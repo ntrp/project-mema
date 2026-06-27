@@ -30,7 +30,12 @@ export default [
 			'@typescript-eslint': tsPlugin
 		},
 		rules: {
-			...tsPlugin.configs.recommended.rules
+			...tsPlugin.configs.recommended.rules,
+			'no-unused-vars': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+			]
 		}
 	},
 	{
@@ -40,6 +45,16 @@ export default [
 				parser: tsParser
 			},
 			globals: browserGlobals
+		},
+		plugins: {
+			'@typescript-eslint': tsPlugin
+		},
+		rules: {
+			'no-unused-vars': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'error',
+				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
+			]
 		}
 	}
 ];
