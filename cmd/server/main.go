@@ -51,7 +51,8 @@ func main() {
 	}
 
 	apiRouter := chi.NewRouter()
-	httpapi.HandlerFromMux(httpapi.NewServer(cfg), apiRouter)
+	settingsStore := storage.NewSettingsStore(pool)
+	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore), apiRouter)
 
 	router := chi.NewRouter()
 	router.Mount("/api", apiRouter)

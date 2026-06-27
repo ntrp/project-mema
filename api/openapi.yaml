@@ -11,6 +11,7 @@ servers:
 tags:
   - name: Health
   - name: Auth
+  - name: Settings
   - name: System
   - name: Events
 paths:
@@ -92,6 +93,174 @@ paths:
                 $ref: "#/components/schemas/SessionResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/download-clients:
+    get:
+      operationId: listDownloadClients
+      tags:
+        - Settings
+      summary: List configured download clients
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Configured download clients
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadClientListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createDownloadClient
+      tags:
+        - Settings
+      summary: Create a download client
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DownloadClientRequest"
+      responses:
+        "201":
+          description: Download client created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadClient"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/download-clients/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateDownloadClient
+      tags:
+        - Settings
+      summary: Update a download client
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DownloadClientRequest"
+      responses:
+        "200":
+          description: Download client updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadClient"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteDownloadClient
+      tags:
+        - Settings
+      summary: Delete a download client
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Download client deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/indexers:
+    get:
+      operationId: listIndexers
+      tags:
+        - Settings
+      summary: List configured indexers
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Configured indexers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createIndexer
+      tags:
+        - Settings
+      summary: Create an indexer
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexerRequest"
+      responses:
+        "201":
+          description: Indexer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Indexer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexers/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateIndexer
+      tags:
+        - Settings
+      summary: Update an indexer
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexerRequest"
+      responses:
+        "200":
+          description: Indexer updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Indexer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteIndexer
+      tags:
+        - Settings
+      summary: Delete an indexer
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Indexer deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /system/tools:
     get:
       operationId: getToolStatus
@@ -131,6 +300,14 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -151,6 +328,12 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     RateLimited:
       description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
       content:
         application/json:
           schema:
@@ -237,6 +420,150 @@ components:
       type: string
       enum:
         - admin
+    DownloadClientListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - clients
+      properties:
+        clients:
+          type: array
+          items:
+            $ref: "#/components/schemas/DownloadClient"
+    DownloadClient:
+      allOf:
+        - $ref: "#/components/schemas/DownloadClientRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    DownloadClientRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - type
+        - baseUrl
+        - enabled
+        - priority
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        type:
+          $ref: "#/components/schemas/DownloadClientType"
+        baseUrl:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        username:
+          type: string
+          maxLength: 200
+        password:
+          type: string
+          maxLength: 1024
+        apiKey:
+          type: string
+          maxLength: 1024
+        category:
+          type: string
+          maxLength: 200
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+    DownloadClientType:
+      type: string
+      enum:
+        - transmission
+        - sabnzbd
+    IndexerListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - indexers
+      properties:
+        indexers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Indexer"
+    Indexer:
+      allOf:
+        - $ref: "#/components/schemas/IndexerRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    IndexerRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - type
+        - baseUrl
+        - enabled
+        - priority
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        type:
+          $ref: "#/components/schemas/IndexerType"
+        baseUrl:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        apiKey:
+          type: string
+          maxLength: 1024
+        categories:
+          type: array
+          items:
+            type: integer
+            format: int32
+          maxItems: 100
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+    IndexerType:
+      type: string
+      enum:
+        - torznab
+        - newznab
+        - rss
     ToolStatusResponse:
       type: object
       additionalProperties: false

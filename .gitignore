@@ -12,6 +12,10 @@ web/node_modules/
 web/test-results/
 web/playwright-report/
 
+# Local verification artifacts
+.playwright-cli/
+output/playwright/
+
 # Local config
 .env
 .env.*

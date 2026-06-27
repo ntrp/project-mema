@@ -72,6 +72,82 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/download-clients': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List configured download clients */
+		get: operations['listDownloadClients'];
+		put?: never;
+		/** Create a download client */
+		post: operations['createDownloadClient'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/download-clients/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a download client */
+		put: operations['updateDownloadClient'];
+		post?: never;
+		/** Delete a download client */
+		delete: operations['deleteDownloadClient'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexers': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List configured indexers */
+		get: operations['listIndexers'];
+		put?: never;
+		/** Create an indexer */
+		post: operations['createIndexer'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexers/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update an indexer */
+		put: operations['updateIndexer'];
+		post?: never;
+		/** Delete an indexer */
+		delete: operations['deleteIndexer'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/tools': {
 		parameters: {
 			query?: never;
@@ -142,6 +218,54 @@ export interface components {
 		};
 		/** @enum {string} */
 		UserRole: 'admin';
+		DownloadClientListResponse: {
+			clients: components['schemas']['DownloadClient'][];
+		};
+		DownloadClient: components['schemas']['DownloadClientRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		DownloadClientRequest: {
+			name: string;
+			type: components['schemas']['DownloadClientType'];
+			baseUrl: string;
+			username?: string;
+			password?: string;
+			apiKey?: string;
+			category?: string;
+			enabled: boolean;
+			/** Format: int32 */
+			priority: number;
+		};
+		/** @enum {string} */
+		DownloadClientType: 'transmission' | 'sabnzbd';
+		IndexerListResponse: {
+			indexers: components['schemas']['Indexer'][];
+		};
+		Indexer: components['schemas']['IndexerRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		IndexerRequest: {
+			name: string;
+			type: components['schemas']['IndexerType'];
+			baseUrl: string;
+			apiKey?: string;
+			categories?: number[];
+			enabled: boolean;
+			/** Format: int32 */
+			priority: number;
+		};
+		/** @enum {string} */
+		IndexerType: 'torznab' | 'newznab' | 'rss';
 		ToolStatusResponse: {
 			tools: components['schemas']['ToolStatus'][];
 		};
@@ -202,6 +326,15 @@ export interface components {
 				'application/json': components['schemas']['ErrorResponse'];
 			};
 		};
+		/** @description Resource not found */
+		NotFound: {
+			headers: {
+				[name: string]: unknown;
+			};
+			content: {
+				'application/json': components['schemas']['ErrorResponse'];
+			};
+		};
 		/** @description Unexpected server error */
 		InternalServerError: {
 			headers: {
@@ -212,7 +345,9 @@ export interface components {
 			};
 		};
 	};
-	parameters: never;
+	parameters: {
+		ResourceId: string;
+	};
 	requestBodies: never;
 	headers: never;
 	pathItems: never;
@@ -308,6 +443,202 @@ export interface operations {
 				};
 			};
 			401: components['responses']['Unauthorized'];
+		};
+	};
+	listDownloadClients: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Configured download clients */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DownloadClientListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createDownloadClient: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DownloadClientRequest'];
+			};
+		};
+		responses: {
+			/** @description Download client created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DownloadClient'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateDownloadClient: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DownloadClientRequest'];
+			};
+		};
+		responses: {
+			/** @description Download client updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DownloadClient'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteDownloadClient: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Download client deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listIndexers: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Configured indexers */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createIndexer: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IndexerRequest'];
+			};
+		};
+		responses: {
+			/** @description Indexer created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Indexer'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateIndexer: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IndexerRequest'];
+			};
+		};
+		responses: {
+			/** @description Indexer updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Indexer'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteIndexer: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	getToolStatus: {

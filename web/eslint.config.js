@@ -3,6 +3,14 @@ import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import svelte from 'eslint-plugin-svelte';
 
+const browserGlobals = {
+	console: 'readonly',
+	document: 'readonly',
+	Event: 'readonly',
+	SubmitEvent: 'readonly',
+	window: 'readonly'
+};
+
 export default [
 	js.configs.recommended,
 	...svelte.configs['flat/recommended'],
@@ -16,11 +24,7 @@ export default [
 			parserOptions: {
 				sourceType: 'module'
 			},
-			globals: {
-				console: 'readonly',
-				document: 'readonly',
-				window: 'readonly'
-			}
+			globals: browserGlobals
 		},
 		plugins: {
 			'@typescript-eslint': tsPlugin
@@ -34,7 +38,8 @@ export default [
 		languageOptions: {
 			parserOptions: {
 				parser: tsParser
-			}
+			},
+			globals: browserGlobals
 		}
 	}
 ];

@@ -10,12 +10,31 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 const (
 	SessionCookieScopes sessionCookieContextKey = "sessionCookie.Scopes"
 )
+
+// Defines values for DownloadClientType.
+const (
+	Sabnzbd      DownloadClientType = "sabnzbd"
+	Transmission DownloadClientType = "transmission"
+)
+
+// Valid indicates whether the value is a known member of the DownloadClientType enum.
+func (e DownloadClientType) Valid() bool {
+	switch e {
+	case Sabnzbd:
+		return true
+	case Transmission:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for HealthStatus.
 const (
@@ -32,6 +51,27 @@ func (e HealthStatus) Valid() bool {
 	case Ok:
 		return true
 	case Unavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IndexerType.
+const (
+	Newznab IndexerType = "newznab"
+	Rss     IndexerType = "rss"
+	Torznab IndexerType = "torznab"
+)
+
+// Valid indicates whether the value is a known member of the IndexerType enum.
+func (e IndexerType) Valid() bool {
+	switch e {
+	case Newznab:
+		return true
+	case Rss:
+		return true
+	case Torznab:
 		return true
 	default:
 		return false
@@ -80,6 +120,43 @@ func (e UserRole) Valid() bool {
 	}
 }
 
+// DownloadClient defines model for DownloadClient.
+type DownloadClient struct {
+	ApiKey    *string            `json:"apiKey,omitempty"`
+	BaseUrl   string             `json:"baseUrl"`
+	Category  *string            `json:"category,omitempty"`
+	CreatedAt time.Time          `json:"createdAt"`
+	Enabled   bool               `json:"enabled"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	Password  *string            `json:"password,omitempty"`
+	Priority  int32              `json:"priority"`
+	Type      DownloadClientType `json:"type"`
+	UpdatedAt time.Time          `json:"updatedAt"`
+	Username  *string            `json:"username,omitempty"`
+}
+
+// DownloadClientListResponse defines model for DownloadClientListResponse.
+type DownloadClientListResponse struct {
+	Clients []DownloadClient `json:"clients"`
+}
+
+// DownloadClientRequest defines model for DownloadClientRequest.
+type DownloadClientRequest struct {
+	ApiKey   *string            `json:"apiKey,omitempty"`
+	BaseUrl  string             `json:"baseUrl"`
+	Category *string            `json:"category,omitempty"`
+	Enabled  bool               `json:"enabled"`
+	Name     string             `json:"name"`
+	Password *string            `json:"password,omitempty"`
+	Priority int32              `json:"priority"`
+	Type     DownloadClientType `json:"type"`
+	Username *string            `json:"username,omitempty"`
+}
+
+// DownloadClientType defines model for DownloadClientType.
+type DownloadClientType string
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	Code    string                  `json:"code"`
@@ -97,6 +174,39 @@ type HealthResponse struct {
 
 // HealthStatus defines model for HealthStatus.
 type HealthStatus string
+
+// Indexer defines model for Indexer.
+type Indexer struct {
+	ApiKey     *string            `json:"apiKey,omitempty"`
+	BaseUrl    string             `json:"baseUrl"`
+	Categories *[]int32           `json:"categories,omitempty"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Enabled    bool               `json:"enabled"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	Priority   int32              `json:"priority"`
+	Type       IndexerType        `json:"type"`
+	UpdatedAt  time.Time          `json:"updatedAt"`
+}
+
+// IndexerListResponse defines model for IndexerListResponse.
+type IndexerListResponse struct {
+	Indexers []Indexer `json:"indexers"`
+}
+
+// IndexerRequest defines model for IndexerRequest.
+type IndexerRequest struct {
+	ApiKey     *string     `json:"apiKey,omitempty"`
+	BaseUrl    string      `json:"baseUrl"`
+	Categories *[]int32    `json:"categories,omitempty"`
+	Enabled    bool        `json:"enabled"`
+	Name       string      `json:"name"`
+	Priority   int32       `json:"priority"`
+	Type       IndexerType `json:"type"`
+}
+
+// IndexerType defines model for IndexerType.
+type IndexerType string
 
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
@@ -139,8 +249,14 @@ type UserSummary struct {
 	Username string             `json:"username"`
 }
 
+// ResourceId defines model for ResourceId.
+type ResourceId = openapi_types.UUID
+
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponse
+
+// NotFound defines model for NotFound.
+type NotFound = ErrorResponse
 
 // RateLimited defines model for RateLimited.
 type RateLimited = ErrorResponse
@@ -153,6 +269,18 @@ type sessionCookieContextKey string
 
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
+
+// CreateDownloadClientJSONRequestBody defines body for CreateDownloadClient for application/json ContentType.
+type CreateDownloadClientJSONRequestBody = DownloadClientRequest
+
+// UpdateDownloadClientJSONRequestBody defines body for UpdateDownloadClient for application/json ContentType.
+type UpdateDownloadClientJSONRequestBody = DownloadClientRequest
+
+// CreateIndexerJSONRequestBody defines body for CreateIndexer for application/json ContentType.
+type CreateIndexerJSONRequestBody = IndexerRequest
+
+// UpdateIndexerJSONRequestBody defines body for UpdateIndexer for application/json ContentType.
+type UpdateIndexerJSONRequestBody = IndexerRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -171,6 +299,30 @@ type ServerInterface interface {
 	// Get application health
 	// (GET /health)
 	GetHealth(w http.ResponseWriter, r *http.Request)
+	// List configured download clients
+	// (GET /settings/download-clients)
+	ListDownloadClients(w http.ResponseWriter, r *http.Request)
+	// Create a download client
+	// (POST /settings/download-clients)
+	CreateDownloadClient(w http.ResponseWriter, r *http.Request)
+	// Delete a download client
+	// (DELETE /settings/download-clients/{id})
+	DeleteDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update a download client
+	// (PUT /settings/download-clients/{id})
+	UpdateDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List configured indexers
+	// (GET /settings/indexers)
+	ListIndexers(w http.ResponseWriter, r *http.Request)
+	// Create an indexer
+	// (POST /settings/indexers)
+	CreateIndexer(w http.ResponseWriter, r *http.Request)
+	// Delete an indexer
+	// (DELETE /settings/indexers/{id})
+	DeleteIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update an indexer
+	// (PUT /settings/indexers/{id})
+	UpdateIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Get detected media tool capabilities
 	// (GET /system/tools)
 	GetToolStatus(w http.ResponseWriter, r *http.Request)
@@ -207,6 +359,54 @@ func (_ Unimplemented) StreamEvents(w http.ResponseWriter, r *http.Request) {
 // Get application health
 // (GET /health)
 func (_ Unimplemented) GetHealth(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List configured download clients
+// (GET /settings/download-clients)
+func (_ Unimplemented) ListDownloadClients(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a download client
+// (POST /settings/download-clients)
+func (_ Unimplemented) CreateDownloadClient(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a download client
+// (DELETE /settings/download-clients/{id})
+func (_ Unimplemented) DeleteDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a download client
+// (PUT /settings/download-clients/{id})
+func (_ Unimplemented) UpdateDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List configured indexers
+// (GET /settings/indexers)
+func (_ Unimplemented) ListIndexers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create an indexer
+// (POST /settings/indexers)
+func (_ Unimplemented) CreateIndexer(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete an indexer
+// (DELETE /settings/indexers/{id})
+func (_ Unimplemented) DeleteIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update an indexer
+// (PUT /settings/indexers/{id})
+func (_ Unimplemented) UpdateIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -304,6 +504,214 @@ func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealth(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDownloadClients operation middleware
+func (siw *ServerInterfaceWrapper) ListDownloadClients(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDownloadClients(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDownloadClient operation middleware
+func (siw *ServerInterfaceWrapper) CreateDownloadClient(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDownloadClient(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDownloadClient operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDownloadClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDownloadClient(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDownloadClient operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDownloadClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDownloadClient(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIndexers operation middleware
+func (siw *ServerInterfaceWrapper) ListIndexers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIndexers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateIndexer operation middleware
+func (siw *ServerInterfaceWrapper) CreateIndexer(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateIndexer(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteIndexer operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIndexer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteIndexer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateIndexer operation middleware
+func (siw *ServerInterfaceWrapper) UpdateIndexer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateIndexer(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -460,6 +868,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/health", wrapper.GetHealth)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/download-clients", wrapper.ListDownloadClients)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/download-clients", wrapper.CreateDownloadClient)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/download-clients/{id}", wrapper.DeleteDownloadClient)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/download-clients/{id}", wrapper.UpdateDownloadClient)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/indexers", wrapper.ListIndexers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/indexers", wrapper.CreateIndexer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/indexers/{id}", wrapper.DeleteIndexer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/indexers/{id}", wrapper.UpdateIndexer)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/tools", wrapper.GetToolStatus)
