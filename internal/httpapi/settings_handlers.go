@@ -80,6 +80,21 @@ func (s *Server) DeleteDownloadClient(w http.ResponseWriter, r *http.Request, id
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) TestDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireSession(w, r); !ok {
+		return
+	}
+
+	client, err := s.settings.GetDownloadClient(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find download client")
+		return
+	}
+
+	result := s.downloadClients.Test(r.Context(), downloadClientConfig(client))
+	writeJSON(w, http.StatusOK, downloadClientTestResponse(s.now(), result))
+}
+
 func (s *Server) ListIndexers(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.requireSession(w, r); !ok {
 		return
@@ -152,4 +167,19 @@ func (s *Server) DeleteIndexer(w http.ResponseWriter, r *http.Request, id Resour
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireSession(w, r); !ok {
+		return
+	}
+
+	indexer, err := s.settings.GetIndexer(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find indexer")
+		return
+	}
+
+	result := s.indexers.Test(r.Context(), indexerConfig(indexer))
+	writeJSON(w, http.StatusOK, indexerTestResponse(s.now(), result))
 }

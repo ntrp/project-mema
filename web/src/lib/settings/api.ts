@@ -18,6 +18,14 @@ export async function login(username: string, password: string) {
 	}
 }
 
+export async function logout() {
+	const { error } = await client.POST('/auth/logout');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
 export async function loadSettings(): Promise<SettingsData> {
 	const [clientResult, indexerResult] = await Promise.all([
 		client.GET('/settings/download-clients'),
@@ -51,6 +59,20 @@ export async function saveDownloadClient(form: DownloadClientForm) {
 	}
 }
 
+export async function testDownloadClient(id: string) {
+	const { data, error } = await client.POST('/settings/download-clients/{id}/test', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Download client test did not return a result');
+	}
+	return data;
+}
+
 export async function saveIndexer(form: IndexerForm) {
 	const body = normalizeIndexerForm(form);
 	const result = form.id
@@ -63,6 +85,20 @@ export async function saveIndexer(form: IndexerForm) {
 	if (result.error) {
 		throw new Error(result.error.message);
 	}
+}
+
+export async function testIndexer(id: string) {
+	const { data, error } = await client.POST('/settings/indexers/{id}/test', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Indexer test did not return a result');
+	}
+	return data;
 }
 
 export async function deleteDownloadClient(id: string) {

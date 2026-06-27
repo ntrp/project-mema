@@ -7,6 +7,8 @@ import (
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
+	"media-manager/internal/downloadclients"
+	"media-manager/internal/indexers"
 	"media-manager/internal/storage"
 )
 
@@ -77,6 +79,27 @@ func indexerInput(w http.ResponseWriter, request IndexerRequest) (storage.Indexe
 		Enabled:    request.Enabled,
 		Priority:   request.Priority,
 	}, true
+}
+
+func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
+	return downloadclients.Config{
+		Name:     client.Name,
+		Type:     client.Type,
+		BaseURL:  client.BaseURL,
+		Username: client.Username,
+		Password: client.Password,
+		APIKey:   client.APIKey,
+	}
+}
+
+func indexerConfig(indexer storage.Indexer) indexers.Config {
+	return indexers.Config{
+		Name:       indexer.Name,
+		Type:       indexer.Type,
+		BaseURL:    indexer.BaseURL,
+		APIKey:     indexer.APIKey,
+		Categories: append([]int32(nil), indexer.Categories...),
+	}
 }
 
 func downloadClientResponse(client storage.DownloadClient) DownloadClient {

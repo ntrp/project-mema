@@ -1,13 +1,17 @@
 <script lang="ts">
-	import type { Indexer } from '$lib/settings/types';
+	import IntegrationTestStatus from './IntegrationTestStatus.svelte';
+	import type { Indexer, IntegrationTestResults } from '$lib/settings/types';
 
 	interface Props {
 		indexers: Indexer[];
 		onEdit: (_indexer: Indexer) => void;
 		onDelete: (_id: string) => void | Promise<void>;
+		onTest: (_id: string) => void | Promise<void>;
+		testingId?: string;
+		testResults: IntegrationTestResults;
 	}
 
-	let { indexers, onEdit, onDelete }: Props = $props();
+	let { indexers, onEdit, onDelete, onTest, testingId, testResults }: Props = $props();
 </script>
 
 <div class="panel" aria-labelledby="indexer-list-title">
@@ -33,8 +37,22 @@
 						<td>{item.baseUrl}</td>
 						<td>{(item.categories ?? []).join(', ') || '-'}</td>
 						<td>{item.priority}</td>
-						<td>{item.enabled ? 'Enabled' : 'Disabled'}</td>
+						<td>
+							<IntegrationTestStatus
+								enabled={item.enabled}
+								result={testResults[item.id]}
+								testing={testingId === item.id}
+							/>
+						</td>
 						<td class="row-actions">
+							<button
+								type="button"
+								class="secondary"
+								disabled={testingId === item.id}
+								onclick={() => onTest(item.id)}
+							>
+								{testingId === item.id ? 'Testing' : 'Test'}
+							</button>
 							<button type="button" class="secondary" onclick={() => onEdit(item)}>Edit</button>
 							<button type="button" class="danger" onclick={() => onDelete(item.id)}>Delete</button>
 						</td>

@@ -177,6 +177,27 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/download-clients/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: testDownloadClient
+      tags:
+        - Settings
+      summary: Test a configured download client
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Download client test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/indexers:
     get:
       operationId: listIndexers
@@ -257,6 +278,27 @@ paths:
       responses:
         "204":
           description: Indexer deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/indexers/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: testIndexer
+      tags:
+        - Settings
+      summary: Test a configured indexer
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -564,6 +606,30 @@ components:
         - torznab
         - newznab
         - rss
+    IntegrationTestResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - success
+        - message
+        - latencyMs
+        - checkedAt
+        - details
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        latencyMs:
+          type: integer
+          format: int32
+          minimum: 0
+        checkedAt:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true
     ToolStatusResponse:
       type: object
       additionalProperties: false

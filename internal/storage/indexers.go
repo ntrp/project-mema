@@ -54,6 +54,14 @@ func (s *SettingsStore) ListIndexers(ctx context.Context) ([]Indexer, error) {
 	return indexers, rows.Err()
 }
 
+func (s *SettingsStore) GetIndexer(ctx context.Context, id uuid.UUID) (Indexer, error) {
+	return scanIndexerRow(s.pool.QueryRow(ctx, `
+		select id, name, type, base_url, api_key, categories, enabled, priority, created_at, updated_at
+		from app.indexers
+		where id = $1
+	`, id))
+}
+
 func (s *SettingsStore) CreateIndexer(ctx context.Context, input IndexerInput) (Indexer, error) {
 	id := uuid.New()
 	return scanIndexerRow(s.pool.QueryRow(ctx, `

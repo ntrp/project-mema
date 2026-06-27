@@ -58,6 +58,14 @@ func (s *SettingsStore) ListDownloadClients(ctx context.Context) ([]DownloadClie
 	return clients, rows.Err()
 }
 
+func (s *SettingsStore) GetDownloadClient(ctx context.Context, id uuid.UUID) (DownloadClient, error) {
+	return scanDownloadClientRow(s.pool.QueryRow(ctx, `
+		select id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
+		from app.download_clients
+		where id = $1
+	`, id))
+}
+
 func (s *SettingsStore) CreateDownloadClient(ctx context.Context, input DownloadClientInput) (DownloadClient, error) {
 	id := uuid.New()
 	return scanDownloadClientRow(s.pool.QueryRow(ctx, `

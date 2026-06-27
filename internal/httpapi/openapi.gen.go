@@ -208,6 +208,15 @@ type IndexerRequest struct {
 // IndexerType defines model for IndexerType.
 type IndexerType string
 
+// IntegrationTestResponse defines model for IntegrationTestResponse.
+type IntegrationTestResponse struct {
+	CheckedAt time.Time              `json:"checkedAt"`
+	Details   map[string]interface{} `json:"details"`
+	LatencyMs int32                  `json:"latencyMs"`
+	Message   string                 `json:"message"`
+	Success   bool                   `json:"success"`
+}
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	Password string `json:"password"`
@@ -311,6 +320,9 @@ type ServerInterface interface {
 	// Update a download client
 	// (PUT /settings/download-clients/{id})
 	UpdateDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Test a configured download client
+	// (POST /settings/download-clients/{id}/test)
+	TestDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// List configured indexers
 	// (GET /settings/indexers)
 	ListIndexers(w http.ResponseWriter, r *http.Request)
@@ -323,6 +335,9 @@ type ServerInterface interface {
 	// Update an indexer
 	// (PUT /settings/indexers/{id})
 	UpdateIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Test a configured indexer
+	// (POST /settings/indexers/{id}/test)
+	TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Get detected media tool capabilities
 	// (GET /system/tools)
 	GetToolStatus(w http.ResponseWriter, r *http.Request)
@@ -386,6 +401,12 @@ func (_ Unimplemented) UpdateDownloadClient(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Test a configured download client
+// (POST /settings/download-clients/{id}/test)
+func (_ Unimplemented) TestDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List configured indexers
 // (GET /settings/indexers)
 func (_ Unimplemented) ListIndexers(w http.ResponseWriter, r *http.Request) {
@@ -407,6 +428,12 @@ func (_ Unimplemented) DeleteIndexer(w http.ResponseWriter, r *http.Request, id 
 // Update an indexer
 // (PUT /settings/indexers/{id})
 func (_ Unimplemented) UpdateIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test a configured indexer
+// (POST /settings/indexers/{id}/test)
+func (_ Unimplemented) TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -617,6 +644,38 @@ func (siw *ServerInterfaceWrapper) UpdateDownloadClient(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// TestDownloadClient operation middleware
+func (siw *ServerInterfaceWrapper) TestDownloadClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestDownloadClient(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListIndexers operation middleware
 func (siw *ServerInterfaceWrapper) ListIndexers(w http.ResponseWriter, r *http.Request) {
 
@@ -712,6 +771,38 @@ func (siw *ServerInterfaceWrapper) UpdateIndexer(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateIndexer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestIndexer operation middleware
+func (siw *ServerInterfaceWrapper) TestIndexer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestIndexer(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -882,6 +973,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/settings/download-clients/{id}", wrapper.UpdateDownloadClient)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/download-clients/{id}/test", wrapper.TestDownloadClient)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/indexers", wrapper.ListIndexers)
 	})
 	r.Group(func(r chi.Router) {
@@ -892,6 +986,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/indexers/{id}", wrapper.UpdateIndexer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/indexers/{id}/test", wrapper.TestIndexer)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/tools", wrapper.GetToolStatus)

@@ -110,6 +110,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/download-clients/{id}/test': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test a configured download client */
+		post: operations['testDownloadClient'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/indexers': {
 		parameters: {
 			query?: never;
@@ -143,6 +162,25 @@ export interface paths {
 		post?: never;
 		/** Delete an indexer */
 		delete: operations['deleteIndexer'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexers/{id}/test': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test a configured indexer */
+		post: operations['testIndexer'];
+		delete?: never;
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -266,6 +304,17 @@ export interface components {
 		};
 		/** @enum {string} */
 		IndexerType: 'torznab' | 'newznab' | 'rss';
+		IntegrationTestResponse: {
+			success: boolean;
+			message: string;
+			/** Format: int32 */
+			latencyMs: number;
+			/** Format: date-time */
+			checkedAt: string;
+			details: {
+				[key: string]: unknown;
+			};
+		};
 		ToolStatusResponse: {
 			tools: components['schemas']['ToolStatus'][];
 		};
@@ -543,6 +592,30 @@ export interface operations {
 			404: components['responses']['NotFound'];
 		};
 	};
+	testDownloadClient: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Download client test result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IntegrationTestResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	listIndexers: {
 		parameters: {
 			query?: never;
@@ -636,6 +709,30 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	testIndexer: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer test result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IntegrationTestResponse'];
+				};
 			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];

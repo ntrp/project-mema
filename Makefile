@@ -2,7 +2,7 @@ GOCACHE ?= $(CURDIR)/.cache/go-build
 GOFLAGS ?=
 DATABASE_URL ?= postgres://media_manager:media_manager@localhost:5432/media_manager?sslmode=disable
 
-.PHONY: api-generate api-generate-go api-generate-web build check db-reset dev dev-api dev-web format river-migrate test web-install
+.PHONY: api-generate api-generate-go api-generate-web build check db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate test web-install
 
 api-generate: api-generate-go api-generate-web
 
@@ -30,13 +30,19 @@ river-migrate:
 	GOCACHE=$(GOCACHE) go run github.com/riverqueue/river/cmd/river migrate-up --database-url "$(DATABASE_URL)"
 
 dev:
-	$(MAKE) dev-api & $(MAKE) dev-web & wait
+	$(MAKE) dev-api-watch & $(MAKE) dev-web & wait
 
 dev-api:
 	GOCACHE=$(GOCACHE) go run ./cmd/server
 
+dev-api-watch:
+	./scripts/dev-api-watch.sh
+
+dev-watch:
+	./scripts/dev-watch.sh
+
 dev-web:
-	cd web && pnpm run dev -- --host 127.0.0.1
+	cd web && pnpm exec vite dev --host 127.0.0.1
 
 format:
 	gofmt -w cmd internal
