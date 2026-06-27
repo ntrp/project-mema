@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: media_manager
+      POSTGRES_USER: media_manager
+      POSTGRES_PASSWORD: media_manager
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U media_manager -d media_manager"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      ADDR: ":8080"
+      APP_ENV: development
+      DATABASE_URL: postgres://media_manager:media_manager@postgres:5432/media_manager?sslmode=disable
+      WEB_DIR: /app/web
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

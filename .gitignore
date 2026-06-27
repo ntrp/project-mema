@@ -1,0 +1,18 @@
+.cache/
+.DS_Store
+
+# Go
+bin/
+coverage.out
+
+# SvelteKit
+web/.svelte-kit/
+web/build/
+web/node_modules/
+web/test-results/
+web/playwright-report/
+
+# Local config
+.env
+.env.*
+!.env.example
