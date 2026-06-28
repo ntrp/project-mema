@@ -29,6 +29,26 @@ func TestTorznabCaps(t *testing.T) {
 	}
 }
 
+func TestCapsDetectsWebUIHTML(t *testing.T) {
+	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
+		resp := response(http.StatusOK, `<!doctype html><html><body>Prowlarr</body></html>`)
+		resp.Header.Set("Content-Type", "text/html; charset=utf-8")
+		return resp, nil
+	})
+
+	result := NewService(client).Test(context.Background(), Config{
+		Type:    "torznab",
+		BaseURL: "https://prowlarr.local/",
+	})
+
+	if result.Success {
+		t.Fatalf("expected failure, got %#v", result)
+	}
+	if !strings.Contains(result.Message, "not the Prowlarr web UI root") {
+		t.Fatalf("unexpected message %q", result.Message)
+	}
+}
+
 func TestRSSFeed(t *testing.T) {
 	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
 		return response(http.StatusOK, `<rss><channel><title>Feed</title><item><title>One</title></item></channel></rss>`), nil

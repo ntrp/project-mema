@@ -18,6 +18,27 @@ const (
 	SessionCookieScopes sessionCookieContextKey = "sessionCookie.Scopes"
 )
 
+// Defines values for DownloadActivityStatus.
+const (
+	Failed  DownloadActivityStatus = "failed"
+	Grabbed DownloadActivityStatus = "grabbed"
+	Queued  DownloadActivityStatus = "queued"
+)
+
+// Valid indicates whether the value is a known member of the DownloadActivityStatus enum.
+func (e DownloadActivityStatus) Valid() bool {
+	switch e {
+	case Failed:
+		return true
+	case Grabbed:
+		return true
+	case Queued:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DownloadClientType.
 const (
 	Sabnzbd      DownloadClientType = "sabnzbd"
@@ -78,6 +99,24 @@ func (e IndexerType) Valid() bool {
 	}
 }
 
+// Defines values for MediaType.
+const (
+	Movie  MediaType = "movie"
+	Series MediaType = "series"
+)
+
+// Valid indicates whether the value is a known member of the MediaType enum.
+func (e MediaType) Valid() bool {
+	switch e {
+	case Movie:
+		return true
+	case Series:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ToolName.
 const (
 	Ffmpeg     ToolName = "ffmpeg"
@@ -118,6 +157,30 @@ func (e UserRole) Valid() bool {
 	default:
 		return false
 	}
+}
+
+// DownloadActivity defines model for DownloadActivity.
+type DownloadActivity struct {
+	CreatedAt          time.Time              `json:"createdAt"`
+	DownloadClientName string                 `json:"downloadClientName"`
+	DownloadUrl        string                 `json:"downloadUrl"`
+	Error              *string                `json:"error,omitempty"`
+	Id                 openapi_types.UUID     `json:"id"`
+	IndexerName        string                 `json:"indexerName"`
+	MediaItemId        openapi_types.UUID     `json:"mediaItemId"`
+	MediaTitle         string                 `json:"mediaTitle"`
+	MediaType          MediaType              `json:"mediaType"`
+	ReleaseTitle       string                 `json:"releaseTitle"`
+	Status             DownloadActivityStatus `json:"status"`
+	UpdatedAt          time.Time              `json:"updatedAt"`
+}
+
+// DownloadActivityStatus defines model for DownloadActivity.Status.
+type DownloadActivityStatus string
+
+// DownloadActivityListResponse defines model for DownloadActivityListResponse.
+type DownloadActivityListResponse struct {
+	Activities []DownloadActivity `json:"activities"`
 }
 
 // DownloadClient defines model for DownloadClient.
@@ -162,6 +225,18 @@ type ErrorResponse struct {
 	Code    string                  `json:"code"`
 	Details *map[string]interface{} `json:"details,omitempty"`
 	Message string                  `json:"message"`
+}
+
+// GrabReleaseRequest defines model for GrabReleaseRequest.
+type GrabReleaseRequest struct {
+	ReleaseId openapi_types.UUID `json:"releaseId"`
+}
+
+// GrabReleaseResponse defines model for GrabReleaseResponse.
+type GrabReleaseResponse struct {
+	Activity DownloadActivity `json:"activity"`
+	JobId    int64            `json:"jobId"`
+	Message  string           `json:"message"`
 }
 
 // HealthResponse defines model for HealthResponse.
@@ -217,10 +292,82 @@ type IntegrationTestResponse struct {
 	Success   bool                   `json:"success"`
 }
 
+// JobEnqueueResponse defines model for JobEnqueueResponse.
+type JobEnqueueResponse struct {
+	JobId   int64  `json:"jobId"`
+	Message string `json:"message"`
+}
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	Password string `json:"password"`
 	Username string `json:"username"`
+}
+
+// MediaItem defines model for MediaItem.
+type MediaItem struct {
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	Monitored bool               `json:"monitored"`
+	Title     string             `json:"title"`
+	Type      MediaType          `json:"type"`
+	UpdatedAt time.Time          `json:"updatedAt"`
+	Year      *int32             `json:"year,omitempty"`
+}
+
+// MediaItemListResponse defines model for MediaItemListResponse.
+type MediaItemListResponse struct {
+	Items []MediaItem `json:"items"`
+}
+
+// MediaItemRequest defines model for MediaItemRequest.
+type MediaItemRequest struct {
+	Monitored bool      `json:"monitored"`
+	Title     string    `json:"title"`
+	Type      MediaType `json:"type"`
+	Year      *int32    `json:"year,omitempty"`
+}
+
+// MediaSearchRequest defines model for MediaSearchRequest.
+type MediaSearchRequest struct {
+	Query string    `json:"query"`
+	Type  MediaType `json:"type"`
+	Year  *int32    `json:"year,omitempty"`
+}
+
+// MediaSearchResponse defines model for MediaSearchResponse.
+type MediaSearchResponse struct {
+	Results []MediaSearchResult `json:"results"`
+}
+
+// MediaSearchResult defines model for MediaSearchResult.
+type MediaSearchResult struct {
+	Title string    `json:"title"`
+	Type  MediaType `json:"type"`
+	Year  *int32    `json:"year,omitempty"`
+}
+
+// MediaType defines model for MediaType.
+type MediaType string
+
+// ReleaseCandidate defines model for ReleaseCandidate.
+type ReleaseCandidate struct {
+	Guid        *string             `json:"guid,omitempty"`
+	Id          openapi_types.UUID  `json:"id"`
+	IndexerId   *openapi_types.UUID `json:"indexerId,omitempty"`
+	IndexerName string              `json:"indexerName"`
+	IndexerType IndexerType         `json:"indexerType"`
+	InfoUrl     *string             `json:"infoUrl,omitempty"`
+	Peers       *int32              `json:"peers,omitempty"`
+	Seeders     *int32              `json:"seeders,omitempty"`
+	SizeBytes   int64               `json:"sizeBytes"`
+	Title       string              `json:"title"`
+}
+
+// ReleaseSearchResponse defines model for ReleaseSearchResponse.
+type ReleaseSearchResponse struct {
+	Errors   []string           `json:"errors"`
+	Releases []ReleaseCandidate `json:"releases"`
 }
 
 // SessionResponse defines model for SessionResponse.
@@ -279,6 +426,15 @@ type sessionCookieContextKey string
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
+// CreateMediaItemJSONRequestBody defines body for CreateMediaItem for application/json ContentType.
+type CreateMediaItemJSONRequestBody = MediaItemRequest
+
+// GrabMediaReleaseJSONRequestBody defines body for GrabMediaRelease for application/json ContentType.
+type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
+
+// SearchMediaJSONRequestBody defines body for SearchMedia for application/json ContentType.
+type SearchMediaJSONRequestBody = MediaSearchRequest
+
 // CreateDownloadClientJSONRequestBody defines body for CreateDownloadClient for application/json ContentType.
 type CreateDownloadClientJSONRequestBody = DownloadClientRequest
 
@@ -293,6 +449,9 @@ type UpdateIndexerJSONRequestBody = IndexerRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List recent download activity
+	// (GET /activity/downloads)
+	ListDownloadActivity(w http.ResponseWriter, r *http.Request)
 	// Log in with local admin credentials
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -308,6 +467,27 @@ type ServerInterface interface {
 	// Get application health
 	// (GET /health)
 	GetHealth(w http.ResponseWriter, r *http.Request)
+	// List monitored media items
+	// (GET /media/items)
+	ListMediaItems(w http.ResponseWriter, r *http.Request)
+	// Add a monitored media item
+	// (POST /media/items)
+	CreateMediaItem(w http.ResponseWriter, r *http.Request)
+	// Remove a monitored media item
+	// (DELETE /media/items/{id})
+	DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Enqueue a release grab with the highest-priority enabled download client
+	// (POST /media/items/{id}/grab)
+	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Enqueue a background release search for a monitored item
+	// (POST /media/items/{id}/release-searches)
+	EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List latest release candidates for a monitored item
+	// (GET /media/items/{id}/releases)
+	SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Search for a movie or series candidate
+	// (POST /media/search)
+	SearchMedia(w http.ResponseWriter, r *http.Request)
 	// List configured download clients
 	// (GET /settings/download-clients)
 	ListDownloadClients(w http.ResponseWriter, r *http.Request)
@@ -347,6 +527,12 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
+// List recent download activity
+// (GET /activity/downloads)
+func (_ Unimplemented) ListDownloadActivity(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Log in with local admin credentials
 // (POST /auth/login)
 func (_ Unimplemented) Login(w http.ResponseWriter, r *http.Request) {
@@ -374,6 +560,48 @@ func (_ Unimplemented) StreamEvents(w http.ResponseWriter, r *http.Request) {
 // Get application health
 // (GET /health)
 func (_ Unimplemented) GetHealth(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List monitored media items
+// (GET /media/items)
+func (_ Unimplemented) ListMediaItems(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add a monitored media item
+// (POST /media/items)
+func (_ Unimplemented) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove a monitored media item
+// (DELETE /media/items/{id})
+func (_ Unimplemented) DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Enqueue a release grab with the highest-priority enabled download client
+// (POST /media/items/{id}/grab)
+func (_ Unimplemented) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Enqueue a background release search for a monitored item
+// (POST /media/items/{id}/release-searches)
+func (_ Unimplemented) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List latest release candidates for a monitored item
+// (GET /media/items/{id}/releases)
+func (_ Unimplemented) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Search for a movie or series candidate
+// (POST /media/search)
+func (_ Unimplemented) SearchMedia(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -451,6 +679,26 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListDownloadActivity operation middleware
+func (siw *ServerInterfaceWrapper) ListDownloadActivity(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDownloadActivity(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
@@ -531,6 +779,194 @@ func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealth(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMediaItems operation middleware
+func (siw *ServerInterfaceWrapper) ListMediaItems(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMediaItems(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMediaItem operation middleware
+func (siw *ServerInterfaceWrapper) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMediaItem(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMediaItem operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMediaItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMediaItem(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GrabMediaRelease operation middleware
+func (siw *ServerInterfaceWrapper) GrabMediaRelease(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GrabMediaRelease(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnqueueMediaReleaseSearch operation middleware
+func (siw *ServerInterfaceWrapper) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnqueueMediaReleaseSearch(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SearchMediaReleases operation middleware
+func (siw *ServerInterfaceWrapper) SearchMediaReleases(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchMediaReleases(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SearchMedia operation middleware
+func (siw *ServerInterfaceWrapper) SearchMedia(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchMedia(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -946,6 +1382,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/activity/downloads", wrapper.ListDownloadActivity)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/login", wrapper.Login)
 	})
 	r.Group(func(r chi.Router) {
@@ -959,6 +1398,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/health", wrapper.GetHealth)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items", wrapper.ListMediaItems)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items", wrapper.CreateMediaItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/media/items/{id}", wrapper.DeleteMediaItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/grab", wrapper.GrabMediaRelease)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/release-searches", wrapper.EnqueueMediaReleaseSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/releases", wrapper.SearchMediaReleases)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/search", wrapper.SearchMedia)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/download-clients", wrapper.ListDownloadClients)

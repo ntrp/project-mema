@@ -19,6 +19,10 @@ func closeBody(body io.ReadCloser) {
 	_ = body.Close()
 }
 
+func readLimitedBody(body io.Reader) ([]byte, error) {
+	return io.ReadAll(io.LimitReader(body, 1024*1024))
+}
+
 func decodeLimitedXML(body io.Reader, target interface{}) error {
 	return xml.NewDecoder(io.LimitReader(body, 1024*1024)).Decode(target)
 }

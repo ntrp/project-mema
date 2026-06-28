@@ -11,6 +11,8 @@ servers:
 tags:
   - name: Health
   - name: Auth
+  - name: Media
+  - name: Activity
   - name: Settings
   - name: System
   - name: Events
@@ -91,6 +93,177 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SessionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/search:
+    post:
+      operationId: searchMedia
+      tags:
+        - Media
+      summary: Search for a movie or series candidate
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaSearchRequest"
+      responses:
+        "200":
+          description: Media search candidates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaSearchResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/items:
+    get:
+      operationId: listMediaItems
+      tags:
+        - Media
+      summary: List monitored media items
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Monitored media items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItemListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createMediaItem
+      tags:
+        - Media
+      summary: Add a monitored media item
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaItemRequest"
+      responses:
+        "201":
+          description: Media item added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/items/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    delete:
+      operationId: deleteMediaItem
+      tags:
+        - Media
+      summary: Remove a monitored media item
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Media item removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/releases:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: searchMediaReleases
+      tags:
+        - Media
+      summary: List latest release candidates for a monitored item
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Latest release candidates found by background search jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReleaseSearchResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/release-searches:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: enqueueMediaReleaseSearch
+      tags:
+        - Media
+      summary: Enqueue a background release search for a monitored item
+      security:
+        - sessionCookie: []
+      responses:
+        "202":
+          description: Release search job enqueued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobEnqueueResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/grab:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: grabMediaRelease
+      tags:
+        - Media
+      summary: Enqueue a release grab with the highest-priority enabled download client
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrabReleaseRequest"
+      responses:
+        "202":
+          description: Release grab job enqueued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrabReleaseResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /activity/downloads:
+    get:
+      operationId: listDownloadActivity
+      tags:
+        - Activity
+      summary: List recent download activity
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Recent download activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadActivityListResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /settings/download-clients:
@@ -462,6 +635,248 @@ components:
       type: string
       enum:
         - admin
+    MediaType:
+      type: string
+      enum:
+        - movie
+        - series
+    MediaSearchRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - query
+        - type
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+          minimum: 1800
+          maximum: 3000
+    MediaSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchResult"
+    MediaSearchResult:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - type
+      properties:
+        title:
+          type: string
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+    MediaItemListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaItem"
+    MediaItem:
+      allOf:
+        - $ref: "#/components/schemas/MediaItemRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    MediaItemRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - type
+        - monitored
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+          minimum: 1800
+          maximum: 3000
+        monitored:
+          type: boolean
+    ReleaseSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - releases
+        - errors
+      properties:
+        releases:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseCandidate"
+        errors:
+          type: array
+          items:
+            type: string
+    ReleaseCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - indexerName
+        - indexerType
+        - title
+        - sizeBytes
+      properties:
+        id:
+          type: string
+          format: uuid
+        indexerId:
+          type: string
+          format: uuid
+        indexerName:
+          type: string
+        indexerType:
+          $ref: "#/components/schemas/IndexerType"
+        title:
+          type: string
+        infoUrl:
+          type: string
+        guid:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        seeders:
+          type: integer
+          format: int32
+        peers:
+          type: integer
+          format: int32
+    GrabReleaseRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - releaseId
+      properties:
+        releaseId:
+          type: string
+          format: uuid
+    GrabReleaseResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - jobId
+        - message
+        - activity
+      properties:
+        jobId:
+          type: integer
+          format: int64
+        message:
+          type: string
+        activity:
+          $ref: "#/components/schemas/DownloadActivity"
+    JobEnqueueResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - jobId
+        - message
+      properties:
+        jobId:
+          type: integer
+          format: int64
+        message:
+          type: string
+    DownloadActivityListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - activities
+      properties:
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/DownloadActivity"
+    DownloadActivity:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mediaItemId
+        - mediaTitle
+        - mediaType
+        - releaseTitle
+        - indexerName
+        - downloadClientName
+        - downloadUrl
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
+        mediaTitle:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        releaseTitle:
+          type: string
+        indexerName:
+          type: string
+        downloadClientName:
+          type: string
+        downloadUrl:
+          type: string
+        status:
+          type: string
+          enum:
+            - queued
+            - grabbed
+            - failed
+        error:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     DownloadClientListResponse:
       type: object
       additionalProperties: false

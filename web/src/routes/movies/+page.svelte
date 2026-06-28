@@ -2,4 +2,4 @@
 	import AppShell from '$lib/components/app/AppShell.svelte';
 </script>
 
-<AppShell initialHomeSection="explore" />
+<AppShell initialHomeSection="movies" />

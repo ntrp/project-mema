@@ -1,7 +1,14 @@
 import { client } from '$lib/api/client';
 
 import { normalizeDownloadClientForm, normalizeIndexerForm } from './forms';
-import type { DownloadClientForm, IndexerForm, SettingsData } from './types';
+import type {
+	DownloadClientForm,
+	IndexerForm,
+	MediaItemRequest,
+	MediaSearchRequest,
+	ReleaseCandidate,
+	SettingsData
+} from './types';
 
 export async function currentSessionAuthenticated() {
 	const { data } = await client.GET('/auth/session');
@@ -43,6 +50,100 @@ export async function loadSettings(): Promise<SettingsData> {
 		downloadClients: clientResult.data?.clients ?? [],
 		indexers: indexerResult.data?.indexers ?? []
 	};
+}
+
+export async function searchMedia(request: MediaSearchRequest) {
+	const { data, error } = await client.POST('/media/search', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.results ?? [];
+}
+
+export async function listMediaItems() {
+	const { data, error } = await client.GET('/media/items');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.items ?? [];
+}
+
+export async function createMediaItem(request: MediaItemRequest) {
+	const { data, error } = await client.POST('/media/items', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
+export async function deleteMediaItem(id: string) {
+	const { error } = await client.DELETE('/media/items/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function searchMediaReleases(id: string) {
+	const { data, error } = await client.GET('/media/items/{id}/releases', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return {
+		releases: data?.releases ?? [],
+		errors: data?.errors ?? []
+	};
+}
+
+export async function enqueueMediaReleaseSearch(id: string) {
+	const { data, error } = await client.POST('/media/items/{id}/release-searches', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Release search job was not returned');
+	}
+	return data;
+}
+
+export async function grabMediaRelease(id: string, release: ReleaseCandidate) {
+	const { data, error } = await client.POST('/media/items/{id}/grab', {
+		params: { path: { id } },
+		body: {
+			releaseId: release.id
+		}
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Download grab did not return a result');
+	}
+	return data;
+}
+
+export async function listDownloadActivity() {
+	const { data, error } = await client.GET('/activity/downloads');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.activities ?? [];
 }
 
 export async function saveDownloadClient(form: DownloadClientForm) {

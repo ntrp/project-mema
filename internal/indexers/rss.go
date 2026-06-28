@@ -3,6 +3,7 @@ package indexers
 import (
 	"context"
 	"net/http"
+	"strings"
 )
 
 type rssDocument struct {
@@ -20,6 +21,49 @@ type atomDocument struct {
 type rssItem struct{}
 
 type atomEntry struct{}
+
+func (s *Service) searchRSS(ctx context.Context, config Config, query string) ([]Release, error) {
+	endpoint, err := endpointWithQuery(config.BaseURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := get(ctx, endpoint)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer closeBody(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, httpStatusError(resp.StatusCode)
+	}
+
+	body, err := readLimitedBody(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	items, err := decodeReleaseFeed(body)
+	if err != nil {
+		return nil, err
+	}
+
+	query = strings.ToLower(query)
+	releases := []Release{}
+	for _, item := range items {
+		if !strings.Contains(strings.ToLower(item.Title), query) {
+			continue
+		}
+		release := item.toRelease(config)
+		if release.DownloadURL == "" {
+			continue
+		}
+		releases = append(releases, release)
+	}
+	return releases, nil
+}
 
 func (s *Service) testRSS(ctx context.Context, config Config) TestResult {
 	endpoint, err := endpointWithQuery(config.BaseURL, nil)

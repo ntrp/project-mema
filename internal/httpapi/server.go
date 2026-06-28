@@ -1,12 +1,12 @@
 package httpapi
 
 import (
-	"net/http"
 	"time"
 
 	"media-manager/internal/config"
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/indexers"
+	"media-manager/internal/jobs"
 	"media-manager/internal/storage"
 )
 
@@ -15,17 +15,18 @@ type Server struct {
 	settings        *storage.SettingsStore
 	downloadClients *downloadclients.Service
 	indexers        *indexers.Service
+	jobs            *jobs.Client
 	sessions        *sessionStore
 	now             func() time.Time
 }
 
-func NewServer(cfg config.Config, settings *storage.SettingsStore) *Server {
-	httpClient := &http.Client{Timeout: 10 * time.Second}
+func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClients *downloadclients.Service, indexerService *indexers.Service, jobs *jobs.Client) *Server {
 	return &Server{
 		cfg:             cfg,
 		settings:        settings,
-		downloadClients: downloadclients.NewService(httpClient),
-		indexers:        indexers.NewService(httpClient),
+		downloadClients: downloadClients,
+		indexers:        indexerService,
+		jobs:            jobs,
 		sessions:        newSessionStore(),
 		now:             time.Now,
 	}

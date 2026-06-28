@@ -6,6 +6,7 @@ import (
 )
 
 type Config struct {
+	ID         string
 	Name       string
 	Type       string
 	BaseURL    string
@@ -18,6 +19,19 @@ type TestResult struct {
 	Message string
 	Latency time.Duration
 	Details map[string]interface{}
+}
+
+type Release struct {
+	IndexerID   string
+	IndexerName string
+	IndexerType string
+	Title       string
+	DownloadURL string
+	InfoURL     string
+	GUID        string
+	SizeBytes   int64
+	Seeders     *int32
+	Peers       *int32
 }
 
 type HTTPDoer interface {

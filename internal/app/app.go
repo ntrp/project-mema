@@ -12,7 +12,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"media-manager/internal/config"
+	"media-manager/internal/downloadclients"
 	"media-manager/internal/httpapi"
+	"media-manager/internal/indexers"
+	"media-manager/internal/jobs"
 	"media-manager/internal/storage"
 	"media-manager/internal/web"
 )
@@ -29,7 +32,13 @@ func Run(ctx context.Context, args []string) error {
 	}
 	defer pool.Close()
 
-	server := newHTTPServer(cfg, pool)
+	server, jobClient, err := newHTTPServer(cfg, pool)
+	if err != nil {
+		return err
+	}
+	if err := jobClient.Start(ctx); err != nil {
+		return fmt.Errorf("job client start failed: %w", err)
+	}
 	errCh := make(chan error, 1)
 	go func() {
 		slog.Info("server listening", "addr", cfg.Addr)
@@ -42,8 +51,11 @@ func Run(ctx context.Context, args []string) error {
 
 	select {
 	case <-ctx.Done():
-		return shutdownServer(server)
+		return shutdown(server, jobClient)
 	case err := <-errCh:
+		if stopErr := stopJobs(jobClient); stopErr != nil {
+			return stopErr
+		}
 		return err
 	}
 }
@@ -65,13 +77,24 @@ func openDatabase(ctx context.Context, databaseURL string) (*pgxpool.Pool, error
 		pool.Close()
 		return nil, fmt.Errorf("database ping failed: %w", err)
 	}
+	if err := storage.EnsureSchema(ctx, pool); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("database schema setup failed: %w", err)
+	}
 	return pool, nil
 }
 
-func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) *http.Server {
+func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.Client, error) {
 	apiRouter := chi.NewRouter()
 	settingsStore := storage.NewSettingsStore(pool)
-	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore), apiRouter)
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	downloadClientService := downloadclients.NewService(httpClient)
+	indexerService := indexers.NewService(httpClient)
+	jobClient, err := jobs.NewClient(pool, settingsStore, indexerService, downloadClientService)
+	if err != nil {
+		return nil, nil, fmt.Errorf("job client setup failed: %w", err)
+	}
+	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, jobClient), apiRouter)
 
 	router := chi.NewRouter()
 	router.Mount("/api", apiRouter)
@@ -81,14 +104,26 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) *http.Server {
 		Addr:              cfg.Addr,
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
-	}
+	}, jobClient, nil
 }
 
-func shutdownServer(server *http.Server) error {
+func shutdown(server *http.Server, jobClient *jobs.Client) error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("server shutdown failed: %w", err)
+	}
+	if err := jobClient.Stop(shutdownCtx); err != nil {
+		return fmt.Errorf("job client shutdown failed: %w", err)
+	}
+	return nil
+}
+
+func stopJobs(jobClient *jobs.Client) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := jobClient.Stop(ctx); err != nil {
+		return fmt.Errorf("job client shutdown failed: %w", err)
 	}
 	return nil
 }

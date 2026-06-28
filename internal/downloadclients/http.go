@@ -97,3 +97,10 @@ func stringValue(value *string) string {
 	}
 	return *value
 }
+
+func intString(value int) string {
+	if value == 0 {
+		return ""
+	}
+	return fmt.Sprintf("%d", value)
+}

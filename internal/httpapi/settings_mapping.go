@@ -89,11 +89,13 @@ func downloadClientConfig(client storage.DownloadClient) downloadclients.Config 
 		Username: client.Username,
 		Password: client.Password,
 		APIKey:   client.APIKey,
+		Category: client.Category,
 	}
 }
 
 func indexerConfig(indexer storage.Indexer) indexers.Config {
 	return indexers.Config{
+		ID:         indexer.ID.String(),
 		Name:       indexer.Name,
 		Type:       indexer.Type,
 		BaseURL:    indexer.BaseURL,

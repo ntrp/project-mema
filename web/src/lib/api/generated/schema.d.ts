@@ -72,6 +72,134 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/search': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Search for a movie or series candidate */
+		post: operations['searchMedia'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List monitored media items */
+		get: operations['listMediaItems'];
+		put?: never;
+		/** Add a monitored media item */
+		post: operations['createMediaItem'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Remove a monitored media item */
+		delete: operations['deleteMediaItem'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/releases': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** List latest release candidates for a monitored item */
+		get: operations['searchMediaReleases'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/release-searches': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Enqueue a background release search for a monitored item */
+		post: operations['enqueueMediaReleaseSearch'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/grab': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Enqueue a release grab with the highest-priority enabled download client */
+		post: operations['grabMediaRelease'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/activity/downloads': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List recent download activity */
+		get: operations['listDownloadActivity'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/download-clients': {
 		parameters: {
 			query?: never;
@@ -256,6 +384,99 @@ export interface components {
 		};
 		/** @enum {string} */
 		UserRole: 'admin';
+		/** @enum {string} */
+		MediaType: 'movie' | 'series';
+		MediaSearchRequest: {
+			query: string;
+			type: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+		};
+		MediaSearchResponse: {
+			results: components['schemas']['MediaSearchResult'][];
+		};
+		MediaSearchResult: {
+			title: string;
+			type: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+		};
+		MediaItemListResponse: {
+			items: components['schemas']['MediaItem'][];
+		};
+		MediaItem: components['schemas']['MediaItemRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		MediaItemRequest: {
+			title: string;
+			type: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+			monitored: boolean;
+		};
+		ReleaseSearchResponse: {
+			releases: components['schemas']['ReleaseCandidate'][];
+			errors: string[];
+		};
+		ReleaseCandidate: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			indexerId?: string;
+			indexerName: string;
+			indexerType: components['schemas']['IndexerType'];
+			title: string;
+			infoUrl?: string;
+			guid?: string;
+			/** Format: int64 */
+			sizeBytes: number;
+			/** Format: int32 */
+			seeders?: number;
+			/** Format: int32 */
+			peers?: number;
+		};
+		GrabReleaseRequest: {
+			/** Format: uuid */
+			releaseId: string;
+		};
+		GrabReleaseResponse: {
+			/** Format: int64 */
+			jobId: number;
+			message: string;
+			activity: components['schemas']['DownloadActivity'];
+		};
+		JobEnqueueResponse: {
+			/** Format: int64 */
+			jobId: number;
+			message: string;
+		};
+		DownloadActivityListResponse: {
+			activities: components['schemas']['DownloadActivity'][];
+		};
+		DownloadActivity: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId: string;
+			mediaTitle: string;
+			mediaType: components['schemas']['MediaType'];
+			releaseTitle: string;
+			indexerName: string;
+			downloadClientName: string;
+			downloadUrl: string;
+			/** @enum {string} */
+			status: 'queued' | 'grabbed' | 'failed';
+			error?: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
 		DownloadClientListResponse: {
 			clients: components['schemas']['DownloadClient'][];
 		};
@@ -489,6 +710,199 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['SessionResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	searchMedia: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaSearchRequest'];
+			};
+		};
+		responses: {
+			/** @description Media search candidates */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaSearchResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listMediaItems: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Monitored media items */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItemListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createMediaItem: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaItemRequest'];
+			};
+		};
+		responses: {
+			/** @description Media item added */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteMediaItem: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media item removed */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	searchMediaReleases: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Latest release candidates found by background search jobs */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ReleaseSearchResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	enqueueMediaReleaseSearch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Release search job enqueued */
+			202: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['JobEnqueueResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	grabMediaRelease: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['GrabReleaseRequest'];
+			};
+		};
+		responses: {
+			/** @description Release grab job enqueued */
+			202: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GrabReleaseResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listDownloadActivity: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Recent download activity */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DownloadActivityListResponse'];
 				};
 			};
 			401: components['responses']['Unauthorized'];

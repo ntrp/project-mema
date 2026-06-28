@@ -2,7 +2,9 @@ package indexers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -35,6 +37,21 @@ func (s *Service) test(ctx context.Context, config Config) TestResult {
 		return s.testRSS(ctx, config)
 	default:
 		return failedResult("Unsupported indexer type", "type", config.Type)
+	}
+}
+
+func (s *Service) Search(ctx context.Context, config Config, query string, mediaType string) ([]Release, error) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return nil, fmt.Errorf("query is required")
+	}
+	switch config.Type {
+	case "torznab", "newznab":
+		return s.searchTorznab(ctx, config, query, mediaType)
+	case "rss":
+		return s.searchRSS(ctx, config, query)
+	default:
+		return nil, fmt.Errorf("unsupported indexer type %q", config.Type)
 	}
 }
 

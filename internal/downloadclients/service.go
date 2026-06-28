@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -39,6 +40,20 @@ func (s *Service) test(ctx context.Context, config Config) TestResult {
 	}
 }
 
+func (s *Service) Add(ctx context.Context, config Config, request AddRequest) AddResult {
+	if strings.TrimSpace(request.URL) == "" {
+		return addFailedResult("Download URL is required")
+	}
+	switch config.Type {
+	case "transmission":
+		return s.addTransmission(ctx, config, request)
+	case "sabnzbd":
+		return s.addSABnzbd(ctx, config, request)
+	default:
+		return addFailedResult("Unsupported download client type", "type", config.Type)
+	}
+}
+
 func failedResult(message string, pairs ...interface{}) TestResult {
 	return TestResult{
 		Success: false,
@@ -52,6 +67,23 @@ func successResult(message string, pairs ...interface{}) TestResult {
 		Success: true,
 		Message: message,
 		Details: details(pairs...),
+	}
+}
+
+func addFailedResult(message string, pairs ...interface{}) AddResult {
+	return AddResult{
+		Success: false,
+		Message: message,
+		Details: details(pairs...),
+	}
+}
+
+func addSuccessResult(message string, downloadID string, pairs ...interface{}) AddResult {
+	return AddResult{
+		Success:    true,
+		Message:    message,
+		DownloadID: downloadID,
+		Details:    details(pairs...),
 	}
 }
 

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { PathnameWithSearchOrHash } from '$app/types';
+
 	import DownloadClientForm from '$lib/components/settings/DownloadClientForm.svelte';
 	import DownloadClientTable from '$lib/components/settings/DownloadClientTable.svelte';
 	import IndexerForm from '$lib/components/settings/IndexerForm.svelte';
@@ -64,9 +66,24 @@
 	}: Props = $props();
 
 	const settingsItems = [
-		{ value: 'download-clients', label: 'Download clients', meta: 'Torrent and NZB' },
-		{ value: 'indexers', label: 'Indexers', meta: 'Torznab, Newznab, RSS' }
-	] satisfies { value: SettingsSection; label: string; meta: string }[];
+		{
+			value: 'download-clients',
+			label: 'Download clients',
+			meta: 'Torrent and NZB',
+			href: '/settings/download-clients'
+		},
+		{
+			value: 'indexers',
+			label: 'Indexers',
+			meta: 'Torznab, Newznab, RSS',
+			href: '/settings/indexers'
+		}
+	] satisfies {
+		value: SettingsSection;
+		label: string;
+		meta: string;
+		href: PathnameWithSearchOrHash;
+	}[];
 </script>
 
 <div class="workspace-layout">

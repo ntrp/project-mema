@@ -15,6 +15,11 @@ var ErrDevResetNotAllowed = errors.New("dev reset is only allowed when APP_ENV=d
 //go:embed schema.sql
 var schemaSQL string
 
+func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
+	_, err := pool.Exec(ctx, schemaSQL)
+	return err
+}
+
 func ResetDevelopment(ctx context.Context, cfg config.Config) error {
 	if !cfg.IsDevelopment() || !cfg.AllowDevReset {
 		return ErrDevResetNotAllowed
