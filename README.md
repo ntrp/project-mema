@@ -50,11 +50,13 @@ Start PostgreSQL:
 docker compose up -d postgres
 ```
 
-If port `5432` is already in use, choose another host port:
+PostgreSQL is exposed on host port `15432` by default so it can run alongside
+other local PostgreSQL instances. If that port is already in use, choose another
+host port:
 
 ```sh
-POSTGRES_PORT=55432 docker compose up -d postgres
-export DATABASE_URL=postgres://media_manager:media_manager@localhost:55432/media_manager?sslmode=disable
+POSTGRES_PORT=16432 docker compose up -d postgres
+export DATABASE_URL=postgres://media_manager:media_manager@localhost:16432/media_manager?sslmode=disable
 ```
 
 Create the development schema:
@@ -69,10 +71,10 @@ Run the Go API:
 make dev-api
 ```
 
-If port `8080` is already in use:
+The API listens on `18080` by default. If that port is already in use:
 
 ```sh
-ADDR=:18080 make dev-api
+ADDR=:19080 make dev-api
 ```
 
 Run the SvelteKit dev server in another terminal:
@@ -81,10 +83,12 @@ Run the SvelteKit dev server in another terminal:
 make dev-web
 ```
 
-When the Go API uses a non-default port, point the Vite proxy at it:
+Vite listens on `15173` by default and proxies `/api` to
+`http://127.0.0.1:18080`. When the Go API uses a non-default port, point the
+Vite proxy at it:
 
 ```sh
-VITE_API_PROXY_TARGET=http://127.0.0.1:18080 make dev-web
+VITE_API_PROXY_TARGET=http://127.0.0.1:19080 make dev-web
 ```
 
 Open the frontend URL printed by Vite. The dev frontend calls the Go API at

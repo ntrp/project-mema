@@ -22,10 +22,10 @@ type Config struct {
 
 func Load() Config {
 	return Config{
-		Addr:          envString("ADDR", ":8080"),
+		Addr:          envString("ADDR", ":18080"),
 		AppEnv:        envString("APP_ENV", "development"),
 		AllowDevReset: envBool("ALLOW_DEV_RESET", false),
-		DatabaseURL:   envString("DATABASE_URL", "postgres://media_manager:media_manager@localhost:5432/media_manager?sslmode=disable"),
+		DatabaseURL:   envString("DATABASE_URL", "postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable"),
 		MediaDataDir:  envString("MEDIA_DATA_DIR", ".data/media"),
 		WebDir:        envString("WEB_DIR", "web/build"),
 		Version:       envString("APP_VERSION", "0.0.0-dev"),

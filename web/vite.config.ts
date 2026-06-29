@@ -3,7 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { env } from 'node:process';
 import { defineConfig } from 'vite';
 
-const apiProxyTarget = env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:8080';
+const apiProxyTarget = env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:18080';
 
 export default defineConfig({
 	plugins: [
@@ -20,6 +20,8 @@ export default defineConfig({
 		})
 	],
 	server: {
+		port: 15173,
+		strictPort: true,
 		proxy: {
 			'/api': apiProxyTarget
 		}

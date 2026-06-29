@@ -1,6 +1,6 @@
 GOCACHE ?= $(CURDIR)/.cache/go-build
 GOFLAGS ?=
-DATABASE_URL ?= postgres://media_manager:media_manager@localhost:5432/media_manager?sslmode=disable
+DATABASE_URL ?= postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable
 MEDIA_DATA_DIR ?= $(CURDIR)/.data/media
 
 .PHONY: api-generate api-generate-go api-generate-web build check db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate test web-install
@@ -43,7 +43,7 @@ dev-watch:
 	./scripts/dev-watch.sh
 
 dev-web:
-	cd web && pnpm exec vite dev --host 127.0.0.1
+	cd web && pnpm exec vite dev --host 127.0.0.1 --port 15173
 
 format:
 	gofmt -w cmd internal

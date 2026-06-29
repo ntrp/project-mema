@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GOCACHE="${GOCACHE:-$ROOT_DIR/.cache/go-build}"
-ADDR="${ADDR:-:8080}"
-DATABASE_URL="${DATABASE_URL:-postgres://media_manager:media_manager@localhost:5432/media_manager?sslmode=disable}"
+ADDR="${ADDR:-:18080}"
+DATABASE_URL="${DATABASE_URL:-postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable}"
 WEB_DIR="${WEB_DIR:-web/build}"
 APP_ENV="${APP_ENV:-development}"
 

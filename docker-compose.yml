@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: media_manager
       POSTGRES_PASSWORD: media_manager
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-15432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -18,7 +18,7 @@ services:
   app:
     build: .
     environment:
-      ADDR: ":8080"
+      ADDR: ":18080"
       APP_ENV: development
       DATABASE_URL: postgres://media_manager:media_manager@postgres:5432/media_manager?sslmode=disable
       WEB_DIR: /app/web
@@ -26,7 +26,7 @@ services:
       ADMIN_PASSWORD: admin
       MEDIA_DATA_DIR: /data
     ports:
-      - "8080:8080"
+      - "18080:18080"
     volumes:
       - ./.data/media:/data
     depends_on:

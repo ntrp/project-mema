@@ -25,7 +25,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=go-build /out/server /app/server
 COPY --from=web-build /src/web/build /app/web
-ENV ADDR=:8080
+ENV ADDR=:18080
 ENV WEB_DIR=/app/web
-EXPOSE 8080
+EXPOSE 18080
 ENTRYPOINT ["/app/server"]
