@@ -4,36 +4,60 @@
 	import { onMount } from 'svelte';
 
 	import AppNav from '$lib/components/app/AppNav.svelte';
+	import AdvancedSearchArea from '$lib/components/app/AdvancedSearchArea.svelte';
 	import HomeArea from '$lib/components/app/HomeArea.svelte';
+	import MediaActionModal from '$lib/components/app/MediaActionModal.svelte';
+	import MetadataDetailArea from '$lib/components/app/MetadataDetailArea.svelte';
 	import SettingsArea from '$lib/components/app/SettingsArea.svelte';
+	import SidebarMenu from '$lib/components/app/SidebarMenu.svelte';
 	import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
 	import NoticeStack from '$lib/components/settings/NoticeStack.svelte';
 	import {
+		approveMediaRequest as approveMediaRequestRequest,
 		createMediaItem as createMediaItemRequest,
-		currentSessionAuthenticated,
+		createMediaRequest as createMediaRequestRequest,
+		currentSession as currentSessionRequest,
 		deleteDownloadClient as deleteDownloadClientRequest,
 		deleteIndexer as deleteIndexerRequest,
+		deleteLibraryFolder as deleteLibraryFolderRequest,
 		deleteMediaItem as deleteMediaItemRequest,
+		deleteUser as deleteUserRequest,
 		enqueueMediaReleaseSearch as enqueueMediaReleaseSearchRequest,
+		advancedSearchMedia as advancedSearchMediaRequest,
+		autocompleteMedia as autocompleteMediaRequest,
+		getLibraryScan as getLibraryScanRequest,
 		grabMediaRelease as grabMediaReleaseRequest,
+		getMediaMetadataDetails as getMediaMetadataDetailsRequest,
 		listDownloadActivity as listDownloadActivityRequest,
+		listMediaRequests as listMediaRequestsRequest,
+		loadMediaDiscoverSections as loadMediaDiscoverSectionsRequest,
 		listMediaItems as listMediaItemsRequest,
 		loadSettings as loadSettingsRequest,
 		login as loginRequest,
 		logout as logoutRequest,
+		matchLibraryScanItem as matchLibraryScanItemRequest,
+		mediaTypeForLibraryKind,
 		saveDownloadClient as saveDownloadClientRequest,
 		saveIndexer as saveIndexerRequest,
+		saveLibraryFolder as saveLibraryFolderRequest,
+		saveMetadataProvider as saveMetadataProviderRequest,
+		saveUser as saveUserRequest,
 		searchMedia as searchMediaRequest,
 		searchMediaReleases as searchMediaReleasesRequest,
 		testDownloadClient as testDownloadClientRequest,
-		testIndexer as testIndexerRequest
+		testIndexer as testIndexerRequest,
+		testMetadataProvider as testMetadataProviderRequest
 	} from '$lib/settings/api';
 	import {
 		downloadClientFormFromClient,
 		emptyDownloadClientForm,
 		emptyIndexerForm,
-		indexerFormFromIndexer
+		emptyLibraryFolderForm,
+		emptyUserForm,
+		indexerFormFromIndexer,
+		userFormFromUser
 	} from '$lib/settings/forms';
+	import { qualityProfiles } from '$lib/settings/qualityProfiles';
 	import '$lib/settings/styles.css';
 	import type {
 		AppView,
@@ -44,12 +68,30 @@
 		Indexer,
 		IndexerForm as IndexerFormValue,
 		IntegrationTestResults,
+		LibraryFolder,
+		LibraryFolderForm as LibraryFolderFormValue,
+		LibraryMediaKind,
+		LibraryScan,
+		LibraryScanItem,
+		LibraryScanItemMatchRequest,
+		ManagedUser,
+		MediaAdvancedSearchRequest,
+		MediaDiscoverSection,
 		MediaItem,
-		MediaSearchRequest,
+		MediaMetadataDetails,
+		MediaRequest,
+		MediaRequestApproveRequest,
+		MediaSearchGroup,
 		MediaSearchResult,
+		MediaType,
+		MetadataProvider,
+		MetadataProviderForm as MetadataProviderFormValue,
+		MetadataProviderType,
 		ReleaseCandidate,
 		ReleaseSearchResults,
-		SettingsSection
+		SettingsSection,
+		UserForm as UserFormValue,
+		UserSummary
 	} from '$lib/settings/types';
 
 	interface Props {
@@ -57,54 +99,118 @@
 		initialHomeSection?: HomeSection;
 		initialSettingsSection?: SettingsSection;
 		initialSelectedMediaItemId?: string;
+		initialSelectedRequestId?: string;
+		initialLibraryScanId?: string;
+		initialAdvancedQuery?: string;
+		initialMetadataProvider?: string;
+		initialMetadataType?: string;
+		initialMetadataExternalId?: string;
 	}
 
 	let {
 		initialView = 'home',
-		initialHomeSection = 'explore',
-		initialSettingsSection = 'download-clients',
-		initialSelectedMediaItemId
+		initialHomeSection = 'discover',
+		initialSettingsSection = 'library',
+		initialSelectedMediaItemId,
+		initialSelectedRequestId,
+		initialLibraryScanId,
+		initialAdvancedQuery = '',
+		initialMetadataProvider,
+		initialMetadataType,
+		initialMetadataExternalId
 	}: Props = $props();
 	const routeDefaults = (() => ({
 		view: initialView,
 		homeSection: initialHomeSection,
 		settingsSection: initialSettingsSection,
-		selectedMediaItemId: initialSelectedMediaItemId
+		selectedMediaItemId: initialSelectedMediaItemId,
+		selectedRequestId: initialSelectedRequestId,
+		libraryScanId: initialLibraryScanId
 	}))();
 
 	let authenticated = $state(false);
 	let loading = $state(true);
 	let savingDownloadClient = $state(false);
 	let savingIndexer = $state(false);
+	let savingMetadataProviderId = $state<string | undefined>();
+	let savingLibraryFolder = $state(false);
+	let savingUser = $state(false);
 	let message = $state('');
 	let errorMessage = $state('');
 	let username = $state('admin');
 	let password = $state('admin');
 	let downloadClients = $state<DownloadClient[]>([]);
 	let indexers = $state<Indexer[]>([]);
+	let metadataProviders = $state<MetadataProvider[]>([]);
+	let libraryFolders = $state<LibraryFolder[]>([]);
+	let users = $state<ManagedUser[]>([]);
+	let currentUser = $state<UserSummary | undefined>();
 	let mediaItems = $state<MediaItem[]>([]);
-	let mediaSearchResults = $state<MediaSearchResult[]>([]);
+	let mediaRequests = $state<MediaRequest[]>([]);
+	let discoverSections = $state<MediaDiscoverSection[]>([]);
+	let metadataDetail = $state<MediaMetadataDetails | undefined>();
+	let autocompleteGroups = $state<MediaSearchGroup[]>([]);
+	let advancedSearchGroups = $state<MediaSearchGroup[]>([]);
 	let releaseResults = $state<ReleaseSearchResults>({});
 	let activities = $state<DownloadActivity[]>([]);
 	let downloadForm = $state<DownloadClientFormValue>(emptyDownloadClientForm());
 	let indexerForm = $state<IndexerFormValue>(emptyIndexerForm());
+	let libraryFolderForm = $state<LibraryFolderFormValue>(emptyLibraryFolderForm());
+	let userForm = $state<UserFormValue>(emptyUserForm());
 	let testingDownloadClientId = $state<string | undefined>();
 	let testingIndexerId = $state<string | undefined>();
-	let searchingMedia = $state(false);
+	let testingMetadataProviderId = $state<string | undefined>();
+	let loadingDiscover = $state(false);
+	let loadingMetadataDetail = $state(false);
+	let loadingAutocomplete = $state(false);
+	let searchingAdvanced = $state(false);
 	let addingKey = $state<string | undefined>();
+	let savingMediaAction = $state(false);
+	let activeMediaCandidate = $state<MediaSearchResult | undefined>();
+	let approvingRequestId = $state<string | undefined>();
 	let searchingItemId = $state<string | undefined>();
 	let grabbingKey = $state<string | undefined>();
 	let deletingMediaItemId = $state<string | undefined>();
 	let loadingActivity = $state(false);
+	let loadingLibraryScan = $state(false);
 	let downloadClientTests = $state<IntegrationTestResults>({});
 	let indexerTests = $state<IntegrationTestResults>({});
+	let metadataProviderTests = $state<IntegrationTestResults>({});
 	let activeView = $state<AppView>(routeDefaults.view);
 	let activeHomeSection = $state<HomeSection>(routeDefaults.homeSection);
 	let activeSettingsSection = $state<SettingsSection>(routeDefaults.settingsSection);
 	let selectedMediaItemId = $state<string | undefined>(routeDefaults.selectedMediaItemId);
+	let selectedRequestId = $state<string | undefined>(routeDefaults.selectedRequestId);
+	let activeLibraryScanId = $state<string | undefined>(routeDefaults.libraryScanId);
+	let activeLibraryScan = $state<LibraryScan | undefined>();
 	let searchQuery = $state('');
+	let isAdmin = $derived(currentUser?.role === 'admin');
+	let activePrimarySection = $derived(activeView === 'settings' ? 'settings' : activeHomeSection);
+	type PrimaryItem = {
+		value: HomeSection | 'settings';
+		label: string;
+		icon: 'discover' | 'movies' | 'series' | 'activity' | 'settings';
+		href: '/discover' | '/requests' | '/movies' | '/series' | '/activity' | '/settings/library';
+	};
+	const basePrimaryItems = [
+		{ value: 'discover', label: 'Discover', icon: 'discover', href: '/discover' },
+		{ value: 'requests', label: 'Requests', icon: 'activity', href: '/requests' },
+		{ value: 'movies', label: 'Movies', icon: 'movies', href: '/movies' },
+		{ value: 'series', label: 'Series', icon: 'series', href: '/series' },
+		{ value: 'activity', label: 'Activity', icon: 'activity', href: '/activity' }
+	] satisfies PrimaryItem[];
+	const settingsPrimaryItem = {
+		value: 'settings',
+		label: 'Settings',
+		icon: 'settings',
+		href: '/settings/library'
+	} satisfies PrimaryItem;
+	let primaryItems = $derived(
+		isAdmin ? [...basePrimaryItems, settingsPrimaryItem] : basePrimaryItems
+	);
 
 	onMount(() => {
+		searchQuery = initialAdvancedQuery;
 		void initialise();
 	});
 
@@ -112,10 +218,22 @@
 		loading = true;
 		errorMessage = '';
 
-		authenticated = await currentSessionAuthenticated();
+		const session = await currentSessionRequest();
+		authenticated = Boolean(session?.authenticated);
+		currentUser = session?.user;
 		if (authenticated) {
-			await loadSettings();
+			if (currentUser?.role === 'admin') {
+				await loadSettings();
+			} else if (activeView === 'settings') {
+				activeView = 'home';
+				activeHomeSection = 'discover';
+				void goto(resolve('/discover'));
+			}
 			await loadLibrary();
+			await loadDiscoverSections();
+			if (activeView === 'metadata-detail') {
+				await loadMetadataDetail();
+			}
 		}
 
 		loading = false;
@@ -126,10 +244,21 @@
 		clearNotice();
 
 		try {
-			await loginRequest(username, password);
+			const session = await loginRequest(username, password);
 			authenticated = true;
-			await loadSettings();
+			currentUser = session.user;
+			if (currentUser?.role === 'admin') {
+				await loadSettings();
+			} else if (activeView === 'settings') {
+				activeView = 'home';
+				activeHomeSection = 'discover';
+				void goto(resolve('/discover'));
+			}
 			await loadLibrary();
+			await loadDiscoverSections();
+			if (activeView === 'metadata-detail') {
+				await loadMetadataDetail();
+			}
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Login failed');
 		}
@@ -144,15 +273,28 @@
 			errorMessage = errorMessageFrom(error, 'Could not log out');
 		} finally {
 			authenticated = false;
+			currentUser = undefined;
 			activeView = 'home';
+			activeHomeSection = 'discover';
 			downloadClients = [];
 			indexers = [];
+			metadataProviders = [];
+			users = [];
 			mediaItems = [];
-			mediaSearchResults = [];
+			mediaRequests = [];
+			discoverSections = [];
+			metadataDetail = undefined;
+			autocompleteGroups = [];
+			advancedSearchGroups = [];
 			releaseResults = {};
 			activities = [];
+			libraryFolders = [];
+			activeLibraryScan = undefined;
+			activeLibraryScanId = undefined;
 			downloadForm = emptyDownloadClientForm();
 			indexerForm = emptyIndexerForm();
+			libraryFolderForm = emptyLibraryFolderForm();
+			userForm = emptyUserForm();
 		}
 	}
 
@@ -161,30 +303,53 @@
 		message = 'Profile settings are not implemented yet';
 	}
 
-	function openSettings() {
-		activeView = 'settings';
-		activeSettingsSection = 'download-clients';
-		void goto(resolve('/settings/download-clients'));
-	}
-
-	function openHome() {
-		activeView = 'home';
-		activeHomeSection = 'explore';
-		void goto(resolve('/explore'));
-	}
-
 	async function loadSettings() {
 		try {
 			const settings = await loadSettingsRequest();
 			downloadClients = settings.downloadClients;
 			indexers = settings.indexers;
+			metadataProviders = settings.metadataProviders;
+			libraryFolders = settings.libraryFolders;
+			users = settings.users;
+			if (activeLibraryScanId) {
+				await loadLibraryScan(activeLibraryScanId);
+			}
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not load settings');
 		}
 	}
 
 	async function loadLibrary() {
-		await Promise.all([loadMediaItems(), loadDownloadActivity()]);
+		await Promise.all([loadMediaItems(), loadMediaRequests(), loadDownloadActivity()]);
+	}
+
+	async function loadDiscoverSections() {
+		loadingDiscover = true;
+		try {
+			discoverSections = await loadMediaDiscoverSectionsRequest();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load discover sections');
+		} finally {
+			loadingDiscover = false;
+		}
+	}
+
+	async function loadMetadataDetail() {
+		if (!initialMetadataProvider || !initialMetadataType || !initialMetadataExternalId) {
+			return;
+		}
+		loadingMetadataDetail = true;
+		try {
+			metadataDetail = await getMediaMetadataDetailsRequest(
+				initialMetadataProvider as MetadataProviderType,
+				initialMetadataType as MediaType,
+				initialMetadataExternalId
+			);
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load media details');
+		} finally {
+			loadingMetadataDetail = false;
+		}
 	}
 
 	async function loadMediaItems() {
@@ -192,6 +357,14 @@
 			mediaItems = await listMediaItemsRequest();
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not load media items');
+		}
+	}
+
+	async function loadMediaRequests() {
+		try {
+			mediaRequests = await listMediaRequestsRequest();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load media requests');
 		}
 	}
 
@@ -206,38 +379,126 @@
 		}
 	}
 
-	async function searchMedia(request: MediaSearchRequest) {
-		searchingMedia = true;
-		clearNotice();
-
+	async function autocompleteMedia(query: string) {
+		const trimmed = query.trim();
+		if (trimmed.length < 2) {
+			autocompleteGroups = [];
+			return;
+		}
+		loadingAutocomplete = true;
 		try {
-			mediaSearchResults = await searchMediaRequest(request);
-		} catch (error) {
-			errorMessage = errorMessageFrom(error, 'Could not search media');
+			autocompleteGroups = await autocompleteMediaRequest(trimmed);
+		} catch {
+			autocompleteGroups = [];
 		} finally {
-			searchingMedia = false;
+			loadingAutocomplete = false;
 		}
 	}
 
-	async function addMedia(candidate: MediaSearchResult) {
-		addingKey = candidateKey(candidate);
+	async function advancedSearch(request: MediaAdvancedSearchRequest) {
+		searchingAdvanced = true;
 		clearNotice();
 
 		try {
-			const item = await createMediaItemRequest({
+			advancedSearchGroups = await advancedSearchMediaRequest(request);
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not search media');
+		} finally {
+			searchingAdvanced = false;
+		}
+	}
+
+	function selectAutocompleteResult(result: MediaSearchResult) {
+		if (result.id) {
+			if (result.type === 'movie') {
+				void goto(resolve('/movies/[id]', { id: result.id }));
+			} else {
+				void goto(resolve('/series/[id]', { id: result.id }));
+			}
+			return;
+		}
+		if (result.externalProvider && result.externalId) {
+			void goto(
+				resolve('/media/[provider]/[type]/[externalId]', {
+					provider: result.externalProvider,
+					type: result.type,
+					externalId: result.externalId
+				})
+			);
+			return;
+		}
+		searchQuery = result.title;
+		void goto(resolve(`/search/advanced?q=${encodeURIComponent(result.title)}`));
+	}
+
+	function addMedia(candidate: MediaSearchResult) {
+		activeMediaCandidate = candidate;
+		clearNotice();
+	}
+
+	function closeMediaAction() {
+		if (savingMediaAction) {
+			return;
+		}
+		activeMediaCandidate = undefined;
+	}
+
+	async function confirmMediaAction(qualityProfileId?: string, libraryFolderId?: string) {
+		const candidate = activeMediaCandidate;
+		if (!candidate) {
+			return;
+		}
+		addingKey = candidateKey(candidate);
+		savingMediaAction = true;
+		clearNotice();
+
+		try {
+			if (isAdmin) {
+				if (!qualityProfileId || !libraryFolderId) {
+					throw new Error('Quality profile and library folder are required');
+				}
+				const item = await createMediaItemRequest({
+					title: candidate.title,
+					type: candidate.type,
+					year: candidate.year,
+					monitored: true,
+					externalProvider: candidate.externalProvider,
+					externalId: candidate.externalId,
+					overview: candidate.overview,
+					posterPath: candidate.posterPath,
+					qualityProfileId,
+					libraryFolderId
+				});
+				mediaItems = [item, ...mediaItems.filter((mediaItem) => mediaItem.id !== item.id)];
+				message = 'Media item added to monitored';
+				activeHomeSection = candidate.type === 'movie' ? 'movies' : 'series';
+				activeMediaCandidate = undefined;
+				void goto(resolve(candidate.type === 'movie' ? '/movies' : '/series'));
+				return;
+			}
+
+			const request = await createMediaRequestRequest({
 				title: candidate.title,
 				type: candidate.type,
 				year: candidate.year,
-				monitored: true
+				externalProvider: candidate.externalProvider,
+				externalId: candidate.externalId,
+				overview: candidate.overview,
+				posterPath: candidate.posterPath
 			});
-			mediaItems = [item, ...mediaItems];
-			message = 'Media item added to monitored';
-			activeHomeSection = candidate.type === 'movie' ? 'movies' : 'series';
-			void goto(resolve(candidate.type === 'movie' ? '/movies' : '/series'));
+			mediaRequests = [request, ...mediaRequests.filter((item) => item.id !== request.id)];
+			message = 'Media request created';
+			activeHomeSection = 'requests';
+			activeMediaCandidate = undefined;
+			void goto(resolve('/requests'));
 		} catch (error) {
-			errorMessage = errorMessageFrom(error, 'Could not add media item');
+			errorMessage = errorMessageFrom(
+				error,
+				isAdmin ? 'Could not add media item' : 'Could not create media request'
+			);
 		} finally {
 			addingKey = undefined;
+			savingMediaAction = false;
 		}
 	}
 
@@ -278,6 +539,27 @@
 			errorMessage = errorMessageFrom(error, 'Could not remove media item');
 		} finally {
 			deletingMediaItemId = undefined;
+		}
+	}
+
+	async function approveMediaRequest(request: MediaRequest, approval: MediaRequestApproveRequest) {
+		approvingRequestId = request.id;
+		clearNotice();
+
+		try {
+			const result = await approveMediaRequestRequest(request.id, approval);
+			mediaRequests = mediaRequests.map((item) =>
+				item.id === result.request.id ? result.request : item
+			);
+			mediaItems = [
+				result.mediaItem,
+				...mediaItems.filter((item) => item.id !== result.mediaItem.id)
+			];
+			message = 'Media request approved and added to monitored';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not approve media request');
+		} finally {
+			approvingRequestId = undefined;
 		}
 	}
 
@@ -348,6 +630,72 @@
 		}
 	}
 
+	async function saveMetadataProvider(form: MetadataProviderFormValue) {
+		savingMetadataProviderId = form.id;
+		clearNotice();
+
+		try {
+			await saveMetadataProviderRequest(form);
+			message = 'Metadata provider saved';
+			await loadSettings();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not save metadata provider');
+		} finally {
+			savingMetadataProviderId = undefined;
+		}
+	}
+
+	async function saveLibraryFolder(event: SubmitEvent) {
+		event.preventDefault();
+		savingLibraryFolder = true;
+		clearNotice();
+
+		try {
+			const result = await saveLibraryFolderRequest(libraryFolderForm);
+			libraryFolderForm = emptyLibraryFolderForm();
+			libraryFolders = [
+				result.folder,
+				...libraryFolders.filter((folder) => folder.id !== result.folder.id)
+			];
+			activeLibraryScan = result.scan;
+			activeLibraryScanId = result.scan.id;
+			message = `Library scan completed: ${result.scan.autoMatchedCount} auto-added, ${result.scan.manualCount} pending`;
+			await loadMediaItems();
+			void goto(resolve(`/settings/library/scans/${result.scan.id}`));
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not add library folder');
+		} finally {
+			savingLibraryFolder = false;
+		}
+	}
+
+	async function saveUser(event: SubmitEvent) {
+		event.preventDefault();
+		savingUser = true;
+		clearNotice();
+
+		try {
+			await saveUserRequest(userForm);
+			userForm = emptyUserForm();
+			message = 'User saved';
+			await loadSettings();
+			if (currentUser && users.some((user) => user.id === currentUser?.id)) {
+				const updatedUser = users.find((user) => user.id === currentUser?.id);
+				if (updatedUser) {
+					currentUser = {
+						id: updatedUser.id,
+						username: updatedUser.username,
+						role: updatedUser.role
+					};
+				}
+			}
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not save user');
+		} finally {
+			savingUser = false;
+		}
+	}
+
 	async function deleteDownloadClient(id: string) {
 		clearNotice();
 
@@ -380,6 +728,84 @@
 		}
 	}
 
+	async function deleteLibraryFolder(id: string) {
+		clearNotice();
+
+		try {
+			await deleteLibraryFolderRequest(id);
+			libraryFolders = libraryFolders.filter((folder) => folder.id !== id);
+			if (activeLibraryScan?.folderId === id) {
+				activeLibraryScan = undefined;
+				activeLibraryScanId = undefined;
+				void goto(resolve('/settings/library'));
+			}
+			message = 'Library folder deleted';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not delete library folder');
+		}
+	}
+
+	async function deleteUser(id: string) {
+		clearNotice();
+
+		try {
+			await deleteUserRequest(id);
+			if (userForm.id === id) {
+				userForm = emptyUserForm();
+			}
+			users = users.filter((user) => user.id !== id);
+			message = 'User deleted';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not delete user');
+		}
+	}
+
+	async function loadLibraryScan(id: string) {
+		loadingLibraryScan = true;
+		clearNotice();
+
+		try {
+			activeLibraryScan = await getLibraryScanRequest(id);
+			activeLibraryScanId = id;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load library scan');
+		} finally {
+			loadingLibraryScan = false;
+		}
+	}
+
+	async function searchLibraryMatch(kind: LibraryMediaKind, query: string) {
+		return await searchMediaRequest({
+			type: mediaTypeForLibraryKind(kind),
+			query: query.trim()
+		});
+	}
+
+	async function matchLibraryScanItem(item: LibraryScanItem, request: LibraryScanItemMatchRequest) {
+		if (!activeLibraryScanId) {
+			return;
+		}
+		clearNotice();
+
+		try {
+			const result = await matchLibraryScanItemRequest(activeLibraryScanId, item.id, request);
+			activeLibraryScan = {
+				...activeLibraryScan!,
+				manualCount: Math.max(0, activeLibraryScan!.manualCount - 1),
+				items: activeLibraryScan!.items.map((scanItem) =>
+					scanItem.id === item.id ? result.item : scanItem
+				)
+			};
+			mediaItems = [
+				result.mediaItem,
+				...mediaItems.filter((mediaItem) => mediaItem.id !== result.mediaItem.id)
+			];
+			message = 'Library item added to monitored';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not match library item');
+		}
+	}
+
 	async function testDownloadClient(id: string) {
 		clearNotice();
 		testingDownloadClientId = id;
@@ -408,6 +834,20 @@
 		}
 	}
 
+	async function testMetadataProvider(id: string) {
+		clearNotice();
+		testingMetadataProviderId = id;
+
+		try {
+			const result = await testMetadataProviderRequest(id);
+			metadataProviderTests = { ...metadataProviderTests, [id]: result };
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not test metadata provider');
+		} finally {
+			testingMetadataProviderId = undefined;
+		}
+	}
+
 	function clearNotice() {
 		errorMessage = '';
 		message = '';
@@ -423,13 +863,30 @@
 	}
 
 	function selectHomeSection(section: HomeSection) {
+		activeView = 'home';
 		activeHomeSection = section;
 		void goto(resolve(`/${section}`));
 	}
 
 	function selectSettingsSection(section: SettingsSection) {
+		if (!isAdmin) {
+			return;
+		}
 		activeSettingsSection = section;
 		void goto(resolve(`/settings/${section}`));
+	}
+
+	function selectPrimarySection(section: HomeSection | 'settings') {
+		if (section === 'settings') {
+			if (!isAdmin) {
+				return;
+			}
+			activeView = 'settings';
+			activeSettingsSection = 'library';
+			void goto(resolve('/settings/library'));
+			return;
+		}
+		selectHomeSection(section);
 	}
 
 	function errorMessageFrom(error: unknown, fallback: string) {
@@ -462,72 +919,143 @@
 	</main>
 {:else}
 	<div class="app-frame">
-		<AppNav
-			{activeView}
-			bind:searchQuery
-			onHome={openHome}
-			onSettings={openSettings}
-			onProfile={showProfile}
-			onLogout={logout}
+		<SidebarMenu
+			title="mema"
+			items={primaryItems}
+			active={activePrimarySection}
+			onSelect={(section) => selectPrimarySection(section as HomeSection | 'settings')}
 		/>
-		<main class="app-content">
-			<NoticeStack {message} {errorMessage} />
-			{#if activeView === 'settings'}
-				<SettingsArea
-					bind:downloadForm
-					bind:indexerForm
-					activeSection={activeSettingsSection}
-					{downloadClients}
-					{indexers}
-					{savingDownloadClient}
-					{savingIndexer}
-					{testingDownloadClientId}
-					{testingIndexerId}
-					{downloadClientTests}
-					{indexerTests}
-					onSectionSelect={selectSettingsSection}
-					onSaveDownloadClient={saveDownloadClient}
-					onSaveIndexer={saveIndexer}
-					onCancelDownloadClient={() => (downloadForm = emptyDownloadClientForm())}
-					onCancelIndexer={() => (indexerForm = emptyIndexerForm())}
-					onEditDownloadClient={(client) => {
-						downloadForm = downloadClientFormFromClient(client);
-						activeSettingsSection = 'download-clients';
-						void goto(resolve('/settings/download-clients'));
-					}}
-					onEditIndexer={(indexer) => {
-						indexerForm = indexerFormFromIndexer(indexer);
-						activeSettingsSection = 'indexers';
-						void goto(resolve('/settings/indexers'));
-					}}
-					onDeleteDownloadClient={deleteDownloadClient}
-					onDeleteIndexer={deleteIndexer}
-					onTestDownloadClient={testDownloadClient}
-					onTestIndexer={testIndexer}
-				/>
-			{:else}
-				<HomeArea
-					activeSection={activeHomeSection}
-					{selectedMediaItemId}
-					{mediaItems}
-					{mediaSearchResults}
-					{releaseResults}
-					{activities}
-					{searchingMedia}
-					{addingKey}
-					{searchingItemId}
-					{grabbingKey}
-					{deletingMediaItemId}
-					{loadingActivity}
-					onSelect={selectHomeSection}
-					onSearchMedia={searchMedia}
-					onAddMedia={addMedia}
-					onFindReleases={findReleases}
-					onDeleteMedia={deleteMediaItem}
-					onGrabRelease={grabRelease}
-					onRefreshActivity={loadDownloadActivity}
-				/>
-			{/if}
-		</main>
+		<div class="app-main">
+			<AppNav
+				bind:searchQuery
+				groups={autocompleteGroups}
+				loading={loadingAutocomplete}
+				onSearch={autocompleteMedia}
+				onSelect={selectAutocompleteResult}
+				onProfile={showProfile}
+				onLogout={logout}
+			/>
+			<main class="app-content">
+				<NoticeStack {message} {errorMessage} />
+				{#if activeView === 'settings' && isAdmin}
+					<SettingsArea
+						bind:downloadForm
+						bind:indexerForm
+						bind:libraryFolderForm
+						bind:userForm
+						activeSection={activeSettingsSection}
+						{downloadClients}
+						{indexers}
+						{metadataProviders}
+						{libraryFolders}
+						{users}
+						{currentUser}
+						{activeLibraryScan}
+						{savingDownloadClient}
+						{savingIndexer}
+						{savingMetadataProviderId}
+						{savingLibraryFolder}
+						{savingUser}
+						{loadingLibraryScan}
+						{testingDownloadClientId}
+						{testingIndexerId}
+						{testingMetadataProviderId}
+						{downloadClientTests}
+						{indexerTests}
+						{metadataProviderTests}
+						onSectionSelect={selectSettingsSection}
+						onSaveDownloadClient={saveDownloadClient}
+						onSaveIndexer={saveIndexer}
+						onSaveMetadataProvider={saveMetadataProvider}
+						onSaveLibraryFolder={saveLibraryFolder}
+						onSaveUser={saveUser}
+						onCancelDownloadClient={() => (downloadForm = emptyDownloadClientForm())}
+						onCancelIndexer={() => (indexerForm = emptyIndexerForm())}
+						onCancelUser={() => (userForm = emptyUserForm())}
+						onEditDownloadClient={(client) => {
+							downloadForm = downloadClientFormFromClient(client);
+							activeSettingsSection = 'download-clients';
+							void goto(resolve('/settings/download-clients'));
+						}}
+						onEditIndexer={(indexer) => {
+							indexerForm = indexerFormFromIndexer(indexer);
+							activeSettingsSection = 'indexers';
+							void goto(resolve('/settings/indexers'));
+						}}
+						onEditUser={(user) => {
+							userForm = userFormFromUser(user);
+							activeSettingsSection = 'users';
+							void goto(resolve('/settings/users'));
+						}}
+						onDeleteDownloadClient={deleteDownloadClient}
+						onDeleteIndexer={deleteIndexer}
+						onDeleteLibraryFolder={deleteLibraryFolder}
+						onDeleteUser={deleteUser}
+						onTestDownloadClient={testDownloadClient}
+						onTestIndexer={testIndexer}
+						onTestMetadataProvider={testMetadataProvider}
+						onSearchLibraryMatch={searchLibraryMatch}
+						onMatchLibraryScanItem={matchLibraryScanItem}
+					/>
+				{:else if activeView === 'advanced-search'}
+					<AdvancedSearchArea
+						initialQuery={initialAdvancedQuery}
+						{metadataProviders}
+						groups={advancedSearchGroups}
+						searching={searchingAdvanced}
+						{addingKey}
+						actionLabel={isAdmin ? 'Add' : 'Request'}
+						onSearch={advancedSearch}
+						onAdd={addMedia}
+					/>
+				{:else if activeView === 'metadata-detail'}
+					<MetadataDetailArea
+						detail={metadataDetail}
+						loading={loadingMetadataDetail}
+						{addingKey}
+						actionLabel={isAdmin ? 'Add' : 'Request'}
+						onAdd={addMedia}
+					/>
+				{:else}
+					<HomeArea
+						activeSection={activeHomeSection}
+						{selectedMediaItemId}
+						{selectedRequestId}
+						{mediaItems}
+						{mediaRequests}
+						{discoverSections}
+						{libraryFolders}
+						{qualityProfiles}
+						{releaseResults}
+						{activities}
+						{loadingDiscover}
+						{addingKey}
+						{approvingRequestId}
+						{searchingItemId}
+						{grabbingKey}
+						{deletingMediaItemId}
+						{loadingActivity}
+						canManage={isAdmin}
+						onAddMedia={addMedia}
+						onApproveMediaRequest={approveMediaRequest}
+						onFindReleases={findReleases}
+						onDeleteMedia={deleteMediaItem}
+						onGrabRelease={grabRelease}
+						onRefreshActivity={loadDownloadActivity}
+					/>
+				{/if}
+			</main>
+		</div>
 	</div>
+	{#if activeMediaCandidate}
+		<MediaActionModal
+			candidate={activeMediaCandidate}
+			{isAdmin}
+			{libraryFolders}
+			{qualityProfiles}
+			saving={savingMediaAction}
+			onClose={closeMediaAction}
+			onConfirm={confirmMediaAction}
+		/>
+	{/if}
 {/if}

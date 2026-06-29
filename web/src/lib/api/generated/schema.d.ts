@@ -89,6 +89,78 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/discover': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get provider-backed discovery sections */
+		get: operations['getMediaDiscover'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/autocomplete': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Search local library and metadata providers for autocomplete */
+		get: operations['autocompleteMedia'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/advanced-search': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Search selected metadata providers with detailed filters */
+		post: operations['advancedSearchMedia'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/metadata/{provider}/{type}/{externalId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				provider: components['schemas']['MetadataProviderType'];
+				type: components['schemas']['MediaType'];
+				externalId: string;
+			};
+			cookie?: never;
+		};
+		/** Get provider metadata details for a media candidate */
+		get: operations['getMediaMetadataDetails'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items': {
 		parameters: {
 			query?: never;
@@ -101,6 +173,62 @@ export interface paths {
 		put?: never;
 		/** Add a monitored media item */
 		post: operations['createMediaItem'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/requests': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List media requests visible to the current user */
+		get: operations['listMediaRequests'];
+		put?: never;
+		/** Create a media request for admin approval */
+		post: operations['createMediaRequest'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/requests/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Get a media request */
+		get: operations['getMediaRequest'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/requests/{id}/approve': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Approve a media request and add it to monitored media */
+		post: operations['approveMediaRequest'];
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -314,6 +442,195 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/metadata-providers': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List configured metadata providers */
+		get: operations['listMetadataProviders'];
+		put?: never;
+		/** Create a metadata provider */
+		post: operations['createMetadataProvider'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/metadata-providers/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a metadata provider */
+		put: operations['updateMetadataProvider'];
+		post?: never;
+		/** Delete a metadata provider */
+		delete: operations['deleteMetadataProvider'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/metadata-providers/{id}/test': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test a configured metadata provider */
+		post: operations['testMetadataProvider'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/folder-options': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Browse server-visible folders for library selection */
+		get: operations['listLibraryFolderOptions'];
+		put?: never;
+		/** Create a server-visible child folder for library selection */
+		post: operations['createLibraryFolderOption'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/folders': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List configured library folders */
+		get: operations['listLibraryFolders'];
+		put?: never;
+		/** Add a library folder and scan it for media */
+		post: operations['createLibraryFolder'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/folders/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Remove a configured library folder */
+		delete: operations['deleteLibraryFolder'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/scans/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Get a library folder scan with discovered media review items */
+		get: operations['getLibraryScan'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/scans/{id}/items/{itemId}/match': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				itemId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Manually match a discovered file to a movie, series, or anime item */
+		post: operations['matchLibraryScanItem'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/users': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List local users */
+		get: operations['listUsers'];
+		put?: never;
+		/** Create a local user */
+		post: operations['createUser'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/users/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a local user */
+		put: operations['updateUser'];
+		post?: never;
+		/** Delete a local user */
+		delete: operations['deleteUser'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/tools': {
 		parameters: {
 			query?: never;
@@ -383,7 +700,30 @@ export interface components {
 			role: components['schemas']['UserRole'];
 		};
 		/** @enum {string} */
-		UserRole: 'admin';
+		UserRole: 'admin' | 'user';
+		UserListResponse: {
+			users: components['schemas']['ManagedUser'][];
+		};
+		ManagedUser: {
+			/** Format: uuid */
+			id: string;
+			username: string;
+			role: components['schemas']['UserRole'];
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		UserCreateRequest: {
+			username: string;
+			password: string;
+			role: components['schemas']['UserRole'];
+		};
+		UserUpdateRequest: {
+			username: string;
+			password?: string;
+			role: components['schemas']['UserRole'];
+		};
 		/** @enum {string} */
 		MediaType: 'movie' | 'series';
 		MediaSearchRequest: {
@@ -395,11 +735,91 @@ export interface components {
 		MediaSearchResponse: {
 			results: components['schemas']['MediaSearchResult'][];
 		};
+		MediaDiscoverResponse: {
+			sections: components['schemas']['MediaDiscoverSection'][];
+		};
+		MediaDiscoverSection: {
+			id: string;
+			title: string;
+			providerName: string;
+			mediaType: components['schemas']['MediaType'];
+			results: components['schemas']['MediaSearchResult'][];
+		};
+		MediaAdvancedSearchRequest: {
+			query?: string;
+			type?: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+			providerIds?: string[];
+			/** Format: int32 */
+			limit?: number;
+		};
+		MediaGroupedSearchResponse: {
+			groups: components['schemas']['MediaSearchGroup'][];
+		};
+		MediaSearchGroup: {
+			sourceType: components['schemas']['MediaSearchSourceType'];
+			sourceName: string;
+			/** Format: uuid */
+			providerId?: string;
+			results: components['schemas']['MediaSearchResult'][];
+		};
+		/** @enum {string} */
+		MediaSearchSourceType: 'library' | 'provider';
 		MediaSearchResult: {
+			/** Format: uuid */
+			id?: string;
 			title: string;
 			type: components['schemas']['MediaType'];
 			/** Format: int32 */
 			year?: number;
+			externalProvider?: string;
+			externalId?: string;
+			overview?: string;
+			posterPath?: string;
+		};
+		MediaMetadataDetails: {
+			title: string;
+			type: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+			externalProvider: string;
+			externalId: string;
+			overview?: string;
+			posterPath?: string;
+			backdropPath?: string;
+			status?: string;
+			originalLanguage?: string;
+			releaseDate?: string;
+			firstAirDate?: string;
+			/** Format: int32 */
+			runtimeMinutes?: number;
+			/** Format: int32 */
+			seasonCount?: number;
+			/** Format: int32 */
+			episodeCount?: number;
+			/** Format: double */
+			voteAverage?: number;
+			genres?: string[];
+			facts?: components['schemas']['MediaMetadataFact'][];
+			seasons?: components['schemas']['MediaMetadataSeason'][];
+			cast?: components['schemas']['MediaMetadataPerson'][];
+		};
+		MediaMetadataFact: {
+			label: string;
+			value: string;
+		};
+		MediaMetadataSeason: {
+			name: string;
+			/** Format: int32 */
+			episodeCount?: number;
+			airDate?: string;
+			posterPath?: string;
+		};
+		MediaMetadataPerson: {
+			name: string;
+			role?: string;
+			profilePath?: string;
 		};
 		MediaItemListResponse: {
 			items: components['schemas']['MediaItem'][];
@@ -418,6 +838,56 @@ export interface components {
 			/** Format: int32 */
 			year?: number;
 			monitored: boolean;
+			externalProvider?: string;
+			externalId?: string;
+			overview?: string;
+			posterPath?: string;
+			qualityProfileId?: string;
+			/** Format: uuid */
+			libraryFolderId?: string;
+		};
+		MediaRequestListResponse: {
+			requests: components['schemas']['MediaRequest'][];
+		};
+		MediaRequest: components['schemas']['MediaRequestCreateRequest'] & {
+			/** Format: uuid */
+			id: string;
+			status: components['schemas']['MediaRequestStatus'];
+			/** Format: uuid */
+			requestedByUserId: string;
+			requestedByUsername: string;
+			qualityProfileId?: string;
+			/** Format: uuid */
+			libraryFolderId?: string;
+			/** Format: uuid */
+			mediaItemId?: string;
+			/** Format: date-time */
+			decidedAt?: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		/** @enum {string} */
+		MediaRequestStatus: 'pending' | 'approved';
+		MediaRequestCreateRequest: {
+			title: string;
+			type: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+			externalProvider?: string;
+			externalId?: string;
+			overview?: string;
+			posterPath?: string;
+		};
+		MediaRequestApproveRequest: {
+			qualityProfileId: string;
+			/** Format: uuid */
+			libraryFolderId: string;
+		};
+		MediaRequestApproveResponse: {
+			request: components['schemas']['MediaRequest'];
+			mediaItem: components['schemas']['MediaItem'];
 		};
 		ReleaseSearchResponse: {
 			releases: components['schemas']['ReleaseCandidate'][];
@@ -525,6 +995,123 @@ export interface components {
 		};
 		/** @enum {string} */
 		IndexerType: 'torznab' | 'newznab' | 'rss';
+		MetadataProviderListResponse: {
+			providers: components['schemas']['MetadataProvider'][];
+		};
+		MetadataProvider: components['schemas']['MetadataProviderRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		MetadataProviderRequest: {
+			name: string;
+			type: components['schemas']['MetadataProviderType'];
+			baseUrl: string;
+			apiKey?: string;
+			pin?: string;
+			accessToken?: string;
+			enabled: boolean;
+			/** Format: int32 */
+			priority: number;
+		};
+		/** @enum {string} */
+		MetadataProviderType: 'tmdb' | 'tvdb';
+		LibraryFolderListResponse: {
+			folders: components['schemas']['LibraryFolder'][];
+		};
+		LibraryFolderCreateResponse: {
+			folder: components['schemas']['LibraryFolder'];
+			scan: components['schemas']['LibraryScan'];
+		};
+		LibraryFolder: components['schemas']['LibraryFolderRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		LibraryFolderRequest: {
+			path: string;
+		};
+		LibraryFolderOptionListResponse: {
+			currentPath: string;
+			parentPath?: string;
+			entries: components['schemas']['LibraryFolderOption'][];
+		};
+		LibraryFolderOption: {
+			name: string;
+			path: string;
+		};
+		LibraryFolderOptionCreateRequest: {
+			parentPath: string;
+			name: string;
+		};
+		/** @enum {string} */
+		LibraryMediaKind: 'movie' | 'series' | 'anime_movie' | 'anime_series' | 'unknown';
+		/** @enum {string} */
+		LibraryScanItemStatus: 'pending' | 'auto_added' | 'manually_added';
+		LibraryScan: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			folderId: string;
+			folderPath: string;
+			/** @enum {string} */
+			status: 'completed' | 'failed';
+			/** Format: int32 */
+			totalFiles: number;
+			/** Format: int32 */
+			autoMatchedCount: number;
+			/** Format: int32 */
+			manualCount: number;
+			items: components['schemas']['LibraryScanItem'][];
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			completedAt?: string;
+		};
+		LibraryScanItem: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			scanId: string;
+			path: string;
+			fileName: string;
+			detectedTitle: string;
+			/** Format: int32 */
+			detectedYear?: number;
+			detectedMediaKind: components['schemas']['LibraryMediaKind'];
+			status: components['schemas']['LibraryScanItemStatus'];
+			matchedTitle?: string;
+			/** Format: int32 */
+			matchedYear?: number;
+			matchedMediaKind?: components['schemas']['LibraryMediaKind'];
+			/** Format: uuid */
+			mediaItemId?: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		LibraryScanItemMatchRequest: {
+			mediaKind: components['schemas']['LibraryMediaKind'];
+			title: string;
+			/** Format: int32 */
+			year?: number;
+			monitored: boolean;
+			externalProvider?: string;
+			externalId?: string;
+			overview?: string;
+			posterPath?: string;
+		};
+		LibraryScanItemMatchResponse: {
+			item: components['schemas']['LibraryScanItem'];
+			mediaItem: components['schemas']['MediaItem'];
+		};
 		IntegrationTestResponse: {
 			success: boolean;
 			message: string;
@@ -580,6 +1167,15 @@ export interface components {
 		};
 		/** @description Authentication required or session invalid */
 		Unauthorized: {
+			headers: {
+				[name: string]: unknown;
+			};
+			content: {
+				'application/json': components['schemas']['ErrorResponse'];
+			};
+		};
+		/** @description The authenticated user is not allowed to perform this action */
+		Forbidden: {
 			headers: {
 				[name: string]: unknown;
 			};
@@ -741,6 +1337,104 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 		};
 	};
+	getMediaDiscover: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Discovery sections for movies and series */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaDiscoverResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	autocompleteMedia: {
+		parameters: {
+			query: {
+				query: string;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Grouped autocomplete results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaGroupedSearchResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	advancedSearchMedia: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaAdvancedSearchRequest'];
+			};
+		};
+		responses: {
+			/** @description Grouped advanced media search results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaGroupedSearchResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	getMediaMetadataDetails: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				provider: components['schemas']['MetadataProviderType'];
+				type: components['schemas']['MediaType'];
+				externalId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Provider metadata details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaMetadataDetails'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	listMediaItems: {
 		parameters: {
 			query?: never;
@@ -786,6 +1480,108 @@ export interface operations {
 			};
 			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
+		};
+	};
+	listMediaRequests: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media requests */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaRequestListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createMediaRequest: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaRequestCreateRequest'];
+			};
+		};
+		responses: {
+			/** @description Media request created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaRequest'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	getMediaRequest: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media request */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaRequest'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	approveMediaRequest: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaRequestApproveRequest'];
+			};
+		};
+		responses: {
+			/** @description Media request approved */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaRequestApproveResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	deleteMediaItem: {
@@ -1149,6 +1945,404 @@ export interface operations {
 				};
 			};
 			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listMetadataProviders: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Configured metadata providers */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataProviderListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createMetadataProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MetadataProviderRequest'];
+			};
+		};
+		responses: {
+			/** @description Metadata provider created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataProvider'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateMetadataProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MetadataProviderRequest'];
+			};
+		};
+		responses: {
+			/** @description Metadata provider updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataProvider'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteMetadataProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Metadata provider deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	testMetadataProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Metadata provider test result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IntegrationTestResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listLibraryFolderOptions: {
+		parameters: {
+			query?: {
+				path?: string;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Folder picker options */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryFolderOptionListResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createLibraryFolderOption: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LibraryFolderOptionCreateRequest'];
+			};
+		};
+		responses: {
+			/** @description Folder created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryFolderOption'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listLibraryFolders: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Configured library folders */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryFolderListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createLibraryFolder: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LibraryFolderRequest'];
+			};
+		};
+		responses: {
+			/** @description Library folder added and scan completed */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryFolderCreateResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteLibraryFolder: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Library folder removed */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	getLibraryScan: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Library scan review */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryScan'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	matchLibraryScanItem: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				itemId: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LibraryScanItemMatchRequest'];
+			};
+		};
+		responses: {
+			/** @description Discovered item matched and added to monitored media */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryScanItemMatchResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listUsers: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Local users */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UserListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	createUser: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UserCreateRequest'];
+			};
+		};
+		responses: {
+			/** @description User created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ManagedUser'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	updateUser: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UserUpdateRequest'];
+			};
+		};
+		responses: {
+			/** @description User updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ManagedUser'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteUser: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description User deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
 			404: components['responses']['NotFound'];
 		};
 	};

@@ -11,6 +11,7 @@ type Config struct {
 	AppEnv        string
 	AllowDevReset bool
 	DatabaseURL   string
+	MediaDataDir  string
 	WebDir        string
 	Version       string
 	Commit        string
@@ -25,6 +26,7 @@ func Load() Config {
 		AppEnv:        envString("APP_ENV", "development"),
 		AllowDevReset: envBool("ALLOW_DEV_RESET", false),
 		DatabaseURL:   envString("DATABASE_URL", "postgres://media_manager:media_manager@localhost:5432/media_manager?sslmode=disable"),
+		MediaDataDir:  envString("MEDIA_DATA_DIR", ".data/media"),
 		WebDir:        envString("WEB_DIR", "web/build"),
 		Version:       envString("APP_VERSION", "0.0.0-dev"),
 		Commit:        envString("APP_COMMIT", "dev"),

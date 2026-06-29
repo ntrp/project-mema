@@ -3,6 +3,7 @@ package httpapi
 import (
 	"strings"
 
+	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"media-manager/internal/storage"
@@ -14,22 +15,73 @@ func mediaItemInput(request MediaItemRequest) (storage.MediaItemInput, bool) {
 		return storage.MediaItemInput{}, false
 	}
 	return storage.MediaItemInput{
-		Type:      string(request.Type),
-		Title:     title,
-		Year:      request.Year,
-		Monitored: request.Monitored,
+		Type:             string(request.Type),
+		Title:            title,
+		Year:             request.Year,
+		Monitored:        request.Monitored,
+		ExternalProvider: optionalTrimmedString(request.ExternalProvider),
+		ExternalID:       optionalTrimmedString(request.ExternalId),
+		Overview:         optionalTrimmedString(request.Overview),
+		PosterPath:       optionalTrimmedString(request.PosterPath),
+		QualityProfileID: optionalTrimmedString(request.QualityProfileId),
+		LibraryFolderID:  optionalUUID(request.LibraryFolderId),
 	}, true
 }
 
 func mediaItemResponse(item storage.MediaItem) MediaItem {
 	return MediaItem{
-		Id:        openapi_types.UUID(item.ID),
-		Type:      MediaType(item.Type),
-		Title:     item.Title,
-		Year:      item.Year,
-		Monitored: item.Monitored,
-		CreatedAt: item.CreatedAt,
-		UpdatedAt: item.UpdatedAt,
+		Id:               openapi_types.UUID(item.ID),
+		Type:             MediaType(item.Type),
+		Title:            item.Title,
+		Year:             item.Year,
+		Monitored:        item.Monitored,
+		ExternalProvider: item.ExternalProvider,
+		ExternalId:       item.ExternalID,
+		Overview:         item.Overview,
+		PosterPath:       item.PosterPath,
+		QualityProfileId: item.QualityProfileID,
+		LibraryFolderId:  optionalOpenAPIUUID(item.LibraryFolderID),
+		CreatedAt:        item.CreatedAt,
+		UpdatedAt:        item.UpdatedAt,
+	}
+}
+
+func mediaRequestInput(request MediaRequestCreateRequest, requestedByUserID uuid.UUID) (storage.MediaRequestInput, bool) {
+	title := strings.TrimSpace(request.Title)
+	if title == "" || !request.Type.Valid() {
+		return storage.MediaRequestInput{}, false
+	}
+	return storage.MediaRequestInput{
+		RequestedByUserID: requestedByUserID,
+		Type:              string(request.Type),
+		Title:             title,
+		Year:              request.Year,
+		ExternalProvider:  optionalTrimmedString(request.ExternalProvider),
+		ExternalID:        optionalTrimmedString(request.ExternalId),
+		Overview:          optionalTrimmedString(request.Overview),
+		PosterPath:        optionalTrimmedString(request.PosterPath),
+	}, true
+}
+
+func mediaRequestResponse(request storage.MediaRequest) MediaRequest {
+	return MediaRequest{
+		Id:                  openapi_types.UUID(request.ID),
+		RequestedByUserId:   openapi_types.UUID(request.RequestedByUserID),
+		RequestedByUsername: request.RequestedByUsername,
+		Type:                MediaType(request.Type),
+		Title:               request.Title,
+		Year:                request.Year,
+		ExternalProvider:    request.ExternalProvider,
+		ExternalId:          request.ExternalID,
+		Overview:            request.Overview,
+		PosterPath:          request.PosterPath,
+		Status:              MediaRequestStatus(request.Status),
+		QualityProfileId:    request.QualityProfileID,
+		LibraryFolderId:     optionalOpenAPIUUID(request.LibraryFolderID),
+		MediaItemId:         optionalOpenAPIUUID(request.MediaItemID),
+		DecidedAt:           request.DecidedAt,
+		CreatedAt:           request.CreatedAt,
+		UpdatedAt:           request.UpdatedAt,
 	}
 }
 
@@ -76,4 +128,20 @@ func optionalString(value string) *string {
 		return nil
 	}
 	return &value
+}
+
+func optionalUUID(value *openapi_types.UUID) *uuid.UUID {
+	if value == nil {
+		return nil
+	}
+	converted := uuid.UUID(*value)
+	return &converted
+}
+
+func optionalOpenAPIUUID(value *uuid.UUID) *openapi_types.UUID {
+	if value == nil {
+		return nil
+	}
+	converted := openapi_types.UUID(*value)
+	return &converted
 }

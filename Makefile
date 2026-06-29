@@ -1,6 +1,7 @@
 GOCACHE ?= $(CURDIR)/.cache/go-build
 GOFLAGS ?=
 DATABASE_URL ?= postgres://media_manager:media_manager@localhost:5432/media_manager?sslmode=disable
+MEDIA_DATA_DIR ?= $(CURDIR)/.data/media
 
 .PHONY: api-generate api-generate-go api-generate-web build check db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate test web-install
 
@@ -33,10 +34,10 @@ dev:
 	$(MAKE) dev-api-watch & $(MAKE) dev-web & wait
 
 dev-api:
-	GOCACHE=$(GOCACHE) go run ./cmd/server
+	GOCACHE=$(GOCACHE) MEDIA_DATA_DIR=$(MEDIA_DATA_DIR) go run ./cmd/server
 
 dev-api-watch:
-	./scripts/dev-api-watch.sh
+	MEDIA_DATA_DIR=$(MEDIA_DATA_DIR) ./scripts/dev-api-watch.sh
 
 dev-watch:
 	./scripts/dev-watch.sh

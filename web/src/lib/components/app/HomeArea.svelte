@@ -1,17 +1,19 @@
 <script lang="ts">
-	import type { PathnameWithSearchOrHash } from '$app/types';
-
 	import ActivityList from './ActivityList.svelte';
 	import MediaDetail from './MediaDetail.svelte';
 	import MediaItemList from './MediaItemList.svelte';
+	import MediaRequestArea from './MediaRequestArea.svelte';
 	import MediaSearchPanel from './MediaSearchPanel.svelte';
-	import SidebarMenu from './SidebarMenu.svelte';
 	import type {
 		DownloadActivity,
 		HomeSection,
+		LibraryFolder,
+		MediaDiscoverSection,
 		MediaItem,
-		MediaSearchRequest,
+		MediaRequest,
+		MediaRequestApproveRequest,
 		MediaSearchResult,
+		QualityProfileOption,
 		ReleaseCandidate,
 		ReleaseSearchResults
 	} from '$lib/settings/types';
@@ -19,19 +21,24 @@
 	interface Props {
 		activeSection: HomeSection;
 		selectedMediaItemId?: string;
+		selectedRequestId?: string;
 		mediaItems: MediaItem[];
-		mediaSearchResults: MediaSearchResult[];
+		mediaRequests: MediaRequest[];
+		discoverSections: MediaDiscoverSection[];
+		libraryFolders: LibraryFolder[];
+		qualityProfiles: QualityProfileOption[];
 		releaseResults: ReleaseSearchResults;
 		activities: DownloadActivity[];
-		searchingMedia: boolean;
+		loadingDiscover: boolean;
 		addingKey?: string;
+		approvingRequestId?: string;
 		searchingItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
+		canManage: boolean;
 		loadingActivity: boolean;
-		onSelect: (_section: HomeSection) => void;
-		onSearchMedia: (_request: MediaSearchRequest) => void;
 		onAddMedia: (_candidate: MediaSearchResult) => void;
+		onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
 		onFindReleases: (_item: MediaItem) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
@@ -41,31 +48,29 @@
 	let {
 		activeSection,
 		selectedMediaItemId,
+		selectedRequestId,
 		mediaItems,
-		mediaSearchResults,
+		mediaRequests,
+		discoverSections,
+		libraryFolders,
+		qualityProfiles,
 		releaseResults,
 		activities,
-		searchingMedia,
+		loadingDiscover,
 		addingKey,
+		approvingRequestId,
 		searchingItemId,
 		grabbingKey,
 		deletingMediaItemId,
+		canManage,
 		loadingActivity,
-		onSelect,
-		onSearchMedia,
 		onAddMedia,
+		onApproveMediaRequest,
 		onFindReleases,
 		onDeleteMedia,
 		onGrabRelease,
 		onRefreshActivity
 	}: Props = $props();
-
-	const homeItems = [
-		{ value: 'explore', label: 'Explore', meta: 'Digest', href: '/explore' },
-		{ value: 'movies', label: 'Movies', meta: 'Anime included', href: '/movies' },
-		{ value: 'series', label: 'Series', meta: 'Anime included', href: '/series' },
-		{ value: 'activity', label: 'Activity', meta: 'Queue', href: '/activity' }
-	] satisfies { value: HomeSection; label: string; meta: string; href: PathnameWithSearchOrHash }[];
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
 	const series = $derived(mediaItems.filter((item) => item.type === 'series'));
@@ -80,60 +85,62 @@
 	);
 </script>
 
-<div class="workspace-layout">
-	<SidebarMenu
-		title="Library"
-		items={homeItems}
-		active={activeSection}
-		onSelect={(section) => onSelect(section as HomeSection)}
-	/>
-
-	<section class="workspace-main" aria-labelledby="home-title">
-		{#if activeSection === 'explore'}
-			<MediaSearchPanel
-				results={mediaSearchResults}
-				searching={searchingMedia}
-				{addingKey}
-				mediaItemsCount={mediaItems.length}
-				onSearch={onSearchMedia}
-				onAdd={onAddMedia}
+<section class="workspace-main" aria-labelledby="home-title">
+	{#if activeSection === 'discover'}
+		<MediaSearchPanel
+			sections={discoverSections}
+			loading={loadingDiscover}
+			{addingKey}
+			onAdd={onAddMedia}
+			actionLabel={canManage ? 'Add' : 'Request'}
+		/>
+	{:else if activeSection === 'requests'}
+		<MediaRequestArea
+			requests={mediaRequests}
+			{selectedRequestId}
+			{libraryFolders}
+			{qualityProfiles}
+			{canManage}
+			{approvingRequestId}
+			onApprove={onApproveMediaRequest}
+		/>
+	{:else if activeSection === 'movies'}
+		{#if selectedMediaItemId}
+			<MediaDetail
+				mediaType="movie"
+				item={selectedMediaItem}
+				requestedItemId={selectedMediaItemId}
+				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
+				{searchingItemId}
+				{grabbingKey}
+				{deletingMediaItemId}
+				{canManage}
+				{onFindReleases}
+				{onDeleteMedia}
+				{onGrabRelease}
 			/>
-		{:else if activeSection === 'movies'}
-			{#if selectedMediaItemId}
-				<MediaDetail
-					mediaType="movie"
-					item={selectedMediaItem}
-					requestedItemId={selectedMediaItemId}
-					releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
-					{searchingItemId}
-					{grabbingKey}
-					{deletingMediaItemId}
-					{onFindReleases}
-					{onDeleteMedia}
-					{onGrabRelease}
-				/>
-			{:else}
-				<MediaItemList mediaType="movie" items={movies} />
-			{/if}
-		{:else if activeSection === 'series'}
-			{#if selectedMediaItemId}
-				<MediaDetail
-					mediaType="series"
-					item={selectedMediaItem}
-					requestedItemId={selectedMediaItemId}
-					releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
-					{searchingItemId}
-					{grabbingKey}
-					{deletingMediaItemId}
-					{onFindReleases}
-					{onDeleteMedia}
-					{onGrabRelease}
-				/>
-			{:else}
-				<MediaItemList mediaType="series" items={series} />
-			{/if}
 		{:else}
-			<ActivityList {activities} loading={loadingActivity} onRefresh={onRefreshActivity} />
+			<MediaItemList mediaType="movie" items={movies} />
 		{/if}
-	</section>
-</div>
+	{:else if activeSection === 'series'}
+		{#if selectedMediaItemId}
+			<MediaDetail
+				mediaType="series"
+				item={selectedMediaItem}
+				requestedItemId={selectedMediaItemId}
+				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
+				{searchingItemId}
+				{grabbingKey}
+				{deletingMediaItemId}
+				{canManage}
+				{onFindReleases}
+				{onDeleteMedia}
+				{onGrabRelease}
+			/>
+		{:else}
+			<MediaItemList mediaType="series" items={series} />
+		{/if}
+	{:else}
+		<ActivityList {activities} loading={loadingActivity} onRefresh={onRefreshActivity} />
+	{/if}
+</section>

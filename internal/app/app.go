@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -16,6 +17,7 @@ import (
 	"media-manager/internal/httpapi"
 	"media-manager/internal/indexers"
 	"media-manager/internal/jobs"
+	"media-manager/internal/metadata"
 	"media-manager/internal/storage"
 	"media-manager/internal/web"
 )
@@ -25,8 +27,11 @@ func Run(ctx context.Context, args []string) error {
 	if len(args) > 0 && args[0] == "reset-dev" {
 		return resetDevelopment(ctx, cfg)
 	}
+	if err := ensureMediaDataDir(cfg.MediaDataDir); err != nil {
+		return err
+	}
 
-	pool, err := openDatabase(ctx, cfg.DatabaseURL)
+	pool, err := openDatabase(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -60,6 +65,13 @@ func Run(ctx context.Context, args []string) error {
 	}
 }
 
+func ensureMediaDataDir(path string) error {
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		return fmt.Errorf("media data directory setup failed: %w", err)
+	}
+	return nil
+}
+
 func resetDevelopment(ctx context.Context, cfg config.Config) error {
 	if err := storage.ResetDevelopment(ctx, cfg); err != nil {
 		return fmt.Errorf("development reset failed: %w", err)
@@ -68,8 +80,8 @@ func resetDevelopment(ctx context.Context, cfg config.Config) error {
 	return nil
 }
 
-func openDatabase(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
+func openDatabase(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("database connection setup failed: %w", err)
 	}
@@ -81,6 +93,14 @@ func openDatabase(ctx context.Context, databaseURL string) (*pgxpool.Pool, error
 		pool.Close()
 		return nil, fmt.Errorf("database schema setup failed: %w", err)
 	}
+	if err := storage.NewSettingsStore(pool).EnsureDefaultMetadataProviders(ctx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("default metadata provider setup failed: %w", err)
+	}
+	if err := storage.NewSettingsStore(pool).EnsureDefaultAdminUser(ctx, cfg.AdminUsername, cfg.AdminPassword); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("default admin user setup failed: %w", err)
+	}
 	return pool, nil
 }
 
@@ -90,11 +110,12 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	downloadClientService := downloadclients.NewService(httpClient)
 	indexerService := indexers.NewService(httpClient)
+	metadataService := metadata.NewService(httpClient, settingsStore)
 	jobClient, err := jobs.NewClient(pool, settingsStore, indexerService, downloadClientService)
 	if err != nil {
 		return nil, nil, fmt.Errorf("job client setup failed: %w", err)
 	}
-	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, jobClient), apiRouter)
+	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, metadataService, jobClient), apiRouter)
 
 	router := chi.NewRouter()
 	router.Mount("/api", apiRouter)

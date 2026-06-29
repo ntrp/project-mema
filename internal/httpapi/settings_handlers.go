@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Server) ListDownloadClients(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -25,7 +25,7 @@ func (s *Server) ListDownloadClients(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) CreateDownloadClient(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -47,7 +47,7 @@ func (s *Server) CreateDownloadClient(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) UpdateDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -69,7 +69,7 @@ func (s *Server) UpdateDownloadClient(w http.ResponseWriter, r *http.Request, id
 }
 
 func (s *Server) DeleteDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -81,7 +81,7 @@ func (s *Server) DeleteDownloadClient(w http.ResponseWriter, r *http.Request, id
 }
 
 func (s *Server) TestDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -96,7 +96,7 @@ func (s *Server) TestDownloadClient(w http.ResponseWriter, r *http.Request, id R
 }
 
 func (s *Server) ListIndexers(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -114,7 +114,7 @@ func (s *Server) ListIndexers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) CreateIndexer(w http.ResponseWriter, r *http.Request) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -136,7 +136,7 @@ func (s *Server) CreateIndexer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -158,7 +158,7 @@ func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id Resour
 }
 
 func (s *Server) DeleteIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -170,7 +170,7 @@ func (s *Server) DeleteIndexer(w http.ResponseWriter, r *http.Request, id Resour
 }
 
 func (s *Server) TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireSession(w, r); !ok {
+	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
 
@@ -182,4 +182,93 @@ func (s *Server) TestIndexer(w http.ResponseWriter, r *http.Request, id Resource
 
 	result := s.indexers.Test(r.Context(), indexerConfig(indexer))
 	writeJSON(w, http.StatusOK, indexerTestResponse(s.now(), result))
+}
+
+func (s *Server) ListMetadataProviders(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	providers, err := s.settings.ListMetadataProviders(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list metadata providers")
+		return
+	}
+
+	response := MetadataProviderListResponse{Providers: make([]MetadataProvider, 0, len(providers))}
+	for _, provider := range providers {
+		response.Providers = append(response.Providers, metadataProviderResponse(provider))
+	}
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) CreateMetadataProvider(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body MetadataProviderRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := metadataProviderInput(w, body)
+	if !ok {
+		return
+	}
+
+	provider, err := s.settings.CreateMetadataProvider(r.Context(), input)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_create_failed", "Could not create metadata provider")
+		return
+	}
+	writeJSON(w, http.StatusCreated, metadataProviderResponse(provider))
+}
+
+func (s *Server) UpdateMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body MetadataProviderRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := metadataProviderInput(w, body)
+	if !ok {
+		return
+	}
+
+	provider, err := s.settings.UpdateMetadataProvider(r.Context(), uuid.UUID(id), input)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update metadata provider")
+		return
+	}
+	writeJSON(w, http.StatusOK, metadataProviderResponse(provider))
+}
+
+func (s *Server) DeleteMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	if err := s.settings.DeleteMetadataProvider(r.Context(), uuid.UUID(id)); err != nil {
+		writeSettingsError(w, err, "Could not delete metadata provider")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	provider, err := s.settings.GetMetadataProvider(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find metadata provider")
+		return
+	}
+
+	result := s.metadata.Test(r.Context(), metadataProviderConfig(provider))
+	writeJSON(w, http.StatusOK, metadataProviderTestResponse(s.now(), result))
 }

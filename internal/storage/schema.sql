@@ -9,6 +9,16 @@ create table if not exists app.users (
     updated_at timestamptz not null default now()
 );
 
+do $$
+begin
+    alter table app.users drop constraint if exists users_role_check;
+    alter table app.users
+        add constraint users_role_check check (role in ('admin', 'user'));
+end $$;
+
+create unique index if not exists idx_users_username_lower
+    on app.users (lower(username));
+
 create table if not exists app.sessions (
     id text primary key,
     user_id uuid not null references app.users(id) on delete cascade,
@@ -54,14 +64,152 @@ create table if not exists app.media_items (
     id uuid primary key,
     media_type text not null check (media_type in ('movie', 'series')),
     title text not null,
-    year integer,
+    year integer not null default 0,
     monitored boolean not null default true,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
+alter table app.media_items
+    add column if not exists external_provider text;
+
+alter table app.media_items
+    add column if not exists external_id text;
+
+alter table app.media_items
+    add column if not exists overview text;
+
+alter table app.media_items
+    add column if not exists poster_path text;
+
+alter table app.media_items
+    add column if not exists quality_profile_id text;
+
+alter table app.media_items
+    alter column year drop not null;
+
 create index if not exists idx_media_items_type_title
     on app.media_items (media_type, title);
+
+create table if not exists app.metadata_providers (
+    id uuid primary key,
+    name text not null,
+    type text not null check (type in ('tmdb', 'tvdb')),
+    base_url text not null,
+    api_key text,
+    pin text,
+    access_token text,
+    session_token text,
+    session_token_expires_at timestamptz,
+    enabled boolean not null default true,
+    priority integer not null default 100 check (priority >= 0 and priority <= 1000),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_metadata_providers_priority
+    on app.metadata_providers (priority, name);
+
+create table if not exists app.metadata_search_cache (
+    provider_id uuid not null references app.metadata_providers(id) on delete cascade,
+    media_type text not null check (media_type in ('movie', 'series')),
+    query text not null,
+    year integer not null default 0,
+    results jsonb not null,
+    expires_at timestamptz not null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    primary key (provider_id, media_type, query, year)
+);
+
+alter table app.metadata_search_cache
+    alter column year set default 0;
+
+update app.metadata_search_cache
+set year = 0
+where year is null;
+
+alter table app.metadata_search_cache
+    alter column year set not null;
+
+create index if not exists idx_metadata_search_cache_expires
+    on app.metadata_search_cache (expires_at);
+
+create table if not exists app.library_folders (
+    id uuid primary key,
+    path text not null unique,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+alter table app.media_items
+    add column if not exists library_folder_id uuid references app.library_folders(id) on delete set null;
+
+create table if not exists app.media_requests (
+    id uuid primary key,
+    requested_by_user_id uuid not null references app.users(id) on delete cascade,
+    media_type text not null check (media_type in ('movie', 'series')),
+    title text not null,
+    year integer,
+    external_provider text,
+    external_id text,
+    overview text,
+    poster_path text,
+    status text not null default 'pending',
+    quality_profile_id text,
+    library_folder_id uuid references app.library_folders(id) on delete set null,
+    media_item_id uuid references app.media_items(id) on delete set null,
+    decided_at timestamptz,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+do $$
+begin
+    alter table app.media_requests drop constraint if exists media_requests_status_check;
+    alter table app.media_requests
+        add constraint media_requests_status_check check (status in ('pending', 'approved'));
+end $$;
+
+create index if not exists idx_media_requests_status_created
+    on app.media_requests (status, created_at desc);
+
+create index if not exists idx_media_requests_requested_by
+    on app.media_requests (requested_by_user_id, created_at desc);
+
+create table if not exists app.library_scans (
+    id uuid primary key,
+    library_folder_id uuid not null references app.library_folders(id) on delete cascade,
+    status text not null check (status in ('completed', 'failed')),
+    total_files integer not null default 0 check (total_files >= 0),
+    auto_matched_count integer not null default 0 check (auto_matched_count >= 0),
+    manual_count integer not null default 0 check (manual_count >= 0),
+    created_at timestamptz not null default now(),
+    completed_at timestamptz
+);
+
+create index if not exists idx_library_scans_folder_created
+    on app.library_scans (library_folder_id, created_at desc);
+
+create table if not exists app.library_scan_items (
+    id uuid primary key,
+    scan_id uuid not null references app.library_scans(id) on delete cascade,
+    path text not null,
+    file_name text not null,
+    detected_title text not null,
+    detected_year integer,
+    detected_media_kind text not null check (detected_media_kind in ('movie', 'series', 'anime_movie', 'anime_series', 'unknown')),
+    status text not null check (status in ('pending', 'auto_added', 'manually_added')),
+    matched_title text,
+    matched_year integer,
+    matched_media_kind text check (matched_media_kind in ('movie', 'series', 'anime_movie', 'anime_series', 'unknown')),
+    media_item_id uuid references app.media_items(id) on delete set null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_library_scan_items_scan_status
+    on app.library_scan_items (scan_id, status, path);
 
 create table if not exists app.download_activity (
     id uuid primary key,

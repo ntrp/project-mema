@@ -15,6 +15,7 @@
 		searchingItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
+		canManage: boolean;
 		onFindReleases: (_item: MediaItem) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
@@ -28,6 +29,7 @@
 		searchingItemId,
 		grabbingKey,
 		deletingMediaItemId,
+		canManage,
 		onFindReleases,
 		onDeleteMedia,
 		onGrabRelease
@@ -69,23 +71,25 @@
 					<span>{item.type}</span>
 					<span>{item.monitored ? 'Monitored' : 'Paused'}</span>
 				</div>
-				<div class="detail-actions">
-					<button
-						type="button"
-						disabled={searchingItemId === item.id}
-						onclick={() => onFindReleases(item)}
-					>
-						{searchingItemId === item.id ? 'Queued' : 'Find releases'}
-					</button>
-					<button
-						type="button"
-						class="danger"
-						disabled={deletingMediaItemId === item.id}
-						onclick={() => onDeleteMedia(item)}
-					>
-						{deletingMediaItemId === item.id ? 'Removing' : 'Remove'}
-					</button>
-				</div>
+				{#if canManage}
+					<div class="detail-actions">
+						<button
+							type="button"
+							disabled={searchingItemId === item.id}
+							onclick={() => onFindReleases(item)}
+						>
+							{searchingItemId === item.id ? 'Queued' : 'Find releases'}
+						</button>
+						<button
+							type="button"
+							class="danger"
+							disabled={deletingMediaItemId === item.id}
+							onclick={() => onDeleteMedia(item)}
+						>
+							{deletingMediaItemId === item.id ? 'Removing' : 'Remove'}
+						</button>
+					</div>
+				{/if}
 			</div>
 		</section>
 
@@ -140,13 +144,15 @@
 										{release.seeders !== undefined ? ` · ${release.seeders} seeders` : ''}
 									</span>
 								</div>
-								<button
-									type="button"
-									disabled={grabbingKey === releaseKey(item, release)}
-									onclick={() => onGrabRelease(item, release)}
-								>
-									{grabbingKey === releaseKey(item, release) ? 'Queueing' : 'Grab'}
-								</button>
+								{#if canManage}
+									<button
+										type="button"
+										disabled={grabbingKey === releaseKey(item, release)}
+										onclick={() => onGrabRelease(item, release)}
+									>
+										{grabbingKey === releaseKey(item, release) ? 'Queueing' : 'Grab'}
+									</button>
+								{/if}
 							</div>
 						{:else}
 							<p class="empty">No release candidates stored yet</p>

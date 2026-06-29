@@ -1,98 +1,110 @@
 <script lang="ts">
-	import type { AppView } from '$lib/settings/types';
+	import { resolve } from '$app/paths';
+	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
-		activeView: AppView;
 		searchQuery: string;
-		onHome: () => void;
-		onSettings: () => void;
+		groups: MediaSearchGroup[];
+		loading: boolean;
+		onSearch: (_query: string) => void | Promise<void>;
+		onSelect: (_result: MediaSearchResult) => void;
 		onProfile: () => void;
 		onLogout: () => void | Promise<void>;
 	}
 
 	let {
-		activeView,
 		searchQuery = $bindable(),
-		onHome,
-		onSettings,
+		groups,
+		loading,
+		onSearch,
+		onSelect,
 		onProfile,
 		onLogout
 	}: Props = $props();
 	let userMenuOpen = $state(false);
 	let searchOpen = $state(false);
 
-	const suggestions = [
-		"Frieren: Beyond Journey's End",
-		'Dune: Part Two',
-		'The Apothecary Diaries',
-		'The Last of Us',
-		'Cyberpunk: Edgerunners',
-		'Foundation',
-		'Chainsaw Man'
-	];
-	const filteredSuggestions = $derived(
-		searchQuery.trim()
-			? suggestions
-					.filter((item) => item.toLowerCase().includes(searchQuery.trim().toLowerCase()))
-					.slice(0, 5)
-			: suggestions.slice(0, 4)
-	);
-	const showSuggestions = $derived(searchOpen && filteredSuggestions.length > 0);
+	const trimmedQuery = $derived(searchQuery.trim());
+	const resultCount = $derived(groups.reduce((count, group) => count + group.results.length, 0));
+	const showSuggestions = $derived(searchOpen && trimmedQuery.length >= 2);
 
-	function selectSuggestion(value: string) {
-		searchQuery = value;
+	$effect(() => {
+		const query = trimmedQuery;
+		if (query.length < 2) {
+			return;
+		}
+		const timeout = window.setTimeout(() => {
+			void onSearch(query);
+		}, 300);
+		return () => window.clearTimeout(timeout);
+	});
+
+	function selectResult(result: MediaSearchResult) {
+		searchQuery = result.title;
 		searchOpen = false;
+		onSelect(result);
+	}
+
+	function resultKey(result: MediaSearchResult) {
+		return `${result.id ?? ''}:${result.type}:${result.externalProvider ?? ''}:${result.externalId ?? ''}:${result.title}:${result.year ?? ''}`;
 	}
 </script>
 
 <header class="app-nav">
-	<button type="button" class="brand-button" aria-label="Open dashboard" onclick={onHome}>
-		<span class="brand-mark" aria-hidden="true">M</span>
-		<span class="brand-name">mema</span>
-	</button>
-
 	<div class="global-search">
 		<label for="global-search">Search</label>
 		<input
 			id="global-search"
 			bind:value={searchQuery}
-			placeholder="Search movies, series, anime, music"
+			placeholder="Search Movies & TV"
 			autocomplete="off"
 			onfocus={() => (searchOpen = true)}
 			onblur={() => {
 				window.setTimeout(() => {
 					searchOpen = false;
-				}, 100);
+				}, 120);
 			}}
 		/>
 		{#if showSuggestions}
 			<div class="search-suggestions" role="listbox" aria-label="Search suggestions">
-				{#each filteredSuggestions as suggestion (suggestion)}
-					<button
-						type="button"
-						role="option"
-						aria-selected={searchQuery === suggestion}
-						onpointerdown={(event) => event.preventDefault()}
-						onclick={() => selectSuggestion(suggestion)}
-					>
-						{suggestion}
-					</button>
-				{/each}
+				{#if loading}
+					<div class="search-status">Searching</div>
+				{:else if resultCount > 0}
+					{#each groups as group (`${group.sourceType}:${group.sourceName}`)}
+						{#if group.results.length > 0}
+							<div class="search-group">
+								<div class="search-group-title">{group.sourceName}</div>
+								{#each group.results as result (resultKey(result))}
+									<button
+										type="button"
+										role="option"
+										aria-selected={searchQuery === result.title}
+										onpointerdown={(event) => event.preventDefault()}
+										onclick={() => selectResult(result)}
+									>
+										<span>{result.title}</span>
+										<small>{result.type}{result.year ? ` · ${result.year}` : ''}</small>
+									</button>
+								{/each}
+							</div>
+						{/if}
+					{/each}
+				{:else}
+					<div class="search-status">No matches</div>
+				{/if}
+				<a
+					class="advanced-search-link"
+					href={trimmedQuery
+						? resolve(`/search/advanced?q=${encodeURIComponent(trimmedQuery)}`)
+						: resolve('/search/advanced')}
+				>
+					Advanced search
+				</a>
 			</div>
 		{/if}
 	</div>
 
 	<nav class="nav-actions" aria-label="Application actions">
-		<button
-			type="button"
-			class:active-icon={activeView === 'settings'}
-			class="icon-button"
-			aria-label="Settings"
-			title="Settings"
-			onclick={onSettings}
-		>
-			<span aria-hidden="true">⚙</span>
-		</button>
 		<div class="user-menu">
 			<button
 				type="button"
@@ -103,7 +115,7 @@
 				title="User"
 				onclick={() => (userMenuOpen = !userMenuOpen)}
 			>
-				<span aria-hidden="true">👤</span>
+				<span aria-hidden="true">A</span>
 			</button>
 			{#if userMenuOpen}
 				<div class="user-dropdown" role="menu">

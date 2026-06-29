@@ -1,17 +1,42 @@
 import { client } from '$lib/api/client';
 
-import { normalizeDownloadClientForm, normalizeIndexerForm } from './forms';
+import {
+	normalizeDownloadClientForm,
+	normalizeIndexerForm,
+	normalizeLibraryFolderForm,
+	normalizeMetadataProviderForm,
+	normalizeUserCreateForm,
+	normalizeUserUpdateForm
+} from './forms';
 import type {
 	DownloadClientForm,
 	IndexerForm,
+	LibraryFolderForm,
+	LibraryFolderOption,
+	LibraryFolderOptionListResponse,
+	LibraryMediaKind,
+	LibraryScanItemMatchRequest,
+	MediaAdvancedSearchRequest,
 	MediaItemRequest,
+	MediaRequestApproveRequest,
+	MediaRequestCreateRequest,
 	MediaSearchRequest,
+	MediaType,
+	MetadataProviderForm,
+	MetadataProviderType,
 	ReleaseCandidate,
-	SettingsData
+	SessionResponse,
+	SettingsData,
+	UserForm
 } from './types';
 
-export async function currentSessionAuthenticated() {
+export async function currentSession(): Promise<SessionResponse | undefined> {
 	const { data } = await client.GET('/auth/session');
+	return data;
+}
+
+export async function currentSessionAuthenticated() {
+	const data = await currentSession();
 	return Boolean(data?.authenticated);
 }
 
@@ -23,6 +48,7 @@ export async function login(username: string, password: string) {
 	if (error || !data?.authenticated) {
 		throw new Error(error?.message ?? 'Login failed');
 	}
+	return data;
 }
 
 export async function logout() {
@@ -34,10 +60,14 @@ export async function logout() {
 }
 
 export async function loadSettings(): Promise<SettingsData> {
-	const [clientResult, indexerResult] = await Promise.all([
-		client.GET('/settings/download-clients'),
-		client.GET('/settings/indexers')
-	]);
+	const [clientResult, indexerResult, metadataProviderResult, libraryFolderResult, userResult] =
+		await Promise.all([
+			client.GET('/settings/download-clients'),
+			client.GET('/settings/indexers'),
+			client.GET('/settings/metadata-providers'),
+			client.GET('/settings/library/folders'),
+			client.GET('/settings/users')
+		]);
 
 	if (clientResult.error) {
 		throw new Error(clientResult.error.message);
@@ -45,10 +75,22 @@ export async function loadSettings(): Promise<SettingsData> {
 	if (indexerResult.error) {
 		throw new Error(indexerResult.error.message);
 	}
+	if (metadataProviderResult.error) {
+		throw new Error(metadataProviderResult.error.message);
+	}
+	if (libraryFolderResult.error) {
+		throw new Error(libraryFolderResult.error.message);
+	}
+	if (userResult.error) {
+		throw new Error(userResult.error.message);
+	}
 
 	return {
 		downloadClients: clientResult.data?.clients ?? [],
-		indexers: indexerResult.data?.indexers ?? []
+		indexers: indexerResult.data?.indexers ?? [],
+		metadataProviders: metadataProviderResult.data?.providers ?? [],
+		libraryFolders: libraryFolderResult.data?.folders ?? [],
+		users: userResult.data?.users ?? []
 	};
 }
 
@@ -59,6 +101,53 @@ export async function searchMedia(request: MediaSearchRequest) {
 		throw new Error(error.message);
 	}
 	return data?.results ?? [];
+}
+
+export async function loadMediaDiscoverSections() {
+	const { data, error } = await client.GET('/media/discover');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.sections ?? [];
+}
+
+export async function autocompleteMedia(query: string) {
+	const { data, error } = await client.GET('/media/autocomplete', {
+		params: { query: { query } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.groups ?? [];
+}
+
+export async function advancedSearchMedia(request: MediaAdvancedSearchRequest) {
+	const { data, error } = await client.POST('/media/advanced-search', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.groups ?? [];
+}
+
+export async function getMediaMetadataDetails(
+	provider: MetadataProviderType,
+	type: MediaType,
+	externalId: string
+) {
+	const { data, error } = await client.GET('/media/metadata/{provider}/{type}/{externalId}', {
+		params: { path: { provider, type, externalId } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media details were not returned');
+	}
+	return data;
 }
 
 export async function listMediaItems() {
@@ -78,6 +167,56 @@ export async function createMediaItem(request: MediaItemRequest) {
 	}
 	if (!data) {
 		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
+export async function listMediaRequests() {
+	const { data, error } = await client.GET('/media/requests');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.requests ?? [];
+}
+
+export async function createMediaRequest(request: MediaRequestCreateRequest) {
+	const { data, error } = await client.POST('/media/requests', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media request was not returned');
+	}
+	return data;
+}
+
+export async function getMediaRequest(id: string) {
+	const { data, error } = await client.GET('/media/requests/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media request was not returned');
+	}
+	return data;
+}
+
+export async function approveMediaRequest(id: string, request: MediaRequestApproveRequest) {
+	const { data, error } = await client.POST('/media/requests/{id}/approve', {
+		params: { path: { id } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media request approval was not returned');
 	}
 	return data;
 }
@@ -202,6 +341,49 @@ export async function testIndexer(id: string) {
 	return data;
 }
 
+export async function saveMetadataProvider(form: MetadataProviderForm) {
+	const body = normalizeMetadataProviderForm(form);
+	const result = form.id
+		? await client.PUT('/settings/metadata-providers/{id}', {
+				params: { path: { id: form.id } },
+				body
+			})
+		: await client.POST('/settings/metadata-providers', { body });
+
+	if (result.error) {
+		throw new Error(result.error.message);
+	}
+}
+
+export async function saveUser(form: UserForm) {
+	const result = form.id
+		? await client.PUT('/settings/users/{id}', {
+				params: { path: { id: form.id } },
+				body: normalizeUserUpdateForm(form)
+			})
+		: await client.POST('/settings/users', {
+				body: normalizeUserCreateForm(form)
+			});
+
+	if (result.error) {
+		throw new Error(result.error.message);
+	}
+}
+
+export async function testMetadataProvider(id: string) {
+	const { data, error } = await client.POST('/settings/metadata-providers/{id}/test', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Metadata provider test did not return a result');
+	}
+	return data;
+}
+
 export async function deleteDownloadClient(id: string) {
 	const { error } = await client.DELETE('/settings/download-clients/{id}', {
 		params: { path: { id } }
@@ -220,4 +402,118 @@ export async function deleteIndexer(id: string) {
 	if (error) {
 		throw new Error(error.message);
 	}
+}
+
+export async function deleteMetadataProvider(id: string) {
+	const { error } = await client.DELETE('/settings/metadata-providers/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function deleteUser(id: string) {
+	const { error } = await client.DELETE('/settings/users/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function saveLibraryFolder(form: LibraryFolderForm) {
+	const { data, error } = await client.POST('/settings/library/folders', {
+		body: normalizeLibraryFolderForm(form)
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Library scan was not returned');
+	}
+	return data;
+}
+
+export async function listLibraryFolderOptions(
+	path?: string
+): Promise<LibraryFolderOptionListResponse> {
+	const { data, error } = await client.GET('/settings/library/folder-options', {
+		params: { query: { path } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Folder options were not returned');
+	}
+	return data;
+}
+
+export async function createLibraryFolderOption(
+	parentPath: string,
+	name: string
+): Promise<LibraryFolderOption> {
+	const { data, error } = await client.POST('/settings/library/folder-options', {
+		body: { parentPath, name }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Folder was not returned');
+	}
+	return data;
+}
+
+export async function deleteLibraryFolder(id: string) {
+	const { error } = await client.DELETE('/settings/library/folders/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function getLibraryScan(id: string) {
+	const { data, error } = await client.GET('/settings/library/scans/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Library scan was not returned');
+	}
+	return data;
+}
+
+export async function matchLibraryScanItem(
+	scanId: string,
+	itemId: string,
+	request: LibraryScanItemMatchRequest
+) {
+	const { data, error } = await client.POST('/settings/library/scans/{id}/items/{itemId}/match', {
+		params: { path: { id: scanId, itemId } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Library match was not returned');
+	}
+	return data;
+}
+
+export function mediaTypeForLibraryKind(kind: LibraryMediaKind) {
+	return kind === 'series' || kind === 'anime_series' ? 'series' : 'movie';
 }

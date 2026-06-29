@@ -5,6 +5,7 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -20,19 +21,19 @@ const (
 
 // Defines values for DownloadActivityStatus.
 const (
-	Failed  DownloadActivityStatus = "failed"
-	Grabbed DownloadActivityStatus = "grabbed"
-	Queued  DownloadActivityStatus = "queued"
+	DownloadActivityStatusFailed  DownloadActivityStatus = "failed"
+	DownloadActivityStatusGrabbed DownloadActivityStatus = "grabbed"
+	DownloadActivityStatusQueued  DownloadActivityStatus = "queued"
 )
 
 // Valid indicates whether the value is a known member of the DownloadActivityStatus enum.
 func (e DownloadActivityStatus) Valid() bool {
 	switch e {
-	case Failed:
+	case DownloadActivityStatusFailed:
 		return true
-	case Grabbed:
+	case DownloadActivityStatusGrabbed:
 		return true
-	case Queued:
+	case DownloadActivityStatusQueued:
 		return true
 	default:
 		return false
@@ -99,18 +100,138 @@ func (e IndexerType) Valid() bool {
 	}
 }
 
+// Defines values for LibraryMediaKind.
+const (
+	LibraryMediaKindAnimeMovie  LibraryMediaKind = "anime_movie"
+	LibraryMediaKindAnimeSeries LibraryMediaKind = "anime_series"
+	LibraryMediaKindMovie       LibraryMediaKind = "movie"
+	LibraryMediaKindSeries      LibraryMediaKind = "series"
+	LibraryMediaKindUnknown     LibraryMediaKind = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the LibraryMediaKind enum.
+func (e LibraryMediaKind) Valid() bool {
+	switch e {
+	case LibraryMediaKindAnimeMovie:
+		return true
+	case LibraryMediaKindAnimeSeries:
+		return true
+	case LibraryMediaKindMovie:
+		return true
+	case LibraryMediaKindSeries:
+		return true
+	case LibraryMediaKindUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LibraryScanStatus.
+const (
+	LibraryScanStatusCompleted LibraryScanStatus = "completed"
+	LibraryScanStatusFailed    LibraryScanStatus = "failed"
+)
+
+// Valid indicates whether the value is a known member of the LibraryScanStatus enum.
+func (e LibraryScanStatus) Valid() bool {
+	switch e {
+	case LibraryScanStatusCompleted:
+		return true
+	case LibraryScanStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LibraryScanItemStatus.
+const (
+	LibraryScanItemStatusAutoAdded     LibraryScanItemStatus = "auto_added"
+	LibraryScanItemStatusManuallyAdded LibraryScanItemStatus = "manually_added"
+	LibraryScanItemStatusPending       LibraryScanItemStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the LibraryScanItemStatus enum.
+func (e LibraryScanItemStatus) Valid() bool {
+	switch e {
+	case LibraryScanItemStatusAutoAdded:
+		return true
+	case LibraryScanItemStatusManuallyAdded:
+		return true
+	case LibraryScanItemStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaRequestStatus.
+const (
+	MediaRequestStatusApproved MediaRequestStatus = "approved"
+	MediaRequestStatusPending  MediaRequestStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the MediaRequestStatus enum.
+func (e MediaRequestStatus) Valid() bool {
+	switch e {
+	case MediaRequestStatusApproved:
+		return true
+	case MediaRequestStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaSearchSourceType.
+const (
+	Library  MediaSearchSourceType = "library"
+	Provider MediaSearchSourceType = "provider"
+)
+
+// Valid indicates whether the value is a known member of the MediaSearchSourceType enum.
+func (e MediaSearchSourceType) Valid() bool {
+	switch e {
+	case Library:
+		return true
+	case Provider:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaType.
 const (
-	Movie  MediaType = "movie"
-	Series MediaType = "series"
+	MediaTypeMovie  MediaType = "movie"
+	MediaTypeSeries MediaType = "series"
 )
 
 // Valid indicates whether the value is a known member of the MediaType enum.
 func (e MediaType) Valid() bool {
 	switch e {
-	case Movie:
+	case MediaTypeMovie:
 		return true
-	case Series:
+	case MediaTypeSeries:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MetadataProviderType.
+const (
+	Tmdb MetadataProviderType = "tmdb"
+	Tvdb MetadataProviderType = "tvdb"
+)
+
+// Valid indicates whether the value is a known member of the MetadataProviderType enum.
+func (e MetadataProviderType) Valid() bool {
+	switch e {
+	case Tmdb:
+		return true
+	case Tvdb:
 		return true
 	default:
 		return false
@@ -147,12 +268,15 @@ func (e ToolName) Valid() bool {
 // Defines values for UserRole.
 const (
 	Admin UserRole = "admin"
+	User  UserRole = "user"
 )
 
 // Valid indicates whether the value is a known member of the UserRole enum.
 func (e UserRole) Valid() bool {
 	switch e {
 	case Admin:
+		return true
+	case User:
 		return true
 	default:
 		return false
@@ -298,21 +422,166 @@ type JobEnqueueResponse struct {
 	Message string `json:"message"`
 }
 
+// LibraryFolder defines model for LibraryFolder.
+type LibraryFolder struct {
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	Path      string             `json:"path"`
+	UpdatedAt time.Time          `json:"updatedAt"`
+}
+
+// LibraryFolderCreateResponse defines model for LibraryFolderCreateResponse.
+type LibraryFolderCreateResponse struct {
+	Folder LibraryFolder `json:"folder"`
+	Scan   LibraryScan   `json:"scan"`
+}
+
+// LibraryFolderListResponse defines model for LibraryFolderListResponse.
+type LibraryFolderListResponse struct {
+	Folders []LibraryFolder `json:"folders"`
+}
+
+// LibraryFolderOption defines model for LibraryFolderOption.
+type LibraryFolderOption struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
+// LibraryFolderOptionCreateRequest defines model for LibraryFolderOptionCreateRequest.
+type LibraryFolderOptionCreateRequest struct {
+	Name       string `json:"name"`
+	ParentPath string `json:"parentPath"`
+}
+
+// LibraryFolderOptionListResponse defines model for LibraryFolderOptionListResponse.
+type LibraryFolderOptionListResponse struct {
+	CurrentPath string                `json:"currentPath"`
+	Entries     []LibraryFolderOption `json:"entries"`
+	ParentPath  *string               `json:"parentPath,omitempty"`
+}
+
+// LibraryFolderRequest defines model for LibraryFolderRequest.
+type LibraryFolderRequest struct {
+	Path string `json:"path"`
+}
+
+// LibraryMediaKind defines model for LibraryMediaKind.
+type LibraryMediaKind string
+
+// LibraryScan defines model for LibraryScan.
+type LibraryScan struct {
+	AutoMatchedCount int32              `json:"autoMatchedCount"`
+	CompletedAt      *time.Time         `json:"completedAt,omitempty"`
+	CreatedAt        time.Time          `json:"createdAt"`
+	FolderId         openapi_types.UUID `json:"folderId"`
+	FolderPath       string             `json:"folderPath"`
+	Id               openapi_types.UUID `json:"id"`
+	Items            []LibraryScanItem  `json:"items"`
+	ManualCount      int32              `json:"manualCount"`
+	Status           LibraryScanStatus  `json:"status"`
+	TotalFiles       int32              `json:"totalFiles"`
+}
+
+// LibraryScanStatus defines model for LibraryScan.Status.
+type LibraryScanStatus string
+
+// LibraryScanItem defines model for LibraryScanItem.
+type LibraryScanItem struct {
+	CreatedAt         time.Time             `json:"createdAt"`
+	DetectedMediaKind LibraryMediaKind      `json:"detectedMediaKind"`
+	DetectedTitle     string                `json:"detectedTitle"`
+	DetectedYear      *int32                `json:"detectedYear,omitempty"`
+	FileName          string                `json:"fileName"`
+	Id                openapi_types.UUID    `json:"id"`
+	MatchedMediaKind  *LibraryMediaKind     `json:"matchedMediaKind,omitempty"`
+	MatchedTitle      *string               `json:"matchedTitle,omitempty"`
+	MatchedYear       *int32                `json:"matchedYear,omitempty"`
+	MediaItemId       *openapi_types.UUID   `json:"mediaItemId,omitempty"`
+	Path              string                `json:"path"`
+	ScanId            openapi_types.UUID    `json:"scanId"`
+	Status            LibraryScanItemStatus `json:"status"`
+	UpdatedAt         time.Time             `json:"updatedAt"`
+}
+
+// LibraryScanItemMatchRequest defines model for LibraryScanItemMatchRequest.
+type LibraryScanItemMatchRequest struct {
+	ExternalId       *string          `json:"externalId,omitempty"`
+	ExternalProvider *string          `json:"externalProvider,omitempty"`
+	MediaKind        LibraryMediaKind `json:"mediaKind"`
+	Monitored        bool             `json:"monitored"`
+	Overview         *string          `json:"overview,omitempty"`
+	PosterPath       *string          `json:"posterPath,omitempty"`
+	Title            string           `json:"title"`
+	Year             *int32           `json:"year,omitempty"`
+}
+
+// LibraryScanItemMatchResponse defines model for LibraryScanItemMatchResponse.
+type LibraryScanItemMatchResponse struct {
+	Item      LibraryScanItem `json:"item"`
+	MediaItem MediaItem       `json:"mediaItem"`
+}
+
+// LibraryScanItemStatus defines model for LibraryScanItemStatus.
+type LibraryScanItemStatus string
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	Password string `json:"password"`
 	Username string `json:"username"`
 }
 
-// MediaItem defines model for MediaItem.
-type MediaItem struct {
+// ManagedUser defines model for ManagedUser.
+type ManagedUser struct {
 	CreatedAt time.Time          `json:"createdAt"`
 	Id        openapi_types.UUID `json:"id"`
-	Monitored bool               `json:"monitored"`
-	Title     string             `json:"title"`
-	Type      MediaType          `json:"type"`
+	Role      UserRole           `json:"role"`
 	UpdatedAt time.Time          `json:"updatedAt"`
-	Year      *int32             `json:"year,omitempty"`
+	Username  string             `json:"username"`
+}
+
+// MediaAdvancedSearchRequest defines model for MediaAdvancedSearchRequest.
+type MediaAdvancedSearchRequest struct {
+	Limit       *int32                `json:"limit,omitempty"`
+	ProviderIds *[]openapi_types.UUID `json:"providerIds,omitempty"`
+	Query       *string               `json:"query,omitempty"`
+	Type        *MediaType            `json:"type,omitempty"`
+	Year        *int32                `json:"year,omitempty"`
+}
+
+// MediaDiscoverResponse defines model for MediaDiscoverResponse.
+type MediaDiscoverResponse struct {
+	Sections []MediaDiscoverSection `json:"sections"`
+}
+
+// MediaDiscoverSection defines model for MediaDiscoverSection.
+type MediaDiscoverSection struct {
+	Id           string              `json:"id"`
+	MediaType    MediaType           `json:"mediaType"`
+	ProviderName string              `json:"providerName"`
+	Results      []MediaSearchResult `json:"results"`
+	Title        string              `json:"title"`
+}
+
+// MediaGroupedSearchResponse defines model for MediaGroupedSearchResponse.
+type MediaGroupedSearchResponse struct {
+	Groups []MediaSearchGroup `json:"groups"`
+}
+
+// MediaItem defines model for MediaItem.
+type MediaItem struct {
+	CreatedAt        time.Time           `json:"createdAt"`
+	ExternalId       *string             `json:"externalId,omitempty"`
+	ExternalProvider *string             `json:"externalProvider,omitempty"`
+	Id               openapi_types.UUID  `json:"id"`
+	LibraryFolderId  *openapi_types.UUID `json:"libraryFolderId,omitempty"`
+	Monitored        bool                `json:"monitored"`
+	Overview         *string             `json:"overview,omitempty"`
+	PosterPath       *string             `json:"posterPath,omitempty"`
+	QualityProfileId *string             `json:"qualityProfileId,omitempty"`
+	Title            string              `json:"title"`
+	Type             MediaType           `json:"type"`
+	UpdatedAt        time.Time           `json:"updatedAt"`
+	Year             *int32              `json:"year,omitempty"`
 }
 
 // MediaItemListResponse defines model for MediaItemListResponse.
@@ -322,10 +591,121 @@ type MediaItemListResponse struct {
 
 // MediaItemRequest defines model for MediaItemRequest.
 type MediaItemRequest struct {
-	Monitored bool      `json:"monitored"`
-	Title     string    `json:"title"`
-	Type      MediaType `json:"type"`
-	Year      *int32    `json:"year,omitempty"`
+	ExternalId       *string             `json:"externalId,omitempty"`
+	ExternalProvider *string             `json:"externalProvider,omitempty"`
+	LibraryFolderId  *openapi_types.UUID `json:"libraryFolderId,omitempty"`
+	Monitored        bool                `json:"monitored"`
+	Overview         *string             `json:"overview,omitempty"`
+	PosterPath       *string             `json:"posterPath,omitempty"`
+	QualityProfileId *string             `json:"qualityProfileId,omitempty"`
+	Title            string              `json:"title"`
+	Type             MediaType           `json:"type"`
+	Year             *int32              `json:"year,omitempty"`
+}
+
+// MediaMetadataDetails defines model for MediaMetadataDetails.
+type MediaMetadataDetails struct {
+	BackdropPath     *string                `json:"backdropPath,omitempty"`
+	Cast             *[]MediaMetadataPerson `json:"cast,omitempty"`
+	EpisodeCount     *int32                 `json:"episodeCount,omitempty"`
+	ExternalId       string                 `json:"externalId"`
+	ExternalProvider string                 `json:"externalProvider"`
+	Facts            *[]MediaMetadataFact   `json:"facts,omitempty"`
+	FirstAirDate     *string                `json:"firstAirDate,omitempty"`
+	Genres           *[]string              `json:"genres,omitempty"`
+	OriginalLanguage *string                `json:"originalLanguage,omitempty"`
+	Overview         *string                `json:"overview,omitempty"`
+	PosterPath       *string                `json:"posterPath,omitempty"`
+	ReleaseDate      *string                `json:"releaseDate,omitempty"`
+	RuntimeMinutes   *int32                 `json:"runtimeMinutes,omitempty"`
+	SeasonCount      *int32                 `json:"seasonCount,omitempty"`
+	Seasons          *[]MediaMetadataSeason `json:"seasons,omitempty"`
+	Status           *string                `json:"status,omitempty"`
+	Title            string                 `json:"title"`
+	Type             MediaType              `json:"type"`
+	VoteAverage      *float64               `json:"voteAverage,omitempty"`
+	Year             *int32                 `json:"year,omitempty"`
+}
+
+// MediaMetadataFact defines model for MediaMetadataFact.
+type MediaMetadataFact struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+// MediaMetadataPerson defines model for MediaMetadataPerson.
+type MediaMetadataPerson struct {
+	Name        string  `json:"name"`
+	ProfilePath *string `json:"profilePath,omitempty"`
+	Role        *string `json:"role,omitempty"`
+}
+
+// MediaMetadataSeason defines model for MediaMetadataSeason.
+type MediaMetadataSeason struct {
+	AirDate      *string `json:"airDate,omitempty"`
+	EpisodeCount *int32  `json:"episodeCount,omitempty"`
+	Name         string  `json:"name"`
+	PosterPath   *string `json:"posterPath,omitempty"`
+}
+
+// MediaRequest defines model for MediaRequest.
+type MediaRequest struct {
+	CreatedAt           time.Time           `json:"createdAt"`
+	DecidedAt           *time.Time          `json:"decidedAt,omitempty"`
+	ExternalId          *string             `json:"externalId,omitempty"`
+	ExternalProvider    *string             `json:"externalProvider,omitempty"`
+	Id                  openapi_types.UUID  `json:"id"`
+	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
+	MediaItemId         *openapi_types.UUID `json:"mediaItemId,omitempty"`
+	Overview            *string             `json:"overview,omitempty"`
+	PosterPath          *string             `json:"posterPath,omitempty"`
+	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
+	RequestedByUserId   openapi_types.UUID  `json:"requestedByUserId"`
+	RequestedByUsername string              `json:"requestedByUsername"`
+	Status              MediaRequestStatus  `json:"status"`
+	Title               string              `json:"title"`
+	Type                MediaType           `json:"type"`
+	UpdatedAt           time.Time           `json:"updatedAt"`
+	Year                *int32              `json:"year,omitempty"`
+}
+
+// MediaRequestApproveRequest defines model for MediaRequestApproveRequest.
+type MediaRequestApproveRequest struct {
+	LibraryFolderId  openapi_types.UUID `json:"libraryFolderId"`
+	QualityProfileId string             `json:"qualityProfileId"`
+}
+
+// MediaRequestApproveResponse defines model for MediaRequestApproveResponse.
+type MediaRequestApproveResponse struct {
+	MediaItem MediaItem    `json:"mediaItem"`
+	Request   MediaRequest `json:"request"`
+}
+
+// MediaRequestCreateRequest defines model for MediaRequestCreateRequest.
+type MediaRequestCreateRequest struct {
+	ExternalId       *string   `json:"externalId,omitempty"`
+	ExternalProvider *string   `json:"externalProvider,omitempty"`
+	Overview         *string   `json:"overview,omitempty"`
+	PosterPath       *string   `json:"posterPath,omitempty"`
+	Title            string    `json:"title"`
+	Type             MediaType `json:"type"`
+	Year             *int32    `json:"year,omitempty"`
+}
+
+// MediaRequestListResponse defines model for MediaRequestListResponse.
+type MediaRequestListResponse struct {
+	Requests []MediaRequest `json:"requests"`
+}
+
+// MediaRequestStatus defines model for MediaRequestStatus.
+type MediaRequestStatus string
+
+// MediaSearchGroup defines model for MediaSearchGroup.
+type MediaSearchGroup struct {
+	ProviderId *openapi_types.UUID   `json:"providerId,omitempty"`
+	Results    []MediaSearchResult   `json:"results"`
+	SourceName string                `json:"sourceName"`
+	SourceType MediaSearchSourceType `json:"sourceType"`
 }
 
 // MediaSearchRequest defines model for MediaSearchRequest.
@@ -342,13 +722,56 @@ type MediaSearchResponse struct {
 
 // MediaSearchResult defines model for MediaSearchResult.
 type MediaSearchResult struct {
-	Title string    `json:"title"`
-	Type  MediaType `json:"type"`
-	Year  *int32    `json:"year,omitempty"`
+	ExternalId       *string             `json:"externalId,omitempty"`
+	ExternalProvider *string             `json:"externalProvider,omitempty"`
+	Id               *openapi_types.UUID `json:"id,omitempty"`
+	Overview         *string             `json:"overview,omitempty"`
+	PosterPath       *string             `json:"posterPath,omitempty"`
+	Title            string              `json:"title"`
+	Type             MediaType           `json:"type"`
+	Year             *int32              `json:"year,omitempty"`
 }
+
+// MediaSearchSourceType defines model for MediaSearchSourceType.
+type MediaSearchSourceType string
 
 // MediaType defines model for MediaType.
 type MediaType string
+
+// MetadataProvider defines model for MetadataProvider.
+type MetadataProvider struct {
+	AccessToken *string              `json:"accessToken,omitempty"`
+	ApiKey      *string              `json:"apiKey,omitempty"`
+	BaseUrl     string               `json:"baseUrl"`
+	CreatedAt   time.Time            `json:"createdAt"`
+	Enabled     bool                 `json:"enabled"`
+	Id          openapi_types.UUID   `json:"id"`
+	Name        string               `json:"name"`
+	Pin         *string              `json:"pin,omitempty"`
+	Priority    int32                `json:"priority"`
+	Type        MetadataProviderType `json:"type"`
+	UpdatedAt   time.Time            `json:"updatedAt"`
+}
+
+// MetadataProviderListResponse defines model for MetadataProviderListResponse.
+type MetadataProviderListResponse struct {
+	Providers []MetadataProvider `json:"providers"`
+}
+
+// MetadataProviderRequest defines model for MetadataProviderRequest.
+type MetadataProviderRequest struct {
+	AccessToken *string              `json:"accessToken,omitempty"`
+	ApiKey      *string              `json:"apiKey,omitempty"`
+	BaseUrl     string               `json:"baseUrl"`
+	Enabled     bool                 `json:"enabled"`
+	Name        string               `json:"name"`
+	Pin         *string              `json:"pin,omitempty"`
+	Priority    int32                `json:"priority"`
+	Type        MetadataProviderType `json:"type"`
+}
+
+// MetadataProviderType defines model for MetadataProviderType.
+type MetadataProviderType string
 
 // ReleaseCandidate defines model for ReleaseCandidate.
 type ReleaseCandidate struct {
@@ -395,6 +818,18 @@ type ToolStatusResponse struct {
 	Tools []ToolStatus `json:"tools"`
 }
 
+// UserCreateRequest defines model for UserCreateRequest.
+type UserCreateRequest struct {
+	Password string   `json:"password"`
+	Role     UserRole `json:"role"`
+	Username string   `json:"username"`
+}
+
+// UserListResponse defines model for UserListResponse.
+type UserListResponse struct {
+	Users []ManagedUser `json:"users"`
+}
+
 // UserRole defines model for UserRole.
 type UserRole string
 
@@ -405,11 +840,21 @@ type UserSummary struct {
 	Username string             `json:"username"`
 }
 
+// UserUpdateRequest defines model for UserUpdateRequest.
+type UserUpdateRequest struct {
+	Password *string  `json:"password,omitempty"`
+	Role     UserRole `json:"role"`
+	Username string   `json:"username"`
+}
+
 // ResourceId defines model for ResourceId.
 type ResourceId = openapi_types.UUID
 
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponse
+
+// Forbidden defines model for Forbidden.
+type Forbidden = ErrorResponse
 
 // NotFound defines model for NotFound.
 type NotFound = ErrorResponse
@@ -423,14 +868,33 @@ type Unauthorized = ErrorResponse
 // sessionCookieContextKey is the context key for sessionCookie security scheme
 type sessionCookieContextKey string
 
+// AutocompleteMediaParams defines parameters for AutocompleteMedia.
+type AutocompleteMediaParams struct {
+	Query string `form:"query" json:"query"`
+}
+
+// ListLibraryFolderOptionsParams defines parameters for ListLibraryFolderOptions.
+type ListLibraryFolderOptionsParams struct {
+	Path *string `form:"path,omitempty" json:"path,omitempty"`
+}
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
+
+// AdvancedSearchMediaJSONRequestBody defines body for AdvancedSearchMedia for application/json ContentType.
+type AdvancedSearchMediaJSONRequestBody = MediaAdvancedSearchRequest
 
 // CreateMediaItemJSONRequestBody defines body for CreateMediaItem for application/json ContentType.
 type CreateMediaItemJSONRequestBody = MediaItemRequest
 
 // GrabMediaReleaseJSONRequestBody defines body for GrabMediaRelease for application/json ContentType.
 type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
+
+// CreateMediaRequestJSONRequestBody defines body for CreateMediaRequest for application/json ContentType.
+type CreateMediaRequestJSONRequestBody = MediaRequestCreateRequest
+
+// ApproveMediaRequestJSONRequestBody defines body for ApproveMediaRequest for application/json ContentType.
+type ApproveMediaRequestJSONRequestBody = MediaRequestApproveRequest
 
 // SearchMediaJSONRequestBody defines body for SearchMedia for application/json ContentType.
 type SearchMediaJSONRequestBody = MediaSearchRequest
@@ -446,6 +910,27 @@ type CreateIndexerJSONRequestBody = IndexerRequest
 
 // UpdateIndexerJSONRequestBody defines body for UpdateIndexer for application/json ContentType.
 type UpdateIndexerJSONRequestBody = IndexerRequest
+
+// CreateLibraryFolderOptionJSONRequestBody defines body for CreateLibraryFolderOption for application/json ContentType.
+type CreateLibraryFolderOptionJSONRequestBody = LibraryFolderOptionCreateRequest
+
+// CreateLibraryFolderJSONRequestBody defines body for CreateLibraryFolder for application/json ContentType.
+type CreateLibraryFolderJSONRequestBody = LibraryFolderRequest
+
+// MatchLibraryScanItemJSONRequestBody defines body for MatchLibraryScanItem for application/json ContentType.
+type MatchLibraryScanItemJSONRequestBody = LibraryScanItemMatchRequest
+
+// CreateMetadataProviderJSONRequestBody defines body for CreateMetadataProvider for application/json ContentType.
+type CreateMetadataProviderJSONRequestBody = MetadataProviderRequest
+
+// UpdateMetadataProviderJSONRequestBody defines body for UpdateMetadataProvider for application/json ContentType.
+type UpdateMetadataProviderJSONRequestBody = MetadataProviderRequest
+
+// CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
+type CreateUserJSONRequestBody = UserCreateRequest
+
+// UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
+type UpdateUserJSONRequestBody = UserUpdateRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -467,6 +952,15 @@ type ServerInterface interface {
 	// Get application health
 	// (GET /health)
 	GetHealth(w http.ResponseWriter, r *http.Request)
+	// Search selected metadata providers with detailed filters
+	// (POST /media/advanced-search)
+	AdvancedSearchMedia(w http.ResponseWriter, r *http.Request)
+	// Search local library and metadata providers for autocomplete
+	// (GET /media/autocomplete)
+	AutocompleteMedia(w http.ResponseWriter, r *http.Request, params AutocompleteMediaParams)
+	// Get provider-backed discovery sections
+	// (GET /media/discover)
+	GetMediaDiscover(w http.ResponseWriter, r *http.Request)
 	// List monitored media items
 	// (GET /media/items)
 	ListMediaItems(w http.ResponseWriter, r *http.Request)
@@ -485,6 +979,21 @@ type ServerInterface interface {
 	// List latest release candidates for a monitored item
 	// (GET /media/items/{id}/releases)
 	SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get provider metadata details for a media candidate
+	// (GET /media/metadata/{provider}/{type}/{externalId})
+	GetMediaMetadataDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, pType MediaType, externalId string)
+	// List media requests visible to the current user
+	// (GET /media/requests)
+	ListMediaRequests(w http.ResponseWriter, r *http.Request)
+	// Create a media request for admin approval
+	// (POST /media/requests)
+	CreateMediaRequest(w http.ResponseWriter, r *http.Request)
+	// Get a media request
+	// (GET /media/requests/{id})
+	GetMediaRequest(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Approve a media request and add it to monitored media
+	// (POST /media/requests/{id}/approve)
+	ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Search for a movie or series candidate
 	// (POST /media/search)
 	SearchMedia(w http.ResponseWriter, r *http.Request)
@@ -518,6 +1027,54 @@ type ServerInterface interface {
 	// Test a configured indexer
 	// (POST /settings/indexers/{id}/test)
 	TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Browse server-visible folders for library selection
+	// (GET /settings/library/folder-options)
+	ListLibraryFolderOptions(w http.ResponseWriter, r *http.Request, params ListLibraryFolderOptionsParams)
+	// Create a server-visible child folder for library selection
+	// (POST /settings/library/folder-options)
+	CreateLibraryFolderOption(w http.ResponseWriter, r *http.Request)
+	// List configured library folders
+	// (GET /settings/library/folders)
+	ListLibraryFolders(w http.ResponseWriter, r *http.Request)
+	// Add a library folder and scan it for media
+	// (POST /settings/library/folders)
+	CreateLibraryFolder(w http.ResponseWriter, r *http.Request)
+	// Remove a configured library folder
+	// (DELETE /settings/library/folders/{id})
+	DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get a library folder scan with discovered media review items
+	// (GET /settings/library/scans/{id})
+	GetLibraryScan(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Manually match a discovered file to a movie, series, or anime item
+	// (POST /settings/library/scans/{id}/items/{itemId}/match)
+	MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID)
+	// List configured metadata providers
+	// (GET /settings/metadata-providers)
+	ListMetadataProviders(w http.ResponseWriter, r *http.Request)
+	// Create a metadata provider
+	// (POST /settings/metadata-providers)
+	CreateMetadataProvider(w http.ResponseWriter, r *http.Request)
+	// Delete a metadata provider
+	// (DELETE /settings/metadata-providers/{id})
+	DeleteMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update a metadata provider
+	// (PUT /settings/metadata-providers/{id})
+	UpdateMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Test a configured metadata provider
+	// (POST /settings/metadata-providers/{id}/test)
+	TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List local users
+	// (GET /settings/users)
+	ListUsers(w http.ResponseWriter, r *http.Request)
+	// Create a local user
+	// (POST /settings/users)
+	CreateUser(w http.ResponseWriter, r *http.Request)
+	// Delete a local user
+	// (DELETE /settings/users/{id})
+	DeleteUser(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update a local user
+	// (PUT /settings/users/{id})
+	UpdateUser(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Get detected media tool capabilities
 	// (GET /system/tools)
 	GetToolStatus(w http.ResponseWriter, r *http.Request)
@@ -563,6 +1120,24 @@ func (_ Unimplemented) GetHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Search selected metadata providers with detailed filters
+// (POST /media/advanced-search)
+func (_ Unimplemented) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Search local library and metadata providers for autocomplete
+// (GET /media/autocomplete)
+func (_ Unimplemented) AutocompleteMedia(w http.ResponseWriter, r *http.Request, params AutocompleteMediaParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get provider-backed discovery sections
+// (GET /media/discover)
+func (_ Unimplemented) GetMediaDiscover(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List monitored media items
 // (GET /media/items)
 func (_ Unimplemented) ListMediaItems(w http.ResponseWriter, r *http.Request) {
@@ -596,6 +1171,36 @@ func (_ Unimplemented) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.
 // List latest release candidates for a monitored item
 // (GET /media/items/{id}/releases)
 func (_ Unimplemented) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get provider metadata details for a media candidate
+// (GET /media/metadata/{provider}/{type}/{externalId})
+func (_ Unimplemented) GetMediaMetadataDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, pType MediaType, externalId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List media requests visible to the current user
+// (GET /media/requests)
+func (_ Unimplemented) ListMediaRequests(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a media request for admin approval
+// (POST /media/requests)
+func (_ Unimplemented) CreateMediaRequest(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a media request
+// (GET /media/requests/{id})
+func (_ Unimplemented) GetMediaRequest(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Approve a media request and add it to monitored media
+// (POST /media/requests/{id}/approve)
+func (_ Unimplemented) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -662,6 +1267,102 @@ func (_ Unimplemented) UpdateIndexer(w http.ResponseWriter, r *http.Request, id 
 // Test a configured indexer
 // (POST /settings/indexers/{id}/test)
 func (_ Unimplemented) TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Browse server-visible folders for library selection
+// (GET /settings/library/folder-options)
+func (_ Unimplemented) ListLibraryFolderOptions(w http.ResponseWriter, r *http.Request, params ListLibraryFolderOptionsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a server-visible child folder for library selection
+// (POST /settings/library/folder-options)
+func (_ Unimplemented) CreateLibraryFolderOption(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List configured library folders
+// (GET /settings/library/folders)
+func (_ Unimplemented) ListLibraryFolders(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add a library folder and scan it for media
+// (POST /settings/library/folders)
+func (_ Unimplemented) CreateLibraryFolder(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove a configured library folder
+// (DELETE /settings/library/folders/{id})
+func (_ Unimplemented) DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a library folder scan with discovered media review items
+// (GET /settings/library/scans/{id})
+func (_ Unimplemented) GetLibraryScan(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Manually match a discovered file to a movie, series, or anime item
+// (POST /settings/library/scans/{id}/items/{itemId}/match)
+func (_ Unimplemented) MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List configured metadata providers
+// (GET /settings/metadata-providers)
+func (_ Unimplemented) ListMetadataProviders(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a metadata provider
+// (POST /settings/metadata-providers)
+func (_ Unimplemented) CreateMetadataProvider(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a metadata provider
+// (DELETE /settings/metadata-providers/{id})
+func (_ Unimplemented) DeleteMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a metadata provider
+// (PUT /settings/metadata-providers/{id})
+func (_ Unimplemented) UpdateMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test a configured metadata provider
+// (POST /settings/metadata-providers/{id}/test)
+func (_ Unimplemented) TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List local users
+// (GET /settings/users)
+func (_ Unimplemented) ListUsers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a local user
+// (POST /settings/users)
+func (_ Unimplemented) CreateUser(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a local user
+// (DELETE /settings/users/{id})
+func (_ Unimplemented) DeleteUser(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a local user
+// (PUT /settings/users/{id})
+func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -779,6 +1480,85 @@ func (siw *ServerInterfaceWrapper) GetHealth(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetHealth(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AdvancedSearchMedia operation middleware
+func (siw *ServerInterfaceWrapper) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AdvancedSearchMedia(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AutocompleteMedia operation middleware
+func (siw *ServerInterfaceWrapper) AutocompleteMedia(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AutocompleteMediaParams
+
+	// ------------- Required query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AutocompleteMedia(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMediaDiscover operation middleware
+func (siw *ServerInterfaceWrapper) GetMediaDiscover(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMediaDiscover(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -947,6 +1727,160 @@ func (siw *ServerInterfaceWrapper) SearchMediaReleases(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchMediaReleases(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMediaMetadataDetails operation middleware
+func (siw *ServerInterfaceWrapper) GetMediaMetadataDetails(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "provider" -------------
+	var provider MetadataProviderType
+
+	err = runtime.BindStyledParameterWithOptions("simple", "provider", chi.URLParam(r, "provider"), &provider, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "type" -------------
+	var pType MediaType
+
+	err = runtime.BindStyledParameterWithOptions("simple", "type", chi.URLParam(r, "type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "externalId" -------------
+	var externalId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "externalId", chi.URLParam(r, "externalId"), &externalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "externalId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMediaMetadataDetails(w, r, provider, pType, externalId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMediaRequests operation middleware
+func (siw *ServerInterfaceWrapper) ListMediaRequests(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMediaRequests(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMediaRequest operation middleware
+func (siw *ServerInterfaceWrapper) CreateMediaRequest(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMediaRequest(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMediaRequest operation middleware
+func (siw *ServerInterfaceWrapper) GetMediaRequest(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMediaRequest(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApproveMediaRequest operation middleware
+func (siw *ServerInterfaceWrapper) ApproveMediaRequest(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApproveMediaRequest(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1248,6 +2182,450 @@ func (siw *ServerInterfaceWrapper) TestIndexer(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListLibraryFolderOptions operation middleware
+func (siw *ServerInterfaceWrapper) ListLibraryFolderOptions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListLibraryFolderOptionsParams
+
+	// ------------- Optional query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLibraryFolderOptions(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLibraryFolderOption operation middleware
+func (siw *ServerInterfaceWrapper) CreateLibraryFolderOption(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLibraryFolderOption(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListLibraryFolders operation middleware
+func (siw *ServerInterfaceWrapper) ListLibraryFolders(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLibraryFolders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLibraryFolder operation middleware
+func (siw *ServerInterfaceWrapper) CreateLibraryFolder(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLibraryFolder(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteLibraryFolder operation middleware
+func (siw *ServerInterfaceWrapper) DeleteLibraryFolder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteLibraryFolder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLibraryScan operation middleware
+func (siw *ServerInterfaceWrapper) GetLibraryScan(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLibraryScan(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MatchLibraryScanItem operation middleware
+func (siw *ServerInterfaceWrapper) MatchLibraryScanItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", chi.URLParam(r, "itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MatchLibraryScanItem(w, r, id, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMetadataProviders operation middleware
+func (siw *ServerInterfaceWrapper) ListMetadataProviders(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMetadataProviders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMetadataProvider operation middleware
+func (siw *ServerInterfaceWrapper) CreateMetadataProvider(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMetadataProvider(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMetadataProvider operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMetadataProvider(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMetadataProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMetadataProvider operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMetadataProvider(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMetadataProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestMetadataProvider operation middleware
+func (siw *ServerInterfaceWrapper) TestMetadataProvider(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestMetadataProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListUsers operation middleware
+func (siw *ServerInterfaceWrapper) ListUsers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUsers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateUser operation middleware
+func (siw *ServerInterfaceWrapper) CreateUser(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateUser(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteUser operation middleware
+func (siw *ServerInterfaceWrapper) DeleteUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateUser operation middleware
+func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetToolStatus operation middleware
 func (siw *ServerInterfaceWrapper) GetToolStatus(w http.ResponseWriter, r *http.Request) {
 
@@ -1400,6 +2778,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/health", wrapper.GetHealth)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/advanced-search", wrapper.AdvancedSearchMedia)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/autocomplete", wrapper.AutocompleteMedia)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/discover", wrapper.GetMediaDiscover)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items", wrapper.ListMediaItems)
 	})
 	r.Group(func(r chi.Router) {
@@ -1416,6 +2803,21 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/releases", wrapper.SearchMediaReleases)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/metadata/{provider}/{type}/{externalId}", wrapper.GetMediaMetadataDetails)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/requests", wrapper.ListMediaRequests)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/requests", wrapper.CreateMediaRequest)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/requests/{id}", wrapper.GetMediaRequest)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/requests/{id}/approve", wrapper.ApproveMediaRequest)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/search", wrapper.SearchMedia)
@@ -1449,6 +2851,54 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/indexers/{id}/test", wrapper.TestIndexer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/library/folder-options", wrapper.ListLibraryFolderOptions)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/library/folder-options", wrapper.CreateLibraryFolderOption)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/library/folders", wrapper.ListLibraryFolders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/library/folders", wrapper.CreateLibraryFolder)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/library/folders/{id}", wrapper.DeleteLibraryFolder)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/library/scans/{id}", wrapper.GetLibraryScan)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/library/scans/{id}/items/{itemId}/match", wrapper.MatchLibraryScanItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/metadata-providers", wrapper.ListMetadataProviders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/metadata-providers", wrapper.CreateMetadataProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/metadata-providers/{id}", wrapper.DeleteMetadataProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/metadata-providers/{id}", wrapper.UpdateMetadataProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/metadata-providers/{id}/test", wrapper.TestMetadataProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/users", wrapper.ListUsers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/users", wrapper.CreateUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/users/{id}", wrapper.DeleteUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/users/{id}", wrapper.UpdateUser)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/tools", wrapper.GetToolStatus)

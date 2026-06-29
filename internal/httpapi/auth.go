@@ -2,15 +2,15 @@ package httpapi
 
 import (
 	"crypto/rand"
-	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+
+	"media-manager/internal/storage"
 )
 
 const sessionCookieName = "session"
@@ -22,7 +22,8 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !sameString(body.Username, s.cfg.AdminUsername) || !sameString(body.Password, s.cfg.AdminPassword) {
+	userRecord, err := s.settings.GetUserByUsername(r.Context(), body.Username)
+	if err != nil || !storage.VerifyPassword(body.Password, userRecord.PasswordHash) {
 		writeError(w, http.StatusUnauthorized, "unauthorized", "Invalid username or password")
 		return
 	}
@@ -35,9 +36,9 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := UserSummary{
-		Id:       openapi_types.UUID(uuid.New()),
-		Username: body.Username,
-		Role:     Admin,
+		Id:       openapi_types.UUID(userRecord.ID),
+		Username: userRecord.Username,
+		Role:     UserRole(userRecord.Role),
 	}
 	s.sessions.put(sessionID, session{user: user, expiresAt: expiresAt})
 	http.SetCookie(w, s.sessionCookie(sessionID, expiresAt))
@@ -85,6 +86,18 @@ func (s *Server) requireSession(w http.ResponseWriter, r *http.Request) (session
 		return session{}, false
 	}
 
+	return currentSession, true
+}
+
+func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) (session, bool) {
+	currentSession, ok := s.requireSession(w, r)
+	if !ok {
+		return session{}, false
+	}
+	if currentSession.user.Role != Admin {
+		writeError(w, http.StatusForbidden, "forbidden", "Admin role required")
+		return session{}, false
+	}
 	return currentSession, true
 }
 
@@ -160,11 +173,4 @@ func newSessionID() (string, error) {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(bytes[:]), nil
-}
-
-func sameString(left, right string) bool {
-	if len(left) != len(right) {
-		return false
-	}
-	return subtle.ConstantTimeCompare([]byte(left), []byte(right)) == 1
 }

@@ -5,6 +5,7 @@ import (
 
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/indexers"
+	"media-manager/internal/metadata"
 )
 
 func downloadClientTestResponse(checkedAt time.Time, result downloadclients.TestResult) IntegrationTestResponse {
@@ -12,6 +13,10 @@ func downloadClientTestResponse(checkedAt time.Time, result downloadclients.Test
 }
 
 func indexerTestResponse(checkedAt time.Time, result indexers.TestResult) IntegrationTestResponse {
+	return integrationTestResponse(checkedAt, result.Success, result.Message, result.Latency, result.Details)
+}
+
+func metadataProviderTestResponse(checkedAt time.Time, result metadata.TestResult) IntegrationTestResponse {
 	return integrationTestResponse(checkedAt, result.Success, result.Message, result.Latency, result.Details)
 }
 

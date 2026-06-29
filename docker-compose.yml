@@ -24,11 +24,28 @@ services:
       WEB_DIR: /app/web
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: admin
+      MEDIA_DATA_DIR: /data
     ports:
       - "8080:8080"
+    volumes:
+      - ./.data/media:/data
     depends_on:
       postgres:
         condition: service_healthy
 
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    environment:
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+      TZ: "${TZ:-Etc/UTC}"
+    ports:
+      - "${SABNZBD_PORT:-8081}:8080"
+    volumes:
+      - sabnzbd-config:/config
+      - ./.data/media:/data
+    restart: unless-stopped
+
 volumes:
   postgres-data:
+  sabnzbd-config:

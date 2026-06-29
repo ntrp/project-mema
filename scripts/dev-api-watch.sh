@@ -7,6 +7,7 @@ ADDR="${ADDR:-:8080}"
 DATABASE_URL="${DATABASE_URL:-postgres://media_manager:media_manager@localhost:5432/media_manager?sslmode=disable}"
 WEB_DIR="${WEB_DIR:-web/build}"
 APP_ENV="${APP_ENV:-development}"
+MEDIA_DATA_DIR="${MEDIA_DATA_DIR:-$ROOT_DIR/.data/media}"
 
 server_pid=""
 last_fingerprint=""
@@ -58,6 +59,7 @@ restart_api() {
 		ADDR="$ADDR" \
 			APP_ENV="$APP_ENV" \
 			DATABASE_URL="$DATABASE_URL" \
+			MEDIA_DATA_DIR="$MEDIA_DATA_DIR" \
 			WEB_DIR="$WEB_DIR" \
 			"$ROOT_DIR/bin/server"
 	) &

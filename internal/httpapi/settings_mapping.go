@@ -9,6 +9,7 @@ import (
 
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/indexers"
+	"media-manager/internal/metadata"
 	"media-manager/internal/storage"
 )
 
@@ -81,6 +82,78 @@ func indexerInput(w http.ResponseWriter, request IndexerRequest) (storage.Indexe
 	}, true
 }
 
+func metadataProviderInput(w http.ResponseWriter, request MetadataProviderRequest) (storage.MetadataProviderInput, bool) {
+	name := strings.TrimSpace(request.Name)
+	baseURL := strings.TrimSpace(request.BaseUrl)
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "invalid_name", "Name is required")
+		return storage.MetadataProviderInput{}, false
+	}
+	if !request.Type.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_type", "Metadata provider type is not supported")
+		return storage.MetadataProviderInput{}, false
+	}
+	if baseURL == "" {
+		writeError(w, http.StatusBadRequest, "invalid_base_url", "Base URL is required")
+		return storage.MetadataProviderInput{}, false
+	}
+	if request.Priority < 0 || request.Priority > 1000 {
+		writeError(w, http.StatusBadRequest, "invalid_priority", "Priority must be between 0 and 1000")
+		return storage.MetadataProviderInput{}, false
+	}
+	apiKey := optionalTrimmedString(request.ApiKey)
+	accessToken := optionalTrimmedString(request.AccessToken)
+	return storage.MetadataProviderInput{
+		Name:        name,
+		Type:        string(request.Type),
+		BaseURL:     baseURL,
+		APIKey:      apiKey,
+		PIN:         optionalTrimmedString(request.Pin),
+		AccessToken: accessToken,
+		Enabled:     request.Enabled,
+		Priority:    request.Priority,
+	}, true
+}
+
+func userCreateInput(w http.ResponseWriter, request UserCreateRequest) (storage.UserInput, bool) {
+	password := strings.TrimSpace(request.Password)
+	if password == "" || len(password) < 8 {
+		writeError(w, http.StatusBadRequest, "invalid_password", "Password must be at least 8 characters")
+		return storage.UserInput{}, false
+	}
+	input, ok := userInput(w, request.Username, request.Role, &password)
+	if !ok {
+		return storage.UserInput{}, false
+	}
+	return input, true
+}
+
+func userUpdateInput(w http.ResponseWriter, request UserUpdateRequest) (storage.UserInput, bool) {
+	password := optionalTrimmedString(request.Password)
+	if password != nil && len(*password) < 8 {
+		writeError(w, http.StatusBadRequest, "invalid_password", "Password must be at least 8 characters")
+		return storage.UserInput{}, false
+	}
+	return userInput(w, request.Username, request.Role, password)
+}
+
+func userInput(w http.ResponseWriter, username string, role UserRole, password *string) (storage.UserInput, bool) {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		writeError(w, http.StatusBadRequest, "invalid_username", "Username is required")
+		return storage.UserInput{}, false
+	}
+	if !role.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_role", "User role is not supported")
+		return storage.UserInput{}, false
+	}
+	return storage.UserInput{
+		Username: username,
+		Password: password,
+		Role:     string(role),
+	}, true
+}
+
 func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
 	return downloadclients.Config{
 		Name:     client.Name,
@@ -101,6 +174,20 @@ func indexerConfig(indexer storage.Indexer) indexers.Config {
 		BaseURL:    indexer.BaseURL,
 		APIKey:     indexer.APIKey,
 		Categories: append([]int32(nil), indexer.Categories...),
+	}
+}
+
+func metadataProviderConfig(provider storage.MetadataProvider) metadata.Config {
+	return metadata.Config{
+		ID:                    provider.ID,
+		Name:                  provider.Name,
+		Type:                  provider.Type,
+		BaseURL:               provider.BaseURL,
+		APIKey:                provider.APIKey,
+		PIN:                   provider.PIN,
+		AccessToken:           provider.AccessToken,
+		SessionToken:          provider.SessionToken,
+		SessionTokenExpiresAt: provider.SessionTokenExpiresAt,
 	}
 }
 
@@ -137,6 +224,32 @@ func indexerResponse(indexer storage.Indexer) Indexer {
 		Priority:   indexer.Priority,
 		CreatedAt:  indexer.CreatedAt,
 		UpdatedAt:  indexer.UpdatedAt,
+	}
+}
+
+func metadataProviderResponse(provider storage.MetadataProvider) MetadataProvider {
+	return MetadataProvider{
+		Id:          openapi_types.UUID(provider.ID),
+		Name:        provider.Name,
+		Type:        MetadataProviderType(provider.Type),
+		BaseUrl:     provider.BaseURL,
+		ApiKey:      provider.APIKey,
+		Pin:         provider.PIN,
+		AccessToken: provider.AccessToken,
+		Enabled:     provider.Enabled,
+		Priority:    provider.Priority,
+		CreatedAt:   provider.CreatedAt,
+		UpdatedAt:   provider.UpdatedAt,
+	}
+}
+
+func managedUserResponse(user storage.User) ManagedUser {
+	return ManagedUser{
+		Id:        openapi_types.UUID(user.ID),
+		Username:  user.Username,
+		Role:      UserRole(user.Role),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 }
 

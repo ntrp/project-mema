@@ -14,6 +14,7 @@ tags:
   - name: Media
   - name: Activity
   - name: Settings
+  - name: Users
   - name: System
   - name: Events
 paths:
@@ -120,6 +121,114 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /media/discover:
+    get:
+      operationId: getMediaDiscover
+      tags:
+        - Media
+      summary: Get provider-backed discovery sections
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Discovery sections for movies and series
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaDiscoverResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/autocomplete:
+    get:
+      operationId: autocompleteMedia
+      tags:
+        - Media
+      summary: Search local library and metadata providers for autocomplete
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 500
+      responses:
+        "200":
+          description: Grouped autocomplete results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaGroupedSearchResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/advanced-search:
+    post:
+      operationId: advancedSearchMedia
+      tags:
+        - Media
+      summary: Search selected metadata providers with detailed filters
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaAdvancedSearchRequest"
+      responses:
+        "200":
+          description: Grouped advanced media search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaGroupedSearchResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/metadata/{provider}/{type}/{externalId}:
+    parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetadataProviderType"
+      - name: type
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/MediaType"
+      - name: externalId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+    get:
+      operationId: getMediaMetadataDetails
+      tags:
+        - Media
+      summary: Get provider metadata details for a media candidate
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Provider metadata details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaMetadataDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items:
     get:
       operationId: listMediaItems
@@ -161,6 +270,101 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /media/requests:
+    get:
+      operationId: listMediaRequests
+      tags:
+        - Media
+      summary: List media requests visible to the current user
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Media requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRequestListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createMediaRequest
+      tags:
+        - Media
+      summary: Create a media request for admin approval
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaRequestCreateRequest"
+      responses:
+        "201":
+          description: Media request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRequest"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/requests/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: getMediaRequest
+      tags:
+        - Media
+      summary: Get a media request
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Media request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/requests/{id}/approve:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: approveMediaRequest
+      tags:
+        - Media
+      summary: Approve a media request and add it to monitored media
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaRequestApproveRequest"
+      responses:
+        "200":
+          description: Media request approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRequestApproveResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -476,6 +680,368 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/metadata-providers:
+    get:
+      operationId: listMetadataProviders
+      tags:
+        - Settings
+      summary: List configured metadata providers
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Configured metadata providers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataProviderListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createMetadataProvider
+      tags:
+        - Settings
+      summary: Create a metadata provider
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetadataProviderRequest"
+      responses:
+        "201":
+          description: Metadata provider created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataProvider"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/metadata-providers/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateMetadataProvider
+      tags:
+        - Settings
+      summary: Update a metadata provider
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetadataProviderRequest"
+      responses:
+        "200":
+          description: Metadata provider updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataProvider"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteMetadataProvider
+      tags:
+        - Settings
+      summary: Delete a metadata provider
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Metadata provider deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/metadata-providers/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: testMetadataProvider
+      tags:
+        - Settings
+      summary: Test a configured metadata provider
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Metadata provider test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/library/folder-options:
+    get:
+      operationId: listLibraryFolderOptions
+      tags:
+        - Settings
+      summary: Browse server-visible folders for library selection
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: path
+          in: query
+          schema:
+            type: string
+            maxLength: 4000
+      responses:
+        "200":
+          description: Folder picker options
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryFolderOptionListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createLibraryFolderOption
+      tags:
+        - Settings
+      summary: Create a server-visible child folder for library selection
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryFolderOptionCreateRequest"
+      responses:
+        "201":
+          description: Folder created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryFolderOption"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/library/folders:
+    get:
+      operationId: listLibraryFolders
+      tags:
+        - Settings
+      summary: List configured library folders
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Configured library folders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryFolderListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createLibraryFolder
+      tags:
+        - Settings
+      summary: Add a library folder and scan it for media
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryFolderRequest"
+      responses:
+        "201":
+          description: Library folder added and scan completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryFolderCreateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/library/folders/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    delete:
+      operationId: deleteLibraryFolder
+      tags:
+        - Settings
+      summary: Remove a configured library folder
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Library folder removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/library/scans/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: getLibraryScan
+      tags:
+        - Settings
+      summary: Get a library folder scan with discovered media review items
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Library scan review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryScan"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/library/scans/{id}/items/{itemId}/match:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: matchLibraryScanItem
+      tags:
+        - Settings
+      summary: Manually match a discovered file to a movie, series, or anime item
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryScanItemMatchRequest"
+      responses:
+        "200":
+          description: Discovered item matched and added to monitored media
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryScanItemMatchResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/users:
+    get:
+      operationId: listUsers
+      tags:
+        - Users
+      summary: List local users
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Local users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createUser
+      tags:
+        - Users
+      summary: Create a local user
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedUser"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /settings/users/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateUser
+      tags:
+        - Users
+      summary: Update a local user
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManagedUser"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteUser
+      tags:
+        - Users
+      summary: Delete a local user
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: User deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /system/tools:
     get:
       operationId: getToolStatus
@@ -537,6 +1103,12 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: Authentication required or session invalid
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: The authenticated user is not allowed to perform this action
       content:
         application/json:
           schema:
@@ -635,6 +1207,75 @@ components:
       type: string
       enum:
         - admin
+        - user
+    UserListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - users
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManagedUser"
+    ManagedUser:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - username
+        - role
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - password
+        - role
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 200
+        password:
+          type: string
+          minLength: 8
+          maxLength: 1024
+        role:
+          $ref: "#/components/schemas/UserRole"
+    UserUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - username
+        - role
+      properties:
+        username:
+          type: string
+          minLength: 1
+          maxLength: 200
+        password:
+          type: string
+          minLength: 8
+          maxLength: 1024
+        role:
+          $ref: "#/components/schemas/UserRole"
     MediaType:
       type: string
       enum:
@@ -668,12 +1309,130 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaSearchResult"
+    MediaDiscoverResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sections
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaDiscoverSection"
+    MediaDiscoverSection:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - providerName
+        - mediaType
+        - results
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        providerName:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchResult"
+    MediaAdvancedSearchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        query:
+          type: string
+          maxLength: 500
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+          minimum: 1800
+          maximum: 3000
+        providerIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 20
+        limit:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 50
+    MediaGroupedSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - groups
+      properties:
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchGroup"
+    MediaSearchGroup:
+      type: object
+      additionalProperties: false
+      required:
+        - sourceType
+        - sourceName
+        - results
+      properties:
+        sourceType:
+          $ref: "#/components/schemas/MediaSearchSourceType"
+        sourceName:
+          type: string
+        providerId:
+          type: string
+          format: uuid
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchResult"
+    MediaSearchSourceType:
+      type: string
+      enum:
+        - library
+        - provider
     MediaSearchResult:
       type: object
       additionalProperties: false
       required:
         - title
         - type
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+        externalProvider:
+          type: string
+        externalId:
+          type: string
+        overview:
+          type: string
+        posterPath:
+          type: string
+    MediaMetadataDetails:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - type
+        - externalProvider
+        - externalId
       properties:
         title:
           type: string
@@ -682,6 +1441,90 @@ components:
         year:
           type: integer
           format: int32
+        externalProvider:
+          type: string
+        externalId:
+          type: string
+        overview:
+          type: string
+        posterPath:
+          type: string
+        backdropPath:
+          type: string
+        status:
+          type: string
+        originalLanguage:
+          type: string
+        releaseDate:
+          type: string
+        firstAirDate:
+          type: string
+        runtimeMinutes:
+          type: integer
+          format: int32
+        seasonCount:
+          type: integer
+          format: int32
+        episodeCount:
+          type: integer
+          format: int32
+        voteAverage:
+          type: number
+          format: double
+        genres:
+          type: array
+          items:
+            type: string
+        facts:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaMetadataFact"
+        seasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaMetadataSeason"
+        cast:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaMetadataPerson"
+    MediaMetadataFact:
+      type: object
+      additionalProperties: false
+      required:
+        - label
+        - value
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+    MediaMetadataSeason:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        episodeCount:
+          type: integer
+          format: int32
+        airDate:
+          type: string
+        posterPath:
+          type: string
+    MediaMetadataPerson:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+        profilePath:
+          type: string
     MediaItemListResponse:
       type: object
       additionalProperties: false
@@ -732,6 +1575,135 @@ components:
           maximum: 3000
         monitored:
           type: boolean
+        externalProvider:
+          type: string
+          maxLength: 100
+        externalId:
+          type: string
+          maxLength: 200
+        overview:
+          type: string
+          maxLength: 5000
+        posterPath:
+          type: string
+          maxLength: 2000
+        qualityProfileId:
+          type: string
+          maxLength: 100
+        libraryFolderId:
+          type: string
+          format: uuid
+    MediaRequestListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaRequest"
+    MediaRequest:
+      allOf:
+        - $ref: "#/components/schemas/MediaRequestCreateRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - status
+            - requestedByUserId
+            - requestedByUsername
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              $ref: "#/components/schemas/MediaRequestStatus"
+            requestedByUserId:
+              type: string
+              format: uuid
+            requestedByUsername:
+              type: string
+            qualityProfileId:
+              type: string
+              maxLength: 100
+            libraryFolderId:
+              type: string
+              format: uuid
+            mediaItemId:
+              type: string
+              format: uuid
+            decidedAt:
+              type: string
+              format: date-time
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    MediaRequestStatus:
+      type: string
+      enum:
+        - pending
+        - approved
+    MediaRequestCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - type
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+          minimum: 1800
+          maximum: 3000
+        externalProvider:
+          type: string
+          maxLength: 100
+        externalId:
+          type: string
+          maxLength: 200
+        overview:
+          type: string
+          maxLength: 5000
+        posterPath:
+          type: string
+          maxLength: 2000
+    MediaRequestApproveRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - qualityProfileId
+        - libraryFolderId
+      properties:
+        qualityProfileId:
+          type: string
+          minLength: 1
+          maxLength: 100
+        libraryFolderId:
+          type: string
+          format: uuid
+    MediaRequestApproveResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - request
+        - mediaItem
+      properties:
+        request:
+          $ref: "#/components/schemas/MediaRequest"
+        mediaItem:
+          $ref: "#/components/schemas/MediaItem"
     ReleaseSearchResponse:
       type: object
       additionalProperties: false
@@ -1021,6 +1993,327 @@ components:
         - torznab
         - newznab
         - rss
+    MetadataProviderListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataProvider"
+    MetadataProvider:
+      allOf:
+        - $ref: "#/components/schemas/MetadataProviderRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    MetadataProviderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - type
+        - baseUrl
+        - enabled
+        - priority
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        type:
+          $ref: "#/components/schemas/MetadataProviderType"
+        baseUrl:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        apiKey:
+          type: string
+          maxLength: 1024
+        pin:
+          type: string
+          maxLength: 1024
+        accessToken:
+          type: string
+          maxLength: 4096
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+    MetadataProviderType:
+      type: string
+      enum:
+        - tmdb
+        - tvdb
+    LibraryFolderListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - folders
+      properties:
+        folders:
+          type: array
+          items:
+            $ref: "#/components/schemas/LibraryFolder"
+    LibraryFolderCreateResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - folder
+        - scan
+      properties:
+        folder:
+          $ref: "#/components/schemas/LibraryFolder"
+        scan:
+          $ref: "#/components/schemas/LibraryScan"
+    LibraryFolder:
+      allOf:
+        - $ref: "#/components/schemas/LibraryFolderRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    LibraryFolderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - path
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 4000
+    LibraryFolderOptionListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - currentPath
+        - entries
+      properties:
+        currentPath:
+          type: string
+        parentPath:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LibraryFolderOption"
+    LibraryFolderOption:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - path
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+    LibraryFolderOptionCreateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - parentPath
+        - name
+      properties:
+        parentPath:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+    LibraryMediaKind:
+      type: string
+      enum:
+        - movie
+        - series
+        - anime_movie
+        - anime_series
+        - unknown
+    LibraryScanItemStatus:
+      type: string
+      enum:
+        - pending
+        - auto_added
+        - manually_added
+    LibraryScan:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - folderId
+        - folderPath
+        - status
+        - totalFiles
+        - autoMatchedCount
+        - manualCount
+        - items
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        folderId:
+          type: string
+          format: uuid
+        folderPath:
+          type: string
+        status:
+          type: string
+          enum:
+            - completed
+            - failed
+        totalFiles:
+          type: integer
+          format: int32
+          minimum: 0
+        autoMatchedCount:
+          type: integer
+          format: int32
+          minimum: 0
+        manualCount:
+          type: integer
+          format: int32
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LibraryScanItem"
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+    LibraryScanItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - scanId
+        - path
+        - fileName
+        - detectedTitle
+        - detectedMediaKind
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        scanId:
+          type: string
+          format: uuid
+        path:
+          type: string
+        fileName:
+          type: string
+        detectedTitle:
+          type: string
+        detectedYear:
+          type: integer
+          format: int32
+          minimum: 1800
+          maximum: 3000
+        detectedMediaKind:
+          $ref: "#/components/schemas/LibraryMediaKind"
+        status:
+          $ref: "#/components/schemas/LibraryScanItemStatus"
+        matchedTitle:
+          type: string
+        matchedYear:
+          type: integer
+          format: int32
+          minimum: 1800
+          maximum: 3000
+        matchedMediaKind:
+          $ref: "#/components/schemas/LibraryMediaKind"
+        mediaItemId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LibraryScanItemMatchRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - mediaKind
+        - title
+        - monitored
+      properties:
+        mediaKind:
+          $ref: "#/components/schemas/LibraryMediaKind"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        year:
+          type: integer
+          format: int32
+          minimum: 1800
+          maximum: 3000
+        monitored:
+          type: boolean
+        externalProvider:
+          type: string
+          maxLength: 100
+        externalId:
+          type: string
+          maxLength: 200
+        overview:
+          type: string
+          maxLength: 5000
+        posterPath:
+          type: string
+          maxLength: 2000
+    LibraryScanItemMatchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - item
+        - mediaItem
+      properties:
+        item:
+          $ref: "#/components/schemas/LibraryScanItem"
+        mediaItem:
+          $ref: "#/components/schemas/MediaItem"
     IntegrationTestResponse:
       type: object
       additionalProperties: false

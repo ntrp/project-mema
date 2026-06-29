@@ -4,7 +4,16 @@ import type {
 	DownloadClientRequest,
 	Indexer,
 	IndexerForm,
-	IndexerRequest
+	IndexerRequest,
+	ManagedUser,
+	MetadataProvider,
+	MetadataProviderForm,
+	MetadataProviderRequest,
+	LibraryFolderForm,
+	LibraryFolderRequest,
+	UserCreateRequest,
+	UserForm,
+	UserUpdateRequest
 } from './types';
 
 export function emptyDownloadClientForm(): DownloadClientForm {
@@ -30,6 +39,33 @@ export function emptyIndexerForm(): IndexerForm {
 		categoriesText: '',
 		enabled: true,
 		priority: 100
+	};
+}
+
+export function emptyMetadataProviderForm(): MetadataProviderForm {
+	return {
+		name: '',
+		type: 'tmdb',
+		baseUrl: 'https://api.themoviedb.org/3',
+		apiKey: '',
+		pin: '',
+		accessToken: '',
+		enabled: true,
+		priority: 100
+	};
+}
+
+export function emptyLibraryFolderForm(): LibraryFolderForm {
+	return {
+		path: ''
+	};
+}
+
+export function emptyUserForm(): UserForm {
+	return {
+		username: '',
+		password: '',
+		role: 'user'
 	};
 }
 
@@ -61,6 +97,29 @@ export function indexerFormFromIndexer(indexer: Indexer): IndexerForm {
 	};
 }
 
+export function metadataProviderFormFromProvider(provider: MetadataProvider): MetadataProviderForm {
+	return {
+		id: provider.id,
+		name: provider.name,
+		type: provider.type,
+		baseUrl: provider.baseUrl,
+		apiKey: provider.apiKey ?? '',
+		pin: provider.pin ?? '',
+		accessToken: provider.accessToken ?? '',
+		enabled: provider.enabled,
+		priority: provider.priority
+	};
+}
+
+export function userFormFromUser(user: ManagedUser): UserForm {
+	return {
+		id: user.id,
+		username: user.username,
+		password: '',
+		role: user.role
+	};
+}
+
 export function normalizeDownloadClientForm(form: DownloadClientForm): DownloadClientRequest {
 	return {
 		name: form.name.trim(),
@@ -84,6 +143,41 @@ export function normalizeIndexerForm(form: IndexerForm): IndexerRequest {
 		categories: parseCategories(form.categoriesText),
 		enabled: form.enabled,
 		priority: form.priority
+	};
+}
+
+export function normalizeMetadataProviderForm(form: MetadataProviderForm): MetadataProviderRequest {
+	return {
+		name: form.name.trim(),
+		type: form.type,
+		baseUrl: form.baseUrl.trim(),
+		apiKey: optionalString(form.apiKey),
+		pin: optionalString(form.pin),
+		accessToken: optionalString(form.accessToken),
+		enabled: form.enabled,
+		priority: form.priority
+	};
+}
+
+export function normalizeLibraryFolderForm(form: LibraryFolderForm): LibraryFolderRequest {
+	return {
+		path: form.path.trim()
+	};
+}
+
+export function normalizeUserCreateForm(form: UserForm): UserCreateRequest {
+	return {
+		username: form.username.trim(),
+		password: form.password,
+		role: form.role
+	};
+}
+
+export function normalizeUserUpdateForm(form: UserForm): UserUpdateRequest {
+	return {
+		username: form.username.trim(),
+		password: optionalString(form.password),
+		role: form.role
 	};
 }
 

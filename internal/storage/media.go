@@ -10,20 +10,32 @@ import (
 )
 
 type MediaItem struct {
-	ID        uuid.UUID
-	Type      string
-	Title     string
-	Year      *int32
-	Monitored bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID               uuid.UUID
+	Type             string
+	Title            string
+	Year             *int32
+	Monitored        bool
+	ExternalProvider *string
+	ExternalID       *string
+	Overview         *string
+	PosterPath       *string
+	QualityProfileID *string
+	LibraryFolderID  *uuid.UUID
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type MediaItemInput struct {
-	Type      string
-	Title     string
-	Year      *int32
-	Monitored bool
+	Type             string
+	Title            string
+	Year             *int32
+	Monitored        bool
+	ExternalProvider *string
+	ExternalID       *string
+	Overview         *string
+	PosterPath       *string
+	QualityProfileID *string
+	LibraryFolderID  *uuid.UUID
 }
 
 type DownloadActivity struct {
@@ -89,7 +101,7 @@ type ReleaseSearchSnapshot struct {
 
 func (s *SettingsStore) ListMediaItems(ctx context.Context) ([]MediaItem, error) {
 	rows, err := s.pool.Query(ctx, `
-		select id, media_type, title, year, monitored, created_at, updated_at
+		select id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
 		from app.media_items
 		order by created_at desc, title asc
 	`)
@@ -109,9 +121,39 @@ func (s *SettingsStore) ListMediaItems(ctx context.Context) ([]MediaItem, error)
 	return items, rows.Err()
 }
 
+func (s *SettingsStore) SearchMediaItems(ctx context.Context, query string, mediaType *string, limit int) ([]MediaItem, error) {
+	if limit <= 0 || limit > 50 {
+		limit = 20
+	}
+	rows, err := s.pool.Query(ctx, `
+		select id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
+		from app.media_items
+		where title ilike '%' || $1 || '%'
+			and ($2::text is null or media_type = $2)
+		order by
+			case when lower(title) = lower($1) then 0 else 1 end,
+			title asc
+		limit $3
+	`, query, mediaType, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := []MediaItem{}
+	for rows.Next() {
+		item, err := scanMediaItem(rows)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
+}
+
 func (s *SettingsStore) GetMediaItem(ctx context.Context, id uuid.UUID) (MediaItem, error) {
 	return scanMediaItemRow(s.pool.QueryRow(ctx, `
-		select id, media_type, title, year, monitored, created_at, updated_at
+		select id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
 		from app.media_items
 		where id = $1
 	`, id))
@@ -120,10 +162,12 @@ func (s *SettingsStore) GetMediaItem(ctx context.Context, id uuid.UUID) (MediaIt
 func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInput) (MediaItem, error) {
 	id := uuid.New()
 	return scanMediaItemRow(s.pool.QueryRow(ctx, `
-		insert into app.media_items (id, media_type, title, year, monitored)
-		values ($1, $2, $3, $4, $5)
-		returning id, media_type, title, year, monitored, created_at, updated_at
-	`, id, input.Type, input.Title, input.Year, input.Monitored))
+		insert into app.media_items (
+			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id
+		)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		returning id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
+	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID))
 }
 
 func (s *SettingsStore) DeleteMediaItem(ctx context.Context, id uuid.UUID) error {
@@ -365,6 +409,12 @@ func scanMediaItem(row pgx.Row) (MediaItem, error) {
 		&item.Title,
 		&item.Year,
 		&item.Monitored,
+		&item.ExternalProvider,
+		&item.ExternalID,
+		&item.Overview,
+		&item.PosterPath,
+		&item.QualityProfileID,
+		&item.LibraryFolderID,
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)
