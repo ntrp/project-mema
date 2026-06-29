@@ -175,6 +175,18 @@ func downloadClientConfig(client storage.DownloadClient) downloadclients.Config 
 	}
 }
 
+func downloadClientInputConfig(input storage.DownloadClientInput) downloadclients.Config {
+	return downloadclients.Config{
+		Name:     input.Name,
+		Type:     input.Type,
+		BaseURL:  input.BaseURL,
+		Username: input.Username,
+		Password: input.Password,
+		APIKey:   input.APIKey,
+		Category: input.Category,
+	}
+}
+
 func indexerConfig(indexer storage.Indexer) indexers.Config {
 	return indexers.Config{
 		ID:         indexer.ID.String(),

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
 	import type { Tag, TagForm } from '$lib/settings/types';
 
 	interface Props {
@@ -22,6 +23,30 @@
 		onEdit,
 		onDelete
 	}: Props = $props();
+
+	let tagModalOpen = $state(false);
+
+	function openTagModal() {
+		onCancel();
+		tagModalOpen = true;
+	}
+
+	function editTag(tag: Tag) {
+		onEdit(tag);
+		tagModalOpen = true;
+	}
+
+	function closeTagModal() {
+		onCancel();
+		tagModalOpen = false;
+	}
+
+	async function saveTag(event: SubmitEvent) {
+		await onSave(event);
+		if (!form.id && form.name === '') {
+			tagModalOpen = false;
+		}
+	}
 </script>
 
 <div class="panel" aria-labelledby="tag-settings-title">
@@ -30,20 +55,8 @@
 			<p class="section-kicker">Organization</p>
 			<h2 id="tag-settings-title">Tags</h2>
 		</div>
+		<button type="button" onclick={openTagModal}>Add tag</button>
 	</div>
-
-	<form class="settings-form compact-form" onsubmit={onSave}>
-		<label>
-			<span>Name</span>
-			<input bind:value={form.name} type="text" maxlength="80" required />
-		</label>
-		<div class="form-actions">
-			<button type="button" class="secondary" onclick={onCancel}>Cancel</button>
-			<button type="submit" disabled={saving}>
-				{saving ? 'Saving' : form.id ? 'Update tag' : 'Create tag'}
-			</button>
-		</div>
-	</form>
 
 	<div class="table-wrap">
 		<table>
@@ -62,7 +75,7 @@
 						</td>
 						<td>{new Date(tag.updatedAt).toLocaleDateString()}</td>
 						<td class="row-actions">
-							<button type="button" class="secondary" onclick={() => onEdit(tag)}>Edit</button>
+							<button type="button" class="secondary" onclick={() => editTag(tag)}>Edit</button>
 							<button
 								type="button"
 								class="danger"
@@ -81,4 +94,21 @@
 			</tbody>
 		</table>
 	</div>
+
+	{#if tagModalOpen}
+		<SettingsFormModal title={form.id ? 'Edit tag' : 'Add tag'} onClose={closeTagModal}>
+			<form class="settings-form compact-form" onsubmit={saveTag}>
+				<label>
+					<span>Name</span>
+					<input bind:value={form.name} type="text" maxlength="80" required />
+				</label>
+				<div class="form-actions">
+					<button type="button" class="secondary" onclick={closeTagModal}>Cancel</button>
+					<button type="submit" disabled={saving}>
+						{saving ? 'Saving' : form.id ? 'Update tag' : 'Create tag'}
+					</button>
+				</div>
+			</form>
+		</SettingsFormModal>
+	{/if}
 </div>

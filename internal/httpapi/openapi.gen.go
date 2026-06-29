@@ -259,6 +259,30 @@ func (e MetadataProviderType) Valid() bool {
 	}
 }
 
+// Defines values for SystemLogLevel.
+const (
+	Debug SystemLogLevel = "debug"
+	Error SystemLogLevel = "error"
+	Info  SystemLogLevel = "info"
+	Warn  SystemLogLevel = "warn"
+)
+
+// Valid indicates whether the value is a known member of the SystemLogLevel enum.
+func (e SystemLogLevel) Valid() bool {
+	switch e {
+	case Debug:
+		return true
+	case Error:
+		return true
+	case Info:
+		return true
+	case Warn:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ToolName.
 const (
 	Ffmpeg     ToolName = "ffmpeg"
@@ -877,6 +901,19 @@ type SessionResponse struct {
 	User          *UserSummary `json:"user,omitempty"`
 }
 
+// SystemLogLevel defines model for SystemLogLevel.
+type SystemLogLevel string
+
+// SystemLogLevelRequest defines model for SystemLogLevelRequest.
+type SystemLogLevelRequest struct {
+	Level SystemLogLevel `json:"level"`
+}
+
+// SystemLogLevelResponse defines model for SystemLogLevelResponse.
+type SystemLogLevelResponse struct {
+	Level SystemLogLevel `json:"level"`
+}
+
 // Tag defines model for Tag.
 type Tag struct {
 	CreatedAt time.Time          `json:"createdAt"`
@@ -999,6 +1036,9 @@ type SearchMediaJSONRequestBody = MediaSearchRequest
 // CreateDownloadClientJSONRequestBody defines body for CreateDownloadClient for application/json ContentType.
 type CreateDownloadClientJSONRequestBody = DownloadClientRequest
 
+// TestDownloadClientConfigJSONRequestBody defines body for TestDownloadClientConfig for application/json ContentType.
+type TestDownloadClientConfigJSONRequestBody = DownloadClientRequest
+
 // UpdateDownloadClientJSONRequestBody defines body for UpdateDownloadClient for application/json ContentType.
 type UpdateDownloadClientJSONRequestBody = DownloadClientRequest
 
@@ -1037,6 +1077,9 @@ type CreateUserJSONRequestBody = UserCreateRequest
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UserUpdateRequest
+
+// UpdateSystemLogLevelJSONRequestBody defines body for UpdateSystemLogLevel for application/json ContentType.
+type UpdateSystemLogLevelJSONRequestBody = SystemLogLevelRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1109,6 +1152,9 @@ type ServerInterface interface {
 	// Create a download client
 	// (POST /settings/download-clients)
 	CreateDownloadClient(w http.ResponseWriter, r *http.Request)
+	// Test a download client configuration
+	// (POST /settings/download-clients/test)
+	TestDownloadClientConfig(w http.ResponseWriter, r *http.Request)
 	// Delete a download client
 	// (DELETE /settings/download-clients/{id})
 	DeleteDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -1202,6 +1248,15 @@ type ServerInterface interface {
 	// Update a local user
 	// (PUT /settings/users/{id})
 	UpdateUser(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get application log verbosity
+	// (GET /system/log-level)
+	GetSystemLogLevel(w http.ResponseWriter, r *http.Request)
+	// Update application log verbosity
+	// (PUT /system/log-level)
+	UpdateSystemLogLevel(w http.ResponseWriter, r *http.Request)
+	// Stream live application logs
+	// (GET /system/logs)
+	StreamSystemLogs(w http.ResponseWriter, r *http.Request)
 	// Get detected media tool capabilities
 	// (GET /system/tools)
 	GetToolStatus(w http.ResponseWriter, r *http.Request)
@@ -1346,6 +1401,12 @@ func (_ Unimplemented) ListDownloadClients(w http.ResponseWriter, r *http.Reques
 // Create a download client
 // (POST /settings/download-clients)
 func (_ Unimplemented) CreateDownloadClient(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test a download client configuration
+// (POST /settings/download-clients/test)
+func (_ Unimplemented) TestDownloadClientConfig(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1532,6 +1593,24 @@ func (_ Unimplemented) DeleteUser(w http.ResponseWriter, r *http.Request, id Res
 // Update a local user
 // (PUT /settings/users/{id})
 func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get application log verbosity
+// (GET /system/log-level)
+func (_ Unimplemented) GetSystemLogLevel(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update application log verbosity
+// (PUT /system/log-level)
+func (_ Unimplemented) UpdateSystemLogLevel(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Stream live application logs
+// (GET /system/logs)
+func (_ Unimplemented) StreamSystemLogs(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2136,6 +2215,26 @@ func (siw *ServerInterfaceWrapper) CreateDownloadClient(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateDownloadClient(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestDownloadClientConfig operation middleware
+func (siw *ServerInterfaceWrapper) TestDownloadClientConfig(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestDownloadClientConfig(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2985,6 +3084,66 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// GetSystemLogLevel operation middleware
+func (siw *ServerInterfaceWrapper) GetSystemLogLevel(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSystemLogLevel(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSystemLogLevel operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSystemLogLevel(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSystemLogLevel(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StreamSystemLogs operation middleware
+func (siw *ServerInterfaceWrapper) StreamSystemLogs(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StreamSystemLogs(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetToolStatus operation middleware
 func (siw *ServerInterfaceWrapper) GetToolStatus(w http.ResponseWriter, r *http.Request) {
 
@@ -3188,6 +3347,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/settings/download-clients", wrapper.CreateDownloadClient)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/download-clients/test", wrapper.TestDownloadClientConfig)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/download-clients/{id}", wrapper.DeleteDownloadClient)
 	})
 	r.Group(func(r chi.Router) {
@@ -3279,6 +3441,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/users/{id}", wrapper.UpdateUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/log-level", wrapper.GetSystemLogLevel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/system/log-level", wrapper.UpdateSystemLogLevel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/logs", wrapper.StreamSystemLogs)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/tools", wrapper.GetToolStatus)

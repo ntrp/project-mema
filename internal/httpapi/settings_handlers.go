@@ -97,6 +97,24 @@ func (s *Server) TestDownloadClient(w http.ResponseWriter, r *http.Request, id R
 	writeJSON(w, http.StatusOK, downloadClientTestResponse(s.now(), result))
 }
 
+func (s *Server) TestDownloadClientConfig(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body DownloadClientRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := downloadClientInput(w, body)
+	if !ok {
+		return
+	}
+
+	result := s.downloadClients.Test(r.Context(), downloadClientInputConfig(input))
+	writeJSON(w, http.StatusOK, downloadClientTestResponse(s.now(), result))
+}
+
 func (s *Server) ListIndexers(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return

@@ -20,6 +20,9 @@ export type MetadataCacheStats = components['schemas']['MetadataCacheStats'];
 export type MetadataProviderRequest = components['schemas']['MetadataProviderRequest'];
 export type MetadataProviderType = components['schemas']['MetadataProviderType'];
 export type IntegrationTestResponse = components['schemas']['IntegrationTestResponse'];
+export type SystemLogEntry = components['schemas']['SystemLogEntry'];
+export type SystemLogLevel = components['schemas']['SystemLogLevel'];
+export type SystemLogLevelResponse = components['schemas']['SystemLogLevelResponse'];
 export type LibraryFolder = components['schemas']['LibraryFolder'];
 export type LibraryFolderOption = components['schemas']['LibraryFolderOption'];
 export type LibraryFolderOptionCreateRequest =
@@ -77,7 +80,8 @@ export type SettingsSection =
 	| 'indexers'
 	| 'metadata'
 	| 'tags'
-	| 'users';
+	| 'users'
+	| 'system-logs';
 export type TagForm = TagRequest & { id?: string };
 export interface SettingsData {
 	downloadClients: DownloadClient[];

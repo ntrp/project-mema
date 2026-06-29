@@ -37,7 +37,7 @@ func (s *Server) StreamEvents(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func writeSSE(w http.ResponseWriter, flusher http.Flusher, eventType string, data map[string]interface{}) {
+func writeSSE(w http.ResponseWriter, flusher http.Flusher, eventType string, data interface{}) {
 	envelope := map[string]interface{}{
 		"id":   uuid.NewString(),
 		"type": eventType,

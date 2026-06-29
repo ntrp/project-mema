@@ -9,10 +9,13 @@ import (
 	"syscall"
 
 	"media-manager/internal/app"
+	"media-manager/internal/logging"
 	"media-manager/internal/storage"
 )
 
 func main() {
+	logging.ConfigureDefault()
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 

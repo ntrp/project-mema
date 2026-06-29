@@ -523,6 +523,31 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/download-clients/test:
+    post:
+      operationId: testDownloadClientConfig
+      tags:
+        - Settings
+      summary: Test a download client configuration
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DownloadClientRequest"
+      responses:
+        "200":
+          description: Download client test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/download-clients/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -1221,6 +1246,73 @@ paths:
                 $ref: "#/components/schemas/ToolStatusResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /system/logs:
+    get:
+      operationId: streamSystemLogs
+      tags:
+        - System
+      summary: Stream live application logs
+      description: >
+        Server-Sent Events stream of application logs. Each event data payload
+        is a SystemLogEntry JSON object.
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Application log stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /system/log-level:
+    get:
+      operationId: getSystemLogLevel
+      tags:
+        - System
+      summary: Get application log verbosity
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Current application log verbosity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemLogLevelResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    put:
+      operationId: updateSystemLogLevel
+      tags:
+        - System
+      summary: Update application log verbosity
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemLogLevelRequest"
+      responses:
+        "200":
+          description: Updated application log verbosity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemLogLevelResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /events:
     get:
       operationId: streamEvents
@@ -2704,6 +2796,50 @@ components:
           type: string
         error:
           type: string
+    SystemLogLevel:
+      type: string
+      enum:
+        - debug
+        - info
+        - warn
+        - error
+    SystemLogLevelRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - level
+      properties:
+        level:
+          $ref: "#/components/schemas/SystemLogLevel"
+    SystemLogLevelResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - level
+      properties:
+        level:
+          $ref: "#/components/schemas/SystemLogLevel"
+    SystemLogEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - time
+        - level
+        - message
+      properties:
+        id:
+          type: string
+        time:
+          type: string
+          format: date-time
+        level:
+          $ref: "#/components/schemas/SystemLogLevel"
+        message:
+          type: string
+        attributes:
+          type: object
+          additionalProperties: true
     ToolName:
       type: string
       enum:

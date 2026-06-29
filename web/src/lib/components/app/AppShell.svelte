@@ -50,7 +50,7 @@
 		saveUser as saveUserRequest,
 		searchMedia as searchMediaRequest,
 		searchMediaReleases as searchMediaReleasesRequest,
-		testDownloadClient as testDownloadClientRequest,
+		testDownloadClientConfig as testDownloadClientConfigRequest,
 		testIndexer as testIndexerRequest,
 		testMetadataProvider as testMetadataProviderRequest
 	} from '$lib/settings/api';
@@ -171,7 +171,6 @@
 	let libraryFolderForm = $state<LibraryFolderFormValue>(emptyLibraryFolderForm());
 	let tagForm = $state<TagForm>(emptyTagForm());
 	let userForm = $state<UserFormValue>(emptyUserForm());
-	let testingDownloadClientId = $state<string | undefined>();
 	let testingIndexerId = $state<string | undefined>();
 	let testingMetadataProviderId = $state<string | undefined>();
 	let loadingMetadataCache = $state(false);
@@ -190,7 +189,6 @@
 	let deletingMediaItemId = $state<string | undefined>();
 	let loadingActivity = $state(false);
 	let loadingLibraryScan = $state(false);
-	let downloadClientTests = $state<IntegrationTestResults>({});
 	let indexerTests = $state<IntegrationTestResults>({});
 	let metadataProviderTests = $state<IntegrationTestResults>({});
 	let activeView = $state<AppView>(routeDefaults.view);
@@ -211,22 +209,25 @@
 		children?: readonly {
 			value: SettingsSection;
 			label: string;
-			href:
-				| '/settings/library'
-				| '/settings/download-clients'
-				| '/settings/indexers'
-				| '/settings/metadata'
-				| '/settings/tags'
-				| '/settings/users';
+			href: SettingsHref;
 		}[];
 	};
+	type SettingsHref =
+		| '/settings/library'
+		| '/settings/download-clients'
+		| '/settings/indexers'
+		| '/settings/metadata'
+		| '/settings/tags'
+		| '/settings/users'
+		| '/settings/system/logs';
 	const settingsItems = [
 		{ value: 'library', label: 'Library', href: '/settings/library' },
 		{ value: 'download-clients', label: 'Download clients', href: '/settings/download-clients' },
 		{ value: 'indexers', label: 'Indexers', href: '/settings/indexers' },
 		{ value: 'metadata', label: 'Metadata', href: '/settings/metadata' },
 		{ value: 'tags', label: 'Tags', href: '/settings/tags' },
-		{ value: 'users', label: 'Users', href: '/settings/users' }
+		{ value: 'users', label: 'Users', href: '/settings/users' },
+		{ value: 'system-logs', label: 'System logs', href: '/settings/system/logs' }
 	] satisfies PrimaryItem['children'];
 	const basePrimaryItems = [
 		{ value: 'discover', label: 'Discover', icon: 'discover', href: '/discover' },
@@ -779,7 +780,6 @@
 			if (downloadForm.id === id) {
 				downloadForm = emptyDownloadClientForm();
 			}
-			downloadClientTests = omitResult(downloadClientTests, id);
 			message = 'Download client deleted';
 			await loadSettings();
 		} catch (error) {
@@ -899,17 +899,14 @@
 		}
 	}
 
-	async function testDownloadClient(id: string) {
+	async function testDownloadClientConfig(form: DownloadClientFormValue) {
 		clearNotice();
-		testingDownloadClientId = id;
 
 		try {
-			const result = await testDownloadClientRequest(id);
-			downloadClientTests = { ...downloadClientTests, [id]: result };
+			return await testDownloadClientConfigRequest(form);
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not test download client');
-		} finally {
-			testingDownloadClientId = undefined;
+			throw error;
 		}
 	}
 
@@ -1015,7 +1012,26 @@
 			return;
 		}
 		activeSettingsSection = section;
-		void goto(resolve(`/settings/${section}`));
+		void goto(resolve(settingsSectionHref(section)));
+	}
+
+	function settingsSectionHref(section: SettingsSection): SettingsHref {
+		switch (section) {
+			case 'download-clients':
+				return '/settings/download-clients';
+			case 'indexers':
+				return '/settings/indexers';
+			case 'metadata':
+				return '/settings/metadata';
+			case 'tags':
+				return '/settings/tags';
+			case 'users':
+				return '/settings/users';
+			case 'system-logs':
+				return '/settings/system/logs';
+			default:
+				return '/settings/library';
+		}
 	}
 
 	function selectPrimarySection(section: HomeSection | 'settings') {
@@ -1114,13 +1130,12 @@
 						{savingUser}
 						bind:metadataCachePattern
 						{loadingLibraryScan}
-						{testingDownloadClientId}
 						{testingIndexerId}
 						{testingMetadataProviderId}
-						{downloadClientTests}
 						{indexerTests}
 						{metadataProviderTests}
 						onSaveDownloadClient={saveDownloadClient}
+						onTestDownloadClientConfig={testDownloadClientConfig}
 						onSaveIndexer={saveIndexer}
 						onSaveMetadataProvider={saveMetadataProvider}
 						onRefreshMetadataCache={refreshMetadataCache}
@@ -1158,7 +1173,6 @@
 						onDeleteLibraryFolder={deleteLibraryFolder}
 						onDeleteTag={deleteTag}
 						onDeleteUser={deleteUser}
-						onTestDownloadClient={testDownloadClient}
 						onTestIndexer={testIndexer}
 						onTestMetadataProvider={testMetadataProvider}
 						onSearchLibraryMatch={searchLibraryMatch}

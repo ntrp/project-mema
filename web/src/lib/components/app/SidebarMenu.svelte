@@ -13,7 +13,8 @@
 		| '/settings/indexers'
 		| '/settings/metadata'
 		| '/settings/tags'
-		| '/settings/users';
+		| '/settings/users'
+		| '/settings/system/logs';
 
 	interface SubmenuItem<TValue extends string> {
 		value: TValue;

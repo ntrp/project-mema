@@ -28,6 +28,8 @@ import type {
 	ReleaseCandidate,
 	SessionResponse,
 	SettingsData,
+	SystemLogLevel,
+	SystemLogLevelResponse,
 	TagForm,
 	UserForm
 } from './types';
@@ -59,6 +61,32 @@ export async function logout() {
 	if (error) {
 		throw new Error(error.message);
 	}
+}
+
+export async function getSystemLogLevel(): Promise<SystemLogLevelResponse> {
+	const { data, error } = await client.GET('/system/log-level');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Log level request did not return a result');
+	}
+	return data;
+}
+
+export async function updateSystemLogLevel(level: SystemLogLevel): Promise<SystemLogLevelResponse> {
+	const { data, error } = await client.PUT('/system/log-level', {
+		body: { level }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Log level update did not return a result');
+	}
+	return data;
 }
 
 export async function loadSettings(): Promise<SettingsData> {
@@ -341,6 +369,20 @@ export async function saveDownloadClient(form: DownloadClientForm) {
 export async function testDownloadClient(id: string) {
 	const { data, error } = await client.POST('/settings/download-clients/{id}/test', {
 		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Download client test did not return a result');
+	}
+	return data;
+}
+
+export async function testDownloadClientConfig(form: DownloadClientForm) {
+	const { data, error } = await client.POST('/settings/download-clients/test', {
+		body: normalizeDownloadClientForm(form)
 	});
 
 	if (error) {
