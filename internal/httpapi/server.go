@@ -5,6 +5,7 @@ import (
 
 	"media-manager/internal/config"
 	"media-manager/internal/downloadclients"
+	"media-manager/internal/events"
 	"media-manager/internal/indexers"
 	"media-manager/internal/jobs"
 	"media-manager/internal/metadata"
@@ -18,11 +19,15 @@ type Server struct {
 	indexers        *indexers.Service
 	metadata        *metadata.Service
 	jobs            *jobs.Client
+	events          *events.Broker
 	sessions        *sessionStore
 	now             func() time.Time
 }
 
-func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClients *downloadclients.Service, indexerService *indexers.Service, metadataService *metadata.Service, jobs *jobs.Client) *Server {
+func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClients *downloadclients.Service, indexerService *indexers.Service, metadataService *metadata.Service, jobs *jobs.Client, eventBroker *events.Broker) *Server {
+	if eventBroker == nil {
+		eventBroker = events.NewBroker()
+	}
 	return &Server{
 		cfg:             cfg,
 		settings:        settings,
@@ -30,6 +35,7 @@ func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClien
 		indexers:        indexerService,
 		metadata:        metadataService,
 		jobs:            jobs,
+		events:          eventBroker,
 		sessions:        newSessionStore(),
 		now:             time.Now,
 	}

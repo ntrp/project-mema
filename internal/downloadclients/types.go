@@ -35,6 +35,35 @@ type AddResult struct {
 	Details    map[string]interface{}
 }
 
+type StatusRequest struct {
+	DownloadID string
+}
+
+type CancelRequest struct {
+	DownloadID string
+}
+
+type CancelResult struct {
+	Success bool
+	Message string
+	Details map[string]interface{}
+}
+
+type StatusFile struct {
+	Path      string
+	SizeBytes int64
+	Complete  bool
+}
+
+type StatusResult struct {
+	Success bool
+	Found   bool
+	Status  string
+	Message string
+	Files   []StatusFile
+	Details map[string]interface{}
+}
+
 type HTTPDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }

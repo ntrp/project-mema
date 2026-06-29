@@ -204,6 +204,145 @@ func (s *Server) TestIndexer(w http.ResponseWriter, r *http.Request, id Resource
 	writeJSON(w, http.StatusOK, indexerTestResponse(s.now(), result))
 }
 
+func (s *Server) ListQualitySizeSettings(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	settings, err := s.settings.ListQualitySizeSettings(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list quality sizes")
+		return
+	}
+	writeJSON(w, http.StatusOK, qualitySizeSettingsResponse(settings))
+}
+
+func (s *Server) UpdateQualitySizeSettings(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body QualitySizeSettingsUpdateRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := qualitySizeSettingsInput(w, body)
+	if !ok {
+		return
+	}
+
+	settings, err := s.settings.SaveQualitySizeSettings(r.Context(), input)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update quality sizes")
+		return
+	}
+	writeJSON(w, http.StatusOK, qualitySizeSettingsResponse(settings))
+}
+
+func (s *Server) GetFileNamingSettings(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	settings, err := s.settings.GetFileNamingSettings(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_load_failed", "Could not load file naming settings")
+		return
+	}
+	writeJSON(w, http.StatusOK, fileNamingSettingsResponse(settings))
+}
+
+func (s *Server) UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body FileNamingSettingsRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := fileNamingSettingsInput(w, body)
+	if !ok {
+		return
+	}
+
+	settings, err := s.settings.SaveFileNamingSettings(r.Context(), input)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update file naming settings")
+		return
+	}
+	writeJSON(w, http.StatusOK, fileNamingSettingsResponse(settings))
+}
+
+func (s *Server) ListMediaProfiles(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	profiles, err := s.settings.ListMediaProfiles(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list media profiles")
+		return
+	}
+	writeJSON(w, http.StatusOK, mediaProfileListResponse(profiles))
+}
+
+func (s *Server) CreateMediaProfile(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body MediaProfileRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := mediaProfileInput(w, body)
+	if !ok {
+		return
+	}
+
+	profile, err := s.settings.CreateMediaProfile(r.Context(), input)
+	if err != nil {
+		writeSettingsError(w, err, "Could not create media profile")
+		return
+	}
+	writeJSON(w, http.StatusCreated, mediaProfileResponse(profile))
+}
+
+func (s *Server) UpdateMediaProfile(w http.ResponseWriter, r *http.Request, id ProfileId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body MediaProfileRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := mediaProfileInput(w, body)
+	if !ok {
+		return
+	}
+
+	profile, err := s.settings.UpdateMediaProfile(r.Context(), string(id), input)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update media profile")
+		return
+	}
+	writeJSON(w, http.StatusOK, mediaProfileResponse(profile))
+}
+
+func (s *Server) DeleteMediaProfile(w http.ResponseWriter, r *http.Request, id ProfileId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	if err := s.settings.DeleteMediaProfile(r.Context(), string(id)); err != nil {
+		writeSettingsError(w, err, "Could not delete media profile")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) ListMetadataProviders(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return

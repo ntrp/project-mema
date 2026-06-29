@@ -4,16 +4,23 @@
 	interface Props {
 		activities: DownloadActivity[];
 		loading: boolean;
+		canManage: boolean;
+		cancellingId?: string;
 		onRefresh: () => void;
+		onCancel: (_activity: DownloadActivity) => void;
 	}
 
-	let { activities, loading, onRefresh }: Props = $props();
+	let { activities, loading, canManage, cancellingId, onRefresh, onCancel }: Props = $props();
 
 	function createdLabel(value: string) {
 		return new Intl.DateTimeFormat(undefined, {
 			dateStyle: 'short',
 			timeStyle: 'short'
 		}).format(new Date(value));
+	}
+
+	function cancellable(activity: DownloadActivity) {
+		return ['queued', 'grabbed', 'downloading'].includes(activity.status);
 	}
 </script>
 
@@ -37,9 +44,9 @@
 			<span>{activity.downloadClientName} · {activity.indexerName}</span>
 			<div class="status-stack">
 				<small
-					class:status-enabled={activity.status === 'grabbed'}
-					class:pending={activity.status === 'queued'}
-					class:test-failed={activity.status === 'failed'}
+					class:status-enabled={activity.status === 'grabbed' || activity.status === 'completed'}
+					class:pending={activity.status === 'queued' || activity.status === 'downloading'}
+					class:test-failed={activity.status === 'failed' || activity.status === 'cancelled'}
 				>
 					{activity.status}
 				</small>
@@ -48,6 +55,16 @@
 					<small class="test-detail">{activity.error}</small>
 				{/if}
 			</div>
+			{#if canManage && cancellable(activity)}
+				<button
+					type="button"
+					class="danger"
+					disabled={cancellingId === activity.id}
+					onclick={() => onCancel(activity)}
+				>
+					{cancellingId === activity.id ? 'Cancelling' : 'Cancel'}
+				</button>
+			{/if}
 		</div>
 	{:else}
 		<div class="panel">

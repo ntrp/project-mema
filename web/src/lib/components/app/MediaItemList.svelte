@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { MediaItem, MediaType } from '$lib/settings/types';
+	import type { MediaItem, MediaItemStatus, MediaType } from '$lib/settings/types';
 
 	interface Props {
 		mediaType: MediaType;
@@ -23,6 +23,17 @@
 			return path;
 		}
 		return `https://image.tmdb.org/t/p/w500${path}`;
+	}
+
+	function statusLabel(status: MediaItemStatus) {
+		switch (status) {
+			case 'downloaded':
+				return 'Downloaded';
+			case 'downloading':
+				return 'Downloading';
+			default:
+				return 'Missing';
+		}
 	}
 </script>
 
@@ -60,8 +71,12 @@
 						{/each}
 					</div>
 				{/if}
-				<small class:status-enabled={item.monitored} class:status-disabled={!item.monitored}>
-					{item.monitored ? 'Monitored' : 'Paused'}
+				<small
+					class:status-enabled={item.status === 'downloaded'}
+					class:pending={item.status === 'downloading'}
+					class:status-disabled={item.status === 'missing'}
+				>
+					{statusLabel(item.status)}
 				</small>
 			</div>
 		</a>

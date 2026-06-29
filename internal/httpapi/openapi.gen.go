@@ -21,14 +21,23 @@ const (
 
 // Defines values for DownloadActivityStatus.
 const (
-	DownloadActivityStatusFailed  DownloadActivityStatus = "failed"
-	DownloadActivityStatusGrabbed DownloadActivityStatus = "grabbed"
-	DownloadActivityStatusQueued  DownloadActivityStatus = "queued"
+	DownloadActivityStatusCancelled   DownloadActivityStatus = "cancelled"
+	DownloadActivityStatusCompleted   DownloadActivityStatus = "completed"
+	DownloadActivityStatusDownloading DownloadActivityStatus = "downloading"
+	DownloadActivityStatusFailed      DownloadActivityStatus = "failed"
+	DownloadActivityStatusGrabbed     DownloadActivityStatus = "grabbed"
+	DownloadActivityStatusQueued      DownloadActivityStatus = "queued"
 )
 
 // Valid indicates whether the value is a known member of the DownloadActivityStatus enum.
 func (e DownloadActivityStatus) Valid() bool {
 	switch e {
+	case DownloadActivityStatusCancelled:
+		return true
+	case DownloadActivityStatusCompleted:
+		return true
+	case DownloadActivityStatusDownloading:
+		return true
 	case DownloadActivityStatusFailed:
 		return true
 	case DownloadActivityStatusGrabbed:
@@ -160,6 +169,27 @@ func (e LibraryScanItemStatus) Valid() bool {
 	case LibraryScanItemStatusManuallyAdded:
 		return true
 	case LibraryScanItemStatusPending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaItemStatus.
+const (
+	Downloaded  MediaItemStatus = "downloaded"
+	Downloading MediaItemStatus = "downloading"
+	Missing     MediaItemStatus = "missing"
+)
+
+// Valid indicates whether the value is a known member of the MediaItemStatus enum.
+func (e MediaItemStatus) Valid() bool {
+	switch e {
+	case Downloaded:
+		return true
+	case Downloading:
+		return true
+	case Missing:
 		return true
 	default:
 		return false
@@ -332,6 +362,7 @@ func (e UserRole) Valid() bool {
 type DownloadActivity struct {
 	CreatedAt          time.Time              `json:"createdAt"`
 	DownloadClientName string                 `json:"downloadClientName"`
+	DownloadId         *string                `json:"downloadId,omitempty"`
 	DownloadUrl        string                 `json:"downloadUrl"`
 	Error              *string                `json:"error,omitempty"`
 	Id                 openapi_types.UUID     `json:"id"`
@@ -394,6 +425,32 @@ type ErrorResponse struct {
 	Code    string                  `json:"code"`
 	Details *map[string]interface{} `json:"details,omitempty"`
 	Message string                  `json:"message"`
+}
+
+// FileNamingSettings defines model for FileNamingSettings.
+type FileNamingSettings struct {
+	AnimeEpisodeFormat   string    `json:"animeEpisodeFormat"`
+	CreatedAt            time.Time `json:"createdAt"`
+	DailyEpisodeFormat   string    `json:"dailyEpisodeFormat"`
+	MovieFileFormat      string    `json:"movieFileFormat"`
+	MovieFolderFormat    string    `json:"movieFolderFormat"`
+	SeasonFolderFormat   string    `json:"seasonFolderFormat"`
+	SeriesEpisodeFormat  string    `json:"seriesEpisodeFormat"`
+	SeriesFolderFormat   string    `json:"seriesFolderFormat"`
+	SpecialsFolderFormat string    `json:"specialsFolderFormat"`
+	UpdatedAt            time.Time `json:"updatedAt"`
+}
+
+// FileNamingSettingsRequest defines model for FileNamingSettingsRequest.
+type FileNamingSettingsRequest struct {
+	AnimeEpisodeFormat   string `json:"animeEpisodeFormat"`
+	DailyEpisodeFormat   string `json:"dailyEpisodeFormat"`
+	MovieFileFormat      string `json:"movieFileFormat"`
+	MovieFolderFormat    string `json:"movieFolderFormat"`
+	SeasonFolderFormat   string `json:"seasonFolderFormat"`
+	SeriesEpisodeFormat  string `json:"seriesEpisodeFormat"`
+	SeriesFolderFormat   string `json:"seriesFolderFormat"`
+	SpecialsFolderFormat string `json:"specialsFolderFormat"`
 }
 
 // GrabReleaseRequest defines model for GrabReleaseRequest.
@@ -614,20 +671,26 @@ type MediaGroupedSearchResponse struct {
 
 // MediaItem defines model for MediaItem.
 type MediaItem struct {
-	CreatedAt        time.Time           `json:"createdAt"`
-	ExternalId       *string             `json:"externalId,omitempty"`
-	ExternalProvider *string             `json:"externalProvider,omitempty"`
-	Id               openapi_types.UUID  `json:"id"`
-	LibraryFolderId  *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	Monitored        bool                `json:"monitored"`
-	Overview         *string             `json:"overview,omitempty"`
-	PosterPath       *string             `json:"posterPath,omitempty"`
-	QualityProfileId *string             `json:"qualityProfileId,omitempty"`
-	Tags             *[]string           `json:"tags,omitempty"`
-	Title            string              `json:"title"`
-	Type             MediaType           `json:"type"`
-	UpdatedAt        time.Time           `json:"updatedAt"`
-	Year             *int32              `json:"year,omitempty"`
+	CreatedAt          time.Time           `json:"createdAt"`
+	ExternalId         *string             `json:"externalId,omitempty"`
+	ExternalProvider   *string             `json:"externalProvider,omitempty"`
+	FilePaths          []string            `json:"filePaths"`
+	Id                 openapi_types.UUID  `json:"id"`
+	LibraryFolderId    *openapi_types.UUID `json:"libraryFolderId,omitempty"`
+	LibraryFolderPath  *string             `json:"libraryFolderPath,omitempty"`
+	MediaFolderPath    *string             `json:"mediaFolderPath,omitempty"`
+	MetadataFilePaths  []string            `json:"metadataFilePaths"`
+	Monitored          bool                `json:"monitored"`
+	Overview           *string             `json:"overview,omitempty"`
+	PosterPath         *string             `json:"posterPath,omitempty"`
+	QualityProfileId   *string             `json:"qualityProfileId,omitempty"`
+	QualityProfileName *string             `json:"qualityProfileName,omitempty"`
+	Status             MediaItemStatus     `json:"status"`
+	Tags               *[]string           `json:"tags,omitempty"`
+	Title              string              `json:"title"`
+	Type               MediaType           `json:"type"`
+	UpdatedAt          time.Time           `json:"updatedAt"`
+	Year               *int32              `json:"year,omitempty"`
 }
 
 // MediaItemListResponse defines model for MediaItemListResponse.
@@ -649,6 +712,9 @@ type MediaItemRequest struct {
 	Type             MediaType           `json:"type"`
 	Year             *int32              `json:"year,omitempty"`
 }
+
+// MediaItemStatus defines model for MediaItemStatus.
+type MediaItemStatus string
 
 // MediaMetadataDetails defines model for MediaMetadataDetails.
 type MediaMetadataDetails struct {
@@ -703,6 +769,26 @@ type MediaMetadataSeason struct {
 	Episodes     *[]MediaMetadataEpisode `json:"episodes,omitempty"`
 	Name         string                  `json:"name"`
 	PosterPath   *string                 `json:"posterPath,omitempty"`
+}
+
+// MediaProfile defines model for MediaProfile.
+type MediaProfile struct {
+	CreatedAt  time.Time `json:"createdAt"`
+	Id         string    `json:"id"`
+	Name       string    `json:"name"`
+	QualityIds []string  `json:"qualityIds"`
+	UpdatedAt  time.Time `json:"updatedAt"`
+}
+
+// MediaProfileListResponse defines model for MediaProfileListResponse.
+type MediaProfileListResponse struct {
+	Profiles []MediaProfile `json:"profiles"`
+}
+
+// MediaProfileRequest defines model for MediaProfileRequest.
+type MediaProfileRequest struct {
+	Name       string   `json:"name"`
+	QualityIds []string `json:"qualityIds"`
 }
 
 // MediaRequest defines model for MediaRequest.
@@ -874,6 +960,56 @@ type MetadataProviderRequest struct {
 // MetadataProviderType defines model for MetadataProviderType.
 type MetadataProviderType string
 
+// PathMapping defines model for PathMapping.
+type PathMapping struct {
+	AppPath    string             `json:"appPath"`
+	ClientPath string             `json:"clientPath"`
+	CreatedAt  time.Time          `json:"createdAt"`
+	Id         openapi_types.UUID `json:"id"`
+	UpdatedAt  time.Time          `json:"updatedAt"`
+}
+
+// PathMappingListResponse defines model for PathMappingListResponse.
+type PathMappingListResponse struct {
+	Mappings []PathMapping `json:"mappings"`
+}
+
+// PathMappingRequest defines model for PathMappingRequest.
+type PathMappingRequest struct {
+	AppPath    string `json:"appPath"`
+	ClientPath string `json:"clientPath"`
+}
+
+// QualitySizeSetting defines model for QualitySizeSetting.
+type QualitySizeSetting struct {
+	CreatedAt                time.Time `json:"createdAt"`
+	MaximumSizeMbPerMinute   *float64  `json:"maximumSizeMbPerMinute,omitempty"`
+	MinimumSizeMbPerMinute   float64   `json:"minimumSizeMbPerMinute"`
+	Name                     string    `json:"name"`
+	PreferredSizeMbPerMinute *float64  `json:"preferredSizeMbPerMinute,omitempty"`
+	QualityId                string    `json:"qualityId"`
+	SortOrder                int32     `json:"sortOrder"`
+	UpdatedAt                time.Time `json:"updatedAt"`
+}
+
+// QualitySizeSettingRequest defines model for QualitySizeSettingRequest.
+type QualitySizeSettingRequest struct {
+	MaximumSizeMbPerMinute   *float64 `json:"maximumSizeMbPerMinute,omitempty"`
+	MinimumSizeMbPerMinute   float64  `json:"minimumSizeMbPerMinute"`
+	PreferredSizeMbPerMinute *float64 `json:"preferredSizeMbPerMinute,omitempty"`
+	QualityId                string   `json:"qualityId"`
+}
+
+// QualitySizeSettingsResponse defines model for QualitySizeSettingsResponse.
+type QualitySizeSettingsResponse struct {
+	Qualities []QualitySizeSetting `json:"qualities"`
+}
+
+// QualitySizeSettingsUpdateRequest defines model for QualitySizeSettingsUpdateRequest.
+type QualitySizeSettingsUpdateRequest struct {
+	Qualities []QualitySizeSettingRequest `json:"qualities"`
+}
+
 // ReleaseCandidate defines model for ReleaseCandidate.
 type ReleaseCandidate struct {
 	Guid        *string             `json:"guid,omitempty"`
@@ -979,6 +1115,9 @@ type UserUpdateRequest struct {
 	Username string   `json:"username"`
 }
 
+// ProfileId defines model for ProfileId.
+type ProfileId = string
+
 // ResourceId defines model for ResourceId.
 type ResourceId = openapi_types.UUID
 
@@ -1042,6 +1181,9 @@ type TestDownloadClientConfigJSONRequestBody = DownloadClientRequest
 // UpdateDownloadClientJSONRequestBody defines body for UpdateDownloadClient for application/json ContentType.
 type UpdateDownloadClientJSONRequestBody = DownloadClientRequest
 
+// UpdateFileNamingSettingsJSONRequestBody defines body for UpdateFileNamingSettings for application/json ContentType.
+type UpdateFileNamingSettingsJSONRequestBody = FileNamingSettingsRequest
+
 // CreateIndexerJSONRequestBody defines body for CreateIndexer for application/json ContentType.
 type CreateIndexerJSONRequestBody = IndexerRequest
 
@@ -1054,6 +1196,9 @@ type CreateLibraryFolderOptionJSONRequestBody = LibraryFolderOptionCreateRequest
 // CreateLibraryFolderJSONRequestBody defines body for CreateLibraryFolder for application/json ContentType.
 type CreateLibraryFolderJSONRequestBody = LibraryFolderRequest
 
+// CreatePathMappingJSONRequestBody defines body for CreatePathMapping for application/json ContentType.
+type CreatePathMappingJSONRequestBody = PathMappingRequest
+
 // MatchLibraryScanItemJSONRequestBody defines body for MatchLibraryScanItem for application/json ContentType.
 type MatchLibraryScanItemJSONRequestBody = LibraryScanItemMatchRequest
 
@@ -1065,6 +1210,15 @@ type CreateMetadataProviderJSONRequestBody = MetadataProviderRequest
 
 // UpdateMetadataProviderJSONRequestBody defines body for UpdateMetadataProvider for application/json ContentType.
 type UpdateMetadataProviderJSONRequestBody = MetadataProviderRequest
+
+// CreateMediaProfileJSONRequestBody defines body for CreateMediaProfile for application/json ContentType.
+type CreateMediaProfileJSONRequestBody = MediaProfileRequest
+
+// UpdateMediaProfileJSONRequestBody defines body for UpdateMediaProfile for application/json ContentType.
+type UpdateMediaProfileJSONRequestBody = MediaProfileRequest
+
+// UpdateQualitySizeSettingsJSONRequestBody defines body for UpdateQualitySizeSettings for application/json ContentType.
+type UpdateQualitySizeSettingsJSONRequestBody = QualitySizeSettingsUpdateRequest
 
 // CreateTagJSONRequestBody defines body for CreateTag for application/json ContentType.
 type CreateTagJSONRequestBody = TagRequest
@@ -1086,6 +1240,9 @@ type ServerInterface interface {
 	// List recent download activity
 	// (GET /activity/downloads)
 	ListDownloadActivity(w http.ResponseWriter, r *http.Request)
+	// Cancel an active download activity
+	// (POST /activity/downloads/{id}/cancel)
+	CancelDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Log in with local admin credentials
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -1164,6 +1321,12 @@ type ServerInterface interface {
 	// Test a configured download client
 	// (POST /settings/download-clients/{id}/test)
 	TestDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get file naming settings
+	// (GET /settings/file-naming)
+	GetFileNamingSettings(w http.ResponseWriter, r *http.Request)
+	// Update file naming settings
+	// (PUT /settings/file-naming)
+	UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request)
 	// List configured indexers
 	// (GET /settings/indexers)
 	ListIndexers(w http.ResponseWriter, r *http.Request)
@@ -1194,6 +1357,15 @@ type ServerInterface interface {
 	// Remove a configured library folder
 	// (DELETE /settings/library/folders/{id})
 	DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List download client path mappings
+	// (GET /settings/library/path-mappings)
+	ListPathMappings(w http.ResponseWriter, r *http.Request)
+	// Create or update a download client path mapping
+	// (POST /settings/library/path-mappings)
+	CreatePathMapping(w http.ResponseWriter, r *http.Request)
+	// Remove a configured path mapping
+	// (DELETE /settings/library/path-mappings/{id})
+	DeletePathMapping(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Get a library folder scan with discovered media review items
 	// (GET /settings/library/scans/{id})
 	GetLibraryScan(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -1224,6 +1396,24 @@ type ServerInterface interface {
 	// Test a configured metadata provider
 	// (POST /settings/metadata-providers/{id}/test)
 	TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List media profiles
+	// (GET /settings/profiles)
+	ListMediaProfiles(w http.ResponseWriter, r *http.Request)
+	// Create a media profile
+	// (POST /settings/profiles)
+	CreateMediaProfile(w http.ResponseWriter, r *http.Request)
+	// Delete a media profile
+	// (DELETE /settings/profiles/{id})
+	DeleteMediaProfile(w http.ResponseWriter, r *http.Request, id ProfileId)
+	// Update a media profile
+	// (PUT /settings/profiles/{id})
+	UpdateMediaProfile(w http.ResponseWriter, r *http.Request, id ProfileId)
+	// List quality size settings
+	// (GET /settings/quality-sizes)
+	ListQualitySizeSettings(w http.ResponseWriter, r *http.Request)
+	// Update quality size settings
+	// (PUT /settings/quality-sizes)
+	UpdateQualitySizeSettings(w http.ResponseWriter, r *http.Request)
 	// List media tags
 	// (GET /settings/tags)
 	ListTags(w http.ResponseWriter, r *http.Request)
@@ -1269,6 +1459,12 @@ type Unimplemented struct{}
 // List recent download activity
 // (GET /activity/downloads)
 func (_ Unimplemented) ListDownloadActivity(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Cancel an active download activity
+// (POST /activity/downloads/{id}/cancel)
+func (_ Unimplemented) CancelDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1428,6 +1624,18 @@ func (_ Unimplemented) TestDownloadClient(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Get file naming settings
+// (GET /settings/file-naming)
+func (_ Unimplemented) GetFileNamingSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update file naming settings
+// (PUT /settings/file-naming)
+func (_ Unimplemented) UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List configured indexers
 // (GET /settings/indexers)
 func (_ Unimplemented) ListIndexers(w http.ResponseWriter, r *http.Request) {
@@ -1488,6 +1696,24 @@ func (_ Unimplemented) DeleteLibraryFolder(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// List download client path mappings
+// (GET /settings/library/path-mappings)
+func (_ Unimplemented) ListPathMappings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create or update a download client path mapping
+// (POST /settings/library/path-mappings)
+func (_ Unimplemented) CreatePathMapping(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove a configured path mapping
+// (DELETE /settings/library/path-mappings/{id})
+func (_ Unimplemented) DeletePathMapping(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Get a library folder scan with discovered media review items
 // (GET /settings/library/scans/{id})
 func (_ Unimplemented) GetLibraryScan(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -1545,6 +1771,42 @@ func (_ Unimplemented) UpdateMetadataProvider(w http.ResponseWriter, r *http.Req
 // Test a configured metadata provider
 // (POST /settings/metadata-providers/{id}/test)
 func (_ Unimplemented) TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List media profiles
+// (GET /settings/profiles)
+func (_ Unimplemented) ListMediaProfiles(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a media profile
+// (POST /settings/profiles)
+func (_ Unimplemented) CreateMediaProfile(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a media profile
+// (DELETE /settings/profiles/{id})
+func (_ Unimplemented) DeleteMediaProfile(w http.ResponseWriter, r *http.Request, id ProfileId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a media profile
+// (PUT /settings/profiles/{id})
+func (_ Unimplemented) UpdateMediaProfile(w http.ResponseWriter, r *http.Request, id ProfileId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List quality size settings
+// (GET /settings/quality-sizes)
+func (_ Unimplemented) ListQualitySizeSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update quality size settings
+// (PUT /settings/quality-sizes)
+func (_ Unimplemented) UpdateQualitySizeSettings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1640,6 +1902,38 @@ func (siw *ServerInterfaceWrapper) ListDownloadActivity(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListDownloadActivity(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CancelDownloadActivity operation middleware
+func (siw *ServerInterfaceWrapper) CancelDownloadActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CancelDownloadActivity(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2340,6 +2634,46 @@ func (siw *ServerInterfaceWrapper) TestDownloadClient(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetFileNamingSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetFileNamingSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFileNamingSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateFileNamingSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFileNamingSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListIndexers operation middleware
 func (siw *ServerInterfaceWrapper) ListIndexers(w http.ResponseWriter, r *http.Request) {
 
@@ -2598,6 +2932,78 @@ func (siw *ServerInterfaceWrapper) DeleteLibraryFolder(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteLibraryFolder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPathMappings operation middleware
+func (siw *ServerInterfaceWrapper) ListPathMappings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPathMappings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePathMapping operation middleware
+func (siw *ServerInterfaceWrapper) CreatePathMapping(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePathMapping(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePathMapping operation middleware
+func (siw *ServerInterfaceWrapper) DeletePathMapping(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePathMapping(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2867,6 +3273,150 @@ func (siw *ServerInterfaceWrapper) TestMetadataProvider(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestMetadataProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMediaProfiles operation middleware
+func (siw *ServerInterfaceWrapper) ListMediaProfiles(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMediaProfiles(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateMediaProfile operation middleware
+func (siw *ServerInterfaceWrapper) CreateMediaProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateMediaProfile(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMediaProfile operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMediaProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ProfileId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMediaProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMediaProfile operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMediaProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ProfileId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMediaProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListQualitySizeSettings operation middleware
+func (siw *ServerInterfaceWrapper) ListQualitySizeSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListQualitySizeSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateQualitySizeSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateQualitySizeSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateQualitySizeSettings(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3281,6 +3831,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/activity/downloads", wrapper.ListDownloadActivity)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/activity/downloads/{id}/cancel", wrapper.CancelDownloadActivity)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/login", wrapper.Login)
 	})
 	r.Group(func(r chi.Router) {
@@ -3359,6 +3912,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/settings/download-clients/{id}/test", wrapper.TestDownloadClient)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/file-naming", wrapper.GetFileNamingSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/file-naming", wrapper.UpdateFileNamingSettings)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/indexers", wrapper.ListIndexers)
 	})
 	r.Group(func(r chi.Router) {
@@ -3389,6 +3948,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/settings/library/folders/{id}", wrapper.DeleteLibraryFolder)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/library/path-mappings", wrapper.ListPathMappings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/library/path-mappings", wrapper.CreatePathMapping)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/library/path-mappings/{id}", wrapper.DeletePathMapping)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/library/scans/{id}", wrapper.GetLibraryScan)
 	})
 	r.Group(func(r chi.Router) {
@@ -3417,6 +3985,24 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/metadata-providers/{id}/test", wrapper.TestMetadataProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/profiles", wrapper.ListMediaProfiles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/profiles", wrapper.CreateMediaProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/profiles/{id}", wrapper.DeleteMediaProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/profiles/{id}", wrapper.UpdateMediaProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/quality-sizes", wrapper.ListQualitySizeSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/quality-sizes", wrapper.UpdateQualitySizeSettings)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/tags", wrapper.ListTags)

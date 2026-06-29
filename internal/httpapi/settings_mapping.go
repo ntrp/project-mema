@@ -163,6 +163,119 @@ func tagInput(w http.ResponseWriter, request TagRequest) (string, bool) {
 	return name, true
 }
 
+func qualitySizeSettingsInput(
+	w http.ResponseWriter,
+	request QualitySizeSettingsUpdateRequest,
+) ([]storage.QualitySizeSettingInput, bool) {
+	inputs := make([]storage.QualitySizeSettingInput, 0, len(request.Qualities))
+	for _, quality := range request.Qualities {
+		qualityID := strings.TrimSpace(quality.QualityId)
+		if qualityID == "" {
+			writeError(w, http.StatusBadRequest, "invalid_quality", "Quality is required")
+			return nil, false
+		}
+		if quality.MinimumSizeMbPerMinute < 0 {
+			writeError(w, http.StatusBadRequest, "invalid_size", "Minimum size must be zero or greater")
+			return nil, false
+		}
+		if quality.PreferredSizeMbPerMinute != nil && *quality.PreferredSizeMbPerMinute < quality.MinimumSizeMbPerMinute {
+			writeError(w, http.StatusBadRequest, "invalid_size", "Preferred size must be greater than or equal to minimum size")
+			return nil, false
+		}
+		if quality.MaximumSizeMbPerMinute != nil && *quality.MaximumSizeMbPerMinute < quality.MinimumSizeMbPerMinute {
+			writeError(w, http.StatusBadRequest, "invalid_size", "Maximum size must be greater than or equal to minimum size")
+			return nil, false
+		}
+		if quality.PreferredSizeMbPerMinute != nil && quality.MaximumSizeMbPerMinute != nil &&
+			*quality.PreferredSizeMbPerMinute > *quality.MaximumSizeMbPerMinute {
+			writeError(w, http.StatusBadRequest, "invalid_size", "Preferred size must be less than or equal to maximum size")
+			return nil, false
+		}
+
+		inputs = append(inputs, storage.QualitySizeSettingInput{
+			QualityID:                qualityID,
+			MinimumSizeMBPerMinute:   quality.MinimumSizeMbPerMinute,
+			PreferredSizeMBPerMinute: quality.PreferredSizeMbPerMinute,
+			MaximumSizeMBPerMinute:   quality.MaximumSizeMbPerMinute,
+		})
+	}
+	return inputs, true
+}
+
+func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (storage.MediaProfileInput, bool) {
+	name := strings.Join(strings.Fields(request.Name), " ")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "invalid_name", "Name is required")
+		return storage.MediaProfileInput{}, false
+	}
+
+	qualityIDs := make([]string, 0, len(request.QualityIds))
+	seen := map[string]struct{}{}
+	for _, value := range request.QualityIds {
+		qualityID := strings.TrimSpace(value)
+		if qualityID == "" {
+			continue
+		}
+		if _, ok := seen[qualityID]; ok {
+			continue
+		}
+		seen[qualityID] = struct{}{}
+		qualityIDs = append(qualityIDs, qualityID)
+	}
+	if len(qualityIDs) == 0 {
+		writeError(w, http.StatusBadRequest, "quality_required", "Select at least one quality")
+		return storage.MediaProfileInput{}, false
+	}
+
+	return storage.MediaProfileInput{
+		Name:       name,
+		QualityIDs: qualityIDs,
+	}, true
+}
+
+func fileNamingSettingsInput(
+	w http.ResponseWriter,
+	request FileNamingSettingsRequest,
+) (storage.FileNamingSettingsInput, bool) {
+	input := storage.FileNamingSettingsInput{
+		MovieFileFormat:      strings.TrimSpace(request.MovieFileFormat),
+		MovieFolderFormat:    strings.TrimSpace(request.MovieFolderFormat),
+		SeriesEpisodeFormat:  strings.TrimSpace(request.SeriesEpisodeFormat),
+		DailyEpisodeFormat:   strings.TrimSpace(request.DailyEpisodeFormat),
+		AnimeEpisodeFormat:   strings.TrimSpace(request.AnimeEpisodeFormat),
+		SeriesFolderFormat:   strings.TrimSpace(request.SeriesFolderFormat),
+		SeasonFolderFormat:   strings.TrimSpace(request.SeasonFolderFormat),
+		SpecialsFolderFormat: strings.TrimSpace(request.SpecialsFolderFormat),
+	}
+	if input.MovieFileFormat == "" ||
+		input.MovieFolderFormat == "" ||
+		input.SeriesEpisodeFormat == "" ||
+		input.DailyEpisodeFormat == "" ||
+		input.AnimeEpisodeFormat == "" ||
+		input.SeriesFolderFormat == "" ||
+		input.SeasonFolderFormat == "" ||
+		input.SpecialsFolderFormat == "" {
+		writeError(w, http.StatusBadRequest, "invalid_template", "All file naming templates are required")
+		return storage.FileNamingSettingsInput{}, false
+	}
+	return input, true
+}
+
+func fileNamingSettingsResponse(settings storage.FileNamingSettings) FileNamingSettings {
+	return FileNamingSettings{
+		MovieFileFormat:      settings.MovieFileFormat,
+		MovieFolderFormat:    settings.MovieFolderFormat,
+		SeriesEpisodeFormat:  settings.SeriesEpisodeFormat,
+		DailyEpisodeFormat:   settings.DailyEpisodeFormat,
+		AnimeEpisodeFormat:   settings.AnimeEpisodeFormat,
+		SeriesFolderFormat:   settings.SeriesFolderFormat,
+		SeasonFolderFormat:   settings.SeasonFolderFormat,
+		SpecialsFolderFormat: settings.SpecialsFolderFormat,
+		CreatedAt:            settings.CreatedAt,
+		UpdatedAt:            settings.UpdatedAt,
+	}
+}
+
 func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
 	return downloadclients.Config{
 		Name:     client.Name,
@@ -316,6 +429,45 @@ func tagResponse(tag storage.Tag) Tag {
 		Name:      tag.Name,
 		CreatedAt: tag.CreatedAt,
 		UpdatedAt: tag.UpdatedAt,
+	}
+}
+
+func qualitySizeSettingsResponse(settings []storage.QualitySizeSetting) QualitySizeSettingsResponse {
+	response := QualitySizeSettingsResponse{Qualities: make([]QualitySizeSetting, 0, len(settings))}
+	for _, setting := range settings {
+		response.Qualities = append(response.Qualities, qualitySizeSettingResponse(setting))
+	}
+	return response
+}
+
+func qualitySizeSettingResponse(setting storage.QualitySizeSetting) QualitySizeSetting {
+	return QualitySizeSetting{
+		QualityId:                setting.ID,
+		Name:                     setting.Name,
+		SortOrder:                setting.SortOrder,
+		MinimumSizeMbPerMinute:   setting.MinimumSizeMBPerMinute,
+		PreferredSizeMbPerMinute: setting.PreferredSizeMBPerMinute,
+		MaximumSizeMbPerMinute:   setting.MaximumSizeMBPerMinute,
+		CreatedAt:                setting.CreatedAt,
+		UpdatedAt:                setting.UpdatedAt,
+	}
+}
+
+func mediaProfileListResponse(profiles []storage.MediaProfile) MediaProfileListResponse {
+	response := MediaProfileListResponse{Profiles: make([]MediaProfile, 0, len(profiles))}
+	for _, profile := range profiles {
+		response.Profiles = append(response.Profiles, mediaProfileResponse(profile))
+	}
+	return response
+}
+
+func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
+	return MediaProfile{
+		Id:         profile.ID,
+		Name:       profile.Name,
+		QualityIds: profile.QualityIDs,
+		CreatedAt:  profile.CreatedAt,
+		UpdatedAt:  profile.UpdatedAt,
 	}
 }
 

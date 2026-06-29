@@ -14,6 +14,7 @@ import (
 
 	"media-manager/internal/config"
 	"media-manager/internal/downloadclients"
+	"media-manager/internal/events"
 	"media-manager/internal/httpapi"
 	"media-manager/internal/indexers"
 	"media-manager/internal/jobs"
@@ -97,6 +98,14 @@ func openDatabase(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error)
 		pool.Close()
 		return nil, fmt.Errorf("default metadata provider setup failed: %w", err)
 	}
+	if err := storage.NewSettingsStore(pool).EnsureDefaultMediaProfiles(ctx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("default media profile setup failed: %w", err)
+	}
+	if err := storage.NewSettingsStore(pool).EnsureDefaultFileNamingSettings(ctx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("default file naming setup failed: %w", err)
+	}
 	if err := storage.NewSettingsStore(pool).EnsureDefaultAdminUser(ctx, cfg.AdminUsername, cfg.AdminPassword); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("default admin user setup failed: %w", err)
@@ -111,11 +120,12 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 	downloadClientService := downloadclients.NewService(httpClient)
 	indexerService := indexers.NewService(httpClient)
 	metadataService := metadata.NewService(httpClient, settingsStore)
-	jobClient, err := jobs.NewClient(pool, settingsStore, indexerService, downloadClientService)
+	eventBroker := events.NewBroker()
+	jobClient, err := jobs.NewClient(pool, settingsStore, indexerService, downloadClientService, eventBroker)
 	if err != nil {
 		return nil, nil, fmt.Errorf("job client setup failed: %w", err)
 	}
-	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, metadataService, jobClient), apiRouter)
+	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, metadataService, jobClient, eventBroker), apiRouter)
 
 	router := chi.NewRouter()
 	router.Mount("/api", apiRouter)

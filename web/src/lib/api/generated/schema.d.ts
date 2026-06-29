@@ -328,6 +328,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/activity/downloads/{id}/cancel': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Cancel an active download activity */
+		post: operations['cancelDownloadActivity'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/download-clients': {
 		parameters: {
 			query?: never;
@@ -454,6 +473,80 @@ export interface paths {
 		/** Test a configured indexer */
 		post: operations['testIndexer'];
 		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/quality-sizes': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List quality size settings */
+		get: operations['listQualitySizeSettings'];
+		/** Update quality size settings */
+		put: operations['updateQualitySizeSettings'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/file-naming': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get file naming settings */
+		get: operations['getFileNamingSettings'];
+		/** Update file naming settings */
+		put: operations['updateFileNamingSettings'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/profiles': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List media profiles */
+		get: operations['listMediaProfiles'];
+		put?: never;
+		/** Create a media profile */
+		post: operations['createMediaProfile'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/profiles/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ProfileId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a media profile */
+		put: operations['updateMediaProfile'];
+		post?: never;
+		/** Delete a media profile */
+		delete: operations['deleteMediaProfile'];
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -639,6 +732,43 @@ export interface paths {
 		post?: never;
 		/** Remove a configured library folder */
 		delete: operations['deleteLibraryFolder'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/path-mappings': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List download client path mappings */
+		get: operations['listPathMappings'];
+		put?: never;
+		/** Create or update a download client path mapping */
+		post: operations['createPathMapping'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/path-mappings/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Remove a configured path mapping */
+		delete: operations['deletePathMapping'];
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -964,6 +1094,12 @@ export interface components {
 		MediaItem: components['schemas']['MediaItemRequest'] & {
 			/** Format: uuid */
 			id: string;
+			status: components['schemas']['MediaItemStatus'];
+			qualityProfileName?: string;
+			libraryFolderPath?: string;
+			mediaFolderPath?: string;
+			filePaths: string[];
+			metadataFilePaths: string[];
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
@@ -984,6 +1120,8 @@ export interface components {
 			libraryFolderId?: string;
 			tags?: string[];
 		};
+		/** @enum {string} */
+		MediaItemStatus: 'missing' | 'downloading' | 'downloaded';
 		MediaRequestListResponse: {
 			requests: components['schemas']['MediaRequest'][];
 		};
@@ -1033,6 +1171,60 @@ export interface components {
 		};
 		TagRequest: {
 			name: string;
+		};
+		QualitySizeSettingsResponse: {
+			qualities: components['schemas']['QualitySizeSetting'][];
+		};
+		QualitySizeSettingsUpdateRequest: {
+			qualities: components['schemas']['QualitySizeSettingRequest'][];
+		};
+		QualitySizeSetting: components['schemas']['QualitySizeSettingRequest'] & {
+			name: string;
+			/** Format: int32 */
+			sortOrder: number;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		QualitySizeSettingRequest: {
+			qualityId: string;
+			/** Format: double */
+			minimumSizeMbPerMinute: number;
+			/** Format: double */
+			preferredSizeMbPerMinute?: number | null;
+			/** Format: double */
+			maximumSizeMbPerMinute?: number | null;
+		};
+		MediaProfileListResponse: {
+			profiles: components['schemas']['MediaProfile'][];
+		};
+		MediaProfile: components['schemas']['MediaProfileRequest'] & {
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		MediaProfileRequest: {
+			name: string;
+			qualityIds: string[];
+		};
+		FileNamingSettings: components['schemas']['FileNamingSettingsRequest'] & {
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		FileNamingSettingsRequest: {
+			movieFileFormat: string;
+			movieFolderFormat: string;
+			seriesEpisodeFormat: string;
+			dailyEpisodeFormat: string;
+			animeEpisodeFormat: string;
+			seriesFolderFormat: string;
+			seasonFolderFormat: string;
+			specialsFolderFormat: string;
 		};
 		MediaRequestApproveRequest: {
 			qualityProfileId: string;
@@ -1092,9 +1284,10 @@ export interface components {
 			releaseTitle: string;
 			indexerName: string;
 			downloadClientName: string;
+			downloadId?: string;
 			downloadUrl: string;
 			/** @enum {string} */
-			status: 'queued' | 'grabbed' | 'failed';
+			status: 'queued' | 'grabbed' | 'downloading' | 'completed' | 'cancelled' | 'failed';
 			error?: string;
 			/** Format: date-time */
 			createdAt: string;
@@ -1230,6 +1423,21 @@ export interface components {
 		};
 		LibraryFolderRequest: {
 			path: string;
+		};
+		PathMappingListResponse: {
+			mappings: components['schemas']['PathMapping'][];
+		};
+		PathMapping: components['schemas']['PathMappingRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		PathMappingRequest: {
+			clientPath: string;
+			appPath: string;
 		};
 		LibraryFolderOptionListResponse: {
 			currentPath: string;
@@ -1425,6 +1633,7 @@ export interface components {
 	};
 	parameters: {
 		ResourceId: string;
+		ProfileId: string;
 	};
 	requestBodies: never;
 	headers: never;
@@ -1918,6 +2127,31 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 		};
 	};
+	cancelDownloadActivity: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Download activity cancelled */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DownloadActivity'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	listDownloadClients: {
 		parameters: {
 			query?: never;
@@ -2183,6 +2417,198 @@ export interface operations {
 				content: {
 					'application/json': components['schemas']['IntegrationTestResponse'];
 				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listQualitySizeSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Quality size settings */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['QualitySizeSettingsResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateQualitySizeSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['QualitySizeSettingsUpdateRequest'];
+			};
+		};
+		responses: {
+			/** @description Quality size settings updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['QualitySizeSettingsResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	getFileNamingSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description File naming settings */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['FileNamingSettings'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateFileNamingSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['FileNamingSettingsRequest'];
+			};
+		};
+		responses: {
+			/** @description File naming settings updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['FileNamingSettings'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listMediaProfiles: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media profiles */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaProfileListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createMediaProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaProfileRequest'];
+			};
+		};
+		responses: {
+			/** @description Media profile created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaProfile'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateMediaProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ProfileId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaProfileRequest'];
+			};
+		};
+		responses: {
+			/** @description Media profile updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaProfile'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteMediaProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ProfileId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media profile deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
 			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
@@ -2589,6 +3015,75 @@ export interface operations {
 		requestBody?: never;
 		responses: {
 			/** @description Library folder removed */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listPathMappings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Configured path mappings */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['PathMappingListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createPathMapping: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['PathMappingRequest'];
+			};
+		};
+		responses: {
+			/** @description Path mapping saved */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['PathMapping'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deletePathMapping: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Path mapping removed */
 			204: {
 				headers: {
 					[name: string]: unknown;

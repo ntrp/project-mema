@@ -187,6 +187,26 @@ func libraryFolderResponse(folder storage.LibraryFolder) LibraryFolder {
 	}
 }
 
+func pathMappingInput(w http.ResponseWriter, request PathMappingRequest) (storage.PathMappingInput, bool) {
+	clientPath := strings.TrimSpace(request.ClientPath)
+	appPath := strings.TrimSpace(request.AppPath)
+	if clientPath == "" || appPath == "" {
+		writeError(w, http.StatusBadRequest, "invalid_path_mapping", "Client and app paths are required")
+		return storage.PathMappingInput{}, false
+	}
+	return storage.PathMappingInput{ClientPath: clientPath, AppPath: appPath}, true
+}
+
+func pathMappingResponse(mapping storage.PathMapping) PathMapping {
+	return PathMapping{
+		Id:         openapi_types.UUID(mapping.ID),
+		ClientPath: mapping.ClientPath,
+		AppPath:    mapping.AppPath,
+		CreatedAt:  mapping.CreatedAt,
+		UpdatedAt:  mapping.UpdatedAt,
+	}
+}
+
 func libraryScanResponse(scan storage.LibraryScan) LibraryScan {
 	items := make([]LibraryScanItem, 0, len(scan.Items))
 	for _, item := range scan.Items {

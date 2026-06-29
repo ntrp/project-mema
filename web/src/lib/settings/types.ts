@@ -30,6 +30,8 @@ export type LibraryFolderOptionCreateRequest =
 export type LibraryFolderOptionListResponse =
 	components['schemas']['LibraryFolderOptionListResponse'];
 export type LibraryFolderRequest = components['schemas']['LibraryFolderRequest'];
+export type PathMapping = components['schemas']['PathMapping'];
+export type PathMappingRequest = components['schemas']['PathMappingRequest'];
 export type LibraryMediaKind = components['schemas']['LibraryMediaKind'];
 export type LibraryScan = components['schemas']['LibraryScan'];
 export type LibraryScanItem = components['schemas']['LibraryScanItem'];
@@ -47,11 +49,22 @@ export type MediaRequestStatus = components['schemas']['MediaRequestStatus'];
 export type MediaSearchGroup = components['schemas']['MediaSearchGroup'];
 export type MediaItem = components['schemas']['MediaItem'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];
+export type MediaItemStatus = components['schemas']['MediaItemStatus'];
 export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];
+export type DownloadActivityStatus = components['schemas']['DownloadActivity']['status'];
 export type JobEnqueueResponse = components['schemas']['JobEnqueueResponse'];
 export type Tag = components['schemas']['Tag'];
 export type TagRequest = components['schemas']['TagRequest'];
+export type QualitySizeSetting = components['schemas']['QualitySizeSetting'];
+export type QualitySizeSettingRequest = components['schemas']['QualitySizeSettingRequest'];
+export type QualitySizeSettingsResponse = components['schemas']['QualitySizeSettingsResponse'];
+export type QualitySizeSettingsUpdateRequest =
+	components['schemas']['QualitySizeSettingsUpdateRequest'];
+export type MediaProfile = components['schemas']['MediaProfile'];
+export type MediaProfileRequest = components['schemas']['MediaProfileRequest'];
+export type FileNamingSettings = components['schemas']['FileNamingSettings'];
+export type FileNamingSettingsRequest = components['schemas']['FileNamingSettingsRequest'];
 
 export type DownloadClientForm = DownloadClientRequest & { id?: string };
 export type IndexerForm = Omit<IndexerRequest, 'categories'> & {
@@ -60,6 +73,8 @@ export type IndexerForm = Omit<IndexerRequest, 'categories'> & {
 };
 export type MetadataProviderForm = MetadataProviderRequest & { id?: string };
 export type LibraryFolderForm = LibraryFolderRequest;
+export type PathMappingForm = PathMappingRequest;
+export type MediaProfileForm = MediaProfileRequest & { id?: string };
 export type UserForm = {
 	id?: string;
 	username: string;
@@ -78,6 +93,9 @@ export type SettingsSection =
 	| 'library'
 	| 'download-clients'
 	| 'indexers'
+	| 'quality'
+	| 'file-naming'
+	| 'profiles'
 	| 'metadata'
 	| 'tags'
 	| 'users'
@@ -89,6 +107,8 @@ export interface SettingsData {
 	metadataProviders: MetadataProvider[];
 	metadataCache: MetadataCacheResponse;
 	libraryFolders: LibraryFolder[];
+	pathMappings: PathMapping[];
+	mediaProfiles: MediaProfile[];
 	users: ManagedUser[];
 	tags: Tag[];
 }

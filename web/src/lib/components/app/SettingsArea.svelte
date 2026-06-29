@@ -1,32 +1,22 @@
 <script lang="ts">
-	import DownloadClientForm from '$lib/components/settings/DownloadClientForm.svelte';
-	import DownloadClientTable from '$lib/components/settings/DownloadClientTable.svelte';
-	import IndexerForm from '$lib/components/settings/IndexerForm.svelte';
-	import IndexerTable from '$lib/components/settings/IndexerTable.svelte';
-	import LibraryFolderForm from '$lib/components/settings/LibraryFolderForm.svelte';
-	import LibraryFolderTable from '$lib/components/settings/LibraryFolderTable.svelte';
-	import LibraryScanReview from '$lib/components/settings/LibraryScanReview.svelte';
+	import DownloadClientsSettingsSection from '$lib/components/settings/DownloadClientsSettingsSection.svelte';
+	import FileNamingSettings from '$lib/components/settings/FileNamingSettings.svelte';
+	import IndexersSettingsSection from '$lib/components/settings/IndexersSettingsSection.svelte';
+	import LibrarySettingsSection from '$lib/components/settings/LibrarySettingsSection.svelte';
 	import MetadataCacheSettings from '$lib/components/settings/MetadataCacheSettings.svelte';
 	import MetadataProviderSettings from '$lib/components/settings/MetadataProviderSettings.svelte';
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import MediaProfilesSettings from '$lib/components/settings/MediaProfilesSettings.svelte';
+	import QualitySizeSettings from '$lib/components/settings/QualitySizeSettings.svelte';
 	import SystemLogsSettings from '$lib/components/settings/SystemLogsSettings.svelte';
 	import TagSettings from '$lib/components/settings/TagSettings.svelte';
-	import UserForm from '$lib/components/settings/UserForm.svelte';
-	import UserTable from '$lib/components/settings/UserTable.svelte';
-	import {
-		emptyDownloadClientForm,
-		emptyIndexerForm,
-		emptyLibraryFolderForm,
-		emptyUserForm
-	} from '$lib/settings/forms';
+	import UsersSettingsSection from '$lib/components/settings/UsersSettingsSection.svelte';
 	import type {
 		DownloadClient,
 		DownloadClientForm as DownloadClientFormValue,
-		DownloadClientType,
 		Indexer,
 		IndexerForm as IndexerFormValue,
-		IntegrationTestResults,
 		IntegrationTestResponse,
+		IntegrationTestResults,
 		LibraryFolder,
 		LibraryFolderForm as LibraryFolderFormValue,
 		LibraryMediaKind,
@@ -34,10 +24,14 @@
 		LibraryScanItem,
 		LibraryScanItemMatchRequest,
 		ManagedUser,
+		MediaProfile,
+		MediaProfileForm as MediaProfileFormValue,
 		MediaSearchResult,
 		MetadataCacheResponse,
 		MetadataProvider,
 		MetadataProviderForm as MetadataProviderFormValue,
+		PathMapping,
+		PathMappingForm,
 		SettingsSection,
 		Tag,
 		TagForm,
@@ -52,6 +46,8 @@
 		metadataProviders: MetadataProvider[];
 		metadataCache: MetadataCacheResponse;
 		libraryFolders: LibraryFolder[];
+		pathMappings: PathMapping[];
+		mediaProfiles: MediaProfile[];
 		users: ManagedUser[];
 		tags: Tag[];
 		currentUser?: UserSummary;
@@ -59,6 +55,8 @@
 		downloadForm: DownloadClientFormValue;
 		indexerForm: IndexerFormValue;
 		libraryFolderForm: LibraryFolderFormValue;
+		pathMappingForm: PathMappingForm;
+		mediaProfileForm: MediaProfileFormValue;
 		tagForm: TagForm;
 		userForm: UserFormValue;
 		savingDownloadClient: boolean;
@@ -68,6 +66,10 @@
 		clearingMetadataCache: boolean;
 		metadataCachePattern: string;
 		savingLibraryFolder: boolean;
+		savingPathMapping: boolean;
+		deletingPathMappingId?: string;
+		savingMediaProfile: boolean;
+		deletingMediaProfileId?: string;
 		savingTag: boolean;
 		deletingTagId?: string;
 		savingUser: boolean;
@@ -86,19 +88,25 @@
 		onClearMetadataCache: () => void | Promise<void>;
 		onClearMetadataCachePattern: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveLibraryFolder: (_event: SubmitEvent) => void | Promise<void>;
+		onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;
+		onSaveMediaProfile: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveTag: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveUser: (_event: SubmitEvent) => void | Promise<void>;
 		onCancelDownloadClient: () => void;
 		onCancelIndexer: () => void;
+		onCancelMediaProfile: () => void;
 		onCancelTag: () => void;
 		onCancelUser: () => void;
 		onEditDownloadClient: (_client: DownloadClient) => void;
 		onEditIndexer: (_indexer: Indexer) => void;
+		onEditMediaProfile: (_profile: MediaProfile) => void;
 		onEditTag: (_tag: Tag) => void;
 		onEditUser: (_user: ManagedUser) => void;
 		onDeleteDownloadClient: (_id: string) => void | Promise<void>;
 		onDeleteIndexer: (_id: string) => void | Promise<void>;
 		onDeleteLibraryFolder: (_id: string) => void | Promise<void>;
+		onDeletePathMapping: (_id: string) => void | Promise<void>;
+		onDeleteMediaProfile: (_id: string) => void | Promise<void>;
 		onDeleteTag: (_id: string) => void | Promise<void>;
 		onDeleteUser: (_id: string) => void | Promise<void>;
 		onTestIndexer: (_id: string) => void | Promise<void>;
@@ -117,6 +125,8 @@
 		metadataProviders,
 		metadataCache,
 		libraryFolders,
+		pathMappings,
+		mediaProfiles,
 		users,
 		tags,
 		currentUser,
@@ -124,6 +134,8 @@
 		downloadForm = $bindable(),
 		indexerForm = $bindable(),
 		libraryFolderForm = $bindable(),
+		pathMappingForm = $bindable(),
+		mediaProfileForm = $bindable(),
 		tagForm = $bindable(),
 		userForm = $bindable(),
 		savingDownloadClient,
@@ -133,6 +145,10 @@
 		clearingMetadataCache,
 		metadataCachePattern = $bindable(),
 		savingLibraryFolder,
+		savingPathMapping,
+		deletingPathMappingId,
+		savingMediaProfile,
+		deletingMediaProfileId,
 		savingTag,
 		deletingTagId,
 		savingUser,
@@ -149,19 +165,25 @@
 		onClearMetadataCache,
 		onClearMetadataCachePattern,
 		onSaveLibraryFolder,
+		onSavePathMapping,
+		onSaveMediaProfile,
 		onSaveTag,
 		onSaveUser,
 		onCancelDownloadClient,
 		onCancelIndexer,
+		onCancelMediaProfile,
 		onCancelTag,
 		onCancelUser,
 		onEditDownloadClient,
 		onEditIndexer,
+		onEditMediaProfile,
 		onEditTag,
 		onEditUser,
 		onDeleteDownloadClient,
 		onDeleteIndexer,
 		onDeleteLibraryFolder,
+		onDeletePathMapping,
+		onDeleteMediaProfile,
 		onDeleteTag,
 		onDeleteUser,
 		onTestIndexer,
@@ -169,230 +191,33 @@
 		onSearchLibraryMatch,
 		onMatchLibraryScanItem
 	}: Props = $props();
-
-	let downloadClientModalOpen = $state(false);
-	let downloadClientTypeSelected = $state(false);
-	let testingDownloadClientConfig = $state(false);
-	let downloadClientModalTestResult = $state<IntegrationTestResponse | undefined>();
-	let indexerModalOpen = $state(false);
-	let libraryFolderModalOpen = $state(false);
-	let userModalOpen = $state(false);
-
-	function openDownloadClientModal() {
-		downloadForm = emptyDownloadClientForm();
-		downloadClientTypeSelected = false;
-		downloadClientModalTestResult = undefined;
-		downloadClientModalOpen = true;
-	}
-
-	function editDownloadClient(client: DownloadClient) {
-		onEditDownloadClient(client);
-		downloadClientTypeSelected = true;
-		downloadClientModalTestResult = undefined;
-		downloadClientModalOpen = true;
-	}
-
-	function closeDownloadClientModal() {
-		onCancelDownloadClient();
-		downloadClientModalOpen = false;
-		downloadClientTypeSelected = false;
-		downloadClientModalTestResult = undefined;
-	}
-
-	function selectDownloadClientType(type: DownloadClientType) {
-		downloadForm = {
-			...emptyDownloadClientForm(),
-			type
-		};
-		downloadClientTypeSelected = true;
-		downloadClientModalTestResult = undefined;
-	}
-
-	function openIndexerModal() {
-		indexerForm = emptyIndexerForm();
-		indexerModalOpen = true;
-	}
-
-	function editIndexer(indexer: Indexer) {
-		onEditIndexer(indexer);
-		indexerModalOpen = true;
-	}
-
-	function closeIndexerModal() {
-		onCancelIndexer();
-		indexerModalOpen = false;
-	}
-
-	function openLibraryFolderModal() {
-		libraryFolderForm = emptyLibraryFolderForm();
-		libraryFolderModalOpen = true;
-	}
-
-	function closeLibraryFolderModal() {
-		libraryFolderForm = emptyLibraryFolderForm();
-		libraryFolderModalOpen = false;
-	}
-
-	function openUserModal() {
-		userForm = emptyUserForm();
-		userModalOpen = true;
-	}
-
-	function editUser(user: ManagedUser) {
-		onEditUser(user);
-		userModalOpen = true;
-	}
-
-	function closeUserModal() {
-		onCancelUser();
-		userModalOpen = false;
-	}
-
-	async function saveDownloadClient(event: SubmitEvent) {
-		event.preventDefault();
-		const passed = await testDownloadClientConfig();
-		if (!passed) {
-			return;
-		}
-		await onSaveDownloadClient(event);
-		if (isEmptyDownloadClientForm(downloadForm)) {
-			downloadClientModalOpen = false;
-		}
-	}
-
-	async function testDownloadClientConfig() {
-		testingDownloadClientConfig = true;
-		downloadClientModalTestResult = undefined;
-		try {
-			const result = await onTestDownloadClientConfig(downloadForm);
-			downloadClientModalTestResult = result;
-			return result.success;
-		} finally {
-			testingDownloadClientConfig = false;
-		}
-	}
-
-	async function saveIndexer(event: SubmitEvent) {
-		await onSaveIndexer(event);
-		if (isEmptyIndexerForm(indexerForm)) {
-			indexerModalOpen = false;
-		}
-	}
-
-	async function saveLibraryFolder(event: SubmitEvent) {
-		await onSaveLibraryFolder(event);
-		if (libraryFolderForm.path.trim() === '') {
-			libraryFolderModalOpen = false;
-		}
-	}
-
-	async function saveUser(event: SubmitEvent) {
-		await onSaveUser(event);
-		if (isEmptyUserForm(userForm)) {
-			userModalOpen = false;
-		}
-	}
-
-	function isEmptyDownloadClientForm(value: DownloadClientFormValue) {
-		return (
-			!value.id &&
-			value.name === '' &&
-			value.baseUrl === '' &&
-			value.username === '' &&
-			value.password === '' &&
-			value.apiKey === '' &&
-			value.category === ''
-		);
-	}
-
-	function isEmptyIndexerForm(value: IndexerFormValue) {
-		return !value.id && value.name === '' && value.baseUrl === '' && value.apiKey === '';
-	}
-
-	function isEmptyUserForm(value: UserFormValue) {
-		return !value.id && value.username === '' && value.password === '';
-	}
 </script>
 
 <section class="workspace-main" aria-labelledby="settings-title">
 	{#if activeSection === 'download-clients'}
-		<div class="page-heading">
-			<p>Settings</p>
-			<h1 id="settings-title">Download clients</h1>
-		</div>
-		<div class="settings-stack">
-			<div class="settings-toolbar">
-				<button type="button" onclick={openDownloadClientModal}>Add download client</button>
-			</div>
-			<DownloadClientTable
-				clients={downloadClients}
-				onEdit={editDownloadClient}
-				onDelete={onDeleteDownloadClient}
-			/>
-			{#if downloadClientModalOpen}
-				<SettingsFormModal
-					title={downloadForm.id ? 'Edit download client' : 'Add download client'}
-					onClose={closeDownloadClientModal}
-				>
-					{#if downloadClientTypeSelected}
-						<DownloadClientForm
-							bind:form={downloadForm}
-							saving={savingDownloadClient}
-							onSave={saveDownloadClient}
-							onCancel={closeDownloadClientModal}
-							onTest={testDownloadClientConfig}
-							showTypeSelect={Boolean(downloadForm.id)}
-							testing={testingDownloadClientConfig}
-							testResult={downloadClientModalTestResult}
-						/>
-					{:else}
-						<div class="download-client-picker" aria-label="Download client type">
-							<button type="button" onclick={() => selectDownloadClientType('transmission')}>
-								<span class="app-icon" aria-hidden="true">sync_alt</span>
-								<strong>Transmission</strong>
-								<small>Torrent download client</small>
-							</button>
-							<button type="button" onclick={() => selectDownloadClientType('sabnzbd')}>
-								<span class="app-icon" aria-hidden="true">cloud_download</span>
-								<strong>SABnzbd</strong>
-								<small>Usenet download client</small>
-							</button>
-						</div>
-					{/if}
-				</SettingsFormModal>
-			{/if}
-		</div>
+		<DownloadClientsSettingsSection
+			clients={downloadClients}
+			bind:form={downloadForm}
+			saving={savingDownloadClient}
+			onSave={onSaveDownloadClient}
+			onTestConfig={onTestDownloadClientConfig}
+			onCancel={onCancelDownloadClient}
+			onEdit={onEditDownloadClient}
+			onDelete={onDeleteDownloadClient}
+		/>
 	{:else if activeSection === 'indexers'}
-		<div class="page-heading">
-			<p>Settings</p>
-			<h1 id="settings-title">Indexers</h1>
-		</div>
-		<div class="settings-stack">
-			<div class="settings-toolbar">
-				<button type="button" onclick={openIndexerModal}>Add indexer</button>
-			</div>
-			<IndexerTable
-				{indexers}
-				onEdit={editIndexer}
-				onDelete={onDeleteIndexer}
-				onTest={onTestIndexer}
-				testingId={testingIndexerId}
-				testResults={indexerTests}
-			/>
-			{#if indexerModalOpen}
-				<SettingsFormModal
-					title={indexerForm.id ? 'Edit indexer' : 'Add indexer'}
-					onClose={closeIndexerModal}
-				>
-					<IndexerForm
-						bind:form={indexerForm}
-						saving={savingIndexer}
-						onSave={saveIndexer}
-						onCancel={closeIndexerModal}
-					/>
-				</SettingsFormModal>
-			{/if}
-		</div>
+		<IndexersSettingsSection
+			{indexers}
+			bind:form={indexerForm}
+			saving={savingIndexer}
+			testingId={testingIndexerId}
+			testResults={indexerTests}
+			onSave={onSaveIndexer}
+			onCancel={onCancelIndexer}
+			onEdit={onEditIndexer}
+			onDelete={onDeleteIndexer}
+			onTest={onTestIndexer}
+		/>
 	{:else if activeSection === 'metadata'}
 		<div class="page-heading">
 			<p>Settings</p>
@@ -417,6 +242,39 @@
 				onClearPattern={onClearMetadataCachePattern}
 			/>
 		</div>
+	{:else if activeSection === 'quality'}
+		<div class="page-heading">
+			<p>Settings</p>
+			<h1 id="settings-title">Quality</h1>
+		</div>
+		<div class="settings-stack">
+			<QualitySizeSettings />
+		</div>
+	{:else if activeSection === 'profiles'}
+		<div class="page-heading">
+			<p>Settings</p>
+			<h1 id="settings-title">Profiles</h1>
+		</div>
+		<div class="settings-stack">
+			<MediaProfilesSettings
+				profiles={mediaProfiles}
+				bind:form={mediaProfileForm}
+				saving={savingMediaProfile}
+				deletingId={deletingMediaProfileId}
+				onSave={onSaveMediaProfile}
+				onCancel={onCancelMediaProfile}
+				onEdit={onEditMediaProfile}
+				onDelete={onDeleteMediaProfile}
+			/>
+		</div>
+	{:else if activeSection === 'file-naming'}
+		<div class="page-heading">
+			<p>Settings</p>
+			<h1 id="settings-title">File naming</h1>
+		</div>
+		<div class="settings-stack">
+			<FileNamingSettings />
+		</div>
 	{:else if activeSection === 'tags'}
 		<div class="page-heading">
 			<p>Settings</p>
@@ -435,31 +293,16 @@
 			/>
 		</div>
 	{:else if activeSection === 'users'}
-		<div class="page-heading">
-			<p>Settings</p>
-			<h1 id="settings-title">Users</h1>
-		</div>
-		<div class="settings-stack">
-			<div class="settings-toolbar">
-				<button type="button" onclick={openUserModal}>Add user</button>
-			</div>
-			<UserTable
-				{users}
-				currentUserId={currentUser?.id}
-				onEdit={editUser}
-				onDelete={onDeleteUser}
-			/>
-			{#if userModalOpen}
-				<SettingsFormModal title={userForm.id ? 'Edit user' : 'Add user'} onClose={closeUserModal}>
-					<UserForm
-						bind:form={userForm}
-						saving={savingUser}
-						onSave={saveUser}
-						onCancel={closeUserModal}
-					/>
-				</SettingsFormModal>
-			{/if}
-		</div>
+		<UsersSettingsSection
+			{users}
+			{currentUser}
+			bind:form={userForm}
+			saving={savingUser}
+			onSave={onSaveUser}
+			onCancel={onCancelUser}
+			onEdit={onEditUser}
+			onDelete={onDeleteUser}
+		/>
 	{:else if activeSection === 'system-logs'}
 		<div class="page-heading">
 			<p>Settings / System</p>
@@ -469,30 +312,22 @@
 			<SystemLogsSettings />
 		</div>
 	{:else}
-		<div class="page-heading">
-			<p>Settings</p>
-			<h1 id="settings-title">Library</h1>
-		</div>
-		<div class="settings-stack">
-			<div class="settings-toolbar">
-				<button type="button" onclick={openLibraryFolderModal}>Add library folder</button>
-			</div>
-			<LibraryFolderTable folders={libraryFolders} onDelete={onDeleteLibraryFolder} />
-			<LibraryScanReview
-				scan={activeLibraryScan}
-				loading={loadingLibraryScan}
-				onSearchMatch={onSearchLibraryMatch}
-				onMatch={onMatchLibraryScanItem}
-			/>
-			{#if libraryFolderModalOpen}
-				<SettingsFormModal title="Add library folder" onClose={closeLibraryFolderModal}>
-					<LibraryFolderForm
-						bind:form={libraryFolderForm}
-						saving={savingLibraryFolder}
-						onSave={saveLibraryFolder}
-					/>
-				</SettingsFormModal>
-			{/if}
-		</div>
+		<LibrarySettingsSection
+			folders={libraryFolders}
+			bind:form={libraryFolderForm}
+			{pathMappings}
+			bind:pathMappingForm
+			scan={activeLibraryScan}
+			saving={savingLibraryFolder}
+			{savingPathMapping}
+			{deletingPathMappingId}
+			loadingScan={loadingLibraryScan}
+			onSave={onSaveLibraryFolder}
+			onDelete={onDeleteLibraryFolder}
+			{onSavePathMapping}
+			{onDeletePathMapping}
+			onSearchMatch={onSearchLibraryMatch}
+			onMatch={onMatchLibraryScanItem}
+		/>
 	{/if}
 </section>

@@ -3,7 +3,6 @@ package jobs
 import (
 	"context"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -13,7 +12,10 @@ import (
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
+	"media-manager/internal/decisions"
 	"media-manager/internal/downloadclients"
+	"media-manager/internal/events"
+	"media-manager/internal/imports"
 	"media-manager/internal/indexers"
 	"media-manager/internal/storage"
 )
@@ -63,36 +65,9 @@ func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSe
 	if err != nil {
 		return fmt.Errorf("load media item: %w", err)
 	}
-	configs, err := w.settings.ListEnabledIndexers(ctx)
+	releases, searchErrors, err := searchReleases(ctx, w.settings, w.indexers, item)
 	if err != nil {
-		return fmt.Errorf("list enabled indexers: %w", err)
-	}
-	if len(configs) == 0 {
-		return w.settings.ReplaceReleaseSearchResults(ctx, mediaItemID, nil, []string{"No enabled indexer is configured"})
-	}
-
-	releases := []storage.ReleaseCandidateInput{}
-	searchErrors := []string{}
-	for _, config := range configs {
-		found, err := w.indexers.Search(ctx, indexerConfig(config), item.Title, item.Type)
-		if err != nil {
-			searchErrors = append(searchErrors, fmt.Sprintf("%s: %s", config.Name, err.Error()))
-			continue
-		}
-		for _, release := range found {
-			releases = append(releases, releaseCandidateInput(mediaItemID, release))
-		}
-	}
-	sort.SliceStable(releases, func(i, j int) bool {
-		left := releases[i]
-		right := releases[j]
-		if left.Seeders != nil && right.Seeders != nil && *left.Seeders != *right.Seeders {
-			return *left.Seeders > *right.Seeders
-		}
-		return left.SizeBytes > right.SizeBytes
-	})
-	if len(releases) == 0 && len(searchErrors) == 0 {
-		searchErrors = append(searchErrors, "No releases found")
+		return err
 	}
 	return w.settings.ReplaceReleaseSearchResults(ctx, mediaItemID, releases, searchErrors)
 }
@@ -102,12 +77,20 @@ type GrabReleaseWorker struct {
 
 	settings        *storage.SettingsStore
 	downloadClients *downloadclients.Service
+	events          *events.Broker
 }
 
 func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabReleaseArgs]) error {
 	activityID, err := uuid.Parse(job.Args.ActivityID)
 	if err != nil {
 		return fmt.Errorf("parse activity id: %w", err)
+	}
+	activity, err := w.settings.GetDownloadActivity(ctx, activityID)
+	if err != nil {
+		return fmt.Errorf("load download activity: %w", err)
+	}
+	if activity.Status == "cancelled" {
+		return nil
 	}
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
@@ -126,7 +109,11 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 	if !result.Success {
 		return w.markGrabFailed(ctx, activityID, result.Message)
 	}
-	_, err = w.settings.UpdateDownloadActivityStatus(ctx, activityID, "grabbed", nil)
+	downloadID := optionalString(result.DownloadID)
+	activity, err = w.settings.UpdateDownloadActivityClientState(ctx, activityID, "grabbed", downloadID, nil)
+	if err == nil {
+		publishDownloadActivity(w.events, activity)
+	}
 	return err
 }
 
@@ -139,15 +126,56 @@ func (w *GrabReleaseWorker) markGrabFailed(ctx context.Context, activityID uuid.
 	return err
 }
 
-func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerService *indexers.Service, downloadClientService *downloadclients.Service) (*Client, error) {
+func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerService *indexers.Service, downloadClientService *downloadclients.Service, eventBroker *events.Broker) (*Client, error) {
 	workers := river.NewWorkers()
+	decisionEngine := decisions.NewEngine()
+	importService := imports.NewService(settings)
+	if eventBroker == nil {
+		eventBroker = events.NewBroker()
+	}
 	river.AddWorker(workers, &ReleaseSearchWorker{settings: settings, indexers: indexerService})
-	river.AddWorker(workers, &GrabReleaseWorker{settings: settings, downloadClients: downloadClientService})
+	river.AddWorker(workers, &AutoSearchDownloadWorker{
+		settings:        settings,
+		indexers:        indexerService,
+		downloadClients: downloadClientService,
+		decisions:       decisionEngine,
+		events:          eventBroker,
+	})
+	river.AddWorker(workers, &MissingMediaRetryWorker{
+		settings:        settings,
+		indexers:        indexerService,
+		downloadClients: downloadClientService,
+		decisions:       decisionEngine,
+		events:          eventBroker,
+	})
+	river.AddWorker(workers, &GrabReleaseWorker{settings: settings, downloadClients: downloadClientService, events: eventBroker})
+	river.AddWorker(workers, &DownloadActivitySyncWorker{
+		settings:        settings,
+		downloadClients: downloadClientService,
+		imports:         importService,
+		events:          eventBroker,
+	})
 
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			queueMediaSearch: {MaxWorkers: 2},
 			queueDownloads:   {MaxWorkers: 2},
+		},
+		PeriodicJobs: []*river.PeriodicJob{
+			river.NewPeriodicJob(
+				river.PeriodicInterval(6*time.Hour),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return MissingMediaRetryArgs{}, &river.InsertOpts{Queue: queueMediaSearch}
+				},
+				&river.PeriodicJobOpts{ID: "missing_media_retry"},
+			),
+			river.NewPeriodicJob(
+				river.PeriodicInterval(30*time.Second),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return DownloadActivitySyncArgs{}, &river.InsertOpts{Queue: queueDownloads}
+				},
+				&river.PeriodicJobOpts{ID: "download_activity_sync"},
+			),
 		},
 		SoftStopTimeout: 10 * time.Second,
 		Workers:         workers,
@@ -179,6 +207,19 @@ func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID
 	return result.Job.ID, nil
 }
 
+func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid.UUID) (int64, error) {
+	result, err := c.river.Insert(ctx, AutoSearchDownloadArgs{MediaItemID: mediaItemID.String()}, &river.InsertOpts{
+		Queue: queueMediaSearch,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result.Job.ID, nil
+}
+
 func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (int64, error) {
 	result, err := c.river.Insert(ctx, args, &river.InsertOpts{
 		Queue: queueDownloads,
@@ -190,55 +231,4 @@ func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (
 		return 0, err
 	}
 	return result.Job.ID, nil
-}
-
-func indexerConfig(indexer storage.Indexer) indexers.Config {
-	return indexers.Config{
-		ID:         indexer.ID.String(),
-		Name:       indexer.Name,
-		Type:       indexer.Type,
-		BaseURL:    indexer.BaseURL,
-		APIKey:     indexer.APIKey,
-		Categories: indexer.Categories,
-	}
-}
-
-func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
-	return downloadclients.Config{
-		Name:     client.Name,
-		Type:     client.Type,
-		BaseURL:  client.BaseURL,
-		Username: client.Username,
-		Password: client.Password,
-		APIKey:   client.APIKey,
-		Category: client.Category,
-	}
-}
-
-func releaseCandidateInput(mediaItemID uuid.UUID, release indexers.Release) storage.ReleaseCandidateInput {
-	var indexerID *uuid.UUID
-	if parsed, err := uuid.Parse(release.IndexerID); err == nil {
-		indexerID = &parsed
-	}
-	return storage.ReleaseCandidateInput{
-		MediaItemID: mediaItemID,
-		IndexerID:   indexerID,
-		IndexerName: release.IndexerName,
-		IndexerType: release.IndexerType,
-		Title:       release.Title,
-		DownloadURL: release.DownloadURL,
-		InfoURL:     optionalString(release.InfoURL),
-		GUID:        optionalString(release.GUID),
-		SizeBytes:   release.SizeBytes,
-		Seeders:     release.Seeders,
-		Peers:       release.Peers,
-	}
-}
-
-func optionalString(value string) *string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return nil
-	}
-	return &value
 }

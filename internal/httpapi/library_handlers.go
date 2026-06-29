@@ -101,6 +101,56 @@ func (s *Server) DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) ListPathMappings(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	mappings, err := s.settings.ListPathMappings(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "path_mapping_list_failed", "Could not list path mappings")
+		return
+	}
+	response := PathMappingListResponse{Mappings: make([]PathMapping, 0, len(mappings))}
+	for _, mapping := range mappings {
+		response.Mappings = append(response.Mappings, pathMappingResponse(mapping))
+	}
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) CreatePathMapping(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body PathMappingRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	input, ok := pathMappingInput(w, body)
+	if !ok {
+		return
+	}
+	mapping, err := s.settings.CreatePathMapping(r.Context(), input)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "path_mapping_save_failed", "Could not save path mapping")
+		return
+	}
+	writeJSON(w, http.StatusCreated, pathMappingResponse(mapping))
+}
+
+func (s *Server) DeletePathMapping(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	if err := s.settings.DeletePathMapping(r.Context(), uuid.UUID(id)); err != nil {
+		writeSettingsError(w, err, "Could not delete path mapping")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) GetLibraryScan(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return

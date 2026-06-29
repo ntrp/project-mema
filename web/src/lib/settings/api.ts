@@ -4,12 +4,16 @@ import {
 	normalizeDownloadClientForm,
 	normalizeIndexerForm,
 	normalizeLibraryFolderForm,
+	normalizeMediaProfileForm,
 	normalizeMetadataProviderForm,
+	normalizePathMappingForm,
 	normalizeUserCreateForm,
 	normalizeUserUpdateForm
 } from './forms';
 import type {
 	DownloadClientForm,
+	FileNamingSettings,
+	FileNamingSettingsRequest,
 	IndexerForm,
 	LibraryFolderForm,
 	LibraryFolderOption,
@@ -18,6 +22,8 @@ import type {
 	LibraryScanItemMatchRequest,
 	MediaAdvancedSearchRequest,
 	MediaItemRequest,
+	MediaProfile,
+	MediaProfileForm,
 	MediaRequestApproveRequest,
 	MediaRequestCreateRequest,
 	MediaSearchRequest,
@@ -25,6 +31,9 @@ import type {
 	MetadataCacheResponse,
 	MetadataProviderForm,
 	MetadataProviderType,
+	PathMappingForm,
+	QualitySizeSettingRequest,
+	QualitySizeSettingsResponse,
 	ReleaseCandidate,
 	SessionResponse,
 	SettingsData,
@@ -96,6 +105,8 @@ export async function loadSettings(): Promise<SettingsData> {
 		metadataProviderResult,
 		metadataCacheResult,
 		libraryFolderResult,
+		pathMappingResult,
+		mediaProfileResult,
 		userResult,
 		tagResult
 	] = await Promise.all([
@@ -104,6 +115,8 @@ export async function loadSettings(): Promise<SettingsData> {
 		client.GET('/settings/metadata-providers'),
 		client.GET('/settings/metadata-cache'),
 		client.GET('/settings/library/folders'),
+		client.GET('/settings/library/path-mappings'),
+		client.GET('/settings/profiles'),
 		client.GET('/settings/users'),
 		client.GET('/settings/tags')
 	]);
@@ -123,6 +136,12 @@ export async function loadSettings(): Promise<SettingsData> {
 	if (libraryFolderResult.error) {
 		throw new Error(libraryFolderResult.error.message);
 	}
+	if (pathMappingResult.error) {
+		throw new Error(pathMappingResult.error.message);
+	}
+	if (mediaProfileResult.error) {
+		throw new Error(mediaProfileResult.error.message);
+	}
 	if (userResult.error) {
 		throw new Error(userResult.error.message);
 	}
@@ -136,6 +155,8 @@ export async function loadSettings(): Promise<SettingsData> {
 		metadataProviders: metadataProviderResult.data?.providers ?? [],
 		metadataCache: metadataCacheResult.data ?? emptyMetadataCache(),
 		libraryFolders: libraryFolderResult.data?.folders ?? [],
+		pathMappings: pathMappingResult.data?.mappings ?? [],
+		mediaProfiles: mediaProfileResult.data?.profiles ?? [],
 		users: userResult.data?.users ?? [],
 		tags: tagResult.data?.tags ?? []
 	};
@@ -151,6 +172,67 @@ export function emptyMetadataCache(): MetadataCacheResponse {
 		},
 		entries: []
 	};
+}
+
+export async function listQualitySizeSettings(): Promise<QualitySizeSettingsResponse> {
+	const { data, error } = await client.GET('/settings/quality-sizes');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Quality size settings were not returned');
+	}
+	return data;
+}
+
+export async function updateQualitySizeSettings(qualities: QualitySizeSettingRequest[]) {
+	const { data, error } = await client.PUT('/settings/quality-sizes', {
+		body: { qualities }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Quality size settings were not returned');
+	}
+	return data;
+}
+
+export async function getFileNamingSettings(): Promise<FileNamingSettings> {
+	const { data, error } = await client.GET('/settings/file-naming');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('File naming settings were not returned');
+	}
+	return data;
+}
+
+export async function updateFileNamingSettings(request: FileNamingSettingsRequest) {
+	const { data, error } = await client.PUT('/settings/file-naming', {
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('File naming settings were not returned');
+	}
+	return data;
+}
+
+export async function listMediaProfiles(): Promise<MediaProfile[]> {
+	const { data, error } = await client.GET('/settings/profiles');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.profiles ?? [];
 }
 
 export async function searchMedia(request: MediaSearchRequest) {
@@ -352,6 +434,20 @@ export async function listDownloadActivity() {
 	return data?.activities ?? [];
 }
 
+export async function cancelDownloadActivity(id: string) {
+	const { data, error } = await client.POST('/activity/downloads/{id}/cancel', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Download activity was not returned');
+	}
+	return data;
+}
+
 export async function saveDownloadClient(form: DownloadClientForm) {
 	const body = normalizeDownloadClientForm(form);
 	const result = form.id
@@ -465,6 +561,20 @@ export async function saveTag(form: TagForm) {
 	}
 }
 
+export async function saveMediaProfile(form: MediaProfileForm) {
+	const body = normalizeMediaProfileForm(form);
+	const result = form.id
+		? await client.PUT('/settings/profiles/{id}', {
+				params: { path: { id: form.id } },
+				body
+			})
+		: await client.POST('/settings/profiles', { body });
+
+	if (result.error) {
+		throw new Error(result.error.message);
+	}
+}
+
 export async function testMetadataProvider(id: string) {
 	const { data, error } = await client.POST('/settings/metadata-providers/{id}/test', {
 		params: { path: { id } }
@@ -558,6 +668,16 @@ export async function deleteTag(id: string) {
 	}
 }
 
+export async function deleteMediaProfile(id: string) {
+	const { error } = await client.DELETE('/settings/profiles/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
 export async function saveLibraryFolder(form: LibraryFolderForm) {
 	const { data, error } = await client.POST('/settings/library/folders', {
 		body: normalizeLibraryFolderForm(form)
@@ -607,6 +727,30 @@ export async function createLibraryFolderOption(
 
 export async function deleteLibraryFolder(id: string) {
 	const { error } = await client.DELETE('/settings/library/folders/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function savePathMapping(form: PathMappingForm) {
+	const { data, error } = await client.POST('/settings/library/path-mappings', {
+		body: normalizePathMappingForm(form)
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Path mapping was not returned');
+	}
+	return data;
+}
+
+export async function deletePathMapping(id: string) {
+	const { error } = await client.DELETE('/settings/library/path-mappings/{id}', {
 		params: { path: { id } }
 	});
 

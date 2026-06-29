@@ -60,6 +60,58 @@ create table if not exists app.indexers (
 create index if not exists idx_indexers_priority
     on app.indexers (priority, name);
 
+create table if not exists app.quality_size_settings (
+    quality_id text primary key,
+    minimum_size_mb_per_minute numeric(10, 2) not null default 0 check (minimum_size_mb_per_minute >= 0),
+    preferred_size_mb_per_minute numeric(10, 2) check (preferred_size_mb_per_minute >= 0),
+    maximum_size_mb_per_minute numeric(10, 2) check (maximum_size_mb_per_minute >= 0),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint quality_size_settings_order_check check (
+        (preferred_size_mb_per_minute is null or preferred_size_mb_per_minute >= minimum_size_mb_per_minute)
+        and (maximum_size_mb_per_minute is null or maximum_size_mb_per_minute >= minimum_size_mb_per_minute)
+        and (
+            preferred_size_mb_per_minute is null
+            or maximum_size_mb_per_minute is null
+            or preferred_size_mb_per_minute <= maximum_size_mb_per_minute
+        )
+    )
+);
+
+create table if not exists app.media_profiles (
+    id text primary key,
+    name text not null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create unique index if not exists idx_media_profiles_name_lower
+    on app.media_profiles (lower(name));
+
+create table if not exists app.media_profile_qualities (
+    profile_id text not null references app.media_profiles(id) on delete cascade,
+    quality_id text not null,
+    sort_order integer not null default 0,
+    primary key (profile_id, quality_id)
+);
+
+create index if not exists idx_media_profile_qualities_profile_sort
+    on app.media_profile_qualities (profile_id, sort_order, quality_id);
+
+create table if not exists app.file_naming_settings (
+    id integer primary key default 1 check (id = 1),
+    movie_file_format text not null,
+    movie_folder_format text not null,
+    series_episode_format text not null,
+    daily_episode_format text not null,
+    anime_episode_format text not null,
+    series_folder_format text not null,
+    season_folder_format text not null,
+    specials_folder_format text not null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
 create table if not exists app.media_items (
     id uuid primary key,
     media_type text not null check (media_type in ('movie', 'series')),
@@ -84,6 +136,9 @@ alter table app.media_items
 
 alter table app.media_items
     add column if not exists quality_profile_id text;
+
+alter table app.media_items
+    add column if not exists media_folder_path text;
 
 alter table app.media_items
     alter column year drop not null;
@@ -157,6 +212,17 @@ create table if not exists app.library_folders (
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
+
+create table if not exists app.path_mappings (
+    id uuid primary key,
+    client_path text not null,
+    app_path text not null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create unique index if not exists idx_path_mappings_client_path
+    on app.path_mappings (client_path);
 
 alter table app.media_items
     add column if not exists library_folder_id uuid references app.library_folders(id) on delete set null;
@@ -239,8 +305,9 @@ create table if not exists app.download_activity (
     release_title text not null,
     indexer_name text not null,
     download_client_name text not null,
+    download_id text,
     download_url text not null,
-    status text not null check (status in ('queued', 'grabbed', 'failed')),
+    status text not null check (status in ('queued', 'grabbed', 'downloading', 'completed', 'cancelled', 'failed')),
     error text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
@@ -248,9 +315,10 @@ create table if not exists app.download_activity (
 
 do $$
 begin
+    alter table app.download_activity add column if not exists download_id text;
     alter table app.download_activity drop constraint if exists download_activity_status_check;
     alter table app.download_activity
-        add constraint download_activity_status_check check (status in ('queued', 'grabbed', 'failed'));
+        add constraint download_activity_status_check check (status in ('queued', 'grabbed', 'downloading', 'completed', 'cancelled', 'failed'));
 end $$;
 
 create index if not exists idx_download_activity_created

@@ -25,12 +25,18 @@ func (s *Server) StreamEvents(w http.ResponseWriter, r *http.Request) {
 
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
+	events := s.events.Subscribe(r.Context())
 
 	writeSSE(w, flusher, "system.heartbeat", map[string]interface{}{"status": "ok"})
 	for {
 		select {
 		case <-r.Context().Done():
 			return
+		case event, ok := <-events:
+			if !ok {
+				return
+			}
+			writeSSE(w, flusher, event.Type, event.Data)
 		case <-ticker.C:
 			writeSSE(w, flusher, "system.heartbeat", map[string]interface{}{"status": "ok"})
 		}

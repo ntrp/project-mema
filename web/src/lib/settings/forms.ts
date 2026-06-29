@@ -6,11 +6,16 @@ import type {
 	IndexerForm,
 	IndexerRequest,
 	ManagedUser,
+	MediaProfile,
+	MediaProfileForm,
+	MediaProfileRequest,
 	MetadataProvider,
 	MetadataProviderForm,
 	MetadataProviderRequest,
 	LibraryFolderForm,
 	LibraryFolderRequest,
+	PathMappingForm,
+	PathMappingRequest,
 	UserCreateRequest,
 	UserForm,
 	UserUpdateRequest
@@ -61,6 +66,20 @@ export function emptyLibraryFolderForm(): LibraryFolderForm {
 	};
 }
 
+export function emptyPathMappingForm(): PathMappingForm {
+	return {
+		clientPath: '',
+		appPath: ''
+	};
+}
+
+export function emptyMediaProfileForm(): MediaProfileForm {
+	return {
+		name: '',
+		qualityIds: []
+	};
+}
+
 export function emptyUserForm(): UserForm {
 	return {
 		username: '',
@@ -108,6 +127,14 @@ export function metadataProviderFormFromProvider(provider: MetadataProvider): Me
 		accessToken: provider.accessToken ?? '',
 		enabled: provider.enabled,
 		priority: provider.priority
+	};
+}
+
+export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfileForm {
+	return {
+		id: profile.id,
+		name: profile.name,
+		qualityIds: [...profile.qualityIds]
 	};
 }
 
@@ -162,6 +189,20 @@ export function normalizeMetadataProviderForm(form: MetadataProviderForm): Metad
 export function normalizeLibraryFolderForm(form: LibraryFolderForm): LibraryFolderRequest {
 	return {
 		path: form.path.trim()
+	};
+}
+
+export function normalizePathMappingForm(form: PathMappingForm): PathMappingRequest {
+	return {
+		clientPath: form.clientPath.trim(),
+		appPath: form.appPath.trim()
+	};
+}
+
+export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileRequest {
+	return {
+		name: form.name.trim(),
+		qualityIds: [...new Set(form.qualityIds.map((id) => id.trim()).filter(Boolean))]
 	};
 }
 

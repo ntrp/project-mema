@@ -35,6 +35,7 @@
 		searchingItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
+		cancellingActivityId?: string;
 		canManage: boolean;
 		loadingActivity: boolean;
 		onAddMedia: (_candidate: MediaSearchResult) => void;
@@ -43,6 +44,7 @@
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 		onRefreshActivity: () => void;
+		onCancelActivity: (_activity: DownloadActivity) => void;
 	}
 
 	let {
@@ -62,6 +64,7 @@
 		searchingItemId,
 		grabbingKey,
 		deletingMediaItemId,
+		cancellingActivityId,
 		canManage,
 		loadingActivity,
 		onAddMedia,
@@ -69,7 +72,8 @@
 		onFindReleases,
 		onDeleteMedia,
 		onGrabRelease,
-		onRefreshActivity
+		onRefreshActivity,
+		onCancelActivity
 	}: Props = $props();
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
@@ -111,6 +115,8 @@
 				mediaType="movie"
 				item={selectedMediaItem}
 				requestedItemId={selectedMediaItemId}
+				{libraryFolders}
+				{qualityProfiles}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{searchingItemId}
 				{grabbingKey}
@@ -129,6 +135,8 @@
 				mediaType="series"
 				item={selectedMediaItem}
 				requestedItemId={selectedMediaItemId}
+				{libraryFolders}
+				{qualityProfiles}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{searchingItemId}
 				{grabbingKey}
@@ -142,6 +150,13 @@
 			<MediaItemList mediaType="series" items={series} />
 		{/if}
 	{:else}
-		<ActivityList {activities} loading={loadingActivity} onRefresh={onRefreshActivity} />
+		<ActivityList
+			{activities}
+			loading={loadingActivity}
+			{canManage}
+			cancellingId={cancellingActivityId}
+			onRefresh={onRefreshActivity}
+			onCancel={onCancelActivity}
+		/>
 	{/if}
 </section>

@@ -1,7 +1,10 @@
 <script lang="ts">
 	import type {
+		LibraryFolder,
 		MediaItem,
+		MediaItemStatus,
 		MediaType,
+		QualityProfileOption,
 		ReleaseCandidate,
 		ReleaseSearchState
 	} from '$lib/settings/types';
@@ -10,6 +13,8 @@
 		mediaType: MediaType;
 		item?: MediaItem;
 		requestedItemId: string;
+		libraryFolders: LibraryFolder[];
+		qualityProfiles: QualityProfileOption[];
 		releaseResults?: ReleaseSearchState;
 		searchingItemId?: string;
 		grabbingKey?: string;
@@ -24,6 +29,8 @@
 		mediaType,
 		item,
 		requestedItemId,
+		libraryFolders,
+		qualityProfiles,
 		releaseResults,
 		searchingItemId,
 		grabbingKey,
@@ -35,6 +42,10 @@
 	}: Props = $props();
 
 	const releaseCount = $derived(releaseResults?.releases.length ?? 0);
+	const libraryFolderLabel = $derived(resolveLibraryFolderLabel(item));
+	const qualityProfileLabel = $derived(resolveQualityProfileLabel(item));
+	const filePaths = $derived(item?.filePaths ?? []);
+	const metadataFilePaths = $derived(item?.metadataFilePaths ?? []);
 
 	function releaseKey(mediaItem: MediaItem, release: ReleaseCandidate) {
 		return `${mediaItem.id}:${release.id}`;
@@ -56,6 +67,40 @@
 			return path;
 		}
 		return `https://image.tmdb.org/t/p/${size}${path}`;
+	}
+
+	function resolveLibraryFolderLabel(mediaItem?: MediaItem) {
+		if (!mediaItem) {
+			return 'Not set';
+		}
+		return (
+			mediaItem.mediaFolderPath ??
+			mediaItem.libraryFolderPath ??
+			libraryFolders.find((folder) => folder.id === mediaItem.libraryFolderId)?.path ??
+			'Not set'
+		);
+	}
+
+	function resolveQualityProfileLabel(mediaItem?: MediaItem) {
+		if (!mediaItem) {
+			return 'Not set';
+		}
+		return (
+			mediaItem.qualityProfileName ??
+			qualityProfiles.find((profile) => profile.id === mediaItem.qualityProfileId)?.name ??
+			'Not set'
+		);
+	}
+
+	function statusLabel(status: MediaItemStatus) {
+		switch (status) {
+			case 'downloaded':
+				return 'Downloaded';
+			case 'downloading':
+				return 'Downloading';
+			default:
+				return 'Missing';
+		}
 	}
 </script>
 
@@ -80,7 +125,8 @@
 				<div class="metadata-info-bar" aria-label="Library media information">
 					<span><strong>Year</strong>{item.year ?? 'Unknown'}</span>
 					<span><strong>Type</strong>{item.type}</span>
-					<span><strong>Status</strong>{item.monitored ? 'Monitored' : 'Paused'}</span>
+					<span><strong>Status</strong>{statusLabel(item.status)}</span>
+					<span><strong>Profile</strong>{qualityProfileLabel}</span>
 				</div>
 				{#if item.tags?.length}
 					<div class="metadata-tags" aria-label="Tags">
@@ -117,8 +163,8 @@
 					<h2 id="library-status-title">Library Status</h2>
 					<div class="metadata-facts-grid" aria-label="Library status facts">
 						<div>
-							<strong>{item.monitored ? 'Monitored' : 'Paused'}</strong>
-							<span>Monitor state</span>
+							<strong>{statusLabel(item.status)}</strong>
+							<span>Status</span>
 						</div>
 						<div>
 							<strong>{releaseCount}</strong>
@@ -128,7 +174,49 @@
 							<strong>{item.year ?? 'Unknown'}</strong>
 							<span>Year</span>
 						</div>
+						<div>
+							<strong>{qualityProfileLabel}</strong>
+							<span>Profile</span>
+						</div>
+						<div>
+							<strong>{libraryFolderLabel}</strong>
+							<span>Media folder</span>
+						</div>
+						<div>
+							<strong>{item.monitored ? 'Monitored' : 'Paused'}</strong>
+							<span>Monitor state</span>
+						</div>
 					</div>
+				</section>
+
+				<section aria-labelledby="media-files-title">
+					<h2 id="media-files-title">Files</h2>
+					{#if filePaths.length || metadataFilePaths.length}
+						<div class="media-file-groups">
+							{#if filePaths.length}
+								<div class="media-file-group">
+									<h3>Downloaded files</h3>
+									<div class="media-file-list">
+										{#each filePaths as path (path)}
+											<code>{path}</code>
+										{/each}
+									</div>
+								</div>
+							{/if}
+							{#if metadataFilePaths.length}
+								<div class="media-file-group">
+									<h3>Metadata files</h3>
+									<div class="media-file-list">
+										{#each metadataFilePaths as path (path)}
+											<code>{path}</code>
+										{/each}
+									</div>
+								</div>
+							{/if}
+						</div>
+					{:else}
+						<p class="empty">No imported files found.</p>
+					{/if}
 				</section>
 
 				<section aria-labelledby="release-candidates-title">

@@ -3,6 +3,10 @@ package storage
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,20 +14,26 @@ import (
 )
 
 type MediaItem struct {
-	ID               uuid.UUID
-	Type             string
-	Title            string
-	Year             *int32
-	Monitored        bool
-	ExternalProvider *string
-	ExternalID       *string
-	Overview         *string
-	PosterPath       *string
-	QualityProfileID *string
-	LibraryFolderID  *uuid.UUID
-	Tags             []string
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID                 uuid.UUID
+	Type               string
+	Title              string
+	Year               *int32
+	Monitored          bool
+	ExternalProvider   *string
+	ExternalID         *string
+	Overview           *string
+	PosterPath         *string
+	QualityProfileID   *string
+	QualityProfileName *string
+	Status             string
+	LibraryFolderID    *uuid.UUID
+	LibraryFolderPath  *string
+	MediaFolderPath    *string
+	FilePaths          []string
+	MetadataFilePaths  []string
+	Tags               []string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type MediaItemInput struct {
@@ -48,6 +58,7 @@ type DownloadActivity struct {
 	ReleaseTitle       string
 	IndexerName        string
 	DownloadClientName string
+	DownloadID         *string
 	DownloadURL        string
 	Status             string
 	Error              *string
@@ -60,6 +71,7 @@ type DownloadActivityInput struct {
 	ReleaseTitle       string
 	IndexerName        string
 	DownloadClientName string
+	DownloadID         *string
 	DownloadURL        string
 	Status             string
 	Error              *string
@@ -101,18 +113,66 @@ type ReleaseSearchSnapshot struct {
 	Errors   []string
 }
 
+const mediaItemSelectFields = `
+	m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path,
+	m.quality_profile_id, mp.name as quality_profile_name,
+	case
+		when exists (
+			select 1
+			from app.library_scan_items status_lsi
+			where status_lsi.media_item_id = m.id
+		) then 'downloaded'
+		when exists (
+			select 1
+			from app.download_activity status_activity
+			where status_activity.media_item_id = m.id
+				and status_activity.status in ('queued', 'grabbed', 'downloading')
+			) then 'downloading'
+		when exists (
+			select 1
+			from app.download_activity status_activity
+			where status_activity.media_item_id = m.id
+				and status_activity.status = 'completed'
+		) then 'downloaded'
+		else 'missing'
+	end as status,
+	m.library_folder_id,
+	m.media_folder_path,
+	coalesce(lf.path, (
+		select lf2.path
+		from app.library_scan_items lsi2
+		join app.library_scans ls2 on ls2.id = lsi2.scan_id
+		join app.library_folders lf2 on lf2.id = ls2.library_folder_id
+		where lsi2.media_item_id = m.id
+		order by lsi2.updated_at desc
+		limit 1
+	)) as library_folder_path,
+	array(
+		select distinct lsi.path
+		from app.library_scan_items lsi
+		where lsi.media_item_id = m.id
+		order by lsi.path
+	) as file_paths,
+	coalesce(array(
+		select t.name
+		from app.media_item_tags mit
+		join app.tags t on t.id = mit.tag_id
+		where mit.media_item_id = m.id
+		order by lower(t.name)
+	), '{}') as tags,
+	m.created_at, m.updated_at
+`
+
+const mediaItemJoins = `
+	left join app.media_profiles mp on mp.id = m.quality_profile_id
+	left join app.library_folders lf on lf.id = m.library_folder_id
+`
+
 func (s *SettingsStore) ListMediaItems(ctx context.Context) ([]MediaItem, error) {
 	rows, err := s.pool.Query(ctx, `
-		select m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path, m.quality_profile_id, m.library_folder_id,
-			coalesce(array(
-				select t.name
-				from app.media_item_tags mit
-				join app.tags t on t.id = mit.tag_id
-				where mit.media_item_id = m.id
-				order by lower(t.name)
-			), '{}') as tags,
-			m.created_at, m.updated_at
+		select `+mediaItemSelectFields+`
 		from app.media_items m
+		`+mediaItemJoins+`
 		order by created_at desc, title asc
 	`)
 	if err != nil {
@@ -136,16 +196,9 @@ func (s *SettingsStore) SearchMediaItems(ctx context.Context, query string, medi
 		limit = 20
 	}
 	rows, err := s.pool.Query(ctx, `
-		select m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path, m.quality_profile_id, m.library_folder_id,
-			coalesce(array(
-				select t.name
-				from app.media_item_tags mit
-				join app.tags t on t.id = mit.tag_id
-				where mit.media_item_id = m.id
-				order by lower(t.name)
-			), '{}') as tags,
-			m.created_at, m.updated_at
+		select `+mediaItemSelectFields+`
 		from app.media_items m
+		`+mediaItemJoins+`
 		where title ilike '%' || $1 || '%'
 			and ($2::text is null or media_type = $2)
 		order by
@@ -175,16 +228,9 @@ func (s *SettingsStore) GetMediaItem(ctx context.Context, id uuid.UUID) (MediaIt
 
 func getMediaItem(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (MediaItem, error) {
 	return scanMediaItemRow(q.QueryRow(ctx, `
-		select m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path, m.quality_profile_id, m.library_folder_id,
-			coalesce(array(
-				select t.name
-				from app.media_item_tags mit
-				join app.tags t on t.id = mit.tag_id
-				where mit.media_item_id = m.id
-				order by lower(t.name)
-			), '{}') as tags,
-			m.created_at, m.updated_at
+		select `+mediaItemSelectFields+`
 		from app.media_items m
+		`+mediaItemJoins+`
 		where m.id = $1
 	`, id))
 }
@@ -199,13 +245,17 @@ func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInpu
 	}()
 	id := uuid.New()
 	var itemID uuid.UUID
+	mediaFolderPath, err := ensureMediaMainFolder(ctx, tx, input)
+	if err != nil {
+		return MediaItem{}, err
+	}
 	if err := tx.QueryRow(ctx, `
 		insert into app.media_items (
-			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id
+			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, media_folder_path
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		returning id
-	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID).Scan(&itemID); err != nil {
+	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath).Scan(&itemID); err != nil {
 		return MediaItem{}, err
 	}
 	if err := assignMediaItemTags(ctx, tx, itemID, input.Tags); err != nil {
@@ -230,6 +280,41 @@ func (s *SettingsStore) DeleteMediaItem(ctx context.Context, id uuid.UUID) error
 		return ErrNotFound
 	}
 	return nil
+}
+
+func (s *SettingsStore) ListMissingMediaItems(ctx context.Context) ([]MediaItem, error) {
+	rows, err := s.pool.Query(ctx, `
+		select `+mediaItemSelectFields+`
+		from app.media_items m
+		`+mediaItemJoins+`
+		where m.monitored = true
+			and not exists (
+				select 1
+				from app.library_scan_items lsi
+				where lsi.media_item_id = m.id
+			)
+			and not exists (
+				select 1
+				from app.download_activity activity
+				where activity.media_item_id = m.id
+					and activity.status in ('queued', 'grabbed', 'downloading')
+			)
+		order by m.created_at asc
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := []MediaItem{}
+	for rows.Next() {
+		item, err := scanMediaItem(rows)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, rows.Err()
 }
 
 func (s *SettingsStore) ListEnabledIndexers(ctx context.Context) ([]Indexer, error) {
@@ -276,26 +361,6 @@ func (s *SettingsStore) ListEnabledDownloadClients(ctx context.Context) ([]Downl
 		clients = append(clients, client)
 	}
 	return clients, rows.Err()
-}
-
-func (s *SettingsStore) CreateDownloadActivity(ctx context.Context, input DownloadActivityInput) (DownloadActivity, error) {
-	id := uuid.New()
-	return scanDownloadActivityRow(s.pool.QueryRow(ctx, `
-		insert into app.download_activity (
-			id, media_item_id, release_title, indexer_name, download_client_name, download_url, status, error
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8)
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_url, status, error, created_at, updated_at
-	`, id, input.MediaItemID, input.ReleaseTitle, input.IndexerName, input.DownloadClientName, input.DownloadURL, input.Status, input.Error))
-}
-
-func (s *SettingsStore) UpdateDownloadActivityStatus(ctx context.Context, id uuid.UUID, status string, activityError *string) (DownloadActivity, error) {
-	return scanDownloadActivityRow(s.pool.QueryRow(ctx, `
-		update app.download_activity
-		set status = $2, error = $3, updated_at = now()
-		where id = $1
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_url, status, error, created_at, updated_at
-	`, id, status, activityError))
 }
 
 func (s *SettingsStore) ReplaceReleaseSearchResults(ctx context.Context, mediaItemID uuid.UUID, releases []ReleaseCandidateInput, searchErrors []string) error {
@@ -395,55 +460,6 @@ func (s *SettingsStore) ListReleaseSearchResults(ctx context.Context, mediaItemI
 	return snapshot, errorRows.Err()
 }
 
-func (s *SettingsStore) ListDownloadActivity(ctx context.Context) ([]DownloadActivity, error) {
-	rows, err := s.pool.Query(ctx, `
-		select
-			a.id,
-			a.media_item_id,
-			m.title,
-			m.media_type,
-			a.release_title,
-			a.indexer_name,
-			a.download_client_name,
-			a.download_url,
-			a.status,
-			a.error,
-			a.created_at,
-			a.updated_at
-		from app.download_activity a
-		join app.media_items m on m.id = a.media_item_id
-		order by a.created_at desc
-		limit 100
-	`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	activities := []DownloadActivity{}
-	for rows.Next() {
-		var activity DownloadActivity
-		if err := rows.Scan(
-			&activity.ID,
-			&activity.MediaItemID,
-			&activity.MediaTitle,
-			&activity.MediaType,
-			&activity.ReleaseTitle,
-			&activity.IndexerName,
-			&activity.DownloadClientName,
-			&activity.DownloadURL,
-			&activity.Status,
-			&activity.Error,
-			&activity.CreatedAt,
-			&activity.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		activities = append(activities, activity)
-	}
-	return activities, rows.Err()
-}
-
 func scanMediaItemRow(row pgx.Row) (MediaItem, error) {
 	item, err := scanMediaItem(row)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -465,12 +481,83 @@ func scanMediaItem(row pgx.Row) (MediaItem, error) {
 		&item.Overview,
 		&item.PosterPath,
 		&item.QualityProfileID,
+		&item.QualityProfileName,
+		&item.Status,
 		&item.LibraryFolderID,
+		&item.MediaFolderPath,
+		&item.LibraryFolderPath,
+		&item.FilePaths,
 		&item.Tags,
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)
+	item.MetadataFilePaths = collectMetadataFilePaths(item.FilePaths)
 	return item, err
+}
+
+var metadataFileExtensions = map[string]struct{}{
+	".ass":  {},
+	".idx":  {},
+	".jpeg": {},
+	".jpg":  {},
+	".nfo":  {},
+	".png":  {},
+	".srt":  {},
+	".ssa":  {},
+	".sub":  {},
+	".tbn":  {},
+	".txt":  {},
+	".webp": {},
+}
+
+func collectMetadataFilePaths(mediaPaths []string) []string {
+	paths := map[string]struct{}{}
+	for _, mediaPath := range mediaPaths {
+		dir := filepath.Dir(mediaPath)
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		mediaBase := strings.TrimSuffix(filepath.Base(mediaPath), filepath.Ext(mediaPath))
+		mediaBase = strings.ToLower(mediaBase)
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			name := entry.Name()
+			ext := strings.ToLower(filepath.Ext(name))
+			if _, ok := metadataFileExtensions[ext]; !ok {
+				continue
+			}
+			base := strings.ToLower(strings.TrimSuffix(name, filepath.Ext(name)))
+			if !isRelatedMetadataBase(base, mediaBase) {
+				continue
+			}
+			fullPath := filepath.Join(dir, name)
+			if fullPath != mediaPath {
+				paths[fullPath] = struct{}{}
+			}
+		}
+	}
+
+	result := make([]string, 0, len(paths))
+	for path := range paths {
+		result = append(result, path)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func isRelatedMetadataBase(base string, mediaBase string) bool {
+	if base == mediaBase || strings.HasPrefix(base, mediaBase+".") || strings.HasPrefix(base, mediaBase+"-") {
+		return true
+	}
+	switch base {
+	case "banner", "clearlogo", "cover", "fanart", "folder", "landscape", "movie", "poster":
+		return true
+	default:
+		return false
+	}
 }
 
 func scanReleaseCandidate(row pgx.Row) (ReleaseCandidate, error) {
@@ -492,24 +579,4 @@ func scanReleaseCandidate(row pgx.Row) (ReleaseCandidate, error) {
 		&release.UpdatedAt,
 	)
 	return release, err
-}
-
-func scanDownloadActivityRow(row pgx.Row) (DownloadActivity, error) {
-	var activity DownloadActivity
-	err := row.Scan(
-		&activity.ID,
-		&activity.MediaItemID,
-		&activity.ReleaseTitle,
-		&activity.IndexerName,
-		&activity.DownloadClientName,
-		&activity.DownloadURL,
-		&activity.Status,
-		&activity.Error,
-		&activity.CreatedAt,
-		&activity.UpdatedAt,
-	)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return DownloadActivity{}, ErrNotFound
-	}
-	return activity, err
 }

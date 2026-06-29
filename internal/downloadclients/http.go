@@ -104,3 +104,10 @@ func intString(value int) string {
 	}
 	return fmt.Sprintf("%d", value)
 }
+
+func pathJoin(base string, elem string) string {
+	if strings.TrimSpace(base) == "" {
+		return elem
+	}
+	return strings.TrimRight(base, "/") + "/" + strings.TrimLeft(elem, "/")
+}

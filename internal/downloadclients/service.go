@@ -54,6 +54,34 @@ func (s *Service) Add(ctx context.Context, config Config, request AddRequest) Ad
 	}
 }
 
+func (s *Service) Status(ctx context.Context, config Config, request StatusRequest) StatusResult {
+	if strings.TrimSpace(request.DownloadID) == "" {
+		return statusLookupFailedResult("Download ID is required")
+	}
+	switch config.Type {
+	case "transmission":
+		return s.statusTransmission(ctx, config, request)
+	case "sabnzbd":
+		return s.statusSABnzbd(ctx, config, request)
+	default:
+		return statusLookupFailedResult("Unsupported download client type", "type", config.Type)
+	}
+}
+
+func (s *Service) Cancel(ctx context.Context, config Config, request CancelRequest) CancelResult {
+	if strings.TrimSpace(request.DownloadID) == "" {
+		return cancelFailedResult("Download ID is required")
+	}
+	switch config.Type {
+	case "transmission":
+		return s.cancelTransmission(ctx, config, request)
+	case "sabnzbd":
+		return s.cancelSABnzbd(ctx, config, request)
+	default:
+		return cancelFailedResult("Unsupported download client type", "type", config.Type)
+	}
+}
+
 func failedResult(message string, pairs ...interface{}) TestResult {
 	return TestResult{
 		Success: false,
@@ -85,6 +113,55 @@ func addSuccessResult(message string, downloadID string, pairs ...interface{}) A
 		DownloadID: downloadID,
 		Details:    details(pairs...),
 	}
+}
+
+func cancelFailedResult(message string, pairs ...interface{}) CancelResult {
+	return CancelResult{
+		Success: false,
+		Message: message,
+		Details: details(pairs...),
+	}
+}
+
+func cancelSuccessResult(message string, pairs ...interface{}) CancelResult {
+	return CancelResult{
+		Success: true,
+		Message: message,
+		Details: details(pairs...),
+	}
+}
+
+func statusLookupFailedResult(message string, pairs ...interface{}) StatusResult {
+	return StatusResult{
+		Success: false,
+		Message: message,
+		Details: details(pairs...),
+	}
+}
+
+func statusLookupNotFoundResult(message string, pairs ...interface{}) StatusResult {
+	return StatusResult{
+		Success: true,
+		Found:   false,
+		Message: message,
+		Details: details(pairs...),
+	}
+}
+
+func statusLookupResult(status string, message string, pairs ...interface{}) StatusResult {
+	return StatusResult{
+		Success: true,
+		Found:   true,
+		Status:  status,
+		Message: message,
+		Details: details(pairs...),
+	}
+}
+
+func statusLookupResultWithFiles(status string, message string, files []StatusFile, pairs ...interface{}) StatusResult {
+	result := statusLookupResult(status, message, pairs...)
+	result.Files = files
+	return result
 }
 
 func requestFailedResult(err error) TestResult {

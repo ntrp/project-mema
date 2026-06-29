@@ -482,6 +482,29 @@ paths:
                 $ref: "#/components/schemas/DownloadActivityListResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /activity/downloads/{id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: cancelDownloadActivity
+      tags:
+        - Activity
+      summary: Cancel an active download activity
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Download activity cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadActivity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/download-clients:
     get:
       operationId: listDownloadClients
@@ -713,6 +736,172 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IntegrationTestResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/quality-sizes:
+    get:
+      operationId: listQualitySizeSettings
+      tags:
+        - Settings
+      summary: List quality size settings
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Quality size settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QualitySizeSettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateQualitySizeSettings
+      tags:
+        - Settings
+      summary: Update quality size settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QualitySizeSettingsUpdateRequest"
+      responses:
+        "200":
+          description: Quality size settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QualitySizeSettingsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/file-naming:
+    get:
+      operationId: getFileNamingSettings
+      tags:
+        - Settings
+      summary: Get file naming settings
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: File naming settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileNamingSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateFileNamingSettings
+      tags:
+        - Settings
+      summary: Update file naming settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileNamingSettingsRequest"
+      responses:
+        "200":
+          description: File naming settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileNamingSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/profiles:
+    get:
+      operationId: listMediaProfiles
+      tags:
+        - Settings
+      summary: List media profiles
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Media profiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaProfileListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createMediaProfile
+      tags:
+        - Settings
+      summary: Create a media profile
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaProfileRequest"
+      responses:
+        "201":
+          description: Media profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/profiles/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ProfileId"
+    put:
+      operationId: updateMediaProfile
+      tags:
+        - Settings
+      summary: Update a media profile
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaProfileRequest"
+      responses:
+        "200":
+          description: Media profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteMediaProfile
+      tags:
+        - Settings
+      summary: Delete a media profile
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Media profile deleted
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -1079,6 +1268,64 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/library/path-mappings:
+    get:
+      operationId: listPathMappings
+      tags:
+        - Settings
+      summary: List download client path mappings
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Configured path mappings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PathMappingListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createPathMapping
+      tags:
+        - Settings
+      summary: Create or update a download client path mapping
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PathMappingRequest"
+      responses:
+        "201":
+          description: Path mapping saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PathMapping"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/library/path-mappings/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    delete:
+      operationId: deletePathMapping
+      tags:
+        - Settings
+      summary: Remove a configured path mapping
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Path mapping removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/library/scans/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -1343,6 +1590,14 @@ components:
       schema:
         type: string
         format: uuid
+    ProfileId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
   securitySchemes:
     sessionCookie:
       type: apiKey
@@ -1818,12 +2073,31 @@ components:
           additionalProperties: false
           required:
             - id
+            - status
+            - filePaths
+            - metadataFilePaths
             - createdAt
             - updatedAt
           properties:
             id:
               type: string
               format: uuid
+            status:
+              $ref: "#/components/schemas/MediaItemStatus"
+            qualityProfileName:
+              type: string
+            libraryFolderPath:
+              type: string
+            mediaFolderPath:
+              type: string
+            filePaths:
+              type: array
+              items:
+                type: string
+            metadataFilePaths:
+              type: array
+              items:
+                type: string
             createdAt:
               type: string
               format: date-time
@@ -1875,6 +2149,12 @@ components:
             type: string
             minLength: 1
             maxLength: 80
+    MediaItemStatus:
+      type: string
+      enum:
+        - missing
+        - downloading
+        - downloaded
     MediaRequestListResponse:
       type: object
       additionalProperties: false
@@ -2007,6 +2287,178 @@ components:
           type: string
           minLength: 1
           maxLength: 80
+    QualitySizeSettingsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - qualities
+      properties:
+        qualities:
+          type: array
+          items:
+            $ref: "#/components/schemas/QualitySizeSetting"
+    QualitySizeSettingsUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - qualities
+      properties:
+        qualities:
+          type: array
+          items:
+            $ref: "#/components/schemas/QualitySizeSettingRequest"
+    QualitySizeSetting:
+      allOf:
+        - $ref: "#/components/schemas/QualitySizeSettingRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - name
+            - sortOrder
+            - createdAt
+            - updatedAt
+          properties:
+            name:
+              type: string
+            sortOrder:
+              type: integer
+              format: int32
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    QualitySizeSettingRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - qualityId
+        - minimumSizeMbPerMinute
+      properties:
+        qualityId:
+          type: string
+          minLength: 1
+          maxLength: 100
+        minimumSizeMbPerMinute:
+          type: number
+          format: double
+          minimum: 0
+        preferredSizeMbPerMinute:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+        maximumSizeMbPerMinute:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+    MediaProfileListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - profiles
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaProfile"
+    MediaProfile:
+      allOf:
+        - $ref: "#/components/schemas/MediaProfileRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    MediaProfileRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - qualityIds
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        qualityIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+    FileNamingSettings:
+      allOf:
+        - $ref: "#/components/schemas/FileNamingSettingsRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - createdAt
+            - updatedAt
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    FileNamingSettingsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - movieFileFormat
+        - movieFolderFormat
+        - seriesEpisodeFormat
+        - dailyEpisodeFormat
+        - animeEpisodeFormat
+        - seriesFolderFormat
+        - seasonFolderFormat
+        - specialsFolderFormat
+      properties:
+        movieFileFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+        movieFolderFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+        seriesEpisodeFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+        dailyEpisodeFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+        animeEpisodeFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+        seriesFolderFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+        seasonFolderFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+        specialsFolderFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
     MediaRequestApproveRequest:
       type: object
       additionalProperties: false
@@ -2161,6 +2613,8 @@ components:
           type: string
         downloadClientName:
           type: string
+        downloadId:
+          type: string
         downloadUrl:
           type: string
         status:
@@ -2168,6 +2622,9 @@ components:
           enum:
             - queued
             - grabbed
+            - downloading
+            - completed
+            - cancelled
             - failed
         error:
           type: string
@@ -2538,6 +2995,50 @@ components:
         - path
       properties:
         path:
+          type: string
+          minLength: 1
+          maxLength: 4000
+    PathMappingListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - mappings
+      properties:
+        mappings:
+          type: array
+          items:
+            $ref: "#/components/schemas/PathMapping"
+    PathMapping:
+      allOf:
+        - $ref: "#/components/schemas/PathMappingRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    PathMappingRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - clientPath
+        - appPath
+      properties:
+        clientPath:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        appPath:
           type: string
           minLength: 1
           maxLength: 4000

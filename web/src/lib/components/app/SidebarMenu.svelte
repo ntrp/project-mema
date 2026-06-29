@@ -11,6 +11,9 @@
 		| '/settings/library'
 		| '/settings/download-clients'
 		| '/settings/indexers'
+		| '/settings/quality'
+		| '/settings/file-naming'
+		| '/settings/profiles'
 		| '/settings/metadata'
 		| '/settings/tags'
 		| '/settings/users'
@@ -40,20 +43,42 @@
 	}
 
 	let { title, items, active, activeSubmenu, onSelect, onSubmenuSelect }: Props<string> = $props();
+	let menuOpen = $state(false);
+
+	function selectItem(value: string) {
+		onSelect(value);
+		menuOpen = false;
+	}
+
+	function selectSubmenuItem(value: string) {
+		onSubmenuSelect?.(value);
+		menuOpen = false;
+	}
 </script>
 
-<aside class="side-menu" aria-label={title}>
-	<a class="brand-button" href={resolve('/discover')} onclick={() => onSelect('discover')}>
-		<span class="brand-mark" aria-hidden="true">M</span>
-		<span class="brand-name">{title}</span>
-	</a>
-	<nav>
+<aside class="side-menu" class:menu-open={menuOpen} aria-label={title}>
+	<div class="side-menu-header">
+		<a class="brand-button" href={resolve('/discover')} onclick={() => selectItem('discover')}>
+			<span class="brand-mark" aria-hidden="true">M</span>
+			<span class="brand-name">{title}</span>
+		</a>
+		<button
+			type="button"
+			class="menu-toggle"
+			aria-expanded={menuOpen}
+			aria-controls="primary-menu"
+			onclick={() => (menuOpen = !menuOpen)}
+		>
+			{menuOpen ? 'Close' : 'Menu'}
+		</button>
+	</div>
+	<nav id="primary-menu">
 		{#each items as item (item.value)}
 			<a
 				href={resolve(item.href)}
 				class:active-menu={active === item.value && !item.children?.length}
 				aria-current={active === item.value && !item.children?.length ? 'page' : undefined}
-				onclick={() => onSelect(item.value)}
+				onclick={() => selectItem(item.value)}
 			>
 				<span class="menu-icon" aria-hidden="true">
 					{#if item.icon === 'discover'}
@@ -94,7 +119,7 @@
 							href={resolve(child.href)}
 							class:active-submenu={activeSubmenu === child.value}
 							aria-current={activeSubmenu === child.value ? 'page' : undefined}
-							onclick={() => onSubmenuSelect?.(child.value)}
+							onclick={() => selectSubmenuItem(child.value)}
 						>
 							{child.label}
 						</a>

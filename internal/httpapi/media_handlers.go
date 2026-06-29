@@ -263,6 +263,7 @@ func (s *Server) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "media_create_failed", "Could not add media item")
 		return
 	}
+	_, _ = s.jobs.EnqueueAutoSearchDownload(r.Context(), item.ID)
 	writeJSON(w, http.StatusCreated, mediaItemResponse(item))
 }
 
@@ -346,6 +347,7 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 		writeMediaRequestError(w, err)
 		return
 	}
+	_, _ = s.jobs.EnqueueAutoSearchDownload(r.Context(), item.ID)
 	writeJSON(w, http.StatusOK, MediaRequestApproveResponse{
 		Request:   mediaRequestResponse(request),
 		MediaItem: mediaItemResponse(item),
@@ -785,13 +787,17 @@ func (s *Server) validateMediaTarget(ctx context.Context, qualityProfileID *stri
 	if qualityProfileID == nil || strings.TrimSpace(*qualityProfileID) == "" {
 		return errMissingQualityProfile
 	}
-	if !qualityProfileSupported(strings.TrimSpace(*qualityProfileID)) {
+	exists, err := s.settings.MediaProfileExists(ctx, strings.TrimSpace(*qualityProfileID))
+	if err != nil {
+		return err
+	}
+	if !exists {
 		return errUnsupportedQualityProfile
 	}
 	if libraryFolderID == nil {
 		return errMissingLibraryFolder
 	}
-	exists, err := s.settings.LibraryFolderExists(ctx, *libraryFolderID)
+	exists, err = s.settings.LibraryFolderExists(ctx, *libraryFolderID)
 	if err != nil {
 		return err
 	}
@@ -824,15 +830,6 @@ func writeMediaRequestError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "media_request_not_found", "Could not find media request")
 	default:
 		writeError(w, http.StatusInternalServerError, "media_request_update_failed", "Could not update media request")
-	}
-}
-
-func qualityProfileSupported(id string) bool {
-	switch id {
-	case "any", "hd-1080p", "uhd-4k", "anime-1080p":
-		return true
-	default:
-		return false
 	}
 }
 

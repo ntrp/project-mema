@@ -12,7 +12,7 @@ import (
 
 func TestMetadataDetailsRouteIsMounted(t *testing.T) {
 	router := chi.NewRouter()
-	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil), router)
+	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil, nil), router)
 
 	request := httptest.NewRequest(http.MethodGet, "/media/metadata/tmdb/movie/936075", nil)
 	response := httptest.NewRecorder()
@@ -26,7 +26,7 @@ func TestMetadataDetailsRouteIsMounted(t *testing.T) {
 
 func TestSettingsUsersRouteIsMounted(t *testing.T) {
 	router := chi.NewRouter()
-	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil), router)
+	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil, nil), router)
 
 	request := httptest.NewRequest(http.MethodGet, "/settings/users", nil)
 	response := httptest.NewRecorder()
@@ -38,9 +38,23 @@ func TestSettingsUsersRouteIsMounted(t *testing.T) {
 	}
 }
 
+func TestSettingsProfilesRouteIsMounted(t *testing.T) {
+	router := chi.NewRouter()
+	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil, nil), router)
+
+	request := httptest.NewRequest(http.MethodGet, "/settings/profiles", nil)
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("expected settings profiles route to reach auth middleware, got status %d and body %q", response.Code, response.Body.String())
+	}
+}
+
 func TestMediaRequestsRouteIsMounted(t *testing.T) {
 	router := chi.NewRouter()
-	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil), router)
+	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil, nil), router)
 
 	request := httptest.NewRequest(http.MethodGet, "/media/requests", nil)
 	response := httptest.NewRecorder()
