@@ -20,6 +20,7 @@ type MediaRequest struct {
 	ExternalID          *string
 	Overview            *string
 	PosterPath          *string
+	Tags                []string
 	Status              string
 	QualityProfileID    *string
 	LibraryFolderID     *uuid.UUID
@@ -38,6 +39,7 @@ type MediaRequestInput struct {
 	ExternalID        *string
 	Overview          *string
 	PosterPath        *string
+	Tags              []string
 }
 
 type MediaRequestApprovalInput struct {
@@ -50,6 +52,13 @@ func (s *SettingsStore) ListMediaRequests(ctx context.Context, userID uuid.UUID,
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
+			coalesce(array(
+				select t.name
+				from app.media_request_tags mrt
+				join app.tags t on t.id = mrt.tag_id
+				where mrt.media_request_id = r.id
+				order by lower(t.name)
+			), '{}') as tags,
 			r.created_at, r.updated_at
 		from app.media_requests r
 		join app.users u on u.id = r.requested_by_user_id
@@ -79,6 +88,13 @@ func (s *SettingsStore) GetMediaRequest(ctx context.Context, id uuid.UUID, userI
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
+			coalesce(array(
+				select t.name
+				from app.media_request_tags mrt
+				join app.tags t on t.id = mrt.tag_id
+				where mrt.media_request_id = r.id
+				order by lower(t.name)
+			), '{}') as tags,
 			r.created_at, r.updated_at
 		from app.media_requests r
 		join app.users u on u.id = r.requested_by_user_id
@@ -90,18 +106,59 @@ func (s *SettingsStore) GetMediaRequest(ctx context.Context, id uuid.UUID, userI
 	return request, err
 }
 
+func getMediaRequest(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (MediaRequest, error) {
+	request, err := scanMediaRequest(q.QueryRow(ctx, `
+		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
+			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
+			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
+			coalesce(array(
+				select t.name
+				from app.media_request_tags mrt
+				join app.tags t on t.id = mrt.tag_id
+				where mrt.media_request_id = r.id
+				order by lower(t.name)
+			), '{}') as tags,
+			r.created_at, r.updated_at
+		from app.media_requests r
+		join app.users u on u.id = r.requested_by_user_id
+		where r.id = $1
+	`, id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return MediaRequest{}, ErrNotFound
+	}
+	return request, err
+}
+
 func (s *SettingsStore) CreateMediaRequest(ctx context.Context, input MediaRequestInput) (MediaRequest, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return MediaRequest{}, err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 	id := uuid.New()
-	return scanMediaRequest(s.pool.QueryRow(ctx, `
+	var requestID uuid.UUID
+	if err := tx.QueryRow(ctx, `
 		insert into app.media_requests (
 			id, requested_by_user_id, media_type, title, year, external_provider, external_id, overview, poster_path
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		returning id, requested_by_user_id, (
-				select username from app.users where id = $2
-			), media_type, title, year, external_provider, external_id, overview, poster_path,
-			status, quality_profile_id, library_folder_id, media_item_id, decided_at, created_at, updated_at
-	`, id, input.RequestedByUserID, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath))
+		returning id
+	`, id, input.RequestedByUserID, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath).Scan(&requestID); err != nil {
+		return MediaRequest{}, err
+	}
+	if err := assignMediaRequestTags(ctx, tx, requestID, input.Tags); err != nil {
+		return MediaRequest{}, err
+	}
+	request, err := getMediaRequest(ctx, tx, requestID)
+	if err != nil {
+		return MediaRequest{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return MediaRequest{}, err
+	}
+	return request, nil
 }
 
 func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, input MediaRequestApprovalInput) (MediaRequest, MediaItem, error) {
@@ -125,6 +182,13 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
+			coalesce(array(
+				select t.name
+				from app.media_request_tags mrt
+				join app.tags t on t.id = mrt.tag_id
+				where mrt.media_request_id = r.id
+				order by lower(t.name)
+			), '{}') as tags,
 			r.created_at, r.updated_at
 		from app.media_requests r
 		join app.users u on u.id = r.requested_by_user_id
@@ -152,6 +216,7 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		ExternalID:       request.ExternalID,
 		Overview:         request.Overview,
 		PosterPath:       request.PosterPath,
+		Tags:             request.Tags,
 		QualityProfileID: &qualityProfileID,
 		LibraryFolderID:  &libraryFolderID,
 	})
@@ -171,7 +236,15 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		returning id, requested_by_user_id, (
 				select username from app.users where id = requested_by_user_id
 			), media_type, title, year, external_provider, external_id, overview, poster_path,
-			status, quality_profile_id, library_folder_id, media_item_id, decided_at, created_at, updated_at
+			status, quality_profile_id, library_folder_id, media_item_id, decided_at,
+			coalesce(array(
+				select t.name
+				from app.media_request_tags mrt
+				join app.tags t on t.id = mrt.tag_id
+				where mrt.media_request_id = $1
+				order by lower(t.name)
+			), '{}') as tags,
+			created_at, updated_at
 	`, id, input.QualityProfileID, input.LibraryFolderID, item.ID))
 	if err != nil {
 		return MediaRequest{}, MediaItem{}, err
@@ -200,6 +273,7 @@ func scanMediaRequest(row pgx.Row) (MediaRequest, error) {
 		&request.LibraryFolderID,
 		&request.MediaItemID,
 		&request.DecidedAt,
+		&request.Tags,
 		&request.CreatedAt,
 		&request.UpdatedAt,
 	)

@@ -43,9 +43,23 @@ type tmdbName struct {
 
 type tmdbSeason struct {
 	Name         string `json:"name"`
+	SeasonNumber int32  `json:"season_number"`
 	EpisodeCount int32  `json:"episode_count"`
 	AirDate      string `json:"air_date"`
 	PosterPath   string `json:"poster_path"`
+	Episodes     []tmdbEpisode
+}
+
+type tmdbSeasonDetails struct {
+	Episodes []tmdbEpisode `json:"episodes"`
+}
+
+type tmdbEpisode struct {
+	Name          string `json:"name"`
+	EpisodeNumber int32  `json:"episode_number"`
+	Overview      string `json:"overview"`
+	AirDate       string `json:"air_date"`
+	StillPath     string `json:"still_path"`
 }
 
 type tmdbCredits struct {

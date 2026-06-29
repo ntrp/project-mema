@@ -37,6 +37,26 @@ type MetadataProviderInput struct {
 	Priority    int32
 }
 
+type MetadataCacheStats struct {
+	TotalEntries   int32
+	ActiveEntries  int32
+	ExpiredEntries int32
+	ProviderCount  int32
+}
+
+type MetadataCacheEntry struct {
+	ProviderName string
+	ProviderType string
+	MediaType    string
+	Query        string
+	Year         int32
+	ItemCount    int32
+	ExpiresAt    time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Expired      bool
+}
+
 func (s *SettingsStore) EnsureDefaultMetadataProviders(ctx context.Context) error {
 	defaults := []MetadataProviderInput{
 		{
@@ -226,6 +246,88 @@ func (s *SettingsStore) SetMetadataSearchCache(ctx context.Context, providerID u
 		set results = excluded.results, expires_at = excluded.expires_at, updated_at = now()
 	`, providerID, mediaType, query, cacheYear(year), raw, expiresAt)
 	return err
+}
+
+func (s *SettingsStore) MetadataCacheStats(ctx context.Context) (MetadataCacheStats, error) {
+	var stats MetadataCacheStats
+	err := s.pool.QueryRow(ctx, `
+		select
+			count(*)::int,
+			count(*) filter (where expires_at > now())::int,
+			count(*) filter (where expires_at <= now())::int,
+			count(distinct provider_id)::int
+		from app.metadata_search_cache
+	`).Scan(&stats.TotalEntries, &stats.ActiveEntries, &stats.ExpiredEntries, &stats.ProviderCount)
+	return stats, err
+}
+
+func (s *SettingsStore) ListMetadataCacheEntries(ctx context.Context, limit int32) ([]MetadataCacheEntry, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+	rows, err := s.pool.Query(ctx, `
+		select p.name,
+			p.type,
+			c.media_type,
+			c.query,
+			c.year,
+			case
+				when jsonb_typeof(c.results) = 'array' then jsonb_array_length(c.results)
+				else 1
+			end::int,
+			c.expires_at,
+			c.created_at,
+			c.updated_at,
+			c.expires_at <= now()
+		from app.metadata_search_cache c
+		join app.metadata_providers p on p.id = c.provider_id
+		order by c.updated_at desc
+		limit $1
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := []MetadataCacheEntry{}
+	for rows.Next() {
+		var entry MetadataCacheEntry
+		if err := rows.Scan(
+			&entry.ProviderName,
+			&entry.ProviderType,
+			&entry.MediaType,
+			&entry.Query,
+			&entry.Year,
+			&entry.ItemCount,
+			&entry.ExpiresAt,
+			&entry.CreatedAt,
+			&entry.UpdatedAt,
+			&entry.Expired,
+		); err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	return entries, rows.Err()
+}
+
+func (s *SettingsStore) ClearMetadataCache(ctx context.Context) (int32, error) {
+	tag, err := s.pool.Exec(ctx, `delete from app.metadata_search_cache`)
+	if err != nil {
+		return 0, err
+	}
+	return int32(tag.RowsAffected()), nil
+}
+
+func (s *SettingsStore) ClearMetadataCacheByPattern(ctx context.Context, pattern string) (int32, error) {
+	tag, err := s.pool.Exec(ctx, `
+		delete from app.metadata_search_cache
+		where query ~* $1
+	`, pattern)
+	if err != nil {
+		return 0, err
+	}
+	return int32(tag.RowsAffected()), nil
 }
 
 func cacheYear(year *int32) int32 {

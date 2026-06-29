@@ -127,10 +127,11 @@ func (s *Server) AutocompleteMedia(w http.ResponseWriter, r *http.Request, param
 	}
 
 	groups, err := s.groupedMediaSearch(r.Context(), groupedMediaSearchRequest{
-		query:          query,
-		mediaTypes:     []string{"movie", "series"},
-		limit:          5,
-		includeLibrary: true,
+		query:            query,
+		mediaTypes:       []string{"movie", "series"},
+		limit:            5,
+		includeLibrary:   boolDefault(params.IncludeLibrary, true),
+		includeProviders: boolDefault(params.IncludeProviders, true),
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "media_autocomplete_failed", "Could not search media")
@@ -181,6 +182,7 @@ func (s *Server) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
 		providerIDsProvided: body.ProviderIds != nil,
 		limit:               int(limit),
 		includeLibrary:      true,
+		includeProviders:    true,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "media_advanced_search_failed", "Could not search media")
@@ -209,7 +211,7 @@ func (s *Server) GetMediaMetadataDetails(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	details, err := s.metadata.Details(r.Context(), metadataProviderConfig(provider), metadata.DetailsRequest{
+	details, err := s.metadataProviderDetails(r.Context(), provider, metadata.DetailsRequest{
 		MediaType:  string(mediaType),
 		ExternalID: externalID,
 	})
@@ -569,6 +571,27 @@ func (s *Server) discoverMetadataProvider(ctx context.Context, provider storage.
 	return results, nil
 }
 
+func (s *Server) metadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
+	cacheKey := "details:v2:" + strings.ToLower(strings.TrimSpace(request.ExternalID))
+	var cached metadata.Details
+	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, &cached)
+	if err != nil {
+		return metadata.Details{}, err
+	}
+	if found {
+		return cached, nil
+	}
+
+	details, err := s.metadata.Details(ctx, metadataProviderConfig(provider), request)
+	if err != nil {
+		return metadata.Details{}, err
+	}
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, details, s.now().Add(24*time.Hour)); err != nil {
+		return metadata.Details{}, err
+	}
+	return details, nil
+}
+
 type groupedMediaSearchRequest struct {
 	query               string
 	mediaTypes          []string
@@ -577,6 +600,7 @@ type groupedMediaSearchRequest struct {
 	providerIDsProvided bool
 	limit               int
 	includeLibrary      bool
+	includeProviders    bool
 }
 
 func (s *Server) groupedMediaSearch(ctx context.Context, request groupedMediaSearchRequest) ([]MediaSearchGroup, error) {
@@ -601,6 +625,10 @@ func (s *Server) groupedMediaSearch(ctx context.Context, request groupedMediaSea
 				Results:    results,
 			})
 		}
+	}
+
+	if !request.includeProviders {
+		return groups, nil
 	}
 
 	providerGroups := map[uuid.UUID]int{}
@@ -689,11 +717,22 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 	}
 	seasons := make([]MediaMetadataSeason, 0, len(details.Seasons))
 	for _, season := range details.Seasons {
+		episodes := make([]MediaMetadataEpisode, 0, len(season.Episodes))
+		for _, episode := range season.Episodes {
+			episodes = append(episodes, MediaMetadataEpisode{
+				Name:          episode.Name,
+				EpisodeNumber: episode.EpisodeNumber,
+				Overview:      episode.Overview,
+				AirDate:       episode.AirDate,
+				StillPath:     episode.StillPath,
+			})
+		}
 		seasons = append(seasons, MediaMetadataSeason{
 			Name:         season.Name,
 			EpisodeCount: season.EpisodeCount,
 			AirDate:      season.AirDate,
 			PosterPath:   season.PosterPath,
+			Episodes:     &episodes,
 		})
 	}
 	cast := make([]MediaMetadataPerson, 0, len(details.Cast))
@@ -731,6 +770,13 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 func valueOrEmpty(value *string) string {
 	if value == nil {
 		return ""
+	}
+	return *value
+}
+
+func boolDefault(value *bool, fallback bool) bool {
+	if value == nil {
+		return fallback
 	}
 	return *value
 }

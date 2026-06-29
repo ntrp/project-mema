@@ -13,6 +13,10 @@ export type Indexer = components['schemas']['Indexer'];
 export type IndexerRequest = components['schemas']['IndexerRequest'];
 export type IndexerType = components['schemas']['IndexerType'];
 export type MetadataProvider = components['schemas']['MetadataProvider'];
+export type MetadataCacheClearResponse = components['schemas']['MetadataCacheClearResponse'];
+export type MetadataCacheEntry = components['schemas']['MetadataCacheEntry'];
+export type MetadataCacheResponse = components['schemas']['MetadataCacheResponse'];
+export type MetadataCacheStats = components['schemas']['MetadataCacheStats'];
 export type MetadataProviderRequest = components['schemas']['MetadataProviderRequest'];
 export type MetadataProviderType = components['schemas']['MetadataProviderType'];
 export type IntegrationTestResponse = components['schemas']['IntegrationTestResponse'];
@@ -43,6 +47,8 @@ export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];
 export type JobEnqueueResponse = components['schemas']['JobEnqueueResponse'];
+export type Tag = components['schemas']['Tag'];
+export type TagRequest = components['schemas']['TagRequest'];
 
 export type DownloadClientForm = DownloadClientRequest & { id?: string };
 export type IndexerForm = Omit<IndexerRequest, 'categories'> & {
@@ -65,13 +71,22 @@ export interface QualityProfileOption {
 
 export type AppView = 'home' | 'settings' | 'advanced-search' | 'metadata-detail';
 export type HomeSection = 'discover' | 'requests' | 'movies' | 'series' | 'activity';
-export type SettingsSection = 'library' | 'download-clients' | 'indexers' | 'metadata' | 'users';
+export type SettingsSection =
+	| 'library'
+	| 'download-clients'
+	| 'indexers'
+	| 'metadata'
+	| 'tags'
+	| 'users';
+export type TagForm = TagRequest & { id?: string };
 export interface SettingsData {
 	downloadClients: DownloadClient[];
 	indexers: Indexer[];
 	metadataProviders: MetadataProvider[];
+	metadataCache: MetadataCacheResponse;
 	libraryFolders: LibraryFolder[];
 	users: ManagedUser[];
+	tags: Tag[];
 }
 
 export type IntegrationTestResults = Record<string, IntegrationTestResponse | undefined>;

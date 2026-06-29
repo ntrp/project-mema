@@ -21,6 +21,7 @@ type MediaItem struct {
 	PosterPath       *string
 	QualityProfileID *string
 	LibraryFolderID  *uuid.UUID
+	Tags             []string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
@@ -36,6 +37,7 @@ type MediaItemInput struct {
 	PosterPath       *string
 	QualityProfileID *string
 	LibraryFolderID  *uuid.UUID
+	Tags             []string
 }
 
 type DownloadActivity struct {
@@ -101,8 +103,16 @@ type ReleaseSearchSnapshot struct {
 
 func (s *SettingsStore) ListMediaItems(ctx context.Context) ([]MediaItem, error) {
 	rows, err := s.pool.Query(ctx, `
-		select id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
-		from app.media_items
+		select m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path, m.quality_profile_id, m.library_folder_id,
+			coalesce(array(
+				select t.name
+				from app.media_item_tags mit
+				join app.tags t on t.id = mit.tag_id
+				where mit.media_item_id = m.id
+				order by lower(t.name)
+			), '{}') as tags,
+			m.created_at, m.updated_at
+		from app.media_items m
 		order by created_at desc, title asc
 	`)
 	if err != nil {
@@ -126,8 +136,16 @@ func (s *SettingsStore) SearchMediaItems(ctx context.Context, query string, medi
 		limit = 20
 	}
 	rows, err := s.pool.Query(ctx, `
-		select id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
-		from app.media_items
+		select m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path, m.quality_profile_id, m.library_folder_id,
+			coalesce(array(
+				select t.name
+				from app.media_item_tags mit
+				join app.tags t on t.id = mit.tag_id
+				where mit.media_item_id = m.id
+				order by lower(t.name)
+			), '{}') as tags,
+			m.created_at, m.updated_at
+		from app.media_items m
 		where title ilike '%' || $1 || '%'
 			and ($2::text is null or media_type = $2)
 		order by
@@ -152,22 +170,55 @@ func (s *SettingsStore) SearchMediaItems(ctx context.Context, query string, medi
 }
 
 func (s *SettingsStore) GetMediaItem(ctx context.Context, id uuid.UUID) (MediaItem, error) {
-	return scanMediaItemRow(s.pool.QueryRow(ctx, `
-		select id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
-		from app.media_items
-		where id = $1
+	return getMediaItem(ctx, s.pool, id)
+}
+
+func getMediaItem(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (MediaItem, error) {
+	return scanMediaItemRow(q.QueryRow(ctx, `
+		select m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path, m.quality_profile_id, m.library_folder_id,
+			coalesce(array(
+				select t.name
+				from app.media_item_tags mit
+				join app.tags t on t.id = mit.tag_id
+				where mit.media_item_id = m.id
+				order by lower(t.name)
+			), '{}') as tags,
+			m.created_at, m.updated_at
+		from app.media_items m
+		where m.id = $1
 	`, id))
 }
 
 func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInput) (MediaItem, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return MediaItem{}, err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 	id := uuid.New()
-	return scanMediaItemRow(s.pool.QueryRow(ctx, `
+	var itemID uuid.UUID
+	if err := tx.QueryRow(ctx, `
 		insert into app.media_items (
 			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		returning id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
-	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID))
+		returning id
+	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID).Scan(&itemID); err != nil {
+		return MediaItem{}, err
+	}
+	if err := assignMediaItemTags(ctx, tx, itemID, input.Tags); err != nil {
+		return MediaItem{}, err
+	}
+	item, err := getMediaItem(ctx, tx, itemID)
+	if err != nil {
+		return MediaItem{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return MediaItem{}, err
+	}
+	return item, nil
 }
 
 func (s *SettingsStore) DeleteMediaItem(ctx context.Context, id uuid.UUID) error {
@@ -415,6 +466,7 @@ func scanMediaItem(row pgx.Row) (MediaItem, error) {
 		&item.PosterPath,
 		&item.QualityProfileID,
 		&item.LibraryFolderID,
+		&item.Tags,
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)

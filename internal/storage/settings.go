@@ -9,6 +9,7 @@ import (
 var (
 	ErrDuplicateUser = errors.New("user already exists")
 	ErrLastAdmin     = errors.New("at least one admin user is required")
+	ErrInvalidInput  = errors.New("invalid input")
 	ErrNotFound      = errors.New("resource not found")
 	ErrRequestClosed = errors.New("media request is not pending")
 )

@@ -154,6 +154,15 @@ func userInput(w http.ResponseWriter, username string, role UserRole, password *
 	}, true
 }
 
+func tagInput(w http.ResponseWriter, request TagRequest) (string, bool) {
+	name := strings.Join(strings.Fields(request.Name), " ")
+	if name == "" {
+		writeError(w, http.StatusBadRequest, "invalid_name", "Name is required")
+		return "", false
+	}
+	return name, true
+}
+
 func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
 	return downloadclients.Config{
 		Name:     client.Name,
@@ -243,6 +252,42 @@ func metadataProviderResponse(provider storage.MetadataProvider) MetadataProvide
 	}
 }
 
+func metadataCacheStatsResponse(stats storage.MetadataCacheStats) MetadataCacheStats {
+	return MetadataCacheStats{
+		TotalEntries:   stats.TotalEntries,
+		ActiveEntries:  stats.ActiveEntries,
+		ExpiredEntries: stats.ExpiredEntries,
+		ProviderCount:  stats.ProviderCount,
+	}
+}
+
+func metadataCacheEntryResponse(entry storage.MetadataCacheEntry) MetadataCacheEntry {
+	return MetadataCacheEntry{
+		ProviderName: entry.ProviderName,
+		ProviderType: MetadataProviderType(entry.ProviderType),
+		MediaType:    MediaType(entry.MediaType),
+		Query:        entry.Query,
+		CacheKind:    MetadataCacheEntryCacheKind(cacheKind(entry.Query)),
+		Year:         entry.Year,
+		ItemCount:    entry.ItemCount,
+		ExpiresAt:    entry.ExpiresAt,
+		CreatedAt:    entry.CreatedAt,
+		UpdatedAt:    entry.UpdatedAt,
+		Expired:      entry.Expired,
+	}
+}
+
+func cacheKind(query string) string {
+	switch {
+	case strings.HasPrefix(query, "discover:"):
+		return "discover"
+	case strings.HasPrefix(query, "details:"):
+		return "details"
+	default:
+		return "search"
+	}
+}
+
 func managedUserResponse(user storage.User) ManagedUser {
 	return ManagedUser{
 		Id:        openapi_types.UUID(user.ID),
@@ -250,6 +295,15 @@ func managedUserResponse(user storage.User) ManagedUser {
 		Role:      UserRole(user.Role),
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
+	}
+}
+
+func tagResponse(tag storage.Tag) Tag {
+	return Tag{
+		Id:        openapi_types.UUID(tag.ID),
+		Name:      tag.Name,
+		CreatedAt: tag.CreatedAt,
+		UpdatedAt: tag.UpdatedAt,
 	}
 }
 
@@ -267,6 +321,10 @@ func optionalTrimmedString(value *string) *string {
 func writeSettingsError(w http.ResponseWriter, err error, message string) {
 	if errors.Is(err, storage.ErrNotFound) {
 		writeError(w, http.StatusNotFound, "not_found", message)
+		return
+	}
+	if errors.Is(err, storage.ErrInvalidInput) {
+		writeError(w, http.StatusBadRequest, "invalid_input", message)
 		return
 	}
 	writeError(w, http.StatusInternalServerError, "settings_update_failed", message)

@@ -91,6 +91,22 @@ alter table app.media_items
 create index if not exists idx_media_items_type_title
     on app.media_items (media_type, title);
 
+create table if not exists app.tags (
+    id uuid primary key,
+    name text not null,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create unique index if not exists idx_tags_name_lower
+    on app.tags (lower(name));
+
+create table if not exists app.media_item_tags (
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    tag_id uuid not null references app.tags(id) on delete cascade,
+    primary key (media_item_id, tag_id)
+);
+
 create table if not exists app.metadata_providers (
     id uuid primary key,
     name text not null,
@@ -176,6 +192,12 @@ create index if not exists idx_media_requests_status_created
 
 create index if not exists idx_media_requests_requested_by
     on app.media_requests (requested_by_user_id, created_at desc);
+
+create table if not exists app.media_request_tags (
+    media_request_id uuid not null references app.media_requests(id) on delete cascade,
+    tag_id uuid not null references app.tags(id) on delete cascade,
+    primary key (media_request_id, tag_id)
+);
 
 create table if not exists app.library_scans (
     id uuid primary key,

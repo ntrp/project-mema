@@ -71,6 +71,13 @@
 					<span>{item.type}</span>
 					<span>{item.monitored ? 'Monitored' : 'Paused'}</span>
 				</div>
+				{#if item.tags?.length}
+					<div class="media-tags" aria-label="Tags">
+						{#each item.tags as tag (tag)}
+							<span>{tag}</span>
+						{/each}
+					</div>
+				{/if}
 				{#if canManage}
 					<div class="detail-actions">
 						<button

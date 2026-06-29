@@ -34,6 +34,13 @@
 			<div class="media-library-card-body">
 				<strong>{item.title}</strong>
 				<span>{item.year ? `${item.year} · ` : ''}{item.type}</span>
+				{#if item.tags?.length}
+					<div class="media-tags compact-tags" aria-label="Tags">
+						{#each item.tags.slice(0, 3) as tag (tag)}
+							<span>{tag}</span>
+						{/each}
+					</div>
+				{/if}
 				<small class:status-enabled={item.monitored} class:status-disabled={!item.monitored}>
 					{item.monitored ? 'Monitored' : 'Paused'}
 				</small>

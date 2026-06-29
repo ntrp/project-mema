@@ -25,6 +25,7 @@ func mediaItemInput(request MediaItemRequest) (storage.MediaItemInput, bool) {
 		PosterPath:       optionalTrimmedString(request.PosterPath),
 		QualityProfileID: optionalTrimmedString(request.QualityProfileId),
 		LibraryFolderID:  optionalUUID(request.LibraryFolderId),
+		Tags:             optionalStringSlice(request.Tags),
 	}, true
 }
 
@@ -41,6 +42,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		PosterPath:       item.PosterPath,
 		QualityProfileId: item.QualityProfileID,
 		LibraryFolderId:  optionalOpenAPIUUID(item.LibraryFolderID),
+		Tags:             &item.Tags,
 		CreatedAt:        item.CreatedAt,
 		UpdatedAt:        item.UpdatedAt,
 	}
@@ -60,6 +62,7 @@ func mediaRequestInput(request MediaRequestCreateRequest, requestedByUserID uuid
 		ExternalID:        optionalTrimmedString(request.ExternalId),
 		Overview:          optionalTrimmedString(request.Overview),
 		PosterPath:        optionalTrimmedString(request.PosterPath),
+		Tags:              optionalStringSlice(request.Tags),
 	}, true
 }
 
@@ -75,6 +78,7 @@ func mediaRequestResponse(request storage.MediaRequest) MediaRequest {
 		ExternalId:          request.ExternalID,
 		Overview:            request.Overview,
 		PosterPath:          request.PosterPath,
+		Tags:                &request.Tags,
 		Status:              MediaRequestStatus(request.Status),
 		QualityProfileId:    request.QualityProfileID,
 		LibraryFolderId:     optionalOpenAPIUUID(request.LibraryFolderID),
@@ -83,6 +87,13 @@ func mediaRequestResponse(request storage.MediaRequest) MediaRequest {
 		CreatedAt:           request.CreatedAt,
 		UpdatedAt:           request.UpdatedAt,
 	}
+}
+
+func optionalStringSlice(values *[]string) []string {
+	if values == nil {
+		return nil
+	}
+	return append([]string(nil), (*values)...)
 }
 
 func releaseCandidateResponse(release storage.ReleaseCandidate) ReleaseCandidate {

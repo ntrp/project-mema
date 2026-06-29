@@ -22,11 +22,13 @@ import type {
 	MediaRequestCreateRequest,
 	MediaSearchRequest,
 	MediaType,
+	MetadataCacheResponse,
 	MetadataProviderForm,
 	MetadataProviderType,
 	ReleaseCandidate,
 	SessionResponse,
 	SettingsData,
+	TagForm,
 	UserForm
 } from './types';
 
@@ -60,14 +62,23 @@ export async function logout() {
 }
 
 export async function loadSettings(): Promise<SettingsData> {
-	const [clientResult, indexerResult, metadataProviderResult, libraryFolderResult, userResult] =
-		await Promise.all([
-			client.GET('/settings/download-clients'),
-			client.GET('/settings/indexers'),
-			client.GET('/settings/metadata-providers'),
-			client.GET('/settings/library/folders'),
-			client.GET('/settings/users')
-		]);
+	const [
+		clientResult,
+		indexerResult,
+		metadataProviderResult,
+		metadataCacheResult,
+		libraryFolderResult,
+		userResult,
+		tagResult
+	] = await Promise.all([
+		client.GET('/settings/download-clients'),
+		client.GET('/settings/indexers'),
+		client.GET('/settings/metadata-providers'),
+		client.GET('/settings/metadata-cache'),
+		client.GET('/settings/library/folders'),
+		client.GET('/settings/users'),
+		client.GET('/settings/tags')
+	]);
 
 	if (clientResult.error) {
 		throw new Error(clientResult.error.message);
@@ -78,19 +89,39 @@ export async function loadSettings(): Promise<SettingsData> {
 	if (metadataProviderResult.error) {
 		throw new Error(metadataProviderResult.error.message);
 	}
+	if (metadataCacheResult.error) {
+		throw new Error(metadataCacheResult.error.message);
+	}
 	if (libraryFolderResult.error) {
 		throw new Error(libraryFolderResult.error.message);
 	}
 	if (userResult.error) {
 		throw new Error(userResult.error.message);
 	}
+	if (tagResult.error) {
+		throw new Error(tagResult.error.message);
+	}
 
 	return {
 		downloadClients: clientResult.data?.clients ?? [],
 		indexers: indexerResult.data?.indexers ?? [],
 		metadataProviders: metadataProviderResult.data?.providers ?? [],
+		metadataCache: metadataCacheResult.data ?? emptyMetadataCache(),
 		libraryFolders: libraryFolderResult.data?.folders ?? [],
-		users: userResult.data?.users ?? []
+		users: userResult.data?.users ?? [],
+		tags: tagResult.data?.tags ?? []
+	};
+}
+
+export function emptyMetadataCache(): MetadataCacheResponse {
+	return {
+		stats: {
+			totalEntries: 0,
+			activeEntries: 0,
+			expiredEntries: 0,
+			providerCount: 0
+		},
+		entries: []
 	};
 }
 
@@ -112,9 +143,17 @@ export async function loadMediaDiscoverSections() {
 	return data?.sections ?? [];
 }
 
-export async function autocompleteMedia(query: string) {
+export type AutocompleteSearchScope = 'library' | 'providers' | 'all';
+
+export async function autocompleteMedia(query: string, scope: AutocompleteSearchScope = 'all') {
 	const { data, error } = await client.GET('/media/autocomplete', {
-		params: { query: { query } }
+		params: {
+			query: {
+				query,
+				includeLibrary: scope !== 'providers',
+				includeProviders: scope !== 'library'
+			}
+		}
 	});
 
 	if (error) {
@@ -370,6 +409,20 @@ export async function saveUser(form: UserForm) {
 	}
 }
 
+export async function saveTag(form: TagForm) {
+	const body = { name: form.name.trim() };
+	const result = form.id
+		? await client.PUT('/settings/tags/{id}', {
+				params: { path: { id: form.id } },
+				body
+			})
+		: await client.POST('/settings/tags', { body });
+
+	if (result.error) {
+		throw new Error(result.error.message);
+	}
+}
+
 export async function testMetadataProvider(id: string) {
 	const { data, error } = await client.POST('/settings/metadata-providers/{id}/test', {
 		params: { path: { id } }
@@ -382,6 +435,35 @@ export async function testMetadataProvider(id: string) {
 		throw new Error('Metadata provider test did not return a result');
 	}
 	return data;
+}
+
+export async function getMetadataCache() {
+	const { data, error } = await client.GET('/settings/metadata-cache');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? emptyMetadataCache();
+}
+
+export async function clearMetadataCache() {
+	const { data, error } = await client.DELETE('/settings/metadata-cache');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.deletedCount ?? 0;
+}
+
+export async function clearMetadataCacheByPattern(pattern: string) {
+	const { data, error } = await client.POST('/settings/metadata-cache/reset', {
+		body: { pattern }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.deletedCount ?? 0;
 }
 
 export async function deleteDownloadClient(id: string) {
@@ -416,6 +498,16 @@ export async function deleteMetadataProvider(id: string) {
 
 export async function deleteUser(id: string) {
 	const { error } = await client.DELETE('/settings/users/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function deleteTag(id: string) {
+	const { error } = await client.DELETE('/settings/tags/{id}', {
 		params: { path: { id } }
 	});
 

@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -271,4 +273,144 @@ func (s *Server) TestMetadataProvider(w http.ResponseWriter, r *http.Request, id
 
 	result := s.metadata.Test(r.Context(), metadataProviderConfig(provider))
 	writeJSON(w, http.StatusOK, metadataProviderTestResponse(s.now(), result))
+}
+
+func (s *Server) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	stats, err := s.settings.MetadataCacheStats(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_cache_stats_failed", "Could not load metadata cache stats")
+		return
+	}
+	entries, err := s.settings.ListMetadataCacheEntries(r.Context(), 100)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_cache_entries_failed", "Could not load metadata cache entries")
+		return
+	}
+
+	response := MetadataCacheResponse{
+		Stats:   metadataCacheStatsResponse(stats),
+		Entries: make([]MetadataCacheEntry, 0, len(entries)),
+	}
+	for _, entry := range entries {
+		response.Entries = append(response.Entries, metadataCacheEntryResponse(entry))
+	}
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) ClearMetadataCache(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	count, err := s.settings.ClearMetadataCache(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_cache_clear_failed", "Could not clear metadata cache")
+		return
+	}
+	writeJSON(w, http.StatusOK, MetadataCacheClearResponse{DeletedCount: count})
+}
+
+func (s *Server) ClearMetadataCacheByPattern(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body MetadataCacheClearRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	pattern := strings.TrimSpace(body.Pattern)
+	if pattern == "" {
+		writeError(w, http.StatusBadRequest, "invalid_pattern", "Cache reset pattern is required")
+		return
+	}
+	if _, err := regexp.Compile(pattern); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_pattern", "Cache reset pattern is not a valid regex")
+		return
+	}
+
+	count, err := s.settings.ClearMetadataCacheByPattern(r.Context(), pattern)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_cache_clear_failed", "Could not clear metadata cache")
+		return
+	}
+	writeJSON(w, http.StatusOK, MetadataCacheClearResponse{DeletedCount: count})
+}
+
+func (s *Server) ListTags(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	tags, err := s.settings.ListTags(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list tags")
+		return
+	}
+	response := TagListResponse{Tags: make([]Tag, 0, len(tags))}
+	for _, tag := range tags {
+		response.Tags = append(response.Tags, tagResponse(tag))
+	}
+	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) CreateTag(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body TagRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	name, ok := tagInput(w, body)
+	if !ok {
+		return
+	}
+
+	tag, err := s.settings.SaveTag(r.Context(), nil, name)
+	if err != nil {
+		writeSettingsError(w, err, "Could not create tag")
+		return
+	}
+	writeJSON(w, http.StatusCreated, tagResponse(tag))
+}
+
+func (s *Server) UpdateTag(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body TagRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	name, ok := tagInput(w, body)
+	if !ok {
+		return
+	}
+
+	tagID := uuid.UUID(id)
+	tag, err := s.settings.SaveTag(r.Context(), &tagID, name)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update tag")
+		return
+	}
+	writeJSON(w, http.StatusOK, tagResponse(tag))
+}
+
+func (s *Server) DeleteTag(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	if err := s.settings.DeleteTag(r.Context(), uuid.UUID(id)); err != nil {
+		writeSettingsError(w, err, "Could not delete tag")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -1,21 +1,37 @@
 <script lang="ts">
-	import type { LibraryFolder, MediaSearchResult, QualityProfileOption } from '$lib/settings/types';
+	import type {
+		LibraryFolder,
+		MediaSearchResult,
+		QualityProfileOption,
+		Tag
+	} from '$lib/settings/types';
 
 	interface Props {
 		candidate: MediaSearchResult;
 		isAdmin: boolean;
 		libraryFolders: LibraryFolder[];
 		qualityProfiles: QualityProfileOption[];
+		tags: Tag[];
 		saving: boolean;
 		onClose: () => void;
-		onConfirm: (_qualityProfileId?: string, _libraryFolderId?: string) => void;
+		onConfirm: (_qualityProfileId?: string, _libraryFolderId?: string, _tags?: string[]) => void;
 	}
 
-	let { candidate, isAdmin, libraryFolders, qualityProfiles, saving, onClose, onConfirm }: Props =
-		$props();
+	let {
+		candidate,
+		isAdmin,
+		libraryFolders,
+		qualityProfiles,
+		tags,
+		saving,
+		onClose,
+		onConfirm
+	}: Props = $props();
 
 	let qualityProfileId = $state('');
 	let libraryFolderId = $state('');
+	let tagInput = $state('');
+	let selectedTags = $state<string[]>([]);
 
 	const canConfirm = $derived(!isAdmin || (qualityProfileId !== '' && libraryFolderId !== ''));
 
@@ -24,7 +40,53 @@
 		if (!canConfirm || saving) {
 			return;
 		}
-		onConfirm(qualityProfileId, libraryFolderId);
+		commitTagInput();
+		onConfirm(qualityProfileId, libraryFolderId, selectedTags);
+	}
+
+	function toggleTag(name: string) {
+		selectedTags = selectedTags.some((tag) => tag.toLowerCase() === name.toLowerCase())
+			? selectedTags.filter((tag) => tag.toLowerCase() !== name.toLowerCase())
+			: [...selectedTags, name];
+	}
+
+	function removeTag(name: string) {
+		selectedTags = selectedTags.filter((tag) => tag.toLowerCase() !== name.toLowerCase());
+	}
+
+	function commitTagInput() {
+		const name = normalizeTag(tagInput);
+		if (!name || selectedTags.some((tag) => tag.toLowerCase() === name.toLowerCase())) {
+			tagInput = '';
+			return;
+		}
+		selectedTags = [...selectedTags, name];
+		tagInput = '';
+	}
+
+	function handleTagKeydown(event: Event) {
+		if (!(event instanceof globalThis.KeyboardEvent)) {
+			return;
+		}
+		if (event.key !== 'Enter' && event.key !== ',') {
+			return;
+		}
+		event.preventDefault();
+		commitTagInput();
+	}
+
+	function normalizeTag(value: string) {
+		return value.trim().replace(/\s+/g, ' ');
+	}
+
+	function imageUrl(path?: string) {
+		if (!path) {
+			return undefined;
+		}
+		if (path.startsWith('http://') || path.startsWith('https://')) {
+			return path;
+		}
+		return `https://image.tmdb.org/t/p/w780${path}`;
 	}
 </script>
 
@@ -38,7 +100,13 @@
 		onkeydown={(event) => event.stopPropagation()}
 		tabindex="-1"
 	>
-		<form class="media-action-modal" onsubmit={submit}>
+		<form
+			class="media-action-modal"
+			onsubmit={submit}
+			style:--modal-bg-url={imageUrl(candidate.posterPath)
+				? `url("${imageUrl(candidate.posterPath)}")`
+				: undefined}
+		>
 			<div class="section-heading">
 				<div>
 					<p class="section-kicker">{isAdmin ? 'Add media' : 'Request media'}</p>
@@ -81,6 +149,42 @@
 					profile before approval.
 				</p>
 			{/if}
+
+			<div class="tag-selector">
+				<div class="tag-selector-header">
+					<span>Tags</span>
+					<input
+						bind:value={tagInput}
+						type="text"
+						maxlength="80"
+						placeholder="Add tag"
+						onkeydown={handleTagKeydown}
+						onblur={commitTagInput}
+					/>
+				</div>
+				{#if tags.length > 0}
+					<div class="tag-options" aria-label="Existing tags">
+						{#each tags as tag (tag.id)}
+							<button
+								type="button"
+								class:active-tag={selectedTags.some(
+									(selected) => selected.toLowerCase() === tag.name.toLowerCase()
+								)}
+								onclick={() => toggleTag(tag.name)}
+							>
+								{tag.name}
+							</button>
+						{/each}
+					</div>
+				{/if}
+				{#if selectedTags.length > 0}
+					<div class="selected-tags" aria-label="Selected tags">
+						{#each selectedTags as tag (tag.toLowerCase())}
+							<button type="button" onclick={() => removeTag(tag)}>{tag}</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
 
 			<div class="form-actions">
 				<button type="button" class="secondary" onclick={onClose}>Cancel</button>

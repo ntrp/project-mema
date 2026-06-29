@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import type { MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
@@ -32,12 +33,27 @@
 
 	function subtitle(details: MediaMetadataDetails) {
 		const parts = [
-			details.type,
-			details.seasonCount ? `${details.seasonCount} seasons` : undefined,
-			details.runtimeMinutes ? `${details.runtimeMinutes} min` : undefined,
-			genres.slice(0, 3).join(', ')
+			details.type === 'movie' ? 'Movie' : 'Series',
+			details.year,
+			details.voteAverage ? `${Math.round(details.voteAverage * 10)}%` : undefined
 		].filter(Boolean);
 		return parts.join(' | ');
+	}
+
+	function topInfo(details: MediaMetadataDetails) {
+		return [
+			details.status ? ['Status', details.status] : undefined,
+			details.releaseDate || details.firstAirDate
+				? [
+						details.type === 'movie' ? 'Release' : 'First aired',
+						details.releaseDate ?? details.firstAirDate
+					]
+				: undefined,
+			details.runtimeMinutes ? ['Runtime', `${details.runtimeMinutes} min`] : undefined,
+			details.seasonCount ? ['Seasons', `${details.seasonCount}`] : undefined,
+			details.episodeCount ? ['Episodes', `${details.episodeCount}`] : undefined,
+			details.originalLanguage ? ['Language', details.originalLanguage.toUpperCase()] : undefined
+		].filter((item): item is [string, string] => Boolean(item));
 	}
 
 	function candidate(details: MediaMetadataDetails): MediaSearchResult {
@@ -54,6 +70,18 @@
 
 	function candidateKey(details: MediaMetadataDetails) {
 		return `${details.type}:${details.title}:${details.year ?? ''}`;
+	}
+
+	function externalUrl(details: MediaMetadataDetails) {
+		return providerPageUrl(details.externalProvider, details.type, details.externalId);
+	}
+
+	function externalLabel(details: MediaMetadataDetails) {
+		return providerDisplayName(details.externalProvider);
+	}
+
+	function episodeTitle(episode: { episodeNumber: number; name: string }) {
+		return `${episode.episodeNumber} - ${episode.name}`;
 	}
 </script>
 
@@ -85,9 +113,34 @@
 			<div class="metadata-title-block">
 				<h1 id="metadata-detail-title">{titleWithYear(detail)}</h1>
 				<p>{subtitle(detail)}</p>
+				{#if topInfo(detail).length > 0}
+					<div class="metadata-info-bar" aria-label="Media information">
+						{#each topInfo(detail) as [label, value] (`${label}:${value}`)}
+							<span><strong>{label}</strong>{value}</span>
+						{/each}
+					</div>
+				{/if}
+				{#if genres.length > 0}
+					<div class="metadata-tags" aria-label="Genres">
+						{#each genres as genre (genre)}
+							<span><span class="app-icon" aria-hidden="true">sell</span>{genre}</span>
+						{/each}
+					</div>
+				{/if}
 				<div class="metadata-actions">
-					{#if detail.voteAverage}
-						<span class="status-pill">{Math.round(detail.voteAverage * 10)}%</span>
+					{#if externalUrl(detail)}
+						<!-- eslint-disable svelte/no-navigation-without-resolve -->
+						<a
+							class="external-link"
+							href={externalUrl(detail)}
+							target="_blank"
+							rel="noreferrer"
+							aria-label={`Open ${externalLabel(detail)} page in a new tab`}
+						>
+							<span class="app-icon" aria-hidden="true">open_in_new</span>
+							<span>{externalLabel(detail)}</span>
+						</a>
+						<!-- eslint-enable svelte/no-navigation-without-resolve -->
 					{/if}
 					<button
 						type="button"
@@ -118,27 +171,43 @@
 					</section>
 				{/if}
 
-				{#if genres.length > 0}
-					<div class="metadata-tags" aria-label="Genres">
-						{#each genres as genre (genre)}
-							<span>{genre}</span>
-						{/each}
-					</div>
-				{/if}
-
 				{#if seasons.length > 0}
 					<section aria-labelledby="metadata-seasons-title">
 						<h2 id="metadata-seasons-title">Seasons</h2>
 						<div class="metadata-season-list">
-							{#each seasons as season (season.name)}
-								<div class="metadata-season-row">
-									<strong>{season.name}</strong>
-									<span
-										>{season.episodeCount
-											? `${season.episodeCount} episodes`
-											: 'Episodes unknown'}</span
-									>
-								</div>
+							{#each seasons as season, index (season.name)}
+								<details class="metadata-season-panel" open={index === 0}>
+									<summary>
+										<span>{season.name}</span>
+										<small
+											>{season.episodeCount
+												? `${season.episodeCount} episodes`
+												: 'Episodes unknown'}</small
+										>
+									</summary>
+									{#if season.episodes && season.episodes.length > 0}
+										<div class="metadata-episode-list">
+											{#each season.episodes as episode (episode.episodeNumber)}
+												<article class="metadata-episode-row">
+													<div class="metadata-episode-copy">
+														<h3>
+															{episodeTitle(episode)}
+															{#if episode.airDate}
+																<span>{episode.airDate}</span>
+															{/if}
+														</h3>
+														<p>{episode.overview ?? 'No episode overview available.'}</p>
+													</div>
+													{#if imageUrl(episode.stillPath, 'w300')}
+														<img src={imageUrl(episode.stillPath, 'w300')} alt="" loading="lazy" />
+													{/if}
+												</article>
+											{/each}
+										</div>
+									{:else}
+										<p class="metadata-season-empty">No episode details available.</p>
+									{/if}
+								</details>
 							{/each}
 						</div>
 					</section>
@@ -167,25 +236,6 @@
 					</section>
 				{/if}
 			</main>
-
-			<aside class="metadata-sidebar" aria-label="Metadata facts">
-				{#if detail.status}
-					<div><strong>Status</strong><span>{detail.status}</span></div>
-				{/if}
-				{#if detail.releaseDate || detail.firstAirDate}
-					<div>
-						<strong>{detail.type === 'movie' ? 'Release Date' : 'First Air Date'}</strong>
-						<span>{detail.releaseDate ?? detail.firstAirDate}</span>
-					</div>
-				{/if}
-				{#if detail.originalLanguage}
-					<div><strong>Original Language</strong><span>{detail.originalLanguage}</span></div>
-				{/if}
-				{#if detail.episodeCount}
-					<div><strong>Episodes</strong><span>{detail.episodeCount}</span></div>
-				{/if}
-				<div><strong>Provider</strong><span>{detail.externalProvider}</span></div>
-			</aside>
 		</div>
 	</section>
 {/if}

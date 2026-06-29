@@ -499,6 +499,79 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/metadata-cache': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Inspect metadata provider cache entries and stats */
+		get: operations['getMetadataCache'];
+		put?: never;
+		post?: never;
+		/** Clear all metadata provider cache entries */
+		delete: operations['clearMetadataCache'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/metadata-cache/reset': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Clear metadata provider cache entries matching a regex */
+		post: operations['clearMetadataCacheByPattern'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/tags': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List media tags */
+		get: operations['listTags'];
+		put?: never;
+		/** Create a media tag */
+		post: operations['createTag'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/tags/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a media tag */
+		put: operations['updateTag'];
+		post?: never;
+		/** Delete a media tag */
+		delete: operations['deleteTag'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/library/folder-options': {
 		parameters: {
 			query?: never;
@@ -815,6 +888,15 @@ export interface components {
 			episodeCount?: number;
 			airDate?: string;
 			posterPath?: string;
+			episodes?: components['schemas']['MediaMetadataEpisode'][];
+		};
+		MediaMetadataEpisode: {
+			name: string;
+			/** Format: int32 */
+			episodeNumber: number;
+			overview?: string;
+			airDate?: string;
+			stillPath?: string;
 		};
 		MediaMetadataPerson: {
 			name: string;
@@ -845,6 +927,7 @@ export interface components {
 			qualityProfileId?: string;
 			/** Format: uuid */
 			libraryFolderId?: string;
+			tags?: string[];
 		};
 		MediaRequestListResponse: {
 			requests: components['schemas']['MediaRequest'][];
@@ -879,6 +962,22 @@ export interface components {
 			externalId?: string;
 			overview?: string;
 			posterPath?: string;
+			tags?: string[];
+		};
+		TagListResponse: {
+			tags: components['schemas']['Tag'][];
+		};
+		Tag: {
+			/** Format: uuid */
+			id: string;
+			name: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		TagRequest: {
+			name: string;
 		};
 		MediaRequestApproveRequest: {
 			qualityProfileId: string;
@@ -1019,6 +1118,46 @@ export interface components {
 		};
 		/** @enum {string} */
 		MetadataProviderType: 'tmdb' | 'tvdb';
+		MetadataCacheResponse: {
+			stats: components['schemas']['MetadataCacheStats'];
+			entries: components['schemas']['MetadataCacheEntry'][];
+		};
+		MetadataCacheStats: {
+			/** Format: int32 */
+			totalEntries: number;
+			/** Format: int32 */
+			activeEntries: number;
+			/** Format: int32 */
+			expiredEntries: number;
+			/** Format: int32 */
+			providerCount: number;
+		};
+		MetadataCacheEntry: {
+			providerName: string;
+			providerType: components['schemas']['MetadataProviderType'];
+			mediaType: components['schemas']['MediaType'];
+			query: string;
+			/** @enum {string} */
+			cacheKind: 'search' | 'discover' | 'details';
+			/** Format: int32 */
+			year: number;
+			/** Format: int32 */
+			itemCount: number;
+			/** Format: date-time */
+			expiresAt: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+			expired: boolean;
+		};
+		MetadataCacheClearRequest: {
+			pattern: string;
+		};
+		MetadataCacheClearResponse: {
+			/** Format: int32 */
+			deletedCount: number;
+		};
 		LibraryFolderListResponse: {
 			folders: components['schemas']['LibraryFolder'][];
 		};
@@ -1362,6 +1501,8 @@ export interface operations {
 		parameters: {
 			query: {
 				query: string;
+				includeLibrary?: boolean;
+				includeProviders?: boolean;
 			};
 			header?: never;
 			path?: never;
@@ -2067,6 +2208,176 @@ export interface operations {
 				};
 			};
 			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	getMetadataCache: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Metadata cache stats and entries */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	clearMetadataCache: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Metadata cache clear result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	clearMetadataCacheByPattern: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MetadataCacheClearRequest'];
+			};
+		};
+		responses: {
+			/** @description Metadata cache clear result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listTags: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media tags */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['TagListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	createTag: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['TagRequest'];
+			};
+		};
+		responses: {
+			/** @description Media tag created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Tag'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	updateTag: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['TagRequest'];
+			};
+		};
+		responses: {
+			/** @description Media tag updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Tag'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteTag: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media tag deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
 			404: components['responses']['NotFound'];
 		};
 	};

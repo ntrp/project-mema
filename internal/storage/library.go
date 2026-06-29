@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type LibraryFolder struct {
@@ -300,32 +301,46 @@ func (s *SettingsStore) listLibraryScanItems(ctx context.Context, scanID uuid.UU
 }
 
 type mediaItemQuerier interface {
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
 func createMediaItemIfMissing(ctx context.Context, q mediaItemQuerier, input MediaItemInput) (MediaItem, error) {
-	existing, err := scanMediaItem(q.QueryRow(ctx, `
-		select id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
+	var existingID uuid.UUID
+	err := q.QueryRow(ctx, `
+		select id
 		from app.media_items
 		where lower(media_type) = lower($1) and lower(title) = lower($2)
 			and (($3::integer is null and year is null) or year = $3)
 		order by created_at asc
 		limit 1
-	`, input.Type, input.Title, input.Year))
+	`, input.Type, input.Title, input.Year).Scan(&existingID)
 	if err == nil {
-		return existing, nil
+		if len(input.Tags) > 0 {
+			if err := assignMediaItemTags(ctx, q, existingID, input.Tags); err != nil {
+				return MediaItem{}, err
+			}
+		}
+		return getMediaItem(ctx, q, existingID)
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return MediaItem{}, err
 	}
 	id := uuid.New()
-	return scanMediaItem(q.QueryRow(ctx, `
+	var itemID uuid.UUID
+	if err := q.QueryRow(ctx, `
 		insert into app.media_items (
 			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		returning id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, created_at, updated_at
-	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID))
+		returning id
+	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID).Scan(&itemID); err != nil {
+		return MediaItem{}, err
+	}
+	if err := assignMediaItemTags(ctx, q, itemID, input.Tags); err != nil {
+		return MediaItem{}, err
+	}
+	return getMediaItem(ctx, q, itemID)
 }
 
 func mediaKindToMediaType(kind string) (string, bool) {

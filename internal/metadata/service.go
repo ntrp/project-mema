@@ -147,7 +147,37 @@ func (s *Service) detailsTMDB(ctx context.Context, config Config, request Detail
 	if err := s.doJSON(ctx, config, http.MethodGet, endpoint, nil, &payload); err != nil {
 		return Details{}, err
 	}
+	if request.MediaType == "series" {
+		if err := s.loadTMDBSeasonEpisodes(ctx, config, mediaPath, externalID, &payload); err != nil {
+			return Details{}, err
+		}
+	}
 	return tmdbDetailsResult(payload, request.MediaType, externalID), nil
+}
+
+func (s *Service) loadTMDBSeasonEpisodes(ctx context.Context, config Config, mediaPath string, externalID string, details *tmdbDetails) error {
+	for seasonIndex := range details.Seasons {
+		season := &details.Seasons[seasonIndex]
+		if season.SeasonNumber <= 0 || season.EpisodeCount <= 0 {
+			continue
+		}
+		endpoint, err := url.JoinPath(
+			strings.TrimRight(config.BaseURL, "/"),
+			mediaPath,
+			externalID,
+			"season",
+			strconv.Itoa(int(season.SeasonNumber)),
+		)
+		if err != nil {
+			return err
+		}
+		var payload tmdbSeasonDetails
+		if err := s.doJSON(ctx, config, http.MethodGet, endpoint, nil, &payload); err != nil {
+			return err
+		}
+		season.Episodes = payload.Episodes
+	}
+	return nil
 }
 
 func (s *Service) searchTVDB(ctx context.Context, config Config, request SearchRequest) ([]SearchResult, error) {
@@ -540,9 +570,23 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 				Name:       name,
 				AirDate:    optionalString(season.AirDate),
 				PosterPath: optionalString(season.PosterPath),
+				Episodes:   []Episode{},
 			}
 			if season.EpisodeCount > 0 {
 				mapped.EpisodeCount = &season.EpisodeCount
+			}
+			for _, episode := range season.Episodes {
+				episodeName := strings.TrimSpace(episode.Name)
+				if episodeName == "" {
+					continue
+				}
+				mapped.Episodes = append(mapped.Episodes, Episode{
+					Name:          episodeName,
+					EpisodeNumber: episode.EpisodeNumber,
+					Overview:      optionalString(episode.Overview),
+					AirDate:       optionalString(episode.AirDate),
+					StillPath:     optionalString(episode.StillPath),
+				})
 			}
 			details.Seasons = append(details.Seasons, mapped)
 		}

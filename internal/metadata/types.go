@@ -85,6 +85,15 @@ type Season struct {
 	EpisodeCount *int32
 	AirDate      *string
 	PosterPath   *string
+	Episodes     []Episode
+}
+
+type Episode struct {
+	Name          string
+	EpisodeNumber int32
+	Overview      *string
+	AirDate       *string
+	StillPath     *string
 }
 
 type Person struct {

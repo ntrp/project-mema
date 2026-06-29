@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import { onMount } from 'svelte';
 	import type {
 		MediaAdvancedSearchRequest,
@@ -90,6 +91,14 @@
 			return path;
 		}
 		return `https://image.tmdb.org/t/p/w185${path}`;
+	}
+
+	function externalUrl(result: MediaSearchResult) {
+		return providerPageUrl(result.externalProvider, result.type, result.externalId);
+	}
+
+	function externalLabel(result: MediaSearchResult) {
+		return providerDisplayName(result.externalProvider);
 	}
 </script>
 
@@ -190,6 +199,20 @@
 									{/if}
 								</div>
 								<div class="wide-media-actions">
+									{#if externalUrl(result)}
+										<!-- eslint-disable svelte/no-navigation-without-resolve -->
+										<a
+											class="external-link"
+											href={externalUrl(result)}
+											target="_blank"
+											rel="noreferrer"
+											aria-label={`Open ${externalLabel(result)} page in a new tab`}
+										>
+											<span class="app-icon" aria-hidden="true">open_in_new</span>
+											<span>{externalLabel(result)}</span>
+										</a>
+										<!-- eslint-enable svelte/no-navigation-without-resolve -->
+									{/if}
 									{#if group.sourceType === 'library'}
 										<span class="status-pill">In library</span>
 									{:else}

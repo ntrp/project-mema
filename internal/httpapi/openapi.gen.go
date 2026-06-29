@@ -220,6 +220,27 @@ func (e MediaType) Valid() bool {
 	}
 }
 
+// Defines values for MetadataCacheEntryCacheKind.
+const (
+	Details  MetadataCacheEntryCacheKind = "details"
+	Discover MetadataCacheEntryCacheKind = "discover"
+	Search   MetadataCacheEntryCacheKind = "search"
+)
+
+// Valid indicates whether the value is a known member of the MetadataCacheEntryCacheKind enum.
+func (e MetadataCacheEntryCacheKind) Valid() bool {
+	switch e {
+	case Details:
+		return true
+	case Discover:
+		return true
+	case Search:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MetadataProviderType.
 const (
 	Tmdb MetadataProviderType = "tmdb"
@@ -578,6 +599,7 @@ type MediaItem struct {
 	Overview         *string             `json:"overview,omitempty"`
 	PosterPath       *string             `json:"posterPath,omitempty"`
 	QualityProfileId *string             `json:"qualityProfileId,omitempty"`
+	Tags             *[]string           `json:"tags,omitempty"`
 	Title            string              `json:"title"`
 	Type             MediaType           `json:"type"`
 	UpdatedAt        time.Time           `json:"updatedAt"`
@@ -598,6 +620,7 @@ type MediaItemRequest struct {
 	Overview         *string             `json:"overview,omitempty"`
 	PosterPath       *string             `json:"posterPath,omitempty"`
 	QualityProfileId *string             `json:"qualityProfileId,omitempty"`
+	Tags             *[]string           `json:"tags,omitempty"`
 	Title            string              `json:"title"`
 	Type             MediaType           `json:"type"`
 	Year             *int32              `json:"year,omitempty"`
@@ -627,6 +650,15 @@ type MediaMetadataDetails struct {
 	Year             *int32                 `json:"year,omitempty"`
 }
 
+// MediaMetadataEpisode defines model for MediaMetadataEpisode.
+type MediaMetadataEpisode struct {
+	AirDate       *string `json:"airDate,omitempty"`
+	EpisodeNumber int32   `json:"episodeNumber"`
+	Name          string  `json:"name"`
+	Overview      *string `json:"overview,omitempty"`
+	StillPath     *string `json:"stillPath,omitempty"`
+}
+
 // MediaMetadataFact defines model for MediaMetadataFact.
 type MediaMetadataFact struct {
 	Label string `json:"label"`
@@ -642,10 +674,11 @@ type MediaMetadataPerson struct {
 
 // MediaMetadataSeason defines model for MediaMetadataSeason.
 type MediaMetadataSeason struct {
-	AirDate      *string `json:"airDate,omitempty"`
-	EpisodeCount *int32  `json:"episodeCount,omitempty"`
-	Name         string  `json:"name"`
-	PosterPath   *string `json:"posterPath,omitempty"`
+	AirDate      *string                 `json:"airDate,omitempty"`
+	EpisodeCount *int32                  `json:"episodeCount,omitempty"`
+	Episodes     *[]MediaMetadataEpisode `json:"episodes,omitempty"`
+	Name         string                  `json:"name"`
+	PosterPath   *string                 `json:"posterPath,omitempty"`
 }
 
 // MediaRequest defines model for MediaRequest.
@@ -663,6 +696,7 @@ type MediaRequest struct {
 	RequestedByUserId   openapi_types.UUID  `json:"requestedByUserId"`
 	RequestedByUsername string              `json:"requestedByUsername"`
 	Status              MediaRequestStatus  `json:"status"`
+	Tags                *[]string           `json:"tags,omitempty"`
 	Title               string              `json:"title"`
 	Type                MediaType           `json:"type"`
 	UpdatedAt           time.Time           `json:"updatedAt"`
@@ -687,6 +721,7 @@ type MediaRequestCreateRequest struct {
 	ExternalProvider *string   `json:"externalProvider,omitempty"`
 	Overview         *string   `json:"overview,omitempty"`
 	PosterPath       *string   `json:"posterPath,omitempty"`
+	Tags             *[]string `json:"tags,omitempty"`
 	Title            string    `json:"title"`
 	Type             MediaType `json:"type"`
 	Year             *int32    `json:"year,omitempty"`
@@ -737,6 +772,48 @@ type MediaSearchSourceType string
 
 // MediaType defines model for MediaType.
 type MediaType string
+
+// MetadataCacheClearRequest defines model for MetadataCacheClearRequest.
+type MetadataCacheClearRequest struct {
+	Pattern string `json:"pattern"`
+}
+
+// MetadataCacheClearResponse defines model for MetadataCacheClearResponse.
+type MetadataCacheClearResponse struct {
+	DeletedCount int32 `json:"deletedCount"`
+}
+
+// MetadataCacheEntry defines model for MetadataCacheEntry.
+type MetadataCacheEntry struct {
+	CacheKind    MetadataCacheEntryCacheKind `json:"cacheKind"`
+	CreatedAt    time.Time                   `json:"createdAt"`
+	Expired      bool                        `json:"expired"`
+	ExpiresAt    time.Time                   `json:"expiresAt"`
+	ItemCount    int32                       `json:"itemCount"`
+	MediaType    MediaType                   `json:"mediaType"`
+	ProviderName string                      `json:"providerName"`
+	ProviderType MetadataProviderType        `json:"providerType"`
+	Query        string                      `json:"query"`
+	UpdatedAt    time.Time                   `json:"updatedAt"`
+	Year         int32                       `json:"year"`
+}
+
+// MetadataCacheEntryCacheKind defines model for MetadataCacheEntry.CacheKind.
+type MetadataCacheEntryCacheKind string
+
+// MetadataCacheResponse defines model for MetadataCacheResponse.
+type MetadataCacheResponse struct {
+	Entries []MetadataCacheEntry `json:"entries"`
+	Stats   MetadataCacheStats   `json:"stats"`
+}
+
+// MetadataCacheStats defines model for MetadataCacheStats.
+type MetadataCacheStats struct {
+	ActiveEntries  int32 `json:"activeEntries"`
+	ExpiredEntries int32 `json:"expiredEntries"`
+	ProviderCount  int32 `json:"providerCount"`
+	TotalEntries   int32 `json:"totalEntries"`
+}
 
 // MetadataProvider defines model for MetadataProvider.
 type MetadataProvider struct {
@@ -798,6 +875,24 @@ type SessionResponse struct {
 	Authenticated bool         `json:"authenticated"`
 	ExpiresAt     *time.Time   `json:"expiresAt,omitempty"`
 	User          *UserSummary `json:"user,omitempty"`
+}
+
+// Tag defines model for Tag.
+type Tag struct {
+	CreatedAt time.Time          `json:"createdAt"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	UpdatedAt time.Time          `json:"updatedAt"`
+}
+
+// TagListResponse defines model for TagListResponse.
+type TagListResponse struct {
+	Tags []Tag `json:"tags"`
+}
+
+// TagRequest defines model for TagRequest.
+type TagRequest struct {
+	Name string `json:"name"`
 }
 
 // ToolName defines model for ToolName.
@@ -870,7 +965,9 @@ type sessionCookieContextKey string
 
 // AutocompleteMediaParams defines parameters for AutocompleteMedia.
 type AutocompleteMediaParams struct {
-	Query string `form:"query" json:"query"`
+	Query            string `form:"query" json:"query"`
+	IncludeLibrary   *bool  `form:"includeLibrary,omitempty" json:"includeLibrary,omitempty"`
+	IncludeProviders *bool  `form:"includeProviders,omitempty" json:"includeProviders,omitempty"`
 }
 
 // ListLibraryFolderOptionsParams defines parameters for ListLibraryFolderOptions.
@@ -920,11 +1017,20 @@ type CreateLibraryFolderJSONRequestBody = LibraryFolderRequest
 // MatchLibraryScanItemJSONRequestBody defines body for MatchLibraryScanItem for application/json ContentType.
 type MatchLibraryScanItemJSONRequestBody = LibraryScanItemMatchRequest
 
+// ClearMetadataCacheByPatternJSONRequestBody defines body for ClearMetadataCacheByPattern for application/json ContentType.
+type ClearMetadataCacheByPatternJSONRequestBody = MetadataCacheClearRequest
+
 // CreateMetadataProviderJSONRequestBody defines body for CreateMetadataProvider for application/json ContentType.
 type CreateMetadataProviderJSONRequestBody = MetadataProviderRequest
 
 // UpdateMetadataProviderJSONRequestBody defines body for UpdateMetadataProvider for application/json ContentType.
 type UpdateMetadataProviderJSONRequestBody = MetadataProviderRequest
+
+// CreateTagJSONRequestBody defines body for CreateTag for application/json ContentType.
+type CreateTagJSONRequestBody = TagRequest
+
+// UpdateTagJSONRequestBody defines body for UpdateTag for application/json ContentType.
+type UpdateTagJSONRequestBody = TagRequest
 
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = UserCreateRequest
@@ -1048,6 +1154,15 @@ type ServerInterface interface {
 	// Manually match a discovered file to a movie, series, or anime item
 	// (POST /settings/library/scans/{id}/items/{itemId}/match)
 	MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID)
+	// Clear all metadata provider cache entries
+	// (DELETE /settings/metadata-cache)
+	ClearMetadataCache(w http.ResponseWriter, r *http.Request)
+	// Inspect metadata provider cache entries and stats
+	// (GET /settings/metadata-cache)
+	GetMetadataCache(w http.ResponseWriter, r *http.Request)
+	// Clear metadata provider cache entries matching a regex
+	// (POST /settings/metadata-cache/reset)
+	ClearMetadataCacheByPattern(w http.ResponseWriter, r *http.Request)
 	// List configured metadata providers
 	// (GET /settings/metadata-providers)
 	ListMetadataProviders(w http.ResponseWriter, r *http.Request)
@@ -1063,6 +1178,18 @@ type ServerInterface interface {
 	// Test a configured metadata provider
 	// (POST /settings/metadata-providers/{id}/test)
 	TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List media tags
+	// (GET /settings/tags)
+	ListTags(w http.ResponseWriter, r *http.Request)
+	// Create a media tag
+	// (POST /settings/tags)
+	CreateTag(w http.ResponseWriter, r *http.Request)
+	// Delete a media tag
+	// (DELETE /settings/tags/{id})
+	DeleteTag(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update a media tag
+	// (PUT /settings/tags/{id})
+	UpdateTag(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// List local users
 	// (GET /settings/users)
 	ListUsers(w http.ResponseWriter, r *http.Request)
@@ -1312,6 +1439,24 @@ func (_ Unimplemented) MatchLibraryScanItem(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Clear all metadata provider cache entries
+// (DELETE /settings/metadata-cache)
+func (_ Unimplemented) ClearMetadataCache(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Inspect metadata provider cache entries and stats
+// (GET /settings/metadata-cache)
+func (_ Unimplemented) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Clear metadata provider cache entries matching a regex
+// (POST /settings/metadata-cache/reset)
+func (_ Unimplemented) ClearMetadataCacheByPattern(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List configured metadata providers
 // (GET /settings/metadata-providers)
 func (_ Unimplemented) ListMetadataProviders(w http.ResponseWriter, r *http.Request) {
@@ -1339,6 +1484,30 @@ func (_ Unimplemented) UpdateMetadataProvider(w http.ResponseWriter, r *http.Req
 // Test a configured metadata provider
 // (POST /settings/metadata-providers/{id}/test)
 func (_ Unimplemented) TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List media tags
+// (GET /settings/tags)
+func (_ Unimplemented) ListTags(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a media tag
+// (POST /settings/tags)
+func (_ Unimplemented) CreateTag(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a media tag
+// (DELETE /settings/tags/{id})
+func (_ Unimplemented) DeleteTag(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a media tag
+// (PUT /settings/tags/{id})
+func (_ Unimplemented) UpdateTag(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1533,6 +1702,32 @@ func (siw *ServerInterfaceWrapper) AutocompleteMedia(w http.ResponseWriter, r *h
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "includeLibrary" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "includeLibrary", r.URL.Query(), &params.IncludeLibrary, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "includeLibrary"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "includeLibrary", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "includeProviders" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "includeProviders", r.URL.Query(), &params.IncludeProviders, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "includeProviders"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "includeProviders", Err: err})
 		}
 		return
 	}
@@ -2386,6 +2581,66 @@ func (siw *ServerInterfaceWrapper) MatchLibraryScanItem(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// ClearMetadataCache operation middleware
+func (siw *ServerInterfaceWrapper) ClearMetadataCache(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClearMetadataCache(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMetadataCache operation middleware
+func (siw *ServerInterfaceWrapper) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMetadataCache(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ClearMetadataCacheByPattern operation middleware
+func (siw *ServerInterfaceWrapper) ClearMetadataCacheByPattern(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClearMetadataCacheByPattern(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMetadataProviders operation middleware
 func (siw *ServerInterfaceWrapper) ListMetadataProviders(w http.ResponseWriter, r *http.Request) {
 
@@ -2513,6 +2768,110 @@ func (siw *ServerInterfaceWrapper) TestMetadataProvider(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestMetadataProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTags operation middleware
+func (siw *ServerInterfaceWrapper) ListTags(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTags(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTag operation middleware
+func (siw *ServerInterfaceWrapper) CreateTag(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTag(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTag operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTag(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTag(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTag operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTag(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTag(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2874,6 +3233,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/settings/library/scans/{id}/items/{itemId}/match", wrapper.MatchLibraryScanItem)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/metadata-cache", wrapper.ClearMetadataCache)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/metadata-cache", wrapper.GetMetadataCache)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/metadata-cache/reset", wrapper.ClearMetadataCacheByPattern)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/metadata-providers", wrapper.ListMetadataProviders)
 	})
 	r.Group(func(r chi.Router) {
@@ -2887,6 +3255,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/metadata-providers/{id}/test", wrapper.TestMetadataProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/tags", wrapper.ListTags)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/tags", wrapper.CreateTag)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/tags/{id}", wrapper.DeleteTag)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/tags/{id}", wrapper.UpdateTag)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/users", wrapper.ListUsers)

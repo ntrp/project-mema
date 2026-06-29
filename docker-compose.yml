@@ -40,7 +40,7 @@ services:
       PGID: "${PGID:-1000}"
       TZ: "${TZ:-Etc/UTC}"
     ports:
-      - "${SABNZBD_PORT:-8081}:8080"
+      - "${SABNZBD_PORT:-18081}:8080"
     volumes:
       - sabnzbd-config:/config
       - ./.data/media:/data

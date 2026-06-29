@@ -14,6 +14,8 @@
 	import NoticeStack from '$lib/components/settings/NoticeStack.svelte';
 	import {
 		approveMediaRequest as approveMediaRequestRequest,
+		clearMetadataCache as clearMetadataCacheRequest,
+		clearMetadataCacheByPattern as clearMetadataCacheByPatternRequest,
 		createMediaItem as createMediaItemRequest,
 		createMediaRequest as createMediaRequestRequest,
 		currentSession as currentSessionRequest,
@@ -21,12 +23,14 @@
 		deleteIndexer as deleteIndexerRequest,
 		deleteLibraryFolder as deleteLibraryFolderRequest,
 		deleteMediaItem as deleteMediaItemRequest,
+		deleteTag as deleteTagRequest,
 		deleteUser as deleteUserRequest,
 		enqueueMediaReleaseSearch as enqueueMediaReleaseSearchRequest,
 		advancedSearchMedia as advancedSearchMediaRequest,
 		autocompleteMedia as autocompleteMediaRequest,
 		getLibraryScan as getLibraryScanRequest,
 		grabMediaRelease as grabMediaReleaseRequest,
+		getMetadataCache as getMetadataCacheRequest,
 		getMediaMetadataDetails as getMediaMetadataDetailsRequest,
 		listDownloadActivity as listDownloadActivityRequest,
 		listMediaRequests as listMediaRequestsRequest,
@@ -37,10 +41,12 @@
 		logout as logoutRequest,
 		matchLibraryScanItem as matchLibraryScanItemRequest,
 		mediaTypeForLibraryKind,
+		emptyMetadataCache,
 		saveDownloadClient as saveDownloadClientRequest,
 		saveIndexer as saveIndexerRequest,
 		saveLibraryFolder as saveLibraryFolderRequest,
 		saveMetadataProvider as saveMetadataProviderRequest,
+		saveTag as saveTagRequest,
 		saveUser as saveUserRequest,
 		searchMedia as searchMediaRequest,
 		searchMediaReleases as searchMediaReleasesRequest,
@@ -84,12 +90,15 @@
 		MediaSearchGroup,
 		MediaSearchResult,
 		MediaType,
+		MetadataCacheResponse,
 		MetadataProvider,
 		MetadataProviderForm as MetadataProviderFormValue,
 		MetadataProviderType,
 		ReleaseCandidate,
 		ReleaseSearchResults,
 		SettingsSection,
+		Tag,
+		TagForm,
 		UserForm as UserFormValue,
 		UserSummary
 	} from '$lib/settings/types';
@@ -134,6 +143,8 @@
 	let savingIndexer = $state(false);
 	let savingMetadataProviderId = $state<string | undefined>();
 	let savingLibraryFolder = $state(false);
+	let savingTag = $state(false);
+	let deletingTagId = $state<string | undefined>();
 	let savingUser = $state(false);
 	let message = $state('');
 	let errorMessage = $state('');
@@ -142,8 +153,10 @@
 	let downloadClients = $state<DownloadClient[]>([]);
 	let indexers = $state<Indexer[]>([]);
 	let metadataProviders = $state<MetadataProvider[]>([]);
+	let metadataCache = $state<MetadataCacheResponse>(emptyMetadataCache());
 	let libraryFolders = $state<LibraryFolder[]>([]);
 	let users = $state<ManagedUser[]>([]);
+	let tags = $state<Tag[]>([]);
 	let currentUser = $state<UserSummary | undefined>();
 	let mediaItems = $state<MediaItem[]>([]);
 	let mediaRequests = $state<MediaRequest[]>([]);
@@ -156,10 +169,14 @@
 	let downloadForm = $state<DownloadClientFormValue>(emptyDownloadClientForm());
 	let indexerForm = $state<IndexerFormValue>(emptyIndexerForm());
 	let libraryFolderForm = $state<LibraryFolderFormValue>(emptyLibraryFolderForm());
+	let tagForm = $state<TagForm>(emptyTagForm());
 	let userForm = $state<UserFormValue>(emptyUserForm());
 	let testingDownloadClientId = $state<string | undefined>();
 	let testingIndexerId = $state<string | undefined>();
 	let testingMetadataProviderId = $state<string | undefined>();
+	let loadingMetadataCache = $state(false);
+	let clearingMetadataCache = $state(false);
+	let metadataCachePattern = $state('');
 	let loadingDiscover = $state(false);
 	let loadingMetadataDetail = $state(false);
 	let loadingAutocomplete = $state(false);
@@ -280,6 +297,7 @@
 			indexers = [];
 			metadataProviders = [];
 			users = [];
+			tags = [];
 			mediaItems = [];
 			mediaRequests = [];
 			discoverSections = [];
@@ -294,6 +312,7 @@
 			downloadForm = emptyDownloadClientForm();
 			indexerForm = emptyIndexerForm();
 			libraryFolderForm = emptyLibraryFolderForm();
+			tagForm = emptyTagForm();
 			userForm = emptyUserForm();
 		}
 	}
@@ -309,8 +328,10 @@
 			downloadClients = settings.downloadClients;
 			indexers = settings.indexers;
 			metadataProviders = settings.metadataProviders;
+			metadataCache = settings.metadataCache;
 			libraryFolders = settings.libraryFolders;
 			users = settings.users;
+			tags = settings.tags;
 			if (activeLibraryScanId) {
 				await loadLibraryScan(activeLibraryScanId);
 			}
@@ -386,8 +407,13 @@
 			return;
 		}
 		loadingAutocomplete = true;
+		autocompleteGroups = [];
 		try {
-			autocompleteGroups = await autocompleteMediaRequest(trimmed);
+			const groups = await autocompleteMediaRequest(trimmed, 'library');
+			if (searchQuery.trim() !== trimmed) {
+				return;
+			}
+			autocompleteGroups = groups;
 		} catch {
 			autocompleteGroups = [];
 		} finally {
@@ -431,6 +457,11 @@
 		void goto(resolve(`/search/advanced?q=${encodeURIComponent(result.title)}`));
 	}
 
+	function openAdvancedSearch(query: string) {
+		searchQuery = query;
+		void goto(resolve(`/search/advanced?q=${encodeURIComponent(query)}`));
+	}
+
 	function addMedia(candidate: MediaSearchResult) {
 		activeMediaCandidate = candidate;
 		clearNotice();
@@ -443,7 +474,11 @@
 		activeMediaCandidate = undefined;
 	}
 
-	async function confirmMediaAction(qualityProfileId?: string, libraryFolderId?: string) {
+	async function confirmMediaAction(
+		qualityProfileId?: string,
+		libraryFolderId?: string,
+		selectedTags: string[] = []
+	) {
 		const candidate = activeMediaCandidate;
 		if (!candidate) {
 			return;
@@ -467,9 +502,11 @@
 					overview: candidate.overview,
 					posterPath: candidate.posterPath,
 					qualityProfileId,
-					libraryFolderId
+					libraryFolderId,
+					tags: selectedTags
 				});
 				mediaItems = [item, ...mediaItems.filter((mediaItem) => mediaItem.id !== item.id)];
+				await loadSettings();
 				message = 'Media item added to monitored';
 				activeHomeSection = candidate.type === 'movie' ? 'movies' : 'series';
 				activeMediaCandidate = undefined;
@@ -484,7 +521,8 @@
 				externalProvider: candidate.externalProvider,
 				externalId: candidate.externalId,
 				overview: candidate.overview,
-				posterPath: candidate.posterPath
+				posterPath: candidate.posterPath,
+				tags: selectedTags
 			});
 			mediaRequests = [request, ...mediaRequests.filter((item) => item.id !== request.id)];
 			message = 'Media request created';
@@ -696,6 +734,23 @@
 		}
 	}
 
+	async function saveTag(event: SubmitEvent) {
+		event.preventDefault();
+		savingTag = true;
+		clearNotice();
+
+		try {
+			await saveTagRequest(tagForm);
+			tagForm = emptyTagForm();
+			message = 'Tag saved';
+			await loadSettings();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not save tag');
+		} finally {
+			savingTag = false;
+		}
+	}
+
 	async function deleteDownloadClient(id: string) {
 		clearNotice();
 
@@ -757,6 +812,24 @@
 			message = 'User deleted';
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not delete user');
+		}
+	}
+
+	async function deleteTag(id: string) {
+		deletingTagId = id;
+		clearNotice();
+
+		try {
+			await deleteTagRequest(id);
+			if (tagForm.id === id) {
+				tagForm = emptyTagForm();
+			}
+			tags = tags.filter((tag) => tag.id !== id);
+			message = 'Tag deleted';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not delete tag');
+		} finally {
+			deletingTagId = undefined;
 		}
 	}
 
@@ -848,6 +921,55 @@
 		}
 	}
 
+	async function refreshMetadataCache() {
+		loadingMetadataCache = true;
+		clearNotice();
+
+		try {
+			metadataCache = await getMetadataCacheRequest();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load metadata cache');
+		} finally {
+			loadingMetadataCache = false;
+		}
+	}
+
+	async function clearMetadataCache() {
+		clearingMetadataCache = true;
+		clearNotice();
+
+		try {
+			const deletedCount = await clearMetadataCacheRequest();
+			metadataCache = await getMetadataCacheRequest();
+			message = `Metadata cache reset: ${deletedCount} entries deleted`;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not reset metadata cache');
+		} finally {
+			clearingMetadataCache = false;
+		}
+	}
+
+	async function clearMetadataCachePattern(event: SubmitEvent) {
+		event.preventDefault();
+		const pattern = metadataCachePattern.trim();
+		if (!pattern) {
+			return;
+		}
+		clearingMetadataCache = true;
+		clearNotice();
+
+		try {
+			const deletedCount = await clearMetadataCacheByPatternRequest(pattern);
+			metadataCachePattern = '';
+			metadataCache = await getMetadataCacheRequest();
+			message = `Metadata cache reset: ${deletedCount} matching entries deleted`;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not reset matching metadata cache entries');
+		} finally {
+			clearingMetadataCache = false;
+		}
+	}
+
 	function clearNotice() {
 		errorMessage = '';
 		message = '';
@@ -892,6 +1014,10 @@
 	function errorMessageFrom(error: unknown, fallback: string) {
 		return error instanceof Error ? error.message : fallback;
 	}
+
+	function emptyTagForm(): TagForm {
+		return { name: '' };
+	}
 </script>
 
 <svelte:head>
@@ -932,6 +1058,7 @@
 				loading={loadingAutocomplete}
 				onSearch={autocompleteMedia}
 				onSelect={selectAutocompleteResult}
+				onAdvancedSearch={openAdvancedSearch}
 				onProfile={showProfile}
 				onLogout={logout}
 			/>
@@ -942,20 +1069,28 @@
 						bind:downloadForm
 						bind:indexerForm
 						bind:libraryFolderForm
+						bind:tagForm
 						bind:userForm
 						activeSection={activeSettingsSection}
 						{downloadClients}
 						{indexers}
 						{metadataProviders}
+						{metadataCache}
 						{libraryFolders}
 						{users}
+						{tags}
 						{currentUser}
 						{activeLibraryScan}
 						{savingDownloadClient}
 						{savingIndexer}
 						{savingMetadataProviderId}
+						{loadingMetadataCache}
+						{clearingMetadataCache}
 						{savingLibraryFolder}
+						{savingTag}
+						{deletingTagId}
 						{savingUser}
+						bind:metadataCachePattern
 						{loadingLibraryScan}
 						{testingDownloadClientId}
 						{testingIndexerId}
@@ -967,10 +1102,15 @@
 						onSaveDownloadClient={saveDownloadClient}
 						onSaveIndexer={saveIndexer}
 						onSaveMetadataProvider={saveMetadataProvider}
+						onRefreshMetadataCache={refreshMetadataCache}
+						onClearMetadataCache={clearMetadataCache}
+						onClearMetadataCachePattern={clearMetadataCachePattern}
 						onSaveLibraryFolder={saveLibraryFolder}
+						onSaveTag={saveTag}
 						onSaveUser={saveUser}
 						onCancelDownloadClient={() => (downloadForm = emptyDownloadClientForm())}
 						onCancelIndexer={() => (indexerForm = emptyIndexerForm())}
+						onCancelTag={() => (tagForm = emptyTagForm())}
 						onCancelUser={() => (userForm = emptyUserForm())}
 						onEditDownloadClient={(client) => {
 							downloadForm = downloadClientFormFromClient(client);
@@ -987,9 +1127,15 @@
 							activeSettingsSection = 'users';
 							void goto(resolve('/settings/users'));
 						}}
+						onEditTag={(tag) => {
+							tagForm = { id: tag.id, name: tag.name };
+							activeSettingsSection = 'tags';
+							void goto(resolve('/settings/tags'));
+						}}
 						onDeleteDownloadClient={deleteDownloadClient}
 						onDeleteIndexer={deleteIndexer}
 						onDeleteLibraryFolder={deleteLibraryFolder}
+						onDeleteTag={deleteTag}
 						onDeleteUser={deleteUser}
 						onTestDownloadClient={testDownloadClient}
 						onTestIndexer={testIndexer}
@@ -1053,6 +1199,7 @@
 			{isAdmin}
 			{libraryFolders}
 			{qualityProfiles}
+			{tags}
 			saving={savingMediaAction}
 			onClose={closeMediaAction}
 			onConfirm={confirmMediaAction}

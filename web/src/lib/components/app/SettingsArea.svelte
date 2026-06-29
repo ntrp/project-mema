@@ -8,7 +8,9 @@
 	import LibraryFolderForm from '$lib/components/settings/LibraryFolderForm.svelte';
 	import LibraryFolderTable from '$lib/components/settings/LibraryFolderTable.svelte';
 	import LibraryScanReview from '$lib/components/settings/LibraryScanReview.svelte';
+	import MetadataCacheSettings from '$lib/components/settings/MetadataCacheSettings.svelte';
 	import MetadataProviderSettings from '$lib/components/settings/MetadataProviderSettings.svelte';
+	import TagSettings from '$lib/components/settings/TagSettings.svelte';
 	import UserForm from '$lib/components/settings/UserForm.svelte';
 	import UserTable from '$lib/components/settings/UserTable.svelte';
 	import type {
@@ -25,9 +27,12 @@
 		LibraryScanItemMatchRequest,
 		ManagedUser,
 		MediaSearchResult,
+		MetadataCacheResponse,
 		MetadataProvider,
 		MetadataProviderForm as MetadataProviderFormValue,
 		SettingsSection,
+		Tag,
+		TagForm,
 		UserForm as UserFormValue,
 		UserSummary
 	} from '$lib/settings/types';
@@ -37,6 +42,7 @@
 		| '/settings/download-clients'
 		| '/settings/indexers'
 		| '/settings/metadata'
+		| '/settings/tags'
 		| '/settings/users';
 
 	interface Props {
@@ -44,18 +50,26 @@
 		downloadClients: DownloadClient[];
 		indexers: Indexer[];
 		metadataProviders: MetadataProvider[];
+		metadataCache: MetadataCacheResponse;
 		libraryFolders: LibraryFolder[];
 		users: ManagedUser[];
+		tags: Tag[];
 		currentUser?: UserSummary;
 		activeLibraryScan?: LibraryScan;
 		downloadForm: DownloadClientFormValue;
 		indexerForm: IndexerFormValue;
 		libraryFolderForm: LibraryFolderFormValue;
+		tagForm: TagForm;
 		userForm: UserFormValue;
 		savingDownloadClient: boolean;
 		savingIndexer: boolean;
 		savingMetadataProviderId?: string;
+		loadingMetadataCache: boolean;
+		clearingMetadataCache: boolean;
+		metadataCachePattern: string;
 		savingLibraryFolder: boolean;
+		savingTag: boolean;
+		deletingTagId?: string;
 		savingUser: boolean;
 		loadingLibraryScan: boolean;
 		testingDownloadClientId?: string;
@@ -68,17 +82,24 @@
 		onSaveDownloadClient: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveIndexer: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveMetadataProvider: (_form: MetadataProviderFormValue) => void | Promise<void>;
+		onRefreshMetadataCache: () => void | Promise<void>;
+		onClearMetadataCache: () => void | Promise<void>;
+		onClearMetadataCachePattern: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveLibraryFolder: (_event: SubmitEvent) => void | Promise<void>;
+		onSaveTag: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveUser: (_event: SubmitEvent) => void | Promise<void>;
 		onCancelDownloadClient: () => void;
 		onCancelIndexer: () => void;
+		onCancelTag: () => void;
 		onCancelUser: () => void;
 		onEditDownloadClient: (_client: DownloadClient) => void;
 		onEditIndexer: (_indexer: Indexer) => void;
+		onEditTag: (_tag: Tag) => void;
 		onEditUser: (_user: ManagedUser) => void;
 		onDeleteDownloadClient: (_id: string) => void | Promise<void>;
 		onDeleteIndexer: (_id: string) => void | Promise<void>;
 		onDeleteLibraryFolder: (_id: string) => void | Promise<void>;
+		onDeleteTag: (_id: string) => void | Promise<void>;
 		onDeleteUser: (_id: string) => void | Promise<void>;
 		onTestDownloadClient: (_id: string) => void | Promise<void>;
 		onTestIndexer: (_id: string) => void | Promise<void>;
@@ -95,18 +116,26 @@
 		downloadClients,
 		indexers,
 		metadataProviders,
+		metadataCache,
 		libraryFolders,
 		users,
+		tags,
 		currentUser,
 		activeLibraryScan,
 		downloadForm = $bindable(),
 		indexerForm = $bindable(),
 		libraryFolderForm = $bindable(),
+		tagForm = $bindable(),
 		userForm = $bindable(),
 		savingDownloadClient,
 		savingIndexer,
 		savingMetadataProviderId,
+		loadingMetadataCache,
+		clearingMetadataCache,
+		metadataCachePattern = $bindable(),
 		savingLibraryFolder,
+		savingTag,
+		deletingTagId,
 		savingUser,
 		loadingLibraryScan,
 		testingDownloadClientId,
@@ -119,17 +148,24 @@
 		onSaveDownloadClient,
 		onSaveIndexer,
 		onSaveMetadataProvider,
+		onRefreshMetadataCache,
+		onClearMetadataCache,
+		onClearMetadataCachePattern,
 		onSaveLibraryFolder,
+		onSaveTag,
 		onSaveUser,
 		onCancelDownloadClient,
 		onCancelIndexer,
+		onCancelTag,
 		onCancelUser,
 		onEditDownloadClient,
 		onEditIndexer,
+		onEditTag,
 		onEditUser,
 		onDeleteDownloadClient,
 		onDeleteIndexer,
 		onDeleteLibraryFolder,
+		onDeleteTag,
 		onDeleteUser,
 		onTestDownloadClient,
 		onTestIndexer,
@@ -158,6 +194,11 @@
 			value: 'metadata',
 			label: 'Metadata',
 			href: '/settings/metadata'
+		},
+		{
+			value: 'tags',
+			label: 'Tags',
+			href: '/settings/tags'
 		},
 		{
 			value: 'users',
@@ -240,6 +281,32 @@
 				testingId={testingMetadataProviderId}
 				savingId={savingMetadataProviderId}
 				testResults={metadataProviderTests}
+			/>
+			<MetadataCacheSettings
+				cache={metadataCache}
+				bind:pattern={metadataCachePattern}
+				loading={loadingMetadataCache}
+				clearing={clearingMetadataCache}
+				onRefresh={onRefreshMetadataCache}
+				onClearAll={onClearMetadataCache}
+				onClearPattern={onClearMetadataCachePattern}
+			/>
+		</div>
+	{:else if activeSection === 'tags'}
+		<div class="page-heading">
+			<p>Settings</p>
+			<h1 id="settings-title">Tags</h1>
+		</div>
+		<div class="settings-stack">
+			<TagSettings
+				{tags}
+				bind:form={tagForm}
+				saving={savingTag}
+				deletingId={deletingTagId}
+				onSave={onSaveTag}
+				onCancel={onCancelTag}
+				onEdit={onEditTag}
+				onDelete={onDeleteTag}
 			/>
 		</div>
 	{:else if activeSection === 'users'}

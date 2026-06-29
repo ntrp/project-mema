@@ -99,6 +99,13 @@
 			{#if selectedRequest.overview}
 				<p>{selectedRequest.overview}</p>
 			{/if}
+			{#if selectedRequest.tags?.length}
+				<div class="media-tags" aria-label="Tags">
+					{#each selectedRequest.tags as tag (tag)}
+						<span>{tag}</span>
+					{/each}
+				</div>
+			{/if}
 
 			{#if canManage && selectedRequest.status === 'pending'}
 				<form class="settings-form compact-form" onsubmit={approve}>
@@ -163,6 +170,13 @@
 						</p>
 						{#if request.overview}
 							<p>{request.overview}</p>
+						{/if}
+						{#if request.tags?.length}
+							<div class="media-tags compact-tags" aria-label="Tags">
+								{#each request.tags.slice(0, 3) as tag (tag)}
+									<span>{tag}</span>
+								{/each}
+							</div>
 						{/if}
 					</div>
 					<span class="status-pill">{request.status}</span>

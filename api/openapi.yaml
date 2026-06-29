@@ -154,6 +154,18 @@ paths:
             type: string
             minLength: 2
             maxLength: 500
+        - name: includeLibrary
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - name: includeProviders
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
       responses:
         "200":
           description: Grouped autocomplete results
@@ -783,6 +795,156 @@ paths:
                 $ref: "#/components/schemas/IntegrationTestResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/metadata-cache:
+    get:
+      operationId: getMetadataCache
+      tags:
+        - Settings
+      summary: Inspect metadata provider cache entries and stats
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Metadata cache stats and entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: clearMetadataCache
+      tags:
+        - Settings
+      summary: Clear all metadata provider cache entries
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Metadata cache clear result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/metadata-cache/reset:
+    post:
+      operationId: clearMetadataCacheByPattern
+      tags:
+        - Settings
+      summary: Clear metadata provider cache entries matching a regex
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetadataCacheClearRequest"
+      responses:
+        "200":
+          description: Metadata cache clear result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/tags:
+    get:
+      operationId: listTags
+      tags:
+        - Settings
+      summary: List media tags
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Media tags
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createTag
+      tags:
+        - Settings
+      summary: Create a media tag
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagRequest"
+      responses:
+        "201":
+          description: Media tag created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /settings/tags/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateTag
+      tags:
+        - Settings
+      summary: Update a media tag
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagRequest"
+      responses:
+        "200":
+          description: Media tag updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tag"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteTag
+      tags:
+        - Settings
+      summary: Delete a media tag
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Media tag deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
   /settings/library/folder-options:
@@ -1513,6 +1675,28 @@ components:
           type: string
         posterPath:
           type: string
+        episodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaMetadataEpisode"
+    MediaMetadataEpisode:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - episodeNumber
+      properties:
+        name:
+          type: string
+        episodeNumber:
+          type: integer
+          format: int32
+        overview:
+          type: string
+        airDate:
+          type: string
+        stillPath:
+          type: string
     MediaMetadataPerson:
       type: object
       additionalProperties: false
@@ -1593,6 +1777,12 @@ components:
         libraryFolderId:
           type: string
           format: uuid
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
     MediaRequestListResponse:
       type: object
       additionalProperties: false
@@ -1679,6 +1869,52 @@ components:
         posterPath:
           type: string
           maxLength: 2000
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+    TagListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - tags
+      properties:
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+    Tag:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    TagRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
     MediaRequestApproveRequest:
       type: object
       additionalProperties: false
@@ -2063,6 +2299,106 @@ components:
       enum:
         - tmdb
         - tvdb
+    MetadataCacheResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - stats
+        - entries
+      properties:
+        stats:
+          $ref: "#/components/schemas/MetadataCacheStats"
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataCacheEntry"
+    MetadataCacheStats:
+      type: object
+      additionalProperties: false
+      required:
+        - totalEntries
+        - activeEntries
+        - expiredEntries
+        - providerCount
+      properties:
+        totalEntries:
+          type: integer
+          format: int32
+        activeEntries:
+          type: integer
+          format: int32
+        expiredEntries:
+          type: integer
+          format: int32
+        providerCount:
+          type: integer
+          format: int32
+    MetadataCacheEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - providerName
+        - providerType
+        - mediaType
+        - query
+        - cacheKind
+        - year
+        - itemCount
+        - expiresAt
+        - createdAt
+        - updatedAt
+        - expired
+      properties:
+        providerName:
+          type: string
+        providerType:
+          $ref: "#/components/schemas/MetadataProviderType"
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        query:
+          type: string
+        cacheKind:
+          type: string
+          enum:
+            - search
+            - discover
+            - details
+        year:
+          type: integer
+          format: int32
+        itemCount:
+          type: integer
+          format: int32
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expired:
+          type: boolean
+    MetadataCacheClearRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - pattern
+      properties:
+        pattern:
+          type: string
+          minLength: 1
+          maxLength: 500
+    MetadataCacheClearResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - deletedCount
+      properties:
+        deletedCount:
+          type: integer
+          format: int32
     LibraryFolderListResponse:
       type: object
       additionalProperties: false
