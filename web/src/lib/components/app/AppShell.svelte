@@ -208,7 +208,26 @@
 		label: string;
 		icon: 'discover' | 'movies' | 'series' | 'activity' | 'settings';
 		href: '/discover' | '/requests' | '/movies' | '/series' | '/activity' | '/settings/library';
+		children?: readonly {
+			value: SettingsSection;
+			label: string;
+			href:
+				| '/settings/library'
+				| '/settings/download-clients'
+				| '/settings/indexers'
+				| '/settings/metadata'
+				| '/settings/tags'
+				| '/settings/users';
+		}[];
 	};
+	const settingsItems = [
+		{ value: 'library', label: 'Library', href: '/settings/library' },
+		{ value: 'download-clients', label: 'Download clients', href: '/settings/download-clients' },
+		{ value: 'indexers', label: 'Indexers', href: '/settings/indexers' },
+		{ value: 'metadata', label: 'Metadata', href: '/settings/metadata' },
+		{ value: 'tags', label: 'Tags', href: '/settings/tags' },
+		{ value: 'users', label: 'Users', href: '/settings/users' }
+	] satisfies PrimaryItem['children'];
 	const basePrimaryItems = [
 		{ value: 'discover', label: 'Discover', icon: 'discover', href: '/discover' },
 		{ value: 'requests', label: 'Requests', icon: 'activity', href: '/requests' },
@@ -220,7 +239,8 @@
 		value: 'settings',
 		label: 'Settings',
 		icon: 'settings',
-		href: '/settings/library'
+		href: '/settings/library',
+		children: settingsItems
 	} satisfies PrimaryItem;
 	let primaryItems = $derived(
 		isAdmin ? [...basePrimaryItems, settingsPrimaryItem] : basePrimaryItems
@@ -1049,7 +1069,9 @@
 			title="mema"
 			items={primaryItems}
 			active={activePrimarySection}
+			activeSubmenu={activeSettingsSection}
 			onSelect={(section) => selectPrimarySection(section as HomeSection | 'settings')}
+			onSubmenuSelect={(section) => selectSettingsSection(section as SettingsSection)}
 		/>
 		<div class="app-main">
 			<AppNav
@@ -1098,7 +1120,6 @@
 						{downloadClientTests}
 						{indexerTests}
 						{metadataProviderTests}
-						onSectionSelect={selectSettingsSection}
 						onSaveDownloadClient={saveDownloadClient}
 						onSaveIndexer={saveIndexer}
 						onSaveMetadataProvider={saveMetadataProvider}

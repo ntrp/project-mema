@@ -28,8 +28,15 @@
 		onConfirm
 	}: Props = $props();
 
-	let qualityProfileId = $state('');
-	let libraryFolderId = $state('');
+	type SmartMediaCandidate = MediaSearchResult & {
+		genres?: string[];
+		originalLanguage?: string;
+	};
+
+	const smartCandidate = $derived(candidate as SmartMediaCandidate);
+
+	let qualityProfileId = $state(preselectQualityProfileId());
+	let libraryFolderId = $state(preselectLibraryFolderId());
 	let tagInput = $state('');
 	let selectedTags = $state<string[]>([]);
 
@@ -77,6 +84,97 @@
 
 	function normalizeTag(value: string) {
 		return value.trim().replace(/\s+/g, ' ');
+	}
+
+	function preselectQualityProfileId() {
+		return bestScored(qualityProfiles, profileScore)?.id ?? '';
+	}
+
+	function profileScore(profile: QualityProfileOption) {
+		const text = normalizedText(`${profile.id} ${profile.name}`);
+		let score = 0;
+
+		if (isAnimeCandidate()) {
+			score += hasAny(text, ['anime']) ? 50 : 0;
+		} else if (hasAny(text, ['anime'])) {
+			score -= 20;
+		}
+
+		if (hasAny(text, ['1080', '1080p'])) {
+			score += 40;
+		}
+		if (hasAny(text, ['2160', '2160p', '4k', 'uhd'])) {
+			score += 25;
+		}
+		if (hasAny(text, ['default', 'best'])) {
+			score += 15;
+		}
+		if (hasAny(text, ['any acceptable', 'any'])) {
+			score -= 10;
+		}
+
+		return score;
+	}
+
+	function preselectLibraryFolderId() {
+		const bestFolder = bestScored(libraryFolders, folderScore);
+		return bestFolder?.id ?? '';
+	}
+
+	function folderScore(folder: LibraryFolder) {
+		const path = normalizedText(folder.path);
+		const hasAnime = hasAny(path, ['anime']);
+		const hasMovie = hasAny(path, ['movie', 'movies', 'film', 'films']);
+		const hasSeries = hasAny(path, ['series', 'tv', 'show', 'shows']);
+		let score = 0;
+
+		if (candidate.type === 'series') {
+			score += hasSeries ? 100 : 0;
+			score += hasAnime && isAnimeCandidate() ? 20 : 0;
+			score -= hasMovie ? 25 : 0;
+			return score;
+		}
+
+		if (isAnimeCandidate()) {
+			score += hasAnime && hasMovie ? 120 : 0;
+			score += hasAnime && !hasMovie ? 90 : 0;
+			score += !hasAnime && hasMovie ? 60 : 0;
+			score -= hasSeries ? 25 : 0;
+			return score;
+		}
+
+		score += hasMovie ? 100 : 0;
+		score -= hasAnime ? 15 : 0;
+		score -= hasSeries ? 25 : 0;
+		return score;
+	}
+
+	function isAnimeCandidate() {
+		const genres = smartCandidate.genres ?? [];
+		const text = normalizedText(
+			[candidate.title, candidate.overview, genres.join(' '), smartCandidate.originalLanguage].join(
+				' '
+			)
+		);
+		const isJapaneseAnimation =
+			smartCandidate.originalLanguage?.toLowerCase() === 'ja' &&
+			genres.some((genre) => normalizedText(genre).includes('animation'));
+
+		return text.includes('anime') || isJapaneseAnimation;
+	}
+
+	function bestScored<T>(items: T[], scoreItem: (item: T) => number) {
+		return items
+			.map((item, index) => ({ item, score: scoreItem(item), index }))
+			.sort((left, right) => right.score - left.score || left.index - right.index)[0]?.item;
+	}
+
+	function normalizedText(value: string) {
+		return value.toLowerCase();
+	}
+
+	function hasAny(text: string, needles: string[]) {
+		return needles.some((needle) => text.includes(needle));
 	}
 
 	function imageUrl(path?: string) {
@@ -153,14 +251,28 @@
 			<div class="tag-selector">
 				<div class="tag-selector-header">
 					<span>Tags</span>
-					<input
-						bind:value={tagInput}
-						type="text"
-						maxlength="80"
-						placeholder="Add tag"
-						onkeydown={handleTagKeydown}
-						onblur={commitTagInput}
-					/>
+					<div class="tag-input-box">
+						{#each selectedTags as tag (tag.toLowerCase())}
+							<button type="button" onclick={() => removeTag(tag)}>{tag}</button>
+						{/each}
+						<input
+							bind:value={tagInput}
+							type="text"
+							list="media-action-tag-options"
+							maxlength="80"
+							placeholder={selectedTags.length === 0 ? 'Add tag' : ''}
+							autocomplete="off"
+							onkeydown={handleTagKeydown}
+							onblur={commitTagInput}
+						/>
+					</div>
+					<datalist id="media-action-tag-options">
+						{#each tags as tag (tag.id)}
+							{#if !selectedTags.some((selected) => selected.toLowerCase() === tag.name.toLowerCase())}
+								<option value={tag.name}></option>
+							{/if}
+						{/each}
+					</datalist>
 				</div>
 				{#if tags.length > 0}
 					<div class="tag-options" aria-label="Existing tags">
@@ -174,13 +286,6 @@
 							>
 								{tag.name}
 							</button>
-						{/each}
-					</div>
-				{/if}
-				{#if selectedTags.length > 0}
-					<div class="selected-tags" aria-label="Selected tags">
-						{#each selectedTags as tag (tag.toLowerCase())}
-							<button type="button" onclick={() => removeTag(tag)}>{tag}</button>
 						{/each}
 					</div>
 				{/if}

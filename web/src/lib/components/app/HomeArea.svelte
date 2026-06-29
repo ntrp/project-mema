@@ -89,6 +89,7 @@
 	{#if activeSection === 'discover'}
 		<MediaSearchPanel
 			sections={discoverSections}
+			{mediaItems}
 			loading={loadingDiscover}
 			{addingKey}
 			onAdd={onAddMedia}

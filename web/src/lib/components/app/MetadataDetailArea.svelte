@@ -10,6 +10,11 @@
 		onAdd: (_candidate: MediaSearchResult) => void;
 	}
 
+	type SmartMediaSearchResult = MediaSearchResult & {
+		genres?: string[];
+		originalLanguage?: string;
+	};
+
 	let { detail, loading, addingKey, actionLabel, onAdd }: Props = $props();
 
 	const genres = $derived(detail?.genres ?? []);
@@ -56,7 +61,7 @@
 		].filter((item): item is [string, string] => Boolean(item));
 	}
 
-	function candidate(details: MediaMetadataDetails): MediaSearchResult {
+	function candidate(details: MediaMetadataDetails): SmartMediaSearchResult {
 		return {
 			title: details.title,
 			type: details.type,
@@ -64,7 +69,9 @@
 			externalProvider: details.externalProvider,
 			externalId: details.externalId,
 			overview: details.overview,
-			posterPath: details.posterPath
+			posterPath: details.posterPath,
+			genres: details.genres,
+			originalLanguage: details.originalLanguage
 		};
 	}
 

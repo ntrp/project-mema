@@ -8,23 +8,37 @@
 		| '/movies'
 		| '/series'
 		| '/activity'
-		| '/settings/library';
+		| '/settings/library'
+		| '/settings/download-clients'
+		| '/settings/indexers'
+		| '/settings/metadata'
+		| '/settings/tags'
+		| '/settings/users';
+
+	interface SubmenuItem<TValue extends string> {
+		value: TValue;
+		label: string;
+		href: MenuHref;
+	}
 
 	interface MenuItem<TValue extends string> {
 		value: TValue;
 		label: string;
 		icon: MenuIcon;
 		href: MenuHref;
+		children?: readonly SubmenuItem<string>[];
 	}
 
 	interface Props<TValue extends string> {
 		title: string;
 		items: readonly MenuItem<TValue>[];
 		active: TValue;
+		activeSubmenu?: string;
 		onSelect: (_value: TValue) => void;
+		onSubmenuSelect?: (_value: string) => void;
 	}
 
-	let { title, items, active, onSelect }: Props<string> = $props();
+	let { title, items, active, activeSubmenu, onSelect, onSubmenuSelect }: Props<string> = $props();
 </script>
 
 <aside class="side-menu" aria-label={title}>
@@ -36,8 +50,8 @@
 		{#each items as item (item.value)}
 			<a
 				href={resolve(item.href)}
-				class:active-menu={active === item.value}
-				aria-current={active === item.value ? 'page' : undefined}
+				class:active-menu={active === item.value && !item.children?.length}
+				aria-current={active === item.value && !item.children?.length ? 'page' : undefined}
 				onclick={() => onSelect(item.value)}
 			>
 				<span class="menu-icon" aria-hidden="true">
@@ -72,6 +86,20 @@
 				</span>
 				<span>{item.label}</span>
 			</a>
+			{#if active === item.value && item.children?.length}
+				<div class="submenu" aria-label={`${item.label} sections`}>
+					{#each item.children as child (child.value)}
+						<a
+							href={resolve(child.href)}
+							class:active-submenu={activeSubmenu === child.value}
+							aria-current={activeSubmenu === child.value ? 'page' : undefined}
+							onclick={() => onSubmenuSelect?.(child.value)}
+						>
+							{child.label}
+						</a>
+					{/each}
+				</div>
+			{/if}
 		{/each}
 	</nav>
 </aside>

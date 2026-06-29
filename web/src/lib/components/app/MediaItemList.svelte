@@ -14,6 +14,16 @@
 	const emptyText = $derived(
 		mediaType === 'movie' ? 'No monitored movies yet' : 'No monitored series yet'
 	);
+
+	function posterUrl(path?: string) {
+		if (!path) {
+			return undefined;
+		}
+		if (path.startsWith('http://') || path.startsWith('https://')) {
+			return path;
+		}
+		return `https://image.tmdb.org/t/p/w500${path}`;
+	}
 </script>
 
 <div class="page-heading">
@@ -29,8 +39,17 @@
 				? resolve('/movies/[id]', { id: item.id })
 				: resolve('/series/[id]', { id: item.id })}
 			aria-label={`Open ${item.title} details`}
+			style:--library-card-bg={posterUrl(item.posterPath)
+				? `url("${posterUrl(item.posterPath)}")`
+				: undefined}
 		>
-			<div class="poster-placeholder compact">{mediaType === 'movie' ? 'Movie' : 'Series'}</div>
+			<div class="library-cover">
+				{#if posterUrl(item.posterPath)}
+					<img src={posterUrl(item.posterPath)} alt="" loading="lazy" />
+				{:else}
+					<div class="poster-placeholder compact">{mediaType === 'movie' ? 'Movie' : 'Series'}</div>
+				{/if}
+			</div>
 			<div class="media-library-card-body">
 				<strong>{item.title}</strong>
 				<span>{item.year ? `${item.year} · ` : ''}{item.type}</span>

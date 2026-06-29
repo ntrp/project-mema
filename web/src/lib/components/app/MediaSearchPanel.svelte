@@ -1,25 +1,57 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { MediaDiscoverSection, MediaSearchResult } from '$lib/settings/types';
+	import type { MediaDiscoverSection, MediaItem, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
 		sections: MediaDiscoverSection[];
+		mediaItems: MediaItem[];
 		loading: boolean;
 		addingKey?: string;
 		actionLabel: string;
 		onAdd: (_candidate: MediaSearchResult) => void;
 	}
 
-	let { sections, loading, addingKey, actionLabel, onAdd }: Props = $props();
+	let { sections, mediaItems, loading, addingKey, actionLabel, onAdd }: Props = $props();
 
 	const safeSections = $derived(sections ?? []);
+	const libraryExternalKeys = $derived(
+		new Set(
+			(mediaItems ?? [])
+				.map((item) => externalKey(item))
+				.filter((key): key is string => Boolean(key))
+		)
+	);
+	const libraryTitleKeys = $derived(new Set((mediaItems ?? []).map((item) => titleKey(item))));
 
 	function resultKey(result: MediaSearchResult) {
 		return `${result.type}:${result.externalProvider ?? ''}:${result.externalId ?? ''}:${result.title}:${result.year ?? ''}`;
 	}
 
 	function sectionResults(section: MediaDiscoverSection) {
-		return section.results ?? [];
+		return (section.results ?? []).filter((result) => !isInLibrary(result));
+	}
+
+	function isInLibrary(result: MediaSearchResult) {
+		const key = externalKey(result);
+		if (key && libraryExternalKeys.has(key)) {
+			return true;
+		}
+		return libraryTitleKeys.has(titleKey(result));
+	}
+
+	function externalKey(item: MediaItem | MediaSearchResult) {
+		if (!item.externalProvider || !item.externalId) {
+			return undefined;
+		}
+		return `${item.type}:${clean(item.externalProvider)}:${clean(item.externalId)}`;
+	}
+
+	function titleKey(item: MediaItem | MediaSearchResult) {
+		return `${item.type}:${clean(item.title)}:${item.year ?? ''}`;
+	}
+
+	function clean(value: string) {
+		return value.trim().toLowerCase();
 	}
 
 	function posterUrl(path?: string) {

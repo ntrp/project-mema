@@ -572,7 +572,7 @@ func (s *Server) discoverMetadataProvider(ctx context.Context, provider storage.
 }
 
 func (s *Server) metadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
-	cacheKey := "details:v2:" + strings.ToLower(strings.TrimSpace(request.ExternalID))
+	cacheKey := "details:v3:" + strings.ToLower(strings.TrimSpace(request.ExternalID))
 	var cached metadata.Details
 	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, &cached)
 	if err != nil {

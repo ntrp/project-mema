@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-
 	import DownloadClientForm from '$lib/components/settings/DownloadClientForm.svelte';
 	import DownloadClientTable from '$lib/components/settings/DownloadClientTable.svelte';
 	import IndexerForm from '$lib/components/settings/IndexerForm.svelte';
@@ -37,14 +35,6 @@
 		UserSummary
 	} from '$lib/settings/types';
 
-	type SettingsHref =
-		| '/settings/library'
-		| '/settings/download-clients'
-		| '/settings/indexers'
-		| '/settings/metadata'
-		| '/settings/tags'
-		| '/settings/users';
-
 	interface Props {
 		activeSection: SettingsSection;
 		downloadClients: DownloadClient[];
@@ -78,7 +68,6 @@
 		downloadClientTests: IntegrationTestResults;
 		indexerTests: IntegrationTestResults;
 		metadataProviderTests: IntegrationTestResults;
-		onSectionSelect: (_section: SettingsSection) => void;
 		onSaveDownloadClient: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveIndexer: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveMetadataProvider: (_form: MetadataProviderFormValue) => void | Promise<void>;
@@ -144,7 +133,6 @@
 		downloadClientTests,
 		indexerTests,
 		metadataProviderTests,
-		onSectionSelect,
 		onSaveDownloadClient,
 		onSaveIndexer,
 		onSaveMetadataProvider,
@@ -173,59 +161,9 @@
 		onSearchLibraryMatch,
 		onMatchLibraryScanItem
 	}: Props = $props();
-
-	const settingsItems = [
-		{
-			value: 'library',
-			label: 'Library',
-			href: '/settings/library'
-		},
-		{
-			value: 'download-clients',
-			label: 'Download clients',
-			href: '/settings/download-clients'
-		},
-		{
-			value: 'indexers',
-			label: 'Indexers',
-			href: '/settings/indexers'
-		},
-		{
-			value: 'metadata',
-			label: 'Metadata',
-			href: '/settings/metadata'
-		},
-		{
-			value: 'tags',
-			label: 'Tags',
-			href: '/settings/tags'
-		},
-		{
-			value: 'users',
-			label: 'Users',
-			href: '/settings/users'
-		}
-	] satisfies {
-		value: SettingsSection;
-		label: string;
-		href: SettingsHref;
-	}[];
 </script>
 
 <section class="workspace-main" aria-labelledby="settings-title">
-	<nav class="settings-tabs" aria-label="Settings sections">
-		{#each settingsItems as item (item.value)}
-			<a
-				href={resolve(item.href)}
-				class:active-tab={activeSection === item.value}
-				aria-current={activeSection === item.value ? 'page' : undefined}
-				onclick={() => onSectionSelect(item.value)}
-			>
-				{item.label}
-			</a>
-		{/each}
-	</nav>
-
 	{#if activeSection === 'download-clients'}
 		<div class="page-heading">
 			<p>Settings</p>
