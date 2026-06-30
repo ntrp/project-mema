@@ -7,40 +7,46 @@ import (
 )
 
 type MediaItem struct {
-	ID                 uuid.UUID
-	Type               string
-	Title              string
-	Year               *int32
-	Monitored          bool
-	ExternalProvider   *string
-	ExternalID         *string
-	Overview           *string
-	PosterPath         *string
-	QualityProfileID   *string
-	QualityProfileName *string
-	Status             string
-	LibraryFolderID    *uuid.UUID
-	LibraryFolderPath  *string
-	MediaFolderPath    *string
-	FilePaths          []string
-	MetadataFilePaths  []string
-	Tags               []string
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	ID                  uuid.UUID
+	Type                string
+	Title               string
+	Year                *int32
+	Monitored           bool
+	ExternalProvider    *string
+	ExternalID          *string
+	Overview            *string
+	PosterPath          *string
+	MonitorMode         string
+	MinimumAvailability string
+	Manual              bool
+	QualityProfileID    *string
+	QualityProfileName  *string
+	Status              string
+	LibraryFolderID     *uuid.UUID
+	LibraryFolderPath   *string
+	MediaFolderPath     *string
+	FilePaths           []string
+	MetadataFilePaths   []string
+	Tags                []string
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 type MediaItemInput struct {
-	Type             string
-	Title            string
-	Year             *int32
-	Monitored        bool
-	ExternalProvider *string
-	ExternalID       *string
-	Overview         *string
-	PosterPath       *string
-	QualityProfileID *string
-	LibraryFolderID  *uuid.UUID
-	Tags             []string
+	Type                string
+	Title               string
+	Year                *int32
+	Monitored           bool
+	ExternalProvider    *string
+	ExternalID          *string
+	Overview            *string
+	PosterPath          *string
+	MonitorMode         string
+	MinimumAvailability string
+	Manual              bool
+	QualityProfileID    *string
+	LibraryFolderID     *uuid.UUID
+	Tags                []string
 }
 
 type DownloadActivity struct {

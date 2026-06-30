@@ -2,22 +2,50 @@ package storage
 
 import (
 	"context"
-	_ "embed"
+	"database/sql"
+	"embed"
 	"errors"
+	"fmt"
+	"os"
+	"strings"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
 
 	"media-manager/internal/config"
 )
 
 var ErrDevResetNotAllowed = errors.New("dev reset is only allowed when APP_ENV=development and ALLOW_DEV_RESET=true")
 
-//go:embed schema.sql
-var schemaSQL string
+const (
+	gooseMigrationsDir = "migrations"
+	gooseVersionTable  = "app.goose_db_version"
+	defaultSeedPath    = "seeds/defaults.sql"
+	devSeedPath        = "internal/storage/seeds/dev.local.sql"
+)
 
-func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
-	_, err := pool.Exec(ctx, schemaSQL)
-	return err
+//go:embed migrations/*.sql seeds/defaults.sql
+var storageFS embed.FS
+
+func init() {
+	goose.SetBaseFS(storageFS)
+	goose.SetLogger(goose.NopLogger())
+	goose.SetTableName(gooseVersionTable)
+	if err := goose.SetDialect("postgres"); err != nil {
+		panic(err)
+	}
+}
+
+func EnsureSchema(ctx context.Context, databaseURL string) error {
+	db, err := openMigrationDB(ctx, databaseURL)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	if err := runMigrations(ctx, db); err != nil {
+		return err
+	}
+	return applyDefaultSeed(ctx, db)
 }
 
 func ResetDevelopment(ctx context.Context, cfg config.Config) error {
@@ -25,20 +53,75 @@ func ResetDevelopment(ctx context.Context, cfg config.Config) error {
 		return ErrDevResetNotAllowed
 	}
 
-	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+	db, err := openMigrationDB(ctx, cfg.DatabaseURL)
 	if err != nil {
 		return err
 	}
-	defer pool.Close()
+	defer db.Close()
 
-	if _, err := pool.Exec(ctx, `drop schema if exists app cascade`); err != nil {
+	if _, err := db.ExecContext(ctx, `drop schema if exists app cascade`); err != nil {
 		return err
 	}
-	if _, err := pool.Exec(ctx, `create schema app`); err != nil {
+	if _, err := db.ExecContext(ctx, `create schema app`); err != nil {
 		return err
 	}
-	if _, err := pool.Exec(ctx, schemaSQL); err != nil {
+	if err := runMigrations(ctx, db); err != nil {
 		return err
+	}
+	if err := applyDefaultSeed(ctx, db); err != nil {
+		return err
+	}
+	return applyDevSeed(ctx, db)
+}
+
+func openMigrationDB(ctx context.Context, databaseURL string) (*sql.DB, error) {
+	db, err := sql.Open("pgx", databaseURL)
+	if err != nil {
+		return nil, err
+	}
+	if err := db.PingContext(ctx); err != nil {
+		db.Close()
+		return nil, err
+	}
+	return db, nil
+}
+
+func runMigrations(ctx context.Context, db *sql.DB) error {
+	if _, err := db.ExecContext(ctx, `create schema if not exists app`); err != nil {
+		return fmt.Errorf("migration schema setup failed: %w", err)
+	}
+	if err := goose.UpContext(ctx, db, gooseMigrationsDir); err != nil {
+		return fmt.Errorf("goose migration failed: %w", err)
+	}
+	return nil
+}
+
+func applyDefaultSeed(ctx context.Context, db *sql.DB) error {
+	return applySeed(ctx, db, defaultSeedPath, storageFS.ReadFile)
+}
+
+func applyDevSeed(ctx context.Context, db *sql.DB) error {
+	return applySeed(ctx, db, devSeedPath, os.ReadFile)
+}
+
+func applySeed(
+	ctx context.Context,
+	db *sql.DB,
+	path string,
+	read func(string) ([]byte, error),
+) error {
+	seedSQL, err := read(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("seed read failed: %w", err)
+	}
+	if strings.TrimSpace(string(seedSQL)) == "" {
+		return nil
+	}
+	if _, err := db.ExecContext(ctx, string(seedSQL)); err != nil {
+		return fmt.Errorf("seed apply failed: %w", err)
 	}
 	return nil
 }

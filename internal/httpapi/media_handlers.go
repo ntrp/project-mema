@@ -258,13 +258,19 @@ func (s *Server) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	item, err := s.settings.CreateMediaItem(r.Context(), input)
+	items, err := s.createMediaForAdd(r.Context(), input)
 	if err != nil {
+		if errors.Is(err, errMediaCollectionUnavailable) {
+			writeError(w, http.StatusBadRequest, "collection_unavailable", "Selected media is not part of an available collection")
+			return
+		}
 		writeError(w, http.StatusInternalServerError, "media_create_failed", "Could not add media item")
 		return
 	}
-	_, _ = s.jobs.EnqueueAutoSearchDownload(r.Context(), item.ID)
-	writeJSON(w, http.StatusCreated, mediaItemResponse(item))
+	if !input.Manual {
+		s.enqueueAutomaticSearch(r.Context(), items)
+	}
+	writeJSON(w, http.StatusCreated, mediaItemResponse(items[0]))
 }
 
 func (s *Server) ListMediaRequests(w http.ResponseWriter, r *http.Request) {
@@ -324,7 +330,8 @@ func (s *Server) GetMediaRequest(w http.ResponseWriter, r *http.Request, id Reso
 }
 
 func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireAdmin(w, r); !ok {
+	session, ok := s.requireAdmin(w, r)
+	if !ok {
 		return
 	}
 
@@ -342,28 +349,41 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 		return
 	}
 
+	existingRequest, err := s.settings.GetMediaRequest(r.Context(), uuid.UUID(id), uuid.UUID(session.user.Id), true)
+	if err != nil {
+		writeSettingsError(w, err, "Could not find media request")
+		return
+	}
+	addInputs, err := s.mediaAddInputs(r.Context(), mediaInputFromRequest(existingRequest, input))
+	if err != nil {
+		if errors.Is(err, errMediaCollectionUnavailable) {
+			writeError(w, http.StatusBadRequest, "collection_unavailable", "Selected media is not part of an available collection")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "collection_lookup_failed", "Could not load media collection")
+		return
+	}
+
 	request, item, err := s.settings.ApproveMediaRequest(r.Context(), uuid.UUID(id), input)
 	if err != nil {
 		writeMediaRequestError(w, err)
 		return
 	}
-	_, _ = s.jobs.EnqueueAutoSearchDownload(r.Context(), item.ID)
+	items := []storage.MediaItem{item}
+	if len(addInputs) > 1 {
+		items, err = s.createMediaInputs(r.Context(), addInputs)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "media_create_failed", "Could not add media collection")
+			return
+		}
+	}
+	if !existingRequest.Manual {
+		s.enqueueAutomaticSearch(r.Context(), items)
+	}
 	writeJSON(w, http.StatusOK, MediaRequestApproveResponse{
 		Request:   mediaRequestResponse(request),
 		MediaItem: mediaItemResponse(item),
 	})
-}
-
-func (s *Server) DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	if _, ok := s.requireAdmin(w, r); !ok {
-		return
-	}
-
-	if err := s.settings.DeleteMediaItem(r.Context(), uuid.UUID(id)); err != nil {
-		writeSettingsError(w, err, "Could not find media item")
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -753,6 +773,8 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 		ExternalId:       details.ExternalID,
 		Overview:         details.Overview,
 		PosterPath:       details.PosterPath,
+		CollectionId:     details.CollectionID,
+		CollectionName:   details.CollectionName,
 		BackdropPath:     details.BackdropPath,
 		Status:           details.Status,
 		OriginalLanguage: details.OriginalLanguage,

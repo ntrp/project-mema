@@ -90,21 +90,9 @@ func openDatabase(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error)
 		pool.Close()
 		return nil, fmt.Errorf("database ping failed: %w", err)
 	}
-	if err := storage.EnsureSchema(ctx, pool); err != nil {
+	if err := storage.EnsureSchema(ctx, cfg.DatabaseURL); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("database schema setup failed: %w", err)
-	}
-	if err := storage.NewSettingsStore(pool).EnsureDefaultMetadataProviders(ctx); err != nil {
-		pool.Close()
-		return nil, fmt.Errorf("default metadata provider setup failed: %w", err)
-	}
-	if err := storage.NewSettingsStore(pool).EnsureDefaultMediaProfiles(ctx); err != nil {
-		pool.Close()
-		return nil, fmt.Errorf("default media profile setup failed: %w", err)
-	}
-	if err := storage.NewSettingsStore(pool).EnsureDefaultFileNamingSettings(ctx); err != nil {
-		pool.Close()
-		return nil, fmt.Errorf("default file naming setup failed: %w", err)
 	}
 	if err := storage.NewSettingsStore(pool).EnsureDefaultAdminUser(ctx, cfg.AdminUsername, cfg.AdminPassword); err != nil {
 		pool.Close()

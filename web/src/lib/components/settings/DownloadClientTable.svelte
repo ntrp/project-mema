@@ -31,8 +31,22 @@
 						<td>{item.baseUrl}</td>
 						<td>{item.priority}</td>
 						<td class="row-actions">
-							<button type="button" class="secondary" onclick={() => onEdit(item)}>Edit</button>
-							<button type="button" class="danger" onclick={() => onDelete(item.id)}>Delete</button>
+							<button
+								type="button"
+								class="secondary icon-button"
+								aria-label={`Edit ${item.name}`}
+								onclick={() => onEdit(item)}
+							>
+								<span class="app-icon" aria-hidden="true">edit</span>
+							</button>
+							<button
+								type="button"
+								class="danger icon-button"
+								aria-label={`Delete ${item.name}`}
+								onclick={() => onDelete(item.id)}
+							>
+								<span class="app-icon" aria-hidden="true">delete</span>
+							</button>
 						</td>
 					</tr>
 				{:else}

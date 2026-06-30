@@ -8,6 +8,8 @@
 		type AppShellOptions
 	} from '$lib/components/app/appShellController.svelte';
 	import HomeAreaRoute from '$lib/components/app/HomeAreaRoute.svelte';
+	import MediaCollectionArea from '$lib/components/app/MediaCollectionArea.svelte';
+	import MediaDeleteModal from '$lib/components/app/MediaDeleteModal.svelte';
 	import MediaActionModal from '$lib/components/app/MediaActionModal.svelte';
 	import MetadataDetailArea from '$lib/components/app/MetadataDetailArea.svelte';
 	import SettingsArea from '$lib/components/app/SettingsArea.svelte';
@@ -87,13 +89,15 @@
 						users={app.users}
 						tags={app.tags}
 						currentUser={app.currentUser}
-						activeLibraryScan={app.activeLibraryScan}
+						libraryScansByFolder={app.libraryScansByFolder}
+						openLibraryFolderId={app.openLibraryFolderId}
 						savingDownloadClient={app.savingDownloadClient}
 						savingIndexer={app.savingIndexer}
 						savingMetadataProviderId={app.savingMetadataProviderId}
 						loadingMetadataCache={app.loadingMetadataCache}
 						clearingMetadataCache={app.clearingMetadataCache}
 						savingLibraryFolder={app.savingLibraryFolder}
+						scanningLibraryFolderId={app.scanningLibraryFolderId}
 						savingPathMapping={app.savingPathMapping}
 						deletingPathMappingId={app.deletingPathMappingId}
 						savingMediaProfile={app.savingMediaProfile}
@@ -104,7 +108,6 @@
 						deletingTagId={app.deletingTagId}
 						savingUser={app.savingUser}
 						bind:metadataCachePattern={app.metadataCachePattern}
-						loadingLibraryScan={app.loadingLibraryScan}
 						testingIndexerId={app.testingIndexerId}
 						testingMetadataProviderId={app.testingMetadataProviderId}
 						indexerTests={app.indexerTests}
@@ -117,9 +120,11 @@
 						onClearMetadataCache={app.clearMetadataCache}
 						onClearMetadataCachePattern={app.clearMetadataCachePattern}
 						onSaveLibraryFolder={app.saveLibraryFolder}
+						onScanLibraryFolder={app.scanLibraryFolder}
 						onSavePathMapping={app.savePathMapping}
 						onSaveMediaProfile={app.saveMediaProfile}
 						onSaveCustomFormat={app.saveCustomFormat}
+						onImportCustomFormat={app.importCustomFormat}
 						onSaveTag={app.saveTag}
 						onSaveUser={app.saveUser}
 						onCancelDownloadClient={app.cancelDownloadClient}
@@ -145,7 +150,7 @@
 						onTestIndexer={app.testIndexer}
 						onTestMetadataProvider={app.testMetadataProvider}
 						onSearchLibraryMatch={app.searchLibraryMatch}
-						onMatchLibraryScanItem={app.matchLibraryScanItem}
+						onImportLibraryScanRows={app.importLibraryScanRows}
 					/>
 				{:else if app.activeView === 'system' && app.isAdmin}
 					<SystemArea activeSection={app.activeSystemSection} />
@@ -168,6 +173,15 @@
 						actionLabel={app.isAdmin ? 'Add' : 'Request'}
 						onAdd={app.addMedia}
 					/>
+				{:else if app.activeView === 'media-collection'}
+					<MediaCollectionArea
+						collection={app.mediaCollection}
+						mediaItems={app.mediaItems}
+						loading={app.loadingMediaCollection}
+						addingKey={app.addingKey}
+						actionLabel={app.isAdmin ? 'Add' : 'Request'}
+						onAdd={app.addMedia}
+					/>
 				{:else}
 					<HomeAreaRoute {app} />
 				{/if}
@@ -186,6 +200,14 @@
 			onConfirm={app.confirmMediaAction}
 		/>
 	{/if}
+	{#if app.mediaDeleteCandidate}
+		<MediaDeleteModal
+			item={app.mediaDeleteCandidate}
+			deleting={app.deletingMediaItemId === app.mediaDeleteCandidate.id}
+			onClose={app.closeMediaDelete}
+			onDelete={app.confirmMediaDelete}
+		/>
+	{/if}
 {/if}
 
-<NoticeStack message={app.message} errorMessage={app.errorMessage} />
+<NoticeStack message={app.message} errorMessage={app.errorMessage} onDismiss={app.clearNotice} />

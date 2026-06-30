@@ -60,6 +60,8 @@ type Details struct {
 	ExternalID       string
 	Overview         *string
 	PosterPath       *string
+	CollectionID     *string
+	CollectionName   *string
 	BackdropPath     *string
 	Status           *string
 	OriginalLanguage *string
@@ -73,6 +75,15 @@ type Details struct {
 	Facts            []Fact
 	Seasons          []Season
 	Cast             []Person
+}
+
+type Collection struct {
+	ID           string
+	Name         string
+	Overview     *string
+	PosterPath   *string
+	BackdropPath *string
+	Parts        []SearchResult
 }
 
 type Fact struct {

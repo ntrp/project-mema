@@ -10,6 +10,7 @@
 	import QualitySizeSettings from '$lib/components/settings/QualitySizeSettings.svelte';
 	import TagSettings from '$lib/components/settings/TagSettings.svelte';
 	import UsersSettingsSection from '$lib/components/settings/UsersSettingsSection.svelte';
+	import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
 	import type {
 		CustomFormat,
 		CustomFormatForm as CustomFormatFormValue,
@@ -23,8 +24,6 @@
 		LibraryFolderForm as LibraryFolderFormValue,
 		LibraryMediaKind,
 		LibraryScan,
-		LibraryScanItem,
-		LibraryScanItemMatchRequest,
 		ManagedUser,
 		MediaProfile,
 		MediaProfileForm as MediaProfileFormValue,
@@ -54,7 +53,8 @@
 		users: ManagedUser[];
 		tags: Tag[];
 		currentUser?: UserSummary;
-		activeLibraryScan?: LibraryScan;
+		libraryScansByFolder: Record<string, LibraryScan>;
+		openLibraryFolderId?: string;
 		downloadForm: DownloadClientFormValue;
 		indexerForm: IndexerFormValue;
 		libraryFolderForm: LibraryFolderFormValue;
@@ -79,7 +79,7 @@
 		savingTag: boolean;
 		deletingTagId?: string;
 		savingUser: boolean;
-		loadingLibraryScan: boolean;
+		scanningLibraryFolderId?: string;
 		testingIndexerId?: string;
 		testingMetadataProviderId?: string;
 		indexerTests: IntegrationTestResults;
@@ -94,9 +94,11 @@
 		onClearMetadataCache: () => void | Promise<void>;
 		onClearMetadataCachePattern: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveLibraryFolder: (_event: SubmitEvent) => void | Promise<void>;
+		onScanLibraryFolder: (_id: string) => void | Promise<void>;
 		onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveMediaProfile: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveCustomFormat: (_event: SubmitEvent) => void | Promise<void>;
+		onImportCustomFormat: (_format: CustomFormatFormValue) => void | Promise<void>;
 		onSaveTag: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveUser: (_event: SubmitEvent) => void | Promise<void>;
 		onCancelDownloadClient: () => void;
@@ -122,10 +124,7 @@
 		onTestIndexer: (_id: string) => void | Promise<void>;
 		onTestMetadataProvider: (_id: string) => void | Promise<void>;
 		onSearchLibraryMatch: (_kind: LibraryMediaKind, _query: string) => Promise<MediaSearchResult[]>;
-		onMatchLibraryScanItem: (
-			_item: LibraryScanItem,
-			_request: LibraryScanItemMatchRequest
-		) => Promise<void>;
+		onImportLibraryScanRows: (_scan: LibraryScan, _rows: LibraryScanImportRow[]) => Promise<void>;
 	}
 
 	let {
@@ -141,7 +140,8 @@
 		users,
 		tags,
 		currentUser,
-		activeLibraryScan,
+		libraryScansByFolder,
+		openLibraryFolderId,
 		downloadForm = $bindable(),
 		indexerForm = $bindable(),
 		libraryFolderForm = $bindable(),
@@ -166,7 +166,7 @@
 		savingTag,
 		deletingTagId,
 		savingUser,
-		loadingLibraryScan,
+		scanningLibraryFolderId,
 		testingIndexerId,
 		testingMetadataProviderId,
 		indexerTests,
@@ -179,9 +179,11 @@
 		onClearMetadataCache,
 		onClearMetadataCachePattern,
 		onSaveLibraryFolder,
+		onScanLibraryFolder,
 		onSavePathMapping,
 		onSaveMediaProfile,
 		onSaveCustomFormat,
+		onImportCustomFormat,
 		onSaveTag,
 		onSaveUser,
 		onCancelDownloadClient,
@@ -207,7 +209,7 @@
 		onTestIndexer,
 		onTestMetadataProvider,
 		onSearchLibraryMatch,
-		onMatchLibraryScanItem
+		onImportLibraryScanRows
 	}: Props = $props();
 </script>
 
@@ -276,6 +278,7 @@
 		<div class="settings-stack">
 			<MediaProfilesSettings
 				profiles={mediaProfiles}
+				{customFormats}
 				bind:form={mediaProfileForm}
 				saving={savingMediaProfile}
 				deletingId={deletingMediaProfileId}
@@ -297,6 +300,7 @@
 				saving={savingCustomFormat}
 				deletingId={deletingCustomFormatId}
 				onSave={onSaveCustomFormat}
+				onImport={onImportCustomFormat}
 				onCancel={onCancelCustomFormat}
 				onEdit={onEditCustomFormat}
 				onDelete={onDeleteCustomFormat}
@@ -344,17 +348,20 @@
 			bind:form={libraryFolderForm}
 			{pathMappings}
 			bind:pathMappingForm
-			scan={activeLibraryScan}
+			scansByFolder={libraryScansByFolder}
+			openFolderId={openLibraryFolderId}
+			qualityProfiles={mediaProfiles}
 			saving={savingLibraryFolder}
+			{scanningLibraryFolderId}
 			{savingPathMapping}
 			{deletingPathMappingId}
-			loadingScan={loadingLibraryScan}
 			onSave={onSaveLibraryFolder}
+			onScan={onScanLibraryFolder}
 			onDelete={onDeleteLibraryFolder}
 			{onSavePathMapping}
 			{onDeletePathMapping}
 			onSearchMatch={onSearchLibraryMatch}
-			onMatch={onMatchLibraryScanItem}
+			onImport={onImportLibraryScanRows}
 		/>
 	{/if}
 </section>

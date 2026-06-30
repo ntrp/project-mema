@@ -23,6 +23,7 @@ import type {
 	LibraryFolderOptionListResponse,
 	LibraryMediaKind,
 	LibraryScanItemMatchRequest,
+	MediaItemModeRequest,
 	MediaAdvancedSearchRequest,
 	MediaItemRequest,
 	MediaProfile,
@@ -253,6 +254,20 @@ export async function listCustomFormats(): Promise<CustomFormat[]> {
 	return data?.formats ?? [];
 }
 
+export async function testCustomFormatParsing(fileName: string) {
+	const { data, error } = await client.POST('/settings/custom-formats/test-parsing', {
+		body: { fileName }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Parsing result was not returned');
+	}
+	return data;
+}
+
 export async function searchMedia(request: MediaSearchRequest) {
 	const { data, error } = await client.POST('/media/search', { body: request });
 
@@ -313,6 +328,20 @@ export async function getMediaMetadataDetails(
 	}
 	if (!data) {
 		throw new Error('Media details were not returned');
+	}
+	return data;
+}
+
+export async function getMediaCollection(provider: MetadataProviderType, collectionId: string) {
+	const { data, error } = await client.GET('/media/collections/{provider}/{collectionId}', {
+		params: { path: { provider, collectionId } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media collection was not returned');
 	}
 	return data;
 }
@@ -388,14 +417,43 @@ export async function approveMediaRequest(id: string, request: MediaRequestAppro
 	return data;
 }
 
-export async function deleteMediaItem(id: string) {
+export async function deleteMediaItem(id: string, options: { keepFiles?: boolean } = {}) {
 	const { error } = await client.DELETE('/media/items/{id}', {
+		params: { path: { id }, query: { keepFiles: options.keepFiles } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function rescanMediaItemFiles(id: string) {
+	const { data, error } = await client.POST('/media/items/{id}/files/rescan', {
 		params: { path: { id } }
 	});
 
 	if (error) {
 		throw new Error(error.message);
 	}
+	if (!data) {
+		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
+export async function updateMediaItemMode(id: string, request: MediaItemModeRequest) {
+	const { data, error } = await client.PUT('/media/items/{id}/mode', {
+		params: { path: { id } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media item was not returned');
+	}
+	return data;
 }
 
 export async function searchMediaReleases(id: string) {
@@ -775,6 +833,20 @@ export async function deleteLibraryFolder(id: string) {
 	if (error) {
 		throw new Error(error.message);
 	}
+}
+
+export async function scanLibraryFolder(id: string) {
+	const { data, error } = await client.POST('/settings/library/folders/{id}/scan', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Library scan was not returned');
+	}
+	return data;
 }
 
 export async function savePathMapping(form: PathMappingForm) {

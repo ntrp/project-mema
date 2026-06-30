@@ -237,6 +237,38 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/collections/{provider}/{collectionId}:
+    parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetadataProviderType"
+      - name: collectionId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+    get:
+      operationId: getMediaCollection
+      tags:
+        - Media
+      summary: Get metadata for a movie collection
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Collection metadata and movies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaCollection"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items:
     get:
       operationId: listMediaItems
@@ -383,9 +415,40 @@ paths:
       summary: Remove a monitored media item
       security:
         - sessionCookie: []
+      parameters:
+        - name: keepFiles
+          in: query
+          description: Remove the media item from the app without deleting its media folder.
+          required: false
+          schema:
+            type: boolean
+            default: false
       responses:
         "204":
           description: Media item removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/rescan:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: rescanMediaItemFiles
+      tags:
+        - Media
+      summary: Rescan a media item folder for media and metadata files
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Media item with refreshed file list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -428,6 +491,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JobEnqueueResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/mode:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateMediaItemMode
+      tags:
+        - Media
+      summary: Update automatic or manual processing mode for a media item
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaItemModeRequest"
+      responses:
+        "200":
+          description: Media item mode updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -943,6 +1035,31 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/custom-formats/test-parsing:
+    post:
+      operationId: testCustomFormatParsing
+      tags:
+        - Settings
+      summary: Test custom format parsing for a release title
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomFormatParsingRequest"
+      responses:
+        "200":
+          description: Parsed release details and matched custom formats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomFormatParsingResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/custom-formats/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -1344,6 +1461,29 @@ paths:
       responses:
         "204":
           description: Library folder removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/library/folders/{id}/scan:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: scanLibraryFolder
+      tags:
+        - Settings
+      summary: Scan an existing library folder for media
+      security:
+        - sessionCookie: []
+      responses:
+        "201":
+          description: Library folder scan completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryScan"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -2014,6 +2154,10 @@ components:
           type: string
         posterPath:
           type: string
+        collectionId:
+          type: string
+        collectionName:
+          type: string
     MediaMetadataDetails:
       type: object
       additionalProperties: false
@@ -2037,6 +2181,10 @@ components:
         overview:
           type: string
         posterPath:
+          type: string
+        collectionId:
+          type: string
+        collectionName:
           type: string
         backdropPath:
           type: string
@@ -2076,6 +2224,31 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaMetadataPerson"
+    MediaCollection:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - provider
+        - results
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        provider:
+          $ref: "#/components/schemas/MetadataProviderType"
+        overview:
+          type: string
+        posterPath:
+          type: string
+        backdropPath:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchResult"
     MediaMetadataFact:
       type: object
       additionalProperties: false
@@ -2191,6 +2364,9 @@ components:
         - title
         - type
         - monitored
+        - monitorMode
+        - minimumAvailability
+        - manual
       properties:
         title:
           type: string
@@ -2204,6 +2380,12 @@ components:
           minimum: 1800
           maximum: 3000
         monitored:
+          type: boolean
+        monitorMode:
+          $ref: "#/components/schemas/MediaMonitorMode"
+        minimumAvailability:
+          $ref: "#/components/schemas/MinimumAvailability"
+        manual:
           type: boolean
         externalProvider:
           type: string
@@ -2235,6 +2417,30 @@ components:
         - missing
         - downloading
         - downloaded
+    MediaItemMode:
+      type: string
+      enum:
+        - automatic
+        - manual
+    MediaItemModeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - mode
+      properties:
+        mode:
+          $ref: "#/components/schemas/MediaItemMode"
+    MediaMonitorMode:
+      type: string
+      enum:
+        - only_media
+        - collection
+    MinimumAvailability:
+      type: string
+      enum:
+        - announced
+        - in_cinema
+        - released
     MediaRequestListResponse:
       type: object
       additionalProperties: false
@@ -2297,6 +2503,9 @@ components:
       required:
         - title
         - type
+        - monitorMode
+        - minimumAvailability
+        - manual
       properties:
         title:
           type: string
@@ -2304,6 +2513,12 @@ components:
           maxLength: 500
         type:
           $ref: "#/components/schemas/MediaType"
+        monitorMode:
+          $ref: "#/components/schemas/MediaMonitorMode"
+        minimumAvailability:
+          $ref: "#/components/schemas/MinimumAvailability"
+        manual:
+          type: boolean
         year:
           type: integer
           format: int32
@@ -2468,6 +2683,13 @@ components:
       required:
         - name
         - qualityIds
+        - upgradesAllowed
+        - minimumCustomFormatScore
+        - upgradeUntilCustomFormatScore
+        - minimumCustomFormatScoreIncrement
+        - targetLanguages
+        - targetLanguageScores
+        - customFormatScores
       properties:
         name:
           type: string
@@ -2479,6 +2701,64 @@ components:
             type: string
             minLength: 1
             maxLength: 100
+        upgradesAllowed:
+          type: boolean
+        upgradeUntilQualityId:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+        minimumCustomFormatScore:
+          type: integer
+          format: int32
+        upgradeUntilCustomFormatScore:
+          type: integer
+          format: int32
+        minimumCustomFormatScoreIncrement:
+          type: integer
+          format: int32
+          minimum: 0
+        targetLanguages:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
+        targetLanguageScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaProfileLanguageScore"
+        customFormatScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaProfileCustomFormatScore"
+    MediaProfileLanguageScore:
+      type: object
+      additionalProperties: false
+      required:
+        - languageId
+        - score
+      properties:
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 40
+        score:
+          type: integer
+          format: int32
+    MediaProfileCustomFormatScore:
+      type: object
+      additionalProperties: false
+      required:
+        - customFormatId
+        - score
+      properties:
+        customFormatId:
+          type: string
+          format: uuid
+        score:
+          type: integer
+          format: int32
     CustomFormatListResponse:
       type: object
       additionalProperties: false
@@ -2568,6 +2848,158 @@ components:
         - edition
         - indexerFlag
         - language
+    CustomFormatParsingRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - fileName
+      properties:
+        fileName:
+          type: string
+          minLength: 1
+          maxLength: 500
+    CustomFormatParsingResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - fileName
+        - release
+        - quality
+        - languages
+        - details
+        - calculatedScore
+        - matchedCustomFormats
+      properties:
+        fileName:
+          type: string
+        release:
+          $ref: "#/components/schemas/ParsedReleaseInfo"
+        quality:
+          $ref: "#/components/schemas/ParsedQualityInfo"
+        languages:
+          type: array
+          items:
+            type: string
+        details:
+          $ref: "#/components/schemas/ParsedReleaseDetails"
+        matchedProfile:
+          $ref: "#/components/schemas/CustomFormatParsingProfile"
+        calculatedScore:
+          type: integer
+          format: int32
+        matchedCustomFormats:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomFormatParsingMatch"
+    CustomFormatParsingProfile:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ParsedReleaseInfo:
+      type: object
+      additionalProperties: false
+      required:
+        - releaseTitle
+        - movieTitle
+        - year
+        - edition
+        - releaseGroup
+        - releaseHash
+      properties:
+        releaseTitle:
+          type: string
+        movieTitle:
+          type: string
+        year:
+          type: string
+        edition:
+          type: string
+        releaseGroup:
+          type: string
+        releaseHash:
+          type: string
+    ParsedQualityInfo:
+      type: object
+      additionalProperties: false
+      required:
+        - qualityId
+        - quality
+        - source
+        - resolution
+        - videoCodec
+        - audioCodec
+        - audioChannels
+        - version
+        - proper
+        - repack
+        - real
+      properties:
+        qualityId:
+          type: string
+        quality:
+          type: string
+        source:
+          type: string
+        resolution:
+          type: string
+        videoCodec:
+          type: string
+        audioCodec:
+          type: string
+        audioChannels:
+          type: string
+        version:
+          type: string
+        proper:
+          type: boolean
+        repack:
+          type: boolean
+        real:
+          type: boolean
+    ParsedReleaseDetails:
+      type: object
+      additionalProperties: false
+      required:
+        - releaseType
+        - customFormatNames
+        - matchedSpecCount
+      properties:
+        releaseType:
+          type: string
+        customFormatNames:
+          type: array
+          items:
+            type: string
+        matchedSpecCount:
+          type: integer
+          format: int32
+    CustomFormatParsingMatch:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - score
+        - matchedSpecs
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        score:
+          type: integer
+          format: int32
+        matchedSpecs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomFormatSpec"
     FileNamingSettings:
       allOf:
         - $ref: "#/components/schemas/FileNamingSettingsRequest"
@@ -3379,6 +3811,9 @@ components:
         - mediaKind
         - title
         - monitored
+        - qualityProfileId
+        - monitorMode
+        - minimumAvailability
       properties:
         mediaKind:
           $ref: "#/components/schemas/LibraryMediaKind"
@@ -3393,6 +3828,14 @@ components:
           maximum: 3000
         monitored:
           type: boolean
+        qualityProfileId:
+          type: string
+          minLength: 1
+          maxLength: 100
+        monitorMode:
+          $ref: "#/components/schemas/MediaMonitorMode"
+        minimumAvailability:
+          $ref: "#/components/schemas/MinimumAvailability"
         externalProvider:
           type: string
           maxLength: 100

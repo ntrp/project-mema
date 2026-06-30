@@ -10,6 +10,7 @@ import (
 
 const mediaItemSelectFields = `
 	m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path,
+	m.monitor_mode, m.minimum_availability, m.manual,
 	m.quality_profile_id, mp.name as quality_profile_name,
 	case
 		when exists (
@@ -131,6 +132,7 @@ func getMediaItem(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (MediaI
 }
 
 func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInput) (MediaItem, error) {
+	input = normalizeMediaItemOptions(input)
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return MediaItem{}, err
@@ -146,11 +148,11 @@ func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInpu
 	}
 	if err := tx.QueryRow(ctx, `
 		insert into app.media_items (
-			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, media_folder_path
+			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, monitor_mode, minimum_availability, manual, quality_profile_id, library_folder_id, media_folder_path
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		returning id
-	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath).Scan(&itemID); err != nil {
+	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.MonitorMode, input.MinimumAvailability, input.Manual, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath).Scan(&itemID); err != nil {
 		return MediaItem{}, err
 	}
 	if err := assignMediaItemTags(ctx, tx, itemID, input.Tags); err != nil {
@@ -166,23 +168,13 @@ func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInpu
 	return item, nil
 }
 
-func (s *SettingsStore) DeleteMediaItem(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.media_items where id = $1`, id)
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	return nil
-}
-
 func (s *SettingsStore) ListMissingMediaItems(ctx context.Context) ([]MediaItem, error) {
 	rows, err := s.pool.Query(ctx, `
 		select `+mediaItemSelectFields+`
 		from app.media_items m
 		`+mediaItemJoins+`
 		where m.monitored = true
+			and m.manual = false
 			and not exists (
 				select 1
 				from app.library_scan_items lsi
@@ -232,6 +224,9 @@ func scanMediaItem(row pgx.Row) (MediaItem, error) {
 		&item.ExternalID,
 		&item.Overview,
 		&item.PosterPath,
+		&item.MonitorMode,
+		&item.MinimumAvailability,
+		&item.Manual,
 		&item.QualityProfileID,
 		&item.QualityProfileName,
 		&item.Status,

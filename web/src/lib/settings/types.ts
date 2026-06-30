@@ -42,14 +42,19 @@ export type MediaSearchResult = components['schemas']['MediaSearchResult'];
 export type MediaAdvancedSearchRequest = components['schemas']['MediaAdvancedSearchRequest'];
 export type MediaDiscoverSection = components['schemas']['MediaDiscoverSection'];
 export type MediaMetadataDetails = components['schemas']['MediaMetadataDetails'];
+export type MediaCollection = components['schemas']['MediaCollection'];
 export type MediaRequest = components['schemas']['MediaRequest'];
 export type MediaRequestApproveRequest = components['schemas']['MediaRequestApproveRequest'];
 export type MediaRequestCreateRequest = components['schemas']['MediaRequestCreateRequest'];
 export type MediaRequestStatus = components['schemas']['MediaRequestStatus'];
 export type MediaSearchGroup = components['schemas']['MediaSearchGroup'];
 export type MediaItem = components['schemas']['MediaItem'];
+export type MediaItemMode = components['schemas']['MediaItemMode'];
+export type MediaItemModeRequest = components['schemas']['MediaItemModeRequest'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type MediaItemStatus = components['schemas']['MediaItemStatus'];
+export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
+export type MinimumAvailability = components['schemas']['MinimumAvailability'];
 export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];
 export type DownloadActivityStatus = components['schemas']['DownloadActivity']['status'];
@@ -63,10 +68,13 @@ export type QualitySizeSettingsUpdateRequest =
 	components['schemas']['QualitySizeSettingsUpdateRequest'];
 export type MediaProfile = components['schemas']['MediaProfile'];
 export type MediaProfileRequest = components['schemas']['MediaProfileRequest'];
+export type MediaProfileLanguageScore = components['schemas']['MediaProfileLanguageScore'];
+export type MediaProfileCustomFormatScore = components['schemas']['MediaProfileCustomFormatScore'];
 export type FileNamingSettings = components['schemas']['FileNamingSettings'];
 export type FileNamingSettingsRequest = components['schemas']['FileNamingSettingsRequest'];
 export type CustomFormat = components['schemas']['CustomFormat'];
 export type CustomFormatRequest = components['schemas']['CustomFormatRequest'];
+export type CustomFormatParsingResponse = components['schemas']['CustomFormatParsingResponse'];
 export type CustomFormatSpec = components['schemas']['CustomFormatSpec'];
 export type CustomFormatSpecType = components['schemas']['CustomFormatSpecType'];
 
@@ -92,7 +100,13 @@ export interface QualityProfileOption {
 	name: string;
 }
 
-export type AppView = 'home' | 'settings' | 'system' | 'advanced-search' | 'metadata-detail';
+export type AppView =
+	| 'home'
+	| 'settings'
+	| 'system'
+	| 'advanced-search'
+	| 'metadata-detail'
+	| 'media-collection';
 export type HomeSection = 'discover' | 'requests' | 'movies' | 'series' | 'activity';
 export type SystemSection = 'logs';
 export type SettingsSection =

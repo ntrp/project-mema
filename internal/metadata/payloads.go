@@ -15,26 +15,36 @@ type tmdbMedia struct {
 }
 
 type tmdbDetails struct {
-	ID               int64        `json:"id"`
-	Title            string       `json:"title"`
-	Name             string       `json:"name"`
-	ReleaseDate      string       `json:"release_date"`
-	FirstAirDate     string       `json:"first_air_date"`
-	Overview         string       `json:"overview"`
-	PosterPath       string       `json:"poster_path"`
-	BackdropPath     string       `json:"backdrop_path"`
-	Status           string       `json:"status"`
-	OriginalLanguage string       `json:"original_language"`
-	Runtime          int32        `json:"runtime"`
-	EpisodeRunTime   []int32      `json:"episode_run_time"`
-	NumberOfSeasons  int32        `json:"number_of_seasons"`
-	NumberOfEpisodes int32        `json:"number_of_episodes"`
-	VoteAverage      float64      `json:"vote_average"`
-	Genres           []tmdbName   `json:"genres"`
-	CreatedBy        []tmdbName   `json:"created_by"`
-	Networks         []tmdbName   `json:"networks"`
-	Seasons          []tmdbSeason `json:"seasons"`
-	Credits          tmdbCredits  `json:"credits"`
+	ID               int64           `json:"id"`
+	Title            string          `json:"title"`
+	Name             string          `json:"name"`
+	ReleaseDate      string          `json:"release_date"`
+	FirstAirDate     string          `json:"first_air_date"`
+	Overview         string          `json:"overview"`
+	PosterPath       string          `json:"poster_path"`
+	Collection       *tmdbCollection `json:"belongs_to_collection"`
+	BackdropPath     string          `json:"backdrop_path"`
+	Status           string          `json:"status"`
+	OriginalLanguage string          `json:"original_language"`
+	Runtime          int32           `json:"runtime"`
+	EpisodeRunTime   []int32         `json:"episode_run_time"`
+	NumberOfSeasons  int32           `json:"number_of_seasons"`
+	NumberOfEpisodes int32           `json:"number_of_episodes"`
+	VoteAverage      float64         `json:"vote_average"`
+	Genres           []tmdbName      `json:"genres"`
+	CreatedBy        []tmdbName      `json:"created_by"`
+	Networks         []tmdbName      `json:"networks"`
+	Seasons          []tmdbSeason    `json:"seasons"`
+	Credits          tmdbCredits     `json:"credits"`
+}
+
+type tmdbCollection struct {
+	ID           int64       `json:"id"`
+	Name         string      `json:"name"`
+	Overview     string      `json:"overview"`
+	PosterPath   string      `json:"poster_path"`
+	BackdropPath string      `json:"backdrop_path"`
+	Parts        []tmdbMedia `json:"parts"`
 }
 
 type tmdbName struct {

@@ -5,9 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
-
-	"media-manager/internal/library"
-	"media-manager/internal/storage"
 )
 
 func (s *Server) ListLibraryFolderOptions(w http.ResponseWriter, r *http.Request, params ListLibraryFolderOptionsParams) {
@@ -68,9 +65,8 @@ func (s *Server) CreateLibraryFolder(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	discovered, err := library.Discover(path)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "library_scan_failed", "Could not scan library folder")
+	inputs, ok := libraryScanInputsForPath(w, path)
+	if !ok {
 		return
 	}
 	folder, err := s.settings.CreateLibraryFolder(r.Context(), path)
@@ -78,9 +74,8 @@ func (s *Server) CreateLibraryFolder(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "library_folder_create_failed", "Could not create library folder")
 		return
 	}
-	scan, err := s.settings.CreateLibraryScan(r.Context(), folder, libraryScanInputs(discovered))
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "library_scan_store_failed", "Could not store library scan")
+	scan, ok := s.storeLibraryScan(w, r.Context(), folder, inputs)
+	if !ok {
 		return
 	}
 	writeJSON(w, http.StatusCreated, LibraryFolderCreateResponse{
@@ -186,19 +181,4 @@ func (s *Server) MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id
 		Item:      libraryScanItemResponse(item),
 		MediaItem: mediaItemResponse(mediaItem),
 	})
-}
-
-func libraryScanInputs(discovered []library.DiscoveredFile) []storage.LibraryScanItemInput {
-	inputs := make([]storage.LibraryScanItemInput, 0, len(discovered))
-	for _, item := range discovered {
-		inputs = append(inputs, storage.LibraryScanItemInput{
-			Path:              item.Path,
-			FileName:          item.FileName,
-			DetectedTitle:     item.DetectedTitle,
-			DetectedYear:      item.DetectedYear,
-			DetectedMediaKind: string(item.DetectedKind),
-			SafeMatch:         item.SafeMatch,
-		})
-	}
-	return inputs
 }

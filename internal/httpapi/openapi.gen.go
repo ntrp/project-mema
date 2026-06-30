@@ -220,6 +220,24 @@ func (e LibraryScanItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaItemMode.
+const (
+	Automatic MediaItemMode = "automatic"
+	Manual    MediaItemMode = "manual"
+)
+
+// Valid indicates whether the value is a known member of the MediaItemMode enum.
+func (e MediaItemMode) Valid() bool {
+	switch e {
+	case Automatic:
+		return true
+	case Manual:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaItemStatus.
 const (
 	Downloaded  MediaItemStatus = "downloaded"
@@ -235,6 +253,24 @@ func (e MediaItemStatus) Valid() bool {
 	case Downloading:
 		return true
 	case Missing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaMonitorMode.
+const (
+	Collection MediaMonitorMode = "collection"
+	OnlyMedia  MediaMonitorMode = "only_media"
+)
+
+// Valid indicates whether the value is a known member of the MediaMonitorMode enum.
+func (e MediaMonitorMode) Valid() bool {
+	switch e {
+	case Collection:
+		return true
+	case OnlyMedia:
 		return true
 	default:
 		return false
@@ -334,6 +370,27 @@ func (e MetadataProviderType) Valid() bool {
 	}
 }
 
+// Defines values for MinimumAvailability.
+const (
+	Announced MinimumAvailability = "announced"
+	InCinema  MinimumAvailability = "in_cinema"
+	Released  MinimumAvailability = "released"
+)
+
+// Valid indicates whether the value is a known member of the MinimumAvailability enum.
+func (e MinimumAvailability) Valid() bool {
+	switch e {
+	case Announced:
+		return true
+	case InCinema:
+		return true
+	case Released:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SystemLogLevel.
 const (
 	Debug SystemLogLevel = "debug"
@@ -416,6 +473,37 @@ type CustomFormat struct {
 // CustomFormatListResponse defines model for CustomFormatListResponse.
 type CustomFormatListResponse struct {
 	Formats []CustomFormat `json:"formats"`
+}
+
+// CustomFormatParsingMatch defines model for CustomFormatParsingMatch.
+type CustomFormatParsingMatch struct {
+	Id           string             `json:"id"`
+	MatchedSpecs []CustomFormatSpec `json:"matchedSpecs"`
+	Name         string             `json:"name"`
+	Score        int32              `json:"score"`
+}
+
+// CustomFormatParsingProfile defines model for CustomFormatParsingProfile.
+type CustomFormatParsingProfile struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// CustomFormatParsingRequest defines model for CustomFormatParsingRequest.
+type CustomFormatParsingRequest struct {
+	FileName string `json:"fileName"`
+}
+
+// CustomFormatParsingResponse defines model for CustomFormatParsingResponse.
+type CustomFormatParsingResponse struct {
+	CalculatedScore      int32                       `json:"calculatedScore"`
+	Details              ParsedReleaseDetails        `json:"details"`
+	FileName             string                      `json:"fileName"`
+	Languages            []string                    `json:"languages"`
+	MatchedCustomFormats []CustomFormatParsingMatch  `json:"matchedCustomFormats"`
+	MatchedProfile       *CustomFormatParsingProfile `json:"matchedProfile,omitempty"`
+	Quality              ParsedQualityInfo           `json:"quality"`
+	Release              ParsedReleaseInfo           `json:"release"`
 }
 
 // CustomFormatRequest defines model for CustomFormatRequest.
@@ -687,14 +775,17 @@ type LibraryScanItem struct {
 
 // LibraryScanItemMatchRequest defines model for LibraryScanItemMatchRequest.
 type LibraryScanItemMatchRequest struct {
-	ExternalId       *string          `json:"externalId,omitempty"`
-	ExternalProvider *string          `json:"externalProvider,omitempty"`
-	MediaKind        LibraryMediaKind `json:"mediaKind"`
-	Monitored        bool             `json:"monitored"`
-	Overview         *string          `json:"overview,omitempty"`
-	PosterPath       *string          `json:"posterPath,omitempty"`
-	Title            string           `json:"title"`
-	Year             *int32           `json:"year,omitempty"`
+	ExternalId          *string             `json:"externalId,omitempty"`
+	ExternalProvider    *string             `json:"externalProvider,omitempty"`
+	MediaKind           LibraryMediaKind    `json:"mediaKind"`
+	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
+	Monitored           bool                `json:"monitored"`
+	Overview            *string             `json:"overview,omitempty"`
+	PosterPath          *string             `json:"posterPath,omitempty"`
+	QualityProfileId    string              `json:"qualityProfileId"`
+	Title               string              `json:"title"`
+	Year                *int32              `json:"year,omitempty"`
 }
 
 // LibraryScanItemMatchResponse defines model for LibraryScanItemMatchResponse.
@@ -730,6 +821,17 @@ type MediaAdvancedSearchRequest struct {
 	Year        *int32                `json:"year,omitempty"`
 }
 
+// MediaCollection defines model for MediaCollection.
+type MediaCollection struct {
+	BackdropPath *string              `json:"backdropPath,omitempty"`
+	Id           string               `json:"id"`
+	Name         string               `json:"name"`
+	Overview     *string              `json:"overview,omitempty"`
+	PosterPath   *string              `json:"posterPath,omitempty"`
+	Provider     MetadataProviderType `json:"provider"`
+	Results      []MediaSearchResult  `json:"results"`
+}
+
 // MediaDiscoverResponse defines model for MediaDiscoverResponse.
 type MediaDiscoverResponse struct {
 	Sections []MediaDiscoverSection `json:"sections"`
@@ -751,26 +853,29 @@ type MediaGroupedSearchResponse struct {
 
 // MediaItem defines model for MediaItem.
 type MediaItem struct {
-	CreatedAt          time.Time           `json:"createdAt"`
-	ExternalId         *string             `json:"externalId,omitempty"`
-	ExternalProvider   *string             `json:"externalProvider,omitempty"`
-	FilePaths          []string            `json:"filePaths"`
-	Id                 openapi_types.UUID  `json:"id"`
-	LibraryFolderId    *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	LibraryFolderPath  *string             `json:"libraryFolderPath,omitempty"`
-	MediaFolderPath    *string             `json:"mediaFolderPath,omitempty"`
-	MetadataFilePaths  []string            `json:"metadataFilePaths"`
-	Monitored          bool                `json:"monitored"`
-	Overview           *string             `json:"overview,omitempty"`
-	PosterPath         *string             `json:"posterPath,omitempty"`
-	QualityProfileId   *string             `json:"qualityProfileId,omitempty"`
-	QualityProfileName *string             `json:"qualityProfileName,omitempty"`
-	Status             MediaItemStatus     `json:"status"`
-	Tags               *[]string           `json:"tags,omitempty"`
-	Title              string              `json:"title"`
-	Type               MediaType           `json:"type"`
-	UpdatedAt          time.Time           `json:"updatedAt"`
-	Year               *int32              `json:"year,omitempty"`
+	CreatedAt           time.Time           `json:"createdAt"`
+	ExternalId          *string             `json:"externalId,omitempty"`
+	ExternalProvider    *string             `json:"externalProvider,omitempty"`
+	FilePaths           []string            `json:"filePaths"`
+	Id                  openapi_types.UUID  `json:"id"`
+	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
+	LibraryFolderPath   *string             `json:"libraryFolderPath,omitempty"`
+	Manual              bool                `json:"manual"`
+	MediaFolderPath     *string             `json:"mediaFolderPath,omitempty"`
+	MetadataFilePaths   []string            `json:"metadataFilePaths"`
+	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
+	Monitored           bool                `json:"monitored"`
+	Overview            *string             `json:"overview,omitempty"`
+	PosterPath          *string             `json:"posterPath,omitempty"`
+	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
+	QualityProfileName  *string             `json:"qualityProfileName,omitempty"`
+	Status              MediaItemStatus     `json:"status"`
+	Tags                *[]string           `json:"tags,omitempty"`
+	Title               string              `json:"title"`
+	Type                MediaType           `json:"type"`
+	UpdatedAt           time.Time           `json:"updatedAt"`
+	Year                *int32              `json:"year,omitempty"`
 }
 
 // MediaItemListResponse defines model for MediaItemListResponse.
@@ -778,19 +883,30 @@ type MediaItemListResponse struct {
 	Items []MediaItem `json:"items"`
 }
 
+// MediaItemMode defines model for MediaItemMode.
+type MediaItemMode string
+
+// MediaItemModeRequest defines model for MediaItemModeRequest.
+type MediaItemModeRequest struct {
+	Mode MediaItemMode `json:"mode"`
+}
+
 // MediaItemRequest defines model for MediaItemRequest.
 type MediaItemRequest struct {
-	ExternalId       *string             `json:"externalId,omitempty"`
-	ExternalProvider *string             `json:"externalProvider,omitempty"`
-	LibraryFolderId  *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	Monitored        bool                `json:"monitored"`
-	Overview         *string             `json:"overview,omitempty"`
-	PosterPath       *string             `json:"posterPath,omitempty"`
-	QualityProfileId *string             `json:"qualityProfileId,omitempty"`
-	Tags             *[]string           `json:"tags,omitempty"`
-	Title            string              `json:"title"`
-	Type             MediaType           `json:"type"`
-	Year             *int32              `json:"year,omitempty"`
+	ExternalId          *string             `json:"externalId,omitempty"`
+	ExternalProvider    *string             `json:"externalProvider,omitempty"`
+	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
+	Manual              bool                `json:"manual"`
+	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
+	Monitored           bool                `json:"monitored"`
+	Overview            *string             `json:"overview,omitempty"`
+	PosterPath          *string             `json:"posterPath,omitempty"`
+	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
+	Tags                *[]string           `json:"tags,omitempty"`
+	Title               string              `json:"title"`
+	Type                MediaType           `json:"type"`
+	Year                *int32              `json:"year,omitempty"`
 }
 
 // MediaItemStatus defines model for MediaItemStatus.
@@ -800,6 +916,8 @@ type MediaItemStatus string
 type MediaMetadataDetails struct {
 	BackdropPath     *string                `json:"backdropPath,omitempty"`
 	Cast             *[]MediaMetadataPerson `json:"cast,omitempty"`
+	CollectionId     *string                `json:"collectionId,omitempty"`
+	CollectionName   *string                `json:"collectionName,omitempty"`
 	EpisodeCount     *int32                 `json:"episodeCount,omitempty"`
 	ExternalId       string                 `json:"externalId"`
 	ExternalProvider string                 `json:"externalProvider"`
@@ -851,13 +969,36 @@ type MediaMetadataSeason struct {
 	PosterPath   *string                 `json:"posterPath,omitempty"`
 }
 
+// MediaMonitorMode defines model for MediaMonitorMode.
+type MediaMonitorMode string
+
 // MediaProfile defines model for MediaProfile.
 type MediaProfile struct {
-	CreatedAt  time.Time `json:"createdAt"`
-	Id         string    `json:"id"`
-	Name       string    `json:"name"`
-	QualityIds []string  `json:"qualityIds"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	CreatedAt                         time.Time                       `json:"createdAt"`
+	CustomFormatScores                []MediaProfileCustomFormatScore `json:"customFormatScores"`
+	Id                                string                          `json:"id"`
+	MinimumCustomFormatScore          int32                           `json:"minimumCustomFormatScore"`
+	MinimumCustomFormatScoreIncrement int32                           `json:"minimumCustomFormatScoreIncrement"`
+	Name                              string                          `json:"name"`
+	QualityIds                        []string                        `json:"qualityIds"`
+	TargetLanguageScores              []MediaProfileLanguageScore     `json:"targetLanguageScores"`
+	TargetLanguages                   []string                        `json:"targetLanguages"`
+	UpdatedAt                         time.Time                       `json:"updatedAt"`
+	UpgradeUntilCustomFormatScore     int32                           `json:"upgradeUntilCustomFormatScore"`
+	UpgradeUntilQualityId             *string                         `json:"upgradeUntilQualityId,omitempty"`
+	UpgradesAllowed                   bool                            `json:"upgradesAllowed"`
+}
+
+// MediaProfileCustomFormatScore defines model for MediaProfileCustomFormatScore.
+type MediaProfileCustomFormatScore struct {
+	CustomFormatId openapi_types.UUID `json:"customFormatId"`
+	Score          int32              `json:"score"`
+}
+
+// MediaProfileLanguageScore defines model for MediaProfileLanguageScore.
+type MediaProfileLanguageScore struct {
+	LanguageId string `json:"languageId"`
+	Score      int32  `json:"score"`
 }
 
 // MediaProfileListResponse defines model for MediaProfileListResponse.
@@ -867,8 +1008,16 @@ type MediaProfileListResponse struct {
 
 // MediaProfileRequest defines model for MediaProfileRequest.
 type MediaProfileRequest struct {
-	Name       string   `json:"name"`
-	QualityIds []string `json:"qualityIds"`
+	CustomFormatScores                []MediaProfileCustomFormatScore `json:"customFormatScores"`
+	MinimumCustomFormatScore          int32                           `json:"minimumCustomFormatScore"`
+	MinimumCustomFormatScoreIncrement int32                           `json:"minimumCustomFormatScoreIncrement"`
+	Name                              string                          `json:"name"`
+	QualityIds                        []string                        `json:"qualityIds"`
+	TargetLanguageScores              []MediaProfileLanguageScore     `json:"targetLanguageScores"`
+	TargetLanguages                   []string                        `json:"targetLanguages"`
+	UpgradeUntilCustomFormatScore     int32                           `json:"upgradeUntilCustomFormatScore"`
+	UpgradeUntilQualityId             *string                         `json:"upgradeUntilQualityId,omitempty"`
+	UpgradesAllowed                   bool                            `json:"upgradesAllowed"`
 }
 
 // MediaRequest defines model for MediaRequest.
@@ -879,7 +1028,10 @@ type MediaRequest struct {
 	ExternalProvider    *string             `json:"externalProvider,omitempty"`
 	Id                  openapi_types.UUID  `json:"id"`
 	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
+	Manual              bool                `json:"manual"`
 	MediaItemId         *openapi_types.UUID `json:"mediaItemId,omitempty"`
+	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
 	Overview            *string             `json:"overview,omitempty"`
 	PosterPath          *string             `json:"posterPath,omitempty"`
 	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
@@ -907,14 +1059,17 @@ type MediaRequestApproveResponse struct {
 
 // MediaRequestCreateRequest defines model for MediaRequestCreateRequest.
 type MediaRequestCreateRequest struct {
-	ExternalId       *string   `json:"externalId,omitempty"`
-	ExternalProvider *string   `json:"externalProvider,omitempty"`
-	Overview         *string   `json:"overview,omitempty"`
-	PosterPath       *string   `json:"posterPath,omitempty"`
-	Tags             *[]string `json:"tags,omitempty"`
-	Title            string    `json:"title"`
-	Type             MediaType `json:"type"`
-	Year             *int32    `json:"year,omitempty"`
+	ExternalId          *string             `json:"externalId,omitempty"`
+	ExternalProvider    *string             `json:"externalProvider,omitempty"`
+	Manual              bool                `json:"manual"`
+	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
+	Overview            *string             `json:"overview,omitempty"`
+	PosterPath          *string             `json:"posterPath,omitempty"`
+	Tags                *[]string           `json:"tags,omitempty"`
+	Title               string              `json:"title"`
+	Type                MediaType           `json:"type"`
+	Year                *int32              `json:"year,omitempty"`
 }
 
 // MediaRequestListResponse defines model for MediaRequestListResponse.
@@ -947,6 +1102,8 @@ type MediaSearchResponse struct {
 
 // MediaSearchResult defines model for MediaSearchResult.
 type MediaSearchResult struct {
+	CollectionId     *string             `json:"collectionId,omitempty"`
+	CollectionName   *string             `json:"collectionName,omitempty"`
 	ExternalId       *string             `json:"externalId,omitempty"`
 	ExternalProvider *string             `json:"externalProvider,omitempty"`
 	Id               *openapi_types.UUID `json:"id,omitempty"`
@@ -1039,6 +1196,41 @@ type MetadataProviderRequest struct {
 
 // MetadataProviderType defines model for MetadataProviderType.
 type MetadataProviderType string
+
+// MinimumAvailability defines model for MinimumAvailability.
+type MinimumAvailability string
+
+// ParsedQualityInfo defines model for ParsedQualityInfo.
+type ParsedQualityInfo struct {
+	AudioChannels string `json:"audioChannels"`
+	AudioCodec    string `json:"audioCodec"`
+	Proper        bool   `json:"proper"`
+	Quality       string `json:"quality"`
+	QualityId     string `json:"qualityId"`
+	Real          bool   `json:"real"`
+	Repack        bool   `json:"repack"`
+	Resolution    string `json:"resolution"`
+	Source        string `json:"source"`
+	Version       string `json:"version"`
+	VideoCodec    string `json:"videoCodec"`
+}
+
+// ParsedReleaseDetails defines model for ParsedReleaseDetails.
+type ParsedReleaseDetails struct {
+	CustomFormatNames []string `json:"customFormatNames"`
+	MatchedSpecCount  int32    `json:"matchedSpecCount"`
+	ReleaseType       string   `json:"releaseType"`
+}
+
+// ParsedReleaseInfo defines model for ParsedReleaseInfo.
+type ParsedReleaseInfo struct {
+	Edition      string `json:"edition"`
+	MovieTitle   string `json:"movieTitle"`
+	ReleaseGroup string `json:"releaseGroup"`
+	ReleaseHash  string `json:"releaseHash"`
+	ReleaseTitle string `json:"releaseTitle"`
+	Year         string `json:"year"`
+}
 
 // PathMapping defines model for PathMapping.
 type PathMapping struct {
@@ -1226,6 +1418,12 @@ type AutocompleteMediaParams struct {
 	IncludeProviders *bool  `form:"includeProviders,omitempty" json:"includeProviders,omitempty"`
 }
 
+// DeleteMediaItemParams defines parameters for DeleteMediaItem.
+type DeleteMediaItemParams struct {
+	// KeepFiles Remove the media item from the app without deleting its media folder.
+	KeepFiles *bool `form:"keepFiles,omitempty" json:"keepFiles,omitempty"`
+}
+
 // ListLibraryFolderOptionsParams defines parameters for ListLibraryFolderOptions.
 type ListLibraryFolderOptionsParams struct {
 	Path *string `form:"path,omitempty" json:"path,omitempty"`
@@ -1243,6 +1441,9 @@ type CreateMediaItemJSONRequestBody = MediaItemRequest
 // GrabMediaReleaseJSONRequestBody defines body for GrabMediaRelease for application/json ContentType.
 type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
 
+// UpdateMediaItemModeJSONRequestBody defines body for UpdateMediaItemMode for application/json ContentType.
+type UpdateMediaItemModeJSONRequestBody = MediaItemModeRequest
+
 // CreateMediaRequestJSONRequestBody defines body for CreateMediaRequest for application/json ContentType.
 type CreateMediaRequestJSONRequestBody = MediaRequestCreateRequest
 
@@ -1254,6 +1455,9 @@ type SearchMediaJSONRequestBody = MediaSearchRequest
 
 // CreateCustomFormatJSONRequestBody defines body for CreateCustomFormat for application/json ContentType.
 type CreateCustomFormatJSONRequestBody = CustomFormatRequest
+
+// TestCustomFormatParsingJSONRequestBody defines body for TestCustomFormatParsing for application/json ContentType.
+type TestCustomFormatParsingJSONRequestBody = CustomFormatParsingRequest
 
 // UpdateCustomFormatJSONRequestBody defines body for UpdateCustomFormat for application/json ContentType.
 type UpdateCustomFormatJSONRequestBody = CustomFormatRequest
@@ -1350,6 +1554,9 @@ type ServerInterface interface {
 	// Search local library and metadata providers for autocomplete
 	// (GET /media/autocomplete)
 	AutocompleteMedia(w http.ResponseWriter, r *http.Request, params AutocompleteMediaParams)
+	// Get metadata for a movie collection
+	// (GET /media/collections/{provider}/{collectionId})
+	GetMediaCollection(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, collectionId string)
 	// Get provider-backed discovery sections
 	// (GET /media/discover)
 	GetMediaDiscover(w http.ResponseWriter, r *http.Request)
@@ -1361,10 +1568,16 @@ type ServerInterface interface {
 	CreateMediaItem(w http.ResponseWriter, r *http.Request)
 	// Remove a monitored media item
 	// (DELETE /media/items/{id})
-	DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId)
+	DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId, params DeleteMediaItemParams)
+	// Rescan a media item folder for media and metadata files
+	// (POST /media/items/{id}/files/rescan)
+	RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a release grab with the highest-priority enabled download client
 	// (POST /media/items/{id}/grab)
 	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update automatic or manual processing mode for a media item
+	// (PUT /media/items/{id}/mode)
+	UpdateMediaItemMode(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a background release search for a monitored item
 	// (POST /media/items/{id}/release-searches)
 	EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -1395,6 +1608,9 @@ type ServerInterface interface {
 	// Create a custom format
 	// (POST /settings/custom-formats)
 	CreateCustomFormat(w http.ResponseWriter, r *http.Request)
+	// Test custom format parsing for a release title
+	// (POST /settings/custom-formats/test-parsing)
+	TestCustomFormatParsing(w http.ResponseWriter, r *http.Request)
 	// Delete a custom format
 	// (DELETE /settings/custom-formats/{id})
 	DeleteCustomFormat(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -1455,6 +1671,9 @@ type ServerInterface interface {
 	// Remove a configured library folder
 	// (DELETE /settings/library/folders/{id})
 	DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Scan an existing library folder for media
+	// (POST /settings/library/folders/{id}/scan)
+	ScanLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// List download client path mappings
 	// (GET /settings/library/path-mappings)
 	ListPathMappings(w http.ResponseWriter, r *http.Request)
@@ -1608,6 +1827,12 @@ func (_ Unimplemented) AutocompleteMedia(w http.ResponseWriter, r *http.Request,
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Get metadata for a movie collection
+// (GET /media/collections/{provider}/{collectionId})
+func (_ Unimplemented) GetMediaCollection(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, collectionId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Get provider-backed discovery sections
 // (GET /media/discover)
 func (_ Unimplemented) GetMediaDiscover(w http.ResponseWriter, r *http.Request) {
@@ -1628,13 +1853,25 @@ func (_ Unimplemented) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
 
 // Remove a monitored media item
 // (DELETE /media/items/{id})
-func (_ Unimplemented) DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId) {
+func (_ Unimplemented) DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId, params DeleteMediaItemParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Rescan a media item folder for media and metadata files
+// (POST /media/items/{id}/files/rescan)
+func (_ Unimplemented) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // Enqueue a release grab with the highest-priority enabled download client
 // (POST /media/items/{id}/grab)
 func (_ Unimplemented) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update automatic or manual processing mode for a media item
+// (PUT /media/items/{id}/mode)
+func (_ Unimplemented) UpdateMediaItemMode(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1695,6 +1932,12 @@ func (_ Unimplemented) ListCustomFormats(w http.ResponseWriter, r *http.Request)
 // Create a custom format
 // (POST /settings/custom-formats)
 func (_ Unimplemented) CreateCustomFormat(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test custom format parsing for a release title
+// (POST /settings/custom-formats/test-parsing)
+func (_ Unimplemented) TestCustomFormatParsing(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1815,6 +2058,12 @@ func (_ Unimplemented) CreateLibraryFolder(w http.ResponseWriter, r *http.Reques
 // Remove a configured library folder
 // (DELETE /settings/library/folders/{id})
 func (_ Unimplemented) DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Scan an existing library folder for media
+// (POST /settings/library/folders/{id}/scan)
+func (_ Unimplemented) ScanLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2232,6 +2481,47 @@ func (siw *ServerInterfaceWrapper) AutocompleteMedia(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// GetMediaCollection operation middleware
+func (siw *ServerInterfaceWrapper) GetMediaCollection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "provider" -------------
+	var provider MetadataProviderType
+
+	err = runtime.BindStyledParameterWithOptions("simple", "provider", chi.URLParam(r, "provider"), &provider, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "collectionId" -------------
+	var collectionId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "collectionId", chi.URLParam(r, "collectionId"), &collectionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "collectionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMediaCollection(w, r, provider, collectionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetMediaDiscover operation middleware
 func (siw *ServerInterfaceWrapper) GetMediaDiscover(w http.ResponseWriter, r *http.Request) {
 
@@ -2313,8 +2603,56 @@ func (siw *ServerInterfaceWrapper) DeleteMediaItem(w http.ResponseWriter, r *htt
 
 	r = r.WithContext(ctx)
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteMediaItemParams
+
+	// ------------- Optional query parameter "keepFiles" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "keepFiles", r.URL.Query(), &params.KeepFiles, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "keepFiles"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keepFiles", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeleteMediaItem(w, r, id)
+		siw.Handler.DeleteMediaItem(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RescanMediaItemFiles operation middleware
+func (siw *ServerInterfaceWrapper) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RescanMediaItemFiles(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2347,6 +2685,38 @@ func (siw *ServerInterfaceWrapper) GrabMediaRelease(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GrabMediaRelease(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMediaItemMode operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMediaItemMode(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMediaItemMode(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2625,6 +2995,26 @@ func (siw *ServerInterfaceWrapper) CreateCustomFormat(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateCustomFormat(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestCustomFormatParsing operation middleware
+func (siw *ServerInterfaceWrapper) TestCustomFormatParsing(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestCustomFormatParsing(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3152,6 +3542,38 @@ func (siw *ServerInterfaceWrapper) DeleteLibraryFolder(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteLibraryFolder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScanLibraryFolder operation middleware
+func (siw *ServerInterfaceWrapper) ScanLibraryFolder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScanLibraryFolder(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4075,6 +4497,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/media/autocomplete", wrapper.AutocompleteMedia)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/collections/{provider}/{collectionId}", wrapper.GetMediaCollection)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/discover", wrapper.GetMediaDiscover)
 	})
 	r.Group(func(r chi.Router) {
@@ -4087,7 +4512,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/media/items/{id}", wrapper.DeleteMediaItem)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/files/rescan", wrapper.RescanMediaItemFiles)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/grab", wrapper.GrabMediaRelease)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/media/items/{id}/mode", wrapper.UpdateMediaItemMode)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/release-searches", wrapper.EnqueueMediaReleaseSearch)
@@ -4118,6 +4549,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/custom-formats", wrapper.CreateCustomFormat)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/custom-formats/test-parsing", wrapper.TestCustomFormatParsing)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/custom-formats/{id}", wrapper.DeleteCustomFormat)
@@ -4178,6 +4612,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/library/folders/{id}", wrapper.DeleteLibraryFolder)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/library/folders/{id}/scan", wrapper.ScanLibraryFolder)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/library/path-mappings", wrapper.ListPathMappings)

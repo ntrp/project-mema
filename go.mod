@@ -8,6 +8,7 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/oapi-codegen/oapi-codegen/v2 v2.7.1
 	github.com/oapi-codegen/runtime v1.4.2
+	github.com/pressly/goose/v3 v3.27.1
 	github.com/riverqueue/river v0.39.0
 	github.com/riverqueue/river/cmd/river v0.39.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.39.0
@@ -16,7 +17,7 @@ require (
 
 require (
 	cel.dev/expr v0.25.1 // indirect
-	filippo.io/edwards25519 v1.1.1 // indirect
+	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
@@ -38,7 +39,8 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/lmittmann/tint v1.1.3 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.21 // indirect
+	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/ncruces/go-sqlite3 v0.32.0 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
@@ -58,6 +60,7 @@ require (
 	github.com/riverqueue/river/rivershared v0.39.0 // indirect
 	github.com/riverqueue/river/rivertype v0.39.0 // indirect
 	github.com/riza-io/grpc-go v0.2.0 // indirect
+	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.3 // indirect
 	github.com/speakeasy-api/openapi v1.19.2 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
@@ -78,7 +81,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
+	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/mod v0.36.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
@@ -86,7 +89,7 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260120221211-b8f7ae30c516 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260120221211-b8f7ae30c516 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529 // indirect
 	google.golang.org/grpc v1.80.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect

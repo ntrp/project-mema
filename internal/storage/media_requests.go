@@ -20,6 +20,9 @@ type MediaRequest struct {
 	ExternalID          *string
 	Overview            *string
 	PosterPath          *string
+	MonitorMode         string
+	MinimumAvailability string
+	Manual              bool
 	Tags                []string
 	Status              string
 	QualityProfileID    *string
@@ -31,15 +34,18 @@ type MediaRequest struct {
 }
 
 type MediaRequestInput struct {
-	RequestedByUserID uuid.UUID
-	Type              string
-	Title             string
-	Year              *int32
-	ExternalProvider  *string
-	ExternalID        *string
-	Overview          *string
-	PosterPath        *string
-	Tags              []string
+	RequestedByUserID   uuid.UUID
+	Type                string
+	Title               string
+	Year                *int32
+	ExternalProvider    *string
+	ExternalID          *string
+	Overview            *string
+	PosterPath          *string
+	MonitorMode         string
+	MinimumAvailability string
+	Manual              bool
+	Tags                []string
 }
 
 type MediaRequestApprovalInput struct {
@@ -51,6 +57,7 @@ func (s *SettingsStore) ListMediaRequests(ctx context.Context, userID uuid.UUID,
 	rows, err := s.pool.Query(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
+			r.monitor_mode, r.minimum_availability, r.manual,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -87,6 +94,7 @@ func (s *SettingsStore) GetMediaRequest(ctx context.Context, id uuid.UUID, userI
 	request, err := scanMediaRequest(s.pool.QueryRow(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
+			r.monitor_mode, r.minimum_availability, r.manual,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -110,6 +118,7 @@ func getMediaRequest(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (Med
 	request, err := scanMediaRequest(q.QueryRow(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
+			r.monitor_mode, r.minimum_availability, r.manual,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -130,6 +139,7 @@ func getMediaRequest(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (Med
 }
 
 func (s *SettingsStore) CreateMediaRequest(ctx context.Context, input MediaRequestInput) (MediaRequest, error) {
+	input = normalizeMediaRequestOptions(input)
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return MediaRequest{}, err
@@ -141,11 +151,11 @@ func (s *SettingsStore) CreateMediaRequest(ctx context.Context, input MediaReque
 	var requestID uuid.UUID
 	if err := tx.QueryRow(ctx, `
 		insert into app.media_requests (
-			id, requested_by_user_id, media_type, title, year, external_provider, external_id, overview, poster_path
+			id, requested_by_user_id, media_type, title, year, external_provider, external_id, overview, poster_path, monitor_mode, minimum_availability, manual
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		returning id
-	`, id, input.RequestedByUserID, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath).Scan(&requestID); err != nil {
+	`, id, input.RequestedByUserID, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.MonitorMode, input.MinimumAvailability, input.Manual).Scan(&requestID); err != nil {
 		return MediaRequest{}, err
 	}
 	if err := assignMediaRequestTags(ctx, tx, requestID, input.Tags); err != nil {
@@ -181,6 +191,7 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 	request, err := scanMediaRequest(tx.QueryRow(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
+			r.monitor_mode, r.minimum_availability, r.manual,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -208,17 +219,20 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 	qualityProfileID := input.QualityProfileID
 	libraryFolderID := input.LibraryFolderID
 	item, err := createMediaItemIfMissing(ctx, tx, MediaItemInput{
-		Type:             request.Type,
-		Title:            request.Title,
-		Year:             request.Year,
-		Monitored:        true,
-		ExternalProvider: request.ExternalProvider,
-		ExternalID:       request.ExternalID,
-		Overview:         request.Overview,
-		PosterPath:       request.PosterPath,
-		Tags:             request.Tags,
-		QualityProfileID: &qualityProfileID,
-		LibraryFolderID:  &libraryFolderID,
+		Type:                request.Type,
+		Title:               request.Title,
+		Year:                request.Year,
+		Monitored:           true,
+		ExternalProvider:    request.ExternalProvider,
+		ExternalID:          request.ExternalID,
+		Overview:            request.Overview,
+		PosterPath:          request.PosterPath,
+		MonitorMode:         request.MonitorMode,
+		MinimumAvailability: request.MinimumAvailability,
+		Manual:              request.Manual,
+		Tags:                request.Tags,
+		QualityProfileID:    &qualityProfileID,
+		LibraryFolderID:     &libraryFolderID,
 	})
 	if err != nil {
 		return MediaRequest{}, MediaItem{}, err
@@ -236,7 +250,7 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		returning id, requested_by_user_id, (
 				select username from app.users where id = requested_by_user_id
 			), media_type, title, year, external_provider, external_id, overview, poster_path,
-			status, quality_profile_id, library_folder_id, media_item_id, decided_at,
+			status, monitor_mode, minimum_availability, manual, quality_profile_id, library_folder_id, media_item_id, decided_at,
 			coalesce(array(
 				select t.name
 				from app.media_request_tags mrt
@@ -269,6 +283,9 @@ func scanMediaRequest(row pgx.Row) (MediaRequest, error) {
 		&request.Overview,
 		&request.PosterPath,
 		&request.Status,
+		&request.MonitorMode,
+		&request.MinimumAvailability,
+		&request.Manual,
 		&request.QualityProfileID,
 		&request.LibraryFolderID,
 		&request.MediaItemID,

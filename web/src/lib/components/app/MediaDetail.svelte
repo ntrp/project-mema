@@ -20,10 +20,14 @@
 		qualityProfiles: QualityProfileOption[];
 		releaseResults?: ReleaseSearchState;
 		searchingItemId?: string;
+		scanningMediaItemId?: string;
+		updatingMediaModeItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
 		canManage: boolean;
 		onFindReleases: (_item: MediaItem) => void;
+		onRescanMediaFiles: (_item: MediaItem) => void;
+		onUpdateMediaMode: (_item: MediaItem, _automatic: boolean) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 	}
@@ -36,10 +40,14 @@
 		qualityProfiles,
 		releaseResults,
 		searchingItemId,
+		scanningMediaItemId,
+		updatingMediaModeItemId,
 		grabbingKey,
 		deletingMediaItemId,
 		canManage,
 		onFindReleases,
+		onRescanMediaFiles,
+		onUpdateMediaMode,
 		onDeleteMedia,
 		onGrabRelease
 	}: Props = $props();
@@ -49,6 +57,7 @@
 	const qualityProfileLabel = $derived(resolveQualityProfileLabel(item));
 	const filePaths = $derived(item?.filePaths ?? []);
 	const metadataFilePaths = $derived(item?.metadataFilePaths ?? []);
+	const modeLabel = $derived(item?.manual ? 'Manual' : 'Automatic');
 
 	function posterUrl(path?: string, size = 'w780') {
 		if (!path) {
@@ -108,8 +117,10 @@
 			{qualityProfileLabel}
 			{canManage}
 			{searchingItemId}
+			{scanningMediaItemId}
 			{deletingMediaItemId}
 			{onFindReleases}
+			{onRescanMediaFiles}
 			{onDeleteMedia}
 		/>
 
@@ -141,6 +152,24 @@
 						<div>
 							<strong>{item.monitored ? 'Monitored' : 'Paused'}</strong>
 							<span>Monitor state</span>
+						</div>
+						<div>
+							<strong>{modeLabel}</strong>
+							<span>Mode</span>
+							{#if canManage}
+								<button
+									type="button"
+									class="secondary compact-action"
+									disabled={updatingMediaModeItemId === item.id}
+									onclick={() => onUpdateMediaMode(item, item.manual)}
+								>
+									{#if updatingMediaModeItemId === item.id}
+										Updating
+									{:else}
+										Switch to {item.manual ? 'automatic' : 'manual'}
+									{/if}
+								</button>
+							{/if}
 						</div>
 					</div>
 				</section>

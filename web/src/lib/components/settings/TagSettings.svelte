@@ -75,14 +75,22 @@
 						</td>
 						<td>{new Date(tag.updatedAt).toLocaleDateString()}</td>
 						<td class="row-actions">
-							<button type="button" class="secondary" onclick={() => editTag(tag)}>Edit</button>
 							<button
 								type="button"
-								class="danger"
+								class="secondary icon-button"
+								aria-label={`Edit ${tag.name}`}
+								onclick={() => editTag(tag)}
+							>
+								<span class="app-icon" aria-hidden="true">edit</span>
+							</button>
+							<button
+								type="button"
+								class="danger icon-button"
 								disabled={deletingId === tag.id}
+								aria-label={`${deletingId === tag.id ? 'Deleting' : 'Delete'} ${tag.name}`}
 								onclick={() => onDelete(tag.id)}
 							>
-								{deletingId === tag.id ? 'Deleting' : 'Delete'}
+								<span class="app-icon" aria-hidden="true">delete</span>
 							</button>
 						</td>
 					</tr>

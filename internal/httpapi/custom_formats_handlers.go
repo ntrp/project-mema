@@ -1,9 +1,14 @@
 package httpapi
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
+
+	"media-manager/internal/decisions"
+	"media-manager/internal/storage"
 )
 
 func (s *Server) ListCustomFormats(w http.ResponseWriter, r *http.Request) {
@@ -73,4 +78,55 @@ func (s *Server) DeleteCustomFormat(w http.ResponseWriter, r *http.Request, id R
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) TestCustomFormatParsing(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body CustomFormatParsingRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	fileName := strings.TrimSpace(body.FileName)
+	if fileName == "" {
+		writeError(w, http.StatusBadRequest, "invalid_file_name", "File name is required")
+		return
+	}
+
+	formats, err := s.settings.ListCustomFormats(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list custom formats")
+		return
+	}
+	parsed := decisions.ParseReleaseFileName(fileName)
+	matches := decisions.MatchCustomFormats(parsed, formats)
+	profile, err := s.customFormatParsingProfile(r, parsed)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "media_match_failed", "Could not match media profile")
+		return
+	}
+	writeJSON(w, http.StatusOK, customFormatParsingResponse(parsed, matches, profile))
+}
+
+func (s *Server) customFormatParsingProfile(
+	r *http.Request,
+	parsed decisions.ParsedRelease,
+) (*storage.MediaProfile, error) {
+	item, err := s.settings.FindMonitoredMediaMatch(r.Context(), parsed.MovieTitle, parsed.Year)
+	if errors.Is(err, storage.ErrNotFound) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if item.QualityProfileID == nil {
+		return nil, nil
+	}
+	profile, err := s.settings.GetMediaProfile(r.Context(), *item.QualityProfileID)
+	if errors.Is(err, storage.ErrNotFound) {
+		return nil, nil
+	}
+	return &profile, err
 }

@@ -78,6 +78,9 @@
 				>
 					{statusLabel(item.status)}
 				</small>
+				<small class:status-enabled={!item.manual} class:status-disabled={item.manual}>
+					{item.manual ? 'Manual' : 'Automatic'}
+				</small>
 			</div>
 		</a>
 	{:else}

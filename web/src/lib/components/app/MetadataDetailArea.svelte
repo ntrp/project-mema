@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import type { MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
@@ -70,6 +71,8 @@
 			externalId: details.externalId,
 			overview: details.overview,
 			posterPath: details.posterPath,
+			collectionId: details.collectionId,
+			collectionName: details.collectionName,
 			genres: details.genres,
 			originalLanguage: details.originalLanguage
 		};
@@ -148,6 +151,18 @@
 							<span>{externalLabel(detail)}</span>
 						</a>
 						<!-- eslint-enable svelte/no-navigation-without-resolve -->
+					{/if}
+					{#if detail.collectionId && detail.collectionName}
+						<a
+							class="external-link"
+							href={resolve('/media/collections/[provider]/[collectionId]', {
+								provider: detail.externalProvider,
+								collectionId: detail.collectionId
+							})}
+						>
+							<span class="app-icon" aria-hidden="true">collections_bookmark</span>
+							<span>{detail.collectionName}</span>
+						</a>
 					{/if}
 					<button
 						type="button"

@@ -3,10 +3,12 @@
 
 	interface Props {
 		folders: LibraryFolder[];
+		scanningLibraryFolderId?: string;
+		onScan: (_id: string) => void | Promise<void>;
 		onDelete: (_id: string) => void | Promise<void>;
 	}
 
-	let { folders, onDelete }: Props = $props();
+	let { folders, scanningLibraryFolderId, onScan, onDelete }: Props = $props();
 </script>
 
 <div class="panel" aria-labelledby="library-folder-list-title">
@@ -26,9 +28,23 @@
 						<td>{folder.path}</td>
 						<td>{new Date(folder.createdAt).toLocaleString()}</td>
 						<td class="row-actions">
-							<button type="button" class="danger" onclick={() => onDelete(folder.id)}
-								>Delete</button
+							<button
+								type="button"
+								class="secondary icon-button"
+								aria-label={`Scan ${folder.path}`}
+								disabled={scanningLibraryFolderId === folder.id}
+								onclick={() => onScan(folder.id)}
 							>
+								<span class="app-icon" aria-hidden="true">sync</span>
+							</button>
+							<button
+								type="button"
+								class="danger icon-button"
+								aria-label={`Delete ${folder.path}`}
+								onclick={() => onDelete(folder.id)}
+							>
+								<span class="app-icon" aria-hidden="true">delete</span>
+							</button>
 						</td>
 					</tr>
 				{:else}

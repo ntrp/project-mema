@@ -30,7 +30,7 @@ import {
 	deleteUser as deleteUserRequest,
 	emptyMetadataCache,
 	enqueueMediaReleaseSearch as enqueueMediaReleaseSearchRequest,
-	getLibraryScan as getLibraryScanRequest,
+	getMediaCollection as getMediaCollectionRequest,
 	getMediaMetadataDetails as getMediaMetadataDetailsRequest,
 	getMetadataCache as getMetadataCacheRequest,
 	grabMediaRelease as grabMediaReleaseRequest,
@@ -50,13 +50,16 @@ import {
 	saveMediaProfile as saveMediaProfileRequest,
 	saveMetadataProvider as saveMetadataProviderRequest,
 	savePathMapping as savePathMappingRequest,
+	rescanMediaItemFiles as rescanMediaItemFilesRequest,
+	scanLibraryFolder as scanLibraryFolderRequest,
 	saveTag as saveTagRequest,
 	saveUser as saveUserRequest,
 	searchMedia as searchMediaRequest,
 	searchMediaReleases as searchMediaReleasesRequest,
 	testDownloadClientConfig as testDownloadClientConfigRequest,
 	testIndexer as testIndexerRequest,
-	testMetadataProvider as testMetadataProviderRequest
+	testMetadataProvider as testMetadataProviderRequest,
+	updateMediaItemMode as updateMediaItemModeRequest
 } from '$lib/settings/api';
 import {
 	customFormatFormFromFormat,
@@ -72,6 +75,8 @@ import {
 	mediaProfileFormFromProfile,
 	userFormFromUser
 } from '$lib/settings/forms';
+import type { MediaActionSelection } from '$lib/components/app/mediaActionTypes';
+import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
 import type {
 	AppView,
 	CustomFormat,
@@ -88,10 +93,9 @@ import type {
 	LibraryFolderForm as LibraryFolderFormValue,
 	LibraryMediaKind,
 	LibraryScan,
-	LibraryScanItem,
-	LibraryScanItemMatchRequest,
 	ManagedUser,
 	MediaAdvancedSearchRequest,
+	MediaCollection,
 	MediaDiscoverSection,
 	MediaItem,
 	MediaProfile,
@@ -132,11 +136,12 @@ export interface AppShellOptions {
 	initialSystemSection?: SystemSection;
 	initialSelectedMediaItemId?: string;
 	initialSelectedRequestId?: string;
-	initialLibraryScanId?: string;
 	initialAdvancedQuery?: string;
 	initialMetadataProvider?: string;
 	initialMetadataType?: string;
 	initialMetadataExternalId?: string;
+	initialCollectionProvider?: string;
+	initialCollectionId?: string;
 }
 
 export function createAppShellController(options: AppShellOptions) {
@@ -174,6 +179,7 @@ export function createAppShellController(options: AppShellOptions) {
 	let mediaRequests = $state<MediaRequest[]>([]);
 	let discoverSections = $state<MediaDiscoverSection[]>([]);
 	let metadataDetail = $state<MediaMetadataDetails | undefined>();
+	let mediaCollection = $state<MediaCollection | undefined>();
 	let autocompleteGroups = $state<MediaSearchGroup[]>([]);
 	let advancedSearchGroups = $state<MediaSearchGroup[]>([]);
 	let releaseResults = $state<ReleaseSearchResults>({});
@@ -193,18 +199,24 @@ export function createAppShellController(options: AppShellOptions) {
 	let metadataCachePattern = $state('');
 	let loadingDiscover = $state(false);
 	let loadingMetadataDetail = $state(false);
+	let loadingMediaCollection = $state(false);
 	let loadingAutocomplete = $state(false);
 	let searchingAdvanced = $state(false);
 	let addingKey = $state<string | undefined>();
 	let savingMediaAction = $state(false);
 	let activeMediaCandidate = $state<MediaSearchResult | undefined>();
+	let mediaDeleteCandidate = $state<MediaItem | undefined>();
 	let approvingRequestId = $state<string | undefined>();
 	let searchingItemId = $state<string | undefined>();
+	let scanningMediaItemId = $state<string | undefined>();
+	let updatingMediaModeItemId = $state<string | undefined>();
 	let grabbingKey = $state<string | undefined>();
 	let deletingMediaItemId = $state<string | undefined>();
 	let cancellingActivityId = $state<string | undefined>();
 	let loadingActivity = $state(false);
-	let loadingLibraryScan = $state(false);
+	let scanningLibraryFolderId = $state<string | undefined>();
+	let libraryScansByFolder = $state<Record<string, LibraryScan>>({});
+	let openLibraryFolderId = $state<string | undefined>();
 	let indexerTests = $state<IntegrationTestResults>({});
 	let metadataProviderTests = $state<IntegrationTestResults>({});
 	let activeView = $state<AppView>(options.initialView ?? 'home');
@@ -213,8 +225,6 @@ export function createAppShellController(options: AppShellOptions) {
 	let activeSystemSection = $state<SystemSection>(options.initialSystemSection ?? 'logs');
 	let selectedMediaItemId = $state<string | undefined>(options.initialSelectedMediaItemId);
 	let selectedRequestId = $state<string | undefined>(options.initialSelectedRequestId);
-	let activeLibraryScanId = $state<string | undefined>(options.initialLibraryScanId);
-	let activeLibraryScan = $state<LibraryScan | undefined>();
 	let searchQuery = $state(options.initialAdvancedQuery ?? '');
 	let eventSource: EventSource | undefined;
 	let isAdmin = $derived(currentUser?.role === 'admin');
@@ -247,6 +257,8 @@ export function createAppShellController(options: AppShellOptions) {
 			await loadDiscoverSections();
 			if (activeView === 'metadata-detail') {
 				await loadMetadataDetail();
+			} else if (activeView === 'media-collection') {
+				await loadMediaCollection();
 			}
 			connectEvents();
 		}
@@ -299,6 +311,8 @@ export function createAppShellController(options: AppShellOptions) {
 			await loadDiscoverSections();
 			if (activeView === 'metadata-detail') {
 				await loadMetadataDetail();
+			} else if (activeView === 'media-collection') {
+				await loadMediaCollection();
 			}
 			connectEvents();
 		} catch (error) {
@@ -330,14 +344,15 @@ export function createAppShellController(options: AppShellOptions) {
 			mediaRequests = [];
 			discoverSections = [];
 			metadataDetail = undefined;
+			mediaCollection = undefined;
 			autocompleteGroups = [];
 			advancedSearchGroups = [];
 			releaseResults = {};
 			activities = [];
 			libraryFolders = [];
 			pathMappings = [];
-			activeLibraryScan = undefined;
-			activeLibraryScanId = undefined;
+			libraryScansByFolder = {};
+			openLibraryFolderId = undefined;
 			downloadForm = emptyDownloadClientForm();
 			indexerForm = emptyIndexerForm();
 			libraryFolderForm = emptyLibraryFolderForm();
@@ -400,9 +415,6 @@ export function createAppShellController(options: AppShellOptions) {
 			customFormats = settings.customFormats;
 			users = settings.users;
 			tags = settings.tags;
-			if (activeLibraryScanId) {
-				await loadLibraryScan(activeLibraryScanId);
-			}
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not load settings');
 		}
@@ -442,6 +454,23 @@ export function createAppShellController(options: AppShellOptions) {
 			errorMessage = errorMessageFrom(error, 'Could not load media details');
 		} finally {
 			loadingMetadataDetail = false;
+		}
+	}
+
+	async function loadMediaCollection() {
+		if (!options.initialCollectionProvider || !options.initialCollectionId) {
+			return;
+		}
+		loadingMediaCollection = true;
+		try {
+			mediaCollection = await getMediaCollectionRequest(
+				options.initialCollectionProvider as MetadataProviderType,
+				options.initialCollectionId
+			);
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load media collection');
+		} finally {
+			loadingMediaCollection = false;
 		}
 	}
 
@@ -543,11 +572,7 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 	}
 
-	async function confirmMediaAction(
-		qualityProfileId?: string,
-		libraryFolderId?: string,
-		selectedTags: string[] = []
-	) {
+	async function confirmMediaAction(selection: MediaActionSelection) {
 		const candidate = activeMediaCandidate;
 		if (!candidate) {
 			return;
@@ -558,25 +583,31 @@ export function createAppShellController(options: AppShellOptions) {
 
 		try {
 			if (isAdmin) {
-				if (!qualityProfileId || !libraryFolderId) {
+				if (!selection.qualityProfileId || !selection.libraryFolderId) {
 					throw new Error('Quality profile and library folder are required');
 				}
-				const item = await createMediaItemRequest({
+				await createMediaItemRequest({
 					title: candidate.title,
 					type: candidate.type,
 					year: candidate.year,
 					monitored: true,
+					monitorMode: selection.monitorMode,
+					minimumAvailability: selection.minimumAvailability,
+					manual: !selection.startSearch,
 					externalProvider: candidate.externalProvider,
 					externalId: candidate.externalId,
 					overview: candidate.overview,
 					posterPath: candidate.posterPath,
-					qualityProfileId,
-					libraryFolderId,
-					tags: selectedTags
+					qualityProfileId: selection.qualityProfileId,
+					libraryFolderId: selection.libraryFolderId,
+					tags: selection.tags
 				});
-				mediaItems = [item, ...mediaItems.filter((mediaItem) => mediaItem.id !== item.id)];
+				await loadMediaItems();
 				await loadSettings();
-				message = 'Media item added to monitored';
+				message =
+					selection.monitorMode === 'collection'
+						? 'Media collection added to monitored'
+						: 'Media item added to monitored';
 				activeHomeSection = candidate.type === 'movie' ? 'movies' : 'series';
 				activeMediaCandidate = undefined;
 				void goto(resolve(candidate.type === 'movie' ? '/movies' : '/series'));
@@ -586,12 +617,15 @@ export function createAppShellController(options: AppShellOptions) {
 			const request = await createMediaRequestRequest({
 				title: candidate.title,
 				type: candidate.type,
+				monitorMode: selection.monitorMode,
+				minimumAvailability: selection.minimumAvailability,
+				manual: !selection.startSearch,
 				year: candidate.year,
 				externalProvider: candidate.externalProvider,
 				externalId: candidate.externalId,
 				overview: candidate.overview,
 				posterPath: candidate.posterPath,
-				tags: selectedTags
+				tags: selection.tags
 			});
 			mediaRequests = [request, ...mediaRequests.filter((item) => item.id !== request.id)];
 			message = 'Media request created';
@@ -628,16 +662,72 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 	}
 
-	async function deleteMediaItem(item: MediaItem) {
+	async function rescanMediaFiles(item: MediaItem) {
+		scanningMediaItemId = item.id;
+		clearNotice();
+
+		try {
+			const updated = await rescanMediaItemFilesRequest(item.id);
+			mediaItems = [updated, ...mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)];
+			message = `File scan completed: ${updated.filePaths.length} media, ${updated.metadataFilePaths.length} metadata`;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not rescan media folder');
+		} finally {
+			scanningMediaItemId = undefined;
+		}
+	}
+
+	async function updateMediaMode(item: MediaItem, automatic: boolean) {
+		updatingMediaModeItemId = item.id;
+		clearNotice();
+
+		try {
+			const updated = await updateMediaItemModeRequest(item.id, {
+				mode: automatic ? 'automatic' : 'manual'
+			});
+			mediaItems = [updated, ...mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)];
+			message = automatic ? 'Media item set to automatic' : 'Media item set to manual';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not update media mode');
+		} finally {
+			updatingMediaModeItemId = undefined;
+		}
+	}
+
+	function deleteMediaItem(item: MediaItem) {
+		clearNotice();
+		if (mediaItemFileCount(item) > 0) {
+			mediaDeleteCandidate = item;
+			return;
+		}
+		void removeMediaItem(item, false);
+	}
+
+	function closeMediaDelete() {
+		if (!deletingMediaItemId) {
+			mediaDeleteCandidate = undefined;
+		}
+	}
+
+	async function confirmMediaDelete(keepFiles: boolean) {
+		const item = mediaDeleteCandidate;
+		if (!item) {
+			return;
+		}
+		await removeMediaItem(item, keepFiles);
+	}
+
+	async function removeMediaItem(item: MediaItem, keepFiles: boolean) {
 		deletingMediaItemId = item.id;
 		clearNotice();
 
 		try {
-			await deleteMediaItemRequest(item.id);
+			await deleteMediaItemRequest(item.id, { keepFiles });
 			mediaItems = mediaItems.filter((mediaItem) => mediaItem.id !== item.id);
 			releaseResults = omitResult(releaseResults, item.id);
 			activities = activities.filter((activity) => activity.mediaItemId !== item.id);
-			message = 'Media item removed';
+			mediaDeleteCandidate = undefined;
+			message = keepFiles ? 'Media item removed; files kept' : 'Media item and files removed';
 			if (selectedMediaItemId === item.id) {
 				selectedMediaItemId = undefined;
 				void goto(resolve(item.type === 'movie' ? '/movies' : '/series'));
@@ -647,6 +737,10 @@ export function createAppShellController(options: AppShellOptions) {
 		} finally {
 			deletingMediaItemId = undefined;
 		}
+	}
+
+	function mediaItemFileCount(item: MediaItem) {
+		return (item.filePaths?.length ?? 0) + (item.metadataFilePaths?.length ?? 0);
 	}
 
 	async function approveMediaRequest(request: MediaRequest, approval: MediaRequestApproveRequest) {
@@ -780,11 +874,12 @@ export function createAppShellController(options: AppShellOptions) {
 				result.folder,
 				...libraryFolders.filter((folder) => folder.id !== result.folder.id)
 			];
-			activeLibraryScan = result.scan;
-			activeLibraryScanId = result.scan.id;
-			message = `Library scan completed: ${result.scan.autoMatchedCount} auto-added, ${result.scan.manualCount} pending`;
-			await loadMediaItems();
-			void goto(resolve(`/settings/library/scans/${result.scan.id}`));
+			libraryScansByFolder = {
+				...libraryScansByFolder,
+				[result.folder.id]: result.scan
+			};
+			openLibraryFolderId = result.folder.id;
+			message = `Library scan completed: ${result.scan.manualCount} pending`;
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not add library folder');
 		} finally {
@@ -887,6 +982,22 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 	}
 
+	async function importCustomFormat(format: CustomFormatFormValue) {
+		savingCustomFormat = true;
+		clearNotice();
+
+		try {
+			await saveCustomFormatRequest(format);
+			message = 'Custom format imported';
+			await loadSettings();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not import custom format');
+			throw error;
+		} finally {
+			savingCustomFormat = false;
+		}
+	}
+
 	async function deleteDownloadClient(id: string) {
 		clearNotice();
 
@@ -924,14 +1035,31 @@ export function createAppShellController(options: AppShellOptions) {
 		try {
 			await deleteLibraryFolderRequest(id);
 			libraryFolders = libraryFolders.filter((folder) => folder.id !== id);
-			if (activeLibraryScan?.folderId === id) {
-				activeLibraryScan = undefined;
-				activeLibraryScanId = undefined;
-				void goto(resolve('/settings/library'));
+			const remainingScans = { ...libraryScansByFolder };
+			delete remainingScans[id];
+			libraryScansByFolder = remainingScans;
+			if (openLibraryFolderId === id) {
+				openLibraryFolderId = undefined;
 			}
 			message = 'Library folder deleted';
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not delete library folder');
+		}
+	}
+
+	async function scanLibraryFolder(id: string) {
+		scanningLibraryFolderId = id;
+		clearNotice();
+
+		try {
+			const scan = await scanLibraryFolderRequest(id);
+			libraryScansByFolder = { ...libraryScansByFolder, [scan.folderId]: scan };
+			openLibraryFolderId = scan.folderId;
+			message = `Library scan completed: ${scan.manualCount} pending`;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not scan library folder');
+		} finally {
+			scanningLibraryFolderId = undefined;
 		}
 	}
 
@@ -1019,20 +1147,6 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 	}
 
-	async function loadLibraryScan(id: string) {
-		loadingLibraryScan = true;
-		clearNotice();
-
-		try {
-			activeLibraryScan = await getLibraryScanRequest(id);
-			activeLibraryScanId = id;
-		} catch (error) {
-			errorMessage = errorMessageFrom(error, 'Could not load library scan');
-		} finally {
-			loadingLibraryScan = false;
-		}
-	}
-
 	async function searchLibraryMatch(kind: LibraryMediaKind, query: string) {
 		return await searchMediaRequest({
 			type: mediaTypeForLibraryKind(kind),
@@ -1040,28 +1154,32 @@ export function createAppShellController(options: AppShellOptions) {
 		});
 	}
 
-	async function matchLibraryScanItem(item: LibraryScanItem, request: LibraryScanItemMatchRequest) {
-		if (!activeLibraryScanId) {
-			return;
-		}
+	async function importLibraryScanRows(scan: LibraryScan, rows: LibraryScanImportRow[]) {
 		clearNotice();
 
 		try {
-			const result = await matchLibraryScanItemRequest(activeLibraryScanId, item.id, request);
-			activeLibraryScan = {
-				...activeLibraryScan!,
-				manualCount: Math.max(0, activeLibraryScan!.manualCount - 1),
-				items: activeLibraryScan!.items.map((scanItem) =>
-					scanItem.id === item.id ? result.item : scanItem
-				)
-			};
+			const results: Awaited<ReturnType<typeof matchLibraryScanItemRequest>>[] = [];
+			for (const row of rows) {
+				results.push(await matchLibraryScanItemRequest(scan.id, row.item.id, row.request));
+			}
+			const importedMediaIds = results.map((result) => result.mediaItem.id);
 			mediaItems = [
-				result.mediaItem,
-				...mediaItems.filter((mediaItem) => mediaItem.id !== result.mediaItem.id)
+				...results.map((result) => result.mediaItem),
+				...mediaItems.filter((item) => !importedMediaIds.includes(item.id))
 			];
-			message = 'Library item added to monitored';
+			libraryScansByFolder = {
+				...libraryScansByFolder,
+				[scan.folderId]: {
+					...scan,
+					manualCount: Math.max(0, scan.manualCount - results.length),
+					items: scan.items.map(
+						(item) => results.find((result) => result.item.id === item.id)?.item ?? item
+					)
+				}
+			};
+			message = `Imported ${results.length} media item${results.length === 1 ? '' : 's'}`;
 		} catch (error) {
-			errorMessage = errorMessageFrom(error, 'Could not match library item');
+			errorMessage = errorMessageFrom(error, 'Could not import library items');
 		}
 	}
 
@@ -1315,6 +1433,7 @@ export function createAppShellController(options: AppShellOptions) {
 		get errorMessage() {
 			return errorMessage;
 		},
+		clearNotice,
 		get username() {
 			return username;
 		},
@@ -1371,6 +1490,9 @@ export function createAppShellController(options: AppShellOptions) {
 		},
 		get metadataDetail() {
 			return metadataDetail;
+		},
+		get mediaCollection() {
+			return mediaCollection;
 		},
 		get autocompleteGroups() {
 			return autocompleteGroups;
@@ -1456,6 +1578,9 @@ export function createAppShellController(options: AppShellOptions) {
 		get loadingMetadataDetail() {
 			return loadingMetadataDetail;
 		},
+		get loadingMediaCollection() {
+			return loadingMediaCollection;
+		},
 		get loadingAutocomplete() {
 			return loadingAutocomplete;
 		},
@@ -1471,11 +1596,20 @@ export function createAppShellController(options: AppShellOptions) {
 		get activeMediaCandidate() {
 			return activeMediaCandidate;
 		},
+		get mediaDeleteCandidate() {
+			return mediaDeleteCandidate;
+		},
 		get approvingRequestId() {
 			return approvingRequestId;
 		},
 		get searchingItemId() {
 			return searchingItemId;
+		},
+		get scanningMediaItemId() {
+			return scanningMediaItemId;
+		},
+		get updatingMediaModeItemId() {
+			return updatingMediaModeItemId;
 		},
 		get grabbingKey() {
 			return grabbingKey;
@@ -1489,8 +1623,14 @@ export function createAppShellController(options: AppShellOptions) {
 		get loadingActivity() {
 			return loadingActivity;
 		},
-		get loadingLibraryScan() {
-			return loadingLibraryScan;
+		get scanningLibraryFolderId() {
+			return scanningLibraryFolderId;
+		},
+		get libraryScansByFolder() {
+			return libraryScansByFolder;
+		},
+		get openLibraryFolderId() {
+			return openLibraryFolderId;
 		},
 		get indexerTests() {
 			return indexerTests;
@@ -1515,9 +1655,6 @@ export function createAppShellController(options: AppShellOptions) {
 		},
 		get selectedRequestId() {
 			return selectedRequestId;
-		},
-		get activeLibraryScan() {
-			return activeLibraryScan;
 		},
 		get searchQuery() {
 			return searchQuery;
@@ -1550,8 +1687,12 @@ export function createAppShellController(options: AppShellOptions) {
 		addMedia,
 		closeMediaAction,
 		confirmMediaAction,
+		closeMediaDelete,
+		confirmMediaDelete,
 		approveMediaRequest,
 		findReleases,
+		rescanMediaFiles,
+		updateMediaMode,
 		deleteMediaItem,
 		grabRelease,
 		cancelActivity,
@@ -1567,6 +1708,7 @@ export function createAppShellController(options: AppShellOptions) {
 		savePathMapping,
 		saveMediaProfile,
 		saveCustomFormat,
+		importCustomFormat,
 		saveTag,
 		saveUser,
 		editDownloadClient,
@@ -1578,6 +1720,7 @@ export function createAppShellController(options: AppShellOptions) {
 		deleteDownloadClient,
 		deleteIndexer,
 		deleteLibraryFolder,
+		scanLibraryFolder,
 		deletePathMapping,
 		deleteMediaProfile,
 		deleteCustomFormat,
@@ -1586,7 +1729,7 @@ export function createAppShellController(options: AppShellOptions) {
 		testIndexer,
 		testMetadataProvider,
 		searchLibraryMatch,
-		matchLibraryScanItem,
+		importLibraryScanRows,
 		selectPrimarySection,
 		selectSettingsSection,
 		selectSystemSection,

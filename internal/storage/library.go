@@ -57,14 +57,17 @@ type LibraryScanItemInput struct {
 }
 
 type LibraryMatchInput struct {
-	MediaKind        string
-	Title            string
-	Year             *int32
-	Monitored        bool
-	ExternalProvider *string
-	ExternalID       *string
-	Overview         *string
-	PosterPath       *string
+	MediaKind           string
+	Title               string
+	Year                *int32
+	Monitored           bool
+	QualityProfileID    string
+	MonitorMode         string
+	MinimumAvailability string
+	ExternalProvider    *string
+	ExternalID          *string
+	Overview            *string
+	PosterPath          *string
 }
 
 func (s *SettingsStore) ListLibraryFolders(ctx context.Context) ([]LibraryFolder, error) {
@@ -128,7 +131,6 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 	}()
 
 	scanID := uuid.New()
-	autoMatchedCount := int32(0)
 	manualCount := int32(0)
 	if _, err := tx.Exec(ctx, `
 		insert into app.library_scans (
@@ -140,35 +142,7 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 	}
 
 	for _, input := range inputs {
-		status := "pending"
-		var mediaItemID *uuid.UUID
-		var matchedTitle *string
-		var matchedYear *int32
-		var matchedKind *string
-		if input.SafeMatch {
-			mediaType, ok := mediaKindToMediaType(input.DetectedMediaKind)
-			if ok {
-				item, err := createMediaItemIfMissing(ctx, tx, MediaItemInput{
-					Type:            mediaType,
-					Title:           input.DetectedTitle,
-					Year:            input.DetectedYear,
-					Monitored:       true,
-					LibraryFolderID: &folder.ID,
-				})
-				if err != nil {
-					return LibraryScan{}, err
-				}
-				status = "auto_added"
-				mediaItemID = &item.ID
-				matchedTitle = &input.DetectedTitle
-				matchedYear = input.DetectedYear
-				matchedKind = &input.DetectedMediaKind
-				autoMatchedCount++
-			}
-		}
-		if status == "pending" {
-			manualCount++
-		}
+		manualCount++
 		if _, err := tx.Exec(ctx, `
 			insert into app.library_scan_items (
 				id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
@@ -176,7 +150,7 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 			)
 			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		`, uuid.New(), scanID, input.Path, input.FileName, input.DetectedTitle, input.DetectedYear,
-			input.DetectedMediaKind, status, matchedTitle, matchedYear, matchedKind, mediaItemID); err != nil {
+			input.DetectedMediaKind, "pending", nil, nil, nil, nil); err != nil {
 			return LibraryScan{}, err
 		}
 	}
@@ -185,7 +159,7 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 		update app.library_scans
 		set auto_matched_count = $2, manual_count = $3
 		where id = $1
-	`, scanID, autoMatchedCount, manualCount); err != nil {
+	`, scanID, int32(0), manualCount); err != nil {
 		return LibraryScan{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -241,15 +215,18 @@ func (s *SettingsStore) MatchLibraryScanItem(ctx context.Context, scanID uuid.UU
 		return LibraryScanItem{}, MediaItem{}, err
 	}
 	item, err := createMediaItemIfMissing(ctx, tx, MediaItemInput{
-		Type:             mediaType,
-		Title:            input.Title,
-		Year:             input.Year,
-		Monitored:        input.Monitored,
-		ExternalProvider: input.ExternalProvider,
-		ExternalID:       input.ExternalID,
-		Overview:         input.Overview,
-		PosterPath:       input.PosterPath,
-		LibraryFolderID:  &folderID,
+		Type:                mediaType,
+		Title:               input.Title,
+		Year:                input.Year,
+		Monitored:           input.Monitored,
+		ExternalProvider:    input.ExternalProvider,
+		ExternalID:          input.ExternalID,
+		Overview:            input.Overview,
+		PosterPath:          input.PosterPath,
+		MonitorMode:         input.MonitorMode,
+		MinimumAvailability: input.MinimumAvailability,
+		QualityProfileID:    &input.QualityProfileID,
+		LibraryFolderID:     &folderID,
 	})
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
@@ -323,6 +300,7 @@ type mediaItemQuerier interface {
 }
 
 func createMediaItemIfMissing(ctx context.Context, q mediaItemQuerier, input MediaItemInput) (MediaItem, error) {
+	input = normalizeMediaItemOptions(input)
 	var existingID uuid.UUID
 	err := q.QueryRow(ctx, `
 		select id
@@ -342,15 +320,21 @@ func createMediaItemIfMissing(ctx context.Context, q mediaItemQuerier, input Med
 			set quality_profile_id = coalesce(quality_profile_id, $2::text),
 				library_folder_id = coalesce(library_folder_id, $3::uuid),
 				media_folder_path = coalesce(media_folder_path, $4::text),
+				monitor_mode = $5,
+				minimum_availability = $6,
+				manual = $7,
 				updated_at = case
 					when (quality_profile_id is null and $2::text is not null)
 						or (library_folder_id is null and $3::uuid is not null)
 						or (media_folder_path is null and $4::text is not null)
+						or monitor_mode <> $5
+						or minimum_availability <> $6
+						or manual <> $7
 					then now()
 					else updated_at
 				end
 			where id = $1
-		`, existingID, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath); err != nil {
+		`, existingID, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath, input.MonitorMode, input.MinimumAvailability, input.Manual); err != nil {
 			return MediaItem{}, err
 		}
 		if len(input.Tags) > 0 {
@@ -371,11 +355,11 @@ func createMediaItemIfMissing(ctx context.Context, q mediaItemQuerier, input Med
 	}
 	if err := q.QueryRow(ctx, `
 		insert into app.media_items (
-			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, quality_profile_id, library_folder_id, media_folder_path
+			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path, monitor_mode, minimum_availability, manual, quality_profile_id, library_folder_id, media_folder_path
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		returning id
-	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath).Scan(&itemID); err != nil {
+	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.MonitorMode, input.MinimumAvailability, input.Manual, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath).Scan(&itemID); err != nil {
 		return MediaItem{}, err
 	}
 	if err := assignMediaItemTags(ctx, q, itemID, input.Tags); err != nil {

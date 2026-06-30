@@ -1,3 +1,4 @@
+-- +goose Up
 create schema if not exists app;
 
 create table if not exists app.users (
@@ -9,12 +10,14 @@ create table if not exists app.users (
     updated_at timestamptz not null default now()
 );
 
+-- +goose StatementBegin
 do $$
 begin
     alter table app.users drop constraint if exists users_role_check;
     alter table app.users
         add constraint users_role_check check (role in ('admin', 'user'));
 end $$;
+-- +goose StatementEnd
 
 create unique index if not exists idx_users_username_lower
     on app.users (lower(username));
@@ -81,6 +84,11 @@ create table if not exists app.quality_size_settings (
 create table if not exists app.media_profiles (
     id text primary key,
     name text not null,
+    upgrades_allowed boolean not null default true,
+    upgrade_until_quality_id text,
+    minimum_custom_format_score integer not null default 0,
+    upgrade_until_custom_format_score integer not null default 0,
+    minimum_custom_format_score_increment integer not null default 1 check (minimum_custom_format_score_increment >= 0),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
@@ -99,15 +107,28 @@ create table if not exists app.custom_formats (
     constraint custom_formats_exclude_specs_array_check check (jsonb_typeof(exclude_specs) = 'array')
 );
 
-drop index if exists app.idx_custom_formats_name_lower;
-
 create index if not exists idx_custom_formats_name_lower
     on app.custom_formats (lower(name));
 
-update app.custom_formats
-set name = regexp_replace(name, '^(Radarr|Sonarr) ', ''),
-    updated_at = now()
-where name ~ '^(Radarr|Sonarr) ';
+create table if not exists app.media_profile_custom_formats (
+    profile_id text not null references app.media_profiles(id) on delete cascade,
+    custom_format_id uuid not null references app.custom_formats(id) on delete cascade,
+    score integer not null default 0,
+    primary key (profile_id, custom_format_id)
+);
+
+create index if not exists idx_media_profile_custom_formats_profile
+    on app.media_profile_custom_formats (profile_id, custom_format_id);
+
+create table if not exists app.media_profile_languages (
+    profile_id text not null references app.media_profiles(id) on delete cascade,
+    language_id text not null,
+    score integer not null default 0,
+    primary key (profile_id, language_id)
+);
+
+create index if not exists idx_media_profile_languages_profile
+    on app.media_profile_languages (profile_id, language_id);
 
 create table if not exists app.media_profile_qualities (
     profile_id text not null references app.media_profiles(id) on delete cascade,
@@ -160,6 +181,27 @@ alter table app.media_items
 
 alter table app.media_items
     add column if not exists media_folder_path text;
+
+alter table app.media_items
+    add column if not exists monitor_mode text not null default 'only_media';
+
+alter table app.media_items
+    add column if not exists minimum_availability text not null default 'released';
+
+alter table app.media_items
+    add column if not exists manual boolean not null default false;
+
+-- +goose StatementBegin
+do $$
+begin
+    alter table app.media_items drop constraint if exists media_items_monitor_mode_check;
+    alter table app.media_items drop constraint if exists media_items_minimum_availability_check;
+    alter table app.media_items
+        add constraint media_items_monitor_mode_check check (monitor_mode in ('only_media', 'collection'));
+    alter table app.media_items
+        add constraint media_items_minimum_availability_check check (minimum_availability in ('announced', 'in_cinema', 'released'));
+end $$;
+-- +goose StatementEnd
 
 alter table app.media_items
     alter column year drop not null;
@@ -258,6 +300,9 @@ create table if not exists app.media_requests (
     external_id text,
     overview text,
     poster_path text,
+    monitor_mode text not null default 'only_media',
+    minimum_availability text not null default 'released',
+    manual boolean not null default false,
     status text not null default 'pending',
     quality_profile_id text,
     library_folder_id uuid references app.library_folders(id) on delete set null,
@@ -267,12 +312,23 @@ create table if not exists app.media_requests (
     updated_at timestamptz not null default now()
 );
 
+-- +goose StatementBegin
 do $$
 begin
     alter table app.media_requests drop constraint if exists media_requests_status_check;
+    alter table app.media_requests add column if not exists monitor_mode text not null default 'only_media';
+    alter table app.media_requests add column if not exists minimum_availability text not null default 'released';
+    alter table app.media_requests add column if not exists manual boolean not null default false;
+    alter table app.media_requests drop constraint if exists media_requests_monitor_mode_check;
+    alter table app.media_requests drop constraint if exists media_requests_minimum_availability_check;
     alter table app.media_requests
         add constraint media_requests_status_check check (status in ('pending', 'approved'));
+    alter table app.media_requests
+        add constraint media_requests_monitor_mode_check check (monitor_mode in ('only_media', 'collection'));
+    alter table app.media_requests
+        add constraint media_requests_minimum_availability_check check (minimum_availability in ('announced', 'in_cinema', 'released'));
 end $$;
+-- +goose StatementEnd
 
 create index if not exists idx_media_requests_status_created
     on app.media_requests (status, created_at desc);
@@ -335,6 +391,7 @@ create table if not exists app.download_activity (
     updated_at timestamptz not null default now()
 );
 
+-- +goose StatementBegin
 do $$
 begin
     alter table app.download_activity add column if not exists download_id text;
@@ -346,6 +403,7 @@ begin
     alter table app.download_activity
         add constraint download_activity_progress_percent_check check (progress_percent is null or (progress_percent >= 0 and progress_percent <= 100));
 end $$;
+-- +goose StatementEnd
 
 create index if not exists idx_download_activity_created
     on app.download_activity (created_at desc);

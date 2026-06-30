@@ -35,14 +35,22 @@
 						<td>{user.role}</td>
 						<td>{new Date(user.createdAt).toLocaleDateString()}</td>
 						<td class="row-actions">
-							<button type="button" class="secondary" onclick={() => onEdit(user)}>Edit</button>
 							<button
 								type="button"
-								class="danger"
+								class="secondary icon-button"
+								aria-label={`Edit ${user.username}`}
+								onclick={() => onEdit(user)}
+							>
+								<span class="app-icon" aria-hidden="true">edit</span>
+							</button>
+							<button
+								type="button"
+								class="danger icon-button"
 								disabled={user.id === currentUserId}
+								aria-label={`Delete ${user.username}`}
 								onclick={() => onDelete(user.id)}
 							>
-								Delete
+								<span class="app-icon" aria-hidden="true">delete</span>
 							</button>
 						</td>
 					</tr>

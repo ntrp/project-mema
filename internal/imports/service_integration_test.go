@@ -27,7 +27,7 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	t.Cleanup(pool.Close)
 
 	store := storage.NewSettingsStore(pool)
-	if err := storage.EnsureSchema(ctx, pool); err != nil {
+	if err := storage.EnsureSchema(ctx, databaseURL); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.EnsureDefaultFileNamingSettings(ctx); err != nil {
@@ -76,7 +76,7 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() {
-		_ = store.DeleteMediaItem(context.Background(), item.ID)
+		_ = store.DeleteMediaItem(context.Background(), item.ID, false)
 	})
 
 	activity := storage.DownloadActivity{

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import CustomFormatForm from '$lib/components/settings/CustomFormatForm.svelte';
+	import CustomFormatImportModal from '$lib/components/settings/CustomFormatImportModal.svelte';
+	import CustomFormatTestParsingModal from '$lib/components/settings/CustomFormatTestParsingModal.svelte';
 	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
 	import { emptyCustomFormatForm } from '$lib/settings/forms';
 	import type {
@@ -14,6 +16,7 @@
 		deletingId?: string;
 		onSave: (_event: SubmitEvent) => void | Promise<void>;
 		onCancel: () => void;
+		onImport: (_format: CustomFormatFormValue) => void | Promise<void>;
 		onEdit: (_format: CustomFormat) => void;
 		onDelete: (_id: string) => void | Promise<void>;
 	}
@@ -25,15 +28,26 @@
 		deletingId,
 		onSave,
 		onCancel,
+		onImport,
 		onEdit,
 		onDelete
 	}: Props = $props();
 
 	let modalOpen = $state(false);
+	let testParsingOpen = $state(false);
+	let importOpen = $state(false);
 
 	function openModal() {
 		form = emptyCustomFormatForm();
 		modalOpen = true;
+	}
+
+	function openTestParsing() {
+		testParsingOpen = true;
+	}
+
+	function openImport() {
+		importOpen = true;
 	}
 
 	function editFormat(format: CustomFormat) {
@@ -60,7 +74,17 @@
 			<p class="section-kicker">Release scoring</p>
 			<h2 id="custom-format-settings-title">Custom formats</h2>
 		</div>
-		<button type="button" onclick={openModal}>Add custom format</button>
+		<div class="custom-format-topbar">
+			<button type="button" class="secondary" onclick={openImport}>
+				<span class="app-icon" aria-hidden="true">upload_file</span>
+				Import
+			</button>
+			<button type="button" class="secondary" onclick={openTestParsing}>
+				<span class="app-icon" aria-hidden="true">rule</span>
+				Test parsing
+			</button>
+			<button type="button" onclick={openModal}>Add custom format</button>
+		</div>
 	</div>
 
 	<div class="custom-format-grid">
@@ -69,14 +93,22 @@
 				<div class="custom-format-card-header">
 					<h3>{format.name}</h3>
 					<div class="row-actions">
-						<button type="button" class="secondary" onclick={() => editFormat(format)}>Edit</button>
 						<button
 							type="button"
-							class="danger"
+							class="secondary icon-button"
+							aria-label={`Edit ${format.name}`}
+							onclick={() => editFormat(format)}
+						>
+							<span class="app-icon" aria-hidden="true">edit</span>
+						</button>
+						<button
+							type="button"
+							class="danger icon-button"
 							disabled={deletingId === format.id}
+							aria-label={`${deletingId === format.id ? 'Deleting' : 'Delete'} ${format.name}`}
 							onclick={() => onDelete(format.id)}
 						>
-							{deletingId === format.id ? 'Deleting' : 'Delete'}
+							<span class="app-icon" aria-hidden="true">delete</span>
 						</button>
 					</div>
 				</div>
@@ -107,5 +139,13 @@
 		>
 			<CustomFormatForm bind:form {saving} onSave={saveFormat} onCancel={closeModal} />
 		</SettingsFormModal>
+	{/if}
+
+	{#if testParsingOpen}
+		<CustomFormatTestParsingModal onClose={() => (testParsingOpen = false)} />
+	{/if}
+
+	{#if importOpen}
+		<CustomFormatImportModal onClose={() => (importOpen = false)} {onImport} />
 	{/if}
 </div>

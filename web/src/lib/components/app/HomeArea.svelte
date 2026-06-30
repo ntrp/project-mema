@@ -33,6 +33,8 @@
 		addingKey?: string;
 		approvingRequestId?: string;
 		searchingItemId?: string;
+		scanningMediaItemId?: string;
+		updatingMediaModeItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
 		cancellingActivityId?: string;
@@ -41,6 +43,8 @@
 		onAddMedia: (_candidate: MediaSearchResult) => void;
 		onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
 		onFindReleases: (_item: MediaItem) => void;
+		onRescanMediaFiles: (_item: MediaItem) => void;
+		onUpdateMediaMode: (_item: MediaItem, _automatic: boolean) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 		onRefreshActivity: () => void;
@@ -62,6 +66,8 @@
 		addingKey,
 		approvingRequestId,
 		searchingItemId,
+		scanningMediaItemId,
+		updatingMediaModeItemId,
 		grabbingKey,
 		deletingMediaItemId,
 		cancellingActivityId,
@@ -70,6 +76,8 @@
 		onAddMedia,
 		onApproveMediaRequest,
 		onFindReleases,
+		onRescanMediaFiles,
+		onUpdateMediaMode,
 		onDeleteMedia,
 		onGrabRelease,
 		onRefreshActivity,
@@ -119,10 +127,14 @@
 				{qualityProfiles}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{searchingItemId}
+				{scanningMediaItemId}
+				{updatingMediaModeItemId}
 				{grabbingKey}
 				{deletingMediaItemId}
 				{canManage}
 				{onFindReleases}
+				{onRescanMediaFiles}
+				{onUpdateMediaMode}
 				{onDeleteMedia}
 				{onGrabRelease}
 			/>
@@ -139,10 +151,14 @@
 				{qualityProfiles}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{searchingItemId}
+				{scanningMediaItemId}
+				{updatingMediaModeItemId}
 				{grabbingKey}
 				{deletingMediaItemId}
 				{canManage}
 				{onFindReleases}
+				{onRescanMediaFiles}
+				{onUpdateMediaMode}
 				{onDeleteMedia}
 				{onGrabRelease}
 			/>

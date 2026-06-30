@@ -95,6 +95,10 @@ func autoSearchDownload(
 	eventBroker *events.Broker,
 	item storage.MediaItem,
 ) error {
+	if item.Manual {
+		slog.Debug("auto search download skipped because media is manual", "mediaItemId", item.ID, "title", item.Title)
+		return nil
+	}
 	if item.Status == "downloaded" || item.Status == "downloading" {
 		slog.Debug("auto search download skipped", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
 		return nil

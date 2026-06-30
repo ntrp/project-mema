@@ -155,6 +155,33 @@ func (s *Service) detailsTMDB(ctx context.Context, config Config, request Detail
 	return tmdbDetailsResult(payload, request.MediaType, externalID), nil
 }
 
+func (s *Service) Collection(ctx context.Context, config Config, collectionID string) (Collection, error) {
+	if config.Type != "tmdb" {
+		return Collection{}, ErrUnsupportedProvider
+	}
+	collectionID = strings.TrimSpace(collectionID)
+	if collectionID == "" {
+		return Collection{}, errors.New("collection id is required")
+	}
+	endpoint, err := url.JoinPath(strings.TrimRight(config.BaseURL, "/"), "collection", collectionID)
+	if err != nil {
+		return Collection{}, err
+	}
+
+	var payload tmdbCollection
+	if err := s.doJSON(ctx, config, http.MethodGet, endpoint, nil, &payload); err != nil {
+		return Collection{}, err
+	}
+	return Collection{
+		ID:           strconv.FormatInt(payload.ID, 10),
+		Name:         strings.TrimSpace(payload.Name),
+		Overview:     optionalString(payload.Overview),
+		PosterPath:   optionalString(payload.PosterPath),
+		BackdropPath: optionalString(payload.BackdropPath),
+		Parts:        tmdbResults(payload.Parts, "movie", len(payload.Parts)),
+	}, nil
+}
+
 func (s *Service) loadTMDBSeasonEpisodes(ctx context.Context, config Config, mediaPath string, externalID string, details *tmdbDetails) error {
 	for seasonIndex := range details.Seasons {
 		season := &details.Seasons[seasonIndex]
@@ -536,6 +563,8 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 		ExternalID:       externalID,
 		Overview:         optionalString(item.Overview),
 		PosterPath:       optionalString(item.PosterPath),
+		CollectionID:     tmdbCollectionID(item.Collection),
+		CollectionName:   tmdbCollectionName(item.Collection),
 		BackdropPath:     optionalString(item.BackdropPath),
 		Status:           optionalString(item.Status),
 		OriginalLanguage: optionalString(item.OriginalLanguage),
@@ -615,6 +644,20 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 		}
 	}
 	return details
+}
+
+func tmdbCollectionID(collection *tmdbCollection) *string {
+	if collection == nil || collection.ID == 0 {
+		return nil
+	}
+	return optionalString(strconv.FormatInt(collection.ID, 10))
+}
+
+func tmdbCollectionName(collection *tmdbCollection) *string {
+	if collection == nil {
+		return nil
+	}
+	return optionalString(collection.Name)
 }
 
 func tmdbNames(items []tmdbName) []string {

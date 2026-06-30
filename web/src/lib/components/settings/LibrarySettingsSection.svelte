@@ -1,20 +1,19 @@
 <script lang="ts">
 	import LibraryFolderForm from '$lib/components/settings/LibraryFolderForm.svelte';
-	import LibraryFolderTable from '$lib/components/settings/LibraryFolderTable.svelte';
-	import LibraryScanReview from '$lib/components/settings/LibraryScanReview.svelte';
+	import LibraryFolderAccordion from '$lib/components/settings/LibraryFolderAccordion.svelte';
 	import PathMappingSettings from '$lib/components/settings/PathMappingSettings.svelte';
 	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
 	import { emptyLibraryFolderForm } from '$lib/settings/forms';
+	import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
 	import type {
 		LibraryFolder,
 		LibraryFolderForm as LibraryFolderFormValue,
 		LibraryMediaKind,
 		LibraryScan,
-		LibraryScanItem,
-		LibraryScanItemMatchRequest,
 		PathMapping,
 		PathMappingForm,
-		MediaSearchResult
+		MediaSearchResult,
+		QualityProfileOption
 	} from '$lib/settings/types';
 
 	interface Props {
@@ -22,17 +21,20 @@
 		form: LibraryFolderFormValue;
 		pathMappings: PathMapping[];
 		pathMappingForm: PathMappingForm;
-		scan?: LibraryScan;
+		scansByFolder: Record<string, LibraryScan>;
+		openFolderId?: string;
+		qualityProfiles: QualityProfileOption[];
 		saving: boolean;
+		scanningLibraryFolderId?: string;
 		savingPathMapping: boolean;
 		deletingPathMappingId?: string;
-		loadingScan: boolean;
 		onSave: (_event: SubmitEvent) => void | Promise<void>;
+		onScan: (_id: string) => void | Promise<void>;
 		onDelete: (_id: string) => void | Promise<void>;
 		onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;
 		onDeletePathMapping: (_id: string) => void | Promise<void>;
 		onSearchMatch: (_kind: LibraryMediaKind, _query: string) => Promise<MediaSearchResult[]>;
-		onMatch: (_item: LibraryScanItem, _request: LibraryScanItemMatchRequest) => Promise<void>;
+		onImport: (_scan: LibraryScan, _rows: LibraryScanImportRow[]) => Promise<void>;
 	}
 
 	let {
@@ -40,17 +42,20 @@
 		form = $bindable(),
 		pathMappings,
 		pathMappingForm = $bindable(),
-		scan,
+		scansByFolder,
+		openFolderId,
+		qualityProfiles,
 		saving,
+		scanningLibraryFolderId,
 		savingPathMapping,
 		deletingPathMappingId,
-		loadingScan,
 		onSave,
+		onScan,
 		onDelete,
 		onSavePathMapping,
 		onDeletePathMapping,
 		onSearchMatch,
-		onMatch
+		onImport
 	}: Props = $props();
 
 	let modalOpen = $state(false);
@@ -81,7 +86,17 @@
 	<div class="settings-toolbar">
 		<button type="button" onclick={openModal}>Add library folder</button>
 	</div>
-	<LibraryFolderTable {folders} {onDelete} />
+	<LibraryFolderAccordion
+		{folders}
+		{scansByFolder}
+		{openFolderId}
+		scanningFolderId={scanningLibraryFolderId}
+		{qualityProfiles}
+		{onScan}
+		{onDelete}
+		{onSearchMatch}
+		{onImport}
+	/>
 	<PathMappingSettings
 		mappings={pathMappings}
 		bind:form={pathMappingForm}
@@ -90,7 +105,6 @@
 		onSave={onSavePathMapping}
 		onDelete={onDeletePathMapping}
 	/>
-	<LibraryScanReview {scan} loading={loadingScan} {onSearchMatch} {onMatch} />
 	{#if modalOpen}
 		<SettingsFormModal title="Add library folder" onClose={closeModal}>
 			<LibraryFolderForm bind:form {saving} onSave={save} />

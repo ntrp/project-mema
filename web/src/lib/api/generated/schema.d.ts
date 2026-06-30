@@ -161,6 +161,26 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/collections/{provider}/{collectionId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				provider: components['schemas']['MetadataProviderType'];
+				collectionId: string;
+			};
+			cookie?: never;
+		};
+		/** Get metadata for a movie collection */
+		get: operations['getMediaCollection'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items': {
 		parameters: {
 			query?: never;
@@ -254,6 +274,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/files/rescan': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Rescan a media item folder for media and metadata files */
+		post: operations['rescanMediaItemFiles'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/releases': {
 		parameters: {
 			query?: never;
@@ -286,6 +325,25 @@ export interface paths {
 		put?: never;
 		/** Enqueue a background release search for a monitored item */
 		post: operations['enqueueMediaReleaseSearch'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/mode': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update automatic or manual processing mode for a media item */
+		put: operations['updateMediaItemMode'];
+		post?: never;
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -570,6 +628,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/custom-formats/test-parsing': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test custom format parsing for a release title */
+		post: operations['testCustomFormatParsing'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/custom-formats/{id}': {
 		parameters: {
 			query?: never;
@@ -770,6 +845,25 @@ export interface paths {
 		post?: never;
 		/** Remove a configured library folder */
 		delete: operations['deleteLibraryFolder'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/library/folders/{id}/scan': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Scan an existing library folder for media */
+		post: operations['scanLibraryFolder'];
+		delete?: never;
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -1073,6 +1167,8 @@ export interface components {
 			externalId?: string;
 			overview?: string;
 			posterPath?: string;
+			collectionId?: string;
+			collectionName?: string;
 		};
 		MediaMetadataDetails: {
 			title: string;
@@ -1083,6 +1179,8 @@ export interface components {
 			externalId: string;
 			overview?: string;
 			posterPath?: string;
+			collectionId?: string;
+			collectionName?: string;
 			backdropPath?: string;
 			status?: string;
 			originalLanguage?: string;
@@ -1100,6 +1198,15 @@ export interface components {
 			facts?: components['schemas']['MediaMetadataFact'][];
 			seasons?: components['schemas']['MediaMetadataSeason'][];
 			cast?: components['schemas']['MediaMetadataPerson'][];
+		};
+		MediaCollection: {
+			id: string;
+			name: string;
+			provider: components['schemas']['MetadataProviderType'];
+			overview?: string;
+			posterPath?: string;
+			backdropPath?: string;
+			results: components['schemas']['MediaSearchResult'][];
 		};
 		MediaMetadataFact: {
 			label: string;
@@ -1149,6 +1256,9 @@ export interface components {
 			/** Format: int32 */
 			year?: number;
 			monitored: boolean;
+			monitorMode: components['schemas']['MediaMonitorMode'];
+			minimumAvailability: components['schemas']['MinimumAvailability'];
+			manual: boolean;
 			externalProvider?: string;
 			externalId?: string;
 			overview?: string;
@@ -1160,6 +1270,15 @@ export interface components {
 		};
 		/** @enum {string} */
 		MediaItemStatus: 'missing' | 'downloading' | 'downloaded';
+		/** @enum {string} */
+		MediaItemMode: 'automatic' | 'manual';
+		MediaItemModeRequest: {
+			mode: components['schemas']['MediaItemMode'];
+		};
+		/** @enum {string} */
+		MediaMonitorMode: 'only_media' | 'collection';
+		/** @enum {string} */
+		MinimumAvailability: 'announced' | 'in_cinema' | 'released';
 		MediaRequestListResponse: {
 			requests: components['schemas']['MediaRequest'][];
 		};
@@ -1187,6 +1306,9 @@ export interface components {
 		MediaRequestCreateRequest: {
 			title: string;
 			type: components['schemas']['MediaType'];
+			monitorMode: components['schemas']['MediaMonitorMode'];
+			minimumAvailability: components['schemas']['MinimumAvailability'];
+			manual: boolean;
 			/** Format: int32 */
 			year?: number;
 			externalProvider?: string;
@@ -1247,6 +1369,28 @@ export interface components {
 		MediaProfileRequest: {
 			name: string;
 			qualityIds: string[];
+			upgradesAllowed: boolean;
+			upgradeUntilQualityId?: string | null;
+			/** Format: int32 */
+			minimumCustomFormatScore: number;
+			/** Format: int32 */
+			upgradeUntilCustomFormatScore: number;
+			/** Format: int32 */
+			minimumCustomFormatScoreIncrement: number;
+			targetLanguages: string[];
+			targetLanguageScores: components['schemas']['MediaProfileLanguageScore'][];
+			customFormatScores: components['schemas']['MediaProfileCustomFormatScore'][];
+		};
+		MediaProfileLanguageScore: {
+			languageId: string;
+			/** Format: int32 */
+			score: number;
+		};
+		MediaProfileCustomFormatScore: {
+			/** Format: uuid */
+			customFormatId: string;
+			/** Format: int32 */
+			score: number;
 		};
 		CustomFormatListResponse: {
 			formats: components['schemas']['CustomFormat'][];
@@ -1284,6 +1428,58 @@ export interface components {
 			| 'edition'
 			| 'indexerFlag'
 			| 'language';
+		CustomFormatParsingRequest: {
+			fileName: string;
+		};
+		CustomFormatParsingResponse: {
+			fileName: string;
+			release: components['schemas']['ParsedReleaseInfo'];
+			quality: components['schemas']['ParsedQualityInfo'];
+			languages: string[];
+			details: components['schemas']['ParsedReleaseDetails'];
+			matchedProfile?: components['schemas']['CustomFormatParsingProfile'];
+			/** Format: int32 */
+			calculatedScore: number;
+			matchedCustomFormats: components['schemas']['CustomFormatParsingMatch'][];
+		};
+		CustomFormatParsingProfile: {
+			id: string;
+			name: string;
+		};
+		ParsedReleaseInfo: {
+			releaseTitle: string;
+			movieTitle: string;
+			year: string;
+			edition: string;
+			releaseGroup: string;
+			releaseHash: string;
+		};
+		ParsedQualityInfo: {
+			qualityId: string;
+			quality: string;
+			source: string;
+			resolution: string;
+			videoCodec: string;
+			audioCodec: string;
+			audioChannels: string;
+			version: string;
+			proper: boolean;
+			repack: boolean;
+			real: boolean;
+		};
+		ParsedReleaseDetails: {
+			releaseType: string;
+			customFormatNames: string[];
+			/** Format: int32 */
+			matchedSpecCount: number;
+		};
+		CustomFormatParsingMatch: {
+			id: string;
+			name: string;
+			/** Format: int32 */
+			score: number;
+			matchedSpecs: components['schemas']['CustomFormatSpec'][];
+		};
 		FileNamingSettings: components['schemas']['FileNamingSettingsRequest'] & {
 			/** Format: date-time */
 			createdAt: string;
@@ -1580,6 +1776,9 @@ export interface components {
 			/** Format: int32 */
 			year?: number;
 			monitored: boolean;
+			qualityProfileId: string;
+			monitorMode: components['schemas']['MediaMonitorMode'];
+			minimumAvailability: components['schemas']['MinimumAvailability'];
 			externalProvider?: string;
 			externalId?: string;
 			overview?: string;
@@ -1932,6 +2131,31 @@ export interface operations {
 			404: components['responses']['NotFound'];
 		};
 	};
+	getMediaCollection: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				provider: components['schemas']['MetadataProviderType'];
+				collectionId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Collection metadata and movies */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaCollection'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	listMediaItems: {
 		parameters: {
 			query?: never;
@@ -2083,7 +2307,10 @@ export interface operations {
 	};
 	deleteMediaItem: {
 		parameters: {
-			query?: never;
+			query?: {
+				/** @description Remove the media item from the app without deleting its media folder. */
+				keepFiles?: boolean;
+			};
 			header?: never;
 			path: {
 				id: components['parameters']['ResourceId'];
@@ -2099,6 +2326,31 @@ export interface operations {
 				};
 				content?: never;
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	rescanMediaItemFiles: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media item with refreshed file list */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};
@@ -2147,6 +2399,35 @@ export interface operations {
 					'application/json': components['schemas']['JobEnqueueResponse'];
 				};
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	updateMediaItemMode: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaItemModeRequest'];
+			};
+		};
+		responses: {
+			/** @description Media item mode updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};
@@ -2735,6 +3016,32 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 		};
 	};
+	testCustomFormatParsing: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['CustomFormatParsingRequest'];
+			};
+		};
+		responses: {
+			/** @description Parsed release details and matched custom formats */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CustomFormatParsingResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
 	updateCustomFormat: {
 		parameters: {
 			query?: never;
@@ -3193,6 +3500,31 @@ export interface operations {
 				};
 				content?: never;
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	scanLibraryFolder: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Library folder scan completed */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryScan'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};

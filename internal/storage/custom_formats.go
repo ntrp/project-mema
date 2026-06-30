@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	_ "embed"
 	"encoding/json"
 	"errors"
 	"time"
@@ -35,14 +34,7 @@ type CustomFormatInput struct {
 	ExcludeSpecs []CustomFormatSpec
 }
 
-//go:embed trash_custom_formats.json
-var trashCustomFormatsJSON []byte
-
 func (s *SettingsStore) ListCustomFormats(ctx context.Context) ([]CustomFormat, error) {
-	if err := s.EnsureDefaultCustomFormats(ctx); err != nil {
-		return nil, err
-	}
-
 	rows, err := s.pool.Query(ctx, `
 		select id, name, include_specs, exclude_specs, created_at, updated_at
 		from app.custom_formats
@@ -62,41 +54,6 @@ func (s *SettingsStore) ListCustomFormats(ctx context.Context) ([]CustomFormat, 
 		formats = append(formats, format)
 	}
 	return formats, rows.Err()
-}
-
-func (s *SettingsStore) EnsureDefaultCustomFormats(ctx context.Context) error {
-	if err := s.NormalizeDefaultCustomFormatNames(ctx); err != nil {
-		return err
-	}
-
-	var count int
-	if err := s.pool.QueryRow(ctx, `select count(*) from app.custom_formats`).Scan(&count); err != nil {
-		return err
-	}
-	if count > 0 {
-		return nil
-	}
-
-	formats, err := defaultCustomFormats()
-	if err != nil {
-		return err
-	}
-	for _, format := range formats {
-		if _, err := s.CreateCustomFormat(ctx, format); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (s *SettingsStore) NormalizeDefaultCustomFormatNames(ctx context.Context) error {
-	_, err := s.pool.Exec(ctx, `
-		update app.custom_formats
-		set name = regexp_replace(name, '^(Radarr|Sonarr) ', ''),
-			updated_at = now()
-		where name ~ '^(Radarr|Sonarr) '
-	`)
-	return err
 }
 
 func (s *SettingsStore) CreateCustomFormat(ctx context.Context, input CustomFormatInput) (CustomFormat, error) {
@@ -137,12 +94,6 @@ func (s *SettingsStore) DeleteCustomFormat(ctx context.Context, id uuid.UUID) er
 		return ErrNotFound
 	}
 	return nil
-}
-
-func defaultCustomFormats() ([]CustomFormatInput, error) {
-	var formats []CustomFormatInput
-	err := json.Unmarshal(trashCustomFormatsJSON, &formats)
-	return formats, err
 }
 
 func marshalCustomFormatSpecs(input CustomFormatInput) ([]byte, []byte, error) {

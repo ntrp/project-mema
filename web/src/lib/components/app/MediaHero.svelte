@@ -7,8 +7,10 @@
 		qualityProfileLabel: string;
 		canManage: boolean;
 		searchingItemId?: string;
+		scanningMediaItemId?: string;
 		deletingMediaItemId?: string;
 		onFindReleases: (_item: MediaItem) => void;
+		onRescanMediaFiles: (_item: MediaItem) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 	}
 
@@ -18,8 +20,10 @@
 		qualityProfileLabel,
 		canManage,
 		searchingItemId,
+		scanningMediaItemId,
 		deletingMediaItemId,
 		onFindReleases,
+		onRescanMediaFiles,
 		onDeleteMedia
 	}: Props = $props();
 
@@ -61,6 +65,7 @@
 			<span><strong>Type</strong>{item.type}</span>
 			<span><strong>Status</strong>{statusLabel(item.status)}</span>
 			<span><strong>Profile</strong>{qualityProfileLabel}</span>
+			<span><strong>Mode</strong>{item.manual ? 'Manual' : 'Automatic'}</span>
 		</div>
 		{#if item.tags?.length}
 			<div class="metadata-tags" aria-label="Tags">
@@ -77,6 +82,15 @@
 					onclick={() => onFindReleases(item)}
 				>
 					{searchingItemId === item.id ? 'Queued' : 'Find releases'}
+				</button>
+				<button
+					type="button"
+					class="secondary"
+					disabled={scanningMediaItemId === item.id || !item.mediaFolderPath}
+					onclick={() => onRescanMediaFiles(item)}
+				>
+					<span class="app-icon" aria-hidden="true">sync</span>
+					<span>{scanningMediaItemId === item.id ? 'Scanning' : 'Rescan files'}</span>
 				</button>
 				<button
 					type="button"

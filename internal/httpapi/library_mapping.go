@@ -166,15 +166,27 @@ func libraryMatchInput(w http.ResponseWriter, request LibraryScanItemMatchReques
 		writeError(w, http.StatusBadRequest, "invalid_media_kind", "A movie, series, or anime type is required")
 		return storage.LibraryMatchInput{}, false
 	}
+	qualityProfileID := strings.TrimSpace(request.QualityProfileId)
+	if qualityProfileID == "" {
+		writeError(w, http.StatusBadRequest, "invalid_quality_profile", "Quality profile is required")
+		return storage.LibraryMatchInput{}, false
+	}
+	if !request.MonitorMode.Valid() || !request.MinimumAvailability.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_monitoring_options", "Monitor and availability options are required")
+		return storage.LibraryMatchInput{}, false
+	}
 	return storage.LibraryMatchInput{
-		MediaKind:        string(request.MediaKind),
-		Title:            title,
-		Year:             request.Year,
-		Monitored:        request.Monitored,
-		ExternalProvider: optionalTrimmedString(request.ExternalProvider),
-		ExternalID:       optionalTrimmedString(request.ExternalId),
-		Overview:         optionalTrimmedString(request.Overview),
-		PosterPath:       optionalTrimmedString(request.PosterPath),
+		MediaKind:           string(request.MediaKind),
+		Title:               title,
+		Year:                request.Year,
+		Monitored:           request.Monitored,
+		QualityProfileID:    qualityProfileID,
+		MonitorMode:         string(request.MonitorMode),
+		MinimumAvailability: string(request.MinimumAvailability),
+		ExternalProvider:    optionalTrimmedString(request.ExternalProvider),
+		ExternalID:          optionalTrimmedString(request.ExternalId),
+		Overview:            optionalTrimmedString(request.Overview),
+		PosterPath:          optionalTrimmedString(request.PosterPath),
 	}, true
 }
 

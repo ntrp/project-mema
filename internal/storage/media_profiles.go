@@ -3,52 +3,67 @@ package storage
 import (
 	"context"
 	"errors"
-	"regexp"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type MediaProfile struct {
-	ID         string
-	Name       string
-	QualityIDs []string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID                                string
+	Name                              string
+	QualityIDs                        []string
+	UpgradesAllowed                   bool
+	UpgradeUntilQualityID             *string
+	MinimumCustomFormatScore          int32
+	UpgradeUntilCustomFormatScore     int32
+	MinimumCustomFormatScoreIncrement int32
+	TargetLanguages                   []string
+	TargetLanguageScores              []MediaProfileLanguageScore
+	CustomFormatScores                []MediaProfileCustomFormatScore
+	CreatedAt                         time.Time
+	UpdatedAt                         time.Time
 }
 
 type MediaProfileInput struct {
-	Name       string
-	QualityIDs []string
+	Name                              string
+	QualityIDs                        []string
+	UpgradesAllowed                   bool
+	UpgradeUntilQualityID             *string
+	MinimumCustomFormatScore          int32
+	UpgradeUntilCustomFormatScore     int32
+	MinimumCustomFormatScoreIncrement int32
+	TargetLanguages                   []string
+	TargetLanguageScores              []MediaProfileLanguageScore
+	CustomFormatScores                []MediaProfileCustomFormatScore
 }
 
-func (s *SettingsStore) EnsureDefaultMediaProfiles(ctx context.Context) error {
-	for _, profile := range defaultMediaProfiles() {
-		if err := s.ensureMediaProfile(ctx, profile); err != nil {
-			return err
-		}
-	}
-	return nil
+type MediaProfileLanguageScore struct {
+	LanguageID string
+	Score      int32
+}
+
+type MediaProfileCustomFormatScore struct {
+	CustomFormatID uuid.UUID
+	Score          int32
 }
 
 func (s *SettingsStore) ListMediaProfiles(ctx context.Context) ([]MediaProfile, error) {
-	if err := s.EnsureDefaultMediaProfiles(ctx); err != nil {
-		return nil, err
-	}
-
 	rows, err := s.pool.Query(ctx, `
 		select
-			p.id,
-			p.name,
-			coalesce(array_agg(q.quality_id order by q.sort_order, q.quality_id) filter (where q.quality_id is not null), '{}') as quality_ids,
-			p.created_at,
-			p.updated_at
-		from app.media_profiles p
-		left join app.media_profile_qualities q on q.profile_id = p.id
-		group by p.id, p.name, p.created_at, p.updated_at
-		order by lower(p.name)
+			id,
+			name,
+			upgrades_allowed,
+			upgrade_until_quality_id,
+			minimum_custom_format_score,
+			upgrade_until_custom_format_score,
+			minimum_custom_format_score_increment,
+			created_at,
+			updated_at
+		from app.media_profiles
+		order by lower(name)
 	`)
 	if err != nil {
 		return nil, err
@@ -57,8 +72,11 @@ func (s *SettingsStore) ListMediaProfiles(ctx context.Context) ([]MediaProfile, 
 
 	profiles := []MediaProfile{}
 	for rows.Next() {
-		profile, err := scanMediaProfile(rows)
+		profile, err := scanMediaProfileBase(rows)
 		if err != nil {
+			return nil, err
+		}
+		if err := s.populateMediaProfile(ctx, &profile); err != nil {
 			return nil, err
 		}
 		profiles = append(profiles, profile)
@@ -67,12 +85,13 @@ func (s *SettingsStore) ListMediaProfiles(ctx context.Context) ([]MediaProfile, 
 }
 
 func (s *SettingsStore) MediaProfileExists(ctx context.Context, id string) (bool, error) {
-	if err := s.EnsureDefaultMediaProfiles(ctx); err != nil {
-		return false, err
-	}
 	var exists bool
 	err := s.pool.QueryRow(ctx, `select exists(select 1 from app.media_profiles where id = $1)`, id).Scan(&exists)
 	return exists, err
+}
+
+func (s *SettingsStore) GetMediaProfile(ctx context.Context, id string) (MediaProfile, error) {
+	return s.getMediaProfile(ctx, strings.TrimSpace(id))
 }
 
 func (s *SettingsStore) CreateMediaProfile(ctx context.Context, input MediaProfileInput) (MediaProfile, error) {
@@ -84,11 +103,15 @@ func (s *SettingsStore) CreateMediaProfile(ctx context.Context, input MediaProfi
 	if err != nil {
 		return MediaProfile{}, err
 	}
+	normalized, err := normalizeMediaProfileInput(input, qualityIDs)
+	if err != nil {
+		return MediaProfile{}, err
+	}
 	id := mediaProfileSlug(name)
 	if id == "" {
 		return MediaProfile{}, ErrInvalidInput
 	}
-	return s.saveMediaProfile(ctx, id, name, qualityIDs, true)
+	return s.saveMediaProfile(ctx, id, name, qualityIDs, normalized, true)
 }
 
 func (s *SettingsStore) UpdateMediaProfile(ctx context.Context, id string, input MediaProfileInput) (MediaProfile, error) {
@@ -100,7 +123,11 @@ func (s *SettingsStore) UpdateMediaProfile(ctx context.Context, id string, input
 	if err != nil {
 		return MediaProfile{}, err
 	}
-	return s.saveMediaProfile(ctx, strings.TrimSpace(id), name, qualityIDs, false)
+	normalized, err := normalizeMediaProfileInput(input, qualityIDs)
+	if err != nil {
+		return MediaProfile{}, err
+	}
+	return s.saveMediaProfile(ctx, strings.TrimSpace(id), name, qualityIDs, normalized, false)
 }
 
 func (s *SettingsStore) DeleteMediaProfile(ctx context.Context, id string) error {
@@ -119,6 +146,7 @@ func (s *SettingsStore) saveMediaProfile(
 	id string,
 	name string,
 	qualityIDs []string,
+	input MediaProfileInput,
 	create bool,
 ) (MediaProfile, error) {
 	tx, err := s.pool.Begin(ctx)
@@ -129,17 +157,47 @@ func (s *SettingsStore) saveMediaProfile(
 
 	if create {
 		if _, err := tx.Exec(ctx, `
-			insert into app.media_profiles (id, name)
-			values ($1, $2)
-		`, id, name); err != nil {
+			insert into app.media_profiles (
+				id,
+				name,
+				upgrades_allowed,
+				upgrade_until_quality_id,
+				minimum_custom_format_score,
+				upgrade_until_custom_format_score,
+				minimum_custom_format_score_increment
+			)
+			values ($1, $2, $3, $4, $5, $6, $7)
+		`,
+			id,
+			name,
+			input.UpgradesAllowed,
+			input.UpgradeUntilQualityID,
+			input.MinimumCustomFormatScore,
+			input.UpgradeUntilCustomFormatScore,
+			input.MinimumCustomFormatScoreIncrement,
+		); err != nil {
 			return MediaProfile{}, normalizeMediaProfileWriteError(err)
 		}
 	} else {
 		tag, err := tx.Exec(ctx, `
 			update app.media_profiles
-			set name = $2, updated_at = now()
+			set name = $2,
+				upgrades_allowed = $3,
+				upgrade_until_quality_id = $4,
+				minimum_custom_format_score = $5,
+				upgrade_until_custom_format_score = $6,
+				minimum_custom_format_score_increment = $7,
+				updated_at = now()
 			where id = $1
-		`, id, name)
+		`,
+			id,
+			name,
+			input.UpgradesAllowed,
+			input.UpgradeUntilQualityID,
+			input.MinimumCustomFormatScore,
+			input.UpgradeUntilCustomFormatScore,
+			input.MinimumCustomFormatScoreIncrement,
+		)
 		if err != nil {
 			return MediaProfile{}, normalizeMediaProfileWriteError(err)
 		}
@@ -151,6 +209,12 @@ func (s *SettingsStore) saveMediaProfile(
 	if err := replaceMediaProfileQualities(ctx, tx, id, qualityIDs); err != nil {
 		return MediaProfile{}, err
 	}
+	if err := replaceMediaProfileLanguages(ctx, tx, id, input.TargetLanguageScores); err != nil {
+		return MediaProfile{}, normalizeMediaProfileWriteError(err)
+	}
+	if err := replaceMediaProfileCustomFormats(ctx, tx, id, input.CustomFormatScores); err != nil {
+		return MediaProfile{}, normalizeMediaProfileWriteError(err)
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return MediaProfile{}, normalizeMediaProfileWriteError(err)
 	}
@@ -158,39 +222,27 @@ func (s *SettingsStore) saveMediaProfile(
 }
 
 func (s *SettingsStore) getMediaProfile(ctx context.Context, id string) (MediaProfile, error) {
-	profile, err := scanMediaProfile(s.pool.QueryRow(ctx, `
+	profile, err := scanMediaProfileBase(s.pool.QueryRow(ctx, `
 		select
-			p.id,
-			p.name,
-			coalesce(array_agg(q.quality_id order by q.sort_order, q.quality_id) filter (where q.quality_id is not null), '{}') as quality_ids,
-			p.created_at,
-			p.updated_at
-		from app.media_profiles p
-		left join app.media_profile_qualities q on q.profile_id = p.id
-		where p.id = $1
-		group by p.id, p.name, p.created_at, p.updated_at
+			id,
+			name,
+			upgrades_allowed,
+			upgrade_until_quality_id,
+			minimum_custom_format_score,
+			upgrade_until_custom_format_score,
+			minimum_custom_format_score_increment,
+			created_at,
+			updated_at
+		from app.media_profiles
+		where id = $1
 	`, id))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return MediaProfile{}, ErrNotFound
 	}
-	return profile, err
-}
-
-func (s *SettingsStore) ensureMediaProfile(ctx context.Context, profile MediaProfile) error {
-	var insertedID string
-	err := s.pool.QueryRow(ctx, `
-		insert into app.media_profiles (id, name)
-		values ($1, $2)
-		on conflict do nothing
-		returning id
-	`, profile.ID, profile.Name).Scan(&insertedID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil
-	}
 	if err != nil {
-		return normalizeMediaProfileWriteError(err)
+		return MediaProfile{}, err
 	}
-	return replaceMediaProfileQualities(ctx, s.pool, insertedID, profile.QualityIDs)
+	return profile, s.populateMediaProfile(ctx, &profile)
 }
 
 type mediaProfileQuerier interface {
@@ -221,74 +273,6 @@ func replaceMediaProfileQualities(
 		}
 	}
 	return nil
-}
-
-func defaultMediaProfiles() []MediaProfile {
-	return []MediaProfile{
-		{ID: "any", Name: "Any acceptable release", QualityIDs: qualityDefinitionIDs()},
-		{ID: "hd-1080p", Name: "HD 1080p", QualityIDs: []string{
-			"hdtv-720p", "webdl-720p", "webrip-720p", "bluray-720p",
-			"hdtv-1080p", "webdl-1080p", "webrip-1080p", "bluray-1080p",
-		}},
-		{ID: "uhd-4k", Name: "UHD 4K", QualityIDs: []string{
-			"webdl-1080p", "webrip-1080p", "bluray-1080p", "remux-1080p",
-			"hdtv-2160p", "webdl-2160p", "webrip-2160p", "bluray-2160p", "remux-2160p",
-		}},
-		{ID: "anime-1080p", Name: "Anime 1080p", QualityIDs: []string{
-			"webdl-720p", "webrip-720p", "bluray-720p",
-			"webdl-1080p", "webrip-1080p", "bluray-1080p",
-		}},
-	}
-}
-
-func qualityDefinitionIDs() []string {
-	definitions := QualitySizeDefinitions()
-	ids := make([]string, 0, len(definitions))
-	for _, definition := range definitions {
-		ids = append(ids, definition.ID)
-	}
-	return ids
-}
-
-func normalizeProfileQualityIDs(values []string) ([]string, error) {
-	definitions := QualitySizeDefinitionMap()
-	seen := map[string]struct{}{}
-	qualityIDs := []string{}
-	for _, value := range values {
-		qualityID := strings.TrimSpace(value)
-		if qualityID == "" {
-			continue
-		}
-		if _, ok := definitions[qualityID]; !ok {
-			return nil, ErrInvalidInput
-		}
-		if _, ok := seen[qualityID]; ok {
-			continue
-		}
-		seen[qualityID] = struct{}{}
-		qualityIDs = append(qualityIDs, qualityID)
-	}
-	return qualityIDs, nil
-}
-
-func normalizeMediaProfileName(value string) string {
-	return strings.Join(strings.Fields(value), " ")
-}
-
-var nonProfileSlugCharacter = regexp.MustCompile(`[^a-z0-9]+`)
-
-func mediaProfileSlug(name string) string {
-	slug := strings.Trim(nonProfileSlugCharacter.ReplaceAllString(strings.ToLower(name), "-"), "-")
-	if len(slug) > 80 {
-		slug = strings.Trim(slug[:80], "-")
-	}
-	return slug
-}
-
-func scanMediaProfile(row pgx.Row) (MediaProfile, error) {
-	var profile MediaProfile
-	err := row.Scan(&profile.ID, &profile.Name, &profile.QualityIDs, &profile.CreatedAt, &profile.UpdatedAt)
-	return profile, err
 }
 
 func normalizeMediaProfileWriteError(err error) error {

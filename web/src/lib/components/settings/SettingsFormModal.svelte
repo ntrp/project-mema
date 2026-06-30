@@ -5,14 +5,15 @@
 		title: string;
 		onClose: () => void;
 		children: Snippet;
+		modalClass?: string;
 	}
 
-	let { title, onClose, children }: Props = $props();
+	let { title, onClose, children, modalClass = '' }: Props = $props();
 </script>
 
 <div class="modal-backdrop" role="presentation" onclick={onClose}>
 	<div
-		class="modal-shell settings-form-modal"
+		class={`modal-shell settings-form-modal ${modalClass}`.trim()}
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="settings-form-modal-title"
