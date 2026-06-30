@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	type MenuIcon = 'discover' | 'movies' | 'series' | 'activity' | 'settings';
+	type MenuIcon = 'discover' | 'movies' | 'series' | 'activity' | 'settings' | 'computer';
 	type MenuHref =
 		| '/discover'
 		| '/requests'
@@ -14,10 +14,11 @@
 		| '/settings/quality'
 		| '/settings/file-naming'
 		| '/settings/profiles'
+		| '/settings/custom-formats'
 		| '/settings/metadata'
 		| '/settings/tags'
 		| '/settings/users'
-		| '/settings/system/logs';
+		| '/system/logs';
 
 	interface SubmenuItem<TValue extends string> {
 		value: TValue;
@@ -100,6 +101,11 @@
 						<svg viewBox="0 0 24 24">
 							<circle cx="12" cy="12" r="8" />
 							<path d="M12 8v5l3 2" />
+						</svg>
+					{:else if item.icon === 'computer'}
+						<svg viewBox="0 0 24 24">
+							<rect x="4" y="5" width="16" height="12" rx="2" />
+							<path d="M8 21h8M12 17v4" />
 						</svg>
 					{:else}
 						<svg viewBox="0 0 24 24">

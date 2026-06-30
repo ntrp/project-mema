@@ -552,6 +552,44 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/custom-formats': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List custom formats */
+		get: operations['listCustomFormats'];
+		put?: never;
+		/** Create a custom format */
+		post: operations['createCustomFormat'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/custom-formats/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a custom format */
+		put: operations['updateCustomFormat'];
+		post?: never;
+		/** Delete a custom format */
+		delete: operations['deleteCustomFormat'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/metadata-providers': {
 		parameters: {
 			query?: never;
@@ -1210,6 +1248,42 @@ export interface components {
 			name: string;
 			qualityIds: string[];
 		};
+		CustomFormatListResponse: {
+			formats: components['schemas']['CustomFormat'][];
+		};
+		CustomFormat: components['schemas']['CustomFormatRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		CustomFormatRequest: {
+			name: string;
+			includeSpecs: components['schemas']['CustomFormatSpec'][];
+			excludeSpecs: components['schemas']['CustomFormatSpec'][];
+		};
+		CustomFormatSpec: {
+			id: string;
+			name: string;
+			type: components['schemas']['CustomFormatSpecType'];
+			value: string;
+			required: boolean;
+		};
+		/** @enum {string} */
+		CustomFormatSpecType:
+			| 'releaseTitle'
+			| 'source'
+			| 'resolution'
+			| 'quality'
+			| 'videoCodec'
+			| 'audioCodec'
+			| 'releaseGroup'
+			| 'releaseType'
+			| 'edition'
+			| 'indexerFlag'
+			| 'language';
 		FileNamingSettings: components['schemas']['FileNamingSettingsRequest'] & {
 			/** Format: date-time */
 			createdAt: string;
@@ -1288,6 +1362,7 @@ export interface components {
 			downloadUrl: string;
 			/** @enum {string} */
 			status: 'queued' | 'grabbed' | 'downloading' | 'completed' | 'cancelled' | 'failed';
+			progressPercent?: number;
 			error?: string;
 			/** Format: date-time */
 			createdAt: string;
@@ -1720,7 +1795,7 @@ export interface operations {
 		};
 		requestBody?: never;
 		responses: {
-			/** @description Current authenticated session */
+			/** @description Current session state */
 			200: {
 				headers: {
 					[name: string]: unknown;
@@ -1729,7 +1804,6 @@ export interface operations {
 					'application/json': components['schemas']['SessionResponse'];
 				};
 			};
-			401: components['responses']['Unauthorized'];
 		};
 	};
 	searchMedia: {
@@ -2604,6 +2678,104 @@ export interface operations {
 		requestBody?: never;
 		responses: {
 			/** @description Media profile deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listCustomFormats: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Custom formats */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CustomFormatListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createCustomFormat: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['CustomFormatRequest'];
+			};
+		};
+		responses: {
+			/** @description Custom format created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CustomFormat'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateCustomFormat: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['CustomFormatRequest'];
+			};
+		};
+		responses: {
+			/** @description Custom format updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CustomFormat'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteCustomFormat: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Custom format deleted */
 			204: {
 				headers: {
 					[name: string]: unknown;

@@ -161,8 +161,7 @@ func (s *Service) cancelSABnzbd(ctx context.Context, config Config, request Canc
 
 func (s *Service) statusSABnzbdQueue(ctx context.Context, config Config, request StatusRequest) StatusResult {
 	endpoint, err := sabnzbdAPIEndpoint(config, map[string]string{
-		"mode":   "queue",
-		"search": request.DownloadID,
+		"mode": "queue",
 	})
 	if err != nil {
 		return statusLookupFailedResult("Invalid SABnzbd URL", "error", err.Error())
@@ -183,8 +182,9 @@ func (s *Service) statusSABnzbdQueue(ctx context.Context, config Config, request
 	var payload struct {
 		Queue struct {
 			Slots []struct {
-				NZOID  string `json:"nzo_id"`
-				Status string `json:"status"`
+				NZOID      string `json:"nzo_id"`
+				Status     string `json:"status"`
+				Percentage string `json:"percentage"`
 			} `json:"slots"`
 		} `json:"queue"`
 	}
@@ -195,19 +195,19 @@ func (s *Service) statusSABnzbdQueue(ctx context.Context, config Config, request
 		if slot.NZOID != request.DownloadID {
 			continue
 		}
+		progress := progressFromPercentString(slot.Percentage)
 		status := strings.ToLower(slot.Status)
 		if strings.Contains(status, "pause") {
-			return statusLookupResult("grabbed", "SABnzbd download is paused", "nzoId", slot.NZOID, "clientStatus", slot.Status)
+			return statusLookupResultWithProgress("grabbed", progress, "SABnzbd download is paused", "nzoId", slot.NZOID, "clientStatus", slot.Status)
 		}
-		return statusLookupResult("downloading", "SABnzbd download is active", "nzoId", slot.NZOID, "clientStatus", slot.Status)
+		return statusLookupResultWithProgress("downloading", progress, "SABnzbd download is active", "nzoId", slot.NZOID, "clientStatus", slot.Status)
 	}
 	return statusLookupNotFoundResult("SABnzbd download was not found in queue")
 }
 
 func (s *Service) statusSABnzbdHistory(ctx context.Context, config Config, request StatusRequest) StatusResult {
 	endpoint, err := sabnzbdAPIEndpoint(config, map[string]string{
-		"mode":   "history",
-		"search": request.DownloadID,
+		"mode": "history",
 	})
 	if err != nil {
 		return statusLookupFailedResult("Invalid SABnzbd URL", "error", err.Error())
@@ -250,8 +250,9 @@ func (s *Service) statusSABnzbdHistory(ctx context.Context, config Config, reque
 			}
 			return statusLookupResult("failed", message, "nzoId", slot.NZOID, "clientStatus", slot.Status)
 		}
-		return statusLookupResultWithFiles(
+		return statusLookupResultWithProgressAndFiles(
 			"completed",
+			completedProgress(),
 			"SABnzbd download completed",
 			sabnzbdStatusFiles(slot.Storage),
 			"nzoId", slot.NZOID,

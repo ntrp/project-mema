@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/riverqueue/river"
@@ -31,12 +32,15 @@ type DownloadActivitySyncWorker struct {
 func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[DownloadActivitySyncArgs]) error {
 	activities, err := w.settings.ListActiveDownloadActivity(ctx)
 	if err != nil {
+		slog.Error("download activity sync list failed", "error", err)
 		return fmt.Errorf("list active download activity: %w", err)
 	}
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
+		slog.Error("download activity sync client list failed", "error", err)
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
+	slog.Debug("download activity sync started", "activityCount", len(activities), "clientCount", len(clients))
 	clientsByName := map[string]storage.DownloadClient{}
 	for _, client := range clients {
 		clientsByName[client.Name] = client
@@ -49,6 +53,7 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[Down
 			continue
 		}
 		if err := w.syncActivity(ctx, activity, client); err != nil {
+			slog.Error("download activity sync item failed", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "releaseTitle", activity.ReleaseTitle, "error", err)
 			failures = append(failures, fmt.Sprintf("%s: %s", activity.ReleaseTitle, err.Error()))
 		}
 	}
@@ -59,6 +64,7 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[Down
 }
 
 func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity storage.DownloadActivity, client storage.DownloadClient) error {
+	slog.Debug("checking download activity status", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "downloadClientName", activity.DownloadClientName, "downloadId", activity.DownloadID)
 	result := w.downloadClients.Status(ctx, downloadClientConfig(client), downloadclients.StatusRequest{
 		DownloadID: *activity.DownloadID,
 	})
@@ -70,16 +76,22 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		updated, err := w.settings.UpdateDownloadActivityStatus(ctx, activity.ID, "failed", &message)
 		if err == nil {
 			w.publishActivity(updated, activity)
+		} else {
+			slog.Error("failed to mark download activity failed", "activityId", activity.ID, "error", err)
 		}
 		return err
 	}
 	if !result.Found {
+		slog.Debug("download activity not found in client", "activityId", activity.ID, "downloadId", activity.DownloadID)
 		return nil
 	}
+	slog.Debug("download activity status received", "activityId", activity.ID, "status", result.Status, "progressPercent", result.ProgressPercent, "fileCount", len(result.Files))
 	if result.Status == "completed" {
 		if err := w.imports.ImportCompletedDownload(ctx, activity, result.Files); err != nil {
+			slog.Error("completed download import failed", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "error", err)
 			return w.failActivity(ctx, activity, err.Error())
 		}
+		slog.Debug("completed download imported", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "fileCount", len(result.Files))
 	}
 	message := (*string)(nil)
 	if result.Status == "failed" {
@@ -88,8 +100,9 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 			message = &trimmed
 		}
 	}
-	updated, err := w.settings.UpdateDownloadActivityStatus(ctx, activity.ID, result.Status, message)
+	updated, err := w.settings.UpdateDownloadActivityProgress(ctx, activity.ID, result.Status, result.ProgressPercent, message)
 	if err != nil {
+		slog.Error("failed to update download activity progress", "activityId", activity.ID, "status", result.Status, "error", err)
 		return err
 	}
 	w.publishActivity(updated, activity)
@@ -110,7 +123,7 @@ func (w *DownloadActivitySyncWorker) failActivity(ctx context.Context, activity 
 }
 
 func (w *DownloadActivitySyncWorker) publishActivity(updated storage.DownloadActivity, previous storage.DownloadActivity) {
-	if updated.Status == previous.Status && sameStringPtr(updated.Error, previous.Error) {
+	if updated.Status == previous.Status && sameStringPtr(updated.Error, previous.Error) && sameIntPtr(updated.ProgressPercent, previous.ProgressPercent) {
 		return
 	}
 	updated.MediaTitle = previous.MediaTitle
@@ -119,6 +132,13 @@ func (w *DownloadActivitySyncWorker) publishActivity(updated storage.DownloadAct
 }
 
 func sameStringPtr(left *string, right *string) bool {
+	if left == nil || right == nil {
+		return left == right
+	}
+	return *left == *right
+}
+
+func sameIntPtr(left *int, right *int) bool {
 	if left == nil || right == nil {
 		return left == right
 	}
@@ -137,6 +157,7 @@ func publishDownloadActivity(broker *events.Broker, activity storage.DownloadAct
 		"downloadId":         activity.DownloadID,
 		"downloadUrl":        activity.DownloadURL,
 		"status":             activity.Status,
+		"progressPercent":    activity.ProgressPercent,
 		"error":              activity.Error,
 		"createdAt":          activity.CreatedAt,
 		"updatedAt":          activity.UpdatedAt,

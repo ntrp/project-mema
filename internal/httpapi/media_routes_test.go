@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,6 +10,27 @@ import (
 
 	"media-manager/internal/config"
 )
+
+func TestSessionRouteAllowsAnonymousProbe(t *testing.T) {
+	router := chi.NewRouter()
+	HandlerFromMux(NewServer(config.Config{}, nil, nil, nil, nil, nil, nil), router)
+
+	request := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected anonymous session probe to return 200, got status %d and body %q", response.Code, response.Body.String())
+	}
+	var body SessionResponse
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode session response: %v", err)
+	}
+	if body.Authenticated {
+		t.Fatal("expected anonymous session probe to be unauthenticated")
+	}
+}
 
 func TestMetadataDetailsRouteIsMounted(t *testing.T) {
 	router := chi.NewRouter()

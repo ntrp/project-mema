@@ -56,12 +56,13 @@ type StatusFile struct {
 }
 
 type StatusResult struct {
-	Success bool
-	Found   bool
-	Status  string
-	Message string
-	Files   []StatusFile
-	Details map[string]interface{}
+	Success         bool
+	Found           bool
+	Status          string
+	ProgressPercent *int
+	Message         string
+	Files           []StatusFile
+	Details         map[string]interface{}
 }
 
 type HTTPDoer interface {

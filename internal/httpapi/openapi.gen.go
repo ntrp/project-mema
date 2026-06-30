@@ -19,6 +19,51 @@ const (
 	SessionCookieScopes sessionCookieContextKey = "sessionCookie.Scopes"
 )
 
+// Defines values for CustomFormatSpecType.
+const (
+	AudioCodec   CustomFormatSpecType = "audioCodec"
+	Edition      CustomFormatSpecType = "edition"
+	IndexerFlag  CustomFormatSpecType = "indexerFlag"
+	Language     CustomFormatSpecType = "language"
+	Quality      CustomFormatSpecType = "quality"
+	ReleaseGroup CustomFormatSpecType = "releaseGroup"
+	ReleaseTitle CustomFormatSpecType = "releaseTitle"
+	ReleaseType  CustomFormatSpecType = "releaseType"
+	Resolution   CustomFormatSpecType = "resolution"
+	Source       CustomFormatSpecType = "source"
+	VideoCodec   CustomFormatSpecType = "videoCodec"
+)
+
+// Valid indicates whether the value is a known member of the CustomFormatSpecType enum.
+func (e CustomFormatSpecType) Valid() bool {
+	switch e {
+	case AudioCodec:
+		return true
+	case Edition:
+		return true
+	case IndexerFlag:
+		return true
+	case Language:
+		return true
+	case Quality:
+		return true
+	case ReleaseGroup:
+		return true
+	case ReleaseTitle:
+		return true
+	case ReleaseType:
+		return true
+	case Resolution:
+		return true
+	case Source:
+		return true
+	case VideoCodec:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DownloadActivityStatus.
 const (
 	DownloadActivityStatusCancelled   DownloadActivityStatus = "cancelled"
@@ -358,6 +403,40 @@ func (e UserRole) Valid() bool {
 	}
 }
 
+// CustomFormat defines model for CustomFormat.
+type CustomFormat struct {
+	CreatedAt    time.Time          `json:"createdAt"`
+	ExcludeSpecs []CustomFormatSpec `json:"excludeSpecs"`
+	Id           openapi_types.UUID `json:"id"`
+	IncludeSpecs []CustomFormatSpec `json:"includeSpecs"`
+	Name         string             `json:"name"`
+	UpdatedAt    time.Time          `json:"updatedAt"`
+}
+
+// CustomFormatListResponse defines model for CustomFormatListResponse.
+type CustomFormatListResponse struct {
+	Formats []CustomFormat `json:"formats"`
+}
+
+// CustomFormatRequest defines model for CustomFormatRequest.
+type CustomFormatRequest struct {
+	ExcludeSpecs []CustomFormatSpec `json:"excludeSpecs"`
+	IncludeSpecs []CustomFormatSpec `json:"includeSpecs"`
+	Name         string             `json:"name"`
+}
+
+// CustomFormatSpec defines model for CustomFormatSpec.
+type CustomFormatSpec struct {
+	Id       string               `json:"id"`
+	Name     string               `json:"name"`
+	Required bool                 `json:"required"`
+	Type     CustomFormatSpecType `json:"type"`
+	Value    string               `json:"value"`
+}
+
+// CustomFormatSpecType defines model for CustomFormatSpecType.
+type CustomFormatSpecType string
+
 // DownloadActivity defines model for DownloadActivity.
 type DownloadActivity struct {
 	CreatedAt          time.Time              `json:"createdAt"`
@@ -370,6 +449,7 @@ type DownloadActivity struct {
 	MediaItemId        openapi_types.UUID     `json:"mediaItemId"`
 	MediaTitle         string                 `json:"mediaTitle"`
 	MediaType          MediaType              `json:"mediaType"`
+	ProgressPercent    *int                   `json:"progressPercent,omitempty"`
 	ReleaseTitle       string                 `json:"releaseTitle"`
 	Status             DownloadActivityStatus `json:"status"`
 	UpdatedAt          time.Time              `json:"updatedAt"`
@@ -1172,6 +1252,12 @@ type ApproveMediaRequestJSONRequestBody = MediaRequestApproveRequest
 // SearchMediaJSONRequestBody defines body for SearchMedia for application/json ContentType.
 type SearchMediaJSONRequestBody = MediaSearchRequest
 
+// CreateCustomFormatJSONRequestBody defines body for CreateCustomFormat for application/json ContentType.
+type CreateCustomFormatJSONRequestBody = CustomFormatRequest
+
+// UpdateCustomFormatJSONRequestBody defines body for UpdateCustomFormat for application/json ContentType.
+type UpdateCustomFormatJSONRequestBody = CustomFormatRequest
+
 // CreateDownloadClientJSONRequestBody defines body for CreateDownloadClient for application/json ContentType.
 type CreateDownloadClientJSONRequestBody = DownloadClientRequest
 
@@ -1303,6 +1389,18 @@ type ServerInterface interface {
 	// Search for a movie or series candidate
 	// (POST /media/search)
 	SearchMedia(w http.ResponseWriter, r *http.Request)
+	// List custom formats
+	// (GET /settings/custom-formats)
+	ListCustomFormats(w http.ResponseWriter, r *http.Request)
+	// Create a custom format
+	// (POST /settings/custom-formats)
+	CreateCustomFormat(w http.ResponseWriter, r *http.Request)
+	// Delete a custom format
+	// (DELETE /settings/custom-formats/{id})
+	DeleteCustomFormat(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update a custom format
+	// (PUT /settings/custom-formats/{id})
+	UpdateCustomFormat(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// List configured download clients
 	// (GET /settings/download-clients)
 	ListDownloadClients(w http.ResponseWriter, r *http.Request)
@@ -1585,6 +1683,30 @@ func (_ Unimplemented) ApproveMediaRequest(w http.ResponseWriter, r *http.Reques
 // Search for a movie or series candidate
 // (POST /media/search)
 func (_ Unimplemented) SearchMedia(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List custom formats
+// (GET /settings/custom-formats)
+func (_ Unimplemented) ListCustomFormats(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a custom format
+// (POST /settings/custom-formats)
+func (_ Unimplemented) CreateCustomFormat(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a custom format
+// (DELETE /settings/custom-formats/{id})
+func (_ Unimplemented) DeleteCustomFormat(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a custom format
+// (PUT /settings/custom-formats/{id})
+func (_ Unimplemented) UpdateCustomFormat(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1979,12 +2101,6 @@ func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request
 
 // GetSession operation middleware
 func (siw *ServerInterfaceWrapper) GetSession(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
-
-	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetSession(w, r)
@@ -2469,6 +2585,110 @@ func (siw *ServerInterfaceWrapper) SearchMedia(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchMedia(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCustomFormats operation middleware
+func (siw *ServerInterfaceWrapper) ListCustomFormats(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCustomFormats(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCustomFormat operation middleware
+func (siw *ServerInterfaceWrapper) CreateCustomFormat(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCustomFormat(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteCustomFormat operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCustomFormat(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCustomFormat(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCustomFormat operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCustomFormat(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCustomFormat(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3892,6 +4112,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/search", wrapper.SearchMedia)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/custom-formats", wrapper.ListCustomFormats)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/custom-formats", wrapper.CreateCustomFormat)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/custom-formats/{id}", wrapper.DeleteCustomFormat)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/custom-formats/{id}", wrapper.UpdateCustomFormat)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/download-clients", wrapper.ListDownloadClients)

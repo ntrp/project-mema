@@ -61,11 +61,18 @@ func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) GetSession(w http.ResponseWriter, r *http.Request) {
-	session, ok := s.requireSession(w, r)
-	if !ok {
+	cookie, err := r.Cookie(sessionCookieName)
+	if err != nil {
+		writeJSON(w, http.StatusOK, SessionResponse{Authenticated: false})
 		return
 	}
 
+	session, ok := s.sessions.get(cookie.Value, s.now())
+	if !ok {
+		http.SetCookie(w, s.expiredSessionCookie())
+		writeJSON(w, http.StatusOK, SessionResponse{Authenticated: false})
+		return
+	}
 	writeJSON(w, http.StatusOK, SessionResponse{
 		Authenticated: true,
 		ExpiresAt:     &session.expiresAt,

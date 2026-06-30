@@ -1,6 +1,7 @@
 import { client } from '$lib/api/client';
 
 import {
+	normalizeCustomFormatForm,
 	normalizeDownloadClientForm,
 	normalizeIndexerForm,
 	normalizeLibraryFolderForm,
@@ -11,6 +12,8 @@ import {
 	normalizeUserUpdateForm
 } from './forms';
 import type {
+	CustomFormat,
+	CustomFormatForm,
 	DownloadClientForm,
 	FileNamingSettings,
 	FileNamingSettingsRequest,
@@ -107,6 +110,7 @@ export async function loadSettings(): Promise<SettingsData> {
 		libraryFolderResult,
 		pathMappingResult,
 		mediaProfileResult,
+		customFormatResult,
 		userResult,
 		tagResult
 	] = await Promise.all([
@@ -117,6 +121,7 @@ export async function loadSettings(): Promise<SettingsData> {
 		client.GET('/settings/library/folders'),
 		client.GET('/settings/library/path-mappings'),
 		client.GET('/settings/profiles'),
+		client.GET('/settings/custom-formats'),
 		client.GET('/settings/users'),
 		client.GET('/settings/tags')
 	]);
@@ -142,6 +147,9 @@ export async function loadSettings(): Promise<SettingsData> {
 	if (mediaProfileResult.error) {
 		throw new Error(mediaProfileResult.error.message);
 	}
+	if (customFormatResult.error) {
+		throw new Error(customFormatResult.error.message);
+	}
 	if (userResult.error) {
 		throw new Error(userResult.error.message);
 	}
@@ -157,6 +165,7 @@ export async function loadSettings(): Promise<SettingsData> {
 		libraryFolders: libraryFolderResult.data?.folders ?? [],
 		pathMappings: pathMappingResult.data?.mappings ?? [],
 		mediaProfiles: mediaProfileResult.data?.profiles ?? [],
+		customFormats: customFormatResult.data?.formats ?? [],
 		users: userResult.data?.users ?? [],
 		tags: tagResult.data?.tags ?? []
 	};
@@ -233,6 +242,15 @@ export async function listMediaProfiles(): Promise<MediaProfile[]> {
 		throw new Error(error.message);
 	}
 	return data?.profiles ?? [];
+}
+
+export async function listCustomFormats(): Promise<CustomFormat[]> {
+	const { data, error } = await client.GET('/settings/custom-formats');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.formats ?? [];
 }
 
 export async function searchMedia(request: MediaSearchRequest) {
@@ -575,6 +593,20 @@ export async function saveMediaProfile(form: MediaProfileForm) {
 	}
 }
 
+export async function saveCustomFormat(form: CustomFormatForm) {
+	const body = normalizeCustomFormatForm(form);
+	const result = form.id
+		? await client.PUT('/settings/custom-formats/{id}', {
+				params: { path: { id: form.id } },
+				body
+			})
+		: await client.POST('/settings/custom-formats', { body });
+
+	if (result.error) {
+		throw new Error(result.error.message);
+	}
+}
+
 export async function testMetadataProvider(id: string) {
 	const { data, error } = await client.POST('/settings/metadata-providers/{id}/test', {
 		params: { path: { id } }
@@ -670,6 +702,16 @@ export async function deleteTag(id: string) {
 
 export async function deleteMediaProfile(id: string) {
 	const { error } = await client.DELETE('/settings/profiles/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function deleteCustomFormat(id: string) {
+	const { error } = await client.DELETE('/settings/custom-formats/{id}', {
 		params: { path: { id } }
 	});
 

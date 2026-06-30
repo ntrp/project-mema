@@ -134,6 +134,7 @@ func downloadActivityResponse(activity storage.DownloadActivity) DownloadActivit
 		DownloadId:         activity.DownloadID,
 		DownloadUrl:        activity.DownloadURL,
 		Status:             DownloadActivityStatus(activity.Status),
+		ProgressPercent:    activity.ProgressPercent,
 		Error:              activity.Error,
 		CreatedAt:          activity.CreatedAt,
 		UpdatedAt:          activity.UpdatedAt,

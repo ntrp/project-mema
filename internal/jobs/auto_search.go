@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 
@@ -43,12 +44,15 @@ type AutoSearchDownloadWorker struct {
 func (w *AutoSearchDownloadWorker) Work(ctx context.Context, job *river.Job[AutoSearchDownloadArgs]) error {
 	mediaItemID, err := uuid.Parse(job.Args.MediaItemID)
 	if err != nil {
+		slog.Error("auto search download invalid media item id", "mediaItemId", job.Args.MediaItemID, "error", err)
 		return fmt.Errorf("parse media item id: %w", err)
 	}
 	item, err := w.settings.GetMediaItem(ctx, mediaItemID)
 	if err != nil {
+		slog.Error("auto search download media item load failed", "mediaItemId", mediaItemID, "error", err)
 		return fmt.Errorf("load media item: %w", err)
 	}
+	slog.Debug("auto search download started", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
 	return autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item)
 }
 
@@ -65,11 +69,14 @@ type MissingMediaRetryWorker struct {
 func (w *MissingMediaRetryWorker) Work(ctx context.Context, _ *river.Job[MissingMediaRetryArgs]) error {
 	items, err := w.settings.ListMissingMediaItems(ctx)
 	if err != nil {
+		slog.Error("missing media retry list failed", "error", err)
 		return fmt.Errorf("list missing media: %w", err)
 	}
+	slog.Debug("missing media retry started", "itemCount", len(items))
 	var failures []string
 	for _, item := range items {
 		if err := autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item); err != nil {
+			slog.Error("missing media retry item failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
 			failures = append(failures, fmt.Sprintf("%s: %s", item.Title, err.Error()))
 		}
 	}
@@ -89,22 +96,29 @@ func autoSearchDownload(
 	item storage.MediaItem,
 ) error {
 	if item.Status == "downloaded" || item.Status == "downloading" {
+		slog.Debug("auto search download skipped", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
 		return nil
 	}
 	releases, searchErrors, err := searchReleases(ctx, settings, indexerService, item)
 	if err != nil {
+		slog.Error("auto search release search failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
 		return err
 	}
 	if err := settings.ReplaceReleaseSearchResults(ctx, item.ID, releases, searchErrors); err != nil {
+		slog.Error("auto search result storage failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
 		return err
 	}
+	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
 	decision, ok := decisionEngine.ChooseRelease(releases)
 	if !ok {
+		slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
 		return nil
 	}
 	if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, item, decision.Release); err != nil {
+		slog.Error("auto search grab failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title, "error", err)
 		return err
 	}
+	slog.Debug("auto search grab queued", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title)
 	return nil
 }
 
@@ -119,6 +133,7 @@ func searchReleases(
 		return nil, nil, fmt.Errorf("list enabled indexers: %w", err)
 	}
 	if len(configs) == 0 {
+		slog.Debug("release search skipped because no indexers are enabled", "mediaItemId", item.ID, "title", item.Title)
 		return nil, []string{"No enabled indexer is configured"}, nil
 	}
 
@@ -127,9 +142,11 @@ func searchReleases(
 	for _, config := range configs {
 		found, err := indexerService.Search(ctx, indexerConfig(config), item.Title, item.Type)
 		if err != nil {
+			slog.Error("indexer release search failed", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "error", err)
 			searchErrors = append(searchErrors, fmt.Sprintf("%s: %s", config.Name, err.Error()))
 			continue
 		}
+		slog.Debug("indexer release search finished", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "releaseCount", len(found))
 		for _, release := range found {
 			releases = append(releases, releaseCandidateInput(item.ID, release))
 		}
@@ -161,6 +178,7 @@ func grabReleaseNow(
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
 	if len(clients) == 0 {
+		slog.Debug("grab release skipped because no download clients are enabled", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", release.Title)
 		return settings.ReplaceReleaseSearchResults(ctx, item.ID, []storage.ReleaseCandidateInput{release}, []string{"No enabled download client is configured"})
 	}
 
@@ -174,6 +192,7 @@ func grabReleaseNow(
 		Status:             "queued",
 	})
 	if err != nil {
+		slog.Error("download activity create failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", release.Title, "downloadClientName", client.Name, "error", err)
 		return fmt.Errorf("record download activity: %w", err)
 	}
 	activity.MediaTitle = item.Title
@@ -189,14 +208,18 @@ func grabReleaseNow(
 		if message == "" {
 			message = "Download client rejected the release"
 		}
+		slog.Error("download client rejected release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "message", message)
 		_, err := settings.UpdateDownloadActivityStatus(ctx, activity.ID, "failed", &message)
 		return err
 	}
+	slog.Debug("download client accepted release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "downloadId", result.DownloadID)
 	updated, err := settings.UpdateDownloadActivityClientState(ctx, activity.ID, "grabbed", optionalString(result.DownloadID), nil)
 	if err == nil {
 		updated.MediaTitle = item.Title
 		updated.MediaType = item.Type
 		publishDownloadActivity(eventBroker, updated)
+	} else {
+		slog.Error("download activity client state update failed", "activityId", activity.ID, "mediaItemId", item.ID, "error", err)
 	}
 	return err
 }

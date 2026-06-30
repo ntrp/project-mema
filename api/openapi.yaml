@@ -85,17 +85,13 @@ paths:
       tags:
         - Auth
       summary: Get current session
-      security:
-        - sessionCookie: []
       responses:
         "200":
-          description: Current authenticated session
+          description: Current session state
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SessionResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /media/search:
     post:
       operationId: searchMedia
@@ -902,6 +898,90 @@ paths:
       responses:
         "204":
           description: Media profile deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/custom-formats:
+    get:
+      operationId: listCustomFormats
+      tags:
+        - Settings
+      summary: List custom formats
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Custom formats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomFormatListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createCustomFormat
+      tags:
+        - Settings
+      summary: Create a custom format
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomFormatRequest"
+      responses:
+        "201":
+          description: Custom format created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomFormat"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/custom-formats/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateCustomFormat
+      tags:
+        - Settings
+      summary: Update a custom format
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomFormatRequest"
+      responses:
+        "200":
+          description: Custom format updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomFormat"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteCustomFormat
+      tags:
+        - Settings
+      summary: Delete a custom format
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Custom format deleted
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -2399,6 +2479,95 @@ components:
             type: string
             minLength: 1
             maxLength: 100
+    CustomFormatListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - formats
+      properties:
+        formats:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomFormat"
+    CustomFormat:
+      allOf:
+        - $ref: "#/components/schemas/CustomFormatRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    CustomFormatRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - includeSpecs
+        - excludeSpecs
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        includeSpecs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomFormatSpec"
+        excludeSpecs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CustomFormatSpec"
+    CustomFormatSpec:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - type
+        - value
+        - required
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 80
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        type:
+          $ref: "#/components/schemas/CustomFormatSpecType"
+        value:
+          type: string
+          minLength: 1
+          maxLength: 500
+        required:
+          type: boolean
+    CustomFormatSpecType:
+      type: string
+      enum:
+        - releaseTitle
+        - source
+        - resolution
+        - quality
+        - videoCodec
+        - audioCodec
+        - releaseGroup
+        - releaseType
+        - edition
+        - indexerFlag
+        - language
     FileNamingSettings:
       allOf:
         - $ref: "#/components/schemas/FileNamingSettingsRequest"
@@ -2626,6 +2795,10 @@ components:
             - completed
             - cancelled
             - failed
+        progressPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
         error:
           type: string
         createdAt:

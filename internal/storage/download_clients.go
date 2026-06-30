@@ -58,6 +58,29 @@ func (s *SettingsStore) ListDownloadClients(ctx context.Context) ([]DownloadClie
 	return clients, rows.Err()
 }
 
+func (s *SettingsStore) ListEnabledDownloadClients(ctx context.Context) ([]DownloadClient, error) {
+	rows, err := s.pool.Query(ctx, `
+		select id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
+		from app.download_clients
+		where enabled = true
+		order by priority asc, name asc
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	clients := []DownloadClient{}
+	for rows.Next() {
+		client, err := scanDownloadClient(rows)
+		if err != nil {
+			return nil, err
+		}
+		clients = append(clients, client)
+	}
+	return clients, rows.Err()
+}
+
 func (s *SettingsStore) GetDownloadClient(ctx context.Context, id uuid.UUID) (DownloadClient, error) {
 	return scanDownloadClientRow(s.pool.QueryRow(ctx, `
 		select id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at

@@ -42,10 +42,8 @@ services:
     ports:
       - "${SABNZBD_PORT:-18081}:8080"
     volumes:
-      - sabnzbd-config:/config
-      - ./.data/media:/data
+      - ./.data/media/sabnzbd:/config
     restart: unless-stopped
 
 volumes:
   postgres-data:
-  sabnzbd-config:

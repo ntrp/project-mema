@@ -88,6 +88,27 @@ create table if not exists app.media_profiles (
 create unique index if not exists idx_media_profiles_name_lower
     on app.media_profiles (lower(name));
 
+create table if not exists app.custom_formats (
+    id uuid primary key,
+    name text not null,
+    include_specs jsonb not null default '[]'::jsonb,
+    exclude_specs jsonb not null default '[]'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint custom_formats_include_specs_array_check check (jsonb_typeof(include_specs) = 'array'),
+    constraint custom_formats_exclude_specs_array_check check (jsonb_typeof(exclude_specs) = 'array')
+);
+
+drop index if exists app.idx_custom_formats_name_lower;
+
+create index if not exists idx_custom_formats_name_lower
+    on app.custom_formats (lower(name));
+
+update app.custom_formats
+set name = regexp_replace(name, '^(Radarr|Sonarr) ', ''),
+    updated_at = now()
+where name ~ '^(Radarr|Sonarr) ';
+
 create table if not exists app.media_profile_qualities (
     profile_id text not null references app.media_profiles(id) on delete cascade,
     quality_id text not null,
@@ -308,6 +329,7 @@ create table if not exists app.download_activity (
     download_id text,
     download_url text not null,
     status text not null check (status in ('queued', 'grabbed', 'downloading', 'completed', 'cancelled', 'failed')),
+    progress_percent integer check (progress_percent is null or (progress_percent >= 0 and progress_percent <= 100)),
     error text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
@@ -316,9 +338,13 @@ create table if not exists app.download_activity (
 do $$
 begin
     alter table app.download_activity add column if not exists download_id text;
+    alter table app.download_activity add column if not exists progress_percent integer;
+    alter table app.download_activity drop constraint if exists download_activity_progress_percent_check;
     alter table app.download_activity drop constraint if exists download_activity_status_check;
     alter table app.download_activity
         add constraint download_activity_status_check check (status in ('queued', 'grabbed', 'downloading', 'completed', 'cancelled', 'failed'));
+    alter table app.download_activity
+        add constraint download_activity_progress_percent_check check (progress_percent is null or (progress_percent >= 0 and progress_percent <= 100));
 end $$;
 
 create index if not exists idx_download_activity_created

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CustomFormatsSettings from '$lib/components/settings/CustomFormatsSettings.svelte';
 	import DownloadClientsSettingsSection from '$lib/components/settings/DownloadClientsSettingsSection.svelte';
 	import FileNamingSettings from '$lib/components/settings/FileNamingSettings.svelte';
 	import IndexersSettingsSection from '$lib/components/settings/IndexersSettingsSection.svelte';
@@ -7,10 +8,11 @@
 	import MetadataProviderSettings from '$lib/components/settings/MetadataProviderSettings.svelte';
 	import MediaProfilesSettings from '$lib/components/settings/MediaProfilesSettings.svelte';
 	import QualitySizeSettings from '$lib/components/settings/QualitySizeSettings.svelte';
-	import SystemLogsSettings from '$lib/components/settings/SystemLogsSettings.svelte';
 	import TagSettings from '$lib/components/settings/TagSettings.svelte';
 	import UsersSettingsSection from '$lib/components/settings/UsersSettingsSection.svelte';
 	import type {
+		CustomFormat,
+		CustomFormatForm as CustomFormatFormValue,
 		DownloadClient,
 		DownloadClientForm as DownloadClientFormValue,
 		Indexer,
@@ -48,6 +50,7 @@
 		libraryFolders: LibraryFolder[];
 		pathMappings: PathMapping[];
 		mediaProfiles: MediaProfile[];
+		customFormats: CustomFormat[];
 		users: ManagedUser[];
 		tags: Tag[];
 		currentUser?: UserSummary;
@@ -57,6 +60,7 @@
 		libraryFolderForm: LibraryFolderFormValue;
 		pathMappingForm: PathMappingForm;
 		mediaProfileForm: MediaProfileFormValue;
+		customFormatForm: CustomFormatFormValue;
 		tagForm: TagForm;
 		userForm: UserFormValue;
 		savingDownloadClient: boolean;
@@ -70,6 +74,8 @@
 		deletingPathMappingId?: string;
 		savingMediaProfile: boolean;
 		deletingMediaProfileId?: string;
+		savingCustomFormat: boolean;
+		deletingCustomFormatId?: string;
 		savingTag: boolean;
 		deletingTagId?: string;
 		savingUser: boolean;
@@ -90,16 +96,19 @@
 		onSaveLibraryFolder: (_event: SubmitEvent) => void | Promise<void>;
 		onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveMediaProfile: (_event: SubmitEvent) => void | Promise<void>;
+		onSaveCustomFormat: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveTag: (_event: SubmitEvent) => void | Promise<void>;
 		onSaveUser: (_event: SubmitEvent) => void | Promise<void>;
 		onCancelDownloadClient: () => void;
 		onCancelIndexer: () => void;
 		onCancelMediaProfile: () => void;
+		onCancelCustomFormat: () => void;
 		onCancelTag: () => void;
 		onCancelUser: () => void;
 		onEditDownloadClient: (_client: DownloadClient) => void;
 		onEditIndexer: (_indexer: Indexer) => void;
 		onEditMediaProfile: (_profile: MediaProfile) => void;
+		onEditCustomFormat: (_format: CustomFormat) => void;
 		onEditTag: (_tag: Tag) => void;
 		onEditUser: (_user: ManagedUser) => void;
 		onDeleteDownloadClient: (_id: string) => void | Promise<void>;
@@ -107,6 +116,7 @@
 		onDeleteLibraryFolder: (_id: string) => void | Promise<void>;
 		onDeletePathMapping: (_id: string) => void | Promise<void>;
 		onDeleteMediaProfile: (_id: string) => void | Promise<void>;
+		onDeleteCustomFormat: (_id: string) => void | Promise<void>;
 		onDeleteTag: (_id: string) => void | Promise<void>;
 		onDeleteUser: (_id: string) => void | Promise<void>;
 		onTestIndexer: (_id: string) => void | Promise<void>;
@@ -127,6 +137,7 @@
 		libraryFolders,
 		pathMappings,
 		mediaProfiles,
+		customFormats,
 		users,
 		tags,
 		currentUser,
@@ -136,6 +147,7 @@
 		libraryFolderForm = $bindable(),
 		pathMappingForm = $bindable(),
 		mediaProfileForm = $bindable(),
+		customFormatForm = $bindable(),
 		tagForm = $bindable(),
 		userForm = $bindable(),
 		savingDownloadClient,
@@ -149,6 +161,8 @@
 		deletingPathMappingId,
 		savingMediaProfile,
 		deletingMediaProfileId,
+		savingCustomFormat,
+		deletingCustomFormatId,
 		savingTag,
 		deletingTagId,
 		savingUser,
@@ -167,16 +181,19 @@
 		onSaveLibraryFolder,
 		onSavePathMapping,
 		onSaveMediaProfile,
+		onSaveCustomFormat,
 		onSaveTag,
 		onSaveUser,
 		onCancelDownloadClient,
 		onCancelIndexer,
 		onCancelMediaProfile,
+		onCancelCustomFormat,
 		onCancelTag,
 		onCancelUser,
 		onEditDownloadClient,
 		onEditIndexer,
 		onEditMediaProfile,
+		onEditCustomFormat,
 		onEditTag,
 		onEditUser,
 		onDeleteDownloadClient,
@@ -184,6 +201,7 @@
 		onDeleteLibraryFolder,
 		onDeletePathMapping,
 		onDeleteMediaProfile,
+		onDeleteCustomFormat,
 		onDeleteTag,
 		onDeleteUser,
 		onTestIndexer,
@@ -267,6 +285,23 @@
 				onDelete={onDeleteMediaProfile}
 			/>
 		</div>
+	{:else if activeSection === 'custom-formats'}
+		<div class="page-heading">
+			<p>Settings</p>
+			<h1 id="settings-title">Custom formats</h1>
+		</div>
+		<div class="settings-stack">
+			<CustomFormatsSettings
+				formats={customFormats}
+				bind:form={customFormatForm}
+				saving={savingCustomFormat}
+				deletingId={deletingCustomFormatId}
+				onSave={onSaveCustomFormat}
+				onCancel={onCancelCustomFormat}
+				onEdit={onEditCustomFormat}
+				onDelete={onDeleteCustomFormat}
+			/>
+		</div>
 	{:else if activeSection === 'file-naming'}
 		<div class="page-heading">
 			<p>Settings</p>
@@ -303,14 +338,6 @@
 			onEdit={onEditUser}
 			onDelete={onDeleteUser}
 		/>
-	{:else if activeSection === 'system-logs'}
-		<div class="page-heading">
-			<p>Settings / System</p>
-			<h1 id="settings-title">Logs</h1>
-		</div>
-		<div class="settings-stack">
-			<SystemLogsSettings />
-		</div>
 	{:else}
 		<LibrarySettingsSection
 			folders={libraryFolders}

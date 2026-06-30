@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -59,16 +60,21 @@ type ReleaseSearchWorker struct {
 func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSearchArgs]) error {
 	mediaItemID, err := uuid.Parse(job.Args.MediaItemID)
 	if err != nil {
+		slog.Error("release search invalid media item id", "mediaItemId", job.Args.MediaItemID, "error", err)
 		return fmt.Errorf("parse media item id: %w", err)
 	}
 	item, err := w.settings.GetMediaItem(ctx, mediaItemID)
 	if err != nil {
+		slog.Error("release search media item load failed", "mediaItemId", mediaItemID, "error", err)
 		return fmt.Errorf("load media item: %w", err)
 	}
+	slog.Debug("release search started", "mediaItemId", item.ID, "title", item.Title)
 	releases, searchErrors, err := searchReleases(ctx, w.settings, w.indexers, item)
 	if err != nil {
+		slog.Error("release search failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
 		return err
 	}
+	slog.Debug("release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
 	return w.settings.ReplaceReleaseSearchResults(ctx, mediaItemID, releases, searchErrors)
 }
 
@@ -83,17 +89,22 @@ type GrabReleaseWorker struct {
 func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabReleaseArgs]) error {
 	activityID, err := uuid.Parse(job.Args.ActivityID)
 	if err != nil {
+		slog.Error("grab release invalid activity id", "activityId", job.Args.ActivityID, "error", err)
 		return fmt.Errorf("parse activity id: %w", err)
 	}
 	activity, err := w.settings.GetDownloadActivity(ctx, activityID)
 	if err != nil {
+		slog.Error("grab release activity load failed", "activityId", activityID, "error", err)
 		return fmt.Errorf("load download activity: %w", err)
 	}
 	if activity.Status == "cancelled" {
+		slog.Debug("grab release skipped cancelled activity", "activityId", activity.ID)
 		return nil
 	}
+	slog.Debug("grab release started", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "releaseTitle", job.Args.Title)
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
+		slog.Error("grab release download client list failed", "activityId", activity.ID, "error", err)
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
 	if len(clients) == 0 {
@@ -107,12 +118,16 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 		Category: client.Category,
 	})
 	if !result.Success {
+		slog.Error("grab release download client rejected", "activityId", activity.ID, "downloadClientName", client.Name, "message", result.Message)
 		return w.markGrabFailed(ctx, activityID, result.Message)
 	}
 	downloadID := optionalString(result.DownloadID)
 	activity, err = w.settings.UpdateDownloadActivityClientState(ctx, activityID, "grabbed", downloadID, nil)
 	if err == nil {
 		publishDownloadActivity(w.events, activity)
+		slog.Debug("grab release finished", "activityId", activity.ID, "downloadClientName", client.Name, "downloadId", result.DownloadID)
+	} else {
+		slog.Error("grab release activity update failed", "activityId", activityID, "error", err)
 	}
 	return err
 }
@@ -122,6 +137,7 @@ func (w *GrabReleaseWorker) markGrabFailed(ctx context.Context, activityID uuid.
 	if message == "" {
 		message = "Download client rejected the release"
 	}
+	slog.Error("marking grab release failed", "activityId", activityID, "message", message)
 	_, err := w.settings.UpdateDownloadActivityStatus(ctx, activityID, "failed", &message)
 	return err
 }

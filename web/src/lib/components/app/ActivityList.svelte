@@ -22,6 +22,22 @@
 	function cancellable(activity: DownloadActivity) {
 		return ['queued', 'grabbed', 'downloading'].includes(activity.status);
 	}
+
+	function showsProgress(activity: DownloadActivity) {
+		return ['queued', 'grabbed', 'downloading', 'completed'].includes(activity.status);
+	}
+
+	function progressValue(activity: DownloadActivity) {
+		if (activity.status === 'completed') {
+			return 100;
+		}
+		return activity.progressPercent ?? undefined;
+	}
+
+	function progressLabel(activity: DownloadActivity) {
+		const value = progressValue(activity);
+		return typeof value === 'number' ? `${value}%` : 'Waiting for client progress';
+	}
 </script>
 
 <div class="page-heading split-heading">
@@ -40,6 +56,24 @@
 			<div>
 				<strong>{activity.releaseTitle}</strong>
 				<span>{activity.mediaTitle} · {activity.mediaType}</span>
+				{#if showsProgress(activity)}
+					<div
+						class="download-progress"
+						role="progressbar"
+						aria-label="Download progress"
+						aria-valuemin="0"
+						aria-valuemax="100"
+						aria-valuenow={progressValue(activity)}
+					>
+						<span
+							class:indeterminate={progressValue(activity) === undefined}
+							style={progressValue(activity) !== undefined
+								? `width: ${progressValue(activity)}%`
+								: undefined}
+						></span>
+					</div>
+					<small class="progress-label">{progressLabel(activity)}</small>
+				{/if}
 			</div>
 			<span>{activity.downloadClientName} · {activity.indexerName}</span>
 			<div class="status-stack">

@@ -54,6 +54,29 @@ func (s *SettingsStore) ListIndexers(ctx context.Context) ([]Indexer, error) {
 	return indexers, rows.Err()
 }
 
+func (s *SettingsStore) ListEnabledIndexers(ctx context.Context) ([]Indexer, error) {
+	rows, err := s.pool.Query(ctx, `
+		select id, name, type, base_url, api_key, categories, enabled, priority, created_at, updated_at
+		from app.indexers
+		where enabled = true
+		order by priority asc, name asc
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	indexers := []Indexer{}
+	for rows.Next() {
+		indexer, err := scanIndexer(rows)
+		if err != nil {
+			return nil, err
+		}
+		indexers = append(indexers, indexer)
+	}
+	return indexers, rows.Err()
+}
+
 func (s *SettingsStore) GetIndexer(ctx context.Context, id uuid.UUID) (Indexer, error) {
 	return scanIndexerRow(s.pool.QueryRow(ctx, `
 		select id, name, type, base_url, api_key, categories, enabled, priority, created_at, updated_at

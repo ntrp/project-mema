@@ -164,6 +164,12 @@ func statusLookupResultWithFiles(status string, message string, files []StatusFi
 	return result
 }
 
+func statusLookupResultWithProgressAndFiles(status string, progressPercent *int, message string, files []StatusFile, pairs ...interface{}) StatusResult {
+	result := statusLookupResultWithFiles(status, message, files, pairs...)
+	result.ProgressPercent = progressPercent
+	return result
+}
+
 func requestFailedResult(err error) TestResult {
 	return failedResult("Connection failed", "error", err.Error())
 }

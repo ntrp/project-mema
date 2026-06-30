@@ -1,4 +1,7 @@
 import type {
+	CustomFormat,
+	CustomFormatForm,
+	CustomFormatRequest,
 	DownloadClient,
 	DownloadClientForm,
 	DownloadClientRequest,
@@ -80,6 +83,14 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 	};
 }
 
+export function emptyCustomFormatForm(): CustomFormatForm {
+	return {
+		name: '',
+		includeSpecs: [],
+		excludeSpecs: []
+	};
+}
+
 export function emptyUserForm(): UserForm {
 	return {
 		username: '',
@@ -135,6 +146,15 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		id: profile.id,
 		name: profile.name,
 		qualityIds: [...profile.qualityIds]
+	};
+}
+
+export function customFormatFormFromFormat(format: CustomFormat): CustomFormatForm {
+	return {
+		id: format.id,
+		name: format.name,
+		includeSpecs: format.includeSpecs.map((spec) => ({ ...spec })),
+		excludeSpecs: format.excludeSpecs.map((spec) => ({ ...spec }))
 	};
 }
 
@@ -206,6 +226,14 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 	};
 }
 
+export function normalizeCustomFormatForm(form: CustomFormatForm): CustomFormatRequest {
+	return {
+		name: form.name.trim(),
+		includeSpecs: normalizeCustomFormatSpecs(form.includeSpecs),
+		excludeSpecs: normalizeCustomFormatSpecs(form.excludeSpecs)
+	};
+}
+
 export function normalizeUserCreateForm(form: UserForm): UserCreateRequest {
 	return {
 		username: form.username.trim(),
@@ -225,6 +253,18 @@ export function normalizeUserUpdateForm(form: UserForm): UserUpdateRequest {
 function optionalString(value: string | undefined) {
 	const trimmed = value?.trim() ?? '';
 	return trimmed === '' ? undefined : trimmed;
+}
+
+function normalizeCustomFormatSpecs(specs: CustomFormatRequest['includeSpecs']) {
+	return specs
+		.map((spec) => ({
+			id: spec.id.trim(),
+			name: spec.name.trim(),
+			type: spec.type,
+			value: spec.value.trim(),
+			required: spec.required
+		}))
+		.filter((spec) => spec.id !== '' && spec.name !== '' && spec.value !== '');
 }
 
 function parseCategories(value: string) {

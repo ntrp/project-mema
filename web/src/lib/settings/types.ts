@@ -65,6 +65,10 @@ export type MediaProfile = components['schemas']['MediaProfile'];
 export type MediaProfileRequest = components['schemas']['MediaProfileRequest'];
 export type FileNamingSettings = components['schemas']['FileNamingSettings'];
 export type FileNamingSettingsRequest = components['schemas']['FileNamingSettingsRequest'];
+export type CustomFormat = components['schemas']['CustomFormat'];
+export type CustomFormatRequest = components['schemas']['CustomFormatRequest'];
+export type CustomFormatSpec = components['schemas']['CustomFormatSpec'];
+export type CustomFormatSpecType = components['schemas']['CustomFormatSpecType'];
 
 export type DownloadClientForm = DownloadClientRequest & { id?: string };
 export type IndexerForm = Omit<IndexerRequest, 'categories'> & {
@@ -75,6 +79,7 @@ export type MetadataProviderForm = MetadataProviderRequest & { id?: string };
 export type LibraryFolderForm = LibraryFolderRequest;
 export type PathMappingForm = PathMappingRequest;
 export type MediaProfileForm = MediaProfileRequest & { id?: string };
+export type CustomFormatForm = CustomFormatRequest & { id?: string };
 export type UserForm = {
 	id?: string;
 	username: string;
@@ -87,8 +92,9 @@ export interface QualityProfileOption {
 	name: string;
 }
 
-export type AppView = 'home' | 'settings' | 'advanced-search' | 'metadata-detail';
+export type AppView = 'home' | 'settings' | 'system' | 'advanced-search' | 'metadata-detail';
 export type HomeSection = 'discover' | 'requests' | 'movies' | 'series' | 'activity';
+export type SystemSection = 'logs';
 export type SettingsSection =
 	| 'library'
 	| 'download-clients'
@@ -96,10 +102,10 @@ export type SettingsSection =
 	| 'quality'
 	| 'file-naming'
 	| 'profiles'
+	| 'custom-formats'
 	| 'metadata'
 	| 'tags'
-	| 'users'
-	| 'system-logs';
+	| 'users';
 export type TagForm = TagRequest & { id?: string };
 export interface SettingsData {
 	downloadClients: DownloadClient[];
@@ -109,6 +115,7 @@ export interface SettingsData {
 	libraryFolders: LibraryFolder[];
 	pathMappings: PathMapping[];
 	mediaProfiles: MediaProfile[];
+	customFormats: CustomFormat[];
 	users: ManagedUser[];
 	tags: Tag[];
 }

@@ -15,24 +15,33 @@ func (s *SettingsStore) CreateDownloadActivity(ctx context.Context, input Downlo
 			id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, error
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, error, created_at, updated_at
+		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, created_at, updated_at
 	`, id, input.MediaItemID, input.ReleaseTitle, input.IndexerName, input.DownloadClientName, input.DownloadID, input.DownloadURL, input.Status, input.Error))
 }
 
 func (s *SettingsStore) UpdateDownloadActivityStatus(ctx context.Context, id uuid.UUID, status string, activityError *string) (DownloadActivity, error) {
-	return s.UpdateDownloadActivityClientState(ctx, id, status, nil, activityError)
+	return s.UpdateDownloadActivityProgress(ctx, id, status, nil, activityError)
+}
+
+func (s *SettingsStore) UpdateDownloadActivityProgress(ctx context.Context, id uuid.UUID, status string, progressPercent *int, activityError *string) (DownloadActivity, error) {
+	return s.updateDownloadActivity(ctx, id, status, nil, progressPercent, activityError)
 }
 
 func (s *SettingsStore) UpdateDownloadActivityClientState(ctx context.Context, id uuid.UUID, status string, downloadID *string, activityError *string) (DownloadActivity, error) {
+	return s.updateDownloadActivity(ctx, id, status, downloadID, nil, activityError)
+}
+
+func (s *SettingsStore) updateDownloadActivity(ctx context.Context, id uuid.UUID, status string, downloadID *string, progressPercent *int, activityError *string) (DownloadActivity, error) {
 	return scanDownloadActivityRow(s.pool.QueryRow(ctx, `
 		update app.download_activity
 		set status = $2,
 			download_id = coalesce($3, download_id),
-			error = $4,
+			progress_percent = $4,
+			error = $5,
 			updated_at = now()
 		where id = $1
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, error, created_at, updated_at
-	`, id, status, downloadID, activityError))
+		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, created_at, updated_at
+	`, id, status, downloadID, progressPercent, activityError))
 }
 
 func (s *SettingsStore) ListDownloadActivity(ctx context.Context) ([]DownloadActivity, error) {
@@ -48,6 +57,7 @@ func (s *SettingsStore) ListDownloadActivity(ctx context.Context) ([]DownloadAct
 			a.download_id,
 			a.download_url,
 			a.status,
+			a.progress_percent,
 			a.error,
 			a.created_at,
 			a.updated_at
@@ -77,6 +87,7 @@ func (s *SettingsStore) GetDownloadActivity(ctx context.Context, id uuid.UUID) (
 			a.download_id,
 			a.download_url,
 			a.status,
+			a.progress_percent,
 			a.error,
 			a.created_at,
 			a.updated_at
@@ -93,10 +104,10 @@ func (s *SettingsStore) GetDownloadActivity(ctx context.Context, id uuid.UUID) (
 func (s *SettingsStore) CancelDownloadActivity(ctx context.Context, id uuid.UUID) (DownloadActivity, error) {
 	return scanDownloadActivityRow(s.pool.QueryRow(ctx, `
 		update app.download_activity
-		set status = 'cancelled', error = null, updated_at = now()
+		set status = 'cancelled', progress_percent = null, error = null, updated_at = now()
 		where id = $1
 			and status in ('queued', 'grabbed', 'downloading')
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, error, created_at, updated_at
+		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, created_at, updated_at
 	`, id))
 }
 
@@ -113,6 +124,7 @@ func (s *SettingsStore) ListActiveDownloadActivity(ctx context.Context) ([]Downl
 			a.download_id,
 			a.download_url,
 			a.status,
+			a.progress_percent,
 			a.error,
 			a.created_at,
 			a.updated_at
@@ -155,6 +167,7 @@ func scanDownloadActivityWithMediaRow(row pgx.Row) (DownloadActivity, error) {
 		&activity.DownloadID,
 		&activity.DownloadURL,
 		&activity.Status,
+		&activity.ProgressPercent,
 		&activity.Error,
 		&activity.CreatedAt,
 		&activity.UpdatedAt,
@@ -173,6 +186,7 @@ func scanDownloadActivityRow(row pgx.Row) (DownloadActivity, error) {
 		&activity.DownloadID,
 		&activity.DownloadURL,
 		&activity.Status,
+		&activity.ProgressPercent,
 		&activity.Error,
 		&activity.CreatedAt,
 		&activity.UpdatedAt,

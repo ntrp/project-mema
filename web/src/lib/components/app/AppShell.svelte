@@ -12,6 +12,7 @@
 	import MetadataDetailArea from '$lib/components/app/MetadataDetailArea.svelte';
 	import SettingsArea from '$lib/components/app/SettingsArea.svelte';
 	import SidebarMenu from '$lib/components/app/SidebarMenu.svelte';
+	import SystemArea from '$lib/components/app/SystemArea.svelte';
 	import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
 	import NoticeStack from '$lib/components/settings/NoticeStack.svelte';
 	import '$lib/settings/styles.css';
@@ -22,7 +23,7 @@
 
 	onMount(() => {
 		void app.initialise();
-		return app.connectEvents();
+		return app.disconnectEvents;
 	});
 </script>
 
@@ -48,9 +49,9 @@
 			title="mema"
 			items={app.primaryItems}
 			active={app.activePrimarySection}
-			activeSubmenu={app.activeSettingsSection}
+			activeSubmenu={app.activeSubmenuSection}
 			onSelect={app.selectPrimarySection}
-			onSubmenuSelect={app.selectSettingsSection}
+			onSubmenuSelect={app.selectSubmenuSection}
 		/>
 		<div class="app-main">
 			<AppNav
@@ -71,6 +72,7 @@
 						bind:libraryFolderForm={app.libraryFolderForm}
 						bind:pathMappingForm={app.pathMappingForm}
 						bind:mediaProfileForm={app.mediaProfileForm}
+						bind:customFormatForm={app.customFormatForm}
 						bind:tagForm={app.tagForm}
 						bind:userForm={app.userForm}
 						activeSection={app.activeSettingsSection}
@@ -81,6 +83,7 @@
 						libraryFolders={app.libraryFolders}
 						pathMappings={app.pathMappings}
 						mediaProfiles={app.mediaProfiles}
+						customFormats={app.customFormats}
 						users={app.users}
 						tags={app.tags}
 						currentUser={app.currentUser}
@@ -95,6 +98,8 @@
 						deletingPathMappingId={app.deletingPathMappingId}
 						savingMediaProfile={app.savingMediaProfile}
 						deletingMediaProfileId={app.deletingMediaProfileId}
+						savingCustomFormat={app.savingCustomFormat}
+						deletingCustomFormatId={app.deletingCustomFormatId}
 						savingTag={app.savingTag}
 						deletingTagId={app.deletingTagId}
 						savingUser={app.savingUser}
@@ -114,16 +119,19 @@
 						onSaveLibraryFolder={app.saveLibraryFolder}
 						onSavePathMapping={app.savePathMapping}
 						onSaveMediaProfile={app.saveMediaProfile}
+						onSaveCustomFormat={app.saveCustomFormat}
 						onSaveTag={app.saveTag}
 						onSaveUser={app.saveUser}
 						onCancelDownloadClient={app.cancelDownloadClient}
 						onCancelIndexer={app.cancelIndexer}
 						onCancelMediaProfile={app.cancelMediaProfile}
+						onCancelCustomFormat={app.cancelCustomFormat}
 						onCancelTag={app.cancelTag}
 						onCancelUser={app.cancelUser}
 						onEditDownloadClient={app.editDownloadClient}
 						onEditIndexer={app.editIndexer}
 						onEditMediaProfile={app.editMediaProfile}
+						onEditCustomFormat={app.editCustomFormat}
 						onEditUser={app.editUser}
 						onEditTag={app.editTag}
 						onDeleteDownloadClient={app.deleteDownloadClient}
@@ -131,6 +139,7 @@
 						onDeleteLibraryFolder={app.deleteLibraryFolder}
 						onDeletePathMapping={app.deletePathMapping}
 						onDeleteMediaProfile={app.deleteMediaProfile}
+						onDeleteCustomFormat={app.deleteCustomFormat}
 						onDeleteTag={app.deleteTag}
 						onDeleteUser={app.deleteUser}
 						onTestIndexer={app.testIndexer}
@@ -138,6 +147,8 @@
 						onSearchLibraryMatch={app.searchLibraryMatch}
 						onMatchLibraryScanItem={app.matchLibraryScanItem}
 					/>
+				{:else if app.activeView === 'system' && app.isAdmin}
+					<SystemArea activeSection={app.activeSystemSection} />
 				{:else if app.activeView === 'advanced-search'}
 					<AdvancedSearchArea
 						initialQuery={props.initialAdvancedQuery ?? ''}

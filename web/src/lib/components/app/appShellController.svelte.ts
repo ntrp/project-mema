@@ -5,7 +5,9 @@ import { resolve } from '$app/paths';
 import {
 	basePrimaryItems,
 	settingsPrimaryItem,
-	settingsSectionHref
+	settingsSectionHref,
+	systemPrimaryItem,
+	systemSectionHref
 } from '$lib/components/app/appNavigation';
 import {
 	advancedSearchMedia as advancedSearchMediaRequest,
@@ -17,6 +19,7 @@ import {
 	createMediaItem as createMediaItemRequest,
 	createMediaRequest as createMediaRequestRequest,
 	currentSession as currentSessionRequest,
+	deleteCustomFormat as deleteCustomFormatRequest,
 	deleteDownloadClient as deleteDownloadClientRequest,
 	deleteIndexer as deleteIndexerRequest,
 	deleteLibraryFolder as deleteLibraryFolderRequest,
@@ -40,6 +43,7 @@ import {
 	logout as logoutRequest,
 	matchLibraryScanItem as matchLibraryScanItemRequest,
 	mediaTypeForLibraryKind,
+	saveCustomFormat as saveCustomFormatRequest,
 	saveDownloadClient as saveDownloadClientRequest,
 	saveIndexer as saveIndexerRequest,
 	saveLibraryFolder as saveLibraryFolderRequest,
@@ -55,7 +59,9 @@ import {
 	testMetadataProvider as testMetadataProviderRequest
 } from '$lib/settings/api';
 import {
+	customFormatFormFromFormat,
 	downloadClientFormFromClient,
+	emptyCustomFormatForm,
 	emptyDownloadClientForm,
 	emptyIndexerForm,
 	emptyLibraryFolderForm,
@@ -68,6 +74,8 @@ import {
 } from '$lib/settings/forms';
 import type {
 	AppView,
+	CustomFormat,
+	CustomFormatForm as CustomFormatFormValue,
 	DownloadActivity,
 	DownloadActivityStatus,
 	DownloadClient,
@@ -103,6 +111,7 @@ import type {
 	ReleaseCandidate,
 	ReleaseSearchResults,
 	SettingsSection,
+	SystemSection,
 	Tag,
 	TagForm,
 	UserForm as UserFormValue,
@@ -120,6 +129,7 @@ export interface AppShellOptions {
 	initialView?: AppView;
 	initialHomeSection?: HomeSection;
 	initialSettingsSection?: SettingsSection;
+	initialSystemSection?: SystemSection;
 	initialSelectedMediaItemId?: string;
 	initialSelectedRequestId?: string;
 	initialLibraryScanId?: string;
@@ -140,6 +150,8 @@ export function createAppShellController(options: AppShellOptions) {
 	let deletingPathMappingId = $state<string | undefined>();
 	let savingMediaProfile = $state(false);
 	let deletingMediaProfileId = $state<string | undefined>();
+	let savingCustomFormat = $state(false);
+	let deletingCustomFormatId = $state<string | undefined>();
 	let savingTag = $state(false);
 	let deletingTagId = $state<string | undefined>();
 	let savingUser = $state(false);
@@ -154,6 +166,7 @@ export function createAppShellController(options: AppShellOptions) {
 	let libraryFolders = $state<LibraryFolder[]>([]);
 	let pathMappings = $state<PathMapping[]>([]);
 	let mediaProfiles = $state<MediaProfile[]>([]);
+	let customFormats = $state<CustomFormat[]>([]);
 	let users = $state<ManagedUser[]>([]);
 	let tags = $state<Tag[]>([]);
 	let currentUser = $state<UserSummary | undefined>();
@@ -170,6 +183,7 @@ export function createAppShellController(options: AppShellOptions) {
 	let libraryFolderForm = $state<LibraryFolderFormValue>(emptyLibraryFolderForm());
 	let pathMappingForm = $state<PathMappingForm>(emptyPathMappingForm());
 	let mediaProfileForm = $state<MediaProfileFormValue>(emptyMediaProfileForm());
+	let customFormatForm = $state<CustomFormatFormValue>(emptyCustomFormatForm());
 	let tagForm = $state<TagForm>(emptyTagForm());
 	let userForm = $state<UserFormValue>(emptyUserForm());
 	let testingIndexerId = $state<string | undefined>();
@@ -196,15 +210,22 @@ export function createAppShellController(options: AppShellOptions) {
 	let activeView = $state<AppView>(options.initialView ?? 'home');
 	let activeHomeSection = $state<HomeSection>(options.initialHomeSection ?? 'discover');
 	let activeSettingsSection = $state<SettingsSection>(options.initialSettingsSection ?? 'library');
+	let activeSystemSection = $state<SystemSection>(options.initialSystemSection ?? 'logs');
 	let selectedMediaItemId = $state<string | undefined>(options.initialSelectedMediaItemId);
 	let selectedRequestId = $state<string | undefined>(options.initialSelectedRequestId);
 	let activeLibraryScanId = $state<string | undefined>(options.initialLibraryScanId);
 	let activeLibraryScan = $state<LibraryScan | undefined>();
 	let searchQuery = $state(options.initialAdvancedQuery ?? '');
+	let eventSource: EventSource | undefined;
 	let isAdmin = $derived(currentUser?.role === 'admin');
-	let activePrimarySection = $derived(activeView === 'settings' ? 'settings' : activeHomeSection);
+	let activePrimarySection = $derived(
+		activeView === 'settings' ? 'settings' : activeView === 'system' ? 'system' : activeHomeSection
+	);
+	let activeSubmenuSection = $derived(
+		activeView === 'system' ? activeSystemSection : activeSettingsSection
+	);
 	let primaryItems = $derived(
-		isAdmin ? [...basePrimaryItems, settingsPrimaryItem] : basePrimaryItems
+		isAdmin ? [...basePrimaryItems, settingsPrimaryItem, systemPrimaryItem] : basePrimaryItems
 	);
 
 	async function initialise() {
@@ -217,7 +238,7 @@ export function createAppShellController(options: AppShellOptions) {
 		if (authenticated) {
 			if (currentUser?.role === 'admin') {
 				await loadSettings();
-			} else if (activeView === 'settings') {
+			} else if (activeView === 'settings' || activeView === 'system') {
 				activeView = 'home';
 				activeHomeSection = 'discover';
 				void goto(resolve('/discover'));
@@ -227,13 +248,18 @@ export function createAppShellController(options: AppShellOptions) {
 			if (activeView === 'metadata-detail') {
 				await loadMetadataDetail();
 			}
+			connectEvents();
 		}
 
 		loading = false;
 	}
 
 	function connectEvents() {
+		if (!authenticated || eventSource) {
+			return;
+		}
 		const source = new EventSource('/api/events', { withCredentials: true });
+		eventSource = source;
 		source.addEventListener('activity.download.updated', (event) => {
 			const activity = parseEventData<DownloadActivity>(event);
 			if (!activity) {
@@ -244,10 +270,14 @@ export function createAppShellController(options: AppShellOptions) {
 		});
 		source.onerror = () => {
 			if (!authenticated) {
-				source.close();
+				disconnectEvents();
 			}
 		};
-		return () => source.close();
+	}
+
+	function disconnectEvents() {
+		eventSource?.close();
+		eventSource = undefined;
 	}
 
 	async function login(event: SubmitEvent) {
@@ -260,7 +290,7 @@ export function createAppShellController(options: AppShellOptions) {
 			currentUser = session.user;
 			if (currentUser?.role === 'admin') {
 				await loadSettings();
-			} else if (activeView === 'settings') {
+			} else if (activeView === 'settings' || activeView === 'system') {
 				activeView = 'home';
 				activeHomeSection = 'discover';
 				void goto(resolve('/discover'));
@@ -270,6 +300,7 @@ export function createAppShellController(options: AppShellOptions) {
 			if (activeView === 'metadata-detail') {
 				await loadMetadataDetail();
 			}
+			connectEvents();
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Login failed');
 		}
@@ -283,6 +314,7 @@ export function createAppShellController(options: AppShellOptions) {
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not log out');
 		} finally {
+			disconnectEvents();
 			authenticated = false;
 			currentUser = undefined;
 			activeView = 'home';
@@ -291,6 +323,7 @@ export function createAppShellController(options: AppShellOptions) {
 			indexers = [];
 			metadataProviders = [];
 			mediaProfiles = [];
+			customFormats = [];
 			users = [];
 			tags = [];
 			mediaItems = [];
@@ -310,6 +343,7 @@ export function createAppShellController(options: AppShellOptions) {
 			libraryFolderForm = emptyLibraryFolderForm();
 			pathMappingForm = emptyPathMappingForm();
 			mediaProfileForm = emptyMediaProfileForm();
+			customFormatForm = emptyCustomFormatForm();
 			tagForm = emptyTagForm();
 			userForm = emptyUserForm();
 		}
@@ -363,6 +397,7 @@ export function createAppShellController(options: AppShellOptions) {
 			libraryFolders = settings.libraryFolders;
 			pathMappings = settings.pathMappings;
 			mediaProfiles = settings.mediaProfiles;
+			customFormats = settings.customFormats;
 			users = settings.users;
 			tags = settings.tags;
 			if (activeLibraryScanId) {
@@ -835,6 +870,23 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 	}
 
+	async function saveCustomFormat(event: SubmitEvent) {
+		event.preventDefault();
+		savingCustomFormat = true;
+		clearNotice();
+
+		try {
+			await saveCustomFormatRequest(customFormatForm);
+			customFormatForm = emptyCustomFormatForm();
+			message = 'Custom format saved';
+			await loadSettings();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not save custom format');
+		} finally {
+			savingCustomFormat = false;
+		}
+	}
+
 	async function deleteDownloadClient(id: string) {
 		clearNotice();
 
@@ -946,6 +998,24 @@ export function createAppShellController(options: AppShellOptions) {
 			errorMessage = errorMessageFrom(error, 'Could not delete profile');
 		} finally {
 			deletingMediaProfileId = undefined;
+		}
+	}
+
+	async function deleteCustomFormat(id: string) {
+		deletingCustomFormatId = id;
+		clearNotice();
+
+		try {
+			await deleteCustomFormatRequest(id);
+			if (customFormatForm.id === id) {
+				customFormatForm = emptyCustomFormatForm();
+			}
+			customFormats = customFormats.filter((format) => format.id !== id);
+			message = 'Custom format deleted';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not delete custom format');
+		} finally {
+			deletingCustomFormatId = undefined;
 		}
 	}
 
@@ -1111,6 +1181,22 @@ export function createAppShellController(options: AppShellOptions) {
 		void goto(resolve(settingsSectionHref(activeSettingsSection)));
 	}
 
+	function selectSystemSection(section: string) {
+		if (!isAdmin) {
+			return;
+		}
+		activeSystemSection = section as SystemSection;
+		void goto(resolve(systemSectionHref(activeSystemSection)));
+	}
+
+	function selectSubmenuSection(section: string) {
+		if (activeView === 'system') {
+			selectSystemSection(section);
+			return;
+		}
+		selectSettingsSection(section);
+	}
+
 	function selectPrimarySection(section: string) {
 		if (section === 'settings') {
 			if (!isAdmin) {
@@ -1119,6 +1205,15 @@ export function createAppShellController(options: AppShellOptions) {
 			activeView = 'settings';
 			activeSettingsSection = 'library';
 			void goto(resolve('/settings/library'));
+			return;
+		}
+		if (section === 'system') {
+			if (!isAdmin) {
+				return;
+			}
+			activeView = 'system';
+			activeSystemSection = 'logs';
+			void goto(resolve('/system/logs'));
 			return;
 		}
 		selectHomeSection(section as HomeSection);
@@ -1152,6 +1247,12 @@ export function createAppShellController(options: AppShellOptions) {
 		mediaProfileForm = mediaProfileFormFromProfile(profile);
 		activeSettingsSection = 'profiles';
 		void goto(resolve('/settings/profiles'));
+	}
+
+	function editCustomFormat(format: CustomFormat) {
+		customFormatForm = customFormatFormFromFormat(format);
+		activeSettingsSection = 'custom-formats';
+		void goto(resolve('/settings/custom-formats'));
 	}
 
 	function errorMessageFrom(error: unknown, fallback: string) {
@@ -1192,6 +1293,12 @@ export function createAppShellController(options: AppShellOptions) {
 		},
 		get deletingMediaProfileId() {
 			return deletingMediaProfileId;
+		},
+		get savingCustomFormat() {
+			return savingCustomFormat;
+		},
+		get deletingCustomFormatId() {
+			return deletingCustomFormatId;
 		},
 		get savingTag() {
 			return savingTag;
@@ -1240,6 +1347,9 @@ export function createAppShellController(options: AppShellOptions) {
 		},
 		get mediaProfiles() {
 			return mediaProfiles;
+		},
+		get customFormats() {
+			return customFormats;
 		},
 		get users() {
 			return users;
@@ -1303,6 +1413,12 @@ export function createAppShellController(options: AppShellOptions) {
 		},
 		set mediaProfileForm(value: MediaProfileFormValue) {
 			mediaProfileForm = value;
+		},
+		get customFormatForm() {
+			return customFormatForm;
+		},
+		set customFormatForm(value: CustomFormatFormValue) {
+			customFormatForm = value;
 		},
 		get tagForm() {
 			return tagForm;
@@ -1391,6 +1507,9 @@ export function createAppShellController(options: AppShellOptions) {
 		get activeSettingsSection() {
 			return activeSettingsSection;
 		},
+		get activeSystemSection() {
+			return activeSystemSection;
+		},
 		get selectedMediaItemId() {
 			return selectedMediaItemId;
 		},
@@ -1412,6 +1531,9 @@ export function createAppShellController(options: AppShellOptions) {
 		get activePrimarySection() {
 			return activePrimarySection;
 		},
+		get activeSubmenuSection() {
+			return activeSubmenuSection;
+		},
 		get primaryItems() {
 			return primaryItems;
 		},
@@ -1420,6 +1542,7 @@ export function createAppShellController(options: AppShellOptions) {
 		logout,
 		showProfile,
 		connectEvents,
+		disconnectEvents,
 		autocompleteMedia,
 		selectAutocompleteResult,
 		openAdvancedSearch,
@@ -1443,11 +1566,13 @@ export function createAppShellController(options: AppShellOptions) {
 		saveLibraryFolder,
 		savePathMapping,
 		saveMediaProfile,
+		saveCustomFormat,
 		saveTag,
 		saveUser,
 		editDownloadClient,
 		editIndexer,
 		editMediaProfile,
+		editCustomFormat,
 		editTag,
 		editUser,
 		deleteDownloadClient,
@@ -1455,6 +1580,7 @@ export function createAppShellController(options: AppShellOptions) {
 		deleteLibraryFolder,
 		deletePathMapping,
 		deleteMediaProfile,
+		deleteCustomFormat,
 		deleteTag,
 		deleteUser,
 		testIndexer,
@@ -1463,9 +1589,12 @@ export function createAppShellController(options: AppShellOptions) {
 		matchLibraryScanItem,
 		selectPrimarySection,
 		selectSettingsSection,
+		selectSystemSection,
+		selectSubmenuSection,
 		cancelDownloadClient: () => (downloadForm = emptyDownloadClientForm()),
 		cancelIndexer: () => (indexerForm = emptyIndexerForm()),
 		cancelMediaProfile: () => (mediaProfileForm = emptyMediaProfileForm()),
+		cancelCustomFormat: () => (customFormatForm = emptyCustomFormatForm()),
 		cancelTag: () => (tagForm = emptyTagForm()),
 		cancelUser: () => (userForm = emptyUserForm())
 	};
