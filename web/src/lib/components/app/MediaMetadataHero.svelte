@@ -2,8 +2,6 @@
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
-	import { formatDate } from '$lib/settings/dateFormat';
-	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
 	interface Props {
@@ -15,6 +13,9 @@
 	let { detail, titleId, actions }: Props = $props();
 
 	const genres = $derived(detail.genres ?? []);
+	const factMap = $derived(new Map((detail.facts ?? []).map((fact) => [fact.label, fact.value])));
+	const certification = $derived(certificationText());
+	const duration = $derived(runtimeText(detail.runtimeMinutes));
 
 	function imageUrl(path?: string, size = 'w780') {
 		if (!path) {
@@ -26,37 +27,34 @@
 		return `https://image.tmdb.org/t/p/${size}${path}`;
 	}
 
-	function titleWithYear(details: MediaMetadataDetails) {
-		return `${details.title}${details.year ? ` (${details.year})` : ''}`;
-	}
-
-	function subtitle(details: MediaMetadataDetails) {
-		const parts = [
-			details.type === 'movie' ? 'Movie' : 'Series',
-			details.year,
-			details.voteAverage ? `${Math.round(details.voteAverage * 10)}%` : undefined
-		].filter(Boolean);
-		return parts.join(' | ');
+	function hasSubtitle(details: MediaMetadataDetails) {
+		return Boolean(certification || details.year || duration);
 	}
 
 	function topInfo(details: MediaMetadataDetails) {
 		return [
-			details.type === 'movie' && details.releaseDate
-				? ['Release', formatDate(details.releaseDate)]
-				: undefined,
-			details.runtimeMinutes ? ['Runtime', `${details.runtimeMinutes} min`] : undefined,
 			details.seasonCount ? ['Seasons', `${details.seasonCount}`] : undefined,
-			details.episodeCount ? ['Episodes', `${details.episodeCount}`] : undefined,
-			details.originalLanguage ? ['Language', details.originalLanguage.toUpperCase()] : undefined
+			details.episodeCount ? ['Episodes', `${details.episodeCount}`] : undefined
 		].filter((item): item is [string, string] => Boolean(item));
 	}
 
-	function externalUrl(details: MediaMetadataDetails) {
-		return providerPageUrl(details.externalProvider, details.type, details.externalId);
+	function certificationText() {
+		return factMap.get('Certification');
 	}
 
-	function externalLabel(details: MediaMetadataDetails) {
-		return providerDisplayName(details.externalProvider);
+	function runtimeText(minutes?: number) {
+		if (!minutes || minutes <= 0) {
+			return undefined;
+		}
+		const hours = Math.floor(minutes / 60);
+		const remainingMinutes = minutes % 60;
+		if (hours > 0 && remainingMinutes > 0) {
+			return `${hours}h ${remainingMinutes}m`;
+		}
+		if (hours > 0) {
+			return `${hours}h`;
+		}
+		return `${remainingMinutes}m`;
 	}
 </script>
 
@@ -71,9 +69,21 @@
 	<div class="metadata-title-block">
 		<h1 id={titleId} class="metadata-title">
 			<MediaMonitorBookmark monitored={detail.monitored === true} />
-			<span>{titleWithYear(detail)}</span>
+			<span>{detail.title}</span>
 		</h1>
-		<p>{subtitle(detail)}</p>
+		{#if hasSubtitle(detail)}
+			<p class="metadata-subtitle">
+				{#if certification}
+					<span class="metadata-certification">{certification}</span>
+				{/if}
+				{#if detail.year}
+					<span>{detail.year}</span>
+				{/if}
+				{#if duration}
+					<span>{duration}</span>
+				{/if}
+			</p>
+		{/if}
 		{#if topInfo(detail).length > 0}
 			<div class="metadata-info-bar" aria-label="Media information">
 				{#each topInfo(detail) as [label, value] (`${label}:${value}`)}
@@ -89,20 +99,6 @@
 			</div>
 		{/if}
 		<div class="metadata-actions">
-			{#if externalUrl(detail)}
-				<!-- eslint-disable svelte/no-navigation-without-resolve -->
-				<a
-					class="external-link"
-					href={externalUrl(detail)}
-					target="_blank"
-					rel="noreferrer"
-					aria-label={`Open ${externalLabel(detail)} page in a new tab`}
-				>
-					<span class="app-icon" aria-hidden="true">open_in_new</span>
-					<span>{externalLabel(detail)}</span>
-				</a>
-				<!-- eslint-enable svelte/no-navigation-without-resolve -->
-			{/if}
 			{#if detail.collectionId && detail.collectionName}
 				<a
 					class="external-link"

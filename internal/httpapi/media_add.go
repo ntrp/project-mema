@@ -105,9 +105,12 @@ func applyMediaDetails(input storage.MediaItemInput, details metadata.Details) s
 		EpisodeCount:     details.EpisodeCount,
 		VoteAverage:      details.VoteAverage,
 		Genres:           append([]string(nil), details.Genres...),
+		Keywords:         append([]string(nil), details.Keywords...),
 		Facts:            mediaFacts(details.Facts),
 		Seasons:          mediaSeasons(details.Seasons),
 		Cast:             mediaCast(details.Cast),
+		Recommendations:  mediaRelatedItems(details.Recommendations),
+		Similar:          mediaRelatedItems(details.Similar),
 	}
 	return input
 }
@@ -155,6 +158,22 @@ func mediaCast(cast []metadata.Person) []storage.MediaPerson {
 			Name:        person.Name,
 			Role:        person.Role,
 			ProfilePath: person.ProfilePath,
+		})
+	}
+	return items
+}
+
+func mediaRelatedItems(results []metadata.SearchResult) []storage.MediaRelatedItem {
+	items := make([]storage.MediaRelatedItem, 0, len(results))
+	for _, result := range results {
+		items = append(items, storage.MediaRelatedItem{
+			Title:            result.Title,
+			Type:             result.Type,
+			Year:             result.Year,
+			ExternalProvider: result.ExternalProvider,
+			ExternalID:       result.ExternalID,
+			Overview:         result.Overview,
+			PosterPath:       result.PosterPath,
 		})
 	}
 	return items

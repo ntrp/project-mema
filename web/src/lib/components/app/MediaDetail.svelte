@@ -2,6 +2,7 @@
 	import MediaFilesTable from './MediaFilesTable.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
+	import MediaRelatedSections from './MediaRelatedSections.svelte';
 	import MediaSeriesSeasons from './MediaSeriesSeasons.svelte';
 	import ReleaseCandidatesSection from './ReleaseCandidatesSection.svelte';
 	import { resolve } from '$app/paths';
@@ -9,6 +10,7 @@
 	import type {
 		DownloadActivity,
 		MediaItem,
+		MediaSearchResult,
 		MediaType,
 		ReleaseCandidate,
 		ReleaseSearchState
@@ -17,48 +19,59 @@
 	interface Props {
 		mediaType: MediaType;
 		item?: MediaItem;
+		mediaItems?: MediaItem[];
 		requestedItemId: string;
 		releaseResults?: ReleaseSearchState;
 		activities: DownloadActivity[];
 		searchingItemId?: string;
-		scanningMediaItemId?: string;
 		grabbingKey?: string;
+		addingKey?: string;
 		deletingMediaItemId?: string;
 		canManage: boolean;
+		actionLabel: string;
 		onFindReleases: (_item: MediaItem) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
-		onRescanMediaFiles: (_item: MediaItem) => void;
 		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
+		onAddMedia: (_candidate: MediaSearchResult) => void;
 	}
 
 	let {
 		mediaType,
 		item,
+		mediaItems = [],
 		requestedItemId,
 		releaseResults,
 		activities,
 		searchingItemId,
-		scanningMediaItemId,
 		grabbingKey,
+		addingKey,
 		deletingMediaItemId,
 		canManage,
+		actionLabel,
 		onFindReleases,
 		onAutoSearchMedia,
-		onRescanMediaFiles,
 		onDeleteMediaFile,
 		onDeleteMedia,
-		onGrabRelease
+		onGrabRelease,
+		onAddMedia
 	}: Props = $props();
 
 	const detail = $derived(item ? mediaMetadataDetail(item) : undefined);
 	const itemActivities = $derived(
 		item ? activities.filter((activity) => activity.mediaItemId === item.id) : []
 	);
-	const peopleHref = $derived(
+	const castHref = $derived(
 		item
 			? resolve(item.type === 'movie' ? '/movies/[id]/cast' : '/series/[id]/cast', {
+					id: item.id
+				})
+			: undefined
+	);
+	const crewHref = $derived(
+		item
+			? resolve(item.type === 'movie' ? '/movies/[id]/crew' : '/series/[id]/crew', {
 					id: item.id
 				})
 			: undefined
@@ -78,27 +91,13 @@
 				{#if canManage}
 					<button
 						type="button"
-						disabled={searchingItemId === item.id}
-						onclick={() => onFindReleases(item)}
-					>
-						{searchingItemId === item.id ? 'Queued' : 'Find releases'}
-					</button>
-					<button
-						type="button"
-						class="secondary"
-						disabled={scanningMediaItemId === item.id || !item.mediaFolderPath}
-						onclick={() => onRescanMediaFiles(item)}
-					>
-						<span class="app-icon" aria-hidden="true">sync</span>
-						<span>{scanningMediaItemId === item.id ? 'Scanning' : 'Rescan files'}</span>
-					</button>
-					<button
-						type="button"
-						class="danger"
+						class="danger icon-button metadata-delete-action"
+						aria-label="Delete media"
+						title="Delete media"
 						disabled={deletingMediaItemId === item.id}
 						onclick={() => onDeleteMedia(item)}
 					>
-						{deletingMediaItemId === item.id ? 'Removing' : 'Remove'}
+						<span class="app-icon" aria-hidden="true">delete</span>
 					</button>
 				{/if}
 			{/snippet}
@@ -106,7 +105,7 @@
 
 		<div class="metadata-body">
 			<main class="metadata-main">
-				<MediaMetadataCore {detail} {peopleHref}>
+				<MediaMetadataCore {detail} {castHref} {crewHref}>
 					{#snippet seasonsContent()}
 						{#if item.type === 'series'}
 							<MediaSeriesSeasons
@@ -123,21 +122,23 @@
 							/>
 						{/if}
 					{/snippet}
+					{#snippet beforeCastContent()}
+						{#if item.type === 'movie'}
+							<MediaFilesTable
+								{item}
+								{releaseResults}
+								activities={itemActivities}
+								{searchingItemId}
+								{grabbingKey}
+								{canManage}
+								onAutoSearch={onAutoSearchMedia}
+								onManualSearch={onFindReleases}
+								onDeleteFile={onDeleteMediaFile}
+								{onGrabRelease}
+							/>
+						{/if}
+					{/snippet}
 				</MediaMetadataCore>
-				{#if item.type === 'movie'}
-					<MediaFilesTable
-						{item}
-						{releaseResults}
-						activities={itemActivities}
-						{searchingItemId}
-						{grabbingKey}
-						{canManage}
-						onAutoSearch={onAutoSearchMedia}
-						onManualSearch={onFindReleases}
-						onDeleteFile={onDeleteMediaFile}
-						{onGrabRelease}
-					/>
-				{/if}
 				<ReleaseCandidatesSection
 					{item}
 					{releaseResults}
@@ -145,6 +146,7 @@
 					{canManage}
 					{onGrabRelease}
 				/>
+				<MediaRelatedSections {detail} {mediaItems} {addingKey} {actionLabel} onAdd={onAddMedia} />
 			</main>
 		</div>
 	</section>

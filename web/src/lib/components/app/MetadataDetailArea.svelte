@@ -1,11 +1,13 @@
 <script lang="ts">
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
-	import type { MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
+	import MediaRelatedSections from './MediaRelatedSections.svelte';
+	import type { MediaItem, MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
 		detail?: MediaMetadataDetails;
 		loading: boolean;
+		mediaItems?: MediaItem[];
 		addingKey?: string;
 		actionLabel: string;
 		onAdd: (_candidate: MediaSearchResult) => void;
@@ -14,7 +16,7 @@
 	type MetadataAddCandidate = MediaSearchResult &
 		Partial<MediaMetadataDetails> & { metadataStatus?: string };
 
-	let { detail, loading, addingKey, actionLabel, onAdd }: Props = $props();
+	let { detail, loading, mediaItems = [], addingKey, actionLabel, onAdd }: Props = $props();
 
 	function imageUrl(path?: string, size = 'w780') {
 		if (!path) {
@@ -47,9 +49,12 @@
 			episodeCount: details.episodeCount,
 			voteAverage: details.voteAverage,
 			genres: details.genres,
+			keywords: details.keywords,
 			facts: details.facts,
 			seasons: details.seasons,
-			cast: details.cast
+			cast: details.cast,
+			recommendations: details.recommendations,
+			similar: details.similar
 		};
 	}
 
@@ -79,7 +84,9 @@
 			{#snippet actions()}
 				<button
 					type="button"
-					class="add-action-button"
+					class="add-action-button metadata-add-action"
+					aria-label={addingKey === candidateKey(detail) ? 'Working' : actionLabel}
+					title={addingKey === candidateKey(detail) ? 'Working' : actionLabel}
 					disabled={addingKey === candidateKey(detail)}
 					onclick={() => onAdd(candidate(detail))}
 				>
@@ -92,6 +99,7 @@
 		<div class="metadata-body">
 			<main class="metadata-main">
 				<MediaMetadataCore {detail} />
+				<MediaRelatedSections {detail} {mediaItems} {addingKey} {actionLabel} {onAdd} />
 			</main>
 		</div>
 	</section>

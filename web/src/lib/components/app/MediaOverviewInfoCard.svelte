@@ -18,7 +18,7 @@
 	const factMap = $derived(new Map(facts.map((fact) => [fact.label, fact.value])));
 	const score = $derived(detail.voteAverage ? Math.round(detail.voteAverage * 10) : undefined);
 	const rows = $derived(infoRows(detail, factMap));
-	const externalLinks = $derived(links(detail, factMap));
+	const externalLinks = $derived(links(detail));
 
 	function infoRows(details: MediaMetadataDetails, lookup: Map<string, string>): InfoRow[] {
 		return [
@@ -30,8 +30,8 @@
 			row('Revenue', lookup.get('Revenue')),
 			row('Budget', lookup.get('Budget')),
 			row('Original Language', languageName(details.originalLanguage)),
-			row('Production Countries', lookup.get('Production Countries')),
-			row('Studios', lookup.get('Studios') ?? lookup.get('Networks'))
+			row('Production Countries', factList(lookup.get('Production Countries'))),
+			row('Studios', factList(lookup.get('Studios') ?? lookup.get('Networks')))
 		].filter((item): item is InfoRow => Boolean(item));
 	}
 
@@ -54,6 +54,17 @@
 		return [...new Set(values)].map(formatDate);
 	}
 
+	function factList(value?: string) {
+		if (!value) {
+			return [];
+		}
+		const separator = value.includes('\n') ? /\n+/ : /,\s*/;
+		return value
+			.split(separator)
+			.map((item) => item.trim())
+			.filter(Boolean);
+	}
+
 	function languageName(code?: string) {
 		if (!code) return undefined;
 		try {
@@ -63,25 +74,12 @@
 		}
 	}
 
-	function links(details: MediaMetadataDetails, lookup: Map<string, string>) {
+	function links(details: MediaMetadataDetails) {
 		const items = [];
 		const providerUrl = providerPageUrl(details.externalProvider, details.type, details.externalId);
 		if (providerUrl) {
 			items.push({ label: details.externalProvider.toUpperCase(), href: providerUrl });
 		}
-		const imdbId = lookup.get('IMDb ID');
-		if (imdbId) {
-			items.push({ label: 'IMDb', href: `https://www.imdb.com/title/${imdbId}/` });
-		}
-		const wikidataId = lookup.get('Wikidata ID');
-		if (wikidataId) {
-			items.push({ label: 'Wikidata', href: `https://www.wikidata.org/wiki/${wikidataId}` });
-		}
-		const query = encodeURIComponent(details.title);
-		items.push(
-			{ label: 'Rotten Tomatoes', href: `https://www.rottentomatoes.com/search?search=${query}` },
-			{ label: 'Letterboxd', href: `https://letterboxd.com/search/${query}/` }
-		);
 		return items;
 	}
 </script>
@@ -101,7 +99,7 @@
 			<div>
 				<strong>{row.label}</strong>
 				{#if Array.isArray(row.value)}
-					<span class="metadata-date-list">
+					<span class="metadata-value-list">
 						{#each row.value as value (value)}
 							<span>{value}</span>
 						{/each}

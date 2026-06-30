@@ -30,7 +30,6 @@
 	removingBlacklistId={app.removingBlacklistId}
 	approvingRequestId={app.approvingRequestId}
 	searchingItemId={app.searchingItemId}
-	scanningMediaItemId={app.scanningMediaItemId}
 	grabbingKey={app.grabbingKey}
 	deletingMediaItemId={app.deletingMediaItemId}
 	cancellingActivityId={app.cancellingActivityId}
@@ -43,7 +42,6 @@
 	onApproveMediaRequest={app.approveMediaRequest}
 	onFindReleases={app.findReleases}
 	onAutoSearchMedia={app.autoSearchMedia}
-	onRescanMediaFiles={app.rescanMediaFiles}
 	onDeleteMediaFile={app.deleteMediaFile}
 	onDeleteMedia={app.deleteMediaItem}
 	onGrabRelease={app.grabRelease}

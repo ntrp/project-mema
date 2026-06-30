@@ -3,16 +3,31 @@ package metadata
 import (
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 func tmdbCountries(items []tmdbCountry) []string {
 	names := make([]string, 0, len(items))
 	for _, item := range items {
 		if name := strings.TrimSpace(item.Name); name != "" {
-			names = append(names, name)
+			names = append(names, countryFlag(item.Code, name))
 		}
 	}
 	return names
+}
+
+func countryFlag(code string, name string) string {
+	code = strings.ToUpper(strings.TrimSpace(code))
+	if len(code) != 2 {
+		return name
+	}
+	runes := []rune(code)
+	for _, value := range runes {
+		if value < 'A' || value > 'Z' || !unicode.IsLetter(value) {
+			return name
+		}
+	}
+	return string([]rune{0x1F1E6 + runes[0] - 'A', 0x1F1E6 + runes[1] - 'A'}) + " " + name
 }
 
 func appendUniqueLimit(values []string, value string, limit int) []string {

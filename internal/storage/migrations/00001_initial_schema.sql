@@ -208,9 +208,12 @@ create table if not exists app.media_items (
     episode_count integer,
     vote_average double precision,
     genres jsonb not null default '[]'::jsonb check (jsonb_typeof(genres) = 'array'),
+    keywords jsonb not null default '[]'::jsonb check (jsonb_typeof(keywords) = 'array'),
     facts jsonb not null default '[]'::jsonb check (jsonb_typeof(facts) = 'array'),
     seasons jsonb not null default '[]'::jsonb check (jsonb_typeof(seasons) = 'array'),
     cast_members jsonb not null default '[]'::jsonb check (jsonb_typeof(cast_members) = 'array'),
+    recommendations jsonb not null default '[]'::jsonb check (jsonb_typeof(recommendations) = 'array'),
+    similar_media jsonb not null default '[]'::jsonb check (jsonb_typeof(similar_media) = 'array'),
     quality_profile_id text,
     media_folder_path text,
     monitor_mode text not null default 'only_media' check (monitor_mode in ('none', 'only_media', 'collection', 'all_episodes', 'future_episodes', 'missing_episodes', 'existing_episodes', 'no_specials')),
@@ -342,15 +345,33 @@ alter table app.media_items
 alter table app.media_items
     add column if not exists series_type text;
 
+alter table app.media_items
+    add column if not exists keywords jsonb not null default '[]'::jsonb;
+
+alter table app.media_items
+    add column if not exists recommendations jsonb not null default '[]'::jsonb;
+
+alter table app.media_items
+    add column if not exists similar_media jsonb not null default '[]'::jsonb;
+
 -- +goose StatementBegin
 do $$
 begin
     alter table app.media_items drop constraint if exists media_items_monitor_mode_check;
     alter table app.media_items drop constraint if exists media_items_series_type_check;
+    alter table app.media_items drop constraint if exists media_items_keywords_check;
+    alter table app.media_items drop constraint if exists media_items_recommendations_check;
+    alter table app.media_items drop constraint if exists media_items_similar_media_check;
     alter table app.media_items
         add constraint media_items_monitor_mode_check check (monitor_mode in ('none', 'only_media', 'collection', 'all_episodes', 'future_episodes', 'missing_episodes', 'existing_episodes', 'no_specials'));
     alter table app.media_items
         add constraint media_items_series_type_check check (series_type is null or series_type in ('standard', 'daily', 'absolute'));
+    alter table app.media_items
+        add constraint media_items_keywords_check check (jsonb_typeof(keywords) = 'array');
+    alter table app.media_items
+        add constraint media_items_recommendations_check check (jsonb_typeof(recommendations) = 'array');
+    alter table app.media_items
+        add constraint media_items_similar_media_check check (jsonb_typeof(similar_media) = 'array');
 end $$;
 -- +goose StatementEnd
 

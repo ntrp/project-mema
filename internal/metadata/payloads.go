@@ -16,33 +16,37 @@ type tmdbMedia struct {
 }
 
 type tmdbDetails struct {
-	ID               int64           `json:"id"`
-	Title            string          `json:"title"`
-	Name             string          `json:"name"`
-	ReleaseDate      string          `json:"release_date"`
-	FirstAirDate     string          `json:"first_air_date"`
-	Overview         string          `json:"overview"`
-	PosterPath       string          `json:"poster_path"`
-	Collection       *tmdbCollection `json:"belongs_to_collection"`
-	BackdropPath     string          `json:"backdrop_path"`
-	Status           string          `json:"status"`
-	OriginalLanguage string          `json:"original_language"`
-	Runtime          int32           `json:"runtime"`
-	EpisodeRunTime   []int32         `json:"episode_run_time"`
-	NumberOfSeasons  int32           `json:"number_of_seasons"`
-	NumberOfEpisodes int32           `json:"number_of_episodes"`
-	VoteAverage      float64         `json:"vote_average"`
-	Budget           int64           `json:"budget"`
-	Revenue          int64           `json:"revenue"`
-	Genres           []tmdbName      `json:"genres"`
-	CreatedBy        []tmdbName      `json:"created_by"`
-	Networks         []tmdbName      `json:"networks"`
-	Production       []tmdbName      `json:"production_companies"`
-	Countries        []tmdbCountry   `json:"production_countries"`
-	Seasons          []tmdbSeason    `json:"seasons"`
-	Credits          tmdbCredits     `json:"credits"`
-	ExternalIDs      tmdbExternalIDs `json:"external_ids"`
-	ReleaseDates     tmdbReleaseInfo `json:"release_dates"`
+	ID               int64              `json:"id"`
+	Title            string             `json:"title"`
+	Name             string             `json:"name"`
+	ReleaseDate      string             `json:"release_date"`
+	FirstAirDate     string             `json:"first_air_date"`
+	Overview         string             `json:"overview"`
+	PosterPath       string             `json:"poster_path"`
+	Collection       *tmdbCollection    `json:"belongs_to_collection"`
+	BackdropPath     string             `json:"backdrop_path"`
+	Status           string             `json:"status"`
+	OriginalLanguage string             `json:"original_language"`
+	Runtime          int32              `json:"runtime"`
+	EpisodeRunTime   []int32            `json:"episode_run_time"`
+	NumberOfSeasons  int32              `json:"number_of_seasons"`
+	NumberOfEpisodes int32              `json:"number_of_episodes"`
+	VoteAverage      float64            `json:"vote_average"`
+	Budget           int64              `json:"budget"`
+	Revenue          int64              `json:"revenue"`
+	Genres           []tmdbName         `json:"genres"`
+	Keywords         tmdbKeywords       `json:"keywords"`
+	CreatedBy        []tmdbName         `json:"created_by"`
+	Networks         []tmdbName         `json:"networks"`
+	Production       []tmdbName         `json:"production_companies"`
+	Countries        []tmdbCountry      `json:"production_countries"`
+	Seasons          []tmdbSeason       `json:"seasons"`
+	Credits          tmdbCredits        `json:"credits"`
+	ExternalIDs      tmdbExternalIDs    `json:"external_ids"`
+	ReleaseDates     tmdbReleaseInfo    `json:"release_dates"`
+	ContentRatings   tmdbContentRatings `json:"content_ratings"`
+	Recommendations  tmdbSearchResponse `json:"recommendations"`
+	Similar          tmdbSearchResponse `json:"similar"`
 }
 
 type tmdbCollection struct {
@@ -56,6 +60,11 @@ type tmdbCollection struct {
 
 type tmdbName struct {
 	Name string `json:"name"`
+}
+
+type tmdbKeywords struct {
+	Keywords []tmdbName `json:"keywords"`
+	Results  []tmdbName `json:"results"`
 }
 
 type tmdbCountry struct {
@@ -82,8 +91,18 @@ type tmdbReleaseCountry struct {
 }
 
 type tmdbReleaseDate struct {
-	Date string `json:"release_date"`
-	Type int    `json:"type"`
+	Date          string `json:"release_date"`
+	Type          int    `json:"type"`
+	Certification string `json:"certification"`
+}
+
+type tmdbContentRatings struct {
+	Results []tmdbContentRating `json:"results"`
+}
+
+type tmdbContentRating struct {
+	Code   string `json:"iso_3166_1"`
+	Rating string `json:"rating"`
 }
 
 type tmdbSeason struct {

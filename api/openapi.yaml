@@ -2639,6 +2639,10 @@ components:
           type: array
           items:
             type: string
+        keywords:
+          type: array
+          items:
+            type: string
         facts:
           type: array
           items:
@@ -2651,6 +2655,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaMetadataPerson"
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchResult"
+        similar:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchResult"
     MediaCollection:
       type: object
       additionalProperties: false
@@ -2798,6 +2810,10 @@ components:
               type: array
               items:
                 type: string
+            keywords:
+              type: array
+              items:
+                type: string
             facts:
               type: array
               items:
@@ -2810,6 +2826,14 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/MediaMetadataPerson"
+            recommendations:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaSearchResult"
+            similar:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaSearchResult"
             qualityProfileName:
               type: string
             libraryFolderPath:

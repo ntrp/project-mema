@@ -1452,9 +1452,12 @@ export interface components {
 			/** Format: double */
 			voteAverage?: number;
 			genres?: string[];
+			keywords?: string[];
 			facts?: components['schemas']['MediaMetadataFact'][];
 			seasons?: components['schemas']['MediaMetadataSeason'][];
 			cast?: components['schemas']['MediaMetadataPerson'][];
+			recommendations?: components['schemas']['MediaSearchResult'][];
+			similar?: components['schemas']['MediaSearchResult'][];
 		};
 		MediaCollection: {
 			id: string;
@@ -1515,9 +1518,12 @@ export interface components {
 			/** Format: double */
 			voteAverage?: number;
 			genres?: string[];
+			keywords?: string[];
 			facts?: components['schemas']['MediaMetadataFact'][];
 			seasons?: components['schemas']['MediaMetadataSeason'][];
 			cast?: components['schemas']['MediaMetadataPerson'][];
+			recommendations?: components['schemas']['MediaSearchResult'][];
+			similar?: components['schemas']['MediaSearchResult'][];
 			qualityProfileName?: string;
 			libraryFolderPath?: string;
 			mediaFolderPath?: string;

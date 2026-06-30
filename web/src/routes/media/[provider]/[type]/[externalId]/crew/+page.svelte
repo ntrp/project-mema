@@ -7,7 +7,8 @@
 
 <AppShell
 	initialView="media-people"
-	initialHomeSection="series"
-	initialSelectedMediaItemId={params.id}
-	initialPeopleSectionKind="cast"
+	initialMetadataProvider={params.provider}
+	initialMetadataType={params.type}
+	initialMetadataExternalId={params.externalId}
+	initialPeopleSectionKind="crew"
 />

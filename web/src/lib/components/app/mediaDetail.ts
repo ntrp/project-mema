@@ -29,8 +29,11 @@ export function mediaMetadataDetail(mediaItem: MediaItem): MediaMetadataDetails 
 		episodeCount: mediaItem.episodeCount,
 		voteAverage: mediaItem.voteAverage,
 		genres: mediaItem.genres,
+		keywords: mediaItem.keywords,
 		facts: mediaItem.facts,
 		seasons: mediaItem.seasons,
-		cast: mediaItem.cast
+		cast: mediaItem.cast,
+		recommendations: mediaItem.recommendations,
+		similar: mediaItem.similar
 	};
 }

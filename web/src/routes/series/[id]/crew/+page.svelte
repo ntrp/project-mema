@@ -9,5 +9,5 @@
 	initialView="media-people"
 	initialHomeSection="series"
 	initialSelectedMediaItemId={params.id}
-	initialPeopleSectionKind="cast"
+	initialPeopleSectionKind="crew"
 />

@@ -7,7 +7,7 @@
 
 <AppShell
 	initialView="media-people"
-	initialHomeSection="series"
+	initialHomeSection="movies"
 	initialSelectedMediaItemId={params.id}
-	initialPeopleSectionKind="cast"
+	initialPeopleSectionKind="crew"
 />

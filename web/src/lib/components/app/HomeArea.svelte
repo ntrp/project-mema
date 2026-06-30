@@ -40,7 +40,6 @@
 		removingBlacklistId?: string;
 		approvingRequestId?: string;
 		searchingItemId?: string;
-		scanningMediaItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
 		cancellingActivityId?: string;
@@ -53,7 +52,6 @@
 		onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
 		onFindReleases: (_item: MediaItem) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
-		onRescanMediaFiles: (_item: MediaItem) => void;
 		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
@@ -81,7 +79,6 @@
 		removingBlacklistId,
 		approvingRequestId,
 		searchingItemId,
-		scanningMediaItemId,
 		grabbingKey,
 		deletingMediaItemId,
 		cancellingActivityId,
@@ -94,7 +91,6 @@
 		onApproveMediaRequest,
 		onFindReleases,
 		onAutoSearchMedia,
-		onRescanMediaFiles,
 		onDeleteMediaFile,
 		onDeleteMedia,
 		onGrabRelease,
@@ -153,20 +149,22 @@
 			<MediaDetail
 				mediaType={activeSection === 'movies' ? 'movie' : 'series'}
 				item={selectedMediaItem}
+				{mediaItems}
 				requestedItemId={selectedMediaItemId}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{activities}
 				{searchingItemId}
-				{scanningMediaItemId}
 				{grabbingKey}
+				{addingKey}
 				{deletingMediaItemId}
 				{canManage}
+				actionLabel={canManage ? 'Add' : 'Request'}
 				{onFindReleases}
 				{onAutoSearchMedia}
-				{onRescanMediaFiles}
 				{onDeleteMediaFile}
 				{onDeleteMedia}
 				{onGrabRelease}
+				{onAddMedia}
 			/>
 		{:else}
 			<MediaItemList

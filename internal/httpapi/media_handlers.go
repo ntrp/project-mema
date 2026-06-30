@@ -776,6 +776,7 @@ func mediaItemSearchResultResponse(item storage.MediaItem) MediaSearchResult {
 
 func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 	genres := append([]string(nil), details.Genres...)
+	keywords := append([]string(nil), details.Keywords...)
 	facts := make([]MediaMetadataFact, 0, len(details.Facts))
 	for _, fact := range details.Facts {
 		facts = append(facts, MediaMetadataFact{
@@ -811,6 +812,14 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 			ProfilePath: person.ProfilePath,
 		})
 	}
+	recommendations := make([]MediaSearchResult, 0, len(details.Recommendations))
+	for _, result := range details.Recommendations {
+		recommendations = append(recommendations, metadataSearchResultResponse(result))
+	}
+	similar := make([]MediaSearchResult, 0, len(details.Similar))
+	for _, result := range details.Similar {
+		similar = append(similar, metadataSearchResultResponse(result))
+	}
 	return MediaMetadataDetails{
 		Title:            details.Title,
 		Type:             MediaType(details.Type),
@@ -831,9 +840,12 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 		EpisodeCount:     details.EpisodeCount,
 		VoteAverage:      details.VoteAverage,
 		Genres:           &genres,
+		Keywords:         &keywords,
 		Facts:            &facts,
 		Seasons:          &seasons,
 		Cast:             &cast,
+		Recommendations:  &recommendations,
+		Similar:          &similar,
 	}
 }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import MediaEpisodeFileSummary from './MediaEpisodeFileSummary.svelte';
 	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
 	import { activityForMovie } from './activityQueue';
@@ -61,113 +62,22 @@
 	<h2 id="media-files-title">Files</h2>
 	<div class="file-section-stack">
 		{#each groups as group (group.key)}
-			<section class="panel media-file-panel" aria-labelledby={`files-${group.key}`}>
-				<h3 id={`files-${group.key}`}>{group.title}</h3>
-				<div class="table-wrap media-files-table">
-					<table>
-						<thead>
-							<tr>
-								<th>Relative Path</th>
-								<th>Video Codec</th>
-								<th>Audio Info</th>
-								<th>Size</th>
-								<th>Languages</th>
-								<th>Quality</th>
-								<th>Status</th>
-								<th>Formats</th>
-								<th>Score</th>
-								<th>Actions</th>
-							</tr>
-						</thead>
-						<tbody>
-							{#each group.rows as row (row.key)}
-								<tr class:missing-file={!row.exists}>
-									<td>
-										<strong>{row.relativePath}</strong>
-										{#if row.episodeNumber}
-											<small>S{row.seasonNumber}E{row.episodeNumber} {row.episodeTitle ?? ''}</small
-											>
-										{/if}
-									</td>
-									<td>{row.videoCodec}</td>
-									<td>{row.audioInfo}</td>
-									<td>{row.size}</td>
-									<td>{row.languages}</td>
-									<td>{row.quality}</td>
-									<td>
-										{#if activityStatus}
-											<span
-												class="activity-status-chip"
-												class:activity-failed={activityStatus.status === 'failed'}
-											>
-												<span class="app-icon" aria-hidden="true">sync</span>
-												{activityStatus.label}
-											</span>
-										{:else}
-											-
-										{/if}
-									</td>
-									<td>
-										{#if row.formats.length}
-											<div class="format-chip-list">
-												{#each row.formats as format (format)}
-													<span>{format}</span>
-												{/each}
-											</div>
-										{:else}
-											-
-										{/if}
-									</td>
-									<td>{row.score}</td>
-									<td class="row-actions media-file-actions">
-										{#if row.exists}
-											<button
-												type="button"
-												class="secondary icon-button"
-												aria-label="File info"
-												onclick={() => (detailRow = row)}
-											>
-												<span class="app-icon" aria-hidden="true">info</span>
-											</button>
-										{/if}
-										<button
-											type="button"
-											class="secondary icon-button"
-											aria-label="Automatic search"
-											title="Automatic search"
-											disabled={!canManage || busy}
-											onclick={() => onAutoSearch(item)}
-										>
-											<span class="app-icon" aria-hidden="true">search</span>
-										</button>
-										<button
-											type="button"
-											class="secondary icon-button"
-											aria-label="Manual search"
-											title="Manual search"
-											disabled={busy}
-											onclick={() => (searchOpen = true)}
-										>
-											<span class="app-icon" aria-hidden="true">person</span>
-										</button>
-										{#if row.exists}
-											<button
-												type="button"
-												class="danger icon-button"
-												aria-label="Delete file"
-												disabled={!canManage || !row.path}
-												onclick={() => confirmDelete(row)}
-											>
-												<span class="app-icon" aria-hidden="true">delete</span>
-											</button>
-										{/if}
-									</td>
-								</tr>
-							{/each}
-						</tbody>
-					</table>
-				</div>
-			</section>
+			<div class="metadata-episode-list" aria-label={group.title}>
+				{#each group.rows as row (row.key)}
+					<MediaEpisodeFileSummary
+						{row}
+						{activityStatus}
+						{canManage}
+						searching={busy}
+						fileLabel="Movie file"
+						missingLabel="No matched file for this movie"
+						onInfo={(nextRow) => (detailRow = nextRow)}
+						onAutoSearch={() => onAutoSearch(item)}
+						onManualSearch={() => (searchOpen = true)}
+						onDelete={confirmDelete}
+					/>
+				{/each}
+			</div>
 		{/each}
 	</div>
 </section>

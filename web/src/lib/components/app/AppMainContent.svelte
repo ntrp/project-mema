@@ -20,6 +20,8 @@
 	}
 
 	let { app = $bindable(), options }: Props = $props();
+
+	function noop() {}
 </script>
 
 {#if app.activeView === 'settings' && app.isAdmin}
@@ -124,6 +126,7 @@
 	<MetadataDetailArea
 		detail={app.metadataDetail}
 		loading={app.loadingMetadataDetail}
+		mediaItems={app.mediaItems}
 		addingKey={app.addingKey}
 		actionLabel={app.isAdmin ? 'Add' : 'Request'}
 		onAdd={app.addMedia}
@@ -131,6 +134,7 @@
 {:else if app.activeView === 'media-people'}
 	<MediaPeopleArea
 		detail={app.mediaPeopleDetail}
+		kind={app.activePeopleSectionKind}
 		loading={app.loadingMetadataDetail && !app.mediaPeopleDetail}
 	/>
 {:else if app.activeView === 'media-collection'}
@@ -141,6 +145,22 @@
 		addingKey={app.addingKey}
 		actionLabel={app.isAdmin ? 'Add' : 'Request'}
 		onAdd={app.addMedia}
+	/>
+{:else if app.activeView === 'related-section'}
+	<DiscoverSectionArea
+		section={app.relatedMediaSection}
+		mediaItems={app.mediaItems}
+		loading={app.loadingMetadataDetail}
+		loadingMore={false}
+		hasMore={false}
+		addingKey={app.addingKey}
+		blacklistingKey={app.blacklistingKey}
+		actionLabel={app.isAdmin ? 'Add' : 'Request'}
+		canManage={app.isAdmin}
+		blacklist={app.discoverBlacklist}
+		onAdd={app.addMedia}
+		onBlacklist={app.blacklistDiscoverMedia}
+		onLoadMore={noop}
 	/>
 {:else if app.activeView === 'discover-section'}
 	<DiscoverSectionArea

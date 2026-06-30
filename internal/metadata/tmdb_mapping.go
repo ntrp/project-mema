@@ -26,9 +26,12 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 		Status:           optionalString(item.Status),
 		OriginalLanguage: optionalString(item.OriginalLanguage),
 		Genres:           tmdbNames(item.Genres),
+		Keywords:         tmdbKeywordNames(item.Keywords),
 		Facts:            []Fact{},
 		Seasons:          []Season{},
 		Cast:             []Person{},
+		Recommendations:  tmdbResults(item.Recommendations.Results, mediaType, 20),
+		Similar:          tmdbResults(item.Similar.Results, mediaType, 20),
 	}
 	if mediaType == "movie" {
 		details.ReleaseDate = optionalString(item.ReleaseDate)
@@ -80,20 +83,21 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 	if item.VoteAverage > 0 {
 		details.VoteAverage = &item.VoteAverage
 	}
+	details.Facts = append(details.Facts, tmdbCertificationFacts(item)...)
 	details.Facts = append(details.Facts, tmdbReleaseDateFacts(item.ReleaseDates)...)
 	details.Facts = append(details.Facts, tmdbFinancialFacts(item)...)
 	if len(item.Countries) > 0 {
-		details.Facts = append(details.Facts, Fact{Label: "Production Countries", Value: strings.Join(tmdbCountries(item.Countries), ", ")})
+		details.Facts = append(details.Facts, Fact{Label: "Production Countries", Value: strings.Join(tmdbCountries(item.Countries), "\n")})
 	}
 	if len(item.Production) > 0 {
-		details.Facts = append(details.Facts, Fact{Label: "Studios", Value: strings.Join(tmdbNames(item.Production), ", ")})
+		details.Facts = append(details.Facts, Fact{Label: "Studios", Value: strings.Join(tmdbNames(item.Production), "\n")})
 	}
 	details.Facts = append(details.Facts, tmdbCrewFacts(item.Credits.Crew)...)
 	if len(item.CreatedBy) > 0 {
 		details.Facts = append(details.Facts, Fact{Label: "Creator", Value: strings.Join(tmdbNames(item.CreatedBy), ", ")})
 	}
 	if len(item.Networks) > 0 {
-		details.Facts = append(details.Facts, Fact{Label: "Networks", Value: strings.Join(tmdbNames(item.Networks), ", ")})
+		details.Facts = append(details.Facts, Fact{Label: "Networks", Value: strings.Join(tmdbNames(item.Networks), "\n")})
 	}
 	details.Facts = append(details.Facts, tmdbExternalIDFacts(item.ExternalIDs)...)
 	for _, cast := range item.Credits.Cast {
@@ -147,6 +151,47 @@ func tmdbReleaseDateFacts(info tmdbReleaseInfo) []Fact {
 	return facts
 }
 
+func tmdbCertificationFacts(item tmdbDetails) []Fact {
+	if value := tmdbReleaseCertification(item.ReleaseDates); value != "" {
+		return []Fact{{Label: "Certification", Value: value}}
+	}
+	if value := tmdbContentRatingValue(item.ContentRatings); value != "" {
+		return []Fact{{Label: "Certification", Value: value}}
+	}
+	return nil
+}
+
+func tmdbReleaseCertification(info tmdbReleaseInfo) string {
+	selected := map[int]string{}
+	for _, country := range info.Results {
+		if country.Code != "US" {
+			continue
+		}
+		for _, release := range country.ReleaseList {
+			value := strings.TrimSpace(release.Certification)
+			if value == "" {
+				continue
+			}
+			selected[release.Type] = value
+		}
+	}
+	for _, releaseType := range []int{3, 2, 1, 4, 5, 6} {
+		if selected[releaseType] != "" {
+			return selected[releaseType]
+		}
+	}
+	return ""
+}
+
+func tmdbContentRatingValue(info tmdbContentRatings) string {
+	for _, rating := range info.Results {
+		if rating.Code == "US" {
+			return strings.TrimSpace(rating.Rating)
+		}
+	}
+	return ""
+}
+
 func tmdbFinancialFacts(item tmdbDetails) []Fact {
 	facts := []Fact{}
 	if item.Revenue > 0 {
@@ -179,6 +224,14 @@ func tmdbExternalIDFacts(ids tmdbExternalIDs) []Fact {
 		facts = append(facts, Fact{Label: "Twitter ID", Value: value})
 	}
 	return facts
+}
+
+func tmdbKeywordNames(keywords tmdbKeywords) []string {
+	values := keywords.Keywords
+	if len(values) == 0 {
+		values = keywords.Results
+	}
+	return tmdbNames(values)
 }
 
 func tmdbCrewFacts(crew []tmdbCrewMember) []Fact {

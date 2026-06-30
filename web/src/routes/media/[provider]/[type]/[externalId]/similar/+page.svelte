@@ -6,9 +6,9 @@
 </script>
 
 <AppShell
-	initialView="media-people"
+	initialView="related-section"
 	initialMetadataProvider={params.provider}
 	initialMetadataType={params.type}
 	initialMetadataExternalId={params.externalId}
-	initialPeopleSectionKind="cast"
+	initialRelatedSectionKind="similar"
 />

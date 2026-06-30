@@ -88,21 +88,22 @@ func insertMediaItem(ctx context.Context, q mediaItemQuerier, input MediaItemInp
 			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path,
 			collection_id, collection_name, backdrop_path, metadata_status, original_language,
 			series_type, release_date, first_air_date, runtime_minutes, season_count, episode_count, vote_average,
-			genres, facts, seasons, cast_members,
+			genres, keywords, facts, seasons, cast_members, recommendations, similar_media,
 			monitor_mode, minimum_availability, quality_profile_id, library_folder_id, media_folder_path
 		)
 		values (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9,
 			$10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
-			$22::jsonb, $23::jsonb, $24::jsonb, $25::jsonb,
-			$26, $27, $28, $29, $30
+			$22::jsonb, $23::jsonb, $24::jsonb, $25::jsonb, $26::jsonb, $27::jsonb, $28::jsonb,
+			$29, $30, $31, $32, $33
 		)
 		returning id
 	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID,
 		input.Overview, input.PosterPath, input.CollectionID, input.CollectionName, input.BackdropPath,
 		input.MetadataStatus, input.OriginalLanguage, input.SeriesType, input.ReleaseDate, input.FirstAirDate,
 		input.RuntimeMinutes, input.SeasonCount, input.EpisodeCount, input.VoteAverage,
-		metadataPayloads.genres, metadataPayloads.facts, metadataPayloads.seasons, metadataPayloads.cast,
+		metadataPayloads.genres, metadataPayloads.keywords, metadataPayloads.facts, metadataPayloads.seasons,
+		metadataPayloads.cast, metadataPayloads.recommendations, metadataPayloads.similar,
 		input.MonitorMode, input.MinimumAvailability, input.QualityProfileID, input.LibraryFolderID,
 		mediaFolderPath).Scan(&itemID); err != nil {
 		return MediaItem{}, err

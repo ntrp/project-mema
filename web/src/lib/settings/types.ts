@@ -123,6 +123,7 @@ export type AppView =
 	| 'metadata-detail'
 	| 'media-people'
 	| 'media-collection'
+	| 'related-section'
 	| 'discover-section';
 export type HomeSection =
 	| 'discover'

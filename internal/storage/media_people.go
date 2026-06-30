@@ -15,9 +15,12 @@ type MediaMetadataSnapshot struct {
 	EpisodeCount     *int32
 	VoteAverage      *float64
 	Genres           []string
+	Keywords         []string
 	Facts            []MediaFact
 	Seasons          []MediaSeason
 	Cast             []MediaPerson
+	Recommendations  []MediaRelatedItem
+	Similar          []MediaRelatedItem
 }
 
 type MediaFact struct {
@@ -49,15 +52,32 @@ type MediaPerson struct {
 	ProfilePath *string `json:"profilePath,omitempty"`
 }
 
+type MediaRelatedItem struct {
+	Title            string  `json:"title"`
+	Type             string  `json:"type"`
+	Year             *int32  `json:"year,omitempty"`
+	ExternalProvider string  `json:"externalProvider"`
+	ExternalID       string  `json:"externalId"`
+	Overview         *string `json:"overview,omitempty"`
+	PosterPath       *string `json:"posterPath,omitempty"`
+}
+
 type mediaMetadataPayloads struct {
-	genres  []byte
-	facts   []byte
-	seasons []byte
-	cast    []byte
+	genres          []byte
+	keywords        []byte
+	facts           []byte
+	seasons         []byte
+	cast            []byte
+	recommendations []byte
+	similar         []byte
 }
 
 func marshalMediaMetadata(input MediaMetadataSnapshot) (mediaMetadataPayloads, error) {
 	genres, err := marshalJSONArray(input.Genres)
+	if err != nil {
+		return mediaMetadataPayloads{}, err
+	}
+	keywords, err := marshalJSONArray(input.Keywords)
 	if err != nil {
 		return mediaMetadataPayloads{}, err
 	}
@@ -73,20 +93,42 @@ func marshalMediaMetadata(input MediaMetadataSnapshot) (mediaMetadataPayloads, e
 	if err != nil {
 		return mediaMetadataPayloads{}, err
 	}
-	return mediaMetadataPayloads{genres: genres, facts: facts, seasons: seasons, cast: cast}, nil
+	recommendations, err := marshalJSONArray(input.Recommendations)
+	if err != nil {
+		return mediaMetadataPayloads{}, err
+	}
+	similar, err := marshalJSONArray(input.Similar)
+	if err != nil {
+		return mediaMetadataPayloads{}, err
+	}
+	return mediaMetadataPayloads{
+		genres:          genres,
+		keywords:        keywords,
+		facts:           facts,
+		seasons:         seasons,
+		cast:            cast,
+		recommendations: recommendations,
+		similar:         similar,
+	}, nil
 }
 
 func scanMediaMetadata(
 	target *MediaMetadataSnapshot,
 	genres []byte,
+	keywords []byte,
 	facts []byte,
 	seasons []byte,
 	cast []byte,
+	recommendations []byte,
+	similar []byte,
 ) {
 	target.Genres = unmarshalJSONArray[string](genres)
+	target.Keywords = unmarshalJSONArray[string](keywords)
 	target.Facts = unmarshalJSONArray[MediaFact](facts)
 	target.Seasons = unmarshalJSONArray[MediaSeason](seasons)
 	target.Cast = unmarshalJSONArray[MediaPerson](cast)
+	target.Recommendations = unmarshalJSONArray[MediaRelatedItem](recommendations)
+	target.Similar = unmarshalJSONArray[MediaRelatedItem](similar)
 }
 
 func marshalJSONArray[T any](values []T) ([]byte, error) {

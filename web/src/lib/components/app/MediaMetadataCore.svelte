@@ -1,6 +1,7 @@
 <script lang="ts">
 	/* global HTMLDivElement */
 	import { resolve } from '$app/paths';
+	import MediaKeywordsSection from './MediaKeywordsSection.svelte';
 	import MediaOverviewInfoCard from './MediaOverviewInfoCard.svelte';
 	import { crewRolePreviews } from './mediaPeople';
 	import { formatDate } from '$lib/settings/dateFormat';
@@ -9,17 +10,21 @@
 
 	interface Props {
 		detail: MediaMetadataDetails;
-		peopleHref?: string;
+		castHref?: string;
+		crewHref?: string;
 		seasonsContent?: Snippet;
+		beforeCastContent?: Snippet;
 	}
 
-	let { detail, peopleHref, seasonsContent }: Props = $props();
+	let { detail, castHref, crewHref, seasonsContent, beforeCastContent }: Props = $props();
 
 	const facts = $derived(detail.facts ?? []);
+	const keywords = $derived(detail.keywords ?? []);
 	const crewRoles = $derived(crewRolePreviews(facts));
 	const seasons = $derived(detail.seasons ?? []);
 	const cast = $derived(detail.cast ?? []);
-	const castHref = $derived(resolvedPeopleHref(detail));
+	const resolvedCastHref = $derived(castHref ?? resolvedPeopleHref(detail, 'cast'));
+	const resolvedCrewHref = $derived(crewHref ?? resolvedPeopleHref(detail, 'crew'));
 	let castRow = $state<HTMLDivElement | undefined>();
 
 	function imageUrl(path?: string, size = 'w780') {
@@ -36,18 +41,18 @@
 		return `${episode.episodeNumber} - ${episode.name}`;
 	}
 
-	function resolvedPeopleHref(details: MediaMetadataDetails) {
-		if (peopleHref) {
-			return peopleHref;
-		}
+	function resolvedPeopleHref(details: MediaMetadataDetails, kind: 'cast' | 'crew') {
 		if (!details.externalProvider || !details.externalId) {
 			return undefined;
 		}
-		return resolve('/media/[provider]/[type]/[externalId]/cast', {
+		const params = {
 			provider: details.externalProvider,
 			type: details.type,
 			externalId: details.externalId
-		});
+		};
+		return kind === 'cast'
+			? resolve('/media/[provider]/[type]/[externalId]/cast', params)
+			: resolve('/media/[provider]/[type]/[externalId]/crew', params);
 	}
 
 	function trackCastRow(node: HTMLDivElement) {
@@ -75,6 +80,18 @@
 		<h2 id="metadata-overview-title">Overview</h2>
 		<p>{detail.overview ?? 'No overview available.'}</p>
 		{#if crewRoles.length > 0}
+			<h3 class="metadata-crew-title">
+				{#if resolvedCrewHref}
+					<!-- eslint-disable svelte/no-navigation-without-resolve -->
+					<a class="metadata-crew-title-link" href={resolvedCrewHref}>
+						<span>Crew</span>
+						<span class="app-icon" aria-hidden="true">arrow_forward</span>
+					</a>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
+				{:else}
+					Crew
+				{/if}
+			</h3>
 			<div class="metadata-crew-grid" aria-label="Crew">
 				{#each crewRoles as role (role.role)}
 					<div>
@@ -83,15 +100,8 @@
 					</div>
 				{/each}
 			</div>
-			{#if castHref}
-				<!-- eslint-disable svelte/no-navigation-without-resolve -->
-				<a class="metadata-crew-link secondary" href={castHref}>
-					<span>Full crew</span>
-					<span class="app-icon" aria-hidden="true">arrow_forward</span>
-				</a>
-				<!-- eslint-enable svelte/no-navigation-without-resolve -->
-			{/if}
 		{/if}
+		<MediaKeywordsSection {keywords} />
 	</div>
 	<MediaOverviewInfoCard {detail} {facts} />
 </section>
@@ -138,12 +148,14 @@
 	</section>
 {/if}
 
+{@render beforeCastContent?.()}
+
 {#if cast.length > 0}
 	<section aria-labelledby="metadata-cast-title">
 		<div class="section-heading">
-			{#if castHref}
+			{#if resolvedCastHref}
 				<!-- eslint-disable svelte/no-navigation-without-resolve -->
-				<a class="section-title-link" href={castHref}>
+				<a class="section-title-link" href={resolvedCastHref}>
 					<h2 id="metadata-cast-title">Cast</h2>
 					<span class="app-icon" aria-hidden="true">arrow_forward</span>
 				</a>

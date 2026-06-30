@@ -6,6 +6,7 @@
 
 	interface Props {
 		detail?: MediaMetadataDetails;
+		kind?: 'cast' | 'crew';
 		loading: boolean;
 	}
 
@@ -15,11 +16,15 @@
 		image?: string;
 	};
 
-	let { detail, loading }: Props = $props();
+	let { detail, kind = 'cast', loading }: Props = $props();
 
-	const groups = $derived(detail ? peopleGroups(detail) : []);
+	const groups = $derived(detail ? peopleGroups(detail, kind) : []);
+	const pageTitle = $derived(kind === 'crew' ? 'Crew' : 'Cast');
 
-	function peopleGroups(details: MediaMetadataDetails): { title: string; people: PersonCard[] }[] {
+	function peopleGroups(
+		details: MediaMetadataDetails,
+		sectionKind: 'cast' | 'crew'
+	): { title: string; people: PersonCard[] }[] {
 		const cast: PersonCard[] = (details.cast ?? []).map((person) => ({
 			name: person.name,
 			role: person.role,
@@ -31,7 +36,9 @@
 				people: peopleFromFact((details.facts ?? []).find((fact) => fact.label === label))
 			}))
 			.filter((group) => group.people.length > 0);
-		return [{ title: 'Cast', people: cast }, ...crew].filter((group) => group.people.length > 0);
+		return (sectionKind === 'cast' ? [{ title: 'Cast', people: cast }] : crew).filter(
+			(group) => group.people.length > 0
+		);
 	}
 
 	function peopleFromFact(fact: MediaMetadataFact | undefined): PersonCard[] {
@@ -45,11 +52,11 @@
 
 {#if loading}
 	<section class="metadata-detail-loading panel">
-		<p class="muted">Loading cast</p>
+		<p class="muted">Loading {pageTitle.toLowerCase()}</p>
 	</section>
 {:else if !detail}
 	<section class="empty-state">
-		<h2>Cast not available</h2>
+		<h2>{pageTitle} not available</h2>
 		<p>Could not load people for this item.</p>
 	</section>
 {:else}

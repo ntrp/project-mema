@@ -1036,6 +1036,7 @@ type MediaItem struct {
 	FirstAirDate        *string                `json:"firstAirDate,omitempty"`
 	Genres              *[]string              `json:"genres,omitempty"`
 	Id                  openapi_types.UUID     `json:"id"`
+	Keywords            *[]string              `json:"keywords,omitempty"`
 	LibraryFolderId     *openapi_types.UUID    `json:"libraryFolderId,omitempty"`
 	LibraryFolderPath   *string                `json:"libraryFolderPath,omitempty"`
 	MediaFolderPath     *string                `json:"mediaFolderPath,omitempty"`
@@ -1049,11 +1050,13 @@ type MediaItem struct {
 	PosterPath          *string                `json:"posterPath,omitempty"`
 	QualityProfileId    *string                `json:"qualityProfileId,omitempty"`
 	QualityProfileName  *string                `json:"qualityProfileName,omitempty"`
+	Recommendations     *[]MediaSearchResult   `json:"recommendations,omitempty"`
 	ReleaseDate         *string                `json:"releaseDate,omitempty"`
 	RuntimeMinutes      *int32                 `json:"runtimeMinutes,omitempty"`
 	SeasonCount         *int32                 `json:"seasonCount,omitempty"`
 	Seasons             *[]MediaMetadataSeason `json:"seasons,omitempty"`
 	SeriesType          *SeriesType            `json:"seriesType,omitempty"`
+	Similar             *[]MediaSearchResult   `json:"similar,omitempty"`
 	Status              MediaItemStatus        `json:"status"`
 	Tags                *[]string              `json:"tags,omitempty"`
 	Title               string                 `json:"title"`
@@ -1120,15 +1123,18 @@ type MediaMetadataDetails struct {
 	Facts            *[]MediaMetadataFact   `json:"facts,omitempty"`
 	FirstAirDate     *string                `json:"firstAirDate,omitempty"`
 	Genres           *[]string              `json:"genres,omitempty"`
+	Keywords         *[]string              `json:"keywords,omitempty"`
 	Monitored        *bool                  `json:"monitored,omitempty"`
 	OriginalLanguage *string                `json:"originalLanguage,omitempty"`
 	Overview         *string                `json:"overview,omitempty"`
 	PosterPath       *string                `json:"posterPath,omitempty"`
+	Recommendations  *[]MediaSearchResult   `json:"recommendations,omitempty"`
 	ReleaseDate      *string                `json:"releaseDate,omitempty"`
 	RuntimeMinutes   *int32                 `json:"runtimeMinutes,omitempty"`
 	SeasonCount      *int32                 `json:"seasonCount,omitempty"`
 	Seasons          *[]MediaMetadataSeason `json:"seasons,omitempty"`
 	SeriesType       *SeriesType            `json:"seriesType,omitempty"`
+	Similar          *[]MediaSearchResult   `json:"similar,omitempty"`
 	Status           *string                `json:"status,omitempty"`
 	Title            string                 `json:"title"`
 	Type             MediaType              `json:"type"`

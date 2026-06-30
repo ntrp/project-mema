@@ -72,7 +72,7 @@
 		<p>{collection.provider}</p>
 		<h1>{collection.name}</h1>
 		{#if collection.overview}
-			<p>{collection.overview}</p>
+			<p class="collection-overview">{collection.overview}</p>
 		{/if}
 	</div>
 

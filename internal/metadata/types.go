@@ -73,9 +73,12 @@ type Details struct {
 	EpisodeCount     *int32
 	VoteAverage      *float64
 	Genres           []string
+	Keywords         []string
 	Facts            []Fact
 	Seasons          []Season
 	Cast             []Person
+	Recommendations  []SearchResult
+	Similar          []SearchResult
 }
 
 type Collection struct {

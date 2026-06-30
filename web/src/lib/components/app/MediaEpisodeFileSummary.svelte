@@ -7,6 +7,8 @@
 		activityStatus?: ActivityQueueStatus;
 		canManage: boolean;
 		searching: boolean;
+		fileLabel?: string;
+		missingLabel?: string;
 		onInfo: (_row: MediaFileRow) => void;
 		onAutoSearch: () => void;
 		onManualSearch: () => void;
@@ -18,6 +20,8 @@
 		activityStatus,
 		canManage,
 		searching,
+		fileLabel = 'Episode file',
+		missingLabel = 'No matched file for this episode',
 		onInfo,
 		onAutoSearch,
 		onManualSearch,
@@ -34,13 +38,7 @@
 <div class:missing-file={!row.exists} class="episode-file-summary">
 	<div class="episode-file-path">
 		<strong>{row.exists ? row.relativePath : 'Missing file'}</strong>
-		<span>{row.exists ? 'Episode file' : 'No matched file for this episode'}</span>
-		{#if activityStatus}
-			<small class:activity-failed={activityStatus.status === 'failed'}>
-				<span class="app-icon" aria-hidden="true">sync</span>
-				{activityStatus.label}
-			</small>
-		{/if}
+		<span>{row.exists ? fileLabel : missingLabel}</span>
 	</div>
 
 	<div class="episode-file-facts" aria-label="Episode file details">
@@ -63,6 +61,20 @@
 		<span>
 			<strong>Score</strong>
 			{row.score}
+		</span>
+		<span>
+			<strong>Status</strong>
+			{#if activityStatus}
+				<small
+					class="activity-status-chip"
+					class:activity-failed={activityStatus.status === 'failed'}
+				>
+					<span class="app-icon" aria-hidden="true">sync</span>
+					{activityStatus.label}
+				</small>
+			{:else}
+				-
+			{/if}
 		</span>
 	</div>
 

@@ -9,4 +9,5 @@
 	initialView="media-people"
 	initialHomeSection="movies"
 	initialSelectedMediaItemId={params.id}
+	initialPeopleSectionKind="cast"
 />

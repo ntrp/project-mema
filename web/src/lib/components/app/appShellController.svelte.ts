@@ -151,7 +151,12 @@ export interface AppShellOptions {
 	initialCollectionProvider?: string;
 	initialCollectionId?: string;
 	initialDiscoverSectionId?: string;
+	initialRelatedSectionKind?: RelatedSectionKind;
+	initialPeopleSectionKind?: PeopleSectionKind;
 }
+
+export type RelatedSectionKind = 'recommendations' | 'similar';
+export type PeopleSectionKind = 'cast' | 'crew';
 
 export function createAppShellController(options: AppShellOptions) {
 	let authenticated = $state(false);
@@ -242,6 +247,12 @@ export function createAppShellController(options: AppShellOptions) {
 	let activeSettingsSection = $state<SettingsSection>(options.initialSettingsSection ?? 'library');
 	let activeSystemSection = $state<SystemSection>(options.initialSystemSection ?? 'status');
 	let activeDiscoverSectionId = $state<string | undefined>(options.initialDiscoverSectionId);
+	let activeRelatedSectionKind = $state<RelatedSectionKind>(
+		options.initialRelatedSectionKind ?? 'recommendations'
+	);
+	let activePeopleSectionKind = $state<PeopleSectionKind>(
+		options.initialPeopleSectionKind ?? 'cast'
+	);
 	let selectedMediaItemId = $state<string | undefined>(options.initialSelectedMediaItemId);
 	let selectedRequestId = $state<string | undefined>(options.initialSelectedRequestId);
 	let searchQuery = $state(options.initialAdvancedQuery ?? '');
@@ -258,6 +269,9 @@ export function createAppShellController(options: AppShellOptions) {
 		mediaPeopleDetail && 'id' in mediaPeopleDetail
 			? mediaMetadataDetail(mediaPeopleDetail)
 			: mediaPeopleDetail
+	);
+	let relatedMediaSection = $derived(
+		relatedSectionFromDetail(metadataDetail, activeRelatedSectionKind)
 	);
 	let isAdmin = $derived(currentUser?.role === 'admin');
 	let activePrimarySection = $derived(
@@ -311,7 +325,11 @@ export function createAppShellController(options: AppShellOptions) {
 			}
 			await loadLibrary();
 			await loadDiscoverSections();
-			if (activeView === 'metadata-detail' || activeView === 'media-people') {
+			if (
+				activeView === 'metadata-detail' ||
+				activeView === 'media-people' ||
+				activeView === 'related-section'
+			) {
 				await loadMetadataDetail();
 			} else if (activeView === 'media-collection') {
 				await loadMediaCollection();
@@ -370,7 +388,11 @@ export function createAppShellController(options: AppShellOptions) {
 			}
 			await loadLibrary();
 			await loadDiscoverSections();
-			if (activeView === 'metadata-detail' || activeView === 'media-people') {
+			if (
+				activeView === 'metadata-detail' ||
+				activeView === 'media-people' ||
+				activeView === 'related-section'
+			) {
 				await loadMetadataDetail();
 			} else if (activeView === 'media-collection') {
 				await loadMediaCollection();
@@ -1510,6 +1532,28 @@ export function createAppShellController(options: AppShellOptions) {
 		};
 	}
 
+	function relatedSectionFromDetail(
+		detail: MediaMetadataDetails | undefined,
+		kind: RelatedSectionKind
+	): MediaDiscoverSection | undefined {
+		if (!detail) {
+			return undefined;
+		}
+		const results = kind === 'recommendations' ? detail.recommendations : detail.similar;
+		return filterDiscoverSection({
+			id: kind,
+			title:
+				kind === 'recommendations'
+					? 'Recommendations'
+					: detail.type === 'movie'
+						? 'Similar Movies'
+						: 'Similar Series',
+			providerName: detail.externalProvider?.toUpperCase() ?? 'Metadata',
+			mediaType: detail.type,
+			results: results ?? []
+		});
+	}
+
 	function isDiscoverBlacklisted(result: MediaSearchResult) {
 		return discoverBlacklist.some((item) => sameDiscoverBlacklistItem(item, result));
 	}
@@ -1769,6 +1813,9 @@ export function createAppShellController(options: AppShellOptions) {
 		get discoverSection() {
 			return discoverSection;
 		},
+		get relatedMediaSection() {
+			return relatedMediaSection;
+		},
 		get discoverBlacklist() {
 			return discoverBlacklist;
 		},
@@ -1777,6 +1824,9 @@ export function createAppShellController(options: AppShellOptions) {
 		},
 		get mediaPeopleDetail() {
 			return mediaPeopleMetadataDetail;
+		},
+		get activePeopleSectionKind() {
+			return activePeopleSectionKind;
 		},
 		get mediaCollection() {
 			return mediaCollection;

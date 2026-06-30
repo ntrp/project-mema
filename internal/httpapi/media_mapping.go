@@ -34,9 +34,12 @@ func mediaItemInput(request MediaItemCreateRequest) (storage.MediaItemInput, boo
 
 func mediaItemResponse(item storage.MediaItem) MediaItem {
 	genres := append([]string(nil), item.Genres...)
+	keywords := append([]string(nil), item.Keywords...)
 	facts := mediaFactResponses(item.Facts)
 	seasons := mediaSeasonResponses(item.Seasons)
 	cast := mediaPersonResponses(item.Cast)
+	recommendations := mediaRelatedResponses(item.Recommendations)
+	similar := mediaRelatedResponses(item.Similar)
 	return MediaItem{
 		Id:                  openapi_types.UUID(item.ID),
 		Type:                MediaType(item.Type),
@@ -60,9 +63,12 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		EpisodeCount:        item.EpisodeCount,
 		VoteAverage:         item.VoteAverage,
 		Genres:              &genres,
+		Keywords:            &keywords,
 		Facts:               &facts,
 		Seasons:             &seasons,
 		Cast:                &cast,
+		Recommendations:     &recommendations,
+		Similar:             &similar,
 		MonitorMode:         MediaMonitorMode(item.MonitorMode),
 		SeriesType:          optionalOpenAPISeriesType(item.SeriesType),
 		MinimumAvailability: MinimumAvailability(item.MinimumAvailability),
@@ -195,6 +201,22 @@ func mediaPersonResponses(values []storage.MediaPerson) []MediaMetadataPerson {
 			Name:        value.Name,
 			Role:        value.Role,
 			ProfilePath: value.ProfilePath,
+		})
+	}
+	return items
+}
+
+func mediaRelatedResponses(values []storage.MediaRelatedItem) []MediaSearchResult {
+	items := make([]MediaSearchResult, 0, len(values))
+	for _, value := range values {
+		items = append(items, MediaSearchResult{
+			Title:            value.Title,
+			Type:             MediaType(value.Type),
+			Year:             value.Year,
+			ExternalProvider: &value.ExternalProvider,
+			ExternalId:       &value.ExternalID,
+			Overview:         value.Overview,
+			PosterPath:       value.PosterPath,
 		})
 	}
 	return items
