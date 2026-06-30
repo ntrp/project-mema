@@ -84,7 +84,10 @@
 </div>
 <div class="settings-stack">
 	<div class="settings-toolbar">
-		<button type="button" onclick={openModal}>Add library folder</button>
+		<button type="button" class="add-action-button" onclick={openModal}>
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add library folder</span>
+		</button>
 	</div>
 	<LibraryFolderAccordion
 		{folders}

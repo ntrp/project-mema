@@ -1,5 +1,8 @@
 <script lang="ts">
-	import type { DownloadActivity } from '$lib/settings/types';
+	import ActivityManualImportModal from './ActivityManualImportModal.svelte';
+	import { activityDisplay, cancellable, createdLabel, manualImportable } from './activityDisplay';
+	import { manualImportDownloadActivity } from '$lib/settings/api';
+	import type { DownloadActivity, ManualImportRequest } from '$lib/settings/types';
 
 	interface Props {
 		activities: DownloadActivity[];
@@ -11,32 +14,27 @@
 	}
 
 	let { activities, loading, canManage, cancellingId, onRefresh, onCancel }: Props = $props();
-
-	function createdLabel(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			dateStyle: 'short',
-			timeStyle: 'short'
-		}).format(new Date(value));
-	}
-
-	function cancellable(activity: DownloadActivity) {
-		return ['queued', 'grabbed', 'downloading'].includes(activity.status);
-	}
+	let manualImportActivity = $state<DownloadActivity | undefined>();
+	let importingId = $state<string | undefined>();
+	let importError = $state<string | undefined>();
 
 	function showsProgress(activity: DownloadActivity) {
 		return ['queued', 'grabbed', 'downloading', 'completed'].includes(activity.status);
 	}
 
-	function progressValue(activity: DownloadActivity) {
-		if (activity.status === 'completed') {
-			return 100;
+	async function submitManualImport(request: ManualImportRequest) {
+		if (!manualImportActivity) return;
+		importingId = manualImportActivity.id;
+		importError = undefined;
+		try {
+			await manualImportDownloadActivity(manualImportActivity.id, request);
+			manualImportActivity = undefined;
+			await onRefresh();
+		} catch (error) {
+			importError = error instanceof Error ? error.message : 'Manual import failed';
+		} finally {
+			importingId = undefined;
 		}
-		return activity.progressPercent ?? undefined;
-	}
-
-	function progressLabel(activity: DownloadActivity) {
-		const value = progressValue(activity);
-		return typeof value === 'number' ? `${value}%` : 'Waiting for client progress';
 	}
 </script>
 
@@ -50,59 +48,127 @@
 	</button>
 </div>
 
-<div class="data-list">
-	{#each activities as activity (activity.id)}
-		<div class="data-row activity-row">
-			<div>
-				<strong>{activity.releaseTitle}</strong>
-				<span>{activity.mediaTitle} · {activity.mediaType}</span>
-				{#if showsProgress(activity)}
-					<div
-						class="download-progress"
-						role="progressbar"
-						aria-label="Download progress"
-						aria-valuemin="0"
-						aria-valuemax="100"
-						aria-valuenow={progressValue(activity)}
-					>
-						<span
-							class:indeterminate={progressValue(activity) === undefined}
-							style={progressValue(activity) !== undefined
-								? `width: ${progressValue(activity)}%`
-								: undefined}
-						></span>
-					</div>
-					<small class="progress-label">{progressLabel(activity)}</small>
-				{/if}
-			</div>
-			<span>{activity.downloadClientName} · {activity.indexerName}</span>
-			<div class="status-stack">
-				<small
-					class:status-enabled={activity.status === 'grabbed' || activity.status === 'completed'}
-					class:pending={activity.status === 'queued' || activity.status === 'downloading'}
-					class:test-failed={activity.status === 'failed' || activity.status === 'cancelled'}
-				>
-					{activity.status}
-				</small>
-				<small>{createdLabel(activity.createdAt)}</small>
-				{#if activity.error}
-					<small class="test-detail">{activity.error}</small>
-				{/if}
-			</div>
-			{#if canManage && cancellable(activity)}
-				<button
-					type="button"
-					class="danger"
-					disabled={cancellingId === activity.id}
-					onclick={() => onCancel(activity)}
-				>
-					{cancellingId === activity.id ? 'Cancelling' : 'Cancel'}
-				</button>
-			{/if}
-		</div>
-	{:else}
-		<div class="panel">
-			<p class="empty">No download activity yet</p>
-		</div>
-	{/each}
-</div>
+{#if activities.length > 0}
+	<div class="table-wrap activity-table">
+		<table>
+			<thead>
+				<tr>
+					<th><span class="sr-only">Select</span></th>
+					<th>Media</th>
+					<th>Year</th>
+					<th>Languages</th>
+					<th>Quality</th>
+					<th>Formats</th>
+					<th>Time left</th>
+					<th>Progress</th>
+					<th class="table-action-heading">Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each activities as activity (activity.id)}
+					{@const display = activityDisplay(activity)}
+					<tr>
+						<td class="activity-check-cell">
+							<input type="checkbox" aria-label={`Select ${activity.releaseTitle}`} />
+						</td>
+						<td class="activity-media-cell">
+							<strong>{activity.mediaTitle}</strong>
+							<small>{activity.downloadClientName} · {activity.indexerName}</small>
+							{#if activity.error}
+								<small class="test-detail">{activity.error}</small>
+							{/if}
+						</td>
+						<td>{display.year}</td>
+						<td>{display.languages.length ? display.languages.join(', ') : '-'}</td>
+						<td>{display.quality}</td>
+						<td>
+							{#if display.formats.length}
+								<div class="format-chip-list">
+									{#each display.formats as format (format)}
+										<span>{format}</span>
+									{/each}
+								</div>
+							{:else}
+								-
+							{/if}
+						</td>
+						<td>{display.timeLeft}</td>
+						<td>
+							<div class="activity-progress-stack">
+								<small
+									class:status-enabled={activity.status === 'grabbed' ||
+										activity.status === 'completed'}
+									class:pending={activity.status === 'queued' || activity.status === 'downloading'}
+									class:test-failed={activity.status === 'failed' ||
+										activity.status === 'cancelled'}
+								>
+									{activity.status}
+								</small>
+								{#if showsProgress(activity)}
+									<div
+										class="download-progress"
+										role="progressbar"
+										aria-label="Download progress"
+										aria-valuemin="0"
+										aria-valuemax="100"
+										aria-valuenow={display.progressValue}
+									>
+										<span
+											class:indeterminate={display.progressValue === undefined}
+											style={display.progressValue !== undefined
+												? `width: ${display.progressValue}%`
+												: undefined}
+										></span>
+									</div>
+									<small>{display.progressLabel}</small>
+								{/if}
+								<small>{createdLabel(activity.createdAt)}</small>
+							</div>
+						</td>
+						<td class="row-actions activity-actions">
+							{#if canManage && manualImportable(activity)}
+								<button
+									type="button"
+									class="secondary icon-button"
+									aria-label={`Manual import ${activity.releaseTitle}`}
+									title="Manual import"
+									onclick={() => ((manualImportActivity = activity), (importError = undefined))}
+								>
+									<span class="app-icon" aria-hidden="true">upload_file</span>
+								</button>
+							{/if}
+							{#if canManage && cancellable(activity)}
+								<button
+									type="button"
+									class="danger icon-button"
+									aria-label={`Cancel ${activity.releaseTitle}`}
+									title="Cancel"
+									disabled={cancellingId === activity.id}
+									onclick={() => onCancel(activity)}
+								>
+									<span class="app-icon" aria-hidden="true">
+										{cancellingId === activity.id ? 'sync' : 'close'}
+									</span>
+								</button>
+							{/if}
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</div>
+{:else}
+	<div class="panel">
+		<p class="empty">No download activity yet</p>
+	</div>
+{/if}
+
+{#if manualImportActivity}
+	<ActivityManualImportModal
+		activity={manualImportActivity}
+		importing={importingId === manualImportActivity.id}
+		error={importError}
+		onImport={submitManualImport}
+		onClose={() => (manualImportActivity = undefined)}
+	/>
+{/if}

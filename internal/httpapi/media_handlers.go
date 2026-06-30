@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -89,30 +90,48 @@ func (s *Server) GetMediaDiscover(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "metadata_provider_list_failed", "Could not list metadata providers")
 		return
 	}
+	blacklist, err := s.settings.ListDiscoverBlacklist(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "discover_blacklist_list_failed", "Could not list discover blacklist")
+		return
+	}
 
 	response := MediaDiscoverResponse{Sections: make([]MediaDiscoverSection, 0, len(discoverSections))}
 	for _, section := range discoverSections {
-		providerName := "TMDB"
-		results := []MediaSearchResult{}
-		if provider, ok := discoverProvider(providers); ok {
-			providerName = provider.Name
-			providerResults, err := s.discoverMetadataProvider(r.Context(), provider, section.mediaType, section.id)
-			if err == nil {
-				for _, result := range providerResults {
-					results = append(results, metadataSearchResultResponse(result))
-				}
-			}
-		}
-		response.Sections = append(response.Sections, MediaDiscoverSection{
-			Id:           section.responseID,
-			Title:        section.title,
-			ProviderName: providerName,
-			MediaType:    MediaType(section.mediaType),
-			Results:      results,
-		})
+		response.Sections = append(response.Sections, s.discoverSectionResponse(r.Context(), providers, section, 20, 1, blacklist))
 	}
 
 	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) GetMediaDiscoverSection(w http.ResponseWriter, r *http.Request, sectionId string, params GetMediaDiscoverSectionParams) {
+	if _, ok := s.requireSession(w, r); !ok {
+		return
+	}
+	section, ok := discoverSectionByID(sectionId)
+	if !ok {
+		writeError(w, http.StatusNotFound, "discover_section_not_found", "Discovery section was not found")
+		return
+	}
+	providers, err := s.settings.ListMetadataProviders(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_provider_list_failed", "Could not list metadata providers")
+		return
+	}
+	blacklist, err := s.settings.ListDiscoverBlacklist(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "discover_blacklist_list_failed", "Could not list discover blacklist")
+		return
+	}
+	page := int32(1)
+	if params.Page != nil {
+		page = *params.Page
+	}
+	limit := int32(20)
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	writeJSON(w, http.StatusOK, s.discoverSectionResponse(r.Context(), providers, section, int(limit), int(page), blacklist))
 }
 
 func (s *Server) AutocompleteMedia(w http.ResponseWriter, r *http.Request, params AutocompleteMediaParams) {
@@ -580,13 +599,24 @@ func (s *Server) searchMetadataProvider(ctx context.Context, provider storage.Me
 	return results, nil
 }
 
-func (s *Server) discoverMetadataProvider(ctx context.Context, provider storage.MetadataProvider, mediaType string, section string) ([]metadata.SearchResult, error) {
+func (s *Server) discoverMetadataProvider(
+	ctx context.Context,
+	provider storage.MetadataProvider,
+	mediaType string,
+	section string,
+	limit int,
+	page int,
+) ([]metadata.SearchResult, error) {
 	if !providerHasCredentials(provider) {
 		return []metadata.SearchResult{}, nil
 	}
-	cacheKey := "discover:" + strings.ToLower(strings.TrimSpace(section))
+	cacheMediaType := mediaType
+	if mediaType == "mixed" {
+		cacheMediaType = "movie"
+	}
+	cacheKey := "discover:" + strings.ToLower(strings.TrimSpace(section)) + ":" + strconv.Itoa(limit) + ":" + strconv.Itoa(page)
 	cached := []metadata.SearchResult{}
-	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, mediaType, cacheKey, nil, &cached)
+	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, cacheMediaType, cacheKey, nil, &cached)
 	if err != nil {
 		return nil, err
 	}
@@ -597,12 +627,13 @@ func (s *Server) discoverMetadataProvider(ctx context.Context, provider storage.
 	results, err := s.metadata.Discover(ctx, metadataProviderConfig(provider), metadata.DiscoverRequest{
 		MediaType: mediaType,
 		Section:   section,
-		Limit:     14,
+		Limit:     limit,
+		Page:      page,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, mediaType, cacheKey, nil, results, s.now().Add(24*time.Hour)); err != nil {
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, cacheMediaType, cacheKey, nil, results, s.now().Add(24*time.Hour)); err != nil {
 		return nil, err
 	}
 	return results, nil
@@ -892,20 +923,82 @@ func metadataProviderByType(providers []storage.MetadataProvider, providerType s
 	return storage.MetadataProvider{}, false
 }
 
+func (s *Server) discoverSectionResponse(
+	ctx context.Context,
+	providers []storage.MetadataProvider,
+	section discoverSection,
+	limit int,
+	page int,
+	blacklist []storage.DiscoverBlacklistItem,
+) MediaDiscoverSection {
+	providerName := "TMDB"
+	results := []MediaSearchResult{}
+	if provider, ok := discoverProvider(providers); ok {
+		providerName = provider.Name
+		for _, request := range section.requests {
+			providerResults, err := s.discoverMetadataProvider(ctx, provider, request.mediaType, request.id, limit, page)
+			if err != nil {
+				continue
+			}
+			for _, result := range providerResults {
+				results = append(results, metadataSearchResultResponse(result))
+			}
+		}
+	}
+	return MediaDiscoverSection{
+		Id:           section.responseID,
+		Title:        section.title,
+		ProviderName: providerName,
+		MediaType:    MediaDiscoverMediaType(section.mediaType),
+		Results:      filterDiscoverBlacklist(dedupeMediaSearchResults(results), blacklist),
+	}
+}
+
+func dedupeMediaSearchResults(results []MediaSearchResult) []MediaSearchResult {
+	seen := map[string]struct{}{}
+	deduped := make([]MediaSearchResult, 0, len(results))
+	for _, result := range results {
+		key := string(result.Type) + ":" + valueOrEmpty(result.ExternalProvider) + ":" + valueOrEmpty(result.ExternalId)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		deduped = append(deduped, result)
+	}
+	return deduped
+}
+
 type discoverSection struct {
 	responseID string
 	title      string
 	mediaType  string
-	id         string
+	requests   []discoverSectionRequest
+}
+
+type discoverSectionRequest struct {
+	mediaType string
+	id        string
 }
 
 var discoverSections = []discoverSection{
-	{responseID: "movie-popular", title: "Popular Movies", mediaType: "movie", id: "popular"},
-	{responseID: "movie-upcoming", title: "Upcoming Movies", mediaType: "movie", id: "upcoming"},
-	{responseID: "movie-top-rated", title: "Top Rated Movies", mediaType: "movie", id: "top_rated"},
-	{responseID: "series-popular", title: "Popular Series", mediaType: "series", id: "popular"},
-	{responseID: "series-on-the-air", title: "Airing Series", mediaType: "series", id: "on_the_air"},
-	{responseID: "series-top-rated", title: "Top Rated Series", mediaType: "series", id: "top_rated"},
+	{responseID: "trending", title: "Trending", mediaType: "mixed", requests: []discoverSectionRequest{
+		{mediaType: "mixed", id: "trending"},
+	}},
+	{responseID: "movie-popular", title: "Popular Movies", mediaType: "movie", requests: []discoverSectionRequest{{mediaType: "movie", id: "popular"}}},
+	{responseID: "movie-upcoming", title: "Upcoming Movies", mediaType: "movie", requests: []discoverSectionRequest{{mediaType: "movie", id: "upcoming"}}},
+	{responseID: "movie-top-rated", title: "Top Rated Movies", mediaType: "movie", requests: []discoverSectionRequest{{mediaType: "movie", id: "top_rated"}}},
+	{responseID: "series-popular", title: "Popular Series", mediaType: "series", requests: []discoverSectionRequest{{mediaType: "series", id: "popular"}}},
+	{responseID: "series-on-the-air", title: "Airing Series", mediaType: "series", requests: []discoverSectionRequest{{mediaType: "series", id: "on_the_air"}}},
+	{responseID: "series-top-rated", title: "Top Rated Series", mediaType: "series", requests: []discoverSectionRequest{{mediaType: "series", id: "top_rated"}}},
+}
+
+func discoverSectionByID(id string) (discoverSection, bool) {
+	for _, section := range discoverSections {
+		if section.responseID == id {
+			return section, true
+		}
+	}
+	return discoverSection{}, false
 }
 
 var (

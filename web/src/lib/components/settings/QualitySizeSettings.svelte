@@ -6,7 +6,11 @@
 	import { groupQualitiesByResolution } from '$lib/settings/qualityGroups';
 	import type { QualitySizeSetting, QualitySizeSettingRequest } from '$lib/settings/types';
 
-	type SizeField = 'minimumSizeMbPerMinute' | 'preferredSizeMbPerMinute' | 'maximumSizeMbPerMinute';
+	type SliderField = 'minimum' | 'preferred' | 'maximum';
+
+	const sliderMaxGibPerHour = 120;
+	const sliderStepGibPerHour = 0.1;
+	const sliderHandleGap = 0.1;
 
 	let qualities = $state<QualitySizeSetting[]>([]);
 	let loading = $state(true);
@@ -55,35 +59,6 @@
 		}
 	}
 
-	function updateSize(qualityId: string, field: SizeField, rawValue: string) {
-		qualities = qualities.map((quality) => {
-			if (quality.qualityId !== qualityId) {
-				return quality;
-			}
-			return {
-				...quality,
-				[field]: parseSizeValue(rawValue, field === 'minimumSizeMbPerMinute')
-			};
-		});
-		message = '';
-	}
-
-	function parseSizeValue(value: string, required: boolean) {
-		const trimmed = value.trim();
-		if (trimmed === '') {
-			return required ? 0 : null;
-		}
-		const parsed = Number(trimmed);
-		if (!Number.isFinite(parsed)) {
-			return required ? 0 : null;
-		}
-		return Math.max(0, parsed);
-	}
-
-	function inputValue(value: number | null | undefined) {
-		return value ?? '';
-	}
-
 	function rowError(quality: QualitySizeSetting) {
 		const minimum = quality.minimumSizeMbPerMinute;
 		const preferred = quality.preferredSizeMbPerMinute;
@@ -110,6 +85,100 @@
 			preferredSizeMbPerMinute: quality.preferredSizeMbPerMinute ?? null,
 			maximumSizeMbPerMinute: quality.maximumSizeMbPerMinute ?? null
 		};
+	}
+
+	function mbPerMinuteToGibPerHour(value: number | null | undefined) {
+		if (value == null) {
+			return sliderMaxGibPerHour;
+		}
+		return clamp(Math.round(((value * 60) / 1024) * 100) / 100, 0, sliderMaxGibPerHour);
+	}
+
+	function gibPerHourToMbPerMinute(value: number) {
+		return Math.round(((value * 1024) / 60) * 100) / 100;
+	}
+
+	function sliderValues(quality: QualitySizeSetting) {
+		const minimum = mbPerMinuteToGibPerHour(quality.minimumSizeMbPerMinute);
+		const maximum = mbPerMinuteToGibPerHour(quality.maximumSizeMbPerMinute);
+		const preferred = clamp(
+			mbPerMinuteToGibPerHour(quality.preferredSizeMbPerMinute),
+			minimum,
+			maximum
+		);
+		return { minimum, preferred, maximum };
+	}
+
+	function updateSlider(qualityId: string, field: SliderField, rawValue: string) {
+		const nextValue = clamp(Number.parseFloat(rawValue), 0, sliderMaxGibPerHour);
+		if (!Number.isFinite(nextValue)) {
+			return;
+		}
+		qualities = qualities.map((quality) => {
+			if (quality.qualityId !== qualityId) {
+				return quality;
+			}
+			let { minimum, preferred, maximum } = sliderValues(quality);
+			if (field === 'minimum') {
+				minimum = clamp(nextValue, 0, Math.max(0, maximum - sliderHandleGap * 2));
+				preferred = Math.max(preferred, minimum);
+			} else if (field === 'preferred') {
+				preferred = clamp(nextValue, minimum, maximum);
+			} else {
+				maximum = clamp(nextValue, minimum + sliderHandleGap * 2, sliderMaxGibPerHour);
+				preferred = Math.min(preferred, maximum);
+			}
+			return {
+				...quality,
+				minimumSizeMbPerMinute: gibPerHourToMbPerMinute(minimum),
+				preferredSizeMbPerMinute:
+					preferred >= sliderMaxGibPerHour ? null : gibPerHourToMbPerMinute(preferred),
+				maximumSizeMbPerMinute:
+					maximum >= sliderMaxGibPerHour ? null : gibPerHourToMbPerMinute(maximum)
+			};
+		});
+		message = '';
+	}
+
+	function updateGibValue(qualityId: string, field: SliderField, rawValue: string) {
+		const parsed = Number.parseFloat(rawValue);
+		if (!Number.isFinite(parsed)) {
+			return;
+		}
+		updateSlider(qualityId, field, String(parsed));
+	}
+
+	function scrollGibValue(
+		event: globalThis.WheelEvent,
+		qualityId: string,
+		field: SliderField,
+		value: number
+	) {
+		event.preventDefault();
+		const wheelDelta = event.deltaY !== 0 ? event.deltaY : event.deltaX;
+		const direction = wheelDelta < 0 ? 1 : -1;
+		const step = event.shiftKey ? 0.1 : 0.01;
+		updateSlider(qualityId, field, String(Math.round((value + direction * step) * 100) / 100));
+	}
+
+	function gibValue(value: number) {
+		return value.toFixed(2);
+	}
+
+	function mbPerMinuteTitle(label: string, value: number) {
+		return `${label}: ${gibPerHourToMbPerMinute(value).toFixed(2)} MB/m`;
+	}
+
+	function labelOffset(value: number) {
+		return `${(value / sliderMaxGibPerHour) * 100}%`;
+	}
+
+	function activeTrackStyle(values: { minimum: number; maximum: number }) {
+		return `--min-pct: ${labelOffset(values.minimum)}; --max-pct: ${labelOffset(values.maximum)}`;
+	}
+
+	function clamp(value: number, minimum: number, maximum: number) {
+		return Math.min(Math.max(value, minimum), maximum);
 	}
 </script>
 
@@ -142,84 +211,151 @@
 				<thead>
 					<tr>
 						<th>Quality</th>
-						<th>Minimum MB/min</th>
-						<th>Preferred MB/min</th>
-						<th>Maximum MB/min</th>
-						<th>Status</th>
+						<th>Size limit</th>
 					</tr>
 				</thead>
 				<tbody>
 					{#if loading}
 						<tr>
-							<td colspan="5" class="empty">Loading quality sizes</td>
+							<td colspan="2" class="empty">Loading quality sizes</td>
 						</tr>
 					{:else if qualities.length === 0}
 						<tr>
-							<td colspan="5" class="empty">No qualities loaded</td>
+							<td colspan="2" class="empty">No qualities loaded</td>
 						</tr>
 					{:else}
 						{#each qualityGroups as group (group.id)}
 							<tr class="quality-size-group-row">
-								<th colspan="5">{group.label}</th>
+								<th colspan="2">{group.label}</th>
 							</tr>
 							{#each group.qualities as quality (quality.qualityId)}
 								{@const validationError = rowError(quality)}
+								{@const values = sliderValues(quality)}
 								<tr class:invalid-row={validationError !== ''}>
 									<td>
 										<strong>{quality.name}</strong>
 										<span>{quality.qualityId}</span>
 									</td>
 									<td>
-										<input
-											type="number"
-											min="0"
-											step="0.1"
-											required
-											aria-label={`${quality.name} minimum size`}
-											value={inputValue(quality.minimumSizeMbPerMinute)}
-											oninput={(event) =>
-												updateSize(
-													quality.qualityId,
-													'minimumSizeMbPerMinute',
-													event.currentTarget.value
-												)}
-										/>
-									</td>
-									<td>
-										<input
-											type="number"
-											min="0"
-											step="0.1"
-											aria-label={`${quality.name} preferred size`}
-											value={inputValue(quality.preferredSizeMbPerMinute)}
-											oninput={(event) =>
-												updateSize(
-													quality.qualityId,
-													'preferredSizeMbPerMinute',
-													event.currentTarget.value
-												)}
-										/>
-									</td>
-									<td>
-										<input
-											type="number"
-											min="0"
-											step="0.1"
-											aria-label={`${quality.name} maximum size`}
-											value={inputValue(quality.maximumSizeMbPerMinute)}
-											oninput={(event) =>
-												updateSize(
-													quality.qualityId,
-													'maximumSizeMbPerMinute',
-													event.currentTarget.value
-												)}
-										/>
-									</td>
-									<td class="quality-size-status">
+										<div class="quality-size-limit-row">
+											<label>
+												<span class="quality-size-field-label">Min</span>
+												<span class="quality-size-unit-input">
+													<input
+														type="number"
+														min="0"
+														max={values.maximum - sliderHandleGap * 2}
+														step="0.01"
+														required
+														aria-label={`${quality.name} minimum size GiB per hour`}
+														title={mbPerMinuteTitle('Minimum', values.minimum)}
+														value={gibValue(values.minimum)}
+														oninput={(event) =>
+															updateGibValue(
+																quality.qualityId,
+																'minimum',
+																event.currentTarget.value
+															)}
+														onwheel={(event) =>
+															scrollGibValue(event, quality.qualityId, 'minimum', values.minimum)}
+													/>
+													<span>GiB/h</span>
+												</span>
+											</label>
+											<div class="quality-size-range">
+												<div class="quality-size-track" aria-hidden="true"></div>
+												<div
+													class="quality-size-track active"
+													style={activeTrackStyle(values)}
+													aria-hidden="true"
+												></div>
+												<input
+													type="range"
+													min="0"
+													max={sliderMaxGibPerHour}
+													step={sliderStepGibPerHour}
+													value={values.minimum}
+													oninput={(event) =>
+														updateSlider(quality.qualityId, 'minimum', event.currentTarget.value)}
+													aria-label={`${quality.name} minimum size slider`}
+													class="quality-size-range-input minimum"
+												/>
+												<input
+													type="range"
+													min="0"
+													max={sliderMaxGibPerHour}
+													step={sliderStepGibPerHour}
+													value={values.preferred}
+													oninput={(event) =>
+														updateSlider(quality.qualityId, 'preferred', event.currentTarget.value)}
+													aria-label={`${quality.name} preferred size slider`}
+													class="quality-size-range-input preferred"
+												/>
+												<input
+													type="range"
+													min="0"
+													max={sliderMaxGibPerHour}
+													step={sliderStepGibPerHour}
+													value={values.maximum}
+													oninput={(event) =>
+														updateSlider(quality.qualityId, 'maximum', event.currentTarget.value)}
+													aria-label={`${quality.name} maximum size slider`}
+													class="quality-size-range-input maximum"
+												/>
+											</div>
+											<label>
+												<span class="quality-size-field-label">Preferred</span>
+												<span class="quality-size-unit-input">
+													<input
+														type="number"
+														min={values.minimum}
+														max={values.maximum}
+														step="0.01"
+														aria-label={`${quality.name} preferred size GiB per hour`}
+														title={mbPerMinuteTitle('Preferred', values.preferred)}
+														value={gibValue(values.preferred)}
+														oninput={(event) =>
+															updateGibValue(
+																quality.qualityId,
+																'preferred',
+																event.currentTarget.value
+															)}
+														onwheel={(event) =>
+															scrollGibValue(
+																event,
+																quality.qualityId,
+																'preferred',
+																values.preferred
+															)}
+													/>
+													<span>GiB/h</span>
+												</span>
+											</label>
+											<label>
+												<span class="quality-size-field-label">Max</span>
+												<span class="quality-size-unit-input">
+													<input
+														type="number"
+														min={values.minimum + sliderHandleGap * 2}
+														step="0.01"
+														aria-label={`${quality.name} maximum size GiB per hour`}
+														title={mbPerMinuteTitle('Maximum', values.maximum)}
+														value={gibValue(values.maximum)}
+														oninput={(event) =>
+															updateGibValue(
+																quality.qualityId,
+																'maximum',
+																event.currentTarget.value
+															)}
+														onwheel={(event) =>
+															scrollGibValue(event, quality.qualityId, 'maximum', values.maximum)}
+													/>
+													<span>GiB/h</span>
+												</span>
+											</label>
+										</div>
 										{#if validationError}
-											<span class="status-error">{validationError}</span>
-										{:else}
-											<span>Ready</span>
+											<span class="quality-size-inline-error">{validationError}</span>
 										{/if}
 									</td>
 								</tr>

@@ -241,6 +241,27 @@ func (e LibraryScanItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaDiscoverMediaType.
+const (
+	MediaDiscoverMediaTypeMixed  MediaDiscoverMediaType = "mixed"
+	MediaDiscoverMediaTypeMovie  MediaDiscoverMediaType = "movie"
+	MediaDiscoverMediaTypeSeries MediaDiscoverMediaType = "series"
+)
+
+// Valid indicates whether the value is a known member of the MediaDiscoverMediaType enum.
+func (e MediaDiscoverMediaType) Valid() bool {
+	switch e {
+	case MediaDiscoverMediaTypeMixed:
+		return true
+	case MediaDiscoverMediaTypeMovie:
+		return true
+	case MediaDiscoverMediaTypeSeries:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaItemStatus.
 const (
 	Downloaded  MediaItemStatus = "downloaded"
@@ -321,16 +342,16 @@ func (e MediaSearchSourceType) Valid() bool {
 
 // Defines values for MediaType.
 const (
-	MediaTypeMovie  MediaType = "movie"
-	MediaTypeSeries MediaType = "series"
+	Movie  MediaType = "movie"
+	Series MediaType = "series"
 )
 
 // Valid indicates whether the value is a known member of the MediaType enum.
 func (e MediaType) Valid() bool {
 	switch e {
-	case MediaTypeMovie:
+	case Movie:
 		return true
-	case MediaTypeSeries:
+	case Series:
 		return true
 	default:
 		return false
@@ -552,6 +573,35 @@ type CustomFormatSpec struct {
 // CustomFormatSpecType defines model for CustomFormatSpecType.
 type CustomFormatSpecType string
 
+// DiscoverBlacklistItem defines model for DiscoverBlacklistItem.
+type DiscoverBlacklistItem struct {
+	CreatedAt        time.Time          `json:"createdAt"`
+	ExternalId       *string            `json:"externalId,omitempty"`
+	ExternalProvider *string            `json:"externalProvider,omitempty"`
+	Id               openapi_types.UUID `json:"id"`
+	Overview         *string            `json:"overview,omitempty"`
+	PosterPath       *string            `json:"posterPath,omitempty"`
+	Title            string             `json:"title"`
+	Type             MediaType          `json:"type"`
+	Year             *int32             `json:"year,omitempty"`
+}
+
+// DiscoverBlacklistRequest defines model for DiscoverBlacklistRequest.
+type DiscoverBlacklistRequest struct {
+	ExternalId       *string   `json:"externalId,omitempty"`
+	ExternalProvider *string   `json:"externalProvider,omitempty"`
+	Overview         *string   `json:"overview,omitempty"`
+	PosterPath       *string   `json:"posterPath,omitempty"`
+	Title            string    `json:"title"`
+	Type             MediaType `json:"type"`
+	Year             *int32    `json:"year,omitempty"`
+}
+
+// DiscoverBlacklistResponse defines model for DiscoverBlacklistResponse.
+type DiscoverBlacklistResponse struct {
+	Items []DiscoverBlacklistItem `json:"items"`
+}
+
 // DownloadActivity defines model for DownloadActivity.
 type DownloadActivity struct {
 	CreatedAt          time.Time              `json:"createdAt"`
@@ -564,6 +614,7 @@ type DownloadActivity struct {
 	MediaItemId        openapi_types.UUID     `json:"mediaItemId"`
 	MediaTitle         string                 `json:"mediaTitle"`
 	MediaType          MediaType              `json:"mediaType"`
+	MediaYear          *int32                 `json:"mediaYear,omitempty"`
 	ProgressPercent    *int                   `json:"progressPercent,omitempty"`
 	ReleaseTitle       string                 `json:"releaseTitle"`
 	Status             DownloadActivityStatus `json:"status"`
@@ -850,6 +901,21 @@ type ManagedUser struct {
 	Username  string             `json:"username"`
 }
 
+// ManualImportRequest defines model for ManualImportRequest.
+type ManualImportRequest struct {
+	Edition        *string   `json:"edition,omitempty"`
+	EpisodeNumber  *int32    `json:"episodeNumber,omitempty"`
+	EpisodeTitle   *string   `json:"episodeTitle,omitempty"`
+	Languages      *[]string `json:"languages,omitempty"`
+	MovieTitle     *string   `json:"movieTitle,omitempty"`
+	Quality        *string   `json:"quality,omitempty"`
+	ReleaseGroup   *string   `json:"releaseGroup,omitempty"`
+	SeasonNumber   *int32    `json:"seasonNumber,omitempty"`
+	SourcePath     string    `json:"sourcePath"`
+	TargetFileName *string   `json:"targetFileName,omitempty"`
+	Year           *int32    `json:"year,omitempty"`
+}
+
 // MediaAdvancedSearchRequest defines model for MediaAdvancedSearchRequest.
 type MediaAdvancedSearchRequest struct {
 	Limit       *int32                `json:"limit,omitempty"`
@@ -870,6 +936,9 @@ type MediaCollection struct {
 	Results      []MediaSearchResult  `json:"results"`
 }
 
+// MediaDiscoverMediaType defines model for MediaDiscoverMediaType.
+type MediaDiscoverMediaType string
+
 // MediaDiscoverResponse defines model for MediaDiscoverResponse.
 type MediaDiscoverResponse struct {
 	Sections []MediaDiscoverSection `json:"sections"`
@@ -877,11 +946,11 @@ type MediaDiscoverResponse struct {
 
 // MediaDiscoverSection defines model for MediaDiscoverSection.
 type MediaDiscoverSection struct {
-	Id           string              `json:"id"`
-	MediaType    MediaType           `json:"mediaType"`
-	ProviderName string              `json:"providerName"`
-	Results      []MediaSearchResult `json:"results"`
-	Title        string              `json:"title"`
+	Id           string                 `json:"id"`
+	MediaType    MediaDiscoverMediaType `json:"mediaType"`
+	ProviderName string                 `json:"providerName"`
+	Results      []MediaSearchResult    `json:"results"`
+	Title        string                 `json:"title"`
 }
 
 // MediaFileDeleteRequest defines model for MediaFileDeleteRequest.
@@ -1545,6 +1614,12 @@ type AutocompleteMediaParams struct {
 	IncludeProviders *bool  `form:"includeProviders,omitempty" json:"includeProviders,omitempty"`
 }
 
+// GetMediaDiscoverSectionParams defines parameters for GetMediaDiscoverSection.
+type GetMediaDiscoverSectionParams struct {
+	Page  *int32 `form:"page,omitempty" json:"page,omitempty"`
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // DeleteMediaItemParams defines parameters for DeleteMediaItem.
 type DeleteMediaItemParams struct {
 	// KeepFiles Remove the media item from the app without deleting its media folder.
@@ -1556,11 +1631,17 @@ type ListLibraryFolderOptionsParams struct {
 	Path *string `form:"path,omitempty" json:"path,omitempty"`
 }
 
+// ManualImportDownloadActivityJSONRequestBody defines body for ManualImportDownloadActivity for application/json ContentType.
+type ManualImportDownloadActivityJSONRequestBody = ManualImportRequest
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
 // AdvancedSearchMediaJSONRequestBody defines body for AdvancedSearchMedia for application/json ContentType.
 type AdvancedSearchMediaJSONRequestBody = MediaAdvancedSearchRequest
+
+// AddDiscoverBlacklistItemJSONRequestBody defines body for AddDiscoverBlacklistItem for application/json ContentType.
+type AddDiscoverBlacklistItemJSONRequestBody = DiscoverBlacklistRequest
 
 // CreateMediaItemJSONRequestBody defines body for CreateMediaItem for application/json ContentType.
 type CreateMediaItemJSONRequestBody = MediaItemCreateRequest
@@ -1666,6 +1747,9 @@ type ServerInterface interface {
 	// Cancel an active download activity
 	// (POST /activity/downloads/{id}/cancel)
 	CancelDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Manually import a failed download activity
+	// (POST /activity/downloads/{id}/manual-import)
+	ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Log in with local admin credentials
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -1693,6 +1777,18 @@ type ServerInterface interface {
 	// Get provider-backed discovery sections
 	// (GET /media/discover)
 	GetMediaDiscover(w http.ResponseWriter, r *http.Request)
+	// List discover blacklist entries
+	// (GET /media/discover/blacklist)
+	ListDiscoverBlacklist(w http.ResponseWriter, r *http.Request)
+	// Add media to the discover blacklist
+	// (POST /media/discover/blacklist)
+	AddDiscoverBlacklistItem(w http.ResponseWriter, r *http.Request)
+	// Remove media from the discover blacklist
+	// (DELETE /media/discover/blacklist/{id})
+	DeleteDiscoverBlacklistItem(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Get one provider-backed discovery section
+	// (GET /media/discover/{sectionId})
+	GetMediaDiscoverSection(w http.ResponseWriter, r *http.Request, sectionId string, params GetMediaDiscoverSectionParams)
 	// List monitored media items
 	// (GET /media/items)
 	ListMediaItems(w http.ResponseWriter, r *http.Request)
@@ -1948,6 +2044,12 @@ func (_ Unimplemented) CancelDownloadActivity(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Manually import a failed download activity
+// (POST /activity/downloads/{id}/manual-import)
+func (_ Unimplemented) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Log in with local admin credentials
 // (POST /auth/login)
 func (_ Unimplemented) Login(w http.ResponseWriter, r *http.Request) {
@@ -1999,6 +2101,30 @@ func (_ Unimplemented) GetMediaCollection(w http.ResponseWriter, r *http.Request
 // Get provider-backed discovery sections
 // (GET /media/discover)
 func (_ Unimplemented) GetMediaDiscover(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List discover blacklist entries
+// (GET /media/discover/blacklist)
+func (_ Unimplemented) ListDiscoverBlacklist(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add media to the discover blacklist
+// (POST /media/discover/blacklist)
+func (_ Unimplemented) AddDiscoverBlacklistItem(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove media from the discover blacklist
+// (DELETE /media/discover/blacklist/{id})
+func (_ Unimplemented) DeleteDiscoverBlacklistItem(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get one provider-backed discovery section
+// (GET /media/discover/{sectionId})
+func (_ Unimplemented) GetMediaDiscoverSection(w http.ResponseWriter, r *http.Request, sectionId string, params GetMediaDiscoverSectionParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2537,6 +2663,38 @@ func (siw *ServerInterfaceWrapper) CancelDownloadActivity(w http.ResponseWriter,
 	handler.ServeHTTP(w, r)
 }
 
+// ManualImportDownloadActivity operation middleware
+func (siw *ServerInterfaceWrapper) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ManualImportDownloadActivity(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // Login operation middleware
 func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request) {
 
@@ -2756,6 +2914,139 @@ func (siw *ServerInterfaceWrapper) GetMediaDiscover(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMediaDiscover(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDiscoverBlacklist operation middleware
+func (siw *ServerInterfaceWrapper) ListDiscoverBlacklist(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDiscoverBlacklist(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddDiscoverBlacklistItem operation middleware
+func (siw *ServerInterfaceWrapper) AddDiscoverBlacklistItem(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddDiscoverBlacklistItem(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDiscoverBlacklistItem operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDiscoverBlacklistItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDiscoverBlacklistItem(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMediaDiscoverSection operation middleware
+func (siw *ServerInterfaceWrapper) GetMediaDiscoverSection(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "sectionId" -------------
+	var sectionId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sectionId", chi.URLParam(r, "sectionId"), &sectionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sectionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMediaDiscoverSectionParams
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMediaDiscoverSection(w, r, sectionId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4935,6 +5226,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/activity/downloads/{id}/cancel", wrapper.CancelDownloadActivity)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/activity/downloads/{id}/manual-import", wrapper.ManualImportDownloadActivity)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/login", wrapper.Login)
 	})
 	r.Group(func(r chi.Router) {
@@ -4960,6 +5254,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/discover", wrapper.GetMediaDiscover)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/discover/blacklist", wrapper.ListDiscoverBlacklist)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/discover/blacklist", wrapper.AddDiscoverBlacklistItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/media/discover/blacklist/{id}", wrapper.DeleteDiscoverBlacklistItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/discover/{sectionId}", wrapper.GetMediaDiscoverSection)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items", wrapper.ListMediaItems)

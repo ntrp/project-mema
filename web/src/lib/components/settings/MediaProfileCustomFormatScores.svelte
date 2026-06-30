@@ -54,11 +54,12 @@
 		</select>
 		<button
 			type="button"
-			class="secondary"
+			class="add-action-button"
 			disabled={!selectedCustomFormatId}
 			onclick={addCustomFormat}
 		>
-			Add
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add</span>
 		</button>
 	</div>
 

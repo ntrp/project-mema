@@ -1,9 +1,18 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	type MenuIcon = 'discover' | 'movies' | 'series' | 'activity' | 'settings' | 'computer';
+	type MenuIcon =
+		| 'discover'
+		| 'movies'
+		| 'series'
+		| 'activity'
+		| 'settings'
+		| 'computer'
+		| 'visibility_off';
 	type MenuHref =
 		| '/discover'
+		| `/discover/${string}`
+		| '/blacklist'
 		| '/requests'
 		| '/movies'
 		| '/series'
@@ -87,10 +96,7 @@
 			>
 				<span class="menu-icon" aria-hidden="true">
 					{#if item.icon === 'discover'}
-						<svg viewBox="0 0 24 24">
-							<path d="M12 3l1.8 5 5.2 1.9-5.2 1.9L12 17l-1.8-5.2L5 9.9 10.2 8z" />
-							<path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z" />
-						</svg>
+						<span class="app-icon">travel_explore</span>
 					{:else if item.icon === 'movies'}
 						<svg viewBox="0 0 24 24">
 							<rect x="4" y="5" width="16" height="14" rx="2" />
@@ -111,6 +117,8 @@
 							<rect x="4" y="5" width="16" height="12" rx="2" />
 							<path d="M8 21h8M12 17v4" />
 						</svg>
+					{:else if item.icon === 'visibility_off'}
+						<span class="app-icon">visibility_off</span>
 					{:else}
 						<svg viewBox="0 0 24 24">
 							<circle cx="12" cy="12" r="3" />

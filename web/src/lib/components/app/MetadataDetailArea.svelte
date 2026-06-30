@@ -79,10 +79,12 @@
 			{#snippet actions()}
 				<button
 					type="button"
+					class="add-action-button"
 					disabled={addingKey === candidateKey(detail)}
 					onclick={() => onAdd(candidate(detail))}
 				>
-					{addingKey === candidateKey(detail) ? 'Working' : actionLabel}
+					<span class="app-icon" aria-hidden="true">add</span>
+					<span>{addingKey === candidateKey(detail) ? 'Working' : actionLabel}</span>
 				</button>
 			{/snippet}
 		</MediaMetadataHero>

@@ -134,6 +134,111 @@ paths:
                 $ref: "#/components/schemas/MediaDiscoverResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /media/discover/blacklist:
+    get:
+      operationId: listDiscoverBlacklist
+      tags:
+        - Media
+      summary: List discover blacklist entries
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Blacklisted discover media
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoverBlacklistResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: addDiscoverBlacklistItem
+      tags:
+        - Media
+      summary: Add media to the discover blacklist
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscoverBlacklistRequest"
+      responses:
+        "201":
+          description: Blacklisted discover media
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoverBlacklistItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/discover/blacklist/{id}:
+    delete:
+      operationId: deleteDiscoverBlacklistItem
+      tags:
+        - Media
+      summary: Remove media from the discover blacklist
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Blacklist entry removed
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/discover/{sectionId}:
+    get:
+      operationId: getMediaDiscoverSection
+      tags:
+        - Media
+      summary: Get one provider-backed discovery section
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: sectionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 40
+            default: 20
+      responses:
+        "200":
+          description: Discovery section
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaDiscoverSection"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/autocomplete:
     get:
       operationId: autocompleteMedia
@@ -604,6 +709,35 @@ paths:
       responses:
         "200":
           description: Download activity cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadActivity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /activity/downloads/{id}/manual-import:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: manualImportDownloadActivity
+      tags:
+        - Activity
+      summary: Manually import a failed download activity
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManualImportRequest"
+      responses:
+        "200":
+          description: Download activity manually imported
           content:
             application/json:
               schema:
@@ -2225,6 +2359,12 @@ components:
       enum:
         - movie
         - series
+    MediaDiscoverMediaType:
+      type: string
+      enum:
+        - movie
+        - series
+        - mixed
     MediaSearchRequest:
       type: object
       additionalProperties: false
@@ -2253,6 +2393,55 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaSearchResult"
+    DiscoverBlacklistResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoverBlacklistItem"
+    DiscoverBlacklistRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - type
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+        externalProvider:
+          type: string
+        externalId:
+          type: string
+        overview:
+          type: string
+        posterPath:
+          type: string
+    DiscoverBlacklistItem:
+      allOf:
+        - $ref: "#/components/schemas/DiscoverBlacklistRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
     MediaDiscoverResponse:
       type: object
       additionalProperties: false
@@ -2280,7 +2469,7 @@ components:
         providerName:
           type: string
         mediaType:
-          $ref: "#/components/schemas/MediaType"
+          $ref: "#/components/schemas/MediaDiscoverMediaType"
         results:
           type: array
           items:
@@ -3466,6 +3655,9 @@ components:
           type: string
         mediaType:
           $ref: "#/components/schemas/MediaType"
+        mediaYear:
+          type: integer
+          format: int32
         releaseTitle:
           type: string
         indexerName:
@@ -3497,6 +3689,42 @@ components:
         updatedAt:
           type: string
           format: date-time
+    ManualImportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - sourcePath
+      properties:
+        sourcePath:
+          type: string
+          minLength: 1
+        targetFileName:
+          type: string
+        movieTitle:
+          type: string
+        year:
+          type: integer
+          format: int32
+        seasonNumber:
+          type: integer
+          format: int32
+          minimum: 0
+        episodeNumber:
+          type: integer
+          format: int32
+          minimum: 0
+        episodeTitle:
+          type: string
+        releaseGroup:
+          type: string
+        edition:
+          type: string
+        quality:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
     DownloadClientListResponse:
       type: object
       additionalProperties: false

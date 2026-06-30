@@ -146,7 +146,7 @@
 				</button>
 				<button
 					type="submit"
-					class="media-action-command"
+					class="media-action-command add-action-button"
 					disabled={!canConfirm || saving || (isAdmin && libraryFolders.length === 0)}
 				>
 					<span class="app-icon" aria-hidden="true">add</span>

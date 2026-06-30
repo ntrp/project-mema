@@ -18,12 +18,16 @@
 	mediaItems={app.mediaItems}
 	mediaRequests={app.mediaRequests}
 	discoverSections={app.discoverSections}
+	discoverBlacklist={app.discoverBlacklist}
 	libraryFolders={app.libraryFolders}
 	qualityProfiles={app.mediaProfiles}
 	releaseResults={app.releaseResults}
 	activities={app.activities}
 	loadingDiscover={app.loadingDiscover}
+	loadingBlacklist={app.loadingBlacklist}
 	addingKey={app.addingKey}
+	blacklistingKey={app.blacklistingKey}
+	removingBlacklistId={app.removingBlacklistId}
 	approvingRequestId={app.approvingRequestId}
 	searchingItemId={app.searchingItemId}
 	scanningMediaItemId={app.scanningMediaItemId}
@@ -33,6 +37,8 @@
 	loadingActivity={app.loadingActivity}
 	canManage={app.isAdmin}
 	onAddMedia={app.addMedia}
+	onBlacklistMedia={app.blacklistDiscoverMedia}
+	onRemoveBlacklistMedia={app.removeDiscoverBlacklistItem}
 	onApproveMediaRequest={app.approveMediaRequest}
 	onFindReleases={app.findReleases}
 	onAutoSearchMedia={app.autoSearchMedia}

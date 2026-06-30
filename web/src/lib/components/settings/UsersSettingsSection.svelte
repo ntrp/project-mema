@@ -58,7 +58,10 @@
 </div>
 <div class="settings-stack">
 	<div class="settings-toolbar">
-		<button type="button" onclick={openModal}>Add user</button>
+		<button type="button" class="add-action-button" onclick={openModal}>
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add user</span>
+		</button>
 	</div>
 	<UserTable {users} currentUserId={currentUser?.id} onEdit={editUser} {onDelete} />
 	{#if modalOpen}

@@ -69,8 +69,9 @@
 		<div class="custom-format-spec-list">
 			<div class="profile-quality-header">
 				<strong>Required</strong>
-				<button type="button" class="secondary" onclick={() => addSpec('includeSpecs')}>
-					Add condition
+				<button type="button" class="add-action-button" onclick={() => addSpec('includeSpecs')}>
+					<span class="app-icon" aria-hidden="true">add</span>
+					<span>Add condition</span>
 				</button>
 			</div>
 			{#each form.includeSpecs as spec, index (spec.id)}
@@ -122,8 +123,9 @@
 		<div class="custom-format-spec-list">
 			<div class="profile-quality-header">
 				<strong>Rejected</strong>
-				<button type="button" class="secondary" onclick={() => addSpec('excludeSpecs')}>
-					Add condition
+				<button type="button" class="add-action-button" onclick={() => addSpec('excludeSpecs')}>
+					<span class="app-icon" aria-hidden="true">add</span>
+					<span>Add condition</span>
 				</button>
 			</div>
 			{#each form.excludeSpecs as spec, index (spec.id)}

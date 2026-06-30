@@ -101,7 +101,9 @@
 								aria-label={`Open ${result.title} details`}
 							></a>
 						{/if}
-						<span class="media-badge">{isInLibrary(result) ? 'In library' : result.type}</span>
+						<span class="media-badge" class:movie={!isInLibrary(result) && result.type === 'movie'}>
+							{isInLibrary(result) ? 'In library' : result.type}
+						</span>
 						<div class="poster-hover">
 							<span class="poster-year">{result.year ?? 'Unknown'}</span>
 							<h3>{result.title}</h3>
@@ -111,10 +113,12 @@
 							{:else}
 								<button
 									type="button"
+									class="add-action-button"
 									disabled={addingKey === resultKey(result)}
 									onclick={() => onAdd(result)}
 								>
-									{addingKey === resultKey(result) ? 'Working' : actionLabel}
+									<span class="app-icon" aria-hidden="true">add</span>
+									<span>{addingKey === resultKey(result) ? 'Working' : actionLabel}</span>
 								</button>
 							{/if}
 						</div>

@@ -1,12 +1,19 @@
 <script lang="ts">
 	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
+	import { activityForMovie } from './activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from './mediaFiles';
-	import type { MediaItem, ReleaseCandidate, ReleaseSearchState } from '$lib/settings/types';
+	import type {
+		DownloadActivity,
+		MediaItem,
+		ReleaseCandidate,
+		ReleaseSearchState
+	} from '$lib/settings/types';
 
 	interface Props {
 		item: MediaItem;
 		releaseResults?: ReleaseSearchState;
+		activities: DownloadActivity[];
 		searchingItemId?: string;
 		grabbingKey?: string;
 		canManage: boolean;
@@ -19,6 +26,7 @@
 	let {
 		item,
 		releaseResults,
+		activities,
 		searchingItemId,
 		grabbingKey,
 		canManage,
@@ -31,6 +39,15 @@
 	let detailRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
 	const groups = $derived(mediaFileGroups(item));
+	const activityStatus = $derived(
+		item.type === 'movie' ? activityForMovie(activities, item.id) : undefined
+	);
+	const busy = $derived(
+		searchingItemId === item.id ||
+			activityStatus?.status === 'queued' ||
+			activityStatus?.status === 'grabbed' ||
+			activityStatus?.status === 'downloading'
+	);
 
 	function confirmDelete(row: MediaFileRow) {
 		if (!row.path) return;
@@ -56,6 +73,7 @@
 								<th>Size</th>
 								<th>Languages</th>
 								<th>Quality</th>
+								<th>Status</th>
 								<th>Formats</th>
 								<th>Score</th>
 								<th>Actions</th>
@@ -76,6 +94,19 @@
 									<td>{row.size}</td>
 									<td>{row.languages}</td>
 									<td>{row.quality}</td>
+									<td>
+										{#if activityStatus}
+											<span
+												class="activity-status-chip"
+												class:activity-failed={activityStatus.status === 'failed'}
+											>
+												<span class="app-icon" aria-hidden="true">sync</span>
+												{activityStatus.label}
+											</span>
+										{:else}
+											-
+										{/if}
+									</td>
 									<td>
 										{#if row.formats.length}
 											<div class="format-chip-list">
@@ -104,7 +135,7 @@
 											class="secondary icon-button"
 											aria-label="Automatic search"
 											title="Automatic search"
-											disabled={!canManage || searchingItemId === item.id}
+											disabled={!canManage || busy}
 											onclick={() => onAutoSearch(item)}
 										>
 											<span class="app-icon" aria-hidden="true">search</span>
@@ -114,6 +145,7 @@
 											class="secondary icon-button"
 											aria-label="Manual search"
 											title="Manual search"
+											disabled={busy}
 											onclick={() => (searchOpen = true)}
 										>
 											<span class="app-icon" aria-hidden="true">person</span>

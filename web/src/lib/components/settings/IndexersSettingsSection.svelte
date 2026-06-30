@@ -66,7 +66,10 @@
 </div>
 <div class="settings-stack">
 	<div class="settings-toolbar">
-		<button type="button" onclick={openModal}>Add indexer</button>
+		<button type="button" class="add-action-button" onclick={openModal}>
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add indexer</span>
+		</button>
 	</div>
 	<IndexerTable {indexers} onEdit={editIndexer} {onDelete} {onTest} {testingId} {testResults} />
 	{#if modalOpen}

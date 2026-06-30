@@ -54,6 +54,7 @@ type DownloadActivity struct {
 	MediaItemID        uuid.UUID
 	MediaTitle         string
 	MediaType          string
+	MediaYear          *int32
 	ReleaseTitle       string
 	IndexerName        string
 	DownloadClientName string

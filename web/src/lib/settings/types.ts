@@ -48,9 +48,14 @@ export type LibraryScanItemMatchRequest = components['schemas']['LibraryScanItem
 export type MediaType = components['schemas']['MediaType'];
 export type MediaSearchRequest = components['schemas']['MediaSearchRequest'];
 export type MediaSearchResult = components['schemas']['MediaSearchResult'];
+export type DiscoverBlacklistItem = components['schemas']['DiscoverBlacklistItem'];
+export type DiscoverBlacklistRequest = components['schemas']['DiscoverBlacklistRequest'];
 export type MediaAdvancedSearchRequest = components['schemas']['MediaAdvancedSearchRequest'];
 export type MediaDiscoverSection = components['schemas']['MediaDiscoverSection'];
 export type MediaMetadataDetails = components['schemas']['MediaMetadataDetails'];
+export type MediaMetadataFact = components['schemas']['MediaMetadataFact'];
+export type MediaMetadataEpisode = components['schemas']['MediaMetadataEpisode'];
+export type MediaMetadataSeason = components['schemas']['MediaMetadataSeason'];
 export type MediaCollection = components['schemas']['MediaCollection'];
 export type MediaRequest = components['schemas']['MediaRequest'];
 export type MediaRequestApproveRequest = components['schemas']['MediaRequestApproveRequest'];
@@ -66,6 +71,7 @@ export type MinimumAvailability = components['schemas']['MinimumAvailability'];
 export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];
 export type DownloadActivityStatus = components['schemas']['DownloadActivity']['status'];
+export type ManualImportRequest = components['schemas']['ManualImportRequest'];
 export type JobEnqueueResponse = components['schemas']['JobEnqueueResponse'];
 export type Tag = components['schemas']['Tag'];
 export type TagRequest = components['schemas']['TagRequest'];
@@ -114,8 +120,17 @@ export type AppView =
 	| 'system'
 	| 'advanced-search'
 	| 'metadata-detail'
-	| 'media-collection';
-export type HomeSection = 'discover' | 'requests' | 'movies' | 'series' | 'wanted' | 'activity';
+	| 'media-people'
+	| 'media-collection'
+	| 'discover-section';
+export type HomeSection =
+	| 'discover'
+	| 'blacklist'
+	| 'requests'
+	| 'movies'
+	| 'series'
+	| 'wanted'
+	| 'activity';
 export type SystemSection = 'status' | 'logs' | 'log-files' | 'events';
 export type SettingsSection =
 	| 'library'

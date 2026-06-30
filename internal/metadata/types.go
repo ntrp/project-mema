@@ -35,6 +35,7 @@ type DiscoverRequest struct {
 	MediaType string
 	Section   string
 	Limit     int
+	Page      int
 }
 
 type DetailsRequest struct {

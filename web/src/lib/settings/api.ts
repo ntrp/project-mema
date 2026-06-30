@@ -14,6 +14,8 @@ import {
 import type {
 	CustomFormat,
 	CustomFormatForm,
+	DiscoverBlacklistItem,
+	DiscoverBlacklistRequest,
 	DownloadClientForm,
 	FileNamingSettings,
 	FileNamingSettingsRequest,
@@ -23,6 +25,7 @@ import type {
 	LibraryFolderOptionListResponse,
 	LibraryMediaKind,
 	LibraryScanItemMatchRequest,
+	ManualImportRequest,
 	MediaAdvancedSearchRequest,
 	MediaItemCreateRequest,
 	MediaProfile,
@@ -397,6 +400,53 @@ export async function loadMediaDiscoverSections() {
 	return data?.sections ?? [];
 }
 
+export async function loadMediaDiscoverSection(sectionId: string, page = 1, limit = 20) {
+	const { data, error } = await client.GET('/media/discover/{sectionId}', {
+		params: { path: { sectionId }, query: { page, limit } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Discovery section request did not return a result');
+	}
+	return data;
+}
+
+export async function listDiscoverBlacklist(): Promise<DiscoverBlacklistItem[]> {
+	const { data, error } = await client.GET('/media/discover/blacklist');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.items ?? [];
+}
+
+export async function addDiscoverBlacklistItem(
+	request: DiscoverBlacklistRequest
+): Promise<DiscoverBlacklistItem> {
+	const { data, error } = await client.POST('/media/discover/blacklist', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Blacklist request did not return a result');
+	}
+	return data;
+}
+
+export async function deleteDiscoverBlacklistItem(id: string) {
+	const { error } = await client.DELETE('/media/discover/blacklist/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
 export type AutocompleteSearchScope = 'library' | 'providers' | 'all';
 
 export async function autocompleteMedia(query: string, scope: AutocompleteSearchScope = 'all') {
@@ -638,6 +688,21 @@ export async function listDownloadActivity() {
 export async function cancelDownloadActivity(id: string) {
 	const { data, error } = await client.POST('/activity/downloads/{id}/cancel', {
 		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Download activity was not returned');
+	}
+	return data;
+}
+
+export async function manualImportDownloadActivity(id: string, body: ManualImportRequest) {
+	const { data, error } = await client.POST('/activity/downloads/{id}/manual-import', {
+		params: { path: { id } },
+		body
 	});
 
 	if (error) {

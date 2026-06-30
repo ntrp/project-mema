@@ -79,7 +79,10 @@
 				<span class="app-icon" aria-hidden="true">rule</span>
 				Test parsing
 			</button>
-			<button type="button" onclick={openModal}>Add custom format</button>
+			<button type="button" class="add-action-button" onclick={openModal}>
+				<span class="app-icon" aria-hidden="true">add</span>
+				<span>Add custom format</span>
+			</button>
 		</div>
 	</div>
 

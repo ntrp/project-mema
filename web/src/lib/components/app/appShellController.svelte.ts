@@ -11,6 +11,7 @@ import {
 } from '$lib/components/app/appNavigation';
 import {
 	advancedSearchMedia as advancedSearchMediaRequest,
+	addDiscoverBlacklistItem as addDiscoverBlacklistItemRequest,
 	approveMediaRequest as approveMediaRequestRequest,
 	autocompleteMedia as autocompleteMediaRequest,
 	cancelDownloadActivity as cancelDownloadActivityRequest,
@@ -20,6 +21,7 @@ import {
 	createMediaRequest as createMediaRequestRequest,
 	currentSession as currentSessionRequest,
 	deleteCustomFormat as deleteCustomFormatRequest,
+	deleteDiscoverBlacklistItem as deleteDiscoverBlacklistItemRequest,
 	deleteDownloadClient as deleteDownloadClientRequest,
 	deleteIndexer as deleteIndexerRequest,
 	deleteMediaItemFile as deleteMediaItemFileRequest,
@@ -37,8 +39,10 @@ import {
 	getMetadataCache as getMetadataCacheRequest,
 	grabMediaRelease as grabMediaReleaseRequest,
 	listDownloadActivity as listDownloadActivityRequest,
+	listDiscoverBlacklist as listDiscoverBlacklistRequest,
 	listMediaItems as listMediaItemsRequest,
 	listMediaRequests as listMediaRequestsRequest,
+	loadMediaDiscoverSection as loadMediaDiscoverSectionRequest,
 	loadMediaDiscoverSections as loadMediaDiscoverSectionsRequest,
 	loadSettings as loadSettingsRequest,
 	login as loginRequest,
@@ -77,11 +81,13 @@ import {
 	userFormFromUser
 } from '$lib/settings/forms';
 import type { MediaActionSelection } from '$lib/components/app/mediaActionTypes';
+import { mediaMetadataDetail } from '$lib/components/app/mediaDetail';
 import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
 import type {
 	AppView,
 	CustomFormat,
 	CustomFormatForm as CustomFormatFormValue,
+	DiscoverBlacklistItem,
 	DownloadActivity,
 	DownloadActivityStatus,
 	DownloadClient,
@@ -143,6 +149,7 @@ export interface AppShellOptions {
 	initialMetadataExternalId?: string;
 	initialCollectionProvider?: string;
 	initialCollectionId?: string;
+	initialDiscoverSectionId?: string;
 }
 
 export function createAppShellController(options: AppShellOptions) {
@@ -179,6 +186,8 @@ export function createAppShellController(options: AppShellOptions) {
 	let mediaItems = $state<MediaItem[]>([]);
 	let mediaRequests = $state<MediaRequest[]>([]);
 	let discoverSections = $state<MediaDiscoverSection[]>([]);
+	let discoverSection = $state<MediaDiscoverSection | undefined>();
+	let discoverBlacklist = $state<DiscoverBlacklistItem[]>([]);
 	let metadataDetail = $state<MediaMetadataDetails | undefined>();
 	let mediaCollection = $state<MediaCollection | undefined>();
 	let autocompleteGroups = $state<MediaSearchGroup[]>([]);
@@ -199,11 +208,18 @@ export function createAppShellController(options: AppShellOptions) {
 	let clearingMetadataCache = $state(false);
 	let metadataCachePattern = $state('');
 	let loadingDiscover = $state(false);
+	let loadingDiscoverSection = $state(false);
+	let loadingMoreDiscoverSection = $state(false);
+	let discoverSectionPage = $state(1);
+	let discoverSectionHasMore = $state(true);
+	let loadingBlacklist = $state(false);
 	let loadingMetadataDetail = $state(false);
 	let loadingMediaCollection = $state(false);
 	let loadingAutocomplete = $state(false);
 	let searchingAdvanced = $state(false);
 	let addingKey = $state<string | undefined>();
+	let blacklistingKey = $state<string | undefined>();
+	let removingBlacklistId = $state<string | undefined>();
 	let savingMediaAction = $state(false);
 	let activeMediaCandidate = $state<MediaSearchResult | undefined>();
 	let mediaDeleteCandidate = $state<MediaItem | undefined>();
@@ -223,31 +239,53 @@ export function createAppShellController(options: AppShellOptions) {
 	let activeHomeSection = $state<HomeSection>(options.initialHomeSection ?? 'discover');
 	let activeSettingsSection = $state<SettingsSection>(options.initialSettingsSection ?? 'library');
 	let activeSystemSection = $state<SystemSection>(options.initialSystemSection ?? 'status');
+	let activeDiscoverSectionId = $state<string | undefined>(options.initialDiscoverSectionId);
 	let selectedMediaItemId = $state<string | undefined>(options.initialSelectedMediaItemId);
 	let selectedRequestId = $state<string | undefined>(options.initialSelectedRequestId);
 	let searchQuery = $state(options.initialAdvancedQuery ?? '');
 	let eventSource: EventSource | undefined;
+	let mediaPeopleDetail = $derived(
+		metadataDetail ??
+			(selectedMediaItemId
+				? mediaItems
+						.filter((item) => item.type === (activeHomeSection === 'movies' ? 'movie' : 'series'))
+						.find((item) => item.id === selectedMediaItemId)
+				: undefined)
+	);
+	let mediaPeopleMetadataDetail = $derived(
+		mediaPeopleDetail && 'id' in mediaPeopleDetail
+			? mediaMetadataDetail(mediaPeopleDetail)
+			: mediaPeopleDetail
+	);
 	let isAdmin = $derived(currentUser?.role === 'admin');
 	let activePrimarySection = $derived(
 		activeView === 'settings'
 			? 'settings'
 			: activeView === 'system'
 				? 'system'
-				: activeHomeSection === 'movies' ||
-					  activeHomeSection === 'series' ||
-					  activeHomeSection === 'wanted'
-					? 'library'
-					: activeHomeSection
+				: activeView === 'discover-section'
+					? 'discover'
+					: activeHomeSection === 'movies' ||
+						  activeHomeSection === 'series' ||
+						  activeHomeSection === 'wanted'
+						? 'library'
+						: activeHomeSection
 	);
 	let activeSubmenuSection = $derived(
 		activeView === 'system'
 			? activeSystemSection
-			: activePrimarySection === 'library'
-				? activeHomeSection
-				: activeSettingsSection
+			: activeView === 'discover-section'
+				? activeDiscoverSectionId
+				: activePrimarySection === 'library'
+					? activeHomeSection
+					: activePrimarySection === 'discover'
+						? activeHomeSection
+						: activeSettingsSection
 	);
 	let primaryItems = $derived(
-		isAdmin ? [...basePrimaryItems, settingsPrimaryItem, systemPrimaryItem] : basePrimaryItems
+		isAdmin
+			? [...basePrimaryItems, settingsPrimaryItem, systemPrimaryItem]
+			: basePrimaryItems.filter((item) => item.value !== 'blacklist')
 	);
 
 	async function initialise() {
@@ -260,17 +298,23 @@ export function createAppShellController(options: AppShellOptions) {
 		if (authenticated) {
 			if (currentUser?.role === 'admin') {
 				await loadSettings();
+				await loadDiscoverBlacklist();
 			} else if (activeView === 'settings' || activeView === 'system') {
 				activeView = 'home';
+				activeHomeSection = 'discover';
+				void goto(resolve('/discover'));
+			} else if (activeHomeSection === 'blacklist') {
 				activeHomeSection = 'discover';
 				void goto(resolve('/discover'));
 			}
 			await loadLibrary();
 			await loadDiscoverSections();
-			if (activeView === 'metadata-detail') {
+			if (activeView === 'metadata-detail' || activeView === 'media-people') {
 				await loadMetadataDetail();
 			} else if (activeView === 'media-collection') {
 				await loadMediaCollection();
+			} else if (activeView === 'discover-section') {
+				await loadDiscoverSection();
 			}
 			connectEvents();
 		}
@@ -291,6 +335,9 @@ export function createAppShellController(options: AppShellOptions) {
 			}
 			upsertActivity(activity);
 			updateMediaStatusFromActivity(activity);
+			if (activity.status === 'completed') {
+				void loadMediaItems();
+			}
 		});
 		source.onerror = () => {
 			if (!authenticated) {
@@ -321,10 +368,12 @@ export function createAppShellController(options: AppShellOptions) {
 			}
 			await loadLibrary();
 			await loadDiscoverSections();
-			if (activeView === 'metadata-detail') {
+			if (activeView === 'metadata-detail' || activeView === 'media-people') {
 				await loadMetadataDetail();
 			} else if (activeView === 'media-collection') {
 				await loadMediaCollection();
+			} else if (activeView === 'discover-section') {
+				await loadDiscoverSection();
 			}
 			connectEvents();
 		} catch (error) {
@@ -355,6 +404,9 @@ export function createAppShellController(options: AppShellOptions) {
 			mediaItems = [];
 			mediaRequests = [];
 			discoverSections = [];
+			discoverSection = undefined;
+			discoverSectionPage = 1;
+			discoverSectionHasMore = true;
 			metadataDetail = undefined;
 			mediaCollection = undefined;
 			autocompleteGroups = [];
@@ -444,6 +496,123 @@ export function createAppShellController(options: AppShellOptions) {
 			errorMessage = errorMessageFrom(error, 'Could not load discover sections');
 		} finally {
 			loadingDiscover = false;
+		}
+	}
+
+	async function loadDiscoverSection() {
+		if (!activeDiscoverSectionId) {
+			return;
+		}
+		loadingDiscoverSection = true;
+		discoverSectionPage = 1;
+		discoverSectionHasMore = true;
+		try {
+			discoverSection = await loadMediaDiscoverSectionRequest(activeDiscoverSectionId, 1);
+			discoverSectionHasMore = (discoverSection.results ?? []).length > 0;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load discover section');
+		} finally {
+			loadingDiscoverSection = false;
+		}
+	}
+
+	async function loadMoreDiscoverSection() {
+		if (
+			!activeDiscoverSectionId ||
+			loadingDiscoverSection ||
+			loadingMoreDiscoverSection ||
+			!discoverSectionHasMore
+		) {
+			return;
+		}
+		loadingMoreDiscoverSection = true;
+		const nextPage = discoverSectionPage + 1;
+		try {
+			const nextSection = await loadMediaDiscoverSectionRequest(activeDiscoverSectionId, nextPage);
+			const existingKeys = (discoverSection?.results ?? []).map(discoverResultKey);
+			const nextResults = (nextSection.results ?? []).filter((result) => {
+				const key = discoverResultKey(result);
+				if (existingKeys.includes(key)) {
+					return false;
+				}
+				existingKeys.push(key);
+				return true;
+			});
+			discoverSectionPage = nextPage;
+			discoverSectionHasMore = nextResults.length > 0;
+			discoverSection = {
+				...nextSection,
+				results: [...(discoverSection?.results ?? []), ...nextResults]
+			};
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load more discover results');
+		} finally {
+			loadingMoreDiscoverSection = false;
+		}
+	}
+
+	async function loadDiscoverBlacklist() {
+		if (!isAdmin) {
+			return;
+		}
+		loadingBlacklist = true;
+		try {
+			discoverBlacklist = await listDiscoverBlacklistRequest();
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not load discover blacklist');
+		} finally {
+			loadingBlacklist = false;
+		}
+	}
+
+	async function blacklistDiscoverMedia(candidate: MediaSearchResult) {
+		if (!isAdmin) {
+			return;
+		}
+		blacklistingKey = discoverResultKey(candidate);
+		try {
+			const item = await addDiscoverBlacklistItemRequest({
+				title: candidate.title,
+				type: candidate.type,
+				year: candidate.year,
+				externalProvider: candidate.externalProvider,
+				externalId: candidate.externalId,
+				overview: candidate.overview,
+				posterPath: candidate.posterPath
+			});
+			discoverBlacklist = [
+				item,
+				...discoverBlacklist.filter((entry) => !sameDiscoverBlacklistItem(entry, item))
+			];
+			discoverSections = filterDiscoverSections(discoverSections);
+			if (discoverSection) {
+				discoverSection = filterDiscoverSection(discoverSection);
+			}
+			message = `${candidate.title} hidden from discover`;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not add media to discover blacklist');
+		} finally {
+			blacklistingKey = undefined;
+		}
+	}
+
+	async function removeDiscoverBlacklistItem(item: DiscoverBlacklistItem) {
+		if (!isAdmin) {
+			return;
+		}
+		removingBlacklistId = item.id;
+		try {
+			await deleteDiscoverBlacklistItemRequest(item.id);
+			discoverBlacklist = discoverBlacklist.filter((entry) => entry.id !== item.id);
+			message = `${item.title} removed from blacklist`;
+			await loadDiscoverSections();
+			if (activeView === 'discover-section') {
+				await loadDiscoverSection();
+			}
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not remove media from discover blacklist');
+		} finally {
+			removingBlacklistId = undefined;
 		}
 	}
 
@@ -806,6 +975,7 @@ export function createAppShellController(options: AppShellOptions) {
 				result.activity,
 				...activities.filter((activity) => activity.id !== result.activity.id)
 			];
+			updateMediaStatusFromActivity(result.activity);
 			message = `${result.message} (#${result.jobId})`;
 			activeHomeSection = 'activity';
 			void goto(resolve('/activity'));
@@ -1306,7 +1476,52 @@ export function createAppShellController(options: AppShellOptions) {
 		return `${candidate.type}:${candidate.title}:${candidate.year ?? ''}`;
 	}
 
+	function discoverResultKey(candidate: MediaSearchResult) {
+		return `${candidate.type}:${candidate.externalProvider ?? ''}:${candidate.externalId ?? ''}:${candidate.title}:${candidate.year ?? ''}`;
+	}
+
+	function filterDiscoverSections(sections: MediaDiscoverSection[]) {
+		return sections.map(filterDiscoverSection);
+	}
+
+	function filterDiscoverSection(section: MediaDiscoverSection): MediaDiscoverSection {
+		return {
+			...section,
+			results: section.results.filter((result) => !isDiscoverBlacklisted(result))
+		};
+	}
+
+	function isDiscoverBlacklisted(result: MediaSearchResult) {
+		return discoverBlacklist.some((item) => sameDiscoverBlacklistItem(item, result));
+	}
+
+	function sameDiscoverBlacklistItem(
+		item: DiscoverBlacklistItem,
+		result: DiscoverBlacklistItem | MediaSearchResult
+	) {
+		const itemExternalKey = discoverExternalKey(item);
+		const resultExternalKey = discoverExternalKey(result);
+		if (itemExternalKey && resultExternalKey && itemExternalKey === resultExternalKey) {
+			return true;
+		}
+		return discoverTitleKey(item) === discoverTitleKey(result);
+	}
+
+	function discoverExternalKey(item: DiscoverBlacklistItem | MediaSearchResult) {
+		if (!item.externalProvider || !item.externalId) {
+			return '';
+		}
+		return `${item.type}:${item.externalProvider}:${item.externalId}`.trim().toLowerCase();
+	}
+
+	function discoverTitleKey(item: DiscoverBlacklistItem | MediaSearchResult) {
+		return `${item.type}:${item.title.trim().toLowerCase()}:${item.year ?? ''}`;
+	}
+
 	function selectHomeSection(section: HomeSection) {
+		if (section === 'blacklist' && !isAdmin) {
+			return;
+		}
 		activeView = 'home';
 		activeHomeSection = section;
 		void goto(resolve(`/${section}`));
@@ -1335,6 +1550,21 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 		if (activePrimarySection === 'library') {
 			selectHomeSection(section as HomeSection);
+			return;
+		}
+		if (activePrimarySection === 'discover') {
+			if (section === 'discover') {
+				selectHomeSection('discover');
+				return;
+			}
+			activeView = 'discover-section';
+			activeHomeSection = 'discover';
+			activeDiscoverSectionId = section;
+			discoverSection = undefined;
+			discoverSectionPage = 1;
+			discoverSectionHasMore = true;
+			void goto(resolve('/discover/[sectionId]', { sectionId: section }));
+			void loadDiscoverSection();
 			return;
 		}
 		selectSettingsSection(section);
@@ -1517,8 +1747,17 @@ export function createAppShellController(options: AppShellOptions) {
 		get discoverSections() {
 			return discoverSections;
 		},
+		get discoverSection() {
+			return discoverSection;
+		},
+		get discoverBlacklist() {
+			return discoverBlacklist;
+		},
 		get metadataDetail() {
 			return metadataDetail;
+		},
+		get mediaPeopleDetail() {
+			return mediaPeopleMetadataDetail;
 		},
 		get mediaCollection() {
 			return mediaCollection;
@@ -1604,6 +1843,18 @@ export function createAppShellController(options: AppShellOptions) {
 		get loadingDiscover() {
 			return loadingDiscover;
 		},
+		get loadingDiscoverSection() {
+			return loadingDiscoverSection;
+		},
+		get loadingMoreDiscoverSection() {
+			return loadingMoreDiscoverSection;
+		},
+		get discoverSectionHasMore() {
+			return discoverSectionHasMore;
+		},
+		get loadingBlacklist() {
+			return loadingBlacklist;
+		},
 		get loadingMetadataDetail() {
 			return loadingMetadataDetail;
 		},
@@ -1618,6 +1869,12 @@ export function createAppShellController(options: AppShellOptions) {
 		},
 		get addingKey() {
 			return addingKey;
+		},
+		get blacklistingKey() {
+			return blacklistingKey;
+		},
+		get removingBlacklistId() {
+			return removingBlacklistId;
 		},
 		get savingMediaAction() {
 			return savingMediaAction;
@@ -1711,6 +1968,9 @@ export function createAppShellController(options: AppShellOptions) {
 		openAdvancedSearch,
 		advancedSearch,
 		addMedia,
+		loadMoreDiscoverSection,
+		blacklistDiscoverMedia,
+		removeDiscoverBlacklistItem,
 		closeMediaAction,
 		confirmMediaAction,
 		closeMediaDelete,

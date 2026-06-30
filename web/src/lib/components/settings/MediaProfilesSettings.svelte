@@ -94,7 +94,10 @@
 
 <div class="panel" aria-label="Profiles">
 	<div class="section-heading">
-		<button type="button" onclick={openModal}>Add profile</button>
+		<button type="button" class="add-action-button" onclick={openModal}>
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add profile</span>
+		</button>
 	</div>
 
 	<MediaProfileTable {profiles} {qualities} {deletingId} onEdit={editProfile} {onDelete} />

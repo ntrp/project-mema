@@ -1,17 +1,40 @@
 <script lang="ts">
+	/* global HTMLDivElement */
 	import { resolve } from '$app/paths';
-	import type { MediaDiscoverSection, MediaItem, MediaSearchResult } from '$lib/settings/types';
+	import type {
+		DiscoverBlacklistItem,
+		MediaDiscoverSection,
+		MediaItem,
+		MediaSearchResult
+	} from '$lib/settings/types';
+	import MediaPosterCard from './MediaPosterCard.svelte';
 
 	interface Props {
 		sections: MediaDiscoverSection[];
 		mediaItems: MediaItem[];
 		loading: boolean;
 		addingKey?: string;
+		blacklistingKey?: string;
 		actionLabel: string;
+		canManage: boolean;
+		blacklist: DiscoverBlacklistItem[];
 		onAdd: (_candidate: MediaSearchResult) => void;
+		onBlacklist: (_candidate: MediaSearchResult) => void;
 	}
 
-	let { sections, mediaItems, loading, addingKey, actionLabel, onAdd }: Props = $props();
+	let {
+		sections,
+		mediaItems,
+		loading,
+		addingKey,
+		blacklistingKey,
+		actionLabel,
+		canManage,
+		blacklist,
+		onAdd,
+		onBlacklist
+	}: Props = $props();
+	let rows = $state<Record<string, HTMLDivElement>>({});
 
 	const safeSections = $derived(sections ?? []);
 	const libraryExternalKeys = $derived(
@@ -22,13 +45,23 @@
 		)
 	);
 	const libraryTitleKeys = $derived(new Set((mediaItems ?? []).map((item) => titleKey(item))));
+	const blacklistExternalKeys = $derived(
+		new Set(
+			(blacklist ?? [])
+				.map((item) => externalKey(item))
+				.filter((key): key is string => Boolean(key))
+		)
+	);
+	const blacklistTitleKeys = $derived(new Set((blacklist ?? []).map((item) => titleKey(item))));
 
 	function resultKey(result: MediaSearchResult) {
 		return `${result.type}:${result.externalProvider ?? ''}:${result.externalId ?? ''}:${result.title}:${result.year ?? ''}`;
 	}
 
 	function sectionResults(section: MediaDiscoverSection) {
-		return (section.results ?? []).filter((result) => !isInLibrary(result));
+		return (section.results ?? []).filter(
+			(result) => !isInLibrary(result) && !isBlacklisted(result)
+		);
 	}
 
 	function isInLibrary(result: MediaSearchResult) {
@@ -39,14 +72,22 @@
 		return libraryTitleKeys.has(titleKey(result));
 	}
 
-	function externalKey(item: MediaItem | MediaSearchResult) {
+	function isBlacklisted(result: MediaSearchResult) {
+		const key = externalKey(result);
+		if (key && blacklistExternalKeys.has(key)) {
+			return true;
+		}
+		return blacklistTitleKeys.has(titleKey(result));
+	}
+
+	function externalKey(item: MediaItem | MediaSearchResult | DiscoverBlacklistItem) {
 		if (!item.externalProvider || !item.externalId) {
 			return undefined;
 		}
 		return `${item.type}:${clean(item.externalProvider)}:${clean(item.externalId)}`;
 	}
 
-	function titleKey(item: MediaItem | MediaSearchResult) {
+	function titleKey(item: MediaItem | MediaSearchResult | DiscoverBlacklistItem) {
 		return `${item.type}:${clean(item.title)}:${item.year ?? ''}`;
 	}
 
@@ -54,14 +95,24 @@
 		return value.trim().toLowerCase();
 	}
 
-	function posterUrl(path?: string) {
-		if (!path) {
-			return undefined;
+	function trackRow(node: HTMLDivElement, sectionId: string) {
+		rows[sectionId] = node;
+		return {
+			destroy() {
+				delete rows[sectionId];
+			}
+		};
+	}
+
+	function scrollSection(sectionId: string, direction: number) {
+		const row = rows[sectionId];
+		if (!row) {
+			return;
 		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/w342${path}`;
+		row.scrollBy({
+			left: direction * Math.max(row.clientWidth - 140, 220),
+			behavior: 'smooth'
+		});
 	}
 </script>
 
@@ -92,51 +143,53 @@
 			{@const results = sectionResults(section)}
 			<section class="discover-section" aria-labelledby={`discover-${section.id}`}>
 				<div class="section-heading">
-					<h2 id={`discover-${section.id}`}>{section.title}</h2>
-					<span>{section.providerName}</span>
+					<a
+						class="section-title-link"
+						href={resolve('/discover/[sectionId]', { sectionId: section.id })}
+					>
+						<h2 id={`discover-${section.id}`}>{section.title}</h2>
+						<span class="app-icon" aria-hidden="true">arrow_forward</span>
+					</a>
+					<div class="poster-row-controls" aria-label={`${section.title} carousel controls`}>
+						<button
+							type="button"
+							aria-label="Scroll left"
+							onclick={() => scrollSection(section.id, -1)}
+						>
+							<span class="app-icon" aria-hidden="true">chevron_left</span>
+						</button>
+						<button
+							type="button"
+							aria-label="Scroll right"
+							onclick={() => scrollSection(section.id, 1)}
+						>
+							<span class="app-icon" aria-hidden="true">chevron_right</span>
+						</button>
+					</div>
 				</div>
 				{#if results.length > 0}
-					<div class="poster-row">
+					<div class="poster-row" use:trackRow={section.id}>
 						{#each results as result (resultKey(result))}
-							<article class="poster-card">
-								<div class="poster-frame">
-									{#if posterUrl(result.posterPath)}
-										<img src={posterUrl(result.posterPath)} alt="" loading="lazy" />
-									{:else}
-										<div class="poster-placeholder">{result.type}</div>
-									{/if}
-									{#if result.externalProvider && result.externalId}
-										<a
-											class="poster-detail-link"
-											href={resolve('/media/[provider]/[type]/[externalId]', {
-												provider: result.externalProvider,
-												type: result.type,
-												externalId: result.externalId
-											})}
-											aria-label={`Open ${result.title} details`}
-										></a>
-									{/if}
-									<span class="media-badge">{result.type}</span>
-									<div class="poster-hover">
-										<span class="poster-year">{result.year ?? 'Unknown'}</span>
-										<h3>
-											{result.title}
-										</h3>
-										<p>{result.overview ?? 'No overview available.'}</p>
-										<button
-											type="button"
-											disabled={addingKey === resultKey(result)}
-											onclick={(event) => {
-												event.stopPropagation();
-												onAdd(result);
-											}}
-										>
-											{addingKey === resultKey(result) ? 'Working' : actionLabel}
-										</button>
-									</div>
-								</div>
-							</article>
+							<MediaPosterCard
+								{result}
+								adding={addingKey === resultKey(result)}
+								blacklisting={blacklistingKey === resultKey(result)}
+								{actionLabel}
+								showBlacklistAction={canManage}
+								{onAdd}
+								{onBlacklist}
+							/>
 						{/each}
+						<a
+							class="poster-card poster-more-card"
+							href={resolve('/discover/[sectionId]', { sectionId: section.id })}
+							aria-label={`Open all ${section.title}`}
+						>
+							<div class="poster-frame poster-more-frame">
+								<span class="app-icon" aria-hidden="true">arrow_forward</span>
+								<span>View all</span>
+							</div>
+						</a>
 					</div>
 				{:else}
 					<div class="section-empty">No results loaded for this section.</div>

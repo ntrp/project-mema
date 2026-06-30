@@ -28,28 +28,46 @@
 			<h2 id="path-mapping-title">Path mappings</h2>
 			<p>Map download client paths to paths visible by the app for hardlink imports.</p>
 		</div>
-		<button type="button" onclick={() => (modalOpen = true)}>Add path</button>
+		<button type="button" class="add-action-button" onclick={() => (modalOpen = true)}>
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add path</span>
+		</button>
 	</div>
-	<div class="data-list compact-list">
-		{#each mappings as mapping (mapping.id)}
-			<div class="data-row">
-				<div>
-					<strong>{mapping.clientPath}</strong>
-					<span>{mapping.appPath}</span>
-				</div>
-				<button
-					type="button"
-					class="danger"
-					disabled={deletingId === mapping.id}
-					onclick={() => onDelete(mapping.id)}
-				>
-					{deletingId === mapping.id ? 'Removing' : 'Delete'}
-				</button>
-			</div>
-		{:else}
-			<p class="empty">No paths have been defined.</p>
-		{/each}
-	</div>
+	{#if mappings.length > 0}
+		<div class="table-wrap">
+			<table>
+				<thead>
+					<tr>
+						<th>Client path</th>
+						<th>App path</th>
+						<th class="table-action-heading">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each mappings as mapping (mapping.id)}
+						<tr>
+							<td>{mapping.clientPath}</td>
+							<td>{mapping.appPath}</td>
+							<td class="row-actions">
+								<button
+									type="button"
+									class="danger icon-button"
+									disabled={deletingId === mapping.id}
+									aria-label="Delete path mapping"
+									title="Delete path mapping"
+									onclick={() => onDelete(mapping.id)}
+								>
+									<span class="app-icon" aria-hidden="true">delete</span>
+								</button>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+	{:else}
+		<p class="empty">No paths have been defined.</p>
+	{/if}
 	{#if modalOpen}
 		<SettingsFormModal title="Add path mapping" onClose={() => (modalOpen = false)}>
 			<form class="settings-grid compact" onsubmit={save}>

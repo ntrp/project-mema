@@ -42,7 +42,10 @@
 		</label>
 		<div class="form-actions library-folder-actions">
 			<button type="button" class="secondary" onclick={openPicker}>Browse</button>
-			<button type="submit" disabled={saving}>{saving ? 'Scanning' : 'Add and scan'}</button>
+			<button type="submit" class="add-action-button" disabled={saving}>
+				<span class="app-icon" aria-hidden="true">add</span>
+				<span>{saving ? 'Scanning' : 'Add and scan'}</span>
+			</button>
 		</div>
 	</form>
 

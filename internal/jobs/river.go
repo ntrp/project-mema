@@ -201,7 +201,7 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 				&river.PeriodicJobOpts{ID: "missing_media_retry"},
 			),
 			river.NewPeriodicJob(
-				river.PeriodicInterval(30*time.Second),
+				river.PeriodicInterval(10*time.Second),
 				func() (river.JobArgs, *river.InsertOpts) {
 					return DownloadActivitySyncArgs{}, &river.InsertOpts{Queue: queueDownloads}
 				},

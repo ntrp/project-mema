@@ -165,6 +165,7 @@ func publishDownloadActivity(broker *events.Broker, activity storage.DownloadAct
 		"mediaItemId":        activity.MediaItemID,
 		"mediaTitle":         activity.MediaTitle,
 		"mediaType":          activity.MediaType,
+		"mediaYear":          activity.MediaYear,
 		"releaseTitle":       activity.ReleaseTitle,
 		"indexerName":        activity.IndexerName,
 		"downloadClientName": activity.DownloadClientName,

@@ -6,6 +6,7 @@ type tmdbSearchResponse struct {
 
 type tmdbMedia struct {
 	ID           int64  `json:"id"`
+	MediaType    string `json:"media_type"`
 	Title        string `json:"title"`
 	Name         string `json:"name"`
 	ReleaseDate  string `json:"release_date"`
@@ -31,11 +32,17 @@ type tmdbDetails struct {
 	NumberOfSeasons  int32           `json:"number_of_seasons"`
 	NumberOfEpisodes int32           `json:"number_of_episodes"`
 	VoteAverage      float64         `json:"vote_average"`
+	Budget           int64           `json:"budget"`
+	Revenue          int64           `json:"revenue"`
 	Genres           []tmdbName      `json:"genres"`
 	CreatedBy        []tmdbName      `json:"created_by"`
 	Networks         []tmdbName      `json:"networks"`
+	Production       []tmdbName      `json:"production_companies"`
+	Countries        []tmdbCountry   `json:"production_countries"`
 	Seasons          []tmdbSeason    `json:"seasons"`
 	Credits          tmdbCredits     `json:"credits"`
+	ExternalIDs      tmdbExternalIDs `json:"external_ids"`
+	ReleaseDates     tmdbReleaseInfo `json:"release_dates"`
 }
 
 type tmdbCollection struct {
@@ -49,6 +56,34 @@ type tmdbCollection struct {
 
 type tmdbName struct {
 	Name string `json:"name"`
+}
+
+type tmdbCountry struct {
+	Name string `json:"name"`
+	Code string `json:"iso_3166_1"`
+}
+
+type tmdbExternalIDs struct {
+	IMDBID      string `json:"imdb_id"`
+	WikidataID  string `json:"wikidata_id"`
+	FacebookID  string `json:"facebook_id"`
+	InstagramID string `json:"instagram_id"`
+	TwitterID   string `json:"twitter_id"`
+	TVDBID      int64  `json:"tvdb_id"`
+}
+
+type tmdbReleaseInfo struct {
+	Results []tmdbReleaseCountry `json:"results"`
+}
+
+type tmdbReleaseCountry struct {
+	Code        string            `json:"iso_3166_1"`
+	ReleaseList []tmdbReleaseDate `json:"release_dates"`
+}
+
+type tmdbReleaseDate struct {
+	Date string `json:"release_date"`
+	Type int    `json:"type"`
 }
 
 type tmdbSeason struct {
@@ -74,12 +109,19 @@ type tmdbEpisode struct {
 
 type tmdbCredits struct {
 	Cast []tmdbCastMember `json:"cast"`
+	Crew []tmdbCrewMember `json:"crew"`
 }
 
 type tmdbCastMember struct {
 	Name        string `json:"name"`
 	Character   string `json:"character"`
 	ProfilePath string `json:"profile_path"`
+}
+
+type tmdbCrewMember struct {
+	Name       string `json:"name"`
+	Job        string `json:"job"`
+	Department string `json:"department"`
 }
 
 type tvdbLoginResponse struct {

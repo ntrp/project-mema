@@ -92,6 +92,26 @@ create table if not exists app.quality_size_settings (
     )
 );
 
+create table if not exists app.discover_blacklist (
+    id uuid primary key,
+    media_type text not null check (media_type in ('movie', 'series')),
+    title text not null,
+    year integer,
+    external_provider text,
+    external_id text,
+    overview text,
+    poster_path text,
+    created_at timestamptz not null default now()
+);
+
+create unique index if not exists idx_discover_blacklist_external
+    on app.discover_blacklist (media_type, external_provider, external_id)
+    where external_provider is not null and external_id is not null;
+
+create unique index if not exists idx_discover_blacklist_title
+    on app.discover_blacklist (media_type, lower(title), coalesce(year, 0))
+    where external_provider is null or external_id is null;
+
 create table if not exists app.media_profiles (
     id text primary key,
     name text not null,
@@ -274,7 +294,7 @@ create index if not exists idx_metadata_providers_priority
 
 create table if not exists app.metadata_search_cache (
     provider_id uuid not null references app.metadata_providers(id) on delete cascade,
-    media_type text not null check (media_type in ('movie', 'series')),
+    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
     query text not null,
     year integer not null default 0,
     results jsonb not null,

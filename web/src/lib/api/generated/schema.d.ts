@@ -106,6 +106,58 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/discover/blacklist': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List discover blacklist entries */
+		get: operations['listDiscoverBlacklist'];
+		put?: never;
+		/** Add media to the discover blacklist */
+		post: operations['addDiscoverBlacklistItem'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/discover/blacklist/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Remove media from the discover blacklist */
+		delete: operations['deleteDiscoverBlacklistItem'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/discover/{sectionId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get one provider-backed discovery section */
+		get: operations['getMediaDiscoverSection'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/autocomplete': {
 		parameters: {
 			query?: never;
@@ -418,6 +470,25 @@ export interface paths {
 		put?: never;
 		/** Cancel an active download activity */
 		post: operations['cancelDownloadActivity'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/activity/downloads/{id}/manual-import': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Manually import a failed download activity */
+		post: operations['manualImportDownloadActivity'];
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -1260,6 +1331,8 @@ export interface components {
 		};
 		/** @enum {string} */
 		MediaType: 'movie' | 'series';
+		/** @enum {string} */
+		MediaDiscoverMediaType: 'movie' | 'series' | 'mixed';
 		MediaSearchRequest: {
 			query: string;
 			type: components['schemas']['MediaType'];
@@ -1269,6 +1342,25 @@ export interface components {
 		MediaSearchResponse: {
 			results: components['schemas']['MediaSearchResult'][];
 		};
+		DiscoverBlacklistResponse: {
+			items: components['schemas']['DiscoverBlacklistItem'][];
+		};
+		DiscoverBlacklistRequest: {
+			title: string;
+			type: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+			externalProvider?: string;
+			externalId?: string;
+			overview?: string;
+			posterPath?: string;
+		};
+		DiscoverBlacklistItem: components['schemas']['DiscoverBlacklistRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+		};
 		MediaDiscoverResponse: {
 			sections: components['schemas']['MediaDiscoverSection'][];
 		};
@@ -1276,7 +1368,7 @@ export interface components {
 			id: string;
 			title: string;
 			providerName: string;
-			mediaType: components['schemas']['MediaType'];
+			mediaType: components['schemas']['MediaDiscoverMediaType'];
 			results: components['schemas']['MediaSearchResult'][];
 		};
 		MediaAdvancedSearchRequest: {
@@ -1713,6 +1805,8 @@ export interface components {
 			mediaItemId: string;
 			mediaTitle: string;
 			mediaType: components['schemas']['MediaType'];
+			/** Format: int32 */
+			mediaYear?: number;
 			releaseTitle: string;
 			indexerName: string;
 			downloadClientName: string;
@@ -1726,6 +1820,22 @@ export interface components {
 			createdAt: string;
 			/** Format: date-time */
 			updatedAt: string;
+		};
+		ManualImportRequest: {
+			sourcePath: string;
+			targetFileName?: string;
+			movieTitle?: string;
+			/** Format: int32 */
+			year?: number;
+			/** Format: int32 */
+			seasonNumber?: number;
+			/** Format: int32 */
+			episodeNumber?: number;
+			episodeTitle?: string;
+			releaseGroup?: string;
+			edition?: string;
+			quality?: string;
+			languages?: string[];
 		};
 		DownloadClientListResponse: {
 			clients: components['schemas']['DownloadClient'][];
@@ -2279,6 +2389,102 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 		};
 	};
+	listDiscoverBlacklist: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Blacklisted discover media */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DiscoverBlacklistResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	addDiscoverBlacklistItem: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DiscoverBlacklistRequest'];
+			};
+		};
+		responses: {
+			/** @description Blacklisted discover media */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DiscoverBlacklistItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteDiscoverBlacklistItem: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Blacklist entry removed */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	getMediaDiscoverSection: {
+		parameters: {
+			query?: {
+				page?: number;
+				limit?: number;
+			};
+			header?: never;
+			path: {
+				sectionId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Discovery section */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaDiscoverSection'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	autocompleteMedia: {
 		parameters: {
 			query: {
@@ -2745,6 +2951,35 @@ export interface operations {
 		requestBody?: never;
 		responses: {
 			/** @description Download activity cancelled */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DownloadActivity'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	manualImportDownloadActivity: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ManualImportRequest'];
+			};
+		};
+		responses: {
+			/** @description Download activity manually imported */
 			200: {
 				headers: {
 					[name: string]: unknown;

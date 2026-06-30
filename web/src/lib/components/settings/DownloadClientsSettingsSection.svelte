@@ -107,7 +107,10 @@
 </div>
 <div class="settings-stack">
 	<div class="settings-toolbar">
-		<button type="button" onclick={openModal}>Add download client</button>
+		<button type="button" class="add-action-button" onclick={openModal}>
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add download client</span>
+		</button>
 	</div>
 	<DownloadClientTable {clients} onEdit={editClient} {onDelete} />
 	{#if modalOpen}

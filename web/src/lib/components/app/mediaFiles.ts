@@ -103,7 +103,7 @@ function seriesGroups(item: MediaItem): MediaFileGroup[] {
 			];
 }
 
-function fileRow(item: MediaItem, path: string): MediaFileRow {
+export function fileRow(item: MediaItem, path: string): MediaFileRow {
 	const name = fileName(path);
 	const formats = matchedFormats(name);
 	return {
@@ -122,7 +122,7 @@ function fileRow(item: MediaItem, path: string): MediaFileRow {
 	};
 }
 
-function missingRow(
+export function missingRow(
 	key: string,
 	title: string,
 	seasonNumber?: number,
@@ -164,11 +164,11 @@ function episodeParts(path: string) {
 	return { seasonNumber: Number(match[1]), episodeNumber: Number(match[2]) };
 }
 
-function episodeKey(season?: number, episode?: number) {
+export function episodeKey(season?: number, episode?: number) {
 	return `${season ?? 0}:${episode ?? 0}`;
 }
 
-function seasonNumberFromName(name: string) {
+export function seasonNumberFromName(name: string) {
 	const match = /(\d+)/.exec(name);
 	return match ? Number(match[1]) : undefined;
 }

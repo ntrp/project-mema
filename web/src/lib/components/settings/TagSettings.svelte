@@ -51,7 +51,10 @@
 
 <div class="panel" aria-label="Tags">
 	<div class="section-heading">
-		<button type="button" onclick={openTagModal}>Add tag</button>
+		<button type="button" class="add-action-button" onclick={openTagModal}>
+			<span class="app-icon" aria-hidden="true">add</span>
+			<span>Add tag</span>
+		</button>
 	</div>
 
 	<div class="table-wrap">

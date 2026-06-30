@@ -204,6 +204,7 @@ func downloadActivityResponse(activity storage.DownloadActivity) DownloadActivit
 		MediaItemId:        openapi_types.UUID(activity.MediaItemID),
 		MediaTitle:         activity.MediaTitle,
 		MediaType:          MediaType(activity.MediaType),
+		MediaYear:          activity.MediaYear,
 		ReleaseTitle:       activity.ReleaseTitle,
 		IndexerName:        activity.IndexerName,
 		DownloadClientName: activity.DownloadClientName,

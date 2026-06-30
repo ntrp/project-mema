@@ -218,10 +218,12 @@
 									{:else}
 										<button
 											type="button"
+											class="add-action-button"
 											disabled={addingKey === candidateKey(result)}
 											onclick={() => onAdd(result)}
 										>
-											{addingKey === candidateKey(result) ? 'Working' : actionLabel}
+											<span class="app-icon" aria-hidden="true">add</span>
+											<span>{addingKey === candidateKey(result) ? 'Working' : actionLabel}</span>
 										</button>
 									{/if}
 								</div>

@@ -1,15 +1,25 @@
 <script lang="ts">
+	/* global HTMLDivElement */
+	import { resolve } from '$app/paths';
+	import MediaOverviewInfoCard from './MediaOverviewInfoCard.svelte';
+	import type { Snippet } from 'svelte';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
 	interface Props {
 		detail: MediaMetadataDetails;
+		peopleHref?: string;
+		seasonsContent?: Snippet;
 	}
 
-	let { detail }: Props = $props();
+	let { detail, peopleHref, seasonsContent }: Props = $props();
 
+	const crewLabels = new Set(['Creator', 'Director', 'Writer', 'Editor', 'Producer']);
 	const facts = $derived(detail.facts ?? []);
+	const crewFacts = $derived(facts.filter((fact) => crewLabels.has(fact.label)));
 	const seasons = $derived(detail.seasons ?? []);
 	const cast = $derived(detail.cast ?? []);
+	const castHref = $derived(resolvedPeopleHref(detail));
+	let castRow = $state<HTMLDivElement | undefined>();
 
 	function imageUrl(path?: string, size = 'w780') {
 		if (!path) {
@@ -24,25 +34,62 @@
 	function episodeTitle(episode: { episodeNumber: number; name: string }) {
 		return `${episode.episodeNumber} - ${episode.name}`;
 	}
+
+	function resolvedPeopleHref(details: MediaMetadataDetails) {
+		if (peopleHref) {
+			return peopleHref;
+		}
+		if (!details.externalProvider || !details.externalId) {
+			return undefined;
+		}
+		return resolve('/media/[provider]/[type]/[externalId]/cast', {
+			provider: details.externalProvider,
+			type: details.type,
+			externalId: details.externalId
+		});
+	}
+
+	function trackCastRow(node: HTMLDivElement) {
+		castRow = node;
+		return {
+			destroy() {
+				castRow = undefined;
+			}
+		};
+	}
+
+	function scrollCast(direction: number) {
+		if (!castRow) {
+			return;
+		}
+		castRow.scrollBy({
+			left: direction * Math.max(castRow.clientWidth - 140, 220),
+			behavior: 'smooth'
+		});
+	}
 </script>
 
-<section aria-labelledby="metadata-overview-title">
-	<h2 id="metadata-overview-title">Overview</h2>
-	<p>{detail.overview ?? 'No overview available.'}</p>
+<section class="metadata-overview-layout" aria-labelledby="metadata-overview-title">
+	<div class="metadata-overview-copy">
+		<h2 id="metadata-overview-title">Overview</h2>
+		<p>{detail.overview ?? 'No overview available.'}</p>
+		{#if crewFacts.length > 0}
+			<div class="metadata-crew-grid" aria-label="Crew">
+				{#each crewFacts as fact (`${fact.label}:${fact.value}`)}
+					<div>
+						<strong>{fact.label}</strong>
+						<span>{fact.value}</span>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
+	<MediaOverviewInfoCard {detail} {facts} />
 </section>
 
-{#if facts.length > 0}
-	<section class="metadata-facts-grid" aria-label="Crew and source facts">
-		{#each facts as fact (`${fact.label}:${fact.value}`)}
-			<div>
-				<strong>{fact.label}</strong>
-				<span>{fact.value}</span>
-			</div>
-		{/each}
-	</section>
-{/if}
-
-{#if seasons.length > 0}
+{#if seasonsContent}
+	{@render seasonsContent()}
+{:else if seasons.length > 0}
 	<section aria-labelledby="metadata-seasons-title">
 		<h2 id="metadata-seasons-title">Seasons</h2>
 		<div class="metadata-season-list">
@@ -84,8 +131,30 @@
 
 {#if cast.length > 0}
 	<section aria-labelledby="metadata-cast-title">
-		<h2 id="metadata-cast-title">Cast</h2>
-		<div class="metadata-cast-grid">
+		<div class="section-heading">
+			{#if castHref}
+				<!-- eslint-disable svelte/no-navigation-without-resolve -->
+				<a class="section-title-link" href={castHref}>
+					<h2 id="metadata-cast-title">Cast</h2>
+					<span class="app-icon" aria-hidden="true">arrow_forward</span>
+				</a>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			{:else}
+				<h2 id="metadata-cast-title">Cast</h2>
+			{/if}
+			<div class="section-heading-actions">
+				<span>{cast.length}</span>
+				<div class="poster-row-controls" aria-label="Cast carousel controls">
+					<button type="button" aria-label="Scroll cast left" onclick={() => scrollCast(-1)}>
+						<span class="app-icon" aria-hidden="true">chevron_left</span>
+					</button>
+					<button type="button" aria-label="Scroll cast right" onclick={() => scrollCast(1)}>
+						<span class="app-icon" aria-hidden="true">chevron_right</span>
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="metadata-cast-slider" use:trackCastRow>
 			{#each cast as person (`${person.name}:${person.role ?? ''}`)}
 				<article class="metadata-cast-card">
 					<div>

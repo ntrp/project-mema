@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ActivityList from './ActivityList.svelte';
+	import DiscoverBlacklistArea from './DiscoverBlacklistArea.svelte';
 	import MediaDetail from './MediaDetail.svelte';
 	import MediaItemList from './MediaItemList.svelte';
 	import MediaRequestArea from './MediaRequestArea.svelte';
@@ -7,6 +8,7 @@
 	import WantedMediaTable from './WantedMediaTable.svelte';
 	import type {
 		DownloadActivity,
+		DiscoverBlacklistItem,
 		HomeSection,
 		LibraryFolder,
 		MediaDiscoverSection,
@@ -26,12 +28,16 @@
 		mediaItems: MediaItem[];
 		mediaRequests: MediaRequest[];
 		discoverSections: MediaDiscoverSection[];
+		discoverBlacklist: DiscoverBlacklistItem[];
 		libraryFolders: LibraryFolder[];
 		qualityProfiles: QualityProfileOption[];
 		releaseResults: ReleaseSearchResults;
 		activities: DownloadActivity[];
 		loadingDiscover: boolean;
+		loadingBlacklist: boolean;
 		addingKey?: string;
+		blacklistingKey?: string;
+		removingBlacklistId?: string;
 		approvingRequestId?: string;
 		searchingItemId?: string;
 		scanningMediaItemId?: string;
@@ -41,6 +47,8 @@
 		canManage: boolean;
 		loadingActivity: boolean;
 		onAddMedia: (_candidate: MediaSearchResult) => void;
+		onBlacklistMedia: (_candidate: MediaSearchResult) => void;
+		onRemoveBlacklistMedia: (_item: DiscoverBlacklistItem) => void;
 		onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
 		onFindReleases: (_item: MediaItem) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
@@ -59,12 +67,16 @@
 		mediaItems,
 		mediaRequests,
 		discoverSections,
+		discoverBlacklist,
 		libraryFolders,
 		qualityProfiles,
 		releaseResults,
 		activities,
 		loadingDiscover,
+		loadingBlacklist,
 		addingKey,
+		blacklistingKey,
+		removingBlacklistId,
 		approvingRequestId,
 		searchingItemId,
 		scanningMediaItemId,
@@ -74,6 +86,8 @@
 		canManage,
 		loadingActivity,
 		onAddMedia,
+		onBlacklistMedia,
+		onRemoveBlacklistMedia,
 		onApproveMediaRequest,
 		onFindReleases,
 		onAutoSearchMedia,
@@ -106,8 +120,19 @@
 			{mediaItems}
 			loading={loadingDiscover}
 			{addingKey}
+			{blacklistingKey}
+			blacklist={discoverBlacklist}
 			onAdd={onAddMedia}
+			onBlacklist={onBlacklistMedia}
 			actionLabel={canManage ? 'Add' : 'Request'}
+			{canManage}
+		/>
+	{:else if activeSection === 'blacklist'}
+		<DiscoverBlacklistArea
+			items={discoverBlacklist}
+			loading={loadingBlacklist}
+			removingId={removingBlacklistId}
+			onRemove={onRemoveBlacklistMedia}
 		/>
 	{:else if activeSection === 'requests'}
 		<MediaRequestArea
@@ -119,15 +144,16 @@
 			{approvingRequestId}
 			onApprove={onApproveMediaRequest}
 		/>
-	{:else if activeSection === 'movies'}
+	{:else if activeSection === 'movies' || activeSection === 'series'}
 		{#if selectedMediaItemId}
 			<MediaDetail
-				mediaType="movie"
+				mediaType={activeSection === 'movies' ? 'movie' : 'series'}
 				item={selectedMediaItem}
 				requestedItemId={selectedMediaItemId}
 				{libraryFolders}
 				{qualityProfiles}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
+				{activities}
 				{searchingItemId}
 				{scanningMediaItemId}
 				{grabbingKey}
@@ -141,31 +167,10 @@
 				{onGrabRelease}
 			/>
 		{:else}
-			<MediaItemList mediaType="movie" items={movies} />
-		{/if}
-	{:else if activeSection === 'series'}
-		{#if selectedMediaItemId}
-			<MediaDetail
-				mediaType="series"
-				item={selectedMediaItem}
-				requestedItemId={selectedMediaItemId}
-				{libraryFolders}
-				{qualityProfiles}
-				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
-				{searchingItemId}
-				{scanningMediaItemId}
-				{grabbingKey}
-				{deletingMediaItemId}
-				{canManage}
-				{onFindReleases}
-				{onAutoSearchMedia}
-				{onRescanMediaFiles}
-				{onDeleteMediaFile}
-				{onDeleteMedia}
-				{onGrabRelease}
+			<MediaItemList
+				mediaType={activeSection === 'movies' ? 'movie' : 'series'}
+				items={activeSection === 'movies' ? movies : series}
 			/>
-		{:else}
-			<MediaItemList mediaType="series" items={series} />
 		{/if}
 	{:else if activeSection === 'wanted'}
 		<WantedMediaTable items={wanted} {searchingItemId} {canManage} {onFindReleases} />

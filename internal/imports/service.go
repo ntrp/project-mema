@@ -17,6 +17,20 @@ type Service struct {
 	settings *storage.SettingsStore
 }
 
+type ManualImportInput struct {
+	SourcePath     string
+	TargetFileName string
+	MovieTitle     string
+	Year           *int32
+	SeasonNumber   *int32
+	EpisodeNumber  *int32
+	EpisodeTitle   string
+	ReleaseGroup   string
+	Edition        string
+	Quality        string
+	Languages      []string
+}
+
 func NewService(settings *storage.SettingsStore) *Service {
 	return &Service{settings: settings}
 }
@@ -64,6 +78,46 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 		}
 	}
 	slog.Debug("import completed download finished", "activityId", activity.ID, "mediaItemId", item.ID, "linkedFileCount", len(sources))
+	return nil
+}
+
+func (s *Service) ImportManualDownload(ctx context.Context, activity storage.DownloadActivity, input ManualImportInput) error {
+	item, err := s.settings.GetMediaItem(ctx, activity.MediaItemID)
+	if err != nil {
+		return fmt.Errorf("load media item: %w", err)
+	}
+	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
+		return fmt.Errorf("media folder is not set")
+	}
+	mappings, err := s.settings.ListPathMappings(ctx)
+	if err != nil {
+		return fmt.Errorf("load path mappings: %w", err)
+	}
+	source := mapPath(input.SourcePath, mappings)
+	info, err := os.Stat(source)
+	if err != nil {
+		return fmt.Errorf("source file is not visible to the app: %s", source)
+	}
+	if info.IsDir() {
+		return fmt.Errorf("source path must be a file")
+	}
+	if !isVideoFile(source) {
+		return fmt.Errorf("source path is not a video file")
+	}
+	targetName, err := manualTargetFileName(item, input, source)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(*item.MediaFolderPath, 0o755); err != nil {
+		return fmt.Errorf("create media folder: %w", err)
+	}
+	target := filepath.Join(*item.MediaFolderPath, targetName)
+	if err := hardlink(source, target); err != nil {
+		return err
+	}
+	if err := s.settings.RecordImportedMediaFile(ctx, item, target); err != nil {
+		return fmt.Errorf("record imported file: %w", err)
+	}
 	return nil
 }
 
@@ -141,6 +195,78 @@ func sameExistingFile(source string, target string) bool {
 	sourceInfo, sourceErr := os.Stat(source)
 	targetInfo, targetErr := os.Stat(target)
 	return sourceErr == nil && targetErr == nil && os.SameFile(sourceInfo, targetInfo)
+}
+
+func manualTargetFileName(item storage.MediaItem, input ManualImportInput, source string) (string, error) {
+	if name := cleanFileName(input.TargetFileName); name != "" {
+		if filepath.Ext(name) == "" {
+			name += strings.ToLower(filepath.Ext(source))
+		}
+		return name, nil
+	}
+	ext := strings.ToLower(filepath.Ext(source))
+	if ext == "" {
+		ext = ".mkv"
+	}
+	title := strings.TrimSpace(input.MovieTitle)
+	if title == "" {
+		title = item.Title
+	}
+	parts := []string{}
+	if item.Type == "series" {
+		if input.SeasonNumber == nil || input.EpisodeNumber == nil {
+			return "", fmt.Errorf("season and episode are required for series imports")
+		}
+		parts = append(parts, title, fmt.Sprintf("S%02dE%02d", *input.SeasonNumber, *input.EpisodeNumber))
+		if episodeTitle := strings.TrimSpace(input.EpisodeTitle); episodeTitle != "" {
+			parts = append(parts, episodeTitle)
+		}
+	} else {
+		year := input.Year
+		if year == nil {
+			year = item.Year
+		}
+		if year != nil {
+			title = fmt.Sprintf("%s (%d)", title, *year)
+		}
+		parts = append(parts, title)
+	}
+	parts = appendNonEmpty(parts, input.Edition, strings.Join(cleanStrings(input.Languages), " "), input.Quality)
+	name := cleanFileName(strings.Join(parts, " - "))
+	if group := cleanFileName(input.ReleaseGroup); group != "" {
+		name = strings.TrimSpace(name + " - " + group)
+	}
+	if name == "" {
+		name = strings.TrimSuffix(filepath.Base(source), filepath.Ext(source))
+	}
+	return name + ext, nil
+}
+
+func appendNonEmpty(values []string, candidates ...string) []string {
+	for _, candidate := range candidates {
+		candidate = strings.TrimSpace(candidate)
+		if candidate != "" {
+			values = append(values, candidate)
+		}
+	}
+	return values
+}
+
+func cleanStrings(values []string) []string {
+	cleaned := []string{}
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			cleaned = append(cleaned, value)
+		}
+	}
+	return cleaned
+}
+
+func cleanFileName(value string) string {
+	value = strings.TrimSpace(value)
+	replacer := strings.NewReplacer("/", " ", "\\", " ", ":", " ", "*", " ", "?", " ", "\"", "", "<", " ", ">", " ", "|", " ")
+	return strings.Join(strings.Fields(replacer.Replace(value)), " ")
 }
 
 func isVideoFile(path string) bool {

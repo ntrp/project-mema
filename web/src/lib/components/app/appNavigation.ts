@@ -14,15 +14,23 @@ export type SettingsHref =
 
 export type SystemHref = '/system/status' | '/system/logs' | '/system/log-files' | '/system/events';
 
-export type HomeHref = '/discover' | '/requests' | '/movies' | '/series' | '/wanted' | '/activity';
+export type HomeHref =
+	| '/discover'
+	| `/discover/${string}`
+	| '/blacklist'
+	| '/requests'
+	| '/movies'
+	| '/series'
+	| '/wanted'
+	| '/activity';
 
 export type PrimaryItem = {
 	value: HomeSection | 'library' | 'settings' | 'system';
 	label: string;
-	icon: 'discover' | 'movies' | 'series' | 'activity' | 'settings' | 'computer';
+	icon: 'discover' | 'movies' | 'series' | 'activity' | 'settings' | 'computer' | 'visibility_off';
 	href: HomeHref | '/settings/library' | SystemHref;
 	children?: readonly {
-		value: HomeSection | SettingsSection | SystemSection;
+		value: string;
 		label: string;
 		href: HomeHref | SettingsHref | SystemHref;
 	}[];
@@ -54,8 +62,26 @@ export const libraryItems = [
 	{ value: 'wanted', label: 'Wanted', href: '/wanted' }
 ] satisfies PrimaryItem['children'];
 
+export const discoverItems = [
+	{ value: 'discover', label: 'All sections', href: '/discover' },
+	{ value: 'trending', label: 'Trending', href: '/discover/trending' },
+	{ value: 'movie-popular', label: 'Popular movies', href: '/discover/movie-popular' },
+	{ value: 'movie-upcoming', label: 'Upcoming movies', href: '/discover/movie-upcoming' },
+	{ value: 'movie-top-rated', label: 'Top rated movies', href: '/discover/movie-top-rated' },
+	{ value: 'series-popular', label: 'Popular series', href: '/discover/series-popular' },
+	{ value: 'series-on-the-air', label: 'Airing series', href: '/discover/series-on-the-air' },
+	{ value: 'series-top-rated', label: 'Top rated series', href: '/discover/series-top-rated' }
+] satisfies PrimaryItem['children'];
+
 export const basePrimaryItems = [
-	{ value: 'discover', label: 'Discover', icon: 'discover', href: '/discover' },
+	{
+		value: 'discover',
+		label: 'Discover',
+		icon: 'discover',
+		href: '/discover',
+		children: discoverItems
+	},
+	{ value: 'blacklist', label: 'Blacklist', icon: 'visibility_off', href: '/blacklist' },
 	{ value: 'requests', label: 'Requests', icon: 'activity', href: '/requests' },
 	{ value: 'library', label: 'Library', icon: 'movies', href: '/movies', children: libraryItems },
 	{ value: 'activity', label: 'Activity', icon: 'activity', href: '/activity' }

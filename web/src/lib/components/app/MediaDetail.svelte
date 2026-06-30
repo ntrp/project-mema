@@ -3,7 +3,9 @@
 	import MediaFilesTable from './MediaFilesTable.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
+	import MediaSeriesSeasons from './MediaSeriesSeasons.svelte';
 	import ReleaseCandidatesSection from './ReleaseCandidatesSection.svelte';
+	import { resolve } from '$app/paths';
 	import {
 		imageUrl,
 		libraryFolderLabel,
@@ -12,6 +14,7 @@
 		qualityProfileLabel
 	} from './mediaDetail';
 	import type {
+		DownloadActivity,
 		LibraryFolder,
 		MediaItem,
 		MediaType,
@@ -27,6 +30,7 @@
 		libraryFolders: LibraryFolder[];
 		qualityProfiles: QualityProfileOption[];
 		releaseResults?: ReleaseSearchState;
+		activities: DownloadActivity[];
 		searchingItemId?: string;
 		scanningMediaItemId?: string;
 		grabbingKey?: string;
@@ -47,6 +51,7 @@
 		libraryFolders,
 		qualityProfiles,
 		releaseResults,
+		activities,
 		searchingItemId,
 		scanningMediaItemId,
 		grabbingKey,
@@ -65,6 +70,16 @@
 	const resolvedQualityProfileLabel = $derived(qualityProfileLabel(item, qualityProfiles));
 	const resolvedMonitorModeLabel = $derived(monitorModeLabel(item));
 	const detail = $derived(item ? mediaMetadataDetail(item) : undefined);
+	const itemActivities = $derived(
+		item ? activities.filter((activity) => activity.mediaItemId === item.id) : []
+	);
+	const peopleHref = $derived(
+		item
+			? resolve(item.type === 'movie' ? '/movies/[id]/cast' : '/series/[id]/cast', {
+					id: item.id
+				})
+			: undefined
+	);
 </script>
 
 {#if item && detail}
@@ -108,7 +123,24 @@
 
 		<div class="metadata-body">
 			<main class="metadata-main">
-				<MediaMetadataCore {detail} />
+				<MediaMetadataCore {detail} {peopleHref}>
+					{#snippet seasonsContent()}
+						{#if item.type === 'series'}
+							<MediaSeriesSeasons
+								{item}
+								{releaseResults}
+								activities={itemActivities}
+								{searchingItemId}
+								{grabbingKey}
+								{canManage}
+								onAutoSearch={onAutoSearchMedia}
+								onManualSearch={onFindReleases}
+								onDeleteFile={onDeleteMediaFile}
+								{onGrabRelease}
+							/>
+						{/if}
+					{/snippet}
+				</MediaMetadataCore>
 				<LibraryMediaStatusSection
 					{item}
 					{releaseCount}
@@ -116,17 +148,20 @@
 					libraryFolderLabel={resolvedLibraryFolderLabel}
 					monitorModeLabel={resolvedMonitorModeLabel}
 				/>
-				<MediaFilesTable
-					{item}
-					{releaseResults}
-					{searchingItemId}
-					{grabbingKey}
-					{canManage}
-					onAutoSearch={onAutoSearchMedia}
-					onManualSearch={onFindReleases}
-					onDeleteFile={onDeleteMediaFile}
-					{onGrabRelease}
-				/>
+				{#if item.type === 'movie'}
+					<MediaFilesTable
+						{item}
+						{releaseResults}
+						activities={itemActivities}
+						{searchingItemId}
+						{grabbingKey}
+						{canManage}
+						onAutoSearch={onAutoSearchMedia}
+						onManualSearch={onFindReleases}
+						onDeleteFile={onDeleteMediaFile}
+						{onGrabRelease}
+					/>
+				{/if}
 				<ReleaseCandidatesSection
 					{item}
 					{releaseResults}

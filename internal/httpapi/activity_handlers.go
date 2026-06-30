@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 
 	"media-manager/internal/downloadclients"
+	"media-manager/internal/imports"
 	"media-manager/internal/storage"
 )
 
@@ -44,6 +46,41 @@ func (s *Server) CancelDownloadActivity(w http.ResponseWriter, r *http.Request, 
 	writeJSON(w, http.StatusOK, downloadActivityResponse(updated))
 }
 
+func (s *Server) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	var request ManualImportRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	activity, err := s.settings.GetDownloadActivity(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find download activity")
+		return
+	}
+	if activity.Status != "failed" {
+		writeError(w, http.StatusBadRequest, "activity_not_failed", "Only failed download activity can be manually imported")
+		return
+	}
+	if err := imports.NewService(s.settings).ImportManualDownload(r.Context(), activity, manualImportInput(request)); err != nil {
+		writeError(w, http.StatusBadRequest, "manual_import_failed", err.Error())
+		return
+	}
+	progress := 100
+	updated, err := s.settings.UpdateDownloadActivityProgress(r.Context(), activity.ID, "completed", &progress, nil)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update download activity")
+		return
+	}
+	updated.MediaTitle = activity.MediaTitle
+	updated.MediaType = activity.MediaType
+	updated.MediaYear = activity.MediaYear
+	s.publishDownloadActivity(updated)
+	s.recordEvent(r.Context(), eventSeverityInfo, "downloads", "Download activity manually imported", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": activity.ReleaseTitle})
+	writeJSON(w, http.StatusOK, downloadActivityResponse(updated))
+}
+
 func (s *Server) cancelClientDownload(ctx context.Context, activity storage.DownloadActivity) error {
 	clients, err := s.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
@@ -70,4 +107,40 @@ func (s *Server) publishDownloadActivity(activity storage.DownloadActivity) {
 
 func downloadActivityCancellable(status string) bool {
 	return status == "queued" || status == "grabbed" || status == "downloading"
+}
+
+func manualImportInput(request ManualImportRequest) imports.ManualImportInput {
+	return imports.ManualImportInput{
+		SourcePath:     request.SourcePath,
+		TargetFileName: manualString(request.TargetFileName),
+		MovieTitle:     manualString(request.MovieTitle),
+		Year:           request.Year,
+		SeasonNumber:   request.SeasonNumber,
+		EpisodeNumber:  request.EpisodeNumber,
+		EpisodeTitle:   manualString(request.EpisodeTitle),
+		ReleaseGroup:   manualString(request.ReleaseGroup),
+		Edition:        manualString(request.Edition),
+		Quality:        manualString(request.Quality),
+		Languages:      manualStrings(request.Languages),
+	}
+}
+
+func manualString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return strings.TrimSpace(*value)
+}
+
+func manualStrings(value *[]string) []string {
+	if value == nil {
+		return nil
+	}
+	values := make([]string, 0, len(*value))
+	for _, item := range *value {
+		if item = strings.TrimSpace(item); item != "" {
+			values = append(values, item)
+		}
+	}
+	return values
 }
