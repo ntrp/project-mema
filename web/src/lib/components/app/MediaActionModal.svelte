@@ -134,10 +134,12 @@
 			<MediaTagSelector {tags} bind:selectedTags />
 
 			<div class="form-actions media-action-actions">
-				<label class="inline-check">
-					<input type="checkbox" bind:checked={startSearch} />
-					<span>Start searching</span>
-				</label>
+				{#if isAdmin}
+					<label class="inline-check">
+						<input type="checkbox" bind:checked={startSearch} />
+						<span>Start searching</span>
+					</label>
+				{/if}
 				<button type="button" class="secondary media-action-command" onclick={onClose}>
 					<span class="app-icon" aria-hidden="true">close</span>
 					<span>Cancel</span>

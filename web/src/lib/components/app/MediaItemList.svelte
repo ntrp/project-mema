@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import type { MediaItem, MediaItemStatus, MediaType } from '$lib/settings/types';
+	import type { MediaItem, MediaType } from '$lib/settings/types';
 
 	interface Props {
 		mediaType: MediaType;
@@ -25,7 +25,7 @@
 		return `https://image.tmdb.org/t/p/w500${path}`;
 	}
 
-	function statusLabel(status: MediaItemStatus) {
+	function statusLabel(status: MediaItem['status']) {
 		switch (status) {
 			case 'downloaded':
 				return 'Downloaded';
@@ -34,6 +34,10 @@
 			default:
 				return 'Missing';
 		}
+	}
+
+	function typeLabel(type: MediaType) {
+		return type === 'movie' ? 'Movie' : 'Series';
 	}
 </script>
 
@@ -58,30 +62,21 @@
 				{#if posterUrl(item.posterPath)}
 					<img src={posterUrl(item.posterPath)} alt="" loading="lazy" />
 				{:else}
-					<div class="poster-placeholder compact">{mediaType === 'movie' ? 'Movie' : 'Series'}</div>
+					<div class="poster-placeholder compact">{typeLabel(mediaType)}</div>
 				{/if}
 			</div>
-			<div class="media-library-card-body">
-				<strong>{item.title}</strong>
-				<span>{item.year ? `${item.year} · ` : ''}{item.type}</span>
-				{#if item.tags?.length}
-					<div class="media-tags compact-tags" aria-label="Tags">
-						{#each item.tags.slice(0, 3) as tag (tag)}
-							<span>{tag}</span>
-						{/each}
-					</div>
-				{/if}
-				<small
-					class:status-enabled={item.status === 'downloaded'}
-					class:pending={item.status === 'downloading'}
-					class:status-disabled={item.status === 'missing'}
-				>
-					{statusLabel(item.status)}
-				</small>
-				<small class:status-enabled={!item.manual} class:status-disabled={item.manual}>
-					{item.manual ? 'Manual' : 'Automatic'}
-				</small>
+			<div class="poster-hover">
+				<span class="poster-year">{item.year ?? 'Unknown'}</span>
+				<h3>{item.title}</h3>
+				<p>{item.overview ?? 'No overview available.'}</p>
 			</div>
+			<span
+				class="media-card-status-line"
+				class:downloaded={item.status === 'downloaded'}
+				class:downloading={item.status === 'downloading'}
+				class:missing={item.status === 'missing'}
+				aria-label={statusLabel(item.status)}
+			></span>
 		</a>
 	{:else}
 		<div class="panel">

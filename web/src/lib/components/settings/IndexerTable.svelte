@@ -1,5 +1,5 @@
 <script lang="ts">
-	import IntegrationTestStatus from './IntegrationTestStatus.svelte';
+	import IndexerHealthStatus from './IndexerHealthStatus.svelte';
 	import type { Indexer, IntegrationTestResults } from '$lib/settings/types';
 
 	interface Props {
@@ -14,8 +14,7 @@
 	let { indexers, onEdit, onDelete, onTest, testingId, testResults }: Props = $props();
 </script>
 
-<div class="panel" aria-labelledby="indexer-list-title">
-	<h2 id="indexer-list-title">Indexers</h2>
+<div class="panel" aria-label="Indexers">
 	<div class="table-wrap">
 		<table>
 			<thead>
@@ -38,10 +37,10 @@
 						<td>{(item.categories ?? []).join(', ') || '-'}</td>
 						<td>{item.priority}</td>
 						<td>
-							<IntegrationTestStatus
-								enabled={item.enabled}
+							<IndexerHealthStatus
+								indexer={item}
 								result={testResults[item.id]}
-								testing={testingId === item.id}
+								checking={testingId === item.id}
 							/>
 						</td>
 						<td class="row-actions">
@@ -51,7 +50,7 @@
 								disabled={testingId === item.id}
 								onclick={() => onTest(item.id)}
 							>
-								{testingId === item.id ? 'Testing' : 'Test'}
+								{testingId === item.id ? 'Checking' : 'Check'}
 							</button>
 							<button
 								type="button"

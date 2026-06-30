@@ -33,6 +33,7 @@ type Entry struct {
 
 type Manager struct {
 	level       slog.LevelVar
+	fileSink    *fileSink
 	mu          sync.Mutex
 	nextID      uint64
 	entries     []Entry
@@ -42,7 +43,7 @@ type Manager struct {
 var Default = NewManager()
 
 func NewManager() *Manager {
-	manager := &Manager{subscribers: make(map[chan Entry]struct{})}
+	manager := &Manager{subscribers: make(map[chan Entry]struct{}), fileSink: newFileSink()}
 	manager.level.Set(slog.LevelInfo)
 	return manager
 }
@@ -140,6 +141,7 @@ func (h *streamHandler) Enabled(ctx context.Context, level slog.Level) bool {
 
 func (h *streamHandler) Handle(ctx context.Context, record slog.Record) error {
 	err := h.base.Handle(ctx, record)
+	h.m.writeFileRecord(record)
 	h.m.publish(record)
 	return err
 }

@@ -30,7 +30,7 @@
 	);
 	let filteredLanguageOptions = $derived(
 		targetLanguageOptions.filter((option) =>
-			option.label.toLowerCase().includes(languageFilter.trim().toLowerCase())
+			option.displayLabel.toLowerCase().includes(languageFilter.trim().toLowerCase())
 		)
 	);
 
@@ -144,11 +144,11 @@
 						checked={selectedLanguageScores.has(option.id)}
 						onchange={() => toggleLanguage(option.id)}
 					/>
-					<span>{option.label}</span>
+					<span>{option.displayLabel}</span>
 				</label>
 				<input
 					type="number"
-					aria-label={`${option.label} score`}
+					aria-label={`${option.displayLabel} score`}
 					value={selectedLanguageScores.get(option.id) ?? 0}
 					disabled={!selectedLanguageScores.has(option.id)}
 					inputmode="numeric"

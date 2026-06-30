@@ -298,7 +298,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MediaItemRequest"
+              $ref: "#/components/schemas/MediaItemCreateRequest"
       responses:
         "201":
           description: Media item added
@@ -495,14 +495,35 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /media/items/{id}/mode:
+  /media/items/{id}/automatic-searches:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
-    put:
-      operationId: updateMediaItemMode
+    post:
+      operationId: enqueueMediaAutomaticSearch
       tags:
         - Media
-      summary: Update automatic or manual processing mode for a media item
+      summary: Enqueue an automatic search and grab for a monitored item
+      security:
+        - sessionCookie: []
+      responses:
+        "202":
+          description: Automatic search job enqueued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobEnqueueResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/delete:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: deleteMediaItemFile
+      tags:
+        - Media
+      summary: Delete one media file and rescan the item folder
       security:
         - sessionCookie: []
       requestBody:
@@ -510,10 +531,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MediaItemModeRequest"
+              $ref: "#/components/schemas/MediaFileDeleteRequest"
       responses:
         "200":
-          description: Media item mode updated
+          description: Media file deleted and item rescanned
           content:
             application/json:
               schema:
@@ -828,6 +849,51 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /system/event-settings:
+    get:
+      operationId: getSystemEventSettings
+      tags:
+        - System
+      summary: Get system event retention settings
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: System event settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemEventSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    put:
+      operationId: updateSystemEventSettings
+      tags:
+        - System
+      summary: Update system event retention settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemEventSettingsRequest"
+      responses:
+        "200":
+          description: System event settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemEventSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /settings/quality-sizes:
     get:
       operationId: listQualitySizeSettings
@@ -1713,6 +1779,25 @@ paths:
                 $ref: "#/components/schemas/ToolStatusResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /system/status:
+    get:
+      operationId: getSystemStatus
+      tags:
+        - System
+      summary: Get application and runtime status
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Application status details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemStatusResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /system/logs:
     get:
       operationId: streamSystemLogs
@@ -1780,6 +1865,136 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /system/log-file-settings:
+    get:
+      operationId: getSystemLogFileSettings
+      tags:
+        - System
+      summary: Get log file settings
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Current log file settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemLogFileSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    put:
+      operationId: updateSystemLogFileSettings
+      tags:
+        - System
+      summary: Update log file settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemLogFileSettingsRequest"
+      responses:
+        "200":
+          description: Updated log file settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemLogFileSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /system/log-files:
+    get:
+      operationId: listSystemLogFiles
+      tags:
+        - System
+      summary: List retained log files
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Retained log files
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemLogFileListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /system/log-files/{name}/download:
+    parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: downloadSystemLogFile
+      tags:
+        - System
+      summary: Download a retained log file
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Log file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /system/events:
+    get:
+      operationId: listSystemEvents
+      tags:
+        - System
+      summary: List notable application events
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Recent application events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemEventListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /system/events/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    delete:
+      operationId: deleteSystemEvent
+      tags:
+        - System
+      summary: Delete a system event
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: System event deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events:
     get:
       operationId: streamEvents
@@ -2337,6 +2552,48 @@ components:
               format: uuid
             status:
               $ref: "#/components/schemas/MediaItemStatus"
+            collectionId:
+              type: string
+            collectionName:
+              type: string
+            backdropPath:
+              type: string
+            metadataStatus:
+              type: string
+            originalLanguage:
+              type: string
+            releaseDate:
+              type: string
+            firstAirDate:
+              type: string
+            runtimeMinutes:
+              type: integer
+              format: int32
+            seasonCount:
+              type: integer
+              format: int32
+            episodeCount:
+              type: integer
+              format: int32
+            voteAverage:
+              type: number
+              format: double
+            genres:
+              type: array
+              items:
+                type: string
+            facts:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaMetadataFact"
+            seasons:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaMetadataSeason"
+            cast:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaMetadataPerson"
             qualityProfileName:
               type: string
             libraryFolderPath:
@@ -2366,7 +2623,6 @@ components:
         - monitored
         - monitorMode
         - minimumAvailability
-        - manual
       properties:
         title:
           type: string
@@ -2385,8 +2641,6 @@ components:
           $ref: "#/components/schemas/MediaMonitorMode"
         minimumAvailability:
           $ref: "#/components/schemas/MinimumAvailability"
-        manual:
-          type: boolean
         externalProvider:
           type: string
           maxLength: 100
@@ -2411,28 +2665,35 @@ components:
             type: string
             minLength: 1
             maxLength: 80
+    MediaItemCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/MediaItemRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - startSearch
+          properties:
+            startSearch:
+              type: boolean
+    MediaFileDeleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - path
+      properties:
+        path:
+          type: string
+          minLength: 1
     MediaItemStatus:
       type: string
       enum:
         - missing
         - downloading
         - downloaded
-    MediaItemMode:
-      type: string
-      enum:
-        - automatic
-        - manual
-    MediaItemModeRequest:
-      type: object
-      additionalProperties: false
-      required:
-        - mode
-      properties:
-        mode:
-          $ref: "#/components/schemas/MediaItemMode"
     MediaMonitorMode:
       type: string
       enum:
+        - none
         - only_media
         - collection
     MinimumAvailability:
@@ -2505,7 +2766,6 @@ components:
         - type
         - monitorMode
         - minimumAvailability
-        - manual
       properties:
         title:
           type: string
@@ -2517,8 +2777,6 @@ components:
           $ref: "#/components/schemas/MediaMonitorMode"
         minimumAvailability:
           $ref: "#/components/schemas/MinimumAvailability"
-        manual:
-          type: boolean
         year:
           type: integer
           format: int32
@@ -3329,18 +3587,49 @@ components:
           additionalProperties: false
           required:
             - id
+            - healthStatus
+            - failureCount
             - createdAt
             - updatedAt
           properties:
             id:
               type: string
               format: uuid
+            healthStatus:
+              $ref: "#/components/schemas/IndexerHealthStatus"
+            lastQueryAt:
+              type: string
+              format: date-time
+            lastSuccessAt:
+              type: string
+              format: date-time
+            lastFailureAt:
+              type: string
+              format: date-time
+            nextCheckAt:
+              type: string
+              format: date-time
+            lastStatusCode:
+              type: integer
+              format: int32
+            lastError:
+              type: string
+            failureCount:
+              type: integer
+              format: int32
+              minimum: 0
             createdAt:
               type: string
               format: date-time
             updatedAt:
               type: string
               format: date-time
+    IndexerHealthStatus:
+      type: string
+      enum:
+        - healthy
+        - temporary_disabled
+        - disabled
     IndexerRequest:
       type: object
       additionalProperties: false
@@ -3893,6 +4182,29 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ToolStatus"
+    SystemStatusResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - version
+        - commit
+        - databaseType
+        - databaseVersion
+        - license
+        - sourceLocation
+      properties:
+        version:
+          type: string
+        commit:
+          type: string
+        databaseType:
+          type: string
+        databaseVersion:
+          type: string
+        license:
+          type: string
+        sourceLocation:
+          type: string
     ToolStatus:
       type: object
       additionalProperties: false
@@ -3957,6 +4269,118 @@ components:
         attributes:
           type: object
           additionalProperties: true
+    SystemLogFileSettingsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - directory
+        - retentionDays
+      properties:
+        enabled:
+          type: boolean
+        directory:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        retentionDays:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 365
+    SystemLogFileSettings:
+      allOf:
+        - $ref: "#/components/schemas/SystemLogFileSettingsRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - effectiveDirectory
+          properties:
+            effectiveDirectory:
+              type: string
+    SystemLogFileListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - files
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemLogFile"
+    SystemLogFile:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - sizeBytes
+        - modifiedAt
+      properties:
+        name:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        modifiedAt:
+          type: string
+          format: date-time
+    SystemEventSeverity:
+      type: string
+      enum:
+        - info
+        - warning
+        - error
+    SystemEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - severity
+        - category
+        - message
+        - data
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        severity:
+          $ref: "#/components/schemas/SystemEventSeverity"
+        category:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+    SystemEventListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - events
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemEvent"
+    SystemEventSettingsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - retentionDays
+      properties:
+        retentionDays:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 365
+    SystemEventSettings:
+      allOf:
+        - $ref: "#/components/schemas/SystemEventSettingsRequest"
     ToolName:
       type: string
       enum:

@@ -68,12 +68,8 @@
 	}
 </script>
 
-<div class="panel" aria-labelledby="custom-format-settings-title">
+<div class="panel" aria-label="Custom formats">
 	<div class="section-heading">
-		<div>
-			<p class="section-kicker">Release scoring</p>
-			<h2 id="custom-format-settings-title">Custom formats</h2>
-		</div>
 		<div class="custom-format-topbar">
 			<button type="button" class="secondary" onclick={openImport}>
 				<span class="app-icon" aria-hidden="true">upload_file</span>

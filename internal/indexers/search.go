@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -157,5 +156,5 @@ func firstNonEmpty(values ...string) string {
 }
 
 func httpStatusError(statusCode int) error {
-	return fmt.Errorf("unexpected response status %d", statusCode)
+	return StatusError{StatusCode: statusCode}
 }

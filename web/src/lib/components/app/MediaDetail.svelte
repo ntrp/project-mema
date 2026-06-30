@@ -1,11 +1,19 @@
 <script lang="ts">
+	import LibraryMediaStatusSection from './LibraryMediaStatusSection.svelte';
 	import MediaFilesTable from './MediaFilesTable.svelte';
-	import MediaHero from './MediaHero.svelte';
+	import MediaMetadataCore from './MediaMetadataCore.svelte';
+	import MediaMetadataHero from './MediaMetadataHero.svelte';
 	import ReleaseCandidatesSection from './ReleaseCandidatesSection.svelte';
+	import {
+		imageUrl,
+		libraryFolderLabel,
+		mediaMetadataDetail,
+		monitorModeLabel,
+		qualityProfileLabel
+	} from './mediaDetail';
 	import type {
 		LibraryFolder,
 		MediaItem,
-		MediaItemStatus,
 		MediaType,
 		QualityProfileOption,
 		ReleaseCandidate,
@@ -21,13 +29,13 @@
 		releaseResults?: ReleaseSearchState;
 		searchingItemId?: string;
 		scanningMediaItemId?: string;
-		updatingMediaModeItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
 		canManage: boolean;
 		onFindReleases: (_item: MediaItem) => void;
+		onAutoSearchMedia: (_item: MediaItem) => void;
 		onRescanMediaFiles: (_item: MediaItem) => void;
-		onUpdateMediaMode: (_item: MediaItem, _automatic: boolean) => void;
+		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 	}
@@ -41,141 +49,84 @@
 		releaseResults,
 		searchingItemId,
 		scanningMediaItemId,
-		updatingMediaModeItemId,
 		grabbingKey,
 		deletingMediaItemId,
 		canManage,
 		onFindReleases,
+		onAutoSearchMedia,
 		onRescanMediaFiles,
-		onUpdateMediaMode,
+		onDeleteMediaFile,
 		onDeleteMedia,
 		onGrabRelease
 	}: Props = $props();
 
 	const releaseCount = $derived(releaseResults?.releases.length ?? 0);
-	const libraryFolderLabel = $derived(resolveLibraryFolderLabel(item));
-	const qualityProfileLabel = $derived(resolveQualityProfileLabel(item));
-	const filePaths = $derived(item?.filePaths ?? []);
-	const metadataFilePaths = $derived(item?.metadataFilePaths ?? []);
-	const modeLabel = $derived(item?.manual ? 'Manual' : 'Automatic');
-
-	function posterUrl(path?: string, size = 'w780') {
-		if (!path) {
-			return undefined;
-		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/${size}${path}`;
-	}
-
-	function resolveLibraryFolderLabel(mediaItem?: MediaItem) {
-		if (!mediaItem) {
-			return 'Not set';
-		}
-		return (
-			mediaItem.mediaFolderPath ??
-			mediaItem.libraryFolderPath ??
-			libraryFolders.find((folder) => folder.id === mediaItem.libraryFolderId)?.path ??
-			'Not set'
-		);
-	}
-
-	function resolveQualityProfileLabel(mediaItem?: MediaItem) {
-		if (!mediaItem) {
-			return 'Not set';
-		}
-		return (
-			mediaItem.qualityProfileName ??
-			qualityProfiles.find((profile) => profile.id === mediaItem.qualityProfileId)?.name ??
-			'Not set'
-		);
-	}
-
-	function statusLabel(status: MediaItemStatus) {
-		switch (status) {
-			case 'downloaded':
-				return 'Downloaded';
-			case 'downloading':
-				return 'Downloading';
-			default:
-				return 'Missing';
-		}
-	}
+	const resolvedLibraryFolderLabel = $derived(libraryFolderLabel(item, libraryFolders));
+	const resolvedQualityProfileLabel = $derived(qualityProfileLabel(item, qualityProfiles));
+	const resolvedMonitorModeLabel = $derived(monitorModeLabel(item));
+	const detail = $derived(item ? mediaMetadataDetail(item) : undefined);
 </script>
 
-{#if item}
-	<div
+{#if item && detail}
+	<section
 		class="metadata-detail media-library-detail"
-		style:--backdrop-url={posterUrl(item.posterPath, 'original')
-			? `url("${posterUrl(item.posterPath, 'original')}")`
+		aria-labelledby="library-media-title"
+		style:--backdrop-url={imageUrl(detail.backdropPath, 'original')
+			? `url("${imageUrl(detail.backdropPath, 'original')}")`
 			: undefined}
 	>
-		<MediaHero
-			{mediaType}
-			{item}
-			{qualityProfileLabel}
-			{canManage}
-			{searchingItemId}
-			{scanningMediaItemId}
-			{deletingMediaItemId}
-			{onFindReleases}
-			{onRescanMediaFiles}
-			{onDeleteMedia}
-		/>
+		<MediaMetadataHero {detail} titleId="library-media-title">
+			{#snippet actions()}
+				{#if canManage}
+					<button
+						type="button"
+						disabled={searchingItemId === item.id}
+						onclick={() => onFindReleases(item)}
+					>
+						{searchingItemId === item.id ? 'Queued' : 'Find releases'}
+					</button>
+					<button
+						type="button"
+						class="secondary"
+						disabled={scanningMediaItemId === item.id || !item.mediaFolderPath}
+						onclick={() => onRescanMediaFiles(item)}
+					>
+						<span class="app-icon" aria-hidden="true">sync</span>
+						<span>{scanningMediaItemId === item.id ? 'Scanning' : 'Rescan files'}</span>
+					</button>
+					<button
+						type="button"
+						class="danger"
+						disabled={deletingMediaItemId === item.id}
+						onclick={() => onDeleteMedia(item)}
+					>
+						{deletingMediaItemId === item.id ? 'Removing' : 'Remove'}
+					</button>
+				{/if}
+			{/snippet}
+		</MediaMetadataHero>
 
 		<div class="metadata-body">
 			<main class="metadata-main">
-				<section aria-labelledby="library-status-title">
-					<h2 id="library-status-title">Library Status</h2>
-					<div class="metadata-facts-grid" aria-label="Library status facts">
-						<div>
-							<strong>{statusLabel(item.status)}</strong>
-							<span>Status</span>
-						</div>
-						<div>
-							<strong>{releaseCount}</strong>
-							<span>Release candidates</span>
-						</div>
-						<div>
-							<strong>{item.year ?? 'Unknown'}</strong>
-							<span>Year</span>
-						</div>
-						<div>
-							<strong>{qualityProfileLabel}</strong>
-							<span>Profile</span>
-						</div>
-						<div>
-							<strong>{libraryFolderLabel}</strong>
-							<span>Media folder</span>
-						</div>
-						<div>
-							<strong>{item.monitored ? 'Monitored' : 'Paused'}</strong>
-							<span>Monitor state</span>
-						</div>
-						<div>
-							<strong>{modeLabel}</strong>
-							<span>Mode</span>
-							{#if canManage}
-								<button
-									type="button"
-									class="secondary compact-action"
-									disabled={updatingMediaModeItemId === item.id}
-									onclick={() => onUpdateMediaMode(item, item.manual)}
-								>
-									{#if updatingMediaModeItemId === item.id}
-										Updating
-									{:else}
-										Switch to {item.manual ? 'automatic' : 'manual'}
-									{/if}
-								</button>
-							{/if}
-						</div>
-					</div>
-				</section>
-
-				<MediaFilesTable {filePaths} {metadataFilePaths} />
-
+				<MediaMetadataCore {detail} />
+				<LibraryMediaStatusSection
+					{item}
+					{releaseCount}
+					qualityProfileLabel={resolvedQualityProfileLabel}
+					libraryFolderLabel={resolvedLibraryFolderLabel}
+					monitorModeLabel={resolvedMonitorModeLabel}
+				/>
+				<MediaFilesTable
+					{item}
+					{releaseResults}
+					{searchingItemId}
+					{grabbingKey}
+					{canManage}
+					onAutoSearch={onAutoSearchMedia}
+					onManualSearch={onFindReleases}
+					onDeleteFile={onDeleteMediaFile}
+					{onGrabRelease}
+				/>
 				<ReleaseCandidatesSection
 					{item}
 					{releaseResults}
@@ -185,7 +136,7 @@
 				/>
 			</main>
 		</div>
-	</div>
+	</section>
 {:else}
 	<div class="detail-stack">
 		<section class="panel">

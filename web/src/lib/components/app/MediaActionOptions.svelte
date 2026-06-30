@@ -54,6 +54,7 @@
 		<select bind:value={monitorMode}>
 			<option value="only_media">Only this media</option>
 			<option value="collection">Entire collection</option>
+			<option value="none">None</option>
 		</select>
 	</label>
 

@@ -65,7 +65,7 @@
 			<span><strong>Type</strong>{item.type}</span>
 			<span><strong>Status</strong>{statusLabel(item.status)}</span>
 			<span><strong>Profile</strong>{qualityProfileLabel}</span>
-			<span><strong>Mode</strong>{item.manual ? 'Manual' : 'Automatic'}</span>
+			<span><strong>Monitor</strong>{item.monitored ? 'Monitored' : 'None'}</span>
 		</div>
 		{#if item.tags?.length}
 			<div class="metadata-tags" aria-label="Tags">

@@ -142,13 +142,9 @@
 	}
 </script>
 
-<div class="panel file-naming-panel" aria-labelledby="file-naming-title">
+<div class="panel file-naming-panel" aria-label="File naming">
 	<form onsubmit={saveSettings}>
 		<div class="section-heading">
-			<div>
-				<p class="section-kicker">Naming</p>
-				<h2 id="file-naming-title">File naming</h2>
-			</div>
 			<div class="file-naming-actions">
 				<button type="button" class="secondary" disabled={loading || saving} onclick={loadSettings}>
 					Reload

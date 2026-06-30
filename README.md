@@ -19,6 +19,11 @@ quality profiles, and MKV track sourcing/assembly.
 - Media tools: Docker image includes ffmpeg, ffprobe, mkvmerge, mkvextract, and
   mediainfo. Local development uses host-installed tools.
 
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 or
+later. See [LICENSE](LICENSE).
+
 ## Repository Layout
 
 - `api/openapi.yaml`: source-of-truth API contract.

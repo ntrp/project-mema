@@ -45,6 +45,7 @@
 		<select bind:value={draft.monitorMode} disabled={!draft.selected || !draft.matched}>
 			<option value="only_media">Only this media</option>
 			<option value="collection">Entire collection</option>
+			<option value="none">None</option>
 		</select>
 	</td>
 	<td>

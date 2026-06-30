@@ -10,6 +10,7 @@
 	}
 
 	let { item, releaseResults, grabbingKey, canManage, onGrabRelease }: Props = $props();
+	const shouldShow = $derived(Boolean(releaseResults?.loaded || releaseResults?.errors.length));
 
 	function releaseKey(mediaItem: MediaItem, release: ReleaseCandidate) {
 		return `${mediaItem.id}:${release.id}`;
@@ -24,46 +25,43 @@
 	}
 </script>
 
-<section aria-labelledby="release-candidates-title">
-	<div>
+{#if shouldShow}
+	<section aria-labelledby="release-candidates-title">
 		<h2 id="release-candidates-title">Release Candidates</h2>
-		<p>Run a release search to populate candidates.</p>
-	</div>
 
-	{#if releaseResults?.errors.length}
-		<div class="inline-errors">
-			{#each releaseResults.errors as searchError (searchError)}
-				<p>{searchError}</p>
-			{/each}
-		</div>
-	{/if}
+		{#if releaseResults?.errors.length}
+			<div class="inline-errors">
+				{#each releaseResults.errors as searchError (searchError)}
+					<p>{searchError}</p>
+				{/each}
+			</div>
+		{/if}
 
-	{#if releaseResults?.loaded}
-		<div class="release-list standalone">
-			{#each releaseResults.releases as release (release.id)}
-				<div class="release-row">
-					<div>
-						<strong>{release.title}</strong>
-						<span>
-							{release.indexerName} · {sizeLabel(release.sizeBytes)}
-							{release.seeders !== undefined ? ` · ${release.seeders} seeders` : ''}
-						</span>
+		{#if releaseResults?.loaded}
+			<div class="release-list standalone">
+				{#each releaseResults.releases as release (release.id)}
+					<div class="release-row">
+						<div>
+							<strong>{release.title}</strong>
+							<span>
+								{release.indexerName} · {sizeLabel(release.sizeBytes)}
+								{release.seeders !== undefined ? ` · ${release.seeders} seeders` : ''}
+							</span>
+						</div>
+						{#if canManage}
+							<button
+								type="button"
+								disabled={grabbingKey === releaseKey(item, release)}
+								onclick={() => onGrabRelease(item, release)}
+							>
+								{grabbingKey === releaseKey(item, release) ? 'Queueing' : 'Grab'}
+							</button>
+						{/if}
 					</div>
-					{#if canManage}
-						<button
-							type="button"
-							disabled={grabbingKey === releaseKey(item, release)}
-							onclick={() => onGrabRelease(item, release)}
-						>
-							{grabbingKey === releaseKey(item, release) ? 'Queueing' : 'Grab'}
-						</button>
-					{/if}
-				</div>
-			{:else}
-				<p class="empty">No release candidates stored yet</p>
-			{/each}
-		</div>
-	{:else}
-		<p class="empty">Run a release search to populate candidates.</p>
-	{/if}
-</section>
+				{:else}
+					<p class="empty">No release candidates stored yet</p>
+				{/each}
+			</div>
+		{/if}
+	</section>
+{/if}

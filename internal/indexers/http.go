@@ -10,6 +10,14 @@ import (
 	"strings"
 )
 
+type StatusError struct {
+	StatusCode int
+}
+
+func (e StatusError) Error() string {
+	return fmt.Sprintf("unexpected response status %d", e.StatusCode)
+}
+
 func get(ctx context.Context, endpoint string) (*http.Request, error) {
 	return http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 }

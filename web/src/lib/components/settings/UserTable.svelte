@@ -11,8 +11,7 @@
 	let { users, currentUserId, onEdit, onDelete }: Props = $props();
 </script>
 
-<div class="panel" aria-labelledby="user-list-title">
-	<h2 id="user-list-title">Users</h2>
+<div class="panel" aria-label="Users">
 	<div class="table-wrap">
 		<table>
 			<thead>

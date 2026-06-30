@@ -12,24 +12,19 @@ export type SettingsHref =
 	| '/settings/tags'
 	| '/settings/users';
 
-export type SystemHref = '/system/logs';
+export type SystemHref = '/system/status' | '/system/logs' | '/system/log-files' | '/system/events';
+
+export type HomeHref = '/discover' | '/requests' | '/movies' | '/series' | '/wanted' | '/activity';
 
 export type PrimaryItem = {
-	value: HomeSection | 'settings' | 'system';
+	value: HomeSection | 'library' | 'settings' | 'system';
 	label: string;
 	icon: 'discover' | 'movies' | 'series' | 'activity' | 'settings' | 'computer';
-	href:
-		| '/discover'
-		| '/requests'
-		| '/movies'
-		| '/series'
-		| '/activity'
-		| '/settings/library'
-		| '/system/logs';
+	href: HomeHref | '/settings/library' | SystemHref;
 	children?: readonly {
-		value: SettingsSection | SystemSection;
+		value: HomeSection | SettingsSection | SystemSection;
 		label: string;
-		href: SettingsHref | SystemHref;
+		href: HomeHref | SettingsHref | SystemHref;
 	}[];
 };
 
@@ -47,14 +42,22 @@ export const settingsItems = [
 ] satisfies PrimaryItem['children'];
 
 export const systemItems = [
-	{ value: 'logs', label: 'Logs', href: '/system/logs' }
+	{ value: 'status', label: 'Status', href: '/system/status' },
+	{ value: 'logs', label: 'Live logs', href: '/system/logs' },
+	{ value: 'log-files', label: 'Log files', href: '/system/log-files' },
+	{ value: 'events', label: 'Events', href: '/system/events' }
+] satisfies PrimaryItem['children'];
+
+export const libraryItems = [
+	{ value: 'movies', label: 'Movies', href: '/movies' },
+	{ value: 'series', label: 'Series', href: '/series' },
+	{ value: 'wanted', label: 'Wanted', href: '/wanted' }
 ] satisfies PrimaryItem['children'];
 
 export const basePrimaryItems = [
 	{ value: 'discover', label: 'Discover', icon: 'discover', href: '/discover' },
 	{ value: 'requests', label: 'Requests', icon: 'activity', href: '/requests' },
-	{ value: 'movies', label: 'Movies', icon: 'movies', href: '/movies' },
-	{ value: 'series', label: 'Series', icon: 'series', href: '/series' },
+	{ value: 'library', label: 'Library', icon: 'movies', href: '/movies', children: libraryItems },
 	{ value: 'activity', label: 'Activity', icon: 'activity', href: '/activity' }
 ] satisfies PrimaryItem[];
 
@@ -70,7 +73,7 @@ export const systemPrimaryItem = {
 	value: 'system',
 	label: 'System',
 	icon: 'computer',
-	href: '/system/logs',
+	href: '/system/status',
 	children: systemItems
 } satisfies PrimaryItem;
 
@@ -101,7 +104,13 @@ export function settingsSectionHref(section: SettingsSection): SettingsHref {
 
 export function systemSectionHref(section: SystemSection): SystemHref {
 	switch (section) {
+		case 'status':
+			return '/system/status';
 		case 'logs':
 			return '/system/logs';
+		case 'log-files':
+			return '/system/log-files';
+		case 'events':
+			return '/system/events';
 	}
 }

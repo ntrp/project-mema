@@ -40,6 +40,7 @@ func (s *Server) CancelDownloadActivity(w http.ResponseWriter, r *http.Request, 
 	updated.MediaTitle = activity.MediaTitle
 	updated.MediaType = activity.MediaType
 	s.publishDownloadActivity(updated)
+	s.recordEvent(r.Context(), eventSeverityWarning, "downloads", "Download activity cancelled", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": activity.ReleaseTitle})
 	writeJSON(w, http.StatusOK, downloadActivityResponse(updated))
 }
 

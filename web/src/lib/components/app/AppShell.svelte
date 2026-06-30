@@ -65,6 +65,7 @@
 				onAdvancedSearch={app.openAdvancedSearch}
 				onProfile={app.showProfile}
 				onLogout={app.logout}
+				showNotifications={app.isAdmin}
 			/>
 			<main class="app-content">
 				{#if app.activeView === 'settings' && app.isAdmin}

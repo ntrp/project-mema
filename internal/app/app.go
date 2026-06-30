@@ -18,6 +18,7 @@ import (
 	"media-manager/internal/httpapi"
 	"media-manager/internal/indexers"
 	"media-manager/internal/jobs"
+	"media-manager/internal/logging"
 	"media-manager/internal/metadata"
 	"media-manager/internal/storage"
 	"media-manager/internal/web"
@@ -37,6 +38,10 @@ func Run(ctx context.Context, args []string) error {
 		return err
 	}
 	defer pool.Close()
+	settingsStore := storage.NewSettingsStore(pool)
+	if err := configureFileLogging(ctx, settingsStore); err != nil {
+		return err
+	}
 
 	server, jobClient, err := newHTTPServer(cfg, pool)
 	if err != nil {
@@ -64,6 +69,21 @@ func Run(ctx context.Context, args []string) error {
 		}
 		return err
 	}
+}
+
+func configureFileLogging(ctx context.Context, store *storage.SettingsStore) error {
+	settings, err := store.GetLogFileSettings(ctx)
+	if err != nil {
+		return fmt.Errorf("log file settings load failed: %w", err)
+	}
+	if err := logging.Default.ConfigureFile(logging.FileSettings{
+		Enabled:       settings.Enabled,
+		Directory:     settings.Directory,
+		RetentionDays: int(settings.RetentionDays),
+	}); err != nil {
+		return fmt.Errorf("log file setup failed: %w", err)
+	}
+	return nil
 }
 
 func ensureMediaDataDir(path string) error {

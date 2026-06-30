@@ -10,8 +10,7 @@
 	let { clients, onEdit, onDelete }: Props = $props();
 </script>
 
-<div class="panel" aria-labelledby="download-client-list-title">
-	<h2 id="download-client-list-title">Download clients</h2>
+<div class="panel" aria-label="Download clients">
 	<div class="table-wrap">
 		<table>
 			<thead>

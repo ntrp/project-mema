@@ -27,7 +27,6 @@
 	approvingRequestId={app.approvingRequestId}
 	searchingItemId={app.searchingItemId}
 	scanningMediaItemId={app.scanningMediaItemId}
-	updatingMediaModeItemId={app.updatingMediaModeItemId}
 	grabbingKey={app.grabbingKey}
 	deletingMediaItemId={app.deletingMediaItemId}
 	cancellingActivityId={app.cancellingActivityId}
@@ -36,8 +35,9 @@
 	onAddMedia={app.addMedia}
 	onApproveMediaRequest={app.approveMediaRequest}
 	onFindReleases={app.findReleases}
+	onAutoSearchMedia={app.autoSearchMedia}
 	onRescanMediaFiles={app.rescanMediaFiles}
-	onUpdateMediaMode={app.updateMediaMode}
+	onDeleteMediaFile={app.deleteMediaFile}
 	onDeleteMedia={app.deleteMediaItem}
 	onGrabRelease={app.grabRelease}
 	onRefreshActivity={app.loadDownloadActivity}

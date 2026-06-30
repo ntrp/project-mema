@@ -142,7 +142,7 @@
 							mediaKind: draft!.mediaKind,
 							title: match.title,
 							year: match.year,
-							monitored: true,
+							monitored: draft!.monitorMode !== 'none',
 							qualityProfileId: draft!.qualityProfileId,
 							monitorMode: draft!.monitorMode,
 							minimumAvailability: draft!.minimumAvailability,

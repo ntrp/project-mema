@@ -22,6 +22,7 @@ import {
 	deleteCustomFormat as deleteCustomFormatRequest,
 	deleteDownloadClient as deleteDownloadClientRequest,
 	deleteIndexer as deleteIndexerRequest,
+	deleteMediaItemFile as deleteMediaItemFileRequest,
 	deleteLibraryFolder as deleteLibraryFolderRequest,
 	deleteMediaItem as deleteMediaItemRequest,
 	deleteMediaProfile as deleteMediaProfileRequest,
@@ -29,6 +30,7 @@ import {
 	deleteTag as deleteTagRequest,
 	deleteUser as deleteUserRequest,
 	emptyMetadataCache,
+	enqueueMediaAutomaticSearch as enqueueMediaAutomaticSearchRequest,
 	enqueueMediaReleaseSearch as enqueueMediaReleaseSearchRequest,
 	getMediaCollection as getMediaCollectionRequest,
 	getMediaMetadataDetails as getMediaMetadataDetailsRequest,
@@ -58,8 +60,7 @@ import {
 	searchMediaReleases as searchMediaReleasesRequest,
 	testDownloadClientConfig as testDownloadClientConfigRequest,
 	testIndexer as testIndexerRequest,
-	testMetadataProvider as testMetadataProviderRequest,
-	updateMediaItemMode as updateMediaItemModeRequest
+	testMetadataProvider as testMetadataProviderRequest
 } from '$lib/settings/api';
 import {
 	customFormatFormFromFormat,
@@ -209,7 +210,6 @@ export function createAppShellController(options: AppShellOptions) {
 	let approvingRequestId = $state<string | undefined>();
 	let searchingItemId = $state<string | undefined>();
 	let scanningMediaItemId = $state<string | undefined>();
-	let updatingMediaModeItemId = $state<string | undefined>();
 	let grabbingKey = $state<string | undefined>();
 	let deletingMediaItemId = $state<string | undefined>();
 	let cancellingActivityId = $state<string | undefined>();
@@ -222,17 +222,29 @@ export function createAppShellController(options: AppShellOptions) {
 	let activeView = $state<AppView>(options.initialView ?? 'home');
 	let activeHomeSection = $state<HomeSection>(options.initialHomeSection ?? 'discover');
 	let activeSettingsSection = $state<SettingsSection>(options.initialSettingsSection ?? 'library');
-	let activeSystemSection = $state<SystemSection>(options.initialSystemSection ?? 'logs');
+	let activeSystemSection = $state<SystemSection>(options.initialSystemSection ?? 'status');
 	let selectedMediaItemId = $state<string | undefined>(options.initialSelectedMediaItemId);
 	let selectedRequestId = $state<string | undefined>(options.initialSelectedRequestId);
 	let searchQuery = $state(options.initialAdvancedQuery ?? '');
 	let eventSource: EventSource | undefined;
 	let isAdmin = $derived(currentUser?.role === 'admin');
 	let activePrimarySection = $derived(
-		activeView === 'settings' ? 'settings' : activeView === 'system' ? 'system' : activeHomeSection
+		activeView === 'settings'
+			? 'settings'
+			: activeView === 'system'
+				? 'system'
+				: activeHomeSection === 'movies' ||
+					  activeHomeSection === 'series' ||
+					  activeHomeSection === 'wanted'
+					? 'library'
+					: activeHomeSection
 	);
 	let activeSubmenuSection = $derived(
-		activeView === 'system' ? activeSystemSection : activeSettingsSection
+		activeView === 'system'
+			? activeSystemSection
+			: activePrimarySection === 'library'
+				? activeHomeSection
+				: activeSettingsSection
 	);
 	let primaryItems = $derived(
 		isAdmin ? [...basePrimaryItems, settingsPrimaryItem, systemPrimaryItem] : basePrimaryItems
@@ -590,10 +602,10 @@ export function createAppShellController(options: AppShellOptions) {
 					title: candidate.title,
 					type: candidate.type,
 					year: candidate.year,
-					monitored: true,
+					monitored: selection.monitorMode !== 'none',
 					monitorMode: selection.monitorMode,
 					minimumAvailability: selection.minimumAvailability,
-					manual: !selection.startSearch,
+					startSearch: selection.startSearch,
 					externalProvider: candidate.externalProvider,
 					externalId: candidate.externalId,
 					overview: candidate.overview,
@@ -605,9 +617,11 @@ export function createAppShellController(options: AppShellOptions) {
 				await loadMediaItems();
 				await loadSettings();
 				message =
-					selection.monitorMode === 'collection'
-						? 'Media collection added to monitored'
-						: 'Media item added to monitored';
+					selection.monitorMode === 'none'
+						? 'Media item added to library'
+						: selection.monitorMode === 'collection'
+							? 'Media collection added to monitored'
+							: 'Media item added to monitored';
 				activeHomeSection = candidate.type === 'movie' ? 'movies' : 'series';
 				activeMediaCandidate = undefined;
 				void goto(resolve(candidate.type === 'movie' ? '/movies' : '/series'));
@@ -619,7 +633,6 @@ export function createAppShellController(options: AppShellOptions) {
 				type: candidate.type,
 				monitorMode: selection.monitorMode,
 				minimumAvailability: selection.minimumAvailability,
-				manual: !selection.startSearch,
 				year: candidate.year,
 				externalProvider: candidate.externalProvider,
 				externalId: candidate.externalId,
@@ -662,6 +675,19 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 	}
 
+	async function autoSearchMedia(item: MediaItem) {
+		searchingItemId = item.id;
+		clearNotice();
+		try {
+			const job = await enqueueMediaAutomaticSearchRequest(item.id);
+			message = `${job.message} (#${job.jobId})`;
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not enqueue automatic search');
+		} finally {
+			searchingItemId = undefined;
+		}
+	}
+
 	async function rescanMediaFiles(item: MediaItem) {
 		scanningMediaItemId = item.id;
 		clearNotice();
@@ -677,20 +703,14 @@ export function createAppShellController(options: AppShellOptions) {
 		}
 	}
 
-	async function updateMediaMode(item: MediaItem, automatic: boolean) {
-		updatingMediaModeItemId = item.id;
+	async function deleteMediaFile(item: MediaItem, path: string) {
 		clearNotice();
-
 		try {
-			const updated = await updateMediaItemModeRequest(item.id, {
-				mode: automatic ? 'automatic' : 'manual'
-			});
+			const updated = await deleteMediaItemFileRequest(item.id, path);
 			mediaItems = [updated, ...mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)];
-			message = automatic ? 'Media item set to automatic' : 'Media item set to manual';
+			message = 'Media file deleted';
 		} catch (error) {
-			errorMessage = errorMessageFrom(error, 'Could not update media mode');
-		} finally {
-			updatingMediaModeItemId = undefined;
+			errorMessage = errorMessageFrom(error, 'Could not delete media file');
 		}
 	}
 
@@ -1201,6 +1221,7 @@ export function createAppShellController(options: AppShellOptions) {
 		try {
 			const result = await testIndexerRequest(id);
 			indexerTests = { ...indexerTests, [id]: result };
+			await loadSettings();
 		} catch (error) {
 			errorMessage = errorMessageFrom(error, 'Could not test indexer');
 		} finally {
@@ -1312,10 +1333,18 @@ export function createAppShellController(options: AppShellOptions) {
 			selectSystemSection(section);
 			return;
 		}
+		if (activePrimarySection === 'library') {
+			selectHomeSection(section as HomeSection);
+			return;
+		}
 		selectSettingsSection(section);
 	}
 
 	function selectPrimarySection(section: string) {
+		if (section === 'library') {
+			selectHomeSection('movies');
+			return;
+		}
 		if (section === 'settings') {
 			if (!isAdmin) {
 				return;
@@ -1330,8 +1359,8 @@ export function createAppShellController(options: AppShellOptions) {
 				return;
 			}
 			activeView = 'system';
-			activeSystemSection = 'logs';
-			void goto(resolve('/system/logs'));
+			activeSystemSection = 'status';
+			void goto(resolve('/system/status'));
 			return;
 		}
 		selectHomeSection(section as HomeSection);
@@ -1608,9 +1637,6 @@ export function createAppShellController(options: AppShellOptions) {
 		get scanningMediaItemId() {
 			return scanningMediaItemId;
 		},
-		get updatingMediaModeItemId() {
-			return updatingMediaModeItemId;
-		},
 		get grabbingKey() {
 			return grabbingKey;
 		},
@@ -1691,8 +1717,9 @@ export function createAppShellController(options: AppShellOptions) {
 		confirmMediaDelete,
 		approveMediaRequest,
 		findReleases,
+		autoSearchMedia,
 		rescanMediaFiles,
-		updateMediaMode,
+		deleteMediaFile,
 		deleteMediaItem,
 		grabRelease,
 		cancelActivity,

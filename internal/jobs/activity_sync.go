@@ -33,11 +33,13 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[Down
 	activities, err := w.settings.ListActiveDownloadActivity(ctx)
 	if err != nil {
 		slog.Error("download activity sync list failed", "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Download activity sync failed to list activity", map[string]any{"error": err.Error()})
 		return fmt.Errorf("list active download activity: %w", err)
 	}
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
 		slog.Error("download activity sync client list failed", "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Download activity sync failed to list clients", map[string]any{"error": err.Error()})
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
 	slog.Debug("download activity sync started", "activityCount", len(activities), "clientCount", len(clients))
@@ -58,7 +60,11 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[Down
 		}
 	}
 	if len(failures) > 0 {
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Download activity sync finished with failures", map[string]any{"failureCount": len(failures)})
 		return fmt.Errorf("download activity sync failed for %d item(s): %s", len(failures), strings.Join(failures, "; "))
+	}
+	if len(activities) > 0 {
+		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Download activity sync finished", map[string]any{"activityCount": len(activities), "clientCount": len(clients)})
 	}
 	return nil
 }
@@ -76,8 +82,10 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		updated, err := w.settings.UpdateDownloadActivityStatus(ctx, activity.ID, "failed", &message)
 		if err == nil {
 			w.publishActivity(updated, activity)
+			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity status check failed", map[string]any{"activityId": activity.ID.String(), "message": message})
 		} else {
 			slog.Error("failed to mark download activity failed", "activityId", activity.ID, "error", err)
+			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity failure update failed", map[string]any{"activityId": activity.ID.String(), "error": err.Error()})
 		}
 		return err
 	}
@@ -89,9 +97,11 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 	if result.Status == "completed" {
 		if err := w.imports.ImportCompletedDownload(ctx, activity, result.Files); err != nil {
 			slog.Error("completed download import failed", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "error", err)
+			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Completed download import failed", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "error": err.Error()})
 			return w.failActivity(ctx, activity, err.Error())
 		}
 		slog.Debug("completed download imported", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "fileCount", len(result.Files))
+		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Completed download imported", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "fileCount": len(result.Files)})
 	}
 	message := (*string)(nil)
 	if result.Status == "failed" {
@@ -103,7 +113,11 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 	updated, err := w.settings.UpdateDownloadActivityProgress(ctx, activity.ID, result.Status, result.ProgressPercent, message)
 	if err != nil {
 		slog.Error("failed to update download activity progress", "activityId", activity.ID, "status", result.Status, "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity progress update failed", map[string]any{"activityId": activity.ID.String(), "status": result.Status, "error": err.Error()})
 		return err
+	}
+	if result.Status == "failed" {
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity failed", map[string]any{"activityId": activity.ID.String(), "status": result.Status})
 	}
 	w.publishActivity(updated, activity)
 	return nil

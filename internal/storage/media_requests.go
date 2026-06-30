@@ -22,7 +22,6 @@ type MediaRequest struct {
 	PosterPath          *string
 	MonitorMode         string
 	MinimumAvailability string
-	Manual              bool
 	Tags                []string
 	Status              string
 	QualityProfileID    *string
@@ -44,20 +43,20 @@ type MediaRequestInput struct {
 	PosterPath          *string
 	MonitorMode         string
 	MinimumAvailability string
-	Manual              bool
 	Tags                []string
 }
 
 type MediaRequestApprovalInput struct {
 	QualityProfileID string
 	LibraryFolderID  uuid.UUID
+	MediaInput       *MediaItemInput
 }
 
 func (s *SettingsStore) ListMediaRequests(ctx context.Context, userID uuid.UUID, includeAll bool) ([]MediaRequest, error) {
 	rows, err := s.pool.Query(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.minimum_availability, r.manual,
+			r.monitor_mode, r.minimum_availability,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -94,7 +93,7 @@ func (s *SettingsStore) GetMediaRequest(ctx context.Context, id uuid.UUID, userI
 	request, err := scanMediaRequest(s.pool.QueryRow(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.minimum_availability, r.manual,
+			r.monitor_mode, r.minimum_availability,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -118,7 +117,7 @@ func getMediaRequest(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (Med
 	request, err := scanMediaRequest(q.QueryRow(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.minimum_availability, r.manual,
+			r.monitor_mode, r.minimum_availability,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -151,11 +150,11 @@ func (s *SettingsStore) CreateMediaRequest(ctx context.Context, input MediaReque
 	var requestID uuid.UUID
 	if err := tx.QueryRow(ctx, `
 		insert into app.media_requests (
-			id, requested_by_user_id, media_type, title, year, external_provider, external_id, overview, poster_path, monitor_mode, minimum_availability, manual
+			id, requested_by_user_id, media_type, title, year, external_provider, external_id, overview, poster_path, monitor_mode, minimum_availability
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		returning id
-	`, id, input.RequestedByUserID, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.MonitorMode, input.MinimumAvailability, input.Manual).Scan(&requestID); err != nil {
+	`, id, input.RequestedByUserID, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID, input.Overview, input.PosterPath, input.MonitorMode, input.MinimumAvailability).Scan(&requestID); err != nil {
 		return MediaRequest{}, err
 	}
 	if err := assignMediaRequestTags(ctx, tx, requestID, input.Tags); err != nil {
@@ -191,7 +190,7 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 	request, err := scanMediaRequest(tx.QueryRow(ctx, `
 		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
 			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.minimum_availability, r.manual,
+			r.monitor_mode, r.minimum_availability,
 			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
 			coalesce(array(
 				select t.name
@@ -218,7 +217,7 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 
 	qualityProfileID := input.QualityProfileID
 	libraryFolderID := input.LibraryFolderID
-	item, err := createMediaItemIfMissing(ctx, tx, MediaItemInput{
+	mediaInput := MediaItemInput{
 		Type:                request.Type,
 		Title:               request.Title,
 		Year:                request.Year,
@@ -229,11 +228,17 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		PosterPath:          request.PosterPath,
 		MonitorMode:         request.MonitorMode,
 		MinimumAvailability: request.MinimumAvailability,
-		Manual:              request.Manual,
 		Tags:                request.Tags,
 		QualityProfileID:    &qualityProfileID,
 		LibraryFolderID:     &libraryFolderID,
-	})
+	}
+	if input.MediaInput != nil {
+		mediaInput = *input.MediaInput
+		mediaInput.QualityProfileID = &qualityProfileID
+		mediaInput.LibraryFolderID = &libraryFolderID
+		mediaInput.Tags = request.Tags
+	}
+	item, err := createMediaItemIfMissing(ctx, tx, mediaInput)
 	if err != nil {
 		return MediaRequest{}, MediaItem{}, err
 	}
@@ -250,7 +255,7 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		returning id, requested_by_user_id, (
 				select username from app.users where id = requested_by_user_id
 			), media_type, title, year, external_provider, external_id, overview, poster_path,
-			status, monitor_mode, minimum_availability, manual, quality_profile_id, library_folder_id, media_item_id, decided_at,
+			status, monitor_mode, minimum_availability, quality_profile_id, library_folder_id, media_item_id, decided_at,
 			coalesce(array(
 				select t.name
 				from app.media_request_tags mrt
@@ -267,32 +272,4 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		return MediaRequest{}, MediaItem{}, err
 	}
 	return updated, item, nil
-}
-
-func scanMediaRequest(row pgx.Row) (MediaRequest, error) {
-	var request MediaRequest
-	err := row.Scan(
-		&request.ID,
-		&request.RequestedByUserID,
-		&request.RequestedByUsername,
-		&request.Type,
-		&request.Title,
-		&request.Year,
-		&request.ExternalProvider,
-		&request.ExternalID,
-		&request.Overview,
-		&request.PosterPath,
-		&request.Status,
-		&request.MonitorMode,
-		&request.MinimumAvailability,
-		&request.Manual,
-		&request.QualityProfileID,
-		&request.LibraryFolderID,
-		&request.MediaItemID,
-		&request.DecidedAt,
-		&request.Tags,
-		&request.CreatedAt,
-		&request.UpdatedAt,
-	)
-	return request, err
 }

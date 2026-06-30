@@ -7,18 +7,18 @@ import (
 )
 
 type MediaItem struct {
-	ID                  uuid.UUID
-	Type                string
-	Title               string
-	Year                *int32
-	Monitored           bool
-	ExternalProvider    *string
-	ExternalID          *string
-	Overview            *string
-	PosterPath          *string
+	ID               uuid.UUID
+	Type             string
+	Title            string
+	Year             *int32
+	Monitored        bool
+	ExternalProvider *string
+	ExternalID       *string
+	Overview         *string
+	PosterPath       *string
+	MediaMetadataSnapshot
 	MonitorMode         string
 	MinimumAvailability string
-	Manual              bool
 	QualityProfileID    *string
 	QualityProfileName  *string
 	Status              string
@@ -33,17 +33,17 @@ type MediaItem struct {
 }
 
 type MediaItemInput struct {
-	Type                string
-	Title               string
-	Year                *int32
-	Monitored           bool
-	ExternalProvider    *string
-	ExternalID          *string
-	Overview            *string
-	PosterPath          *string
+	Type             string
+	Title            string
+	Year             *int32
+	Monitored        bool
+	ExternalProvider *string
+	ExternalID       *string
+	Overview         *string
+	PosterPath       *string
+	MediaMetadataSnapshot
 	MonitorMode         string
 	MinimumAvailability string
-	Manual              bool
 	QualityProfileID    *string
 	LibraryFolderID     *uuid.UUID
 	Tags                []string

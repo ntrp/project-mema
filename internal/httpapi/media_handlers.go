@@ -244,7 +244,7 @@ func (s *Server) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body MediaItemRequest
+	var body MediaItemCreateRequest
 	if !decodeJSON(w, r, &body) {
 		return
 	}
@@ -267,7 +267,7 @@ func (s *Server) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "media_create_failed", "Could not add media item")
 		return
 	}
-	if !input.Manual {
+	if body.StartSearch {
 		s.enqueueAutomaticSearch(r.Context(), items)
 	}
 	writeJSON(w, http.StatusCreated, mediaItemResponse(items[0]))
@@ -363,6 +363,17 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 		writeError(w, http.StatusInternalServerError, "collection_lookup_failed", "Could not load media collection")
 		return
 	}
+	for index := range addInputs {
+		enriched, err := s.enrichMediaItemInput(r.Context(), addInputs[index])
+		if err != nil {
+			writeMetadataDetailsError(w, err)
+			return
+		}
+		addInputs[index] = enriched
+	}
+	if len(addInputs) > 0 {
+		input.MediaInput = &addInputs[0]
+	}
 
 	request, item, err := s.settings.ApproveMediaRequest(r.Context(), uuid.UUID(id), input)
 	if err != nil {
@@ -377,7 +388,7 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 			return
 		}
 	}
-	if !existingRequest.Manual {
+	if existingRequest.MonitorMode != "none" {
 		s.enqueueAutomaticSearch(r.Context(), items)
 	}
 	writeJSON(w, http.StatusOK, MediaRequestApproveResponse{
@@ -400,8 +411,10 @@ func (s *Server) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Reques
 	jobID, err := s.jobs.EnqueueReleaseSearch(r.Context(), mediaItemID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "release_search_enqueue_failed", "Could not enqueue release search")
+		s.recordEvent(r.Context(), eventSeverityError, "media", "Release search enqueue failed", map[string]any{"mediaItemId": mediaItemID.String(), "error": err.Error()})
 		return
 	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "media", "Release search queued", map[string]any{"mediaItemId": mediaItemID.String(), "jobId": jobID})
 	writeJSON(w, http.StatusAccepted, JobEnqueueResponse{
 		JobId:   jobID,
 		Message: "Release search queued",
@@ -490,9 +503,11 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 	if err != nil {
 		enqueueError := "Could not enqueue download job"
 		_, _ = s.settings.UpdateDownloadActivityStatus(r.Context(), activity.ID, "failed", &enqueueError)
+		s.recordEvent(r.Context(), eventSeverityError, "downloads", "Download enqueue failed", map[string]any{"mediaItemId": item.ID.String(), "activityId": activity.ID.String(), "releaseTitle": release.Title, "error": err.Error()})
 		writeError(w, http.StatusInternalServerError, "download_enqueue_failed", enqueueError)
 		return
 	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "downloads", "Download queued", map[string]any{"mediaItemId": item.ID.String(), "activityId": activity.ID.String(), "releaseTitle": release.Title, "jobId": jobID})
 	writeJSON(w, http.StatusAccepted, GrabReleaseResponse{
 		JobId:    jobID,
 		Message:  "Download queued",

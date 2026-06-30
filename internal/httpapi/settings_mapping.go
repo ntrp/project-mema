@@ -378,16 +378,24 @@ func indexerResponse(indexer storage.Indexer) Indexer {
 		categories = []int32{}
 	}
 	return Indexer{
-		Id:         openapi_types.UUID(indexer.ID),
-		Name:       indexer.Name,
-		Type:       IndexerType(indexer.Type),
-		BaseUrl:    indexer.BaseURL,
-		ApiKey:     indexer.APIKey,
-		Categories: &categories,
-		Enabled:    indexer.Enabled,
-		Priority:   indexer.Priority,
-		CreatedAt:  indexer.CreatedAt,
-		UpdatedAt:  indexer.UpdatedAt,
+		Id:             openapi_types.UUID(indexer.ID),
+		Name:           indexer.Name,
+		Type:           IndexerType(indexer.Type),
+		BaseUrl:        indexer.BaseURL,
+		ApiKey:         indexer.APIKey,
+		Categories:     &categories,
+		Enabled:        indexer.Enabled,
+		Priority:       indexer.Priority,
+		HealthStatus:   IndexerHealthStatus(indexer.HealthStatus),
+		LastQueryAt:    indexer.LastQueryAt,
+		LastSuccessAt:  indexer.LastSuccessAt,
+		LastFailureAt:  indexer.LastFailureAt,
+		NextCheckAt:    indexer.NextCheckAt,
+		LastStatusCode: indexer.LastStatusCode,
+		LastError:      indexer.LastError,
+		FailureCount:   indexer.FailureCount,
+		CreatedAt:      indexer.CreatedAt,
+		UpdatedAt:      indexer.UpdatedAt,
 	}
 }
 

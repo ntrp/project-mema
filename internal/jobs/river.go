@@ -55,6 +55,7 @@ type ReleaseSearchWorker struct {
 
 	settings *storage.SettingsStore
 	indexers *indexers.Service
+	events   *events.Broker
 }
 
 func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSearchArgs]) error {
@@ -66,15 +67,23 @@ func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSe
 	item, err := w.settings.GetMediaItem(ctx, mediaItemID)
 	if err != nil {
 		slog.Error("release search media item load failed", "mediaItemId", mediaItemID, "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Release search failed to load media", map[string]any{"mediaItemId": mediaItemID.String(), "error": err.Error()})
 		return fmt.Errorf("load media item: %w", err)
 	}
 	slog.Debug("release search started", "mediaItemId", item.ID, "title", item.Title)
+	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Release search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
 	releases, searchErrors, err := searchReleases(ctx, w.settings, w.indexers, item)
 	if err != nil {
 		slog.Error("release search failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Release search failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "error": err.Error()})
 		return err
 	}
 	slog.Debug("release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
+	severity := jobEventInfo
+	if len(searchErrors) > 0 {
+		severity = jobEventWarning
+	}
+	publishSystemEvent(ctx, w.settings, w.events, severity, "jobs", "Release search finished", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseCount": len(releases), "errorCount": len(searchErrors)})
 	return w.settings.ReplaceReleaseSearchResults(ctx, mediaItemID, releases, searchErrors)
 }
 
@@ -99,12 +108,15 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 	}
 	if activity.Status == "cancelled" {
 		slog.Debug("grab release skipped cancelled activity", "activityId", activity.ID)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventWarning, "downloads", "Download job skipped because activity was cancelled", map[string]any{"activityId": activity.ID.String()})
 		return nil
 	}
 	slog.Debug("grab release started", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "releaseTitle", job.Args.Title)
+	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Download job started", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": job.Args.Title})
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
 		slog.Error("grab release download client list failed", "activityId", activity.ID, "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download job failed to load clients", map[string]any{"activityId": activity.ID.String(), "error": err.Error()})
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
 	if len(clients) == 0 {
@@ -119,6 +131,7 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 	})
 	if !result.Success {
 		slog.Error("grab release download client rejected", "activityId", activity.ID, "downloadClientName", client.Name, "message", result.Message)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download client rejected release", map[string]any{"activityId": activity.ID.String(), "downloadClientName": client.Name, "message": result.Message})
 		return w.markGrabFailed(ctx, activityID, result.Message)
 	}
 	downloadID := optionalString(result.DownloadID)
@@ -126,8 +139,10 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 	if err == nil {
 		publishDownloadActivity(w.events, activity)
 		slog.Debug("grab release finished", "activityId", activity.ID, "downloadClientName", client.Name, "downloadId", result.DownloadID)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Download sent to client", map[string]any{"activityId": activity.ID.String(), "downloadClientName": client.Name, "downloadId": result.DownloadID})
 	} else {
 		slog.Error("grab release activity update failed", "activityId", activityID, "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity update failed", map[string]any{"activityId": activityID.String(), "error": err.Error()})
 	}
 	return err
 }
@@ -149,7 +164,7 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 	if eventBroker == nil {
 		eventBroker = events.NewBroker()
 	}
-	river.AddWorker(workers, &ReleaseSearchWorker{settings: settings, indexers: indexerService})
+	river.AddWorker(workers, &ReleaseSearchWorker{settings: settings, indexers: indexerService, events: eventBroker})
 	river.AddWorker(workers, &AutoSearchDownloadWorker{
 		settings:        settings,
 		indexers:        indexerService,

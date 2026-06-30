@@ -10,6 +10,7 @@ export type UserRole = components['schemas']['UserRole'];
 export type UserSummary = components['schemas']['UserSummary'];
 export type UserUpdateRequest = components['schemas']['UserUpdateRequest'];
 export type Indexer = components['schemas']['Indexer'];
+export type IndexerHealthStatus = components['schemas']['IndexerHealthStatus'];
 export type IndexerRequest = components['schemas']['IndexerRequest'];
 export type IndexerType = components['schemas']['IndexerType'];
 export type MetadataProvider = components['schemas']['MetadataProvider'];
@@ -21,6 +22,14 @@ export type MetadataProviderRequest = components['schemas']['MetadataProviderReq
 export type MetadataProviderType = components['schemas']['MetadataProviderType'];
 export type IntegrationTestResponse = components['schemas']['IntegrationTestResponse'];
 export type SystemLogEntry = components['schemas']['SystemLogEntry'];
+export type SystemStatusResponse = components['schemas']['SystemStatusResponse'];
+export type SystemEvent = components['schemas']['SystemEvent'];
+export type SystemEventSeverity = components['schemas']['SystemEventSeverity'];
+export type SystemEventSettings = components['schemas']['SystemEventSettings'];
+export type SystemEventSettingsRequest = components['schemas']['SystemEventSettingsRequest'];
+export type SystemLogFile = components['schemas']['SystemLogFile'];
+export type SystemLogFileSettings = components['schemas']['SystemLogFileSettings'];
+export type SystemLogFileSettingsRequest = components['schemas']['SystemLogFileSettingsRequest'];
 export type SystemLogLevel = components['schemas']['SystemLogLevel'];
 export type SystemLogLevelResponse = components['schemas']['SystemLogLevelResponse'];
 export type LibraryFolder = components['schemas']['LibraryFolder'];
@@ -49,8 +58,7 @@ export type MediaRequestCreateRequest = components['schemas']['MediaRequestCreat
 export type MediaRequestStatus = components['schemas']['MediaRequestStatus'];
 export type MediaSearchGroup = components['schemas']['MediaSearchGroup'];
 export type MediaItem = components['schemas']['MediaItem'];
-export type MediaItemMode = components['schemas']['MediaItemMode'];
-export type MediaItemModeRequest = components['schemas']['MediaItemModeRequest'];
+export type MediaItemCreateRequest = components['schemas']['MediaItemCreateRequest'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type MediaItemStatus = components['schemas']['MediaItemStatus'];
 export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
@@ -107,8 +115,8 @@ export type AppView =
 	| 'advanced-search'
 	| 'metadata-detail'
 	| 'media-collection';
-export type HomeSection = 'discover' | 'requests' | 'movies' | 'series' | 'activity';
-export type SystemSection = 'logs';
+export type HomeSection = 'discover' | 'requests' | 'movies' | 'series' | 'wanted' | 'activity';
+export type SystemSection = 'status' | 'logs' | 'log-files' | 'events';
 export type SettingsSection =
 	| 'library'
 	| 'download-clients'

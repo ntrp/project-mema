@@ -56,12 +56,23 @@ create table if not exists app.indexers (
     categories integer[] not null default '{}',
     enabled boolean not null default true,
     priority integer not null default 100 check (priority >= 0 and priority <= 1000),
+    health_status text not null default 'healthy' check (health_status in ('healthy', 'temporary_disabled', 'disabled')),
+    last_query_at timestamptz,
+    last_success_at timestamptz,
+    last_failure_at timestamptz,
+    next_check_at timestamptz,
+    last_status_code integer,
+    last_error text,
+    failure_count integer not null default 0 check (failure_count >= 0),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
 create index if not exists idx_indexers_priority
     on app.indexers (priority, name);
+
+create index if not exists idx_indexers_health
+    on app.indexers (enabled, health_status, next_check_at);
 
 create table if not exists app.quality_size_settings (
     quality_id text primary key,
@@ -158,53 +169,34 @@ create table if not exists app.media_items (
     id uuid primary key,
     media_type text not null check (media_type in ('movie', 'series')),
     title text not null,
-    year integer not null default 0,
+    year integer,
     monitored boolean not null default true,
+    external_provider text,
+    external_id text,
+    overview text,
+    poster_path text,
+    collection_id text,
+    collection_name text,
+    backdrop_path text,
+    metadata_status text,
+    original_language text,
+    release_date text,
+    first_air_date text,
+    runtime_minutes integer,
+    season_count integer,
+    episode_count integer,
+    vote_average double precision,
+    genres jsonb not null default '[]'::jsonb check (jsonb_typeof(genres) = 'array'),
+    facts jsonb not null default '[]'::jsonb check (jsonb_typeof(facts) = 'array'),
+    seasons jsonb not null default '[]'::jsonb check (jsonb_typeof(seasons) = 'array'),
+    cast_members jsonb not null default '[]'::jsonb check (jsonb_typeof(cast_members) = 'array'),
+    quality_profile_id text,
+    media_folder_path text,
+    monitor_mode text not null default 'only_media' check (monitor_mode in ('none', 'only_media', 'collection')),
+    minimum_availability text not null default 'released' check (minimum_availability in ('announced', 'in_cinema', 'released')),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
-
-alter table app.media_items
-    add column if not exists external_provider text;
-
-alter table app.media_items
-    add column if not exists external_id text;
-
-alter table app.media_items
-    add column if not exists overview text;
-
-alter table app.media_items
-    add column if not exists poster_path text;
-
-alter table app.media_items
-    add column if not exists quality_profile_id text;
-
-alter table app.media_items
-    add column if not exists media_folder_path text;
-
-alter table app.media_items
-    add column if not exists monitor_mode text not null default 'only_media';
-
-alter table app.media_items
-    add column if not exists minimum_availability text not null default 'released';
-
-alter table app.media_items
-    add column if not exists manual boolean not null default false;
-
--- +goose StatementBegin
-do $$
-begin
-    alter table app.media_items drop constraint if exists media_items_monitor_mode_check;
-    alter table app.media_items drop constraint if exists media_items_minimum_availability_check;
-    alter table app.media_items
-        add constraint media_items_monitor_mode_check check (monitor_mode in ('only_media', 'collection'));
-    alter table app.media_items
-        add constraint media_items_minimum_availability_check check (minimum_availability in ('announced', 'in_cinema', 'released'));
-end $$;
--- +goose StatementEnd
-
-alter table app.media_items
-    alter column year drop not null;
 
 create index if not exists idx_media_items_type_title
     on app.media_items (media_type, title);
@@ -218,6 +210,42 @@ create table if not exists app.tags (
 
 create unique index if not exists idx_tags_name_lower
     on app.tags (lower(name));
+
+create table if not exists app.log_file_settings (
+    id boolean primary key default true check (id),
+    enabled boolean not null default false,
+    directory text not null default '.data/logs',
+    retention_days integer not null default 7 check (retention_days between 1 and 365),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+insert into app.log_file_settings (id, enabled, directory, retention_days)
+values (true, false, '.data/logs', 7)
+on conflict (id) do nothing;
+
+create table if not exists app.system_events (
+    id uuid primary key,
+    severity text not null check (severity in ('info', 'warning', 'error')),
+    category text not null,
+    message text not null,
+    data jsonb not null default '{}'::jsonb,
+    created_at timestamptz not null default now()
+);
+
+create index if not exists idx_system_events_created_at
+    on app.system_events (created_at desc);
+
+create table if not exists app.system_event_settings (
+    id boolean primary key default true check (id),
+    retention_days integer not null default 30 check (retention_days between 1 and 365),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+insert into app.system_event_settings (id, retention_days)
+values (true, 30)
+on conflict (id) do nothing;
 
 create table if not exists app.media_item_tags (
     media_item_id uuid not null references app.media_items(id) on delete cascade,
@@ -302,7 +330,6 @@ create table if not exists app.media_requests (
     poster_path text,
     monitor_mode text not null default 'only_media',
     minimum_availability text not null default 'released',
-    manual boolean not null default false,
     status text not null default 'pending',
     quality_profile_id text,
     library_folder_id uuid references app.library_folders(id) on delete set null,
@@ -318,13 +345,12 @@ begin
     alter table app.media_requests drop constraint if exists media_requests_status_check;
     alter table app.media_requests add column if not exists monitor_mode text not null default 'only_media';
     alter table app.media_requests add column if not exists minimum_availability text not null default 'released';
-    alter table app.media_requests add column if not exists manual boolean not null default false;
     alter table app.media_requests drop constraint if exists media_requests_monitor_mode_check;
     alter table app.media_requests drop constraint if exists media_requests_minimum_availability_check;
     alter table app.media_requests
         add constraint media_requests_status_check check (status in ('pending', 'approved'));
     alter table app.media_requests
-        add constraint media_requests_monitor_mode_check check (monitor_mode in ('only_media', 'collection'));
+        add constraint media_requests_monitor_mode_check check (monitor_mode in ('none', 'only_media', 'collection'));
     alter table app.media_requests
         add constraint media_requests_minimum_availability_check check (minimum_availability in ('announced', 'in_cinema', 'released'));
 end $$;

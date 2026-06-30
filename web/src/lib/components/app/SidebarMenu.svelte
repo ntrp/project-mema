@@ -7,6 +7,7 @@
 		| '/requests'
 		| '/movies'
 		| '/series'
+		| '/wanted'
 		| '/activity'
 		| '/settings/library'
 		| '/settings/download-clients'
@@ -18,7 +19,10 @@
 		| '/settings/metadata'
 		| '/settings/tags'
 		| '/settings/users'
-		| '/system/logs';
+		| '/system/status'
+		| '/system/logs'
+		| '/system/log-files'
+		| '/system/events';
 
 	interface SubmenuItem<TValue extends string> {
 		value: TValue;

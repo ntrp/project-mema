@@ -201,6 +201,7 @@ func (s *Server) TestIndexer(w http.ResponseWriter, r *http.Request, id Resource
 	}
 
 	result := s.indexers.Test(r.Context(), indexerConfig(indexer))
+	s.recordIndexerTestResult(r.Context(), indexer, result)
 	writeJSON(w, http.StatusOK, indexerTestResponse(s.now(), result))
 }
 

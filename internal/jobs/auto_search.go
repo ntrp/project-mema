@@ -50,9 +50,11 @@ func (w *AutoSearchDownloadWorker) Work(ctx context.Context, job *river.Job[Auto
 	item, err := w.settings.GetMediaItem(ctx, mediaItemID)
 	if err != nil {
 		slog.Error("auto search download media item load failed", "mediaItemId", mediaItemID, "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Automatic search failed to load media", map[string]any{"mediaItemId": mediaItemID.String(), "error": err.Error()})
 		return fmt.Errorf("load media item: %w", err)
 	}
 	slog.Debug("auto search download started", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
+	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Automatic search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
 	return autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item)
 }
 
@@ -70,9 +72,11 @@ func (w *MissingMediaRetryWorker) Work(ctx context.Context, _ *river.Job[Missing
 	items, err := w.settings.ListMissingMediaItems(ctx)
 	if err != nil {
 		slog.Error("missing media retry list failed", "error", err)
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Missing media retry failed to list items", map[string]any{"error": err.Error()})
 		return fmt.Errorf("list missing media: %w", err)
 	}
 	slog.Debug("missing media retry started", "itemCount", len(items))
+	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Missing media retry started", map[string]any{"itemCount": len(items)})
 	var failures []string
 	for _, item := range items {
 		if err := autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item); err != nil {
@@ -81,8 +85,10 @@ func (w *MissingMediaRetryWorker) Work(ctx context.Context, _ *river.Job[Missing
 		}
 	}
 	if len(failures) > 0 {
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Missing media retry finished with failures", map[string]any{"failureCount": len(failures)})
 		return fmt.Errorf("missing media retry failed for %d item(s): %s", len(failures), strings.Join(failures, "; "))
 	}
+	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Missing media retry finished", map[string]any{"itemCount": len(items)})
 	return nil
 }
 
@@ -95,34 +101,36 @@ func autoSearchDownload(
 	eventBroker *events.Broker,
 	item storage.MediaItem,
 ) error {
-	if item.Manual {
-		slog.Debug("auto search download skipped because media is manual", "mediaItemId", item.ID, "title", item.Title)
-		return nil
-	}
 	if item.Status == "downloaded" || item.Status == "downloading" {
 		slog.Debug("auto search download skipped", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search skipped", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "status": item.Status})
 		return nil
 	}
 	releases, searchErrors, err := searchReleases(ctx, settings, indexerService, item)
 	if err != nil {
 		slog.Error("auto search release search failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "error": err.Error()})
 		return err
 	}
 	if err := settings.ReplaceReleaseSearchResults(ctx, item.ID, releases, searchErrors); err != nil {
 		slog.Error("auto search result storage failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search result storage failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "error": err.Error()})
 		return err
 	}
 	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
 	decision, ok := decisionEngine.ChooseRelease(releases)
 	if !ok {
 		slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseCount": len(releases), "errorCount": len(searchErrors)})
 		return nil
 	}
 	if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, item, decision.Release); err != nil {
 		slog.Error("auto search grab failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title, "error", err)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search grab failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title, "error": err.Error()})
 		return err
 	}
 	slog.Debug("auto search grab queued", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title)
+	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search queued download", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title})
 	return nil
 }
 
@@ -146,9 +154,13 @@ func searchReleases(
 	for _, config := range configs {
 		found, err := indexerService.Search(ctx, indexerConfig(config), item.Title, item.Type)
 		if err != nil {
+			recordIndexerSearchFailure(ctx, settings, config, err)
 			slog.Error("indexer release search failed", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "error", err)
 			searchErrors = append(searchErrors, fmt.Sprintf("%s: %s", config.Name, err.Error()))
 			continue
+		}
+		if _, err := settings.RecordIndexerSuccess(ctx, config.ID); err != nil {
+			slog.Error("indexer success state update failed", "indexerName", config.Name, "error", err)
 		}
 		slog.Debug("indexer release search finished", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "releaseCount", len(found))
 		for _, release := range found {
@@ -179,10 +191,12 @@ func grabReleaseNow(
 ) error {
 	clients, err := settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
+		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Automatic grab failed to list clients", map[string]any{"mediaItemId": item.ID.String(), "error": err.Error()})
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
 	if len(clients) == 0 {
 		slog.Debug("grab release skipped because no download clients are enabled", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", release.Title)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "downloads", "Automatic grab skipped because no download client is enabled", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": release.Title})
 		return settings.ReplaceReleaseSearchResults(ctx, item.ID, []storage.ReleaseCandidateInput{release}, []string{"No enabled download client is configured"})
 	}
 
@@ -197,6 +211,7 @@ func grabReleaseNow(
 	})
 	if err != nil {
 		slog.Error("download activity create failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", release.Title, "downloadClientName", client.Name, "error", err)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download activity creation failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": release.Title, "downloadClientName": client.Name, "error": err.Error()})
 		return fmt.Errorf("record download activity: %w", err)
 	}
 	activity.MediaTitle = item.Title
@@ -213,10 +228,12 @@ func grabReleaseNow(
 			message = "Download client rejected the release"
 		}
 		slog.Error("download client rejected release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "message", message)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download client rejected automatic release", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "releaseTitle": release.Title, "downloadClientName": client.Name, "message": message})
 		_, err := settings.UpdateDownloadActivityStatus(ctx, activity.ID, "failed", &message)
 		return err
 	}
 	slog.Debug("download client accepted release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "downloadId", result.DownloadID)
+	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "downloads", "Download client accepted automatic release", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "releaseTitle": release.Title, "downloadClientName": client.Name, "downloadId": result.DownloadID})
 	updated, err := settings.UpdateDownloadActivityClientState(ctx, activity.ID, "grabbed", optionalString(result.DownloadID), nil)
 	if err == nil {
 		updated.MediaTitle = item.Title
@@ -224,6 +241,7 @@ func grabReleaseNow(
 		publishDownloadActivity(eventBroker, updated)
 	} else {
 		slog.Error("download activity client state update failed", "activityId", activity.ID, "mediaItemId", item.ID, "error", err)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download activity state update failed", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "error": err.Error()})
 	}
 	return err
 }

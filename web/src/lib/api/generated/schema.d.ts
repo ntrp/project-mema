@@ -331,7 +331,7 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	'/media/items/{id}/mode': {
+	'/media/items/{id}/automatic-searches': {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -341,9 +341,28 @@ export interface paths {
 			cookie?: never;
 		};
 		get?: never;
-		/** Update automatic or manual processing mode for a media item */
-		put: operations['updateMediaItemMode'];
-		post?: never;
+		put?: never;
+		/** Enqueue an automatic search and grab for a monitored item */
+		post: operations['enqueueMediaAutomaticSearch'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/files/delete': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Delete one media file and rescan the item folder */
+		post: operations['deleteMediaItemFile'];
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -530,6 +549,24 @@ export interface paths {
 		put?: never;
 		/** Test a configured indexer */
 		post: operations['testIndexer'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/event-settings': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get system event retention settings */
+		get: operations['getSystemEventSettings'];
+		/** Update system event retention settings */
+		put: operations['updateSystemEventSettings'];
+		post?: never;
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -1000,6 +1037,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/system/status': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get application and runtime status */
+		get: operations['getSystemStatus'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/logs': {
 		parameters: {
 			query?: never;
@@ -1033,6 +1087,96 @@ export interface paths {
 		put: operations['updateSystemLogLevel'];
 		post?: never;
 		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/log-file-settings': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get log file settings */
+		get: operations['getSystemLogFileSettings'];
+		/** Update log file settings */
+		put: operations['updateSystemLogFileSettings'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/log-files': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List retained log files */
+		get: operations['listSystemLogFiles'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/log-files/{name}/download': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				name: string;
+			};
+			cookie?: never;
+		};
+		/** Download a retained log file */
+		get: operations['downloadSystemLogFile'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/events': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List notable application events */
+		get: operations['listSystemEvents'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/events/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete a system event */
+		delete: operations['deleteSystemEvent'];
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -1240,6 +1384,25 @@ export interface components {
 			/** Format: uuid */
 			id: string;
 			status: components['schemas']['MediaItemStatus'];
+			collectionId?: string;
+			collectionName?: string;
+			backdropPath?: string;
+			metadataStatus?: string;
+			originalLanguage?: string;
+			releaseDate?: string;
+			firstAirDate?: string;
+			/** Format: int32 */
+			runtimeMinutes?: number;
+			/** Format: int32 */
+			seasonCount?: number;
+			/** Format: int32 */
+			episodeCount?: number;
+			/** Format: double */
+			voteAverage?: number;
+			genres?: string[];
+			facts?: components['schemas']['MediaMetadataFact'][];
+			seasons?: components['schemas']['MediaMetadataSeason'][];
+			cast?: components['schemas']['MediaMetadataPerson'][];
 			qualityProfileName?: string;
 			libraryFolderPath?: string;
 			mediaFolderPath?: string;
@@ -1258,7 +1421,6 @@ export interface components {
 			monitored: boolean;
 			monitorMode: components['schemas']['MediaMonitorMode'];
 			minimumAvailability: components['schemas']['MinimumAvailability'];
-			manual: boolean;
 			externalProvider?: string;
 			externalId?: string;
 			overview?: string;
@@ -1268,15 +1430,16 @@ export interface components {
 			libraryFolderId?: string;
 			tags?: string[];
 		};
+		MediaItemCreateRequest: components['schemas']['MediaItemRequest'] & {
+			startSearch: boolean;
+		};
+		MediaFileDeleteRequest: {
+			path: string;
+		};
 		/** @enum {string} */
 		MediaItemStatus: 'missing' | 'downloading' | 'downloaded';
 		/** @enum {string} */
-		MediaItemMode: 'automatic' | 'manual';
-		MediaItemModeRequest: {
-			mode: components['schemas']['MediaItemMode'];
-		};
-		/** @enum {string} */
-		MediaMonitorMode: 'only_media' | 'collection';
+		MediaMonitorMode: 'none' | 'only_media' | 'collection';
 		/** @enum {string} */
 		MinimumAvailability: 'announced' | 'in_cinema' | 'released';
 		MediaRequestListResponse: {
@@ -1308,7 +1471,6 @@ export interface components {
 			type: components['schemas']['MediaType'];
 			monitorMode: components['schemas']['MediaMonitorMode'];
 			minimumAvailability: components['schemas']['MinimumAvailability'];
-			manual: boolean;
 			/** Format: int32 */
 			year?: number;
 			externalProvider?: string;
@@ -1596,11 +1758,27 @@ export interface components {
 		Indexer: components['schemas']['IndexerRequest'] & {
 			/** Format: uuid */
 			id: string;
+			healthStatus: components['schemas']['IndexerHealthStatus'];
+			/** Format: date-time */
+			lastQueryAt?: string;
+			/** Format: date-time */
+			lastSuccessAt?: string;
+			/** Format: date-time */
+			lastFailureAt?: string;
+			/** Format: date-time */
+			nextCheckAt?: string;
+			/** Format: int32 */
+			lastStatusCode?: number;
+			lastError?: string;
+			/** Format: int32 */
+			failureCount: number;
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
 			updatedAt: string;
 		};
+		/** @enum {string} */
+		IndexerHealthStatus: 'healthy' | 'temporary_disabled' | 'disabled';
 		IndexerRequest: {
 			name: string;
 			type: components['schemas']['IndexerType'];
@@ -1802,6 +1980,14 @@ export interface components {
 		ToolStatusResponse: {
 			tools: components['schemas']['ToolStatus'][];
 		};
+		SystemStatusResponse: {
+			version: string;
+			commit: string;
+			databaseType: string;
+			databaseVersion: string;
+			license: string;
+			sourceLocation: string;
+		};
 		ToolStatus: {
 			name: components['schemas']['ToolName'];
 			required: boolean;
@@ -1828,6 +2014,47 @@ export interface components {
 				[key: string]: unknown;
 			};
 		};
+		SystemLogFileSettingsRequest: {
+			enabled: boolean;
+			directory: string;
+			/** Format: int32 */
+			retentionDays: number;
+		};
+		SystemLogFileSettings: components['schemas']['SystemLogFileSettingsRequest'] & {
+			effectiveDirectory: string;
+		};
+		SystemLogFileListResponse: {
+			files: components['schemas']['SystemLogFile'][];
+		};
+		SystemLogFile: {
+			name: string;
+			/** Format: int64 */
+			sizeBytes: number;
+			/** Format: date-time */
+			modifiedAt: string;
+		};
+		/** @enum {string} */
+		SystemEventSeverity: 'info' | 'warning' | 'error';
+		SystemEvent: {
+			/** Format: uuid */
+			id: string;
+			severity: components['schemas']['SystemEventSeverity'];
+			category: string;
+			message: string;
+			data: {
+				[key: string]: unknown;
+			};
+			/** Format: date-time */
+			createdAt: string;
+		};
+		SystemEventListResponse: {
+			events: components['schemas']['SystemEvent'][];
+		};
+		SystemEventSettingsRequest: {
+			/** Format: int32 */
+			retentionDays: number;
+		};
+		SystemEventSettings: components['schemas']['SystemEventSettingsRequest'];
 		/** @enum {string} */
 		ToolName: 'ffmpeg' | 'ffprobe' | 'mkvmerge' | 'mkvextract' | 'mediainfo';
 		EventEnvelope: {
@@ -2186,7 +2413,7 @@ export interface operations {
 		};
 		requestBody: {
 			content: {
-				'application/json': components['schemas']['MediaItemRequest'];
+				'application/json': components['schemas']['MediaItemCreateRequest'];
 			};
 		};
 		responses: {
@@ -2403,7 +2630,31 @@ export interface operations {
 			404: components['responses']['NotFound'];
 		};
 	};
-	updateMediaItemMode: {
+	enqueueMediaAutomaticSearch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Automatic search job enqueued */
+			202: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['JobEnqueueResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteMediaItemFile: {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -2414,11 +2665,11 @@ export interface operations {
 		};
 		requestBody: {
 			content: {
-				'application/json': components['schemas']['MediaItemModeRequest'];
+				'application/json': components['schemas']['MediaFileDeleteRequest'];
 			};
 		};
 		responses: {
-			/** @description Media item mode updated */
+			/** @description Media file deleted and item rescanned */
 			200: {
 				headers: {
 					[name: string]: unknown;
@@ -2775,6 +3026,55 @@ export interface operations {
 			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
+		};
+	};
+	getSystemEventSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description System event settings */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemEventSettings'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	updateSystemEventSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SystemEventSettingsRequest'];
+			};
+		};
+		responses: {
+			/** @description System event settings updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemEventSettings'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
 		};
 	};
 	listQualitySizeSettings: {
@@ -3776,6 +4076,28 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 		};
 	};
+	getSystemStatus: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Application status details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemStatusResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
 	streamSystemLogs: {
 		parameters: {
 			query?: never;
@@ -3845,6 +4167,147 @@ export interface operations {
 			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			403: components['responses']['Forbidden'];
+		};
+	};
+	getSystemLogFileSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Current log file settings */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemLogFileSettings'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	updateSystemLogFileSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SystemLogFileSettingsRequest'];
+			};
+		};
+		responses: {
+			/** @description Updated log file settings */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemLogFileSettings'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	listSystemLogFiles: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Retained log files */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemLogFileListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	downloadSystemLogFile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				name: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Log file */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/octet-stream': string;
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listSystemEvents: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Recent application events */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemEventListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	deleteSystemEvent: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description System event deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	streamEvents: {

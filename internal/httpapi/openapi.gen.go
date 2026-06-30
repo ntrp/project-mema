@@ -133,6 +133,27 @@ func (e HealthStatus) Valid() bool {
 	}
 }
 
+// Defines values for IndexerHealthStatus.
+const (
+	Disabled          IndexerHealthStatus = "disabled"
+	Healthy           IndexerHealthStatus = "healthy"
+	TemporaryDisabled IndexerHealthStatus = "temporary_disabled"
+)
+
+// Valid indicates whether the value is a known member of the IndexerHealthStatus enum.
+func (e IndexerHealthStatus) Valid() bool {
+	switch e {
+	case Disabled:
+		return true
+	case Healthy:
+		return true
+	case TemporaryDisabled:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IndexerType.
 const (
 	Newznab IndexerType = "newznab"
@@ -220,24 +241,6 @@ func (e LibraryScanItemStatus) Valid() bool {
 	}
 }
 
-// Defines values for MediaItemMode.
-const (
-	Automatic MediaItemMode = "automatic"
-	Manual    MediaItemMode = "manual"
-)
-
-// Valid indicates whether the value is a known member of the MediaItemMode enum.
-func (e MediaItemMode) Valid() bool {
-	switch e {
-	case Automatic:
-		return true
-	case Manual:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for MediaItemStatus.
 const (
 	Downloaded  MediaItemStatus = "downloaded"
@@ -262,6 +265,7 @@ func (e MediaItemStatus) Valid() bool {
 // Defines values for MediaMonitorMode.
 const (
 	Collection MediaMonitorMode = "collection"
+	None       MediaMonitorMode = "none"
 	OnlyMedia  MediaMonitorMode = "only_media"
 )
 
@@ -269,6 +273,8 @@ const (
 func (e MediaMonitorMode) Valid() bool {
 	switch e {
 	case Collection:
+		return true
+	case None:
 		return true
 	case OnlyMedia:
 		return true
@@ -391,24 +397,45 @@ func (e MinimumAvailability) Valid() bool {
 	}
 }
 
+// Defines values for SystemEventSeverity.
+const (
+	SystemEventSeverityError   SystemEventSeverity = "error"
+	SystemEventSeverityInfo    SystemEventSeverity = "info"
+	SystemEventSeverityWarning SystemEventSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the SystemEventSeverity enum.
+func (e SystemEventSeverity) Valid() bool {
+	switch e {
+	case SystemEventSeverityError:
+		return true
+	case SystemEventSeverityInfo:
+		return true
+	case SystemEventSeverityWarning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SystemLogLevel.
 const (
-	Debug SystemLogLevel = "debug"
-	Error SystemLogLevel = "error"
-	Info  SystemLogLevel = "info"
-	Warn  SystemLogLevel = "warn"
+	SystemLogLevelDebug SystemLogLevel = "debug"
+	SystemLogLevelError SystemLogLevel = "error"
+	SystemLogLevelInfo  SystemLogLevel = "info"
+	SystemLogLevelWarn  SystemLogLevel = "warn"
 )
 
 // Valid indicates whether the value is a known member of the SystemLogLevel enum.
 func (e SystemLogLevel) Valid() bool {
 	switch e {
-	case Debug:
+	case SystemLogLevelDebug:
 		return true
-	case Error:
+	case SystemLogLevelError:
 		return true
-	case Info:
+	case SystemLogLevelInfo:
 		return true
-	case Warn:
+	case SystemLogLevelWarn:
 		return true
 	default:
 		return false
@@ -646,17 +673,28 @@ type HealthStatus string
 
 // Indexer defines model for Indexer.
 type Indexer struct {
-	ApiKey     *string            `json:"apiKey,omitempty"`
-	BaseUrl    string             `json:"baseUrl"`
-	Categories *[]int32           `json:"categories,omitempty"`
-	CreatedAt  time.Time          `json:"createdAt"`
-	Enabled    bool               `json:"enabled"`
-	Id         openapi_types.UUID `json:"id"`
-	Name       string             `json:"name"`
-	Priority   int32              `json:"priority"`
-	Type       IndexerType        `json:"type"`
-	UpdatedAt  time.Time          `json:"updatedAt"`
+	ApiKey         *string             `json:"apiKey,omitempty"`
+	BaseUrl        string              `json:"baseUrl"`
+	Categories     *[]int32            `json:"categories,omitempty"`
+	CreatedAt      time.Time           `json:"createdAt"`
+	Enabled        bool                `json:"enabled"`
+	FailureCount   int32               `json:"failureCount"`
+	HealthStatus   IndexerHealthStatus `json:"healthStatus"`
+	Id             openapi_types.UUID  `json:"id"`
+	LastError      *string             `json:"lastError,omitempty"`
+	LastFailureAt  *time.Time          `json:"lastFailureAt,omitempty"`
+	LastQueryAt    *time.Time          `json:"lastQueryAt,omitempty"`
+	LastStatusCode *int32              `json:"lastStatusCode,omitempty"`
+	LastSuccessAt  *time.Time          `json:"lastSuccessAt,omitempty"`
+	Name           string              `json:"name"`
+	NextCheckAt    *time.Time          `json:"nextCheckAt,omitempty"`
+	Priority       int32               `json:"priority"`
+	Type           IndexerType         `json:"type"`
+	UpdatedAt      time.Time           `json:"updatedAt"`
 }
+
+// IndexerHealthStatus defines model for IndexerHealthStatus.
+type IndexerHealthStatus string
 
 // IndexerListResponse defines model for IndexerListResponse.
 type IndexerListResponse struct {
@@ -846,6 +884,11 @@ type MediaDiscoverSection struct {
 	Title        string              `json:"title"`
 }
 
+// MediaFileDeleteRequest defines model for MediaFileDeleteRequest.
+type MediaFileDeleteRequest struct {
+	Path string `json:"path"`
+}
+
 // MediaGroupedSearchResponse defines model for MediaGroupedSearchResponse.
 type MediaGroupedSearchResponse struct {
 	Groups []MediaSearchGroup `json:"groups"`
@@ -853,28 +896,60 @@ type MediaGroupedSearchResponse struct {
 
 // MediaItem defines model for MediaItem.
 type MediaItem struct {
-	CreatedAt           time.Time           `json:"createdAt"`
+	BackdropPath        *string                `json:"backdropPath,omitempty"`
+	Cast                *[]MediaMetadataPerson `json:"cast,omitempty"`
+	CollectionId        *string                `json:"collectionId,omitempty"`
+	CollectionName      *string                `json:"collectionName,omitempty"`
+	CreatedAt           time.Time              `json:"createdAt"`
+	EpisodeCount        *int32                 `json:"episodeCount,omitempty"`
+	ExternalId          *string                `json:"externalId,omitempty"`
+	ExternalProvider    *string                `json:"externalProvider,omitempty"`
+	Facts               *[]MediaMetadataFact   `json:"facts,omitempty"`
+	FilePaths           []string               `json:"filePaths"`
+	FirstAirDate        *string                `json:"firstAirDate,omitempty"`
+	Genres              *[]string              `json:"genres,omitempty"`
+	Id                  openapi_types.UUID     `json:"id"`
+	LibraryFolderId     *openapi_types.UUID    `json:"libraryFolderId,omitempty"`
+	LibraryFolderPath   *string                `json:"libraryFolderPath,omitempty"`
+	MediaFolderPath     *string                `json:"mediaFolderPath,omitempty"`
+	MetadataFilePaths   []string               `json:"metadataFilePaths"`
+	MetadataStatus      *string                `json:"metadataStatus,omitempty"`
+	MinimumAvailability MinimumAvailability    `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode       `json:"monitorMode"`
+	Monitored           bool                   `json:"monitored"`
+	OriginalLanguage    *string                `json:"originalLanguage,omitempty"`
+	Overview            *string                `json:"overview,omitempty"`
+	PosterPath          *string                `json:"posterPath,omitempty"`
+	QualityProfileId    *string                `json:"qualityProfileId,omitempty"`
+	QualityProfileName  *string                `json:"qualityProfileName,omitempty"`
+	ReleaseDate         *string                `json:"releaseDate,omitempty"`
+	RuntimeMinutes      *int32                 `json:"runtimeMinutes,omitempty"`
+	SeasonCount         *int32                 `json:"seasonCount,omitempty"`
+	Seasons             *[]MediaMetadataSeason `json:"seasons,omitempty"`
+	Status              MediaItemStatus        `json:"status"`
+	Tags                *[]string              `json:"tags,omitempty"`
+	Title               string                 `json:"title"`
+	Type                MediaType              `json:"type"`
+	UpdatedAt           time.Time              `json:"updatedAt"`
+	VoteAverage         *float64               `json:"voteAverage,omitempty"`
+	Year                *int32                 `json:"year,omitempty"`
+}
+
+// MediaItemCreateRequest defines model for MediaItemCreateRequest.
+type MediaItemCreateRequest struct {
 	ExternalId          *string             `json:"externalId,omitempty"`
 	ExternalProvider    *string             `json:"externalProvider,omitempty"`
-	FilePaths           []string            `json:"filePaths"`
-	Id                  openapi_types.UUID  `json:"id"`
 	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	LibraryFolderPath   *string             `json:"libraryFolderPath,omitempty"`
-	Manual              bool                `json:"manual"`
-	MediaFolderPath     *string             `json:"mediaFolderPath,omitempty"`
-	MetadataFilePaths   []string            `json:"metadataFilePaths"`
 	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
 	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
 	Monitored           bool                `json:"monitored"`
 	Overview            *string             `json:"overview,omitempty"`
 	PosterPath          *string             `json:"posterPath,omitempty"`
 	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
-	QualityProfileName  *string             `json:"qualityProfileName,omitempty"`
-	Status              MediaItemStatus     `json:"status"`
+	StartSearch         bool                `json:"startSearch"`
 	Tags                *[]string           `json:"tags,omitempty"`
 	Title               string              `json:"title"`
 	Type                MediaType           `json:"type"`
-	UpdatedAt           time.Time           `json:"updatedAt"`
 	Year                *int32              `json:"year,omitempty"`
 }
 
@@ -883,20 +958,11 @@ type MediaItemListResponse struct {
 	Items []MediaItem `json:"items"`
 }
 
-// MediaItemMode defines model for MediaItemMode.
-type MediaItemMode string
-
-// MediaItemModeRequest defines model for MediaItemModeRequest.
-type MediaItemModeRequest struct {
-	Mode MediaItemMode `json:"mode"`
-}
-
 // MediaItemRequest defines model for MediaItemRequest.
 type MediaItemRequest struct {
 	ExternalId          *string             `json:"externalId,omitempty"`
 	ExternalProvider    *string             `json:"externalProvider,omitempty"`
 	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	Manual              bool                `json:"manual"`
 	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
 	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
 	Monitored           bool                `json:"monitored"`
@@ -1028,7 +1094,6 @@ type MediaRequest struct {
 	ExternalProvider    *string             `json:"externalProvider,omitempty"`
 	Id                  openapi_types.UUID  `json:"id"`
 	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	Manual              bool                `json:"manual"`
 	MediaItemId         *openapi_types.UUID `json:"mediaItemId,omitempty"`
 	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
 	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
@@ -1061,7 +1126,6 @@ type MediaRequestApproveResponse struct {
 type MediaRequestCreateRequest struct {
 	ExternalId          *string             `json:"externalId,omitempty"`
 	ExternalProvider    *string             `json:"externalProvider,omitempty"`
-	Manual              bool                `json:"manual"`
 	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
 	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
 	Overview            *string             `json:"overview,omitempty"`
@@ -1309,6 +1373,59 @@ type SessionResponse struct {
 	User          *UserSummary `json:"user,omitempty"`
 }
 
+// SystemEvent defines model for SystemEvent.
+type SystemEvent struct {
+	Category  string                 `json:"category"`
+	CreatedAt time.Time              `json:"createdAt"`
+	Data      map[string]interface{} `json:"data"`
+	Id        openapi_types.UUID     `json:"id"`
+	Message   string                 `json:"message"`
+	Severity  SystemEventSeverity    `json:"severity"`
+}
+
+// SystemEventListResponse defines model for SystemEventListResponse.
+type SystemEventListResponse struct {
+	Events []SystemEvent `json:"events"`
+}
+
+// SystemEventSettings defines model for SystemEventSettings.
+type SystemEventSettings = SystemEventSettingsRequest
+
+// SystemEventSettingsRequest defines model for SystemEventSettingsRequest.
+type SystemEventSettingsRequest struct {
+	RetentionDays int32 `json:"retentionDays"`
+}
+
+// SystemEventSeverity defines model for SystemEventSeverity.
+type SystemEventSeverity string
+
+// SystemLogFile defines model for SystemLogFile.
+type SystemLogFile struct {
+	ModifiedAt time.Time `json:"modifiedAt"`
+	Name       string    `json:"name"`
+	SizeBytes  int64     `json:"sizeBytes"`
+}
+
+// SystemLogFileListResponse defines model for SystemLogFileListResponse.
+type SystemLogFileListResponse struct {
+	Files []SystemLogFile `json:"files"`
+}
+
+// SystemLogFileSettings defines model for SystemLogFileSettings.
+type SystemLogFileSettings struct {
+	Directory          string `json:"directory"`
+	EffectiveDirectory string `json:"effectiveDirectory"`
+	Enabled            bool   `json:"enabled"`
+	RetentionDays      int32  `json:"retentionDays"`
+}
+
+// SystemLogFileSettingsRequest defines model for SystemLogFileSettingsRequest.
+type SystemLogFileSettingsRequest struct {
+	Directory     string `json:"directory"`
+	Enabled       bool   `json:"enabled"`
+	RetentionDays int32  `json:"retentionDays"`
+}
+
 // SystemLogLevel defines model for SystemLogLevel.
 type SystemLogLevel string
 
@@ -1320,6 +1437,16 @@ type SystemLogLevelRequest struct {
 // SystemLogLevelResponse defines model for SystemLogLevelResponse.
 type SystemLogLevelResponse struct {
 	Level SystemLogLevel `json:"level"`
+}
+
+// SystemStatusResponse defines model for SystemStatusResponse.
+type SystemStatusResponse struct {
+	Commit          string `json:"commit"`
+	DatabaseType    string `json:"databaseType"`
+	DatabaseVersion string `json:"databaseVersion"`
+	License         string `json:"license"`
+	SourceLocation  string `json:"sourceLocation"`
+	Version         string `json:"version"`
 }
 
 // Tag defines model for Tag.
@@ -1436,13 +1563,13 @@ type LoginJSONRequestBody = LoginRequest
 type AdvancedSearchMediaJSONRequestBody = MediaAdvancedSearchRequest
 
 // CreateMediaItemJSONRequestBody defines body for CreateMediaItem for application/json ContentType.
-type CreateMediaItemJSONRequestBody = MediaItemRequest
+type CreateMediaItemJSONRequestBody = MediaItemCreateRequest
+
+// DeleteMediaItemFileJSONRequestBody defines body for DeleteMediaItemFile for application/json ContentType.
+type DeleteMediaItemFileJSONRequestBody = MediaFileDeleteRequest
 
 // GrabMediaReleaseJSONRequestBody defines body for GrabMediaRelease for application/json ContentType.
 type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
-
-// UpdateMediaItemModeJSONRequestBody defines body for UpdateMediaItemMode for application/json ContentType.
-type UpdateMediaItemModeJSONRequestBody = MediaItemModeRequest
 
 // CreateMediaRequestJSONRequestBody defines body for CreateMediaRequest for application/json ContentType.
 type CreateMediaRequestJSONRequestBody = MediaRequestCreateRequest
@@ -1522,6 +1649,12 @@ type CreateUserJSONRequestBody = UserCreateRequest
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody = UserUpdateRequest
 
+// UpdateSystemEventSettingsJSONRequestBody defines body for UpdateSystemEventSettings for application/json ContentType.
+type UpdateSystemEventSettingsJSONRequestBody = SystemEventSettingsRequest
+
+// UpdateSystemLogFileSettingsJSONRequestBody defines body for UpdateSystemLogFileSettings for application/json ContentType.
+type UpdateSystemLogFileSettingsJSONRequestBody = SystemLogFileSettingsRequest
+
 // UpdateSystemLogLevelJSONRequestBody defines body for UpdateSystemLogLevel for application/json ContentType.
 type UpdateSystemLogLevelJSONRequestBody = SystemLogLevelRequest
 
@@ -1569,15 +1702,18 @@ type ServerInterface interface {
 	// Remove a monitored media item
 	// (DELETE /media/items/{id})
 	DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId, params DeleteMediaItemParams)
+	// Enqueue an automatic search and grab for a monitored item
+	// (POST /media/items/{id}/automatic-searches)
+	EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Delete one media file and rescan the item folder
+	// (POST /media/items/{id}/files/delete)
+	DeleteMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Rescan a media item folder for media and metadata files
 	// (POST /media/items/{id}/files/rescan)
 	RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a release grab with the highest-priority enabled download client
 	// (POST /media/items/{id}/grab)
 	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
-	// Update automatic or manual processing mode for a media item
-	// (PUT /media/items/{id}/mode)
-	UpdateMediaItemMode(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a background release search for a monitored item
 	// (POST /media/items/{id}/release-searches)
 	EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -1755,6 +1891,30 @@ type ServerInterface interface {
 	// Update a local user
 	// (PUT /settings/users/{id})
 	UpdateUser(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get system event retention settings
+	// (GET /system/event-settings)
+	GetSystemEventSettings(w http.ResponseWriter, r *http.Request)
+	// Update system event retention settings
+	// (PUT /system/event-settings)
+	UpdateSystemEventSettings(w http.ResponseWriter, r *http.Request)
+	// List notable application events
+	// (GET /system/events)
+	ListSystemEvents(w http.ResponseWriter, r *http.Request)
+	// Delete a system event
+	// (DELETE /system/events/{id})
+	DeleteSystemEvent(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get log file settings
+	// (GET /system/log-file-settings)
+	GetSystemLogFileSettings(w http.ResponseWriter, r *http.Request)
+	// Update log file settings
+	// (PUT /system/log-file-settings)
+	UpdateSystemLogFileSettings(w http.ResponseWriter, r *http.Request)
+	// List retained log files
+	// (GET /system/log-files)
+	ListSystemLogFiles(w http.ResponseWriter, r *http.Request)
+	// Download a retained log file
+	// (GET /system/log-files/{name}/download)
+	DownloadSystemLogFile(w http.ResponseWriter, r *http.Request, name string)
 	// Get application log verbosity
 	// (GET /system/log-level)
 	GetSystemLogLevel(w http.ResponseWriter, r *http.Request)
@@ -1764,6 +1924,9 @@ type ServerInterface interface {
 	// Stream live application logs
 	// (GET /system/logs)
 	StreamSystemLogs(w http.ResponseWriter, r *http.Request)
+	// Get application and runtime status
+	// (GET /system/status)
+	GetSystemStatus(w http.ResponseWriter, r *http.Request)
 	// Get detected media tool capabilities
 	// (GET /system/tools)
 	GetToolStatus(w http.ResponseWriter, r *http.Request)
@@ -1857,6 +2020,18 @@ func (_ Unimplemented) DeleteMediaItem(w http.ResponseWriter, r *http.Request, i
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Enqueue an automatic search and grab for a monitored item
+// (POST /media/items/{id}/automatic-searches)
+func (_ Unimplemented) EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete one media file and rescan the item folder
+// (POST /media/items/{id}/files/delete)
+func (_ Unimplemented) DeleteMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Rescan a media item folder for media and metadata files
 // (POST /media/items/{id}/files/rescan)
 func (_ Unimplemented) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -1866,12 +2041,6 @@ func (_ Unimplemented) RescanMediaItemFiles(w http.ResponseWriter, r *http.Reque
 // Enqueue a release grab with the highest-priority enabled download client
 // (POST /media/items/{id}/grab)
 func (_ Unimplemented) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Update automatic or manual processing mode for a media item
-// (PUT /media/items/{id}/mode)
-func (_ Unimplemented) UpdateMediaItemMode(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2229,6 +2398,54 @@ func (_ Unimplemented) UpdateUser(w http.ResponseWriter, r *http.Request, id Res
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Get system event retention settings
+// (GET /system/event-settings)
+func (_ Unimplemented) GetSystemEventSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update system event retention settings
+// (PUT /system/event-settings)
+func (_ Unimplemented) UpdateSystemEventSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List notable application events
+// (GET /system/events)
+func (_ Unimplemented) ListSystemEvents(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a system event
+// (DELETE /system/events/{id})
+func (_ Unimplemented) DeleteSystemEvent(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get log file settings
+// (GET /system/log-file-settings)
+func (_ Unimplemented) GetSystemLogFileSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update log file settings
+// (PUT /system/log-file-settings)
+func (_ Unimplemented) UpdateSystemLogFileSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List retained log files
+// (GET /system/log-files)
+func (_ Unimplemented) ListSystemLogFiles(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Download a retained log file
+// (GET /system/log-files/{name}/download)
+func (_ Unimplemented) DownloadSystemLogFile(w http.ResponseWriter, r *http.Request, name string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Get application log verbosity
 // (GET /system/log-level)
 func (_ Unimplemented) GetSystemLogLevel(w http.ResponseWriter, r *http.Request) {
@@ -2244,6 +2461,12 @@ func (_ Unimplemented) UpdateSystemLogLevel(w http.ResponseWriter, r *http.Reque
 // Stream live application logs
 // (GET /system/logs)
 func (_ Unimplemented) StreamSystemLogs(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get application and runtime status
+// (GET /system/status)
+func (_ Unimplemented) GetSystemStatus(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2630,6 +2853,70 @@ func (siw *ServerInterfaceWrapper) DeleteMediaItem(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// EnqueueMediaAutomaticSearch operation middleware
+func (siw *ServerInterfaceWrapper) EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnqueueMediaAutomaticSearch(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMediaItemFile operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMediaItemFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMediaItemFile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // RescanMediaItemFiles operation middleware
 func (siw *ServerInterfaceWrapper) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request) {
 
@@ -2685,38 +2972,6 @@ func (siw *ServerInterfaceWrapper) GrabMediaRelease(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GrabMediaRelease(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// UpdateMediaItemMode operation middleware
-func (siw *ServerInterfaceWrapper) UpdateMediaItemMode(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "id" -------------
-	var id ResourceId
-
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.UpdateMediaItemMode(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4276,6 +4531,190 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// GetSystemEventSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetSystemEventSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSystemEventSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSystemEventSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSystemEventSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSystemEventSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSystemEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListSystemEvents(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSystemEvents(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSystemEvent operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSystemEvent(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSystemEvent(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSystemLogFileSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetSystemLogFileSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSystemLogFileSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSystemLogFileSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSystemLogFileSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSystemLogFileSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSystemLogFiles operation middleware
+func (siw *ServerInterfaceWrapper) ListSystemLogFiles(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSystemLogFiles(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadSystemLogFile operation middleware
+func (siw *ServerInterfaceWrapper) DownloadSystemLogFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadSystemLogFile(w, r, name)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetSystemLogLevel operation middleware
 func (siw *ServerInterfaceWrapper) GetSystemLogLevel(w http.ResponseWriter, r *http.Request) {
 
@@ -4327,6 +4766,26 @@ func (siw *ServerInterfaceWrapper) StreamSystemLogs(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.StreamSystemLogs(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSystemStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetSystemStatus(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSystemStatus(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4512,13 +4971,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/media/items/{id}", wrapper.DeleteMediaItem)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/automatic-searches", wrapper.EnqueueMediaAutomaticSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/files/delete", wrapper.DeleteMediaItemFile)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/files/rescan", wrapper.RescanMediaItemFiles)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/grab", wrapper.GrabMediaRelease)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/media/items/{id}/mode", wrapper.UpdateMediaItemMode)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/release-searches", wrapper.EnqueueMediaReleaseSearch)
@@ -4698,6 +5160,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/settings/users/{id}", wrapper.UpdateUser)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/event-settings", wrapper.GetSystemEventSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/system/event-settings", wrapper.UpdateSystemEventSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/events", wrapper.ListSystemEvents)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/system/events/{id}", wrapper.DeleteSystemEvent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/log-file-settings", wrapper.GetSystemLogFileSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/system/log-file-settings", wrapper.UpdateSystemLogFileSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/log-files", wrapper.ListSystemLogFiles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/log-files/{name}/download", wrapper.DownloadSystemLogFile)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/log-level", wrapper.GetSystemLogLevel)
 	})
 	r.Group(func(r chi.Router) {
@@ -4705,6 +5191,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/logs", wrapper.StreamSystemLogs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/status", wrapper.GetSystemStatus)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/tools", wrapper.GetToolStatus)

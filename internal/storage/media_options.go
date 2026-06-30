@@ -3,6 +3,7 @@ package storage
 func normalizeMediaItemOptions(input MediaItemInput) MediaItemInput {
 	input.MonitorMode = normalizeMonitorMode(input.MonitorMode)
 	input.MinimumAvailability = normalizeMinimumAvailability(input.MinimumAvailability)
+	input.Monitored = input.MonitorMode != "none"
 	return input
 }
 
@@ -14,7 +15,7 @@ func normalizeMediaRequestOptions(input MediaRequestInput) MediaRequestInput {
 
 func normalizeMonitorMode(value string) string {
 	switch value {
-	case "collection":
+	case "none", "collection":
 		return value
 	default:
 		return "only_media"

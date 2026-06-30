@@ -23,9 +23,8 @@ import type {
 	LibraryFolderOptionListResponse,
 	LibraryMediaKind,
 	LibraryScanItemMatchRequest,
-	MediaItemModeRequest,
 	MediaAdvancedSearchRequest,
-	MediaItemRequest,
+	MediaItemCreateRequest,
 	MediaProfile,
 	MediaProfileForm,
 	MediaRequestApproveRequest,
@@ -41,8 +40,15 @@ import type {
 	ReleaseCandidate,
 	SessionResponse,
 	SettingsData,
+	SystemEvent,
+	SystemEventSettings,
+	SystemEventSettingsRequest,
+	SystemLogFile,
+	SystemLogFileSettings,
+	SystemLogFileSettingsRequest,
 	SystemLogLevel,
 	SystemLogLevelResponse,
+	SystemStatusResponse,
 	TagForm,
 	UserForm
 } from './types';
@@ -98,6 +104,111 @@ export async function updateSystemLogLevel(level: SystemLogLevel): Promise<Syste
 	}
 	if (!data) {
 		throw new Error('Log level update did not return a result');
+	}
+	return data;
+}
+
+export async function getSystemStatus(): Promise<SystemStatusResponse> {
+	const { data, error } = await client.GET('/system/status');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('System status request did not return a result');
+	}
+	return data;
+}
+
+export async function getSystemLogFileSettings(): Promise<SystemLogFileSettings> {
+	const { data, error } = await client.GET('/system/log-file-settings');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Log file settings request did not return a result');
+	}
+	return data;
+}
+
+export async function updateSystemLogFileSettings(
+	request: SystemLogFileSettingsRequest
+): Promise<SystemLogFileSettings> {
+	const { data, error } = await client.PUT('/system/log-file-settings', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Log file settings update did not return a result');
+	}
+	return data;
+}
+
+export async function listSystemLogFiles(): Promise<SystemLogFile[]> {
+	const { data, error } = await client.GET('/system/log-files');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.files ?? [];
+}
+
+export async function downloadSystemLogFile(name: string) {
+	const response = await globalThis.fetch(
+		`/api/system/log-files/${encodeURIComponent(name)}/download`,
+		{
+			credentials: 'include'
+		}
+	);
+	if (!response.ok) {
+		throw new Error('Could not download log file');
+	}
+	return response.blob();
+}
+
+export async function listSystemEvents(): Promise<SystemEvent[]> {
+	const { data, error } = await client.GET('/system/events');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.events ?? [];
+}
+
+export async function deleteSystemEvent(id: string) {
+	const { error } = await client.DELETE('/system/events/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function getSystemEventSettings(): Promise<SystemEventSettings> {
+	const { data, error } = await client.GET('/system/event-settings');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Event settings request did not return a result');
+	}
+	return data;
+}
+
+export async function updateSystemEventSettings(
+	request: SystemEventSettingsRequest
+): Promise<SystemEventSettings> {
+	const { data, error } = await client.PUT('/system/event-settings', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Event settings update did not return a result');
 	}
 	return data;
 }
@@ -355,7 +466,7 @@ export async function listMediaItems() {
 	return data?.items ?? [];
 }
 
-export async function createMediaItem(request: MediaItemRequest) {
+export async function createMediaItem(request: MediaItemCreateRequest) {
 	const { data, error } = await client.POST('/media/items', { body: request });
 
 	if (error) {
@@ -441,10 +552,10 @@ export async function rescanMediaItemFiles(id: string) {
 	return data;
 }
 
-export async function updateMediaItemMode(id: string, request: MediaItemModeRequest) {
-	const { data, error } = await client.PUT('/media/items/{id}/mode', {
+export async function deleteMediaItemFile(id: string, path: string) {
+	const { data, error } = await client.POST('/media/items/{id}/files/delete', {
 		params: { path: { id } },
-		body: request
+		body: { path }
 	});
 
 	if (error) {
@@ -480,6 +591,20 @@ export async function enqueueMediaReleaseSearch(id: string) {
 	}
 	if (!data) {
 		throw new Error('Release search job was not returned');
+	}
+	return data;
+}
+
+export async function enqueueMediaAutomaticSearch(id: string) {
+	const { data, error } = await client.POST('/media/items/{id}/automatic-searches', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Automatic search job was not returned');
 	}
 	return data;
 }

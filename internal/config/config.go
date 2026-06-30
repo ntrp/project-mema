@@ -15,6 +15,7 @@ type Config struct {
 	WebDir        string
 	Version       string
 	Commit        string
+	SourceURL     string
 	AdminUsername string
 	AdminPassword string
 	SessionTTL    time.Duration
@@ -30,6 +31,7 @@ func Load() Config {
 		WebDir:        envString("WEB_DIR", "web/build"),
 		Version:       envString("APP_VERSION", "0.0.0-dev"),
 		Commit:        envString("APP_COMMIT", "dev"),
+		SourceURL:     envString("APP_SOURCE_URL", "Not configured"),
 		AdminUsername: envString("ADMIN_USERNAME", "admin"),
 		AdminPassword: envString("ADMIN_PASSWORD", "admin"),
 		SessionTTL:    envDuration("SESSION_TTL", 24*time.Hour),

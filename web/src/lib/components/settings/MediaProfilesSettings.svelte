@@ -92,12 +92,8 @@
 	}
 </script>
 
-<div class="panel" aria-labelledby="profile-settings-title">
+<div class="panel" aria-label="Profiles">
 	<div class="section-heading">
-		<div>
-			<p class="section-kicker">Media</p>
-			<h2 id="profile-settings-title">Profiles</h2>
-		</div>
 		<button type="button" onclick={openModal}>Add profile</button>
 	</div>
 

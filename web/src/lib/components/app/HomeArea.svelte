@@ -4,6 +4,7 @@
 	import MediaItemList from './MediaItemList.svelte';
 	import MediaRequestArea from './MediaRequestArea.svelte';
 	import MediaSearchPanel from './MediaSearchPanel.svelte';
+	import WantedMediaTable from './WantedMediaTable.svelte';
 	import type {
 		DownloadActivity,
 		HomeSection,
@@ -34,7 +35,6 @@
 		approvingRequestId?: string;
 		searchingItemId?: string;
 		scanningMediaItemId?: string;
-		updatingMediaModeItemId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
 		cancellingActivityId?: string;
@@ -43,8 +43,9 @@
 		onAddMedia: (_candidate: MediaSearchResult) => void;
 		onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
 		onFindReleases: (_item: MediaItem) => void;
+		onAutoSearchMedia: (_item: MediaItem) => void;
 		onRescanMediaFiles: (_item: MediaItem) => void;
-		onUpdateMediaMode: (_item: MediaItem, _automatic: boolean) => void;
+		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 		onRefreshActivity: () => void;
@@ -67,7 +68,6 @@
 		approvingRequestId,
 		searchingItemId,
 		scanningMediaItemId,
-		updatingMediaModeItemId,
 		grabbingKey,
 		deletingMediaItemId,
 		cancellingActivityId,
@@ -76,8 +76,9 @@
 		onAddMedia,
 		onApproveMediaRequest,
 		onFindReleases,
+		onAutoSearchMedia,
 		onRescanMediaFiles,
-		onUpdateMediaMode,
+		onDeleteMediaFile,
 		onDeleteMedia,
 		onGrabRelease,
 		onRefreshActivity,
@@ -86,6 +87,7 @@
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
 	const series = $derived(mediaItems.filter((item) => item.type === 'series'));
+	const wanted = $derived(mediaItems.filter((item) => item.status === 'missing'));
 	const selectedMediaItem = $derived(
 		selectedMediaItemId
 			? mediaItems.find(
@@ -128,13 +130,13 @@
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{searchingItemId}
 				{scanningMediaItemId}
-				{updatingMediaModeItemId}
 				{grabbingKey}
 				{deletingMediaItemId}
 				{canManage}
 				{onFindReleases}
+				{onAutoSearchMedia}
 				{onRescanMediaFiles}
-				{onUpdateMediaMode}
+				{onDeleteMediaFile}
 				{onDeleteMedia}
 				{onGrabRelease}
 			/>
@@ -152,19 +154,21 @@
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{searchingItemId}
 				{scanningMediaItemId}
-				{updatingMediaModeItemId}
 				{grabbingKey}
 				{deletingMediaItemId}
 				{canManage}
 				{onFindReleases}
+				{onAutoSearchMedia}
 				{onRescanMediaFiles}
-				{onUpdateMediaMode}
+				{onDeleteMediaFile}
 				{onDeleteMedia}
 				{onGrabRelease}
 			/>
 		{:else}
 			<MediaItemList mediaType="series" items={series} />
 		{/if}
+	{:else if activeSection === 'wanted'}
+		<WantedMediaTable items={wanted} {searchingItemId} {canManage} {onFindReleases} />
 	{:else}
 		<ActivityList
 			{activities}

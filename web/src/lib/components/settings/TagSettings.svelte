@@ -49,12 +49,8 @@
 	}
 </script>
 
-<div class="panel" aria-labelledby="tag-settings-title">
+<div class="panel" aria-label="Tags">
 	<div class="section-heading">
-		<div>
-			<p class="section-kicker">Organization</p>
-			<h2 id="tag-settings-title">Tags</h2>
-		</div>
 		<button type="button" onclick={openTagModal}>Add tag</button>
 	</div>
 

@@ -9,7 +9,7 @@ import (
 	"media-manager/internal/storage"
 )
 
-func mediaItemInput(request MediaItemRequest) (storage.MediaItemInput, bool) {
+func mediaItemInput(request MediaItemCreateRequest) (storage.MediaItemInput, bool) {
 	title := strings.TrimSpace(request.Title)
 	if title == "" || !request.Type.Valid() {
 		return storage.MediaItemInput{}, false
@@ -25,7 +25,6 @@ func mediaItemInput(request MediaItemRequest) (storage.MediaItemInput, bool) {
 		PosterPath:          optionalTrimmedString(request.PosterPath),
 		MonitorMode:         string(request.MonitorMode),
 		MinimumAvailability: string(request.MinimumAvailability),
-		Manual:              request.Manual,
 		QualityProfileID:    optionalTrimmedString(request.QualityProfileId),
 		LibraryFolderID:     optionalUUID(request.LibraryFolderId),
 		Tags:                optionalStringSlice(request.Tags),
@@ -33,6 +32,10 @@ func mediaItemInput(request MediaItemRequest) (storage.MediaItemInput, bool) {
 }
 
 func mediaItemResponse(item storage.MediaItem) MediaItem {
+	genres := append([]string(nil), item.Genres...)
+	facts := mediaFactResponses(item.Facts)
+	seasons := mediaSeasonResponses(item.Seasons)
+	cast := mediaPersonResponses(item.Cast)
 	return MediaItem{
 		Id:                  openapi_types.UUID(item.ID),
 		Type:                MediaType(item.Type),
@@ -44,9 +47,23 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		ExternalId:          item.ExternalID,
 		Overview:            item.Overview,
 		PosterPath:          item.PosterPath,
+		CollectionId:        item.CollectionID,
+		CollectionName:      item.CollectionName,
+		BackdropPath:        item.BackdropPath,
+		MetadataStatus:      item.MetadataStatus,
+		OriginalLanguage:    item.OriginalLanguage,
+		ReleaseDate:         item.ReleaseDate,
+		FirstAirDate:        item.FirstAirDate,
+		RuntimeMinutes:      item.RuntimeMinutes,
+		SeasonCount:         item.SeasonCount,
+		EpisodeCount:        item.EpisodeCount,
+		VoteAverage:         item.VoteAverage,
+		Genres:              &genres,
+		Facts:               &facts,
+		Seasons:             &seasons,
+		Cast:                &cast,
 		MonitorMode:         MediaMonitorMode(item.MonitorMode),
 		MinimumAvailability: MinimumAvailability(item.MinimumAvailability),
-		Manual:              item.Manual,
 		QualityProfileId:    item.QualityProfileID,
 		QualityProfileName:  item.QualityProfileName,
 		LibraryFolderId:     optionalOpenAPIUUID(item.LibraryFolderID),
@@ -76,7 +93,6 @@ func mediaRequestInput(request MediaRequestCreateRequest, requestedByUserID uuid
 		PosterPath:          optionalTrimmedString(request.PosterPath),
 		MonitorMode:         string(request.MonitorMode),
 		MinimumAvailability: string(request.MinimumAvailability),
-		Manual:              request.Manual,
 		Tags:                optionalStringSlice(request.Tags),
 	}, true
 }
@@ -95,7 +111,6 @@ func mediaRequestResponse(request storage.MediaRequest) MediaRequest {
 		PosterPath:          request.PosterPath,
 		MonitorMode:         MediaMonitorMode(request.MonitorMode),
 		MinimumAvailability: MinimumAvailability(request.MinimumAvailability),
-		Manual:              request.Manual,
 		Tags:                &request.Tags,
 		Status:              MediaRequestStatus(request.Status),
 		QualityProfileId:    request.QualityProfileID,
@@ -112,6 +127,55 @@ func optionalStringSlice(values *[]string) []string {
 		return nil
 	}
 	return append([]string(nil), (*values)...)
+}
+
+func mediaFactResponses(values []storage.MediaFact) []MediaMetadataFact {
+	items := make([]MediaMetadataFact, 0, len(values))
+	for _, value := range values {
+		items = append(items, MediaMetadataFact{Label: value.Label, Value: value.Value})
+	}
+	return items
+}
+
+func mediaSeasonResponses(values []storage.MediaSeason) []MediaMetadataSeason {
+	items := make([]MediaMetadataSeason, 0, len(values))
+	for _, value := range values {
+		episodes := mediaEpisodeResponses(value.Episodes)
+		items = append(items, MediaMetadataSeason{
+			Name:         value.Name,
+			EpisodeCount: value.EpisodeCount,
+			AirDate:      value.AirDate,
+			PosterPath:   value.PosterPath,
+			Episodes:     &episodes,
+		})
+	}
+	return items
+}
+
+func mediaEpisodeResponses(values []storage.MediaEpisode) []MediaMetadataEpisode {
+	items := make([]MediaMetadataEpisode, 0, len(values))
+	for _, value := range values {
+		items = append(items, MediaMetadataEpisode{
+			Name:          value.Name,
+			EpisodeNumber: value.EpisodeNumber,
+			Overview:      value.Overview,
+			AirDate:       value.AirDate,
+			StillPath:     value.StillPath,
+		})
+	}
+	return items
+}
+
+func mediaPersonResponses(values []storage.MediaPerson) []MediaMetadataPerson {
+	items := make([]MediaMetadataPerson, 0, len(values))
+	for _, value := range values {
+		items = append(items, MediaMetadataPerson{
+			Name:        value.Name,
+			Role:        value.Role,
+			ProfilePath: value.ProfilePath,
+		})
+	}
+	return items
 }
 
 func releaseCandidateResponse(release storage.ReleaseCandidate) ReleaseCandidate {

@@ -4,6 +4,7 @@
 
 	import { getSystemLogLevel, updateSystemLogLevel } from '$lib/settings/api';
 	import type { SystemLogEntry, SystemLogLevel } from '$lib/settings/types';
+	import SystemLogAttributesButton from './SystemLogAttributesButton.svelte';
 
 	type StreamEnvelope<T> = {
 		data: T;
@@ -19,6 +20,9 @@
 	let connected = $state(false);
 	let streamMessage = $state('Connecting');
 	let errorMessage = $state('');
+	let followLogs = $state(true);
+	let logViewport = $state<HTMLDivElement>();
+	let lastScrollTop = 0;
 
 	onMount(() => {
 		void loadLevel();
@@ -88,15 +92,34 @@
 			return;
 		}
 		entries = [...entries, entry].slice(-maxEntries);
-		void scrollToBottom();
+		if (followLogs) {
+			void scrollToBottom();
+		}
 	}
 
 	async function scrollToBottom() {
 		await tick();
-		const logViewport = document.querySelector<HTMLDivElement>('[data-log-viewer]');
 		if (logViewport) {
 			logViewport.scrollTop = logViewport.scrollHeight;
+			lastScrollTop = logViewport.scrollTop;
 		}
+	}
+
+	function clearLogs() {
+		entries = [];
+	}
+
+	function enableFollow() {
+		followLogs = true;
+		void scrollToBottom();
+	}
+
+	function handleLogScroll(event: Event) {
+		const target = event.currentTarget as HTMLDivElement;
+		if (target.scrollTop < lastScrollTop - 4) {
+			followLogs = false;
+		}
+		lastScrollTop = target.scrollTop;
 	}
 
 	function formatTime(value: string) {
@@ -115,14 +138,20 @@
 	}
 </script>
 
-<section class="panel log-settings-panel" aria-labelledby="system-logs-title">
+<section class="panel log-settings-panel" aria-label="Live logs">
 	<div class="section-heading">
-		<div>
-			<p>System</p>
-			<h2 id="system-logs-title">Logs</h2>
-		</div>
 		<div class="log-controls">
 			<span class:connected class="log-stream-state">{streamMessage}</span>
+			<button type="button" class="secondary compact-action" onclick={clearLogs}>Clear logs</button>
+			<button
+				type="button"
+				class="secondary compact-action"
+				class:active-follow={followLogs}
+				aria-pressed={followLogs}
+				onclick={enableFollow}
+			>
+				Follow logs
+			</button>
 			<label>
 				<span>Verbosity</span>
 				<select value={level} disabled={loading || saving} onchange={changeLevel}>
@@ -138,14 +167,21 @@
 		<p class="inline-error">{errorMessage}</p>
 	{/if}
 
-	<div class="log-viewer" data-log-viewer aria-live="polite" aria-label="Application logs">
+	<div
+		class="log-viewer"
+		data-log-viewer
+		bind:this={logViewport}
+		onscroll={handleLogScroll}
+		aria-live="polite"
+		aria-label="Application logs"
+	>
 		{#each entries as entry (entry.id)}
 			<div class={`log-row level-${entry.level}`}>
 				<time datetime={entry.time}>{formatTime(entry.time)}</time>
 				<span>{entry.level.toUpperCase()}</span>
 				<p>{entry.message}</p>
-				{#if attributeText(entry)}
-					<code>{attributeText(entry)}</code>
+				{#if entry.attributes && attributeText(entry)}
+					<SystemLogAttributesButton attributes={entry.attributes} />
 				{/if}
 			</div>
 		{:else}
