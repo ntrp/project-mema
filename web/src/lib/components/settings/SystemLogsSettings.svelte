@@ -3,6 +3,7 @@
 	import { onMount, tick } from 'svelte';
 
 	import { getSystemLogLevel, updateSystemLogLevel } from '$lib/settings/api';
+	import { formatTimeWithSeconds } from '$lib/settings/dateFormat';
 	import type { SystemLogEntry, SystemLogLevel } from '$lib/settings/types';
 	import SystemLogAttributesButton from './SystemLogAttributesButton.svelte';
 
@@ -122,14 +123,6 @@
 		lastScrollTop = target.scrollTop;
 	}
 
-	function formatTime(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit'
-		}).format(new Date(value));
-	}
-
 	function attributeText(entry: SystemLogEntry) {
 		if (!entry.attributes || Object.keys(entry.attributes).length === 0) {
 			return '';
@@ -177,7 +170,7 @@
 	>
 		{#each entries as entry (entry.id)}
 			<div class={`log-row level-${entry.level}`}>
-				<time datetime={entry.time}>{formatTime(entry.time)}</time>
+				<time datetime={entry.time}>{formatTimeWithSeconds(entry.time)}</time>
 				<span>{entry.level.toUpperCase()}</span>
 				<p>{entry.message}</p>
 				{#if entry.attributes && attributeText(entry)}

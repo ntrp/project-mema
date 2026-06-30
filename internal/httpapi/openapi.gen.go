@@ -94,6 +94,24 @@ func (e DownloadActivityStatus) Valid() bool {
 	}
 }
 
+// Defines values for DownloadActivityFailureType.
+const (
+	Download DownloadActivityFailureType = "download"
+	Import   DownloadActivityFailureType = "import"
+)
+
+// Valid indicates whether the value is a known member of the DownloadActivityFailureType enum.
+func (e DownloadActivityFailureType) Valid() bool {
+	switch e {
+	case Download:
+		return true
+	case Import:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DownloadClientType.
 const (
 	Sabnzbd      DownloadClientType = "sabnzbd"
@@ -285,15 +303,30 @@ func (e MediaItemStatus) Valid() bool {
 
 // Defines values for MediaMonitorMode.
 const (
-	Collection MediaMonitorMode = "collection"
-	None       MediaMonitorMode = "none"
-	OnlyMedia  MediaMonitorMode = "only_media"
+	AllEpisodes      MediaMonitorMode = "all_episodes"
+	Collection       MediaMonitorMode = "collection"
+	ExistingEpisodes MediaMonitorMode = "existing_episodes"
+	FutureEpisodes   MediaMonitorMode = "future_episodes"
+	MissingEpisodes  MediaMonitorMode = "missing_episodes"
+	NoSpecials       MediaMonitorMode = "no_specials"
+	None             MediaMonitorMode = "none"
+	OnlyMedia        MediaMonitorMode = "only_media"
 )
 
 // Valid indicates whether the value is a known member of the MediaMonitorMode enum.
 func (e MediaMonitorMode) Valid() bool {
 	switch e {
+	case AllEpisodes:
+		return true
 	case Collection:
+		return true
+	case ExistingEpisodes:
+		return true
+	case FutureEpisodes:
+		return true
+	case MissingEpisodes:
+		return true
+	case NoSpecials:
 		return true
 	case None:
 		return true
@@ -412,6 +445,27 @@ func (e MinimumAvailability) Valid() bool {
 	case InCinema:
 		return true
 	case Released:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SeriesType.
+const (
+	Absolute SeriesType = "absolute"
+	Daily    SeriesType = "daily"
+	Standard SeriesType = "standard"
+)
+
+// Valid indicates whether the value is a known member of the SeriesType enum.
+func (e SeriesType) Valid() bool {
+	switch e {
+	case Absolute:
+		return true
+	case Daily:
+		return true
+	case Standard:
 		return true
 	default:
 		return false
@@ -604,25 +658,29 @@ type DiscoverBlacklistResponse struct {
 
 // DownloadActivity defines model for DownloadActivity.
 type DownloadActivity struct {
-	CreatedAt          time.Time              `json:"createdAt"`
-	DownloadClientName string                 `json:"downloadClientName"`
-	DownloadId         *string                `json:"downloadId,omitempty"`
-	DownloadUrl        string                 `json:"downloadUrl"`
-	Error              *string                `json:"error,omitempty"`
-	Id                 openapi_types.UUID     `json:"id"`
-	IndexerName        string                 `json:"indexerName"`
-	MediaItemId        openapi_types.UUID     `json:"mediaItemId"`
-	MediaTitle         string                 `json:"mediaTitle"`
-	MediaType          MediaType              `json:"mediaType"`
-	MediaYear          *int32                 `json:"mediaYear,omitempty"`
-	ProgressPercent    *int                   `json:"progressPercent,omitempty"`
-	ReleaseTitle       string                 `json:"releaseTitle"`
-	Status             DownloadActivityStatus `json:"status"`
-	UpdatedAt          time.Time              `json:"updatedAt"`
+	CreatedAt          time.Time                    `json:"createdAt"`
+	DownloadClientName string                       `json:"downloadClientName"`
+	DownloadId         *string                      `json:"downloadId,omitempty"`
+	DownloadUrl        string                       `json:"downloadUrl"`
+	Error              *string                      `json:"error,omitempty"`
+	FailureType        *DownloadActivityFailureType `json:"failureType,omitempty"`
+	Id                 openapi_types.UUID           `json:"id"`
+	IndexerName        string                       `json:"indexerName"`
+	MediaItemId        openapi_types.UUID           `json:"mediaItemId"`
+	MediaTitle         string                       `json:"mediaTitle"`
+	MediaType          MediaType                    `json:"mediaType"`
+	MediaYear          *int32                       `json:"mediaYear,omitempty"`
+	ProgressPercent    *int                         `json:"progressPercent,omitempty"`
+	ReleaseTitle       string                       `json:"releaseTitle"`
+	Status             DownloadActivityStatus       `json:"status"`
+	UpdatedAt          time.Time                    `json:"updatedAt"`
 }
 
 // DownloadActivityStatus defines model for DownloadActivity.Status.
 type DownloadActivityStatus string
+
+// DownloadActivityFailureType defines model for DownloadActivityFailureType.
+type DownloadActivityFailureType string
 
 // DownloadActivityListResponse defines model for DownloadActivityListResponse.
 type DownloadActivityListResponse struct {
@@ -995,6 +1053,7 @@ type MediaItem struct {
 	RuntimeMinutes      *int32                 `json:"runtimeMinutes,omitempty"`
 	SeasonCount         *int32                 `json:"seasonCount,omitempty"`
 	Seasons             *[]MediaMetadataSeason `json:"seasons,omitempty"`
+	SeriesType          *SeriesType            `json:"seriesType,omitempty"`
 	Status              MediaItemStatus        `json:"status"`
 	Tags                *[]string              `json:"tags,omitempty"`
 	Title               string                 `json:"title"`
@@ -1015,6 +1074,7 @@ type MediaItemCreateRequest struct {
 	Overview            *string             `json:"overview,omitempty"`
 	PosterPath          *string             `json:"posterPath,omitempty"`
 	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
+	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
 	StartSearch         bool                `json:"startSearch"`
 	Tags                *[]string           `json:"tags,omitempty"`
 	Title               string              `json:"title"`
@@ -1038,6 +1098,7 @@ type MediaItemRequest struct {
 	Overview            *string             `json:"overview,omitempty"`
 	PosterPath          *string             `json:"posterPath,omitempty"`
 	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
+	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
 	Tags                *[]string           `json:"tags,omitempty"`
 	Title               string              `json:"title"`
 	Type                MediaType           `json:"type"`
@@ -1059,6 +1120,7 @@ type MediaMetadataDetails struct {
 	Facts            *[]MediaMetadataFact   `json:"facts,omitempty"`
 	FirstAirDate     *string                `json:"firstAirDate,omitempty"`
 	Genres           *[]string              `json:"genres,omitempty"`
+	Monitored        *bool                  `json:"monitored,omitempty"`
 	OriginalLanguage *string                `json:"originalLanguage,omitempty"`
 	Overview         *string                `json:"overview,omitempty"`
 	PosterPath       *string                `json:"posterPath,omitempty"`
@@ -1066,6 +1128,7 @@ type MediaMetadataDetails struct {
 	RuntimeMinutes   *int32                 `json:"runtimeMinutes,omitempty"`
 	SeasonCount      *int32                 `json:"seasonCount,omitempty"`
 	Seasons          *[]MediaMetadataSeason `json:"seasons,omitempty"`
+	SeriesType       *SeriesType            `json:"seriesType,omitempty"`
 	Status           *string                `json:"status,omitempty"`
 	Title            string                 `json:"title"`
 	Type             MediaType              `json:"type"`
@@ -1077,6 +1140,7 @@ type MediaMetadataDetails struct {
 type MediaMetadataEpisode struct {
 	AirDate       *string `json:"airDate,omitempty"`
 	EpisodeNumber int32   `json:"episodeNumber"`
+	Monitored     *bool   `json:"monitored,omitempty"`
 	Name          string  `json:"name"`
 	Overview      *string `json:"overview,omitempty"`
 	StillPath     *string `json:"stillPath,omitempty"`
@@ -1100,6 +1164,7 @@ type MediaMetadataSeason struct {
 	AirDate      *string                 `json:"airDate,omitempty"`
 	EpisodeCount *int32                  `json:"episodeCount,omitempty"`
 	Episodes     *[]MediaMetadataEpisode `json:"episodes,omitempty"`
+	Monitored    *bool                   `json:"monitored,omitempty"`
 	Name         string                  `json:"name"`
 	PosterPath   *string                 `json:"posterPath,omitempty"`
 }
@@ -1171,6 +1236,7 @@ type MediaRequest struct {
 	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
 	RequestedByUserId   openapi_types.UUID  `json:"requestedByUserId"`
 	RequestedByUsername string              `json:"requestedByUsername"`
+	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
 	Status              MediaRequestStatus  `json:"status"`
 	Tags                *[]string           `json:"tags,omitempty"`
 	Title               string              `json:"title"`
@@ -1199,6 +1265,7 @@ type MediaRequestCreateRequest struct {
 	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
 	Overview            *string             `json:"overview,omitempty"`
 	PosterPath          *string             `json:"posterPath,omitempty"`
+	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
 	Tags                *[]string           `json:"tags,omitempty"`
 	Title               string              `json:"title"`
 	Type                MediaType           `json:"type"`
@@ -1434,6 +1501,9 @@ type ReleaseSearchResponse struct {
 	Errors   []string           `json:"errors"`
 	Releases []ReleaseCandidate `json:"releases"`
 }
+
+// SeriesType defines model for SeriesType.
+type SeriesType string
 
 // SessionResponse defines model for SessionResponse.
 type SessionResponse struct {
@@ -1744,10 +1814,13 @@ type ServerInterface interface {
 	// List recent download activity
 	// (GET /activity/downloads)
 	ListDownloadActivity(w http.ResponseWriter, r *http.Request)
+	// Delete a failed or cancelled download activity
+	// (DELETE /activity/downloads/{id})
+	DeleteDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Cancel an active download activity
 	// (POST /activity/downloads/{id}/cancel)
 	CancelDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
-	// Manually import a failed download activity
+	// Manually import a failed import activity
 	// (POST /activity/downloads/{id}/manual-import)
 	ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Log in with local admin credentials
@@ -2038,13 +2111,19 @@ func (_ Unimplemented) ListDownloadActivity(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Delete a failed or cancelled download activity
+// (DELETE /activity/downloads/{id})
+func (_ Unimplemented) DeleteDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Cancel an active download activity
 // (POST /activity/downloads/{id}/cancel)
 func (_ Unimplemented) CancelDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Manually import a failed download activity
+// Manually import a failed import activity
 // (POST /activity/downloads/{id}/manual-import)
 func (_ Unimplemented) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -2622,6 +2701,38 @@ func (siw *ServerInterfaceWrapper) ListDownloadActivity(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListDownloadActivity(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDownloadActivity operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDownloadActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDownloadActivity(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5221,6 +5332,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/activity/downloads", wrapper.ListDownloadActivity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/activity/downloads/{id}", wrapper.DeleteDownloadActivity)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/activity/downloads/{id}/cancel", wrapper.CancelDownloadActivity)

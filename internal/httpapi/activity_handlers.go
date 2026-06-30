@@ -59,8 +59,8 @@ func (s *Server) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Req
 		writeSettingsError(w, err, "Could not find download activity")
 		return
 	}
-	if activity.Status != "failed" {
-		writeError(w, http.StatusBadRequest, "activity_not_failed", "Only failed download activity can be manually imported")
+	if !manualImportAllowed(activity) {
+		writeError(w, http.StatusBadRequest, "activity_not_import_failed", "Only failed import activity can be manually imported")
 		return
 	}
 	if err := imports.NewService(s.settings).ImportManualDownload(r.Context(), activity, manualImportInput(request)); err != nil {
@@ -79,6 +79,27 @@ func (s *Server) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Req
 	s.publishDownloadActivity(updated)
 	s.recordEvent(r.Context(), eventSeverityInfo, "downloads", "Download activity manually imported", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": activity.ReleaseTitle})
 	writeJSON(w, http.StatusOK, downloadActivityResponse(updated))
+}
+
+func (s *Server) DeleteDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	activity, err := s.settings.GetDownloadActivity(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find download activity")
+		return
+	}
+	if !downloadActivityDeletable(activity.Status) {
+		writeError(w, http.StatusBadRequest, "activity_not_deletable", "Only failed or cancelled download activity can be deleted")
+		return
+	}
+	if err := s.settings.DeleteDownloadActivity(r.Context(), activity.ID); err != nil {
+		writeSettingsError(w, err, "Could not delete download activity")
+		return
+	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "downloads", "Download activity deleted", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": activity.ReleaseTitle})
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) cancelClientDownload(ctx context.Context, activity storage.DownloadActivity) error {
@@ -107,6 +128,14 @@ func (s *Server) publishDownloadActivity(activity storage.DownloadActivity) {
 
 func downloadActivityCancellable(status string) bool {
 	return status == "queued" || status == "grabbed" || status == "downloading"
+}
+
+func downloadActivityDeletable(status string) bool {
+	return status == "failed" || status == "cancelled"
+}
+
+func manualImportAllowed(activity storage.DownloadActivity) bool {
+	return activity.Status == "failed" && activity.FailureType != nil && *activity.FailureType == "import"
 }
 
 func manualImportInput(request ManualImportRequest) imports.ManualImportInput {

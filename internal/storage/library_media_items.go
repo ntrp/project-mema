@@ -50,17 +50,22 @@ func updateExistingMediaItem(ctx context.Context, q mediaItemQuerier, id uuid.UU
 			media_folder_path = coalesce(media_folder_path, $4::text),
 			monitor_mode = $5,
 			minimum_availability = $6,
+			monitored = $7,
+			series_type = coalesce($8::text, series_type),
 			updated_at = case
 				when (quality_profile_id is null and $2::text is not null)
 					or (library_folder_id is null and $3::uuid is not null)
 					or (media_folder_path is null and $4::text is not null)
 					or monitor_mode <> $5
 					or minimum_availability <> $6
+					or monitored <> $7
+					or ($8::text is not null and series_type is distinct from $8::text)
 				then now()
 				else updated_at
 			end
 		where id = $1
-	`, id, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath, input.MonitorMode, input.MinimumAvailability); err != nil {
+	`, id, input.QualityProfileID, input.LibraryFolderID, mediaFolderPath, input.MonitorMode,
+		input.MinimumAvailability, input.Monitored, input.SeriesType); err != nil {
 		return MediaItem{}, err
 	}
 	if len(input.Tags) > 0 {
@@ -82,20 +87,20 @@ func insertMediaItem(ctx context.Context, q mediaItemQuerier, input MediaItemInp
 		insert into app.media_items (
 			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path,
 			collection_id, collection_name, backdrop_path, metadata_status, original_language,
-			release_date, first_air_date, runtime_minutes, season_count, episode_count, vote_average,
+			series_type, release_date, first_air_date, runtime_minutes, season_count, episode_count, vote_average,
 			genres, facts, seasons, cast_members,
 			monitor_mode, minimum_availability, quality_profile_id, library_folder_id, media_folder_path
 		)
 		values (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9,
-			$10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-			$21::jsonb, $22::jsonb, $23::jsonb, $24::jsonb,
-			$25, $26, $27, $28, $29
+			$10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
+			$22::jsonb, $23::jsonb, $24::jsonb, $25::jsonb,
+			$26, $27, $28, $29, $30
 		)
 		returning id
 	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID,
 		input.Overview, input.PosterPath, input.CollectionID, input.CollectionName, input.BackdropPath,
-		input.MetadataStatus, input.OriginalLanguage, input.ReleaseDate, input.FirstAirDate,
+		input.MetadataStatus, input.OriginalLanguage, input.SeriesType, input.ReleaseDate, input.FirstAirDate,
 		input.RuntimeMinutes, input.SeasonCount, input.EpisodeCount, input.VoteAverage,
 		metadataPayloads.genres, metadataPayloads.facts, metadataPayloads.seasons, metadataPayloads.cast,
 		input.MonitorMode, input.MinimumAvailability, input.QualityProfileID, input.LibraryFolderID,

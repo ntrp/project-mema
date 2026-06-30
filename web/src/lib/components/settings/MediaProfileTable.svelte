@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { languageLabel } from '$lib/settings/languageOptions';
+	import { formatDate } from '$lib/settings/dateFormat';
 	import type { MediaProfile, QualitySizeSetting } from '$lib/settings/types';
 
 	interface Props {
@@ -67,7 +68,7 @@
 					<td>{upgradeUntilName(profile)}</td>
 					<td>{languageSummary(profile)}</td>
 					<td>{scoreSummary(profile)}</td>
-					<td>{new Date(profile.updatedAt).toLocaleDateString()}</td>
+					<td>{formatDate(profile.updatedAt)}</td>
 					<td class="row-actions">
 						<button
 							type="button"

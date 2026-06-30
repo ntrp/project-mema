@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDate } from '$lib/settings/dateFormat';
 	import type { ManagedUser } from '$lib/settings/types';
 
 	interface Props {
@@ -32,7 +33,7 @@
 							{/if}
 						</td>
 						<td>{user.role}</td>
-						<td>{new Date(user.createdAt).toLocaleDateString()}</td>
+						<td>{formatDate(user.createdAt)}</td>
 						<td class="row-actions">
 							<button
 								type="button"

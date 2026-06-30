@@ -620,7 +620,7 @@ h1 {
 }
 
 h2 {
-	font-size: 18px;
+	font-size: 24px;
 }
 
 .workspace-layout {
@@ -1562,6 +1562,29 @@ a.wide-media-card:focus-visible {
 	line-height: 1;
 }
 
+.metadata-title {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.monitor-bookmark {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	color: #7c8798;
+	line-height: 1;
+}
+
+.monitor-bookmark.monitored {
+	color: #f2c94c;
+}
+
+.monitor-bookmark .app-icon {
+	font-size: 0.9em;
+}
+
 .metadata-title-block p,
 .metadata-main p,
 .metadata-facts-grid span,
@@ -1635,12 +1658,14 @@ a.wide-media-card:focus-visible {
 .metadata-crew-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
+	align-items: start;
 	gap: 18px 28px;
 	margin-top: 8px;
 }
 
 .metadata-crew-grid div {
 	display: grid;
+	align-content: start;
 	gap: 4px;
 	min-width: 0;
 }
@@ -1653,6 +1678,20 @@ a.wide-media-card:focus-visible {
 .metadata-crew-grid span {
 	color: #aab4c3;
 	overflow-wrap: anywhere;
+}
+
+.metadata-crew-link {
+	display: inline-flex;
+	width: max-content;
+	min-height: 34px;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid #344156;
+	border-radius: 5px;
+	padding: 0 12px;
+	font-size: 13px;
+	font-weight: 800;
+	text-decoration: none;
 }
 
 .metadata-overview-card {
@@ -1855,10 +1894,11 @@ a.wide-media-card:focus-visible {
 	transform: rotate(225deg);
 }
 
-.metadata-season-panel summary span {
+.metadata-season-title {
 	display: inline-flex;
 	align-items: center;
 	gap: 9px;
+	min-width: 0;
 }
 
 .metadata-season-panel small {
@@ -1905,7 +1945,11 @@ a.wide-media-card:focus-visible {
 	font-size: 18px;
 }
 
-.metadata-episode-copy h3 span {
+.metadata-episode-title {
+	min-width: 0;
+}
+
+.metadata-episode-date {
 	border-radius: 5px;
 	background: #475569;
 	color: #dbe5f1;
@@ -2006,14 +2050,14 @@ a.wide-media-card:focus-visible {
 
 .metadata-cast-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(211px, 1fr));
 	gap: 16px;
 	overflow: hidden;
 }
 
 .metadata-cast-slider {
 	display: grid;
-	grid-auto-columns: 220px;
+	grid-auto-columns: 187px;
 	grid-auto-flow: column;
 	gap: 16px;
 	overflow-x: auto;
@@ -2036,7 +2080,7 @@ a.wide-media-card:focus-visible {
 
 .metadata-people-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(231px, 1fr));
 	gap: 16px;
 }
 
@@ -2044,20 +2088,20 @@ a.wide-media-card:focus-visible {
 	display: grid;
 	grid-template-rows: auto minmax(0, auto) minmax(0, auto);
 	justify-items: center;
-	align-content: start;
-	gap: 10px;
+	align-content: center;
+	gap: 8px;
 	aspect-ratio: 2 / 3;
 	min-width: 0;
 	border: 1px solid #263244;
 	border-radius: 5px;
 	background: #1b2535;
-	padding: 18px 14px;
+	padding: 15px 12px;
 	text-align: center;
 }
 
 .metadata-cast-card div {
 	display: grid;
-	width: min(74%, 148px);
+	width: min(74%, 126px);
 	aspect-ratio: 1;
 	place-items: center;
 	overflow: hidden;
@@ -2083,11 +2127,11 @@ a.wide-media-card:focus-visible {
 }
 
 .metadata-cast-card strong {
-	font-size: 16px;
+	font-size: 14px;
 }
 
 .metadata-cast-card p {
-	font-size: 14px;
+	font-size: 12px;
 	white-space: normal;
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
@@ -4619,7 +4663,7 @@ td {
 	}
 
 	.metadata-cast-slider {
-		grid-auto-columns: 232px;
+		grid-auto-columns: 197px;
 	}
 
 	.poster-row {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ActivityManualImportModal from './ActivityManualImportModal.svelte';
-	import { activityDisplay, cancellable, createdLabel, manualImportable } from './activityDisplay';
+	import ActivityActions from './ActivityActions.svelte';
+	import { activityDisplay, createdLabel } from './activityDisplay';
 	import { manualImportDownloadActivity } from '$lib/settings/api';
 	import type { DownloadActivity, ManualImportRequest } from '$lib/settings/types';
 
@@ -9,17 +10,33 @@
 		loading: boolean;
 		canManage: boolean;
 		cancellingId?: string;
+		deletingId?: string;
 		onRefresh: () => void;
 		onCancel: (_activity: DownloadActivity) => void;
+		onDelete: (_activity: DownloadActivity) => void;
 	}
 
-	let { activities, loading, canManage, cancellingId, onRefresh, onCancel }: Props = $props();
+	let {
+		activities,
+		loading,
+		canManage,
+		cancellingId,
+		deletingId,
+		onRefresh,
+		onCancel,
+		onDelete
+	}: Props = $props();
 	let manualImportActivity = $state<DownloadActivity | undefined>();
 	let importingId = $state<string | undefined>();
 	let importError = $state<string | undefined>();
 
 	function showsProgress(activity: DownloadActivity) {
 		return ['queued', 'grabbed', 'downloading', 'completed'].includes(activity.status);
+	}
+
+	function openManualImport(activity: DownloadActivity) {
+		manualImportActivity = activity;
+		importError = undefined;
 	}
 
 	async function submitManualImport(request: ManualImportRequest) {
@@ -126,31 +143,15 @@
 							</div>
 						</td>
 						<td class="row-actions activity-actions">
-							{#if canManage && manualImportable(activity)}
-								<button
-									type="button"
-									class="secondary icon-button"
-									aria-label={`Manual import ${activity.releaseTitle}`}
-									title="Manual import"
-									onclick={() => ((manualImportActivity = activity), (importError = undefined))}
-								>
-									<span class="app-icon" aria-hidden="true">upload_file</span>
-								</button>
-							{/if}
-							{#if canManage && cancellable(activity)}
-								<button
-									type="button"
-									class="danger icon-button"
-									aria-label={`Cancel ${activity.releaseTitle}`}
-									title="Cancel"
-									disabled={cancellingId === activity.id}
-									onclick={() => onCancel(activity)}
-								>
-									<span class="app-icon" aria-hidden="true">
-										{cancellingId === activity.id ? 'sync' : 'close'}
-									</span>
-								</button>
-							{/if}
+							<ActivityActions
+								{activity}
+								{canManage}
+								{cancellingId}
+								{deletingId}
+								onManualImport={openManualImport}
+								{onCancel}
+								{onDelete}
+							/>
 						</td>
 					</tr>
 				{/each}

@@ -699,6 +699,16 @@ export async function cancelDownloadActivity(id: string) {
 	return data;
 }
 
+export async function deleteDownloadActivity(id: string) {
+	const { error } = await client.DELETE('/activity/downloads/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
 export async function manualImportDownloadActivity(id: string, body: ManualImportRequest) {
 	const { data, error } = await client.POST('/activity/downloads/{id}/manual-import', {
 		params: { path: { id } },

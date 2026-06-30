@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDateTime } from '$lib/settings/dateFormat';
 	import type { MetadataCacheResponse } from '$lib/settings/types';
 
 	interface Props {
@@ -20,13 +21,6 @@
 		onClearAll,
 		onClearPattern
 	}: Props = $props();
-
-	function formatDate(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			dateStyle: 'medium',
-			timeStyle: 'short'
-		}).format(new Date(value));
-	}
 </script>
 
 <section class="panel cache-panel" aria-labelledby="metadata-cache-title">
@@ -100,7 +94,7 @@
 							<td>{entry.itemCount}</td>
 							<td>
 								<span class:status-disabled={entry.expired} class:status-enabled={!entry.expired}>
-									{entry.expired ? 'Expired' : formatDate(entry.expiresAt)}
+									{entry.expired ? 'Expired' : formatDateTime(entry.expiresAt)}
 								</span>
 							</td>
 						</tr>

@@ -24,6 +24,7 @@ func mediaItemInput(request MediaItemCreateRequest) (storage.MediaItemInput, boo
 		Overview:            optionalTrimmedString(request.Overview),
 		PosterPath:          optionalTrimmedString(request.PosterPath),
 		MonitorMode:         string(request.MonitorMode),
+		SeriesType:          optionalSeriesType(request.Type, request.SeriesType),
 		MinimumAvailability: string(request.MinimumAvailability),
 		QualityProfileID:    optionalTrimmedString(request.QualityProfileId),
 		LibraryFolderID:     optionalUUID(request.LibraryFolderId),
@@ -63,6 +64,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		Seasons:             &seasons,
 		Cast:                &cast,
 		MonitorMode:         MediaMonitorMode(item.MonitorMode),
+		SeriesType:          optionalOpenAPISeriesType(item.SeriesType),
 		MinimumAvailability: MinimumAvailability(item.MinimumAvailability),
 		QualityProfileId:    item.QualityProfileID,
 		QualityProfileName:  item.QualityProfileName,
@@ -92,6 +94,7 @@ func mediaRequestInput(request MediaRequestCreateRequest, requestedByUserID uuid
 		Overview:            optionalTrimmedString(request.Overview),
 		PosterPath:          optionalTrimmedString(request.PosterPath),
 		MonitorMode:         string(request.MonitorMode),
+		SeriesType:          optionalSeriesType(request.Type, request.SeriesType),
 		MinimumAvailability: string(request.MinimumAvailability),
 		Tags:                optionalStringSlice(request.Tags),
 	}, true
@@ -110,6 +113,7 @@ func mediaRequestResponse(request storage.MediaRequest) MediaRequest {
 		Overview:            request.Overview,
 		PosterPath:          request.PosterPath,
 		MonitorMode:         MediaMonitorMode(request.MonitorMode),
+		SeriesType:          optionalOpenAPISeriesType(request.SeriesType),
 		MinimumAvailability: MinimumAvailability(request.MinimumAvailability),
 		Tags:                &request.Tags,
 		Status:              MediaRequestStatus(request.Status),
@@ -146,6 +150,7 @@ func mediaSeasonResponses(values []storage.MediaSeason) []MediaMetadataSeason {
 			EpisodeCount: value.EpisodeCount,
 			AirDate:      value.AirDate,
 			PosterPath:   value.PosterPath,
+			Monitored:    &value.Monitored,
 			Episodes:     &episodes,
 		})
 	}
@@ -161,9 +166,26 @@ func mediaEpisodeResponses(values []storage.MediaEpisode) []MediaMetadataEpisode
 			Overview:      value.Overview,
 			AirDate:       value.AirDate,
 			StillPath:     value.StillPath,
+			Monitored:     &value.Monitored,
 		})
 	}
 	return items
+}
+
+func optionalSeriesType(mediaType MediaType, value *SeriesType) *string {
+	if mediaType != Series || value == nil {
+		return nil
+	}
+	seriesType := string(*value)
+	return &seriesType
+}
+
+func optionalOpenAPISeriesType(value *string) *SeriesType {
+	if value == nil {
+		return nil
+	}
+	seriesType := SeriesType(*value)
+	return &seriesType
 }
 
 func mediaPersonResponses(values []storage.MediaPerson) []MediaMetadataPerson {
@@ -213,9 +235,18 @@ func downloadActivityResponse(activity storage.DownloadActivity) DownloadActivit
 		Status:             DownloadActivityStatus(activity.Status),
 		ProgressPercent:    activity.ProgressPercent,
 		Error:              activity.Error,
+		FailureType:        downloadActivityFailureType(activity.FailureType),
 		CreatedAt:          activity.CreatedAt,
 		UpdatedAt:          activity.UpdatedAt,
 	}
+}
+
+func downloadActivityFailureType(value *string) *DownloadActivityFailureType {
+	if value == nil {
+		return nil
+	}
+	failureType := DownloadActivityFailureType(*value)
+	return &failureType
 }
 
 func optionalString(value string) *string {

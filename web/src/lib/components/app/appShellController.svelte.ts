@@ -22,6 +22,7 @@ import {
 	currentSession as currentSessionRequest,
 	deleteCustomFormat as deleteCustomFormatRequest,
 	deleteDiscoverBlacklistItem as deleteDiscoverBlacklistItemRequest,
+	deleteDownloadActivity as deleteDownloadActivityRequest,
 	deleteDownloadClient as deleteDownloadClientRequest,
 	deleteIndexer as deleteIndexerRequest,
 	deleteMediaItemFile as deleteMediaItemFileRequest,
@@ -229,6 +230,7 @@ export function createAppShellController(options: AppShellOptions) {
 	let grabbingKey = $state<string | undefined>();
 	let deletingMediaItemId = $state<string | undefined>();
 	let cancellingActivityId = $state<string | undefined>();
+	let deletingActivityId = $state<string | undefined>();
 	let loadingActivity = $state(false);
 	let scanningLibraryFolderId = $state<string | undefined>();
 	let libraryScansByFolder = $state<Record<string, LibraryScan>>({});
@@ -773,6 +775,7 @@ export function createAppShellController(options: AppShellOptions) {
 					year: candidate.year,
 					monitored: selection.monitorMode !== 'none',
 					monitorMode: selection.monitorMode,
+					seriesType: candidate.type === 'series' ? selection.seriesType : undefined,
 					minimumAvailability: selection.minimumAvailability,
 					startSearch: selection.startSearch,
 					externalProvider: candidate.externalProvider,
@@ -801,6 +804,7 @@ export function createAppShellController(options: AppShellOptions) {
 				title: candidate.title,
 				type: candidate.type,
 				monitorMode: selection.monitorMode,
+				seriesType: candidate.type === 'series' ? selection.seriesType : undefined,
 				minimumAvailability: selection.minimumAvailability,
 				year: candidate.year,
 				externalProvider: candidate.externalProvider,
@@ -1000,6 +1004,21 @@ export function createAppShellController(options: AppShellOptions) {
 			errorMessage = errorMessageFrom(error, 'Could not cancel download activity');
 		} finally {
 			cancellingActivityId = undefined;
+		}
+	}
+
+	async function deleteActivity(activity: DownloadActivity) {
+		deletingActivityId = activity.id;
+		clearNotice();
+
+		try {
+			await deleteDownloadActivityRequest(activity.id);
+			activities = activities.filter((item) => item.id !== activity.id);
+			message = 'Download activity deleted';
+		} catch (error) {
+			errorMessage = errorMessageFrom(error, 'Could not delete download activity');
+		} finally {
+			deletingActivityId = undefined;
 		}
 	}
 
@@ -1903,6 +1922,9 @@ export function createAppShellController(options: AppShellOptions) {
 		get cancellingActivityId() {
 			return cancellingActivityId;
 		},
+		get deletingActivityId() {
+			return deletingActivityId;
+		},
 		get loadingActivity() {
 			return loadingActivity;
 		},
@@ -1983,6 +2005,7 @@ export function createAppShellController(options: AppShellOptions) {
 		deleteMediaItem,
 		grabRelease,
 		cancelActivity,
+		deleteActivity,
 		loadDownloadActivity,
 		saveDownloadClient,
 		testDownloadClientConfig,

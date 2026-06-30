@@ -1,29 +1,40 @@
 <script lang="ts">
+	/* global HTMLSelectElement */
 	import type {
 		LibraryFolder,
 		MediaMonitorMode,
+		MediaType,
 		MinimumAvailability,
-		QualityProfileOption
+		QualityProfileOption,
+		SeriesType
 	} from '$lib/settings/types';
 
 	interface Props {
+		mediaType: MediaType;
 		isAdmin: boolean;
 		libraryFolders: LibraryFolder[];
 		qualityProfiles: QualityProfileOption[];
 		qualityProfileId: string;
 		libraryFolderId: string;
 		monitorMode: MediaMonitorMode;
+		seriesType: SeriesType;
 		minimumAvailability: MinimumAvailability;
+		onMonitorModeChange: (_mode: MediaMonitorMode) => void;
+		onSeriesTypeChange: (_type: SeriesType) => void;
 	}
 
 	let {
+		mediaType,
 		isAdmin,
 		libraryFolders,
 		qualityProfiles,
 		qualityProfileId = $bindable(),
 		libraryFolderId = $bindable(),
-		monitorMode = $bindable(),
-		minimumAvailability = $bindable()
+		monitorMode,
+		seriesType,
+		minimumAvailability = $bindable(),
+		onMonitorModeChange,
+		onSeriesTypeChange
 	}: Props = $props();
 </script>
 
@@ -51,12 +62,39 @@
 
 	<label>
 		<span>Monitor</span>
-		<select bind:value={monitorMode}>
-			<option value="only_media">Only this media</option>
-			<option value="collection">Entire collection</option>
+		<select
+			value={monitorMode}
+			onchange={(event) =>
+				onMonitorModeChange((event.currentTarget as HTMLSelectElement).value as MediaMonitorMode)}
+		>
+			{#if mediaType === 'series'}
+				<option value="all_episodes">All episodes</option>
+				<option value="future_episodes">Future episodes</option>
+				<option value="missing_episodes">Missing episodes</option>
+				<option value="existing_episodes">Existing episodes</option>
+				<option value="no_specials">No specials</option>
+			{:else}
+				<option value="only_media">Only this media</option>
+				<option value="collection">Entire collection</option>
+			{/if}
 			<option value="none">None</option>
 		</select>
 	</label>
+
+	{#if mediaType === 'series'}
+		<label>
+			<span>Series type</span>
+			<select
+				value={seriesType}
+				onchange={(event) =>
+					onSeriesTypeChange((event.currentTarget as HTMLSelectElement).value as SeriesType)}
+			>
+				<option value="standard">Standard</option>
+				<option value="daily">Daily / Date</option>
+				<option value="absolute">Absolute</option>
+			</select>
+		</label>
+	{/if}
 
 	<label>
 		<span>Minimum availability</span>

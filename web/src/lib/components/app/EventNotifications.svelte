@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { listSystemEvents } from '$lib/settings/api';
+	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
 
 	type StreamEnvelope<T> = { data: T };
@@ -58,15 +59,6 @@
 			return undefined;
 		}
 	}
-
-	function formatTime(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			month: 'short',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit'
-		}).format(new Date(value));
-	}
 </script>
 
 <div class="event-notifications">
@@ -95,7 +87,7 @@
 					>
 						<span class="status-pill">{event.severity}</span>
 						<strong>{event.message}</strong>
-						<small>{event.category} - {formatTime(event.createdAt)}</small>
+						<small>{event.category} - {formatCompactDateTime(event.createdAt)}</small>
 					</a>
 				{/each}
 			{:else}

@@ -2,6 +2,7 @@
 	import MediaEpisodeFileSummary from './MediaEpisodeFileSummary.svelte';
 	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
+	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
 	import { activityForEpisode } from './activityQueue';
 	import {
 		episodeKey,
@@ -11,6 +12,7 @@
 		type MediaFileRow
 	} from './mediaFiles';
 	import { imageUrl } from './mediaDetail';
+	import { formatDate } from '$lib/settings/dateFormat';
 	import type {
 		DownloadActivity,
 		MediaItem,
@@ -89,9 +91,15 @@
 		<h2 id="metadata-seasons-title">Seasons</h2>
 		<div class="metadata-season-list">
 			{#each seasons as season, index (season.name)}
-				<details class="metadata-season-panel" open={index === 0}>
+				<details class="metadata-season-panel">
 					<summary>
-						<span>{season.name}</span>
+						<span class="metadata-season-title">
+							<MediaMonitorBookmark
+								monitored={season.monitored === true}
+								label={`${season.name} ${season.monitored ? 'monitored' : 'not monitored'}`}
+							/>
+							<span>{season.name}</span>
+						</span>
 						<small
 							>{season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}</small
 						>
@@ -109,9 +117,13 @@
 								<article class="metadata-episode-row">
 									<div class="metadata-episode-copy">
 										<h3>
-											{episodeTitle(episode)}
+											<MediaMonitorBookmark
+												monitored={episode.monitored === true}
+												label={`${episode.name} ${episode.monitored ? 'monitored' : 'not monitored'}`}
+											/>
+											<span class="metadata-episode-title">{episodeTitle(episode)}</span>
 											{#if episode.airDate}
-												<span>{episode.airDate}</span>
+												<span class="metadata-episode-date">{formatDate(episode.airDate)}</span>
 											{/if}
 										</h3>
 										<p>{episode.overview ?? 'No episode overview available.'}</p>

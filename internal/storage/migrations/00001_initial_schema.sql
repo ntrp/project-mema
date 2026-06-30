@@ -200,6 +200,7 @@ create table if not exists app.media_items (
     backdrop_path text,
     metadata_status text,
     original_language text,
+    series_type text check (series_type in ('standard', 'daily', 'absolute')),
     release_date text,
     first_air_date text,
     runtime_minutes integer,
@@ -212,7 +213,7 @@ create table if not exists app.media_items (
     cast_members jsonb not null default '[]'::jsonb check (jsonb_typeof(cast_members) = 'array'),
     quality_profile_id text,
     media_folder_path text,
-    monitor_mode text not null default 'only_media' check (monitor_mode in ('none', 'only_media', 'collection')),
+    monitor_mode text not null default 'only_media' check (monitor_mode in ('none', 'only_media', 'collection', 'all_episodes', 'future_episodes', 'missing_episodes', 'existing_episodes', 'no_specials')),
     minimum_availability text not null default 'released' check (minimum_availability in ('announced', 'in_cinema', 'released')),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
@@ -338,6 +339,21 @@ create unique index if not exists idx_path_mappings_client_path
 alter table app.media_items
     add column if not exists library_folder_id uuid references app.library_folders(id) on delete set null;
 
+alter table app.media_items
+    add column if not exists series_type text;
+
+-- +goose StatementBegin
+do $$
+begin
+    alter table app.media_items drop constraint if exists media_items_monitor_mode_check;
+    alter table app.media_items drop constraint if exists media_items_series_type_check;
+    alter table app.media_items
+        add constraint media_items_monitor_mode_check check (monitor_mode in ('none', 'only_media', 'collection', 'all_episodes', 'future_episodes', 'missing_episodes', 'existing_episodes', 'no_specials'));
+    alter table app.media_items
+        add constraint media_items_series_type_check check (series_type is null or series_type in ('standard', 'daily', 'absolute'));
+end $$;
+-- +goose StatementEnd
+
 create table if not exists app.media_requests (
     id uuid primary key,
     requested_by_user_id uuid not null references app.users(id) on delete cascade,
@@ -349,6 +365,7 @@ create table if not exists app.media_requests (
     overview text,
     poster_path text,
     monitor_mode text not null default 'only_media',
+    series_type text,
     minimum_availability text not null default 'released',
     status text not null default 'pending',
     quality_profile_id text,
@@ -364,13 +381,17 @@ do $$
 begin
     alter table app.media_requests drop constraint if exists media_requests_status_check;
     alter table app.media_requests add column if not exists monitor_mode text not null default 'only_media';
+    alter table app.media_requests add column if not exists series_type text;
     alter table app.media_requests add column if not exists minimum_availability text not null default 'released';
     alter table app.media_requests drop constraint if exists media_requests_monitor_mode_check;
+    alter table app.media_requests drop constraint if exists media_requests_series_type_check;
     alter table app.media_requests drop constraint if exists media_requests_minimum_availability_check;
     alter table app.media_requests
         add constraint media_requests_status_check check (status in ('pending', 'approved'));
     alter table app.media_requests
-        add constraint media_requests_monitor_mode_check check (monitor_mode in ('none', 'only_media', 'collection'));
+        add constraint media_requests_monitor_mode_check check (monitor_mode in ('none', 'only_media', 'collection', 'all_episodes', 'future_episodes', 'missing_episodes', 'existing_episodes', 'no_specials'));
+    alter table app.media_requests
+        add constraint media_requests_series_type_check check (series_type is null or series_type in ('standard', 'daily', 'absolute'));
     alter table app.media_requests
         add constraint media_requests_minimum_availability_check check (minimum_availability in ('announced', 'in_cinema', 'released'));
 end $$;
@@ -433,6 +454,7 @@ create table if not exists app.download_activity (
     status text not null check (status in ('queued', 'grabbed', 'downloading', 'completed', 'cancelled', 'failed')),
     progress_percent integer check (progress_percent is null or (progress_percent >= 0 and progress_percent <= 100)),
     error text,
+    failure_type text check (failure_type is null or failure_type in ('download', 'import')),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
@@ -442,12 +464,16 @@ do $$
 begin
     alter table app.download_activity add column if not exists download_id text;
     alter table app.download_activity add column if not exists progress_percent integer;
+    alter table app.download_activity add column if not exists failure_type text;
     alter table app.download_activity drop constraint if exists download_activity_progress_percent_check;
+    alter table app.download_activity drop constraint if exists download_activity_failure_type_check;
     alter table app.download_activity drop constraint if exists download_activity_status_check;
     alter table app.download_activity
         add constraint download_activity_status_check check (status in ('queued', 'grabbed', 'downloading', 'completed', 'cancelled', 'failed'));
     alter table app.download_activity
         add constraint download_activity_progress_percent_check check (progress_percent is null or (progress_percent >= 0 and progress_percent <= 100));
+    alter table app.download_activity
+        add constraint download_activity_failure_type_check check (failure_type is null or failure_type in ('download', 'import'));
 end $$;
 -- +goose StatementEnd
 

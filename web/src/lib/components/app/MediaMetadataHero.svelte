@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
+	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
+	import { formatDate } from '$lib/settings/dateFormat';
 	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
@@ -39,12 +41,8 @@
 
 	function topInfo(details: MediaMetadataDetails) {
 		return [
-			details.status ? ['Status', details.status] : undefined,
-			details.releaseDate || details.firstAirDate
-				? [
-						details.type === 'movie' ? 'Release' : 'First aired',
-						details.releaseDate ?? details.firstAirDate
-					]
+			details.type === 'movie' && details.releaseDate
+				? ['Release', formatDate(details.releaseDate)]
 				: undefined,
 			details.runtimeMinutes ? ['Runtime', `${details.runtimeMinutes} min`] : undefined,
 			details.seasonCount ? ['Seasons', `${details.seasonCount}`] : undefined,
@@ -71,7 +69,10 @@
 		{/if}
 	</div>
 	<div class="metadata-title-block">
-		<h1 id={titleId}>{titleWithYear(detail)}</h1>
+		<h1 id={titleId} class="metadata-title">
+			<MediaMonitorBookmark monitored={detail.monitored === true} />
+			<span>{titleWithYear(detail)}</span>
+		</h1>
 		<p>{subtitle(detail)}</p>
 		{#if topInfo(detail).length > 0}
 			<div class="metadata-info-bar" aria-label="Media information">

@@ -1,24 +1,15 @@
 <script lang="ts">
-	import LibraryMediaStatusSection from './LibraryMediaStatusSection.svelte';
 	import MediaFilesTable from './MediaFilesTable.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
 	import MediaSeriesSeasons from './MediaSeriesSeasons.svelte';
 	import ReleaseCandidatesSection from './ReleaseCandidatesSection.svelte';
 	import { resolve } from '$app/paths';
-	import {
-		imageUrl,
-		libraryFolderLabel,
-		mediaMetadataDetail,
-		monitorModeLabel,
-		qualityProfileLabel
-	} from './mediaDetail';
+	import { imageUrl, mediaMetadataDetail } from './mediaDetail';
 	import type {
 		DownloadActivity,
-		LibraryFolder,
 		MediaItem,
 		MediaType,
-		QualityProfileOption,
 		ReleaseCandidate,
 		ReleaseSearchState
 	} from '$lib/settings/types';
@@ -27,8 +18,6 @@
 		mediaType: MediaType;
 		item?: MediaItem;
 		requestedItemId: string;
-		libraryFolders: LibraryFolder[];
-		qualityProfiles: QualityProfileOption[];
 		releaseResults?: ReleaseSearchState;
 		activities: DownloadActivity[];
 		searchingItemId?: string;
@@ -48,8 +37,6 @@
 		mediaType,
 		item,
 		requestedItemId,
-		libraryFolders,
-		qualityProfiles,
 		releaseResults,
 		activities,
 		searchingItemId,
@@ -65,10 +52,6 @@
 		onGrabRelease
 	}: Props = $props();
 
-	const releaseCount = $derived(releaseResults?.releases.length ?? 0);
-	const resolvedLibraryFolderLabel = $derived(libraryFolderLabel(item, libraryFolders));
-	const resolvedQualityProfileLabel = $derived(qualityProfileLabel(item, qualityProfiles));
-	const resolvedMonitorModeLabel = $derived(monitorModeLabel(item));
 	const detail = $derived(item ? mediaMetadataDetail(item) : undefined);
 	const itemActivities = $derived(
 		item ? activities.filter((activity) => activity.mediaItemId === item.id) : []
@@ -141,13 +124,6 @@
 						{/if}
 					{/snippet}
 				</MediaMetadataCore>
-				<LibraryMediaStatusSection
-					{item}
-					{releaseCount}
-					qualityProfileLabel={resolvedQualityProfileLabel}
-					libraryFolderLabel={resolvedLibraryFolderLabel}
-					monitorModeLabel={resolvedMonitorModeLabel}
-				/>
 				{#if item.type === 'movie'}
 					<MediaFilesTable
 						{item}

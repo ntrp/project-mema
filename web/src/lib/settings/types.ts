@@ -67,6 +67,7 @@ export type MediaItemCreateRequest = components['schemas']['MediaItemCreateReque
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type MediaItemStatus = components['schemas']['MediaItemStatus'];
 export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
+export type SeriesType = components['schemas']['SeriesType'];
 export type MinimumAvailability = components['schemas']['MinimumAvailability'];
 export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];

@@ -1,3 +1,4 @@
+import { formatShortDateTime } from '$lib/settings/dateFormat';
 import type { DownloadActivity } from '$lib/settings/types';
 
 const qualityTokens = ['2160p', '1080p', '720p', '576p', '480p'];
@@ -45,14 +46,15 @@ export function cancellable(activity: DownloadActivity) {
 }
 
 export function manualImportable(activity: DownloadActivity) {
-	return activity.status === 'failed';
+	return activity.status === 'failed' && activity.failureType === 'import';
+}
+
+export function deletable(activity: DownloadActivity) {
+	return activity.status === 'failed' || activity.status === 'cancelled';
 }
 
 export function createdLabel(value: string) {
-	return new Intl.DateTimeFormat(undefined, {
-		dateStyle: 'short',
-		timeStyle: 'short'
-	}).format(new Date(value));
+	return formatShortDateTime(value);
 }
 
 export function releaseGroupFromTitle(value: string) {

@@ -34,6 +34,7 @@
 	grabbingKey={app.grabbingKey}
 	deletingMediaItemId={app.deletingMediaItemId}
 	cancellingActivityId={app.cancellingActivityId}
+	deletingActivityId={app.deletingActivityId}
 	loadingActivity={app.loadingActivity}
 	canManage={app.isAdmin}
 	onAddMedia={app.addMedia}
@@ -48,4 +49,5 @@
 	onGrabRelease={app.grabRelease}
 	onRefreshActivity={app.loadDownloadActivity}
 	onCancelActivity={app.cancelActivity}
+	onDeleteActivity={app.deleteActivity}
 />

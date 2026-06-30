@@ -696,6 +696,25 @@ paths:
                 $ref: "#/components/schemas/DownloadActivityListResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /activity/downloads/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    delete:
+      operationId: deleteDownloadActivity
+      tags:
+        - Activity
+      summary: Delete a failed or cancelled download activity
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Download activity deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /activity/downloads/{id}/cancel:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -726,7 +745,7 @@ paths:
       operationId: manualImportDownloadActivity
       tags:
         - Activity
-      summary: Manually import a failed download activity
+      summary: Manually import a failed import activity
       security:
         - sessionCookie: []
       requestBody:
@@ -2575,6 +2594,8 @@ components:
           type: string
         type:
           $ref: "#/components/schemas/MediaType"
+        monitored:
+          type: boolean
         year:
           type: integer
           format: int32
@@ -2596,6 +2617,8 @@ components:
           type: string
         originalLanguage:
           type: string
+        seriesType:
+          $ref: "#/components/schemas/SeriesType"
         releaseDate:
           type: string
         firstAirDate:
@@ -2683,6 +2706,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaMetadataEpisode"
+        monitored:
+          type: boolean
     MediaMetadataEpisode:
       type: object
       additionalProperties: false
@@ -2701,6 +2726,8 @@ components:
           type: string
         stillPath:
           type: string
+        monitored:
+          type: boolean
     MediaMetadataPerson:
       type: object
       additionalProperties: false
@@ -2828,6 +2855,8 @@ components:
           type: boolean
         monitorMode:
           $ref: "#/components/schemas/MediaMonitorMode"
+        seriesType:
+          $ref: "#/components/schemas/SeriesType"
         minimumAvailability:
           $ref: "#/components/schemas/MinimumAvailability"
         externalProvider:
@@ -2885,6 +2914,17 @@ components:
         - none
         - only_media
         - collection
+        - all_episodes
+        - future_episodes
+        - missing_episodes
+        - existing_episodes
+        - no_specials
+    SeriesType:
+      type: string
+      enum:
+        - standard
+        - daily
+        - absolute
     MinimumAvailability:
       type: string
       enum:
@@ -2964,6 +3004,8 @@ components:
           $ref: "#/components/schemas/MediaType"
         monitorMode:
           $ref: "#/components/schemas/MediaMonitorMode"
+        seriesType:
+          $ref: "#/components/schemas/SeriesType"
         minimumAvailability:
           $ref: "#/components/schemas/MinimumAvailability"
         year:
@@ -3683,12 +3725,19 @@ components:
           maximum: 100
         error:
           type: string
+        failureType:
+          $ref: "#/components/schemas/DownloadActivityFailureType"
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
+    DownloadActivityFailureType:
+      type: string
+      enum:
+        - download
+        - import
     ManualImportRequest:
       type: object
       additionalProperties: false

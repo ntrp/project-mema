@@ -153,7 +153,7 @@ func (w *GrabReleaseWorker) markGrabFailed(ctx context.Context, activityID uuid.
 		message = "Download client rejected the release"
 	}
 	slog.Error("marking grab release failed", "activityId", activityID, "message", message)
-	_, err := w.settings.UpdateDownloadActivityStatus(ctx, activityID, "failed", &message)
+	_, err := w.settings.FailDownloadActivity(ctx, activityID, &message, "download")
 	return err
 }
 

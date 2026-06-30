@@ -1,9 +1,4 @@
-import type {
-	LibraryFolder,
-	MediaItem,
-	MediaMetadataDetails,
-	QualityProfileOption
-} from '$lib/settings/types';
+import type { MediaItem, MediaMetadataDetails } from '$lib/settings/types';
 
 export function imageUrl(path?: string, size = 'w780') {
 	if (!path) return undefined;
@@ -16,6 +11,8 @@ export function mediaMetadataDetail(mediaItem: MediaItem): MediaMetadataDetails 
 		title: mediaItem.title,
 		type: mediaItem.type,
 		year: mediaItem.year,
+		monitored: mediaItem.monitored,
+		seriesType: mediaItem.seriesType,
 		externalProvider: mediaItem.externalProvider ?? 'local',
 		externalId: mediaItem.externalId ?? mediaItem.id,
 		overview: mediaItem.overview,
@@ -36,31 +33,4 @@ export function mediaMetadataDetail(mediaItem: MediaItem): MediaMetadataDetails 
 		seasons: mediaItem.seasons,
 		cast: mediaItem.cast
 	};
-}
-
-export function libraryFolderLabel(mediaItem: MediaItem | undefined, folders: LibraryFolder[]) {
-	if (!mediaItem) return 'Not set';
-	return (
-		mediaItem.mediaFolderPath ??
-		mediaItem.libraryFolderPath ??
-		folders.find((folder) => folder.id === mediaItem.libraryFolderId)?.path ??
-		'Not set'
-	);
-}
-
-export function qualityProfileLabel(
-	mediaItem: MediaItem | undefined,
-	profiles: QualityProfileOption[]
-) {
-	if (!mediaItem) return 'Not set';
-	return (
-		mediaItem.qualityProfileName ??
-		profiles.find((profile) => profile.id === mediaItem.qualityProfileId)?.name ??
-		'Not set'
-	);
-}
-
-export function monitorModeLabel(mediaItem: MediaItem | undefined) {
-	if (!mediaItem?.monitored || mediaItem.monitorMode === 'none') return 'None';
-	return mediaItem.monitorMode === 'collection' ? 'Entire collection' : 'This media only';
 }

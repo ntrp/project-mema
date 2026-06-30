@@ -18,6 +18,7 @@ type MediaItem struct {
 	PosterPath       *string
 	MediaMetadataSnapshot
 	MonitorMode         string
+	SeriesType          *string
 	MinimumAvailability string
 	QualityProfileID    *string
 	QualityProfileName  *string
@@ -43,6 +44,7 @@ type MediaItemInput struct {
 	PosterPath       *string
 	MediaMetadataSnapshot
 	MonitorMode         string
+	SeriesType          *string
 	MinimumAvailability string
 	QualityProfileID    *string
 	LibraryFolderID     *uuid.UUID
@@ -63,6 +65,7 @@ type DownloadActivity struct {
 	Status             string
 	ProgressPercent    *int
 	Error              *string
+	FailureType        *string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 }
@@ -76,6 +79,7 @@ type DownloadActivityInput struct {
 	DownloadURL        string
 	Status             string
 	Error              *string
+	FailureType        *string
 }
 
 type ReleaseCandidate struct {

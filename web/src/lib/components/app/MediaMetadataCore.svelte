@@ -2,6 +2,8 @@
 	/* global HTMLDivElement */
 	import { resolve } from '$app/paths';
 	import MediaOverviewInfoCard from './MediaOverviewInfoCard.svelte';
+	import { crewRolePreviews } from './mediaPeople';
+	import { formatDate } from '$lib/settings/dateFormat';
 	import type { Snippet } from 'svelte';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
@@ -13,9 +15,8 @@
 
 	let { detail, peopleHref, seasonsContent }: Props = $props();
 
-	const crewLabels = new Set(['Creator', 'Director', 'Writer', 'Editor', 'Producer']);
 	const facts = $derived(detail.facts ?? []);
-	const crewFacts = $derived(facts.filter((fact) => crewLabels.has(fact.label)));
+	const crewRoles = $derived(crewRolePreviews(facts));
 	const seasons = $derived(detail.seasons ?? []);
 	const cast = $derived(detail.cast ?? []);
 	const castHref = $derived(resolvedPeopleHref(detail));
@@ -73,15 +74,23 @@
 	<div class="metadata-overview-copy">
 		<h2 id="metadata-overview-title">Overview</h2>
 		<p>{detail.overview ?? 'No overview available.'}</p>
-		{#if crewFacts.length > 0}
+		{#if crewRoles.length > 0}
 			<div class="metadata-crew-grid" aria-label="Crew">
-				{#each crewFacts as fact (`${fact.label}:${fact.value}`)}
+				{#each crewRoles as role (role.role)}
 					<div>
-						<strong>{fact.label}</strong>
-						<span>{fact.value}</span>
+						<strong>{role.role}</strong>
+						<span>{role.names.join(', ')}</span>
 					</div>
 				{/each}
 			</div>
+			{#if castHref}
+				<!-- eslint-disable svelte/no-navigation-without-resolve -->
+				<a class="metadata-crew-link secondary" href={castHref}>
+					<span>Full crew</span>
+					<span class="app-icon" aria-hidden="true">arrow_forward</span>
+				</a>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			{/if}
 		{/if}
 	</div>
 	<MediaOverviewInfoCard {detail} {facts} />
@@ -93,8 +102,8 @@
 	<section aria-labelledby="metadata-seasons-title">
 		<h2 id="metadata-seasons-title">Seasons</h2>
 		<div class="metadata-season-list">
-			{#each seasons as season, index (season.name)}
-				<details class="metadata-season-panel" open={index === 0}>
+			{#each seasons as season (season.name)}
+				<details class="metadata-season-panel">
 					<summary>
 						<span>{season.name}</span>
 						<small
@@ -109,7 +118,7 @@
 										<h3>
 											{episodeTitle(episode)}
 											{#if episode.airDate}
-												<span>{episode.airDate}</span>
+												<span>{formatDate(episode.airDate)}</span>
 											{/if}
 										</h3>
 										<p>{episode.overview ?? 'No episode overview available.'}</p>

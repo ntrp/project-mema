@@ -7,6 +7,7 @@
 		listSystemEvents,
 		updateSystemEventSettings
 	} from '$lib/settings/api';
+	import { formatDateTimeWithSeconds } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
 	import SystemLogAttributesButton from './SystemLogAttributesButton.svelte';
 
@@ -108,16 +109,6 @@
 		}
 	}
 
-	function formatTime(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			month: 'short',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			second: '2-digit'
-		}).format(new Date(value));
-	}
-
 	function hasData(event: SystemEvent) {
 		return Object.keys(event.data ?? {}).length > 0;
 	}
@@ -164,7 +155,7 @@
 			<tbody>
 				{#each events as event (event.id)}
 					<tr class={`event-row event-${event.severity}`}>
-						<td>{formatTime(event.createdAt)}</td>
+						<td>{formatDateTimeWithSeconds(event.createdAt)}</td>
 						<td><span class="status-pill">{event.severity}</span></td>
 						<td>{event.category}</td>
 						<td>{event.message}</td>

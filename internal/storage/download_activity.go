@@ -12,15 +12,28 @@ func (s *SettingsStore) CreateDownloadActivity(ctx context.Context, input Downlo
 	id := uuid.New()
 	return scanDownloadActivityRow(s.pool.QueryRow(ctx, `
 		insert into app.download_activity (
-			id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, error
+			id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, error, failure_type
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, created_at, updated_at
-	`, id, input.MediaItemID, input.ReleaseTitle, input.IndexerName, input.DownloadClientName, input.DownloadID, input.DownloadURL, input.Status, input.Error))
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, failure_type, created_at, updated_at
+	`, id, input.MediaItemID, input.ReleaseTitle, input.IndexerName, input.DownloadClientName, input.DownloadID, input.DownloadURL, input.Status, input.Error, input.FailureType))
 }
 
 func (s *SettingsStore) UpdateDownloadActivityStatus(ctx context.Context, id uuid.UUID, status string, activityError *string) (DownloadActivity, error) {
 	return s.UpdateDownloadActivityProgress(ctx, id, status, nil, activityError)
+}
+
+func (s *SettingsStore) FailDownloadActivity(ctx context.Context, id uuid.UUID, activityError *string, failureType string) (DownloadActivity, error) {
+	return scanDownloadActivityRow(s.pool.QueryRow(ctx, `
+		update app.download_activity
+		set status = 'failed',
+			progress_percent = null,
+			error = $2,
+			failure_type = $3,
+			updated_at = now()
+		where id = $1
+		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, failure_type, created_at, updated_at
+	`, id, activityError, failureType))
 }
 
 func (s *SettingsStore) UpdateDownloadActivityProgress(ctx context.Context, id uuid.UUID, status string, progressPercent *int, activityError *string) (DownloadActivity, error) {
@@ -38,9 +51,10 @@ func (s *SettingsStore) updateDownloadActivity(ctx context.Context, id uuid.UUID
 			download_id = coalesce($3, download_id),
 			progress_percent = $4,
 			error = $5,
+			failure_type = null,
 			updated_at = now()
 		where id = $1
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, created_at, updated_at
+		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, failure_type, created_at, updated_at
 	`, id, status, downloadID, progressPercent, activityError))
 }
 
@@ -60,6 +74,7 @@ func (s *SettingsStore) ListDownloadActivity(ctx context.Context) ([]DownloadAct
 			a.status,
 			a.progress_percent,
 			a.error,
+			a.failure_type,
 			a.created_at,
 			a.updated_at
 		from app.download_activity a
@@ -91,6 +106,7 @@ func (s *SettingsStore) GetDownloadActivity(ctx context.Context, id uuid.UUID) (
 			a.status,
 			a.progress_percent,
 			a.error,
+			a.failure_type,
 			a.created_at,
 			a.updated_at
 		from app.download_activity a
@@ -106,11 +122,26 @@ func (s *SettingsStore) GetDownloadActivity(ctx context.Context, id uuid.UUID) (
 func (s *SettingsStore) CancelDownloadActivity(ctx context.Context, id uuid.UUID) (DownloadActivity, error) {
 	return scanDownloadActivityRow(s.pool.QueryRow(ctx, `
 		update app.download_activity
-		set status = 'cancelled', progress_percent = null, error = null, updated_at = now()
+		set status = 'cancelled', progress_percent = null, error = null, failure_type = null, updated_at = now()
 		where id = $1
 			and status in ('queued', 'grabbed', 'downloading')
-		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, created_at, updated_at
+		returning id, media_item_id, release_title, indexer_name, download_client_name, download_id, download_url, status, progress_percent, error, failure_type, created_at, updated_at
 	`, id))
+}
+
+func (s *SettingsStore) DeleteDownloadActivity(ctx context.Context, id uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx, `
+		delete from app.download_activity
+		where id = $1
+			and status in ('failed', 'cancelled')
+	`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 func (s *SettingsStore) ListActiveDownloadActivity(ctx context.Context) ([]DownloadActivity, error) {
@@ -129,6 +160,7 @@ func (s *SettingsStore) ListActiveDownloadActivity(ctx context.Context) ([]Downl
 			a.status,
 			a.progress_percent,
 			a.error,
+			a.failure_type,
 			a.created_at,
 			a.updated_at
 		from app.download_activity a
@@ -173,6 +205,7 @@ func scanDownloadActivityWithMediaRow(row pgx.Row) (DownloadActivity, error) {
 		&activity.Status,
 		&activity.ProgressPercent,
 		&activity.Error,
+		&activity.FailureType,
 		&activity.CreatedAt,
 		&activity.UpdatedAt,
 	)
@@ -192,6 +225,7 @@ func scanDownloadActivityRow(row pgx.Row) (DownloadActivity, error) {
 		&activity.Status,
 		&activity.ProgressPercent,
 		&activity.Error,
+		&activity.FailureType,
 		&activity.CreatedAt,
 		&activity.UpdatedAt,
 	)

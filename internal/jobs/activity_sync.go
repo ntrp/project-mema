@@ -79,7 +79,7 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		if message == "" {
 			message = "Could not fetch download status"
 		}
-		updated, err := w.settings.UpdateDownloadActivityStatus(ctx, activity.ID, "failed", &message)
+		updated, err := w.settings.FailDownloadActivity(ctx, activity.ID, &message, "download")
 		if err == nil {
 			w.publishActivity(updated, activity)
 			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity status check failed", map[string]any{"activityId": activity.ID.String(), "message": message})
@@ -128,7 +128,7 @@ func (w *DownloadActivitySyncWorker) failActivity(ctx context.Context, activity 
 	if message == "" {
 		message = "Download import failed"
 	}
-	updated, err := w.settings.UpdateDownloadActivityStatus(ctx, activity.ID, "failed", &message)
+	updated, err := w.settings.FailDownloadActivity(ctx, activity.ID, &message, "import")
 	if err != nil {
 		return err
 	}
@@ -174,6 +174,7 @@ func publishDownloadActivity(broker *events.Broker, activity storage.DownloadAct
 		"status":             activity.Status,
 		"progressPercent":    activity.ProgressPercent,
 		"error":              activity.Error,
+		"failureType":        activity.FailureType,
 		"createdAt":          activity.CreatedAt,
 		"updatedAt":          activity.UpdatedAt,
 	})

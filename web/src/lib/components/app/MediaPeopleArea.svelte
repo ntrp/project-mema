@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
 	import { imageUrl } from './mediaDetail';
+	import { crewRoleLabels } from './mediaPeople';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
 
 	interface Props {
@@ -16,7 +17,6 @@
 
 	let { detail, loading }: Props = $props();
 
-	const crewLabels = ['Creator', 'Director', 'Writer', 'Editor', 'Producer'];
 	const groups = $derived(detail ? peopleGroups(detail) : []);
 
 	function peopleGroups(details: MediaMetadataDetails): { title: string; people: PersonCard[] }[] {
@@ -25,7 +25,7 @@
 			role: person.role,
 			image: person.profilePath
 		}));
-		const crew = crewLabels
+		const crew = crewRoleLabels
 			.map((label) => ({
 				title: label,
 				people: peopleFromFact((details.facts ?? []).find((fact) => fact.label === label))

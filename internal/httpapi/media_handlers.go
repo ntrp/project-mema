@@ -388,7 +388,7 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 			writeMetadataDetailsError(w, err)
 			return
 		}
-		addInputs[index] = enriched
+		addInputs[index] = applySeriesMonitoring(enriched)
 	}
 	if len(addInputs) > 0 {
 		input.MediaInput = &addInputs[0]
@@ -521,7 +521,7 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 	})
 	if err != nil {
 		enqueueError := "Could not enqueue download job"
-		_, _ = s.settings.UpdateDownloadActivityStatus(r.Context(), activity.ID, "failed", &enqueueError)
+		_, _ = s.settings.FailDownloadActivity(r.Context(), activity.ID, &enqueueError, "download")
 		s.recordEvent(r.Context(), eventSeverityError, "downloads", "Download enqueue failed", map[string]any{"mediaItemId": item.ID.String(), "activityId": activity.ID.String(), "releaseTitle": release.Title, "error": err.Error()})
 		writeError(w, http.StatusInternalServerError, "download_enqueue_failed", enqueueError)
 		return

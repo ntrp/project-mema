@@ -229,7 +229,7 @@ func grabReleaseNow(
 		}
 		slog.Error("download client rejected release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "message", message)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download client rejected automatic release", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "releaseTitle": release.Title, "downloadClientName": client.Name, "message": message})
-		_, err := settings.UpdateDownloadActivityStatus(ctx, activity.ID, "failed", &message)
+		_, err := settings.FailDownloadActivity(ctx, activity.ID, &message, "download")
 		return err
 	}
 	slog.Debug("download client accepted release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "downloadId", result.DownloadID)

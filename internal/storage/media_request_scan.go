@@ -17,6 +17,7 @@ func scanMediaRequest(row pgx.Row) (MediaRequest, error) {
 		&request.PosterPath,
 		&request.Status,
 		&request.MonitorMode,
+		&request.SeriesType,
 		&request.MinimumAvailability,
 		&request.QualityProfileID,
 		&request.LibraryFolderID,

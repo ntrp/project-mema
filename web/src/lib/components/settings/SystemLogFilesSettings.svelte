@@ -6,6 +6,7 @@
 		listSystemLogFiles,
 		updateSystemLogFileSettings
 	} from '$lib/settings/api';
+	import { formatLongDateTime } from '$lib/settings/dateFormat';
 	import type { SystemLogFile, SystemLogFileSettings } from '$lib/settings/types';
 
 	let settings = $state<SystemLogFileSettings>();
@@ -87,16 +88,6 @@
 		retentionDays = nextSettings.retentionDays;
 	}
 
-	function formatTime(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			year: 'numeric',
-			month: 'short',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit'
-		}).format(new Date(value));
-	}
-
 	function formatSize(bytes: number) {
 		if (bytes < 1024) {
 			return `${bytes} B`;
@@ -159,7 +150,7 @@
 					<tr>
 						<td>{file.name}</td>
 						<td>{formatSize(file.sizeBytes)}</td>
-						<td>{formatTime(file.modifiedAt)}</td>
+						<td>{formatLongDateTime(file.modifiedAt)}</td>
 						<td>
 							<button
 								type="button"

@@ -30,6 +30,7 @@ type MediaSeason struct {
 	EpisodeCount *int32         `json:"episodeCount,omitempty"`
 	AirDate      *string        `json:"airDate,omitempty"`
 	PosterPath   *string        `json:"posterPath,omitempty"`
+	Monitored    bool           `json:"monitored"`
 	Episodes     []MediaEpisode `json:"episodes,omitempty"`
 }
 
@@ -39,6 +40,7 @@ type MediaEpisode struct {
 	Overview      *string `json:"overview,omitempty"`
 	AirDate       *string `json:"airDate,omitempty"`
 	StillPath     *string `json:"stillPath,omitempty"`
+	Monitored     bool    `json:"monitored"`
 }
 
 type MediaPerson struct {

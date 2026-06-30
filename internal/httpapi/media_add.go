@@ -21,7 +21,7 @@ func (s *Server) createMediaForAdd(ctx context.Context, input storage.MediaItemI
 		if err != nil {
 			return nil, err
 		}
-		inputs[index] = enriched
+		inputs[index] = applySeriesMonitoring(enriched)
 	}
 	return s.createMediaInputs(ctx, inputs)
 }
@@ -54,6 +54,7 @@ func mediaInputFromRequest(
 		Overview:            request.Overview,
 		PosterPath:          request.PosterPath,
 		MonitorMode:         request.MonitorMode,
+		SeriesType:          request.SeriesType,
 		MinimumAvailability: request.MinimumAvailability,
 		Tags:                request.Tags,
 		QualityProfileID:    &qualityProfileID,
@@ -160,7 +161,7 @@ func mediaCast(cast []metadata.Person) []storage.MediaPerson {
 }
 
 func (s *Server) mediaAddInputs(ctx context.Context, input storage.MediaItemInput) ([]storage.MediaItemInput, error) {
-	if input.MonitorMode != "collection" {
+	if input.Type != "movie" || input.MonitorMode != "collection" {
 		return []storage.MediaItemInput{input}, nil
 	}
 	collection, err := s.mediaCollection(ctx, input)

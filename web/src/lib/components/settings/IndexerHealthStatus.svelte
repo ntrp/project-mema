@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { Indexer, IntegrationTestResponse } from '$lib/settings/types';
 
 	interface Props {
@@ -19,19 +20,10 @@
 	function detail(indexer: Indexer) {
 		if (checking) return 'Checking now';
 		if (result) return `${result.message} - ${result.latencyMs} ms`;
-		if (indexer.nextCheckAt) return `Next check ${formatDate(indexer.nextCheckAt)}`;
+		if (indexer.nextCheckAt) return `Next check ${formatCompactDateTime(indexer.nextCheckAt)}`;
 		if (indexer.lastError) return indexer.lastError;
-		if (indexer.lastQueryAt) return `Last query ${formatDate(indexer.lastQueryAt)}`;
+		if (indexer.lastQueryAt) return `Last query ${formatCompactDateTime(indexer.lastQueryAt)}`;
 		return 'No query yet';
-	}
-
-	function formatDate(value: string) {
-		return new Intl.DateTimeFormat(undefined, {
-			month: 'short',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit'
-		}).format(new Date(value));
 	}
 </script>
 

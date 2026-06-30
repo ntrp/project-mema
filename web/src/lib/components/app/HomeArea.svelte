@@ -44,6 +44,7 @@
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
 		cancellingActivityId?: string;
+		deletingActivityId?: string;
 		canManage: boolean;
 		loadingActivity: boolean;
 		onAddMedia: (_candidate: MediaSearchResult) => void;
@@ -58,6 +59,7 @@
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 		onRefreshActivity: () => void;
 		onCancelActivity: (_activity: DownloadActivity) => void;
+		onDeleteActivity: (_activity: DownloadActivity) => void;
 	}
 
 	let {
@@ -83,6 +85,7 @@
 		grabbingKey,
 		deletingMediaItemId,
 		cancellingActivityId,
+		deletingActivityId,
 		canManage,
 		loadingActivity,
 		onAddMedia,
@@ -96,7 +99,8 @@
 		onDeleteMedia,
 		onGrabRelease,
 		onRefreshActivity,
-		onCancelActivity
+		onCancelActivity,
+		onDeleteActivity
 	}: Props = $props();
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
@@ -150,8 +154,6 @@
 				mediaType={activeSection === 'movies' ? 'movie' : 'series'}
 				item={selectedMediaItem}
 				requestedItemId={selectedMediaItemId}
-				{libraryFolders}
-				{qualityProfiles}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{activities}
 				{searchingItemId}
@@ -180,8 +182,10 @@
 			loading={loadingActivity}
 			{canManage}
 			cancellingId={cancellingActivityId}
+			deletingId={deletingActivityId}
 			onRefresh={onRefreshActivity}
 			onCancel={onCancelActivity}
+			onDelete={onDeleteActivity}
 		/>
 	{/if}
 </section>

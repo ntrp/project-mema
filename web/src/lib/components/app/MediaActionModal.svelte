@@ -13,6 +13,7 @@
 		MediaMonitorMode,
 		MinimumAvailability,
 		QualityProfileOption,
+		SeriesType,
 		Tag
 	} from '$lib/settings/types';
 
@@ -40,13 +41,16 @@
 
 	let qualityProfileId = $state('');
 	let libraryFolderId = $state('');
-	let monitorMode = $state<MediaMonitorMode>('only_media');
+	let selectedMonitorMode = $state<MediaMonitorMode | undefined>();
+	let selectedSeriesType = $state<SeriesType | undefined>();
 	let minimumAvailability = $state<MinimumAvailability>('released');
 	let startSearch = $state(true);
 	let selectedTags = $state<string[]>([]);
 
 	const canConfirm = $derived(!isAdmin || (qualityProfileId !== '' && libraryFolderId !== ''));
 	const posterUrl = $derived(mediaPosterUrl(candidate.posterPath));
+	const monitorMode = $derived(selectedMonitorMode ?? defaultMonitorMode(candidate.type));
+	const seriesType = $derived(selectedSeriesType ?? 'standard');
 
 	$effect(() => {
 		if (qualityProfileId === '') {
@@ -67,9 +71,14 @@
 			libraryFolderId,
 			tags: selectedTags,
 			monitorMode,
+			seriesType,
 			minimumAvailability,
 			startSearch
 		});
+	}
+
+	function defaultMonitorMode(type: MediaSearchResult['type']): MediaMonitorMode {
+		return type === 'series' ? 'all_episodes' : 'only_media';
 	}
 </script>
 
@@ -105,12 +114,16 @@
 			{#if isAdmin}
 				<MediaActionOptions
 					{isAdmin}
+					mediaType={candidate.type}
 					{libraryFolders}
 					{qualityProfiles}
 					bind:qualityProfileId
 					bind:libraryFolderId
-					bind:monitorMode
+					{monitorMode}
+					{seriesType}
 					bind:minimumAvailability
+					onMonitorModeChange={(mode) => (selectedMonitorMode = mode)}
+					onSeriesTypeChange={(type) => (selectedSeriesType = type)}
 				/>
 				{#if libraryFolders.length === 0}
 					<p class="error">Add a library folder in Settings before adding monitored media.</p>
@@ -118,12 +131,16 @@
 			{:else}
 				<MediaActionOptions
 					{isAdmin}
+					mediaType={candidate.type}
 					{libraryFolders}
 					{qualityProfiles}
 					bind:qualityProfileId
 					bind:libraryFolderId
-					bind:monitorMode
+					{monitorMode}
+					{seriesType}
 					bind:minimumAvailability
+					onMonitorModeChange={(mode) => (selectedMonitorMode = mode)}
+					onSeriesTypeChange={(type) => (selectedSeriesType = type)}
 				/>
 				<p class="muted">
 					Your request will be visible under Requests. An admin will choose the folder and quality

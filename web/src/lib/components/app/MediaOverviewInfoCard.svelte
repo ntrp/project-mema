@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { providerPageUrl } from '$lib/settings/providerLinks';
+	import { formatDate } from '$lib/settings/dateFormat';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
 
 	interface Props {
@@ -42,12 +43,15 @@
 	}
 
 	function releaseDates(details: MediaMetadataDetails, lookup: Map<string, string>) {
+		if (details.type === 'series') {
+			return details.firstAirDate ? [formatDate(details.firstAirDate)] : [];
+		}
 		const values = [
 			lookup.get('Theatrical Release Date') ?? details.releaseDate,
 			lookup.get('Digital Release Date'),
 			lookup.get('Physical Release Date')
 		].filter((value): value is string => Boolean(value));
-		return [...new Set(values)];
+		return [...new Set(values)].map(formatDate);
 	}
 
 	function languageName(code?: string) {

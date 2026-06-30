@@ -457,6 +457,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/activity/downloads/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete a failed or cancelled download activity */
+		delete: operations['deleteDownloadActivity'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/activity/downloads/{id}/cancel': {
 		parameters: {
 			query?: never;
@@ -487,7 +506,7 @@ export interface paths {
 		};
 		get?: never;
 		put?: never;
-		/** Manually import a failed download activity */
+		/** Manually import a failed import activity */
 		post: operations['manualImportDownloadActivity'];
 		delete?: never;
 		options?: never;
@@ -1409,6 +1428,7 @@ export interface components {
 		MediaMetadataDetails: {
 			title: string;
 			type: components['schemas']['MediaType'];
+			monitored?: boolean;
 			/** Format: int32 */
 			year?: number;
 			externalProvider: string;
@@ -1420,6 +1440,7 @@ export interface components {
 			backdropPath?: string;
 			status?: string;
 			originalLanguage?: string;
+			seriesType?: components['schemas']['SeriesType'];
 			releaseDate?: string;
 			firstAirDate?: string;
 			/** Format: int32 */
@@ -1455,6 +1476,7 @@ export interface components {
 			airDate?: string;
 			posterPath?: string;
 			episodes?: components['schemas']['MediaMetadataEpisode'][];
+			monitored?: boolean;
 		};
 		MediaMetadataEpisode: {
 			name: string;
@@ -1463,6 +1485,7 @@ export interface components {
 			overview?: string;
 			airDate?: string;
 			stillPath?: string;
+			monitored?: boolean;
 		};
 		MediaMetadataPerson: {
 			name: string;
@@ -1512,6 +1535,7 @@ export interface components {
 			year?: number;
 			monitored: boolean;
 			monitorMode: components['schemas']['MediaMonitorMode'];
+			seriesType?: components['schemas']['SeriesType'];
 			minimumAvailability: components['schemas']['MinimumAvailability'];
 			externalProvider?: string;
 			externalId?: string;
@@ -1531,7 +1555,17 @@ export interface components {
 		/** @enum {string} */
 		MediaItemStatus: 'missing' | 'downloading' | 'downloaded';
 		/** @enum {string} */
-		MediaMonitorMode: 'none' | 'only_media' | 'collection';
+		MediaMonitorMode:
+			| 'none'
+			| 'only_media'
+			| 'collection'
+			| 'all_episodes'
+			| 'future_episodes'
+			| 'missing_episodes'
+			| 'existing_episodes'
+			| 'no_specials';
+		/** @enum {string} */
+		SeriesType: 'standard' | 'daily' | 'absolute';
 		/** @enum {string} */
 		MinimumAvailability: 'announced' | 'in_cinema' | 'released';
 		MediaRequestListResponse: {
@@ -1562,6 +1596,7 @@ export interface components {
 			title: string;
 			type: components['schemas']['MediaType'];
 			monitorMode: components['schemas']['MediaMonitorMode'];
+			seriesType?: components['schemas']['SeriesType'];
 			minimumAvailability: components['schemas']['MinimumAvailability'];
 			/** Format: int32 */
 			year?: number;
@@ -1816,11 +1851,14 @@ export interface components {
 			status: 'queued' | 'grabbed' | 'downloading' | 'completed' | 'cancelled' | 'failed';
 			progressPercent?: number;
 			error?: string;
+			failureType?: components['schemas']['DownloadActivityFailureType'];
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
 			updatedAt: string;
 		};
+		/** @enum {string} */
+		DownloadActivityFailureType: 'download' | 'import';
 		ManualImportRequest: {
 			sourcePath: string;
 			targetFileName?: string;
@@ -2937,6 +2975,29 @@ export interface operations {
 				};
 			};
 			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteDownloadActivity: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Download activity deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	cancelDownloadActivity: {

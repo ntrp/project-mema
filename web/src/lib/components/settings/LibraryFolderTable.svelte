@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatDateTime } from '$lib/settings/dateFormat';
 	import type { LibraryFolder } from '$lib/settings/types';
 
 	interface Props {
@@ -26,7 +27,7 @@
 				{#each folders as folder (folder.id)}
 					<tr>
 						<td>{folder.path}</td>
-						<td>{new Date(folder.createdAt).toLocaleString()}</td>
+						<td>{formatDateTime(folder.createdAt)}</td>
 						<td class="row-actions">
 							<button
 								type="button"

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import { formatDate } from '$lib/settings/dateFormat';
 	import type { Tag, TagForm } from '$lib/settings/types';
 
 	interface Props {
@@ -72,7 +73,7 @@
 						<td>
 							<span class="tag-pill">{tag.name}</span>
 						</td>
-						<td>{new Date(tag.updatedAt).toLocaleDateString()}</td>
+						<td>{formatDate(tag.updatedAt)}</td>
 						<td class="row-actions">
 							<button
 								type="button"
