@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
 	import { getSystemStatus } from '$lib/settings/api';
 	import type { SystemStatusResponse } from '$lib/settings/types';
 
@@ -49,79 +52,49 @@
 	}
 </script>
 
-<section class="panel status-panel" aria-label="About">
-	<div class="section-heading">
-		<h2>About</h2>
-		<button type="button" class="secondary compact-action" disabled={loading} onclick={load}>
-			Refresh
-		</button>
-	</div>
+<Card.Root aria-label="About">
+	<Card.Header class="border-b border-border">
+		<Card.Title>About</Card.Title>
+		<Card.Action>
+			<Button type="button" variant="secondary" size="sm" disabled={loading} onclick={load}>
+				<RefreshCwIcon class={loading ? 'animate-spin' : ''} />
+				Refresh
+			</Button>
+		</Card.Action>
+	</Card.Header>
 
-	{#if errorMessage}
-		<p class="inline-error">{errorMessage}</p>
-	{/if}
+	<Card.Content class="grid gap-4 pt-5">
+		{#if errorMessage}
+			<p class="text-sm font-medium text-destructive">{errorMessage}</p>
+		{/if}
 
-	{#if loading && !status}
-		<p class="muted">Loading system status...</p>
-	{:else if status}
-		<dl class="status-details">
-			{#each details as detail (detail.label)}
-				<div>
-					<dt>{detail.label}</dt>
-					<dd>
-						{#if detail.link}
-							<!-- eslint-disable svelte/no-navigation-without-resolve -->
-							<a href={detail.link} target="_blank" rel="noreferrer">{detail.value}</a>
-						{:else}
-							{detail.value}
-						{/if}
-					</dd>
-				</div>
-			{/each}
-		</dl>
-	{/if}
-</section>
-
-<style>
-	.status-panel {
-		display: grid;
-		gap: 16px;
-	}
-
-	.status-details {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 14px;
-		margin: 0;
-	}
-
-	.status-details div {
-		display: grid;
-		gap: 5px;
-		min-width: 0;
-	}
-
-	.status-details dt {
-		color: #9aa7ba;
-		font-size: 12px;
-		font-weight: 800;
-		text-transform: uppercase;
-	}
-
-	.status-details dd {
-		margin: 0;
-		overflow-wrap: anywhere;
-		color: #e6edf7;
-		font-weight: 800;
-	}
-
-	.status-details a {
-		color: #67e8f9;
-	}
-
-	@media (width <= 760px) {
-		.status-details {
-			grid-template-columns: 1fr;
-		}
-	}
-</style>
+		{#if loading && !status}
+			<p class="text-sm text-muted-foreground">Loading system status...</p>
+		{:else if status}
+			<dl class="m-0 grid grid-cols-1 gap-4 min-[761px]:grid-cols-2">
+				{#each details as detail (detail.label)}
+					<div class="grid min-w-0 gap-1">
+						<dt class="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+							{detail.label}
+						</dt>
+						<dd class="m-0 break-words text-sm font-medium text-foreground">
+							{#if detail.link}
+								<!-- eslint-disable svelte/no-navigation-without-resolve -->
+								<a
+									class="text-primary underline-offset-4 hover:underline"
+									href={detail.link}
+									target="_blank"
+									rel="noreferrer"
+								>
+									{detail.value}
+								</a>
+							{:else}
+								{detail.value}
+							{/if}
+						</dd>
+					</div>
+				{/each}
+			</dl>
+		{/if}
+	</Card.Content>
+</Card.Root>

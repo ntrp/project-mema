@@ -1,24 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
+	import FileNamingTemplateSection from '$lib/components/settings/FileNamingTemplateSection.svelte';
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { defaultFileNamingTemplates } from '$lib/settings/fileNamingTemplates';
 	import { getFileNamingSettings, updateFileNamingSettings } from '$lib/settings/api';
 	import type { FileNamingSettingsRequest } from '$lib/settings/types';
 
 	type TemplateField = keyof FileNamingSettingsRequest;
-
-	const defaultTemplates: FileNamingSettingsRequest = {
-		movieFileFormat: '{Movie Title} ({Release Year}) {Quality Full}',
-		movieFolderFormat: '{Movie Title} ({Release Year})',
-		seriesEpisodeFormat:
-			'{Series Title} - S{season:00}E{episode:00} - {Episode Title} {Quality Full}',
-		dailyEpisodeFormat: '{Series Title} - {Air-Date} - {Episode Title} {Quality Full}',
-		animeEpisodeFormat:
-			'{Series Title} - S{season:00}E{episode:00} - {Episode Title} {Quality Full}',
-		seriesFolderFormat: '{Series Title}',
-		seasonFolderFormat: 'Season {season}',
-		specialsFolderFormat: 'Specials'
-	};
 
 	const templateSections: {
 		id: string;
@@ -57,7 +49,7 @@
 		}
 	];
 
-	let templates = $state<FileNamingSettingsRequest>({ ...defaultTemplates });
+	let templates = $state<FileNamingSettingsRequest>({ ...defaultFileNamingTemplates });
 	let loading = $state(true);
 	let saving = $state(false);
 	let message = $state('');
@@ -130,7 +122,7 @@
 	}
 
 	function resetDefaults() {
-		templates = { ...defaultTemplates };
+		templates = { ...defaultFileNamingTemplates };
 		message = '';
 		errorMessage = '';
 	}
@@ -142,46 +134,46 @@
 	}
 </script>
 
-<div class="panel file-naming-panel" aria-label="File naming">
-	<form onsubmit={saveSettings}>
-		<div class="section-heading">
-			<div class="file-naming-actions">
-				<button type="button" class="secondary" disabled={loading || saving} onclick={loadSettings}>
-					Reload
-				</button>
-				<button
-					type="button"
-					class="secondary"
-					disabled={loading || saving}
-					onclick={resetDefaults}
-				>
-					Defaults
-				</button>
-				<button type="submit" disabled={loading || saving || hasValidationErrors}>
-					{saving ? 'Saving' : 'Save templates'}
-				</button>
-			</div>
-		</div>
+<Card class="p-5" aria-label="File naming">
+	<form class="grid gap-4" onsubmit={saveSettings}>
+		<SectionHeading>
+			{#snippet actions()}
+				<div class="flex flex-wrap justify-end gap-2.5">
+					<Button
+						type="button"
+						variant="outline"
+						disabled={loading || saving}
+						onclick={loadSettings}
+					>
+						Reload
+					</Button>
+					<Button
+						type="button"
+						variant="outline"
+						disabled={loading || saving}
+						onclick={resetDefaults}
+					>
+						Defaults
+					</Button>
+					<Button type="submit" disabled={loading || saving || hasValidationErrors}>
+						{saving ? 'Saving' : 'Save templates'}
+					</Button>
+				</div>
+			{/snippet}
+		</SectionHeading>
 
 		<NoticeStack {message} {errorMessage} />
 
-		<div class="file-naming-grid">
+		<div class="grid gap-3.5 md:grid-cols-2">
 			{#each templateSections as section (section.id)}
-				<section class="file-naming-group" aria-labelledby={section.id}>
-					<h3 id={section.id}>{section.title}</h3>
-					{#each section.fields as field (field.key)}
-						<label>
-							<span>{field.label}</span>
-							<textarea
-								rows="2"
-								required
-								value={templates[field.key]}
-								oninput={(event) => updateTemplate(field.key, event.currentTarget.value)}
-							></textarea>
-						</label>
-					{/each}
-				</section>
+				<FileNamingTemplateSection
+					id={section.id}
+					title={section.title}
+					fields={section.fields}
+					{templates}
+					onChange={updateTemplate}
+				/>
 			{/each}
 		</div>
 	</form>
-</div>
+</Card>

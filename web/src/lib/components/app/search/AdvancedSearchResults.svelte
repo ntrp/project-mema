@@ -1,7 +1,13 @@
 <script lang="ts">
+	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
+	import PlusIcon from '@lucide/svelte/icons/plus';
 	import { resolve } from '$app/paths';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
+	import StatusPill from '$lib/components/shared/StatusPill.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
+	import PosterPlaceholder from '../media/PosterPlaceholder.svelte';
 
 	interface Props {
 		groups: MediaSearchGroup[];
@@ -43,36 +49,46 @@
 	}
 </script>
 
-<div class="advanced-results" aria-label="Advanced search results">
+<div class="grid gap-[22px]" aria-label="Advanced search results">
 	{#each groups as group (`${group.sourceType}:${group.sourceName}`)}
 		{#if group.results.length > 0}
 			{@const headingId = groupDomId(group)}
-			<section class="search-result-group" aria-labelledby={headingId}>
-				<div class="section-heading">
-					<h2 id={headingId}>{group.sourceName}</h2>
-					<span>{group.sourceType}</span>
-				</div>
-				<div class="wide-card-list">
+			<section aria-labelledby={headingId}>
+				<SectionHeading title={group.sourceName} titleId={headingId}>
+					{#snippet actions()}
+						<span>{group.sourceType}</span>
+					{/snippet}
+				</SectionHeading>
+				<div class="grid gap-2.5">
 					{#each group.results as result (resultKey(result))}
-						<article class="wide-media-card">
-							<div class="wide-poster">
+						<article
+							class="grid items-center gap-3.5 rounded-md border border-border bg-muted p-2.5 md:grid-cols-[82px_minmax(0,1fr)_auto]"
+						>
+							<div class="aspect-[2/3] overflow-hidden rounded-md bg-card">
 								{#if posterUrl(result.posterPath)}
-									<img src={posterUrl(result.posterPath)} alt="" loading="lazy" />
+									<img
+										class="block h-full w-full object-cover"
+										src={posterUrl(result.posterPath)}
+										alt=""
+										loading="lazy"
+									/>
 								{:else}
-									<div class="poster-placeholder">{result.type}</div>
+									<PosterPlaceholder label={result.type} class="h-full min-h-0" />
 								{/if}
 							</div>
-							<div class="wide-media-body">
+							<div class="grid min-w-0 gap-2">
 								<div>
-									<h3>
+									<h3 class="m-0 text-base leading-tight">
 										{#if result.id}
 											<a
+												class="text-foreground no-underline hover:text-primary-hover"
 												href={result.type === 'movie'
 													? resolve('/movies/[id]', { id: result.id })
 													: resolve('/series/[id]', { id: result.id })}>{result.title}</a
 											>
 										{:else if result.externalProvider && result.externalId}
 											<a
+												class="text-foreground no-underline hover:text-primary-hover"
 												href={resolve('/media/[provider]/[type]/[externalId]', {
 													provider: result.externalProvider,
 													type: result.type,
@@ -83,39 +99,39 @@
 											{result.title}
 										{/if}
 									</h3>
-									<p>{result.type}{result.year ? ` · ${result.year}` : ''}</p>
+									<p class="m-0 text-sm text-muted-foreground">
+										{result.type}{result.year ? ` · ${result.year}` : ''}
+									</p>
 								</div>
 								{#if result.overview}
-									<p>{result.overview}</p>
+									<p class="line-clamp-2 m-0 text-sm text-muted-foreground">{result.overview}</p>
 								{/if}
 							</div>
-							<div class="wide-media-actions">
+							<div class="flex items-center justify-end gap-2.5">
 								{#if externalUrl(result)}
-									<!-- eslint-disable svelte/no-navigation-without-resolve -->
-									<a
-										class="external-link"
+									<Button
+										variant="outline"
+										size="sm"
 										href={externalUrl(result)}
 										target="_blank"
 										rel="noreferrer"
 										aria-label={`Open ${externalLabel(result)} page in a new tab`}
 									>
-										<span class="app-icon" aria-hidden="true">open_in_new</span>
+										<ExternalLinkIcon aria-hidden="true" />
 										<span>{externalLabel(result)}</span>
-									</a>
-									<!-- eslint-enable svelte/no-navigation-without-resolve -->
+									</Button>
 								{/if}
 								{#if group.sourceType === 'library'}
-									<span class="status-pill">In library</span>
+									<StatusPill tone="success">In library</StatusPill>
 								{:else}
-									<button
+									<Button
 										type="button"
-										class="add-action-button"
 										disabled={addingKey === candidateKey(result)}
 										onclick={() => onAdd(result)}
 									>
-										<span class="app-icon" aria-hidden="true">add</span>
+										<PlusIcon aria-hidden="true" />
 										<span>{addingKey === candidateKey(result) ? 'Working' : actionLabel}</span>
-									</button>
+									</Button>
 								{/if}
 							</div>
 						</article>

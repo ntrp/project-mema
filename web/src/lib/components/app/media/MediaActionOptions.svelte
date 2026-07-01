@@ -1,5 +1,6 @@
 <script lang="ts">
-	/* global HTMLSelectElement */
+	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import { Label } from '$lib/components/ui/label';
 	import type {
 		LibraryFolder,
 		MediaMonitorMode,
@@ -36,72 +37,88 @@
 		onMonitorModeChange,
 		onSeriesTypeChange
 	}: Props = $props();
+
+	let libraryFolderOptions = $derived([
+		{ value: '', label: 'Select folder' },
+		...libraryFolders.map((folder) => ({ value: folder.id, label: folder.path }))
+	]);
+	let qualityProfileOptions = $derived([
+		{ value: '', label: 'Select profile' },
+		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
+	]);
+	let monitorModeOptions = $derived([
+		...(mediaType === 'series'
+			? [
+					{ value: 'all_episodes', label: 'All episodes' },
+					{ value: 'future_episodes', label: 'Future episodes' },
+					{ value: 'missing_episodes', label: 'Missing episodes' },
+					{ value: 'existing_episodes', label: 'Existing episodes' },
+					{ value: 'no_specials', label: 'No specials' }
+				]
+			: [
+					{ value: 'only_media', label: 'Only this media' },
+					{ value: 'collection', label: 'Entire collection' }
+				]),
+		{ value: 'none', label: 'None' }
+	]);
+	const seriesTypeOptions: { value: SeriesType; label: string }[] = [
+		{ value: 'standard', label: 'Standard' },
+		{ value: 'daily', label: 'Daily / Date' },
+		{ value: 'absolute', label: 'Absolute' }
+	];
+	const availabilityOptions: { value: MinimumAvailability; label: string }[] = [
+		{ value: 'released', label: 'Released' },
+		{ value: 'in_cinema', label: 'In cinema' },
+		{ value: 'announced', label: 'Announced' }
+	];
 </script>
 
-<div class="settings-form compact-form media-action-fields">
+<div class="grid gap-4">
 	{#if isAdmin}
-		<label>
-			<span>Library folder</span>
-			<select bind:value={libraryFolderId}>
-				<option value="" disabled>Select folder</option>
-				{#each libraryFolders as folder (folder.id)}
-					<option value={folder.id}>{folder.path}</option>
-				{/each}
-			</select>
-		</label>
-		<label>
-			<span>Quality profile</span>
-			<select bind:value={qualityProfileId}>
-				<option value="" disabled>Select profile</option>
-				{#each qualityProfiles as profile (profile.id)}
-					<option value={profile.id}>{profile.name}</option>
-				{/each}
-			</select>
-		</label>
+		<div class="grid gap-2">
+			<Label>Library folder</Label>
+			<SettingsSelect
+				value={libraryFolderId}
+				options={libraryFolderOptions}
+				onValueChange={(value) => (libraryFolderId = value)}
+			/>
+		</div>
+		<div class="grid gap-2">
+			<Label>Quality profile</Label>
+			<SettingsSelect
+				value={qualityProfileId}
+				options={qualityProfileOptions}
+				onValueChange={(value) => (qualityProfileId = value)}
+			/>
+		</div>
 	{/if}
 
-	<label>
-		<span>Monitor</span>
-		<select
+	<div class="grid gap-2">
+		<Label>Monitor</Label>
+		<SettingsSelect
 			value={monitorMode}
-			onchange={(event) =>
-				onMonitorModeChange((event.currentTarget as HTMLSelectElement).value as MediaMonitorMode)}
-		>
-			{#if mediaType === 'series'}
-				<option value="all_episodes">All episodes</option>
-				<option value="future_episodes">Future episodes</option>
-				<option value="missing_episodes">Missing episodes</option>
-				<option value="existing_episodes">Existing episodes</option>
-				<option value="no_specials">No specials</option>
-			{:else}
-				<option value="only_media">Only this media</option>
-				<option value="collection">Entire collection</option>
-			{/if}
-			<option value="none">None</option>
-		</select>
-	</label>
+			options={monitorModeOptions}
+			onValueChange={(value) => onMonitorModeChange(value as MediaMonitorMode)}
+		/>
+	</div>
 
 	{#if mediaType === 'series'}
-		<label>
-			<span>Series type</span>
-			<select
+		<div class="grid gap-2">
+			<Label>Series type</Label>
+			<SettingsSelect
 				value={seriesType}
-				onchange={(event) =>
-					onSeriesTypeChange((event.currentTarget as HTMLSelectElement).value as SeriesType)}
-			>
-				<option value="standard">Standard</option>
-				<option value="daily">Daily / Date</option>
-				<option value="absolute">Absolute</option>
-			</select>
-		</label>
+				options={seriesTypeOptions}
+				onValueChange={(value) => onSeriesTypeChange(value as SeriesType)}
+			/>
+		</div>
 	{/if}
 
-	<label>
-		<span>Minimum availability</span>
-		<select bind:value={minimumAvailability}>
-			<option value="released">Released</option>
-			<option value="in_cinema">In cinema</option>
-			<option value="announced">Announced</option>
-		</select>
-	</label>
+	<div class="grid gap-2">
+		<Label>Minimum availability</Label>
+		<SettingsSelect
+			value={minimumAvailability}
+			options={availabilityOptions}
+			onValueChange={(value) => (minimumAvailability = value as MinimumAvailability)}
+		/>
+	</div>
 </div>

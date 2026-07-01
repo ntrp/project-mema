@@ -1,8 +1,15 @@
 <script lang="ts">
+	import ListChecksIcon from '@lucide/svelte/icons/list-checks';
+	import PlusIcon from '@lucide/svelte/icons/plus';
+	import UploadIcon from '@lucide/svelte/icons/upload';
+	import CustomFormatCard from '$lib/components/settings/CustomFormatCard.svelte';
 	import CustomFormatForm from '$lib/components/settings/CustomFormatForm.svelte';
 	import CustomFormatImportModal from '$lib/components/settings/CustomFormatImportModal.svelte';
 	import CustomFormatTestParsingModal from '$lib/components/settings/CustomFormatTestParsingModal.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
 	import { emptyCustomFormatForm } from '$lib/settings/forms';
 	import type {
 		CustomFormat,
@@ -68,66 +75,38 @@
 	}
 </script>
 
-<div class="panel" aria-label="Custom formats">
-	<div class="section-heading">
-		<div class="custom-format-topbar">
-			<button type="button" class="secondary" onclick={openImport}>
-				<span class="app-icon" aria-hidden="true">upload_file</span>
-				Import
-			</button>
-			<button type="button" class="secondary" onclick={openTestParsing}>
-				<span class="app-icon" aria-hidden="true">rule</span>
-				Test parsing
-			</button>
-			<button type="button" class="add-action-button" onclick={openModal}>
-				<span class="app-icon" aria-hidden="true">add</span>
-				<span>Add custom format</span>
-			</button>
-		</div>
-	</div>
+<Card class="gap-4 p-5" aria-label="Custom formats">
+	<SectionHeading>
+		{#snippet actions()}
+			<div class="flex flex-wrap justify-end gap-2.5">
+				<Button type="button" variant="outline" onclick={openImport}>
+					<UploadIcon aria-hidden="true" />
+					Import
+				</Button>
+				<Button type="button" variant="outline" onclick={openTestParsing}>
+					<ListChecksIcon aria-hidden="true" />
+					Test parsing
+				</Button>
+				<Button type="button" onclick={openModal}>
+					<PlusIcon aria-hidden="true" />
+					<span>Add custom format</span>
+				</Button>
+			</div>
+		{/snippet}
+	</SectionHeading>
 
-	<div class="custom-format-grid">
+	<div class="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))]">
 		{#each formats as format (format.id)}
-			<article class="custom-format-card">
-				<div class="custom-format-card-header">
-					<h3>{format.name}</h3>
-					<div class="row-actions">
-						<button
-							type="button"
-							class="secondary icon-button"
-							aria-label={`Edit ${format.name}`}
-							onclick={() => editFormat(format)}
-						>
-							<span class="app-icon" aria-hidden="true">edit</span>
-						</button>
-						<button
-							type="button"
-							class="danger icon-button"
-							disabled={deletingId === format.id}
-							aria-label={`${deletingId === format.id ? 'Deleting' : 'Delete'} ${format.name}`}
-							onclick={() => onDelete(format.id)}
-						>
-							<span class="app-icon" aria-hidden="true">delete</span>
-						</button>
-					</div>
-				</div>
-				<div class="custom-format-tags">
-					{#each format.includeSpecs as spec (spec.id)}
-						<span
-							class:include={spec.required}
-							class:optional={!spec.required}
-							title={`${spec.type}: ${spec.value}`}
-						>
-							{spec.name}
-						</span>
-					{/each}
-					{#each format.excludeSpecs as spec (spec.id)}
-						<span class="exclude" title={`${spec.type}: ${spec.value}`}>{spec.name}</span>
-					{/each}
-				</div>
-			</article>
+			<CustomFormatCard
+				{format}
+				deleting={deletingId === format.id}
+				onEdit={editFormat}
+				{onDelete}
+			/>
 		{:else}
-			<p class="empty custom-format-empty">No custom formats configured</p>
+			<p class="col-span-full m-0 text-sm leading-6 text-muted-foreground">
+				No custom formats configured
+			</p>
 		{/each}
 	</div>
 
@@ -147,4 +126,4 @@
 	{#if importOpen}
 		<CustomFormatImportModal onClose={() => (importOpen = false)} {onImport} />
 	{/if}
-</div>
+</Card>

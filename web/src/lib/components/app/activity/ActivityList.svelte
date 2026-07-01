@@ -1,7 +1,14 @@
 <script lang="ts">
 	import ActivityManualImportModal from './ActivityManualImportModal.svelte';
 	import ActivityActions from './ActivityActions.svelte';
-	import { activityDisplay, createdLabel } from './activityDisplay';
+	import ActivityProgressCell from './ActivityProgressCell.svelte';
+	import EmptyState from '$lib/components/shared/EmptyState.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import * as Table from '$lib/components/ui/table';
+	import { activityDisplay } from './activityDisplay';
 	import { manualImportDownloadActivity } from '$lib/settings/api';
 	import type { DownloadActivity, ManualImportRequest } from '$lib/settings/types';
 
@@ -30,10 +37,6 @@
 	let importingId = $state<string | undefined>();
 	let importError = $state<string | undefined>();
 
-	function showsProgress(activity: DownloadActivity) {
-		return ['queued', 'grabbed', 'downloading', 'completed'].includes(activity.status);
-	}
-
 	function openManualImport(activity: DownloadActivity) {
 		manualImportActivity = activity;
 		importError = undefined;
@@ -55,94 +58,68 @@
 	}
 </script>
 
-<div class="page-heading split-heading">
-	<div>
-		<p>Activity</p>
-		<h1 id="home-title">Downloads and imports</h1>
-	</div>
-	<button type="button" class="secondary" disabled={loading} onclick={onRefresh}>
-		{loading ? 'Refreshing' : 'Refresh'}
-	</button>
-</div>
+<PageHeading eyebrow="Activity" title="Downloads and imports" titleId="home-title">
+	{#snippet actions()}
+		<Button type="button" variant="outline" disabled={loading} onclick={onRefresh}>
+			{loading ? 'Refreshing' : 'Refresh'}
+		</Button>
+	{/snippet}
+</PageHeading>
 
 {#if activities.length > 0}
-	<div class="table-wrap activity-table">
-		<table>
-			<thead>
-				<tr>
-					<th><span class="sr-only">Select</span></th>
-					<th>Media</th>
-					<th>Year</th>
-					<th>Languages</th>
-					<th>Quality</th>
-					<th>Formats</th>
-					<th>Time left</th>
-					<th>Progress</th>
-					<th class="table-action-heading">Actions</th>
-				</tr>
-			</thead>
-			<tbody>
+	<Card class="overflow-hidden p-0">
+		<Table.Root class="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
+			<Table.Header>
+				<Table.Row>
+					<Table.Head class="w-[42px]"><span class="sr-only">Select</span></Table.Head>
+					<Table.Head class="min-w-55 whitespace-normal">Media</Table.Head>
+					<Table.Head>Year</Table.Head>
+					<Table.Head>Languages</Table.Head>
+					<Table.Head>Quality</Table.Head>
+					<Table.Head>Formats</Table.Head>
+					<Table.Head>Time left</Table.Head>
+					<Table.Head class="min-w-55 whitespace-normal">Progress</Table.Head>
+					<Table.Head class="text-right">Actions</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
 				{#each activities as activity (activity.id)}
 					{@const display = activityDisplay(activity)}
-					<tr>
-						<td class="activity-check-cell">
-							<input type="checkbox" aria-label={`Select ${activity.releaseTitle}`} />
-						</td>
-						<td class="activity-media-cell">
+					<Table.Row>
+						<Table.Cell class="w-[42px]">
+							<Checkbox aria-label={`Select ${activity.releaseTitle}`} />
+						</Table.Cell>
+						<Table.Cell class="grid min-w-55 gap-1 whitespace-normal">
 							<strong>{activity.mediaTitle}</strong>
-							<small>{activity.downloadClientName} · {activity.indexerName}</small>
+							<small class="text-xs text-muted-foreground"
+								>{activity.downloadClientName} · {activity.indexerName}</small
+							>
 							{#if activity.error}
-								<small class="test-detail">{activity.error}</small>
+								<small class="max-w-55 text-xs text-muted-foreground">{activity.error}</small>
 							{/if}
-						</td>
-						<td>{display.year}</td>
-						<td>{display.languages.length ? display.languages.join(', ') : '-'}</td>
-						<td>{display.quality}</td>
-						<td>
+						</Table.Cell>
+						<Table.Cell>{display.year}</Table.Cell>
+						<Table.Cell>{display.languages.length ? display.languages.join(', ') : '-'}</Table.Cell>
+						<Table.Cell>{display.quality}</Table.Cell>
+						<Table.Cell>
 							{#if display.formats.length}
-								<div class="format-chip-list">
+								<div class="flex min-w-28 flex-wrap gap-1">
 									{#each display.formats as format (format)}
-										<span>{format}</span>
+										<span
+											class="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[11px] font-extrabold text-primary"
+											>{format}</span
+										>
 									{/each}
 								</div>
 							{:else}
 								-
 							{/if}
-						</td>
-						<td>{display.timeLeft}</td>
-						<td>
-							<div class="activity-progress-stack">
-								<small
-									class:status-enabled={activity.status === 'grabbed' ||
-										activity.status === 'completed'}
-									class:pending={activity.status === 'queued' || activity.status === 'downloading'}
-									class:test-failed={activity.status === 'failed' ||
-										activity.status === 'cancelled'}
-								>
-									{activity.status}
-								</small>
-								{#if showsProgress(activity)}
-									<div
-										class="download-progress"
-										role="progressbar"
-										aria-label="Download progress"
-										aria-valuemin="0"
-										aria-valuemax="100"
-										aria-valuenow={display.progressValue}
-									>
-										<span
-											class:indeterminate={display.progressValue === undefined}
-											style={display.progressValue !== undefined
-												? `width: ${display.progressValue}%`
-												: undefined}
-										></span>
-									</div>
-									<small>{display.progressLabel}</small>
-								{/if}
-								<small>{createdLabel(activity.createdAt)}</small>
-							</div>
-						</td>
-						<td class="row-actions activity-actions">
+						</Table.Cell>
+						<Table.Cell>{display.timeLeft}</Table.Cell>
+						<Table.Cell>
+							<ActivityProgressCell {activity} />
+						</Table.Cell>
+						<Table.Cell class="min-w-22">
 							<ActivityActions
 								{activity}
 								{canManage}
@@ -152,16 +129,18 @@
 								{onCancel}
 								{onDelete}
 							/>
-						</td>
-					</tr>
+						</Table.Cell>
+					</Table.Row>
 				{/each}
-			</tbody>
-		</table>
-	</div>
+			</Table.Body>
+		</Table.Root>
+	</Card>
 {:else}
-	<div class="panel">
-		<p class="empty">No download activity yet</p>
-	</div>
+	<EmptyState
+		class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
+	>
+		<p class="m-0 text-lg font-black text-foreground">No download activity yet</p>
+	</EmptyState>
 {/if}
 
 {#if manualImportActivity}

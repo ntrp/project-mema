@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CustomFormatSpecChip from './CustomFormatSpecChip.svelte';
 	import type { CustomFormatParsingResponse } from '$lib/settings/types';
 
 	interface Props {
@@ -45,59 +46,79 @@
 </script>
 
 {#snippet fieldList(rows: Row[])}
-	<dl>
+	<dl class="m-0 grid gap-2 sm:grid-cols-2">
 		{#each rows as row (row[0])}
-			<div>
-				<dt>{row[0]}</dt>
-				<dd>{valueOrDash(row[1])}</dd>
+			<div class="grid grid-cols-[minmax(130px,0.4fr)_minmax(0,1fr)] gap-3 max-sm:grid-cols-1">
+				<dt class="text-right font-extrabold text-muted-foreground max-sm:text-left">{row[0]}</dt>
+				<dd class="m-0 min-w-0 text-foreground [overflow-wrap:anywhere]">
+					{valueOrDash(row[1])}
+				</dd>
 			</div>
 		{/each}
 	</dl>
 {/snippet}
 
-<div class="test-parsing-results">
-	<section class="test-parsing-section">
-		<h3>Release</h3>
+<div class="grid gap-4.5">
+	<section class="grid min-w-0 gap-2.5 mt-6">
+		<h3 class="m-0 border-b border-border pb-2 text-2xl leading-tight text-foreground">Release</h3>
 		{@render fieldList(releaseRows)}
 	</section>
 
-	<section class="test-parsing-section">
-		<h3>Quality</h3>
+	<section class="grid min-w-0 gap-2.5">
+		<h3 class="m-0 border-b border-border pb-2 text-2xl leading-tight text-foreground">Quality</h3>
 		{@render fieldList(qualityRows)}
 	</section>
 
-	<section class="test-parsing-section">
-		<h3>Languages</h3>
-		<div class="test-parsing-tags">
+	<section class="grid min-w-0 gap-2.5">
+		<h3 class="m-0 border-b border-border pb-2 text-2xl leading-tight text-foreground">
+			Languages
+		</h3>
+		<div class="flex flex-wrap gap-1.5">
 			{#each result.languages as language (language)}
-				<span>{language}</span>
+				<span
+					class="rounded-md bg-primary px-2 py-1 text-xs font-extrabold text-primary-foreground"
+				>
+					{language}
+				</span>
 			{:else}
-				<span>-</span>
+				<span
+					class="rounded-md bg-primary px-2 py-1 text-xs font-extrabold text-primary-foreground"
+				>
+					-
+				</span>
 			{/each}
 		</div>
 	</section>
 
-	<section class="test-parsing-section">
-		<h3 class="test-parsing-section-title">
+	<section class="grid min-w-0 gap-2.5">
+		<h3
+			class="m-0 flex items-center justify-between gap-3 border-b border-border pb-2 text-2xl leading-tight text-foreground"
+		>
 			<span>Matched custom formats</span>
-			<span>{result.matchedCustomFormats.length}</span>
+			<span class="rounded-md bg-muted px-2 py-1 text-xs font-extrabold text-muted-foreground">
+				{result.matchedCustomFormats.length}
+			</span>
 		</h3>
 		{@render fieldList(scoreRows)}
-		<div class="test-parsing-match-list">
+		<div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-3">
 			{#each result.matchedCustomFormats as format (format.id)}
-				<article class="custom-format-card test-parsing-format-card">
-					<div class="custom-format-card-header">
-						<h4>{format.name}</h4>
-						<span class="custom-format-score">{format.score}</span>
+				<article class="grid min-h-0 gap-3 rounded-md border border-border bg-card p-3">
+					<div class="flex items-start justify-between gap-3">
+						<h4 class="m-0 text-xl text-muted-foreground">{format.name}</h4>
+						<span
+							class="min-w-[42px] rounded-md bg-primary/10 px-2 py-1.5 text-center text-sm leading-none font-bold text-primary"
+						>
+							{format.score}
+						</span>
 					</div>
-					<div class="custom-format-tags">
+					<div class="flex flex-wrap content-start gap-1.5">
 						{#each format.matchedSpecs as spec (spec.id)}
-							<span title={`${spec.type}: ${spec.value}`}>{spec.name}</span>
+							<CustomFormatSpecChip {spec} />
 						{/each}
 					</div>
 				</article>
 			{:else}
-				<p class="empty">No custom formats matched</p>
+				<p class="m-0 text-sm leading-6 text-muted-foreground">No custom formats matched</p>
 			{/each}
 		</div>
 	</section>

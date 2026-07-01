@@ -8,9 +8,10 @@ import (
 )
 
 type CustomFormatMatch struct {
-	ID           string
-	Name         string
-	MatchedSpecs []CustomFormatSpecMatch
+	ID                      string
+	Name                    string
+	IncludeInRenameTemplate bool
+	MatchedSpecs            []CustomFormatSpecMatch
 }
 
 type CustomFormatSpecMatch struct {
@@ -75,7 +76,12 @@ func matchCustomFormat(parsed ParsedRelease, format storage.CustomFormat) (Custo
 	if requiredCount == 0 && optionalCount > 1 && strongOptionalMatches == 0 {
 		return CustomFormatMatch{}, false
 	}
-	return CustomFormatMatch{ID: format.ID.String(), Name: format.Name, MatchedSpecs: specMatches}, true
+	return CustomFormatMatch{
+		ID:                      format.ID.String(),
+		Name:                    format.Name,
+		IncludeInRenameTemplate: format.IncludeInRenameTemplate,
+		MatchedSpecs:            specMatches,
+	}, true
 }
 
 func isStrongOptionalSpec(spec storage.CustomFormatSpec) bool {

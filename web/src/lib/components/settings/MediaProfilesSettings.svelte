@@ -5,7 +5,13 @@
 	import MediaProfileQualitySelector from '$lib/components/settings/MediaProfileQualitySelector.svelte';
 	import MediaProfileRules from '$lib/components/settings/MediaProfileRules.svelte';
 	import MediaProfileTable from '$lib/components/settings/MediaProfileTable.svelte';
+	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import { listQualitySizeSettings } from '$lib/settings/api';
 	import { emptyMediaProfileForm } from '$lib/settings/forms';
 	import type {
@@ -92,35 +98,36 @@
 	}
 </script>
 
-<div class="panel" aria-label="Profiles">
-	<div class="section-heading">
-		<button type="button" class="add-action-button" onclick={openModal}>
-			<span class="app-icon" aria-hidden="true">add</span>
-			<span>Add profile</span>
-		</button>
-	</div>
+<Card class="p-5" aria-label="Profiles">
+	<SectionHeading>
+		{#snippet actions()}
+			<SettingsAddButton label="Add profile" onclick={openModal} />
+		{/snippet}
+	</SectionHeading>
 
 	<MediaProfileTable {profiles} {qualities} {deletingId} onEdit={editProfile} {onDelete} />
 
 	{#if modalOpen}
 		<SettingsFormModal
 			title={form.id ? 'Edit profile' : 'Add profile'}
-			modalClass="profile-settings-modal"
+			modalClass="w-[min(2560px,calc(100vw-48px))] max-h-[min(880px,calc(100vh-48px))] max-[640px]:w-full max-[640px]:max-h-[calc(100vh-24px)]"
 			onClose={closeModal}
 		>
-			<form class="settings-form profile-form" onsubmit={saveProfile}>
-				<div class="profile-editor-grid">
-					<div class="profile-editor-main">
-						<label>
-							<span>Name</span>
-							<input bind:value={form.name} type="text" maxlength="200" required />
-						</label>
+			<form class="grid gap-4" onsubmit={saveProfile}>
+				<div
+					class="grid min-w-0 items-start gap-4.5 min-[981px]:grid-cols-[minmax(340px,0.82fr)_minmax(440px,1fr)]"
+				>
+					<div class="grid min-w-0 gap-3.5">
+						<div class="grid gap-1.5">
+							<Label>Name</Label>
+							<Input bind:value={form.name} type="text" maxlength={200} required />
+						</div>
 
 						<MediaProfileRules {form} {qualities} onChange={updateForm} />
 						<MediaProfileCustomFormatScores {form} {customFormats} onChange={updateForm} />
 					</div>
 
-					<aside class="profile-editor-qualities">
+					<aside class="grid min-w-0 gap-3.5 min-[981px]:sticky min-[981px]:top-0">
 						<MediaProfileQualitySelector
 							{form}
 							{qualities}
@@ -131,13 +138,13 @@
 					</aside>
 				</div>
 
-				<div class="form-actions wide">
-					<button type="button" class="secondary" onclick={closeModal}>Cancel</button>
-					<button type="submit" disabled={saving || !canSave}>
+				<div class="flex items-center justify-end gap-3">
+					<Button type="button" variant="outline" onclick={closeModal}>Cancel</Button>
+					<Button type="submit" disabled={saving || !canSave}>
 						{saving ? 'Saving' : form.id ? 'Update profile' : 'Create profile'}
-					</button>
+					</Button>
 				</div>
 			</form>
 		</SettingsFormModal>
 	{/if}
-</div>
+</Card>

@@ -1,4 +1,3 @@
-/* global EventSource */
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import {
@@ -89,16 +88,12 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 	}
 
 	function connectEvents() {
-		if (!state.authenticated || state.eventSource) {
-			return;
-		}
+		if (!state.authenticated || state.eventSource) return;
 		const source = new EventSource('/api/events', { withCredentials: true });
 		state.eventSource = source;
 		source.addEventListener('activity.download.updated', (event) => {
 			const activity = parseEventData<DownloadActivity>(event);
-			if (!activity) {
-				return;
-			}
+			if (!activity) return;
 			upsertActivity(activity);
 			updateMediaStatusFromActivity(activity);
 			if (activity.status === 'completed') {

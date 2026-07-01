@@ -1,7 +1,9 @@
 <script lang="ts">
 	import IndexerForm from '$lib/components/settings/IndexerForm.svelte';
 	import IndexerTable from '$lib/components/settings/IndexerTable.svelte';
+	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { emptyIndexerForm } from '$lib/settings/forms';
 	import type {
 		Indexer,
@@ -60,16 +62,10 @@
 	}
 </script>
 
-<div class="page-heading">
-	<p>Settings</p>
-	<h1 id="settings-title">Indexers</h1>
-</div>
-<div class="settings-stack">
-	<div class="settings-toolbar">
-		<button type="button" class="add-action-button" onclick={openModal}>
-			<span class="app-icon" aria-hidden="true">add</span>
-			<span>Add indexer</span>
-		</button>
+<PageHeading eyebrow="Settings" title="Indexers" titleId="settings-title" />
+<div class="space-y-4">
+	<div class="flex justify-end">
+		<SettingsAddButton label="Add indexer" onclick={openModal} />
 	</div>
 	<IndexerTable {indexers} onEdit={editIndexer} {onDelete} {onTest} {testingId} {testResults} />
 	{#if modalOpen}

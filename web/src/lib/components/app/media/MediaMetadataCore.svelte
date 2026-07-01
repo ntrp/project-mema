@@ -1,10 +1,14 @@
 <script lang="ts">
-	/* global HTMLDivElement */
+	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import { resolve } from '$app/paths';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import MediaKeywordsSection from './MediaKeywordsSection.svelte';
 	import MediaOverviewInfoCard from './MediaOverviewInfoCard.svelte';
+	import MediaEpisodeRow from './MediaEpisodeRow.svelte';
+	import MediaPersonCard from './MediaPersonCard.svelte';
+	import MediaSeasonPanel from './MediaSeasonPanel.svelte';
+	import PosterRowControls from './PosterRowControls.svelte';
 	import { crewRolePreviews } from './mediaPeople';
-	import { formatDate } from '$lib/settings/dateFormat';
 	import type { Snippet } from 'svelte';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
@@ -27,16 +31,6 @@
 	const resolvedCrewHref = $derived(crewHref ?? resolvedPeopleHref(detail, 'crew'));
 	let castRow = $state<HTMLDivElement | undefined>();
 
-	function imageUrl(path?: string, size = 'w780') {
-		if (!path) {
-			return undefined;
-		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/${size}${path}`;
-	}
-
 	function episodeTitle(episode: { episodeNumber: number; name: string }) {
 		return `${episode.episodeNumber} - ${episode.name}`;
 	}
@@ -55,15 +49,6 @@
 			: resolve('/media/[provider]/[type]/[externalId]/crew', params);
 	}
 
-	function trackCastRow(node: HTMLDivElement) {
-		castRow = node;
-		return {
-			destroy() {
-				castRow = undefined;
-			}
-		};
-	}
-
 	function scrollCast(direction: number) {
 		if (!castRow) {
 			return;
@@ -75,28 +60,40 @@
 	}
 </script>
 
-<section class="metadata-overview-layout" aria-labelledby="metadata-overview-title">
-	<div class="metadata-overview-copy">
-		<h2 id="metadata-overview-title">Overview</h2>
-		<p>{detail.overview ?? 'No overview available.'}</p>
+<section
+	class="mt-4 grid items-start gap-5.5 min-[981px]:grid-cols-[minmax(0,1fr)_minmax(280px,390px)]"
+	aria-labelledby="metadata-overview-title"
+>
+	<div class="grid min-w-0 gap-3">
+		<h2 id="metadata-overview-title" class="m-0 text-3xl font-semibold text-foreground">
+			Overview
+		</h2>
+		<p class="m-0 text-sm leading-6 text-muted-foreground">
+			{detail.overview ?? 'No overview available.'}
+		</p>
 		{#if crewRoles.length > 0}
-			<h3 class="metadata-crew-title">
+			<h3 class="mt-1 mb-0 text-xl text-foreground">
 				{#if resolvedCrewHref}
 					<!-- eslint-disable svelte/no-navigation-without-resolve -->
-					<a class="metadata-crew-title-link" href={resolvedCrewHref}>
+					<a
+						class="inline-flex items-center gap-2 text-inherit no-underline hover:text-primary-hover focus-visible:text-primary-hover focus-visible:outline-none"
+						href={resolvedCrewHref}
+					>
 						<span>Crew</span>
-						<span class="app-icon" aria-hidden="true">arrow_forward</span>
+						<ArrowRightIcon aria-hidden="true" />
 					</a>
 					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 				{:else}
 					Crew
 				{/if}
 			</h3>
-			<div class="metadata-crew-grid" aria-label="Crew">
+			<div class="grid items-start gap-x-7 gap-y-[18px] md:grid-cols-3" aria-label="Crew">
 				{#each crewRoles as role (role.role)}
-					<div>
-						<strong>{role.role}</strong>
-						<span>{role.names.join(', ')}</span>
+					<div class="grid min-w-0 content-start gap-1">
+						<strong class="[overflow-wrap:anywhere] text-foreground">{role.role}</strong>
+						<span class="[overflow-wrap:anywhere] text-muted-foreground">
+							{role.names.join(', ')}
+						</span>
 					</div>
 				{/each}
 			</div>
@@ -110,39 +107,25 @@
 	{@render seasonsContent()}
 {:else if seasons.length > 0}
 	<section aria-labelledby="metadata-seasons-title">
-		<h2 id="metadata-seasons-title">Seasons</h2>
-		<div class="metadata-season-list">
+		<h2 id="metadata-seasons-title" class="m-0 text-3xl font-semibold text-foreground">Seasons</h2>
+		<div class="grid gap-2.5">
 			{#each seasons as season (season.name)}
-				<details class="metadata-season-panel">
-					<summary>
+				<MediaSeasonPanel
+					meta={season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}
+				>
+					{#snippet title()}
 						<span>{season.name}</span>
-						<small
-							>{season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}</small
-						>
-					</summary>
+					{/snippet}
 					{#if season.episodes && season.episodes.length > 0}
-						<div class="metadata-episode-list">
+						<div class="grid px-4.5">
 							{#each season.episodes as episode (episode.episodeNumber)}
-								<article class="metadata-episode-row">
-									<div class="metadata-episode-copy">
-										<h3>
-											{episodeTitle(episode)}
-											{#if episode.airDate}
-												<span>{formatDate(episode.airDate)}</span>
-											{/if}
-										</h3>
-										<p>{episode.overview ?? 'No episode overview available.'}</p>
-									</div>
-									{#if imageUrl(episode.stillPath, 'w300')}
-										<img src={imageUrl(episode.stillPath, 'w300')} alt="" loading="lazy" />
-									{/if}
-								</article>
+								<MediaEpisodeRow {episode} title={episodeTitle(episode)} />
 							{/each}
 						</div>
 					{:else}
-						<p class="metadata-season-empty">No episode details available.</p>
+						<p class="p-4.5 text-sm text-muted-foreground">No episode details available.</p>
 					{/if}
-				</details>
+				</MediaSeasonPanel>
 			{/each}
 		</div>
 	</section>
@@ -152,44 +135,26 @@
 
 {#if cast.length > 0}
 	<section aria-labelledby="metadata-cast-title">
-		<div class="section-heading">
+		<SectionHeading title="Cast" titleId="metadata-cast-title" href={resolvedCastHref}>
 			{#if resolvedCastHref}
-				<!-- eslint-disable svelte/no-navigation-without-resolve -->
-				<a class="section-title-link" href={resolvedCastHref}>
-					<h2 id="metadata-cast-title">Cast</h2>
-					<span class="app-icon" aria-hidden="true">arrow_forward</span>
-				</a>
-				<!-- eslint-enable svelte/no-navigation-without-resolve -->
-			{:else}
-				<h2 id="metadata-cast-title">Cast</h2>
+				<ArrowRightIcon aria-hidden="true" />
 			{/if}
-			<div class="section-heading-actions">
+			{#snippet actions()}
 				<span>{cast.length}</span>
-				<div class="poster-row-controls" aria-label="Cast carousel controls">
-					<button type="button" aria-label="Scroll cast left" onclick={() => scrollCast(-1)}>
-						<span class="app-icon" aria-hidden="true">chevron_left</span>
-					</button>
-					<button type="button" aria-label="Scroll cast right" onclick={() => scrollCast(1)}>
-						<span class="app-icon" aria-hidden="true">chevron_right</span>
-					</button>
-				</div>
-			</div>
-		</div>
-		<div class="metadata-cast-slider" use:trackCastRow>
+				<PosterRowControls
+					ariaLabel="Cast carousel controls"
+					leftLabel="Scroll cast left"
+					rightLabel="Scroll cast right"
+					onScroll={scrollCast}
+				/>
+			{/snippet}
+		</SectionHeading>
+		<div
+			class="-mx-3.5 mt-[-12px] grid max-w-full auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-[980px]:auto-cols-[minmax(160px,180px)] max-[980px]:gap-3.5 max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
+			bind:this={castRow}
+		>
 			{#each cast as person (`${person.name}:${person.role ?? ''}`)}
-				<article class="metadata-cast-card">
-					<div>
-						{#if imageUrl(person.profilePath, 'w185')}
-							<img src={imageUrl(person.profilePath, 'w185')} alt="" loading="lazy" />
-						{:else}
-							<span>{person.name.slice(0, 1)}</span>
-						{/if}
-					</div>
-					<strong>{person.name}</strong>
-					{#if person.role}
-						<p>{person.role}</p>
-					{/if}
-				</article>
+				<MediaPersonCard name={person.name} role={person.role} image={person.profilePath} />
 			{/each}
 		</div>
 	</section>

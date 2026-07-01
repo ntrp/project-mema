@@ -1,4 +1,13 @@
 <script lang="ts">
+	import InfoIcon from '@lucide/svelte/icons/info';
+	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import TrashIcon from '@lucide/svelte/icons/trash-2';
+	import UserIcon from '@lucide/svelte/icons/user';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { cn } from '$lib/utils';
 	import type { MediaFileRow } from './mediaFiles';
 	import type { ActivityQueueStatus } from '../activity/activityQueue';
 
@@ -35,43 +44,50 @@
 	);
 </script>
 
-<div class:missing-file={!row.exists} class="episode-file-summary">
-	<div class="episode-file-path">
-		<strong>{row.exists ? row.relativePath : 'Missing file'}</strong>
-		<span>{row.exists ? fileLabel : missingLabel}</span>
+<div
+	class={cn(
+		'grid gap-4 rounded-md border bg-card p-4 text-card-foreground shadow-xs',
+		!row.exists && 'border-dashed bg-muted/30'
+	)}
+>
+	<div class="grid gap-1">
+		<strong class="break-all text-sm font-semibold"
+			>{row.exists ? row.relativePath : 'Missing file'}</strong
+		>
+		<span class="text-sm text-muted-foreground">{row.exists ? fileLabel : missingLabel}</span>
 	</div>
 
-	<div class="episode-file-facts" aria-label="Episode file details">
-		<span>
-			<strong>Quality</strong>
-			{row.quality}
+	<div class="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3" aria-label="Episode file details">
+		<span class="grid gap-1 rounded-md border bg-background px-3 py-2">
+			<strong class="text-xs font-medium uppercase text-muted-foreground">Quality</strong>
+			<span>{row.quality}</span>
 		</span>
-		<span>
-			<strong>Video</strong>
-			{row.videoCodec}
+		<span class="grid gap-1 rounded-md border bg-background px-3 py-2">
+			<strong class="text-xs font-medium uppercase text-muted-foreground">Video</strong>
+			<span>{row.videoCodec}</span>
 		</span>
-		<span>
-			<strong>Audio</strong>
-			{row.audioInfo}
+		<span class="grid gap-1 rounded-md border bg-background px-3 py-2">
+			<strong class="text-xs font-medium uppercase text-muted-foreground">Audio</strong>
+			<span>{row.audioInfo}</span>
 		</span>
-		<span>
-			<strong>Languages</strong>
-			{row.languages}
+		<span class="grid gap-1 rounded-md border bg-background px-3 py-2">
+			<strong class="text-xs font-medium uppercase text-muted-foreground">Languages</strong>
+			<span>{row.languages}</span>
 		</span>
-		<span>
-			<strong>Score</strong>
-			{row.score}
+		<span class="grid gap-1 rounded-md border bg-background px-3 py-2">
+			<strong class="text-xs font-medium uppercase text-muted-foreground">Score</strong>
+			<span>{row.score}</span>
 		</span>
-		<span>
-			<strong>Status</strong>
+		<span class="grid gap-1 rounded-md border bg-background px-3 py-2">
+			<strong class="text-xs font-medium uppercase text-muted-foreground">Status</strong>
 			{#if activityStatus}
-				<small
-					class="activity-status-chip"
-					class:activity-failed={activityStatus.status === 'failed'}
+				<Badge
+					variant={activityStatus.status === 'failed' ? 'destructive' : 'secondary'}
+					class="justify-self-start"
 				>
-					<span class="app-icon" aria-hidden="true">sync</span>
+					<RefreshCwIcon aria-hidden="true" />
 					{activityStatus.label}
-				</small>
+				</Badge>
 			{:else}
 				-
 			{/if}
@@ -79,56 +95,88 @@
 	</div>
 
 	{#if row.formats.length > 0}
-		<div class="format-chip-list episode-file-formats" aria-label="Matched formats">
+		<div class="flex flex-wrap gap-2" aria-label="Matched formats">
 			{#each row.formats as format (format)}
-				<span>{format}</span>
+				<Badge variant="outline">{format}</Badge>
 			{/each}
 		</div>
 	{/if}
 
-	<div class="row-actions episode-file-actions">
+	<div class="flex flex-wrap justify-end gap-2">
 		{#if row.exists}
-			<button
-				type="button"
-				class="secondary icon-button"
-				aria-label="File info"
-				title="File info"
-				onclick={() => onInfo(row)}
-			>
-				<span class="app-icon" aria-hidden="true">info</span>
-			</button>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							type="button"
+							variant="outline"
+							size="icon-sm"
+							aria-label="File info"
+							onclick={() => onInfo(row)}
+						>
+							<InfoIcon aria-hidden="true" />
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>File info</Tooltip.Content>
+			</Tooltip.Root>
 		{/if}
-		<button
-			type="button"
-			class="secondary icon-button"
-			aria-label="Automatic search"
-			title="Automatic search"
-			disabled={!canManage || busy}
-			onclick={onAutoSearch}
-		>
-			<span class="app-icon" aria-hidden="true">search</span>
-		</button>
-		<button
-			type="button"
-			class="secondary icon-button"
-			aria-label="Manual search"
-			title="Manual search"
-			disabled={busy}
-			onclick={onManualSearch}
-		>
-			<span class="app-icon" aria-hidden="true">person</span>
-		</button>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						type="button"
+						variant="outline"
+						size="icon-sm"
+						aria-label="Automatic search"
+						disabled={!canManage || busy}
+						onclick={onAutoSearch}
+					>
+						<SearchIcon aria-hidden="true" />
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Automatic search</Tooltip.Content>
+		</Tooltip.Root>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						type="button"
+						variant="outline"
+						size="icon-sm"
+						aria-label="Manual search"
+						disabled={busy}
+						onclick={onManualSearch}
+					>
+						<UserIcon aria-hidden="true" />
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Manual search</Tooltip.Content>
+		</Tooltip.Root>
 		{#if row.exists}
-			<button
-				type="button"
-				class="danger icon-button"
-				aria-label="Delete file"
-				title="Delete file"
-				disabled={!canManage || !row.path}
-				onclick={() => onDelete(row)}
-			>
-				<span class="app-icon" aria-hidden="true">delete</span>
-			</button>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							type="button"
+							variant="destructive"
+							size="icon-sm"
+							aria-label="Delete file"
+							disabled={!canManage || !row.path}
+							onclick={() => onDelete(row)}
+						>
+							<TrashIcon aria-hidden="true" />
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>Delete file</Tooltip.Content>
+			</Tooltip.Root>
 		{/if}
 	</div>
 </div>

@@ -1,4 +1,7 @@
 <script lang="ts">
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import { activityDisplay, releaseGroupFromTitle } from './activityDisplay';
 	import type { DownloadActivity, ManualImportRequest } from '$lib/settings/types';
 
@@ -65,84 +68,77 @@
 		value = value.trim();
 		return value === '' ? undefined : value;
 	}
-
-	function closeFromBackdrop(event: Event) {
-		if (event.target === event.currentTarget) {
-			onClose();
-		}
-	}
 </script>
 
-<div class="modal-backdrop" role="presentation" onclick={closeFromBackdrop}>
-	<div
-		class="modal-shell settings-modal manual-import-modal"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="manual-import-title"
-	>
-		<div class="modal-header">
-			<div>
-				<p>Manual import</p>
-				<h2 id="manual-import-title">{activity.mediaTitle}</h2>
-				<span>{activity.releaseTitle}</span>
-			</div>
-			<button type="button" class="secondary" onclick={onClose}>Close</button>
-		</div>
-
-		<form class="settings-form" onsubmit={(event) => (event.preventDefault(), submit())}>
-			<label class="wide">
-				<span>Source path</span>
-				<input bind:value={sourcePath} required placeholder="/downloads/release/file.mkv" />
-			</label>
-			<label class="wide">
-				<span>Target filename override</span>
-				<input bind:value={targetFileName} placeholder="Leave empty to build from params" />
-			</label>
-			<label>
-				<span>{activity.mediaType === 'series' ? 'Series' : 'Movie'}</span>
-				<input bind:value={movieTitle} />
-			</label>
-			<label>
-				<span>Year</span>
-				<input bind:value={year} min="0" type="number" />
-			</label>
-			{#if activity.mediaType === 'series'}
-				<label>
-					<span>Season</span>
-					<input bind:value={seasonNumber} min="0" type="number" required />
-				</label>
-				<label>
-					<span>Episode</span>
-					<input bind:value={episodeNumber} min="0" type="number" required />
-				</label>
-				<label class="wide">
-					<span>Episode title</span>
-					<input bind:value={episodeTitle} />
-				</label>
-			{/if}
-			<label>
-				<span>Release group</span>
-				<input bind:value={releaseGroup} />
-			</label>
-			<label>
-				<span>Edition</span>
-				<input bind:value={edition} />
-			</label>
-			<label>
-				<span>Quality</span>
-				<input bind:value={quality} />
-			</label>
-			<label>
-				<span>Languages</span>
-				<input bind:value={languagesText} placeholder="English, German" />
-			</label>
-			{#if error}
-				<p class="form-status error wide">{error}</p>
-			{/if}
-			<div class="modal-actions wide">
-				<button type="button" class="secondary" onclick={onClose}>Cancel</button>
-				<button type="submit" disabled={importing}>{importing ? 'Importing' : 'Import'}</button>
-			</div>
-		</form>
+<SettingsFormModal
+	title={activity.mediaTitle}
+	modalClass="w-[min(1840px,calc(100vw-48px))]"
+	{onClose}
+>
+	<div class="mb-4 grid gap-1">
+		<p class="m-0 mb-1.5 text-xs font-extrabold text-muted-foreground uppercase">Manual import</p>
+		<p class="m-0 text-sm leading-6 text-muted-foreground">{activity.releaseTitle}</p>
 	</div>
-</div>
+
+	<form class="grid gap-4 md:grid-cols-2" onsubmit={(event) => (event.preventDefault(), submit())}>
+		<label class="grid gap-1.5 md:col-span-2">
+			<span class="text-sm font-bold text-muted-foreground">Source path</span>
+			<Input bind:value={sourcePath} required placeholder="/downloads/release/file.mkv" />
+		</label>
+		<label class="grid gap-1.5 md:col-span-2">
+			<span class="text-sm font-bold text-muted-foreground">Target filename override</span>
+			<Input bind:value={targetFileName} placeholder="Leave empty to build from params" />
+		</label>
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">
+				{activity.mediaType === 'series' ? 'Series' : 'Movie'}
+			</span>
+			<Input bind:value={movieTitle} />
+		</label>
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">Year</span>
+			<Input bind:value={year} min="0" type="number" />
+		</label>
+		{#if activity.mediaType === 'series'}
+			<label class="grid gap-1.5">
+				<span class="text-sm font-bold text-muted-foreground">Season</span>
+				<Input bind:value={seasonNumber} min="0" type="number" required />
+			</label>
+			<label class="grid gap-1.5">
+				<span class="text-sm font-bold text-muted-foreground">Episode</span>
+				<Input bind:value={episodeNumber} min="0" type="number" required />
+			</label>
+			<label class="grid gap-1.5 md:col-span-2">
+				<span class="text-sm font-bold text-muted-foreground">Episode title</span>
+				<Input bind:value={episodeTitle} />
+			</label>
+		{/if}
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">Release group</span>
+			<Input bind:value={releaseGroup} />
+		</label>
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">Edition</span>
+			<Input bind:value={edition} />
+		</label>
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">Quality</span>
+			<Input bind:value={quality} />
+		</label>
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">Languages</span>
+			<Input bind:value={languagesText} placeholder="English, German" />
+		</label>
+		{#if error}
+			<p
+				class="m-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 font-bold text-destructive md:col-span-2"
+			>
+				{error}
+			</p>
+		{/if}
+		<div class="flex items-center gap-3 md:col-span-2">
+			<Button type="button" variant="outline" onclick={onClose}>Cancel</Button>
+			<Button type="submit" disabled={importing}>{importing ? 'Importing' : 'Import'}</Button>
+		</div>
+	</form>
+</SettingsFormModal>

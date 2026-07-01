@@ -1,4 +1,5 @@
 <script lang="ts">
+	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { Indexer, IntegrationTestResponse } from '$lib/settings/types';
 
@@ -25,18 +26,18 @@
 		if (indexer.lastQueryAt) return `Last query ${formatCompactDateTime(indexer.lastQueryAt)}`;
 		return 'No query yet';
 	}
+
+	function healthTone(indexer: Indexer): 'success' | 'muted' | 'pending' {
+		if (!indexer.enabled || indexer.healthStatus === 'disabled') return 'muted';
+		if (indexer.healthStatus === 'temporary_disabled') return 'pending';
+		return 'success';
+	}
 </script>
 
-<div class="status-stack" aria-live="polite">
-	<span
-		class:status-enabled={indexer.enabled && indexer.healthStatus === 'healthy'}
-		class:pending={indexer.enabled && indexer.healthStatus === 'temporary_disabled'}
-		class:status-disabled={!indexer.enabled || indexer.healthStatus === 'disabled'}
-	>
-		{healthLabel(indexer)}
-	</span>
-	<span class="test-detail">{detail(indexer)}</span>
+<div class="grid min-w-30 gap-1" aria-live="polite">
+	<StatusPill tone={healthTone(indexer)}>{healthLabel(indexer)}</StatusPill>
+	<span class="max-w-55 text-xs text-muted-foreground">{detail(indexer)}</span>
 	{#if indexer.lastStatusCode}
-		<span class="test-detail">HTTP {indexer.lastStatusCode}</span>
+		<span class="max-w-55 text-xs text-muted-foreground">HTTP {indexer.lastStatusCode}</span>
 	{/if}
 </div>

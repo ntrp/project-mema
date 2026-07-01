@@ -1,12 +1,17 @@
 <script lang="ts">
+	import TrashIcon from '@lucide/svelte/icons/trash-2';
+	import EmptyState from '$lib/components/shared/EmptyState.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import MediaFilesTable from './MediaFilesTable.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
+	import MediaMetadataShell from './MediaMetadataShell.svelte';
 	import MediaRelatedSections from './MediaRelatedSections.svelte';
 	import MediaSeriesSeasons from './MediaSeriesSeasons.svelte';
 	import ReleaseCandidatesSection from './ReleaseCandidatesSection.svelte';
 	import { resolve } from '$app/paths';
-	import { imageUrl, mediaMetadataDetail } from './mediaDetail';
+	import { mediaMetadataDetail } from './mediaDetail';
 	import type {
 		DownloadActivity,
 		MediaItem,
@@ -79,32 +84,39 @@
 </script>
 
 {#if item && detail}
-	<section
-		class="metadata-detail media-library-detail"
-		aria-labelledby="library-media-title"
-		style:--backdrop-url={imageUrl(detail.backdropPath, 'original')
-			? `url("${imageUrl(detail.backdropPath, 'original')}")`
-			: undefined}
+	<MediaMetadataShell
+		backdropPath={detail.backdropPath}
+		labelledby="library-media-title"
+		class="[min-height:auto]"
 	>
 		<MediaMetadataHero {detail} titleId="library-media-title">
 			{#snippet actions()}
 				{#if canManage}
-					<button
-						type="button"
-						class="danger icon-button metadata-delete-action"
-						aria-label="Delete media"
-						title="Delete media"
-						disabled={deletingMediaItemId === item.id}
-						onclick={() => onDeleteMedia(item)}
-					>
-						<span class="app-icon" aria-hidden="true">delete</span>
-					</button>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									type="button"
+									variant="destructive"
+									size="icon-sm"
+									class="ml-auto"
+									aria-label="Delete media"
+									disabled={deletingMediaItemId === item.id}
+									onclick={() => onDeleteMedia(item)}
+								>
+									<TrashIcon aria-hidden="true" />
+								</Button>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>Delete media</Tooltip.Content>
+					</Tooltip.Root>
 				{/if}
 			{/snippet}
 		</MediaMetadataHero>
 
-		<div class="metadata-body">
-			<main class="metadata-main">
+		<div class="grid items-start gap-7">
+			<main class="grid min-w-0 gap-6 [&>section]:grid [&>section]:min-w-0 [&>section]:gap-2.5">
 				<MediaMetadataCore {detail} {castHref} {crewHref}>
 					{#snippet seasonsContent()}
 						{#if item.type === 'series'}
@@ -149,15 +161,10 @@
 				<MediaRelatedSections {detail} {mediaItems} {addingKey} {actionLabel} onAdd={onAddMedia} />
 			</main>
 		</div>
-	</section>
+	</MediaMetadataShell>
 {:else}
-	<div class="detail-stack">
-		<section class="panel">
-			<div class="page-heading">
-				<p>{mediaType === 'movie' ? 'Movies' : 'Series'}</p>
-				<h1 id="home-title">Media item not found</h1>
-			</div>
-			<p class="empty">No monitored {mediaType} matches {requestedItemId}.</p>
-		</section>
-	</div>
+	<EmptyState
+		title="Media item not found"
+		description={`No monitored ${mediaType} matches ${requestedItemId}.`}
+	/>
 {/if}

@@ -1,5 +1,12 @@
 <script lang="ts">
+	import PlusIcon from '@lucide/svelte/icons/plus';
+	import SettingsRowActionButton from '$lib/components/settings/shared/SettingsRowActionButton.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Table from '$lib/components/ui/table';
 	import type { PathMapping, PathMappingForm } from '$lib/settings/types';
 
 	interface Props {
@@ -22,67 +29,82 @@
 	}
 </script>
 
-<section class="settings-panel" aria-labelledby="path-mapping-title">
-	<div class="settings-panel-header">
+<section class="grid gap-4" aria-labelledby="path-mapping-title">
+	<div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
 		<div>
-			<h2 id="path-mapping-title">Path mappings</h2>
-			<p>Map download client paths to paths visible by the app for hardlink imports.</p>
+			<h2 id="path-mapping-title" class="m-0 text-3xl font-semibold text-foreground">
+				Path mappings
+			</h2>
+			<p class="mt-1 text-sm text-muted-foreground">
+				Map download client paths to paths visible by the app for hardlink imports.
+			</p>
 		</div>
-		<button type="button" class="add-action-button" onclick={() => (modalOpen = true)}>
-			<span class="app-icon" aria-hidden="true">add</span>
+		<Button type="button" onclick={() => (modalOpen = true)}>
+			<PlusIcon aria-hidden="true" />
 			<span>Add path</span>
-		</button>
+		</Button>
 	</div>
-	{#if mappings.length > 0}
-		<div class="table-wrap">
-			<table>
-				<thead>
-					<tr>
-						<th>Client path</th>
-						<th>App path</th>
-						<th class="table-action-heading">Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each mappings as mapping (mapping.id)}
-						<tr>
-							<td>{mapping.clientPath}</td>
-							<td>{mapping.appPath}</td>
-							<td class="row-actions">
-								<button
-									type="button"
-									class="danger icon-button"
+	<Card class="p-0">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Client path</Table.Head>
+					<Table.Head>App path</Table.Head>
+					<Table.Head class="text-right">Actions</Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each mappings as mapping (mapping.id)}
+					<Table.Row>
+						<Table.Cell class="max-w-[360px] truncate">{mapping.clientPath}</Table.Cell>
+						<Table.Cell class="max-w-[360px] truncate">{mapping.appPath}</Table.Cell>
+						<Table.Cell>
+							<div class="flex justify-end">
+								<SettingsRowActionButton
+									label="Delete path mapping"
+									icon="delete"
+									variant="destructive"
 									disabled={deletingId === mapping.id}
-									aria-label="Delete path mapping"
-									title="Delete path mapping"
 									onclick={() => onDelete(mapping.id)}
-								>
-									<span class="app-icon" aria-hidden="true">delete</span>
-								</button>
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	{:else}
-		<p class="empty">No paths have been defined.</p>
-	{/if}
+								/>
+							</div>
+						</Table.Cell>
+					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={3} class="py-8 text-center text-muted-foreground">
+							No paths have been defined.
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</Card>
 	{#if modalOpen}
 		<SettingsFormModal title="Add path mapping" onClose={() => (modalOpen = false)}>
-			<form class="settings-grid compact" onsubmit={save}>
-				<label>
-					<span>Client path</span>
-					<input bind:value={form.clientPath} placeholder="/downloads" required />
-				</label>
-				<label>
-					<span>App path</span>
-					<input bind:value={form.appPath} placeholder="/mnt/downloads" required />
-				</label>
-				<div class="form-actions inline">
-					<button type="submit" disabled={saving}>
+			<form class="grid gap-4 sm:grid-cols-2" onsubmit={save}>
+				<div class="grid gap-2">
+					<Label for="path-mapping-client-path">Client path</Label>
+					<Input
+						id="path-mapping-client-path"
+						bind:value={form.clientPath}
+						placeholder="/downloads"
+						required
+					/>
+				</div>
+				<div class="grid gap-2">
+					<Label for="path-mapping-app-path">App path</Label>
+					<Input
+						id="path-mapping-app-path"
+						bind:value={form.appPath}
+						placeholder="/mnt/downloads"
+						required
+					/>
+				</div>
+				<div class="flex justify-end sm:col-span-2">
+					<Button type="submit" disabled={saving}>
 						{saving ? 'Saving' : 'Save mapping'}
-					</button>
+					</Button>
 				</div>
 			</form>
 		</SettingsFormModal>

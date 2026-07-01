@@ -1,5 +1,9 @@
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/settings/dateFormat';
+	import SettingsRowActionButton from './shared/SettingsRowActionButton.svelte';
 	import type { ManagedUser } from '$lib/settings/types';
 
 	interface Props {
@@ -12,54 +16,53 @@
 	let { users, currentUserId, onEdit, onDelete }: Props = $props();
 </script>
 
-<div class="panel" aria-label="Users">
-	<div class="table-wrap">
-		<table>
-			<thead>
-				<tr>
-					<th>Username</th>
-					<th>Role</th>
-					<th>Created</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each users as user (user.id)}
-					<tr>
-						<td>
+<Card class="p-0" aria-label="Users">
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head>Username</Table.Head>
+				<Table.Head>Role</Table.Head>
+				<Table.Head>Created</Table.Head>
+				<Table.Head class="text-right">Actions</Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
+			{#each users as user (user.id)}
+				<Table.Row>
+					<Table.Cell>
+						<div class="flex items-center gap-2">
 							{user.username}
 							{#if user.id === currentUserId}
-								<span class="status-pill">Current</span>
+								<Badge variant="secondary">Current</Badge>
 							{/if}
-						</td>
-						<td>{user.role}</td>
-						<td>{formatDate(user.createdAt)}</td>
-						<td class="row-actions">
-							<button
-								type="button"
-								class="secondary icon-button"
-								aria-label={`Edit ${user.username}`}
+						</div>
+					</Table.Cell>
+					<Table.Cell>{user.role}</Table.Cell>
+					<Table.Cell>{formatDate(user.createdAt)}</Table.Cell>
+					<Table.Cell>
+						<div class="flex justify-end gap-2">
+							<SettingsRowActionButton
+								label={`Edit ${user.username}`}
+								icon="edit"
 								onclick={() => onEdit(user)}
-							>
-								<span class="app-icon" aria-hidden="true">edit</span>
-							</button>
-							<button
-								type="button"
-								class="danger icon-button"
+							/>
+							<SettingsRowActionButton
+								label={`Delete ${user.username}`}
+								icon="delete"
+								variant="destructive"
 								disabled={user.id === currentUserId}
-								aria-label={`Delete ${user.username}`}
 								onclick={() => onDelete(user.id)}
-							>
-								<span class="app-icon" aria-hidden="true">delete</span>
-							</button>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="4" class="empty">No users configured</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
-</div>
+							/>
+						</div>
+					</Table.Cell>
+				</Table.Row>
+			{:else}
+				<Table.Row>
+					<Table.Cell colspan={4} class="py-8 text-center text-muted-foreground">
+						No users configured
+					</Table.Cell>
+				</Table.Row>
+			{/each}
+		</Table.Body>
+	</Table.Root>
+</Card>

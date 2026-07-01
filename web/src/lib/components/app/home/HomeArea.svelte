@@ -113,7 +113,7 @@
 	);
 </script>
 
-<section class="workspace-main" aria-labelledby="home-title">
+<section class="grid min-w-0 gap-[18px]" aria-labelledby="home-title">
 	{#if activeSection === 'discover'}
 		<MediaSearchPanel
 			sections={discoverSections}

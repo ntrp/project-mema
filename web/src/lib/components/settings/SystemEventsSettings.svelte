@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { clearSystemEvents, deleteSystemEvent, listSystemEvents } from '$lib/settings/api';
 	import type { SystemEvent } from '$lib/settings/types';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
+	import { Card } from '$lib/components/ui/card';
 	import ClearSystemEventsModal from './ClearSystemEventsModal.svelte';
 	import SystemEventsControls from './SystemEventsControls.svelte';
 	import SystemEventsTable from './SystemEventsTable.svelte';
@@ -121,23 +123,25 @@
 	}
 </script>
 
-<section class="panel log-settings-panel" aria-label="Events">
-	<div class="section-heading events-section-heading">
-		<SystemEventsControls
-			{severityFilter}
-			{loading}
-			{clearing}
-			eventsEmpty={events.length === 0}
-			onSeverityChange={(severity) => (severityFilter = severity)}
-			onClear={() => (clearModalOpen = true)}
-		/>
-	</div>
+<Card class="gap-4 p-5" aria-label="Events">
+	<SectionHeading class="items-start">
+		{#snippet actions()}
+			<SystemEventsControls
+				{severityFilter}
+				{loading}
+				{clearing}
+				eventsEmpty={events.length === 0}
+				onSeverityChange={(severity) => (severityFilter = severity)}
+				onClear={() => (clearModalOpen = true)}
+			/>
+		{/snippet}
+	</SectionHeading>
 
 	{#if errorMessage}
-		<p class="inline-error">{errorMessage}</p>
+		<p class="m-0 font-bold text-destructive">{errorMessage}</p>
 	{/if}
 	{#if message}
-		<p class="muted">{message}</p>
+		<p class="m-0 text-sm leading-6 text-muted-foreground">{message}</p>
 	{/if}
 
 	<SystemEventsTable
@@ -149,7 +153,7 @@
 		onDelete={(id) => void deleteEvent(id)}
 		onLoadMore={() => void loadMoreEvents()}
 	/>
-</section>
+</Card>
 
 {#if clearModalOpen}
 	<ClearSystemEventsModal

@@ -2,6 +2,9 @@
 	import { onMount } from 'svelte';
 
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
 	import { listQualitySizeSettings, updateQualitySizeSettings } from '$lib/settings/api';
 	import { groupQualitiesByResolution } from '$lib/settings/qualityGroups';
 	import type { QualitySizeSetting } from '$lib/settings/types';
@@ -63,59 +66,68 @@
 	}
 </script>
 
-<div class="panel quality-size-panel" aria-labelledby="quality-size-title">
-	<form onsubmit={saveQualitySizes}>
-		<div class="section-heading">
+<Card.Root aria-labelledby="quality-size-title">
+	<form class="grid gap-3.5" onsubmit={saveQualitySizes}>
+		<Card.Header>
 			<div>
-				<p class="section-kicker">Release scoring</p>
-				<h2 id="quality-size-title">Quality sizes</h2>
+				<Card.Description>Release scoring</Card.Description>
+				<Card.Title id="quality-size-title">Quality sizes</Card.Title>
 			</div>
-			<div class="quality-size-actions">
-				<button
-					type="button"
-					class="secondary"
-					disabled={loading || saving}
-					onclick={loadQualitySizes}
-				>
-					Reload
-				</button>
-				<button type="submit" disabled={loading || saving || hasValidationErrors}>
-					{saving ? 'Saving' : 'Save sizes'}
-				</button>
-			</div>
-		</div>
+			<Card.Action>
+				<div class="flex flex-wrap justify-end gap-2">
+					<Button
+						type="button"
+						variant="outline"
+						disabled={loading || saving}
+						onclick={loadQualitySizes}
+					>
+						Reload
+					</Button>
+					<Button type="submit" disabled={loading || saving || hasValidationErrors}>
+						{saving ? 'Saving' : 'Save sizes'}
+					</Button>
+				</div>
+			</Card.Action>
+		</Card.Header>
 
-		<NoticeStack {message} {errorMessage} />
+		<Card.Content class="grid gap-4">
+			<NoticeStack {message} {errorMessage} />
 
-		<div class="table-wrap">
-			<table class="quality-size-table">
-				<thead>
-					<tr>
-						<th>Quality</th>
-						<th>Size limit</th>
-					</tr>
-				</thead>
-				<tbody>
+			<Table.Root class="min-w-[980px]">
+				<Table.Header>
+					<Table.Row>
+						<Table.Head class="w-[180px] min-w-40">Quality</Table.Head>
+						<Table.Head>Size limit</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
 					{#if loading}
-						<tr>
-							<td colspan="2" class="empty">Loading quality sizes</td>
-						</tr>
+						<Table.Row>
+							<Table.Cell colspan={2} class="text-muted-foreground"
+								>Loading quality sizes</Table.Cell
+							>
+						</Table.Row>
 					{:else if qualities.length === 0}
-						<tr>
-							<td colspan="2" class="empty">No qualities loaded</td>
-						</tr>
+						<Table.Row>
+							<Table.Cell colspan={2} class="text-muted-foreground">No qualities loaded</Table.Cell>
+						</Table.Row>
 					{:else}
 						{#each qualityGroups as group (group.id)}
-							<tr class="quality-size-group-row">
-								<th colspan="2">{group.label}</th>
-							</tr>
+							<Table.Row>
+								<Table.Head
+									colspan={2}
+									class="bg-muted/60 text-xs font-black text-muted-foreground uppercase"
+								>
+									{group.label}
+								</Table.Head>
+							</Table.Row>
 							{#each group.qualities as quality (quality.qualityId)}
 								<QualitySizeRow {quality} onChange={updateQuality} />
 							{/each}
 						{/each}
 					{/if}
-				</tbody>
-			</table>
-		</div>
+				</Table.Body>
+			</Table.Root>
+		</Card.Content>
 	</form>
-</div>
+</Card.Root>

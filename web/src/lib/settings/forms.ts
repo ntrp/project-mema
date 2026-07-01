@@ -94,6 +94,7 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 export function emptyCustomFormatForm(): CustomFormatForm {
 	return {
 		name: '',
+		includeInRenameTemplate: false,
 		includeSpecs: [],
 		excludeSpecs: []
 	};
@@ -169,6 +170,7 @@ export function customFormatFormFromFormat(format: CustomFormat): CustomFormatFo
 	return {
 		id: format.id,
 		name: format.name,
+		includeInRenameTemplate: format.includeInRenameTemplate,
 		includeSpecs: format.includeSpecs.map((spec) => ({ ...spec })),
 		excludeSpecs: format.excludeSpecs.map((spec) => ({ ...spec }))
 	};
@@ -299,6 +301,7 @@ function normalizedInteger(value: number | string | undefined) {
 export function normalizeCustomFormatForm(form: CustomFormatForm): CustomFormatRequest {
 	return {
 		name: form.name.trim(),
+		includeInRenameTemplate: form.includeInRenameTemplate,
 		includeSpecs: normalizeCustomFormatSpecs(form.includeSpecs),
 		excludeSpecs: normalizeCustomFormatSpecs(form.excludeSpecs)
 	};

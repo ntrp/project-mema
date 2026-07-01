@@ -1,8 +1,12 @@
 <script lang="ts">
+	import CustomFormatSpecEditor from '$lib/components/settings/CustomFormatSpecEditor.svelte';
+	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Input } from '$lib/components/ui/input';
 	import type {
 		CustomFormatForm as CustomFormatFormValue,
-		CustomFormatSpec,
-		CustomFormatSpecType
+		CustomFormatSpec
 	} from '$lib/settings/types';
 
 	interface Props {
@@ -11,19 +15,6 @@
 		onSave: (_event: SubmitEvent) => void | Promise<void>;
 		onCancel: () => void;
 	}
-
-	const specTypes: { value: CustomFormatSpecType; label: string }[] = [
-		{ value: 'releaseTitle', label: 'Release title regex' },
-		{ value: 'source', label: 'Source' },
-		{ value: 'resolution', label: 'Resolution' },
-		{ value: 'quality', label: 'Quality' },
-		{ value: 'videoCodec', label: 'Video codec' },
-		{ value: 'audioCodec', label: 'Audio codec' },
-		{ value: 'releaseGroup', label: 'Release group regex' },
-		{ value: 'edition', label: 'Edition regex' },
-		{ value: 'indexerFlag', label: 'Indexer flag' },
-		{ value: 'language', label: 'Language' }
-	];
 
 	let { form = $bindable(), saving, onSave, onCancel }: Props = $props();
 	let canSave = $derived(
@@ -59,126 +50,62 @@
 	}
 </script>
 
-<form class="settings-form custom-format-form" onsubmit={onSave}>
-	<label>
-		<span>Name</span>
-		<input bind:value={form.name} type="text" maxlength="200" required />
+<form class="grid gap-5" onsubmit={onSave}>
+	<label class="grid gap-2 text-sm">
+		<span class="font-medium">Name</span>
+		<Input bind:value={form.name} type="text" maxlength={200} required />
 	</label>
 
-	<div class="custom-format-spec-columns">
-		<div class="custom-format-spec-list">
-			<div class="profile-quality-header">
-				<strong>Required</strong>
-				<button type="button" class="add-action-button" onclick={() => addSpec('includeSpecs')}>
-					<span class="app-icon" aria-hidden="true">add</span>
-					<span>Add condition</span>
-				</button>
-			</div>
-			{#each form.includeSpecs as spec, index (spec.id)}
-				<div class="custom-format-spec-row include">
-					<input
-						value={spec.name}
-						type="text"
-						placeholder="Label"
-						aria-label="Required condition label"
-						oninput={(event) =>
-							updateSpec('includeSpecs', index, { name: event.currentTarget.value })}
-					/>
-					<select
-						value={spec.type}
-						aria-label="Required condition type"
-						onchange={(event) =>
-							updateSpec('includeSpecs', index, {
-								type: event.currentTarget.value as CustomFormatSpecType
-							})}
-					>
-						{#each specTypes as type (type.value)}
-							<option value={type.value}>{type.label}</option>
-						{/each}
-					</select>
-					<input
-						value={spec.value}
-						type="text"
-						placeholder="Value or regex"
-						aria-label="Required condition value"
-						oninput={(event) =>
-							updateSpec('includeSpecs', index, { value: event.currentTarget.value })}
-					/>
-					<label class="toggle custom-format-required-toggle">
-						<input
-							type="checkbox"
-							checked={spec.required}
-							onchange={(event) =>
-								updateSpec('includeSpecs', index, { required: event.currentTarget.checked })}
-						/>
-						<span>Required</span>
-					</label>
-					<button type="button" class="danger" onclick={() => removeSpec('includeSpecs', index)}>
-						Remove
-					</button>
-				</div>
-			{/each}
-		</div>
+	<label class="flex items-center gap-2 text-sm text-muted-foreground">
+		<Checkbox
+			checked={form.includeInRenameTemplate}
+			onCheckedChange={(checked) => (form = { ...form, includeInRenameTemplate: checked === true })}
+		/>
+		<span>Include in rename template custom_formats</span>
+	</label>
 
-		<div class="custom-format-spec-list">
-			<div class="profile-quality-header">
-				<strong>Rejected</strong>
-				<button type="button" class="add-action-button" onclick={() => addSpec('excludeSpecs')}>
-					<span class="app-icon" aria-hidden="true">add</span>
-					<span>Add condition</span>
-				</button>
+	<div class="grid gap-6">
+		<section class="grid gap-3">
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<strong>Conditions</strong>
+				<SettingsAddButton label="Add condition" onclick={() => addSpec('includeSpecs')} />
 			</div>
-			{#each form.excludeSpecs as spec, index (spec.id)}
-				<div class="custom-format-spec-row exclude">
-					<input
-						value={spec.name}
-						type="text"
-						placeholder="Label"
-						aria-label="Rejected condition label"
-						oninput={(event) =>
-							updateSpec('excludeSpecs', index, { name: event.currentTarget.value })}
+			<div class="grid gap-3 min-[860px]:grid-cols-2 min-[1240px]:grid-cols-3">
+				{#each form.includeSpecs as spec, index (spec.id)}
+					<CustomFormatSpecEditor
+						{spec}
+						labelPrefix="Required"
+						tone="include"
+						onChange={(patch) => updateSpec('includeSpecs', index, patch)}
+						onRemove={() => removeSpec('includeSpecs', index)}
 					/>
-					<select
-						value={spec.type}
-						aria-label="Rejected condition type"
-						onchange={(event) =>
-							updateSpec('excludeSpecs', index, {
-								type: event.currentTarget.value as CustomFormatSpecType
-							})}
-					>
-						{#each specTypes as type (type.value)}
-							<option value={type.value}>{type.label}</option>
-						{/each}
-					</select>
-					<input
-						value={spec.value}
-						type="text"
-						placeholder="Value or regex"
-						aria-label="Rejected condition value"
-						oninput={(event) =>
-							updateSpec('excludeSpecs', index, { value: event.currentTarget.value })}
+				{/each}
+			</div>
+		</section>
+
+		<section class="grid gap-3">
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<strong>Negated conditions</strong>
+				<SettingsAddButton label="Add condition" onclick={() => addSpec('excludeSpecs')} />
+			</div>
+			<div class="grid gap-3 min-[860px]:grid-cols-2 min-[1240px]:grid-cols-3">
+				{#each form.excludeSpecs as spec, index (spec.id)}
+					<CustomFormatSpecEditor
+						{spec}
+						labelPrefix="Rejected"
+						tone="exclude"
+						onChange={(patch) => updateSpec('excludeSpecs', index, patch)}
+						onRemove={() => removeSpec('excludeSpecs', index)}
 					/>
-					<label class="toggle custom-format-required-toggle">
-						<input
-							type="checkbox"
-							checked={spec.required}
-							onchange={(event) =>
-								updateSpec('excludeSpecs', index, { required: event.currentTarget.checked })}
-						/>
-						<span>Required</span>
-					</label>
-					<button type="button" class="danger" onclick={() => removeSpec('excludeSpecs', index)}>
-						Remove
-					</button>
-				</div>
-			{/each}
-		</div>
+				{/each}
+			</div>
+		</section>
 	</div>
 
-	<div class="form-actions">
-		<button type="button" class="secondary" onclick={onCancel}>Cancel</button>
-		<button type="submit" disabled={saving || !canSave}>
+	<div class="flex justify-end gap-2">
+		<Button type="button" variant="outline" onclick={onCancel}>Cancel</Button>
+		<Button type="submit" disabled={saving || !canSave}>
 			{saving ? 'Saving' : form.id ? 'Update format' : 'Create format'}
-		</button>
+		</Button>
 	</div>
 </form>

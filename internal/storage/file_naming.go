@@ -41,12 +41,12 @@ var fileNamingTokenPattern = regexp.MustCompile(`\{([^{}]+)\}`)
 
 func DefaultFileNamingSettings() FileNamingSettings {
 	return FileNamingSettings{
-		MovieFileFormat:      "{Movie Title} ({Release Year}) {Quality Full}",
-		MovieFolderFormat:    "{Movie Title} ({Release Year})",
-		SeriesEpisodeFormat:  "{Series Title} - S{season:00}E{episode:00} - {Episode Title} {Quality Full}",
-		DailyEpisodeFormat:   "{Series Title} - {Air-Date} - {Episode Title} {Quality Full}",
-		AnimeEpisodeFormat:   "{Series Title} - S{season:00}E{episode:00} - {Episode Title} {Quality Full}",
-		SeriesFolderFormat:   "{Series Title}",
+		MovieFileFormat:      "{movie_title} ({release_year}) {quality_full}",
+		MovieFolderFormat:    "{movie_title} ({release_year})",
+		SeriesEpisodeFormat:  "{series_title} - S{season:00}E{episode:00} - {episode_title} {quality_full}",
+		DailyEpisodeFormat:   "{series_title} - {air_date} - {episode_title} {quality_full}",
+		AnimeEpisodeFormat:   "{series_title} - S{season:00}E{episode:00} - {episode_title} {quality_full}",
+		SeriesFolderFormat:   "{series_title}",
 		SeasonFolderFormat:   "Season {season}",
 		SpecialsFolderFormat: "Specials",
 	}
@@ -175,7 +175,8 @@ func normalizeFileNamingSettings(input FileNamingSettingsInput) (FileNamingSetti
 }
 
 func normalizeTemplate(value string) string {
-	return strings.Join(strings.Fields(strings.TrimSpace(value)), " ")
+	normalized := strings.Join(strings.Fields(strings.TrimSpace(value)), " ")
+	return normalizeTemplateTokens(normalized)
 }
 
 func scanFileNamingSettings(row pgx.Row) (FileNamingSettings, error) {
@@ -211,13 +212,13 @@ func renderMediaTemplate(template string, input MediaItemInput) string {
 		year = formatInt32(*input.Year)
 	}
 	values := map[string]string{
-		"Movie Title":  title,
-		"Release Year": year,
-		"Series Title": title,
-		"Year":         year,
+		"movie_title":  title,
+		"release_year": year,
+		"series_title": title,
+		"year":         year,
 	}
 	rendered := fileNamingTokenPattern.ReplaceAllStringFunc(template, func(token string) string {
-		key := strings.Trim(token, "{}")
+		key := normalizeTemplateTokenName(strings.Trim(token, "{}"))
 		if value, ok := values[key]; ok {
 			return value
 		}

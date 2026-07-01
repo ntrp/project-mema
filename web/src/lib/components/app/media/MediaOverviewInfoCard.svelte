@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { providerPageUrl } from '$lib/settings/providerLinks';
 	import { formatDate } from '$lib/settings/dateFormat';
+	import { Button } from '$lib/components/ui/button';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
 
 	interface Props {
@@ -84,39 +85,51 @@
 	}
 </script>
 
-<aside class="metadata-overview-card" aria-label="Media facts">
+<aside class="overflow-hidden rounded-md border border-border bg-card" aria-label="Media facts">
 	{#if score}
-		<div class="metadata-score-row">
-			<span class="metadata-score">
-				<span class="tmdb-mark" aria-label="TMDB">TMDb</span>
+		<div class="flex flex-wrap items-center justify-center gap-2.5 px-4 py-3.5">
+			<span class="inline-flex items-center gap-3 text-lg font-black text-foreground">
+				<span
+					class="inline-flex min-h-[22px] items-center rounded-md bg-primary px-[9px] py-[3px] text-xs leading-none font-black text-primary-foreground"
+					aria-label="TMDB"
+				>
+					TMDb
+				</span>
 				{score}%
 			</span>
 		</div>
 	{/if}
 
-	<div class="metadata-overview-card-rows">
+	<div class="border-t border-border">
 		{#each rows as row (`${row.label}:${row.value}`)}
-			<div>
-				<strong>{row.label}</strong>
+			<div
+				class="grid grid-cols-[max-content_minmax(0,1fr)] gap-3 border-b border-border px-4 py-[13px]"
+			>
+				<strong class="[overflow-wrap:anywhere] text-sm whitespace-nowrap text-foreground">
+					{row.label}
+				</strong>
 				{#if Array.isArray(row.value)}
-					<span class="metadata-value-list">
+					<span class="grid justify-items-end gap-1 text-right text-muted-foreground">
 						{#each row.value as value (value)}
 							<span>{value}</span>
 						{/each}
 					</span>
 				{:else}
-					<span>{row.value}</span>
+					<span class="[overflow-wrap:anywhere] text-right text-muted-foreground">{row.value}</span>
 				{/if}
 			</div>
 		{/each}
 	</div>
 
 	{#if externalLinks.length > 0}
-		<div class="metadata-source-row" aria-label="Metadata sources">
+		<div
+			class="flex flex-wrap items-center justify-center gap-2.5 px-4 py-3.5"
+			aria-label="Metadata sources"
+		>
 			{#each externalLinks as link (link.href)}
-				<!-- eslint-disable svelte/no-navigation-without-resolve -->
-				<a href={link.href} target="_blank" rel="noreferrer">{link.label}</a>
-				<!-- eslint-enable svelte/no-navigation-without-resolve -->
+				<Button variant="outline" size="xs" href={link.href} target="_blank" rel="noreferrer">
+					{link.label}
+				</Button>
 			{/each}
 		</div>
 	{/if}

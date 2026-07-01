@@ -1,4 +1,5 @@
 <script lang="ts">
+	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import type { IntegrationTestResponse } from '$lib/settings/types';
 
 	interface Props {
@@ -10,16 +11,16 @@
 	let { enabled, result, testing = false }: Props = $props();
 </script>
 
-<div class="status-stack" aria-live="polite">
-	<span class:status-enabled={enabled} class:status-disabled={!enabled}>
-		{enabled ? 'Enabled' : 'Disabled'}
-	</span>
+<div class="grid min-w-30 gap-1" aria-live="polite">
+	<StatusPill tone={enabled ? 'success' : 'muted'}>{enabled ? 'Enabled' : 'Disabled'}</StatusPill>
 	{#if testing}
-		<span class="test-status pending">Testing</span>
+		<StatusPill tone="pending">Testing</StatusPill>
 	{:else if result}
-		<span class:test-ok={result.success} class:test-failed={!result.success}>
+		<StatusPill tone={result.success ? 'success' : 'error'}>
 			{result.success ? 'Test OK' : 'Test failed'}
-		</span>
-		<span class="test-detail">{result.message} - {result.latencyMs} ms</span>
+		</StatusPill>
+		<span class="max-w-55 text-xs text-muted-foreground"
+			>{result.message} - {result.latencyMs} ms</span
+		>
 	{/if}
 </div>

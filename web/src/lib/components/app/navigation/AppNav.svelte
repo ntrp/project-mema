@@ -1,6 +1,8 @@
 <script lang="ts">
 	import EventNotifications from './EventNotifications.svelte';
 	import AppNavSearch from './AppNavSearch.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
@@ -26,52 +28,29 @@
 		onLogout,
 		showNotifications = false
 	}: Props = $props();
-	let userMenuOpen = $state(false);
 </script>
 
-<header class="app-nav">
+<header
+	class="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_auto] items-center gap-3 border-b border-border bg-card px-3 py-2 min-[641px]:gap-4 min-[641px]:px-[18px] min-[981px]:py-1.5"
+>
 	<AppNavSearch bind:searchQuery {groups} {loading} {onSearch} {onSelect} {onAdvancedSearch} />
 
-	<nav class="nav-actions" aria-label="Application actions">
+	<nav class="flex w-full justify-end gap-2.5 justify-self-end" aria-label="Application actions">
 		{#if showNotifications}
 			<EventNotifications />
 		{/if}
-		<div class="user-menu">
-			<button
-				type="button"
-				class="icon-button"
-				aria-label="User menu"
-				aria-haspopup="menu"
-				aria-expanded={userMenuOpen}
-				title="User"
-				onclick={() => (userMenuOpen = !userMenuOpen)}
-			>
-				<span aria-hidden="true">A</span>
-			</button>
-			{#if userMenuOpen}
-				<div class="user-dropdown" role="menu">
-					<button
-						type="button"
-						role="menuitem"
-						onclick={() => {
-							userMenuOpen = false;
-							onProfile();
-						}}
-					>
-						Profile
-					</button>
-					<button
-						type="button"
-						role="menuitem"
-						onclick={() => {
-							userMenuOpen = false;
-							void onLogout();
-						}}
-					>
-						Logout
-					</button>
-				</div>
-			{/if}
-		</div>
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger>
+				{#snippet child({ props })}
+					<Button variant="outline" size="icon" aria-label="User menu" {...props}>
+						<span aria-hidden="true">A</span>
+					</Button>
+				{/snippet}
+			</DropdownMenu.Trigger>
+			<DropdownMenu.Content align="end" class="w-44">
+				<DropdownMenu.Item onclick={onProfile}>Profile</DropdownMenu.Item>
+				<DropdownMenu.Item onclick={() => void onLogout()}>Logout</DropdownMenu.Item>
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
 	</nav>
 </header>

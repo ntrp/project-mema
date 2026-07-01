@@ -1,6 +1,10 @@
 <script lang="ts">
+	import { Badge } from '$lib/components/ui/badge';
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
 	import { languageLabel } from '$lib/settings/languageOptions';
 	import { formatDate } from '$lib/settings/dateFormat';
+	import SettingsRowActionButton from './shared/SettingsRowActionButton.svelte';
 	import type { MediaProfile, QualitySizeSetting } from '$lib/settings/types';
 
 	interface Props {
@@ -38,62 +42,61 @@
 	}
 </script>
 
-<div class="table-wrap">
-	<table>
-		<thead>
-			<tr>
-				<th>Name</th>
-				<th>Qualities</th>
-				<th>Upgrade until</th>
-				<th>Languages</th>
-				<th>Score</th>
-				<th>Updated</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
+<Card class="p-0">
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head>Name</Table.Head>
+				<Table.Head>Qualities</Table.Head>
+				<Table.Head>Upgrade until</Table.Head>
+				<Table.Head>Languages</Table.Head>
+				<Table.Head>Score</Table.Head>
+				<Table.Head>Updated</Table.Head>
+				<Table.Head class="text-right">Actions</Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
 			{#each profiles as profile (profile.id)}
-				<tr>
-					<td><strong>{profile.name}</strong></td>
-					<td>
-						<div class="quality-chip-list" aria-label={`${profile.name} qualities`}>
+				<Table.Row>
+					<Table.Cell><strong>{profile.name}</strong></Table.Cell>
+					<Table.Cell>
+						<div class="flex flex-wrap gap-1.5" aria-label={`${profile.name} qualities`}>
 							{#each selectedQualityNames(profile).slice(0, 6) as name (name)}
-								<span>{name}</span>
+								<Badge variant="secondary">{name}</Badge>
 							{/each}
 							{#if (profile.qualityIds?.length ?? 0) > 6}
-								<span>+{(profile.qualityIds?.length ?? 0) - 6}</span>
+								<Badge variant="outline">+{(profile.qualityIds?.length ?? 0) - 6}</Badge>
 							{/if}
 						</div>
-					</td>
-					<td>{upgradeUntilName(profile)}</td>
-					<td>{languageSummary(profile)}</td>
-					<td>{scoreSummary(profile)}</td>
-					<td>{formatDate(profile.updatedAt)}</td>
-					<td class="row-actions">
-						<button
-							type="button"
-							class="secondary icon-button"
-							aria-label={`Edit ${profile.name}`}
-							onclick={() => onEdit(profile)}
-						>
-							<span class="app-icon" aria-hidden="true">edit</span>
-						</button>
-						<button
-							type="button"
-							class="danger icon-button"
-							disabled={deletingId === profile.id}
-							aria-label={`${deletingId === profile.id ? 'Deleting' : 'Delete'} ${profile.name}`}
-							onclick={() => onDelete(profile.id)}
-						>
-							<span class="app-icon" aria-hidden="true">delete</span>
-						</button>
-					</td>
-				</tr>
+					</Table.Cell>
+					<Table.Cell>{upgradeUntilName(profile)}</Table.Cell>
+					<Table.Cell>{languageSummary(profile)}</Table.Cell>
+					<Table.Cell>{scoreSummary(profile)}</Table.Cell>
+					<Table.Cell>{formatDate(profile.updatedAt)}</Table.Cell>
+					<Table.Cell>
+						<div class="flex justify-end gap-2">
+							<SettingsRowActionButton
+								label={`Edit ${profile.name}`}
+								icon="edit"
+								onclick={() => onEdit(profile)}
+							/>
+							<SettingsRowActionButton
+								label={`${deletingId === profile.id ? 'Deleting' : 'Delete'} ${profile.name}`}
+								icon="delete"
+								variant="destructive"
+								disabled={deletingId === profile.id}
+								onclick={() => onDelete(profile.id)}
+							/>
+						</div>
+					</Table.Cell>
+				</Table.Row>
 			{:else}
-				<tr>
-					<td colspan="7" class="empty">No profiles configured</td>
-				</tr>
+				<Table.Row>
+					<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">
+						No profiles configured
+					</Table.Cell>
+				</Table.Row>
 			{/each}
-		</tbody>
-	</table>
-</div>
+		</Table.Body>
+	</Table.Root>
+</Card>

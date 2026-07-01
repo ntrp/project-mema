@@ -4,11 +4,30 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import svelte from 'eslint-plugin-svelte';
 
 const browserGlobals = {
+	$derived: 'readonly',
+	$state: 'readonly',
 	console: 'readonly',
 	document: 'readonly',
 	Event: 'readonly',
+	EventSource: 'readonly',
+	HTMLDivElement: 'readonly',
+	HTMLSelectElement: 'readonly',
+	KeyboardEvent: 'readonly',
+	MessageEvent: 'readonly',
 	SubmitEvent: 'readonly',
 	window: 'readonly'
+};
+
+const domTypeGlobals = {
+	FileList: 'readonly',
+	HTMLElement: 'readonly',
+	HTMLAnchorElement: 'readonly',
+	HTMLButtonElement: 'readonly',
+	HTMLInputElement: 'readonly',
+	HTMLParagraphElement: 'readonly',
+	HTMLSpanElement: 'readonly',
+	HTMLTableRowElement: 'readonly',
+	HTMLTableSectionElement: 'readonly'
 };
 
 export default [
@@ -36,6 +55,12 @@ export default [
 				'error',
 				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
 			]
+		}
+	},
+	{
+		files: ['src/lib/components/ui/**/*.{svelte,ts}', 'src/lib/utils.ts'],
+		languageOptions: {
+			globals: domTypeGlobals
 		}
 	},
 	{

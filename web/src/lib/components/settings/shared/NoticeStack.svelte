@@ -1,5 +1,5 @@
 <script lang="ts">
-	const dismissDelayMs = 5000;
+	import { Button } from '$lib/components/ui/button';
 
 	interface Props {
 		message: string;
@@ -8,45 +8,41 @@
 	}
 
 	let { message, errorMessage, onDismiss }: Props = $props();
-	let visible = $state(false);
-	let noticeKey = $state('');
-
-	$effect(() => {
-		const nextKey = `${errorMessage}|${message}`;
-		if (!nextKey || nextKey === '|') {
-			visible = false;
-			noticeKey = '';
-			return;
-		}
-		visible = true;
-		noticeKey = nextKey;
-		const timeout = window.setTimeout(dismiss, dismissDelayMs);
-		return () => window.clearTimeout(timeout);
-	});
+	let dismissedNoticeKey = $state('');
+	let noticeKey = $derived(`${errorMessage}|${message}`);
+	let visible = $derived(noticeKey !== '|' && dismissedNoticeKey !== noticeKey);
 
 	function dismiss() {
-		visible = false;
+		dismissedNoticeKey = noticeKey;
 		onDismiss?.();
 	}
 </script>
 
 {#if visible && (message || errorMessage)}
-	<div class="toast-stack" aria-live="polite" aria-atomic="true">
+	<div
+		class="fixed top-4 right-4 z-50 grid w-[min(360px,calc(100vw-2rem))] gap-2"
+		aria-live="polite"
+		aria-atomic="true"
+	>
 		{#if errorMessage}
-			<button type="button" class="toast-notice error" onclick={dismiss}>
+			<Button
+				type="button"
+				variant="destructive"
+				class="relative h-auto justify-start overflow-hidden whitespace-normal px-4 py-3 text-left shadow-lg"
+				onclick={dismiss}
+			>
 				<span>{errorMessage}</span>
-				{#key noticeKey}
-					<span class="toast-progress" aria-hidden="true"></span>
-				{/key}
-			</button>
+			</Button>
 		{/if}
 		{#if message}
-			<button type="button" class="toast-notice success" onclick={dismiss}>
+			<Button
+				type="button"
+				variant="outline"
+				class="relative h-auto justify-start overflow-hidden border-primary/30 bg-primary/10 px-4 py-3 text-left text-primary shadow-lg whitespace-normal hover:bg-primary/15"
+				onclick={dismiss}
+			>
 				<span>{message}</span>
-				{#key noticeKey}
-					<span class="toast-progress" aria-hidden="true"></span>
-				{/key}
-			</button>
+			</Button>
 		{/if}
 	</div>
 {/if}

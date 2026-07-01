@@ -3,6 +3,8 @@
 	import LibraryScanImportRow from '$lib/components/settings/LibraryScanImportRow.svelte';
 	import LibraryScanImportTableHead from '$lib/components/settings/LibraryScanImportTableHead.svelte';
 	import LibraryScanImportToolbar from '$lib/components/settings/LibraryScanImportToolbar.svelte';
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
 	import {
 		folderName,
 		scanMediaKind,
@@ -48,7 +50,6 @@
 		checkedRows.length > 0 &&
 			checkedRows.every((item) => drafts[item.id]?.matched && drafts[item.id]?.qualityProfileId)
 	);
-
 	$effect(() => {
 		for (const item of scan.items) {
 			if (drafts[item.id]) continue;
@@ -161,8 +162,8 @@
 </script>
 
 <LibraryScanImportToolbar totalFiles={scan.totalFiles} bind:sortMode />
-<div class="table-wrap scan-import-table">
-	<table>
+<Card class="mt-4 overflow-x-auto p-0">
+	<Table.Root class="min-w-[1040px]">
 		<LibraryScanImportTableHead />
 		<tbody>
 			{#each rows as item (item.id)}
@@ -195,5 +196,5 @@
 				onImport={importChecked}
 			/>
 		</tfoot>
-	</table>
-</div>
+	</Table.Root>
+</Card>

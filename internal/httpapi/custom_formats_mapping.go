@@ -28,7 +28,12 @@ func customFormatInput(w http.ResponseWriter, request CustomFormatRequest) (stor
 		writeError(w, http.StatusBadRequest, "spec_required", "Add at least one condition")
 		return storage.CustomFormatInput{}, false
 	}
-	return storage.CustomFormatInput{Name: name, IncludeSpecs: includeSpecs, ExcludeSpecs: excludeSpecs}, true
+	return storage.CustomFormatInput{
+		Name:                    name,
+		IncludeInRenameTemplate: request.IncludeInRenameTemplate,
+		IncludeSpecs:            includeSpecs,
+		ExcludeSpecs:            excludeSpecs,
+	}, true
 }
 
 func customFormatSpecsInput(w http.ResponseWriter, specs []CustomFormatSpec) ([]storage.CustomFormatSpec, bool) {
@@ -78,12 +83,13 @@ func customFormatListResponse(formats []storage.CustomFormat) CustomFormatListRe
 
 func customFormatResponse(format storage.CustomFormat) CustomFormat {
 	return CustomFormat{
-		Id:           openapi_types.UUID(format.ID),
-		Name:         format.Name,
-		IncludeSpecs: customFormatSpecResponses(format.IncludeSpecs),
-		ExcludeSpecs: customFormatSpecResponses(format.ExcludeSpecs),
-		CreatedAt:    format.CreatedAt,
-		UpdatedAt:    format.UpdatedAt,
+		Id:                      openapi_types.UUID(format.ID),
+		Name:                    format.Name,
+		IncludeInRenameTemplate: format.IncludeInRenameTemplate,
+		IncludeSpecs:            customFormatSpecResponses(format.IncludeSpecs),
+		ExcludeSpecs:            customFormatSpecResponses(format.ExcludeSpecs),
+		CreatedAt:               format.CreatedAt,
+		UpdatedAt:               format.UpdatedAt,
 	}
 }
 
@@ -109,7 +115,9 @@ func customFormatParsingResponse(
 	names := make([]string, 0, len(matches))
 	matchedSpecCount := int32(0)
 	for _, match := range matches {
-		names = append(names, match.Name)
+		if match.IncludeInRenameTemplate {
+			names = append(names, match.Name)
+		}
 		matchedSpecCount += int32(len(match.MatchedSpecs))
 	}
 	scores := customFormatParsingScores(profile)

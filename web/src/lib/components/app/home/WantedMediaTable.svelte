@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import EmptyState from '$lib/components/shared/EmptyState.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
 	import type { MediaItem } from '$lib/settings/types';
 
 	interface Props {
@@ -19,29 +24,26 @@
 	}
 </script>
 
-<div class="page-heading">
-	<p>Library</p>
-	<h1 id="home-title">Wanted</h1>
-</div>
+<PageHeading eyebrow="Library" title="Wanted" titleId="home-title" />
 
 {#if items.length}
-	<div class="table-wrap">
-		<table class="data-table wanted-table">
-			<thead>
-				<tr>
-					<th>Title</th>
-					<th>Type</th>
-					<th>Year</th>
-					<th>Monitor</th>
-					<th>Profile</th>
-					<th>Availability</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
+	<Card class="overflow-hidden p-0">
+		<Table.Root class="wanted-table">
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Title</Table.Head>
+					<Table.Head>Type</Table.Head>
+					<Table.Head>Year</Table.Head>
+					<Table.Head>Monitor</Table.Head>
+					<Table.Head>Profile</Table.Head>
+					<Table.Head>Availability</Table.Head>
+					<Table.Head></Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
 				{#each items as item (item.id)}
-					<tr>
-						<td>
+					<Table.Row>
+						<Table.Cell>
 							<a
 								href={item.type === 'movie'
 									? resolve('/movies/[id]', { id: item.id })
@@ -49,31 +51,34 @@
 							>
 								{item.title}
 							</a>
-						</td>
-						<td>{item.type}</td>
-						<td>{item.year ?? '-'}</td>
-						<td>{monitorLabel(item)}</td>
-						<td>{item.qualityProfileName ?? '-'}</td>
-						<td>{item.minimumAvailability}</td>
-						<td>
+						</Table.Cell>
+						<Table.Cell>{item.type}</Table.Cell>
+						<Table.Cell>{item.year ?? '-'}</Table.Cell>
+						<Table.Cell>{monitorLabel(item)}</Table.Cell>
+						<Table.Cell>{item.qualityProfileName ?? '-'}</Table.Cell>
+						<Table.Cell>{item.minimumAvailability}</Table.Cell>
+						<Table.Cell class="text-right">
 							{#if canManage}
-								<button
+								<Button
 									type="button"
-									class="secondary compact-action"
+									variant="outline"
+									size="sm"
 									disabled={searchingItemId === item.id}
 									onclick={() => onFindReleases(item)}
 								>
 									{searchingItemId === item.id ? 'Searching' : 'Search'}
-								</button>
+								</Button>
 							{/if}
-						</td>
-					</tr>
+						</Table.Cell>
+					</Table.Row>
 				{/each}
-			</tbody>
-		</table>
-	</div>
+			</Table.Body>
+		</Table.Root>
+	</Card>
 {:else}
-	<div class="panel">
-		<p class="empty">No missing media.</p>
-	</div>
+	<EmptyState
+		class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
+	>
+		<p class="m-0 text-lg font-black text-foreground">No missing media.</p>
+	</EmptyState>
 {/if}

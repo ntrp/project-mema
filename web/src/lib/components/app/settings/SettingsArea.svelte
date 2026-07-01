@@ -93,7 +93,7 @@
 	}: SettingsAreaProps = $props();
 </script>
 
-<section class="workspace-main" aria-labelledby="settings-title">
+<section class="grid min-w-0 gap-[18px]" aria-labelledby="settings-title">
 	{#if activeSection === 'general'}
 		<SystemGeneralSettings />
 	{:else if activeSection === 'download-clients'}

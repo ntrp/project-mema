@@ -1,4 +1,7 @@
 <script lang="ts">
+	import EmptyState from '$lib/components/shared/EmptyState.svelte';
+	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { onMount } from 'svelte';
 	import type {
 		DiscoverBlacklistItem,
@@ -40,8 +43,6 @@
 		onLoadMore
 	}: Props = $props();
 
-	let showScrollTop = $state(false);
-
 	const libraryExternalKeys = $derived(
 		new Set(
 			(mediaItems ?? [])
@@ -64,7 +65,6 @@
 		const handleScroll = () => {
 			const distanceToEnd =
 				document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-			showScrollTop = window.scrollY > 700;
 			if (!loading && !loadingMore && hasMore && distanceToEnd < 700) {
 				onLoadMore();
 			}
@@ -104,36 +104,29 @@
 	function clean(value: string) {
 		return value.trim().toLowerCase();
 	}
-
-	function scrollToTop() {
-		window.scrollTo({ top: 0, behavior: 'smooth' });
-	}
 </script>
 
 {#if loading}
-	<div class="page-heading">
-		<p>Discover</p>
-		<h1>Loading section</h1>
-	</div>
-	<div class="media-card-grid">
+	<PageHeading eyebrow="Discover" title="Loading section" />
+	<div
+		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,220px))] sm:gap-5"
+	>
 		{#each Array.from({ length: 12 }) as _, index (index)}
-			<div class="poster-card skeleton-card" aria-hidden="true"></div>
+			<div class="min-w-0 snap-start aspect-[2/3] rounded-md bg-card" aria-hidden="true"></div>
 		{/each}
 	</div>
 {:else if !section}
-	<section class="empty-state">
-		<h2>Discovery section not available</h2>
-		<p>Could not load this discover section.</p>
-	</section>
+	<EmptyState
+		title="Discovery section not available"
+		description="Could not load this discover section."
+	/>
 {:else}
-	<div class="page-heading">
-		<p>Discover</p>
-		<h1>{section.title}</h1>
-		<p>{results.length} titles</p>
-	</div>
+	<PageHeading eyebrow="Discover" title={section.title} description={`${results.length} titles`} />
 
 	{#if results.length > 0}
-		<div class="media-card-grid discover-section-grid">
+		<div
+			class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] items-start gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,220px))] sm:gap-5"
+		>
 			{#each results as result (resultKey(result))}
 				<MediaPosterCard
 					{result}
@@ -148,26 +141,11 @@
 			{/each}
 		</div>
 		{#if loadingMore}
-			<div class="discover-section-loading">
-				<span class="inline-spinner">Loading more</span>
+			<div class="flex justify-center pt-6 pb-2">
+				<InlineSpinner label="Loading more" />
 			</div>
 		{/if}
 	{:else}
-		<section class="empty-state">
-			<h2>No results loaded</h2>
-			<p>This section did not return any media.</p>
-		</section>
+		<EmptyState title="No results loaded" description="This section did not return any media." />
 	{/if}
-{/if}
-
-{#if showScrollTop}
-	<button
-		type="button"
-		class="scroll-top-button"
-		aria-label="Scroll to top"
-		title="Scroll to top"
-		onclick={scrollToTop}
-	>
-		<span class="app-icon" aria-hidden="true">keyboard_arrow_up</span>
-	</button>
 {/if}

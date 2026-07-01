@@ -1,8 +1,11 @@
 <script lang="ts">
 	import MediaEpisodeFileSummary from './MediaEpisodeFileSummary.svelte';
+	import MediaFileDeleteModal from './MediaFileDeleteModal.svelte';
 	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
+	import MediaEpisodeRow from './MediaEpisodeRow.svelte';
 	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
+	import MediaSeasonPanel from './MediaSeasonPanel.svelte';
 	import { activityForEpisode } from '../activity/activityQueue';
 	import {
 		episodeKey,
@@ -11,8 +14,6 @@
 		seasonNumberFromName,
 		type MediaFileRow
 	} from './mediaFiles';
-	import { imageUrl } from './mediaDetail';
-	import { formatDate } from '$lib/settings/dateFormat';
 	import type {
 		DownloadActivity,
 		MediaItem,
@@ -49,6 +50,7 @@
 	}: Props = $props();
 
 	let detailRow = $state<MediaFileRow | undefined>();
+	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
 	const seasons = $derived(item.seasons ?? []);
 	const mediaRows = $derived(item.filePaths.map((path) => fileRow(item, path)));
@@ -78,34 +80,37 @@
 		);
 	}
 
-	function confirmDelete(row: MediaFileRow) {
+	function requestDelete(row: MediaFileRow) {
 		if (!row.path) return;
-		if (window.confirm(`Delete ${row.relativePath}?`)) {
-			onDeleteFile(item, row.path);
-		}
+		deleteRow = row;
+	}
+
+	function confirmDelete() {
+		if (!deleteRow?.path) return;
+		onDeleteFile(item, deleteRow.path);
+		deleteRow = undefined;
 	}
 </script>
 
 {#if seasons.length > 0}
 	<section aria-labelledby="metadata-seasons-title">
-		<h2 id="metadata-seasons-title">Seasons</h2>
-		<div class="metadata-season-list">
+		<h2 id="metadata-seasons-title" class="m-0 text-3xl font-semibold text-foreground">Seasons</h2>
+		<div class="grid gap-2.5">
 			{#each seasons as season, index (season.name)}
-				<details class="metadata-season-panel">
-					<summary>
-						<span class="metadata-season-title">
+				<MediaSeasonPanel
+					meta={season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}
+				>
+					{#snippet title()}
+						<span class="inline-flex min-w-0 items-center gap-2.5">
 							<MediaMonitorBookmark
 								monitored={season.monitored === true}
 								label={`${season.name} ${season.monitored ? 'monitored' : 'not monitored'}`}
 							/>
 							<span>{season.name}</span>
 						</span>
-						<small
-							>{season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}</small
-						>
-					</summary>
+					{/snippet}
 					{#if season.episodes && season.episodes.length > 0}
-						<div class="metadata-episode-list">
+						<div class="grid px-4.5">
 							{#each season.episodes as episode (episode.episodeNumber)}
 								{@const row = episodeFileRow(season, index, episode)}
 								{@const activityStatus = activityForEpisode(
@@ -114,23 +119,13 @@
 									row.seasonNumber,
 									row.episodeNumber
 								)}
-								<article class="metadata-episode-row">
-									<div class="metadata-episode-copy">
-										<h3>
-											<MediaMonitorBookmark
-												monitored={episode.monitored === true}
-												label={`${episode.name} ${episode.monitored ? 'monitored' : 'not monitored'}`}
-											/>
-											<span class="metadata-episode-title">{episodeTitle(episode)}</span>
-											{#if episode.airDate}
-												<span class="metadata-episode-date">{formatDate(episode.airDate)}</span>
-											{/if}
-										</h3>
-										<p>{episode.overview ?? 'No episode overview available.'}</p>
-									</div>
-									{#if imageUrl(episode.stillPath, 'w300')}
-										<img src={imageUrl(episode.stillPath, 'w300')} alt="" loading="lazy" />
-									{/if}
+								<MediaEpisodeRow {episode} title={episodeTitle(episode)}>
+									{#snippet beforeTitle()}
+										<MediaMonitorBookmark
+											monitored={episode.monitored === true}
+											label={`${episode.name} ${episode.monitored ? 'monitored' : 'not monitored'}`}
+										/>
+									{/snippet}
 									<MediaEpisodeFileSummary
 										{row}
 										{activityStatus}
@@ -139,18 +134,26 @@
 										onInfo={(nextRow) => (detailRow = nextRow)}
 										onAutoSearch={() => onAutoSearch(item)}
 										onManualSearch={() => (searchOpen = true)}
-										onDelete={confirmDelete}
+										onDelete={requestDelete}
 									/>
-								</article>
+								</MediaEpisodeRow>
 							{/each}
 						</div>
 					{:else}
-						<p class="metadata-season-empty">No episode details available.</p>
+						<p class="p-4.5 text-sm text-muted-foreground">No episode details available.</p>
 					{/if}
-				</details>
+				</MediaSeasonPanel>
 			{/each}
 		</div>
 	</section>
+{/if}
+
+{#if deleteRow}
+	<MediaFileDeleteModal
+		row={deleteRow}
+		onCancel={() => (deleteRow = undefined)}
+		onConfirm={confirmDelete}
+	/>
 {/if}
 
 {#if detailRow}

@@ -1,4 +1,9 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import IntegrationTestStatus from './shared/IntegrationTestStatus.svelte';
 	import type {
 		IntegrationTestResponse,
@@ -73,67 +78,72 @@
 	}
 </script>
 
-<div class="panel provider-panel" aria-labelledby={`${definition.type}-metadata-title`}>
-	<form class="provider-form" onsubmit={save}>
-		<div class="section-heading">
-			<div>
-				<p class="section-kicker">Metadata provider</p>
-				<h2 id={`${definition.type}-metadata-title`}>{definition.name}</h2>
-			</div>
-			<IntegrationTestStatus
-				enabled={form.enabled}
-				result={testResult}
-				testing={form.id ? testingId === form.id : false}
-			/>
-		</div>
-
-		<div class="settings-form provider-form-fields">
-			<label class="toggle provider-enabled">
-				<input
-					checked={form.enabled}
-					type="checkbox"
-					onchange={(event) => updateEnabled(event.currentTarget.checked)}
+<div
+	class="min-w-0 rounded-md border border-border bg-card p-5"
+	aria-labelledby={`${definition.type}-metadata-title`}
+>
+	<form class="grid gap-3.5" onsubmit={save}>
+		<SectionHeading
+			title={definition.name}
+			titleId={`${definition.type}-metadata-title`}
+			kicker="Metadata provider"
+		>
+			{#snippet actions()}
+				<IntegrationTestStatus
+					enabled={form.enabled}
+					result={testResult}
+					testing={form.id ? testingId === form.id : false}
 				/>
-				<span>Enabled</span>
-			</label>
-			<label class="wide">
-				<span>Base URL</span>
-				<input
+			{/snippet}
+		</SectionHeading>
+
+		<div class="mb-4 grid gap-4 md:grid-cols-2">
+			<div class="flex min-h-9 items-center gap-2 self-end">
+				<Checkbox
+					id={`${definition.type}-metadata-enabled`}
+					checked={form.enabled}
+					onCheckedChange={(checked) => updateEnabled(checked === true)}
+				/>
+				<Label for={`${definition.type}-metadata-enabled`}>Enabled</Label>
+			</div>
+			<label class="grid gap-1.5 md:col-span-2">
+				<span class="text-sm font-bold text-muted-foreground">Base URL</span>
+				<Input
 					value={form.baseUrl}
 					required
-					maxlength="2000"
+					maxlength={2000}
 					oninput={(event) => updateText('baseUrl', event.currentTarget.value)}
 				/>
 			</label>
-			<label>
-				<span>API key</span>
-				<input
+			<label class="grid gap-1.5">
+				<span class="text-sm font-bold text-muted-foreground">API key</span>
+				<Input
 					value={form.apiKey}
 					autocomplete="off"
 					oninput={(event) => updateText('apiKey', event.currentTarget.value)}
 				/>
 			</label>
 			{#if definition.fields === 'tvdb'}
-				<label>
-					<span>PIN</span>
-					<input
+				<label class="grid gap-1.5">
+					<span class="text-sm font-bold text-muted-foreground">PIN</span>
+					<Input
 						value={form.pin}
 						autocomplete="off"
 						oninput={(event) => updateText('pin', event.currentTarget.value)}
 					/>
 				</label>
 			{/if}
-			<label>
-				<span>Access token</span>
-				<input
+			<label class="grid gap-1.5">
+				<span class="text-sm font-bold text-muted-foreground">Access token</span>
+				<Input
 					value={form.accessToken}
 					autocomplete="off"
 					oninput={(event) => updateText('accessToken', event.currentTarget.value)}
 				/>
 			</label>
-			<label>
-				<span>Priority</span>
-				<input
+			<label class="grid gap-1.5">
+				<span class="text-sm font-bold text-muted-foreground">Priority</span>
+				<Input
 					value={form.priority}
 					min="0"
 					max="1000"
@@ -143,18 +153,18 @@
 			</label>
 		</div>
 
-		<div class="form-actions provider-actions">
-			<button type="submit" disabled={savingId === form.id}>
+		<div class="flex flex-wrap justify-end gap-2.5">
+			<Button type="submit" disabled={savingId === form.id}>
 				{savingId === form.id ? 'Saving' : 'Save'}
-			</button>
-			<button
+			</Button>
+			<Button
 				type="button"
-				class="secondary"
+				variant="outline"
 				disabled={!form.id || testingId === form.id}
 				onclick={() => form.id && onTest(form.id)}
 			>
 				{testingId === form.id ? 'Testing' : 'Test'}
-			</button>
+			</Button>
 		</div>
 	</form>
 </div>

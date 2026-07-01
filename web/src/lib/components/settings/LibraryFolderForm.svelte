@@ -1,5 +1,10 @@
 <script lang="ts">
+	import PlusIcon from '@lucide/svelte/icons/plus';
 	import LibraryFolderPicker from '$lib/components/settings/library/LibraryFolderPicker.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import type { LibraryFolderForm } from '$lib/settings/types';
 
 	interface Props {
@@ -25,31 +30,34 @@
 	}
 </script>
 
-<div class="panel" aria-labelledby="library-folder-form-title">
-	<div class="section-heading">
-		<h2 id="library-folder-form-title">Add library folder</h2>
-	</div>
+<Card.Root aria-labelledby="library-folder-form-title">
+	<Card.Header>
+		<Card.Title id="library-folder-form-title">Add library folder</Card.Title>
+	</Card.Header>
 
-	<form class="settings-form" onsubmit={onSave}>
-		<label class="wide">
-			<span>Folder path</span>
-			<input
-				bind:value={form.path}
-				placeholder="/data/library or downloads/complete"
-				required
-				maxlength="4000"
-			/>
-		</label>
-		<div class="form-actions library-folder-actions">
-			<button type="button" class="secondary" onclick={openPicker}>Browse</button>
-			<button type="submit" class="add-action-button" disabled={saving}>
-				<span class="app-icon" aria-hidden="true">add</span>
-				<span>{saving ? 'Scanning' : 'Add and scan'}</span>
-			</button>
-		</div>
-	</form>
+	<Card.Content>
+		<form class="grid gap-4" onsubmit={onSave}>
+			<div class="space-y-2">
+				<Label for="library-folder-path">Folder path</Label>
+				<Input
+					id="library-folder-path"
+					bind:value={form.path}
+					placeholder="/data/library or downloads/complete"
+					required
+					maxlength={4000}
+				/>
+			</div>
+			<div class="flex flex-wrap justify-end gap-2">
+				<Button type="button" variant="outline" onclick={openPicker}>Browse</Button>
+				<Button type="submit" disabled={saving}>
+					<PlusIcon aria-hidden="true" />
+					<span>{saving ? 'Scanning' : 'Add and scan'}</span>
+				</Button>
+			</div>
+		</form>
+	</Card.Content>
 
 	{#if pickerOpen}
 		<LibraryFolderPicker initialPath={form.path} onClose={closePicker} onUse={useFolder} />
 	{/if}
-</div>
+</Card.Root>

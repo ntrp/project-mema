@@ -1,5 +1,13 @@
 <script lang="ts">
+	import PlusIcon from '@lucide/svelte/icons/plus';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import SettingsRowActionButton from '$lib/components/settings/shared/SettingsRowActionButton.svelte';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Table from '$lib/components/ui/table';
 	import { formatDate } from '$lib/settings/dateFormat';
 	import type { Tag, TagForm } from '$lib/settings/types';
 
@@ -50,73 +58,68 @@
 	}
 </script>
 
-<div class="panel" aria-label="Tags">
-	<div class="section-heading">
-		<button type="button" class="add-action-button" onclick={openTagModal}>
-			<span class="app-icon" aria-hidden="true">add</span>
+<Card class="gap-0 p-0" aria-label="Tags">
+	<div class="flex justify-end border-b px-4 py-3">
+		<Button type="button" onclick={openTagModal}>
+			<PlusIcon aria-hidden="true" />
 			<span>Add tag</span>
-		</button>
+		</Button>
 	</div>
 
-	<div class="table-wrap">
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Updated</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each tags as tag (tag.id)}
-					<tr>
-						<td>
-							<span class="tag-pill">{tag.name}</span>
-						</td>
-						<td>{formatDate(tag.updatedAt)}</td>
-						<td class="row-actions">
-							<button
-								type="button"
-								class="secondary icon-button"
-								aria-label={`Edit ${tag.name}`}
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head>Name</Table.Head>
+				<Table.Head>Updated</Table.Head>
+				<Table.Head class="text-right">Actions</Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
+			{#each tags as tag (tag.id)}
+				<Table.Row>
+					<Table.Cell><Badge variant="secondary">{tag.name}</Badge></Table.Cell>
+					<Table.Cell>{formatDate(tag.updatedAt)}</Table.Cell>
+					<Table.Cell>
+						<div class="flex justify-end gap-2">
+							<SettingsRowActionButton
+								label={`Edit ${tag.name}`}
+								icon="edit"
 								onclick={() => editTag(tag)}
-							>
-								<span class="app-icon" aria-hidden="true">edit</span>
-							</button>
-							<button
-								type="button"
-								class="danger icon-button"
+							/>
+							<SettingsRowActionButton
+								label={`${deletingId === tag.id ? 'Deleting' : 'Delete'} ${tag.name}`}
+								icon="delete"
+								variant="destructive"
 								disabled={deletingId === tag.id}
-								aria-label={`${deletingId === tag.id ? 'Deleting' : 'Delete'} ${tag.name}`}
 								onclick={() => onDelete(tag.id)}
-							>
-								<span class="app-icon" aria-hidden="true">delete</span>
-							</button>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="3" class="empty">No tags configured</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
+							/>
+						</div>
+					</Table.Cell>
+				</Table.Row>
+			{:else}
+				<Table.Row>
+					<Table.Cell colspan={3} class="py-8 text-center text-muted-foreground">
+						No tags configured
+					</Table.Cell>
+				</Table.Row>
+			{/each}
+		</Table.Body>
+	</Table.Root>
 
 	{#if tagModalOpen}
 		<SettingsFormModal title={form.id ? 'Edit tag' : 'Add tag'} onClose={closeTagModal}>
-			<form class="settings-form compact-form" onsubmit={saveTag}>
-				<label>
-					<span>Name</span>
-					<input bind:value={form.name} type="text" maxlength="80" required />
-				</label>
-				<div class="form-actions">
-					<button type="button" class="secondary" onclick={closeTagModal}>Cancel</button>
-					<button type="submit" disabled={saving}>
+			<form class="grid gap-4" onsubmit={saveTag}>
+				<div class="grid gap-2">
+					<Label for="tag-name">Name</Label>
+					<Input id="tag-name" bind:value={form.name} type="text" maxlength={80} required />
+				</div>
+				<div class="flex justify-end gap-2">
+					<Button type="button" variant="outline" onclick={closeTagModal}>Cancel</Button>
+					<Button type="submit" disabled={saving}>
 						{saving ? 'Saving' : form.id ? 'Update tag' : 'Create tag'}
-					</button>
+					</Button>
 				</div>
 			</form>
 		</SettingsFormModal>
 	{/if}
-</div>
+</Card>

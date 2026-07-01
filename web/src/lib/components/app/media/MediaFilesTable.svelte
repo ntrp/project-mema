@@ -1,5 +1,6 @@
 <script lang="ts">
 	import MediaEpisodeFileSummary from './MediaEpisodeFileSummary.svelte';
+	import MediaFileDeleteModal from './MediaFileDeleteModal.svelte';
 	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
 	import { activityForMovie } from '../activity/activityQueue';
@@ -38,6 +39,7 @@
 	}: Props = $props();
 
 	let detailRow = $state<MediaFileRow | undefined>();
+	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
 	const groups = $derived(mediaFileGroups(item));
 	const activityStatus = $derived(
@@ -50,19 +52,23 @@
 			activityStatus?.status === 'downloading'
 	);
 
-	function confirmDelete(row: MediaFileRow) {
+	function requestDelete(row: MediaFileRow) {
 		if (!row.path) return;
-		if (window.confirm(`Delete ${row.relativePath}?`)) {
-			onDeleteFile(item, row.path);
-		}
+		deleteRow = row;
+	}
+
+	function confirmDelete() {
+		if (!deleteRow?.path) return;
+		onDeleteFile(item, deleteRow.path);
+		deleteRow = undefined;
 	}
 </script>
 
 <section aria-labelledby="media-files-title">
-	<h2 id="media-files-title">Files</h2>
-	<div class="file-section-stack">
+	<h2 id="media-files-title" class="m-0 text-3xl font-semibold text-foreground">Files</h2>
+	<div class="grid gap-3.5">
 		{#each groups as group (group.key)}
-			<div class="metadata-episode-list" aria-label={group.title}>
+			<div class="grid px-4.5" aria-label={group.title}>
 				{#each group.rows as row (row.key)}
 					<MediaEpisodeFileSummary
 						{row}
@@ -74,13 +80,21 @@
 						onInfo={(nextRow) => (detailRow = nextRow)}
 						onAutoSearch={() => onAutoSearch(item)}
 						onManualSearch={() => (searchOpen = true)}
-						onDelete={confirmDelete}
+						onDelete={requestDelete}
 					/>
 				{/each}
 			</div>
 		{/each}
 	</div>
 </section>
+
+{#if deleteRow}
+	<MediaFileDeleteModal
+		row={deleteRow}
+		onCancel={() => (deleteRow = undefined)}
+		onConfirm={confirmDelete}
+	/>
+{/if}
 
 {#if detailRow}
 	<MediaFileInfoModal row={detailRow} onClose={() => (detailRow = undefined)} />

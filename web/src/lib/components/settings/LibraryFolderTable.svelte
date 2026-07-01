@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
 	import { formatDateTime } from '$lib/settings/dateFormat';
+	import SettingsRowActionButton from './shared/SettingsRowActionButton.svelte';
 	import type { LibraryFolder } from '$lib/settings/types';
 
 	interface Props {
@@ -12,48 +15,47 @@
 	let { folders, scanningLibraryFolderId, onScan, onDelete }: Props = $props();
 </script>
 
-<div class="panel" aria-labelledby="library-folder-list-title">
-	<h2 id="library-folder-list-title">Library folders</h2>
-	<div class="table-wrap">
-		<table>
-			<thead>
-				<tr>
-					<th>Path</th>
-					<th>Added</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each folders as folder (folder.id)}
-					<tr>
-						<td>{folder.path}</td>
-						<td>{formatDateTime(folder.createdAt)}</td>
-						<td class="row-actions">
-							<button
-								type="button"
-								class="secondary icon-button"
-								aria-label={`Scan ${folder.path}`}
+<Card class="gap-0 p-0" aria-labelledby="library-folder-list-title">
+	<div class="border-b px-4 py-3">
+		<h2 id="library-folder-list-title" class="text-lg font-semibold">Library folders</h2>
+	</div>
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head>Path</Table.Head>
+				<Table.Head>Added</Table.Head>
+				<Table.Head class="text-right">Actions</Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
+			{#each folders as folder (folder.id)}
+				<Table.Row>
+					<Table.Cell class="max-w-[520px] truncate">{folder.path}</Table.Cell>
+					<Table.Cell>{formatDateTime(folder.createdAt)}</Table.Cell>
+					<Table.Cell>
+						<div class="flex justify-end gap-2">
+							<SettingsRowActionButton
+								label={`Scan ${folder.path}`}
+								icon="sync"
 								disabled={scanningLibraryFolderId === folder.id}
 								onclick={() => onScan(folder.id)}
-							>
-								<span class="app-icon" aria-hidden="true">sync</span>
-							</button>
-							<button
-								type="button"
-								class="danger icon-button"
-								aria-label={`Delete ${folder.path}`}
+							/>
+							<SettingsRowActionButton
+								label={`Delete ${folder.path}`}
+								icon="delete"
+								variant="destructive"
 								onclick={() => onDelete(folder.id)}
-							>
-								<span class="app-icon" aria-hidden="true">delete</span>
-							</button>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="3" class="empty">No library folders configured</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
-</div>
+							/>
+						</div>
+					</Table.Cell>
+				</Table.Row>
+			{:else}
+				<Table.Row>
+					<Table.Cell colspan={3} class="py-8 text-center text-muted-foreground">
+						No library folders configured
+					</Table.Cell>
+				</Table.Row>
+			{/each}
+		</Table.Body>
+	</Table.Root>
+</Card>

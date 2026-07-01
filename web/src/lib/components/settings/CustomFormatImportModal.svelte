@@ -1,5 +1,8 @@
 <script lang="ts">
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { parseArrCustomFormatImport } from '$lib/settings/arrCustomFormatImport';
 	import type { CustomFormatForm } from '$lib/settings/types';
 
@@ -70,40 +73,46 @@
 	}
 </script>
 
-<SettingsFormModal title="Import custom format" modalClass="custom-format-import-modal" {onClose}>
-	<form class="settings-form custom-format-import-form" onsubmit={importFormats}>
-		<div class="profile-quality-header">
+<SettingsFormModal title="Import custom format" {onClose}>
+	<form class="grid gap-4" onsubmit={importFormats}>
+		<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 			<strong>Arr JSON</strong>
-			<button type="button" class="secondary" onclick={sampleJson}>Use sample</button>
+			<Button type="button" variant="outline" onclick={sampleJson}>Use sample</Button>
 		</div>
 
-		<label>
-			<span>Custom format JSON</span>
-			<textarea
+		<label class="grid gap-2 text-sm">
+			<span class="font-medium">Custom format JSON</span>
+			<Textarea
 				bind:value={rawJson}
-				rows="16"
+				class="min-h-80 font-mono text-xs"
+				rows={16}
 				placeholder="Paste a Radarr or Sonarr custom format JSON export"
 				oninput={parseImport}
-				required></textarea>
+				required
+			/>
 		</label>
 
 		{#if error}
-			<p class="form-status error">{error}</p>
+			<p
+				class="m-0 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+			>
+				{error}
+			</p>
 		{:else if parsed.length}
-			<div class="custom-format-import-preview">
+			<Card class="grid gap-1 p-3 text-sm">
 				<strong>{parsed.length === 1 ? parsed[0].name : `${parsed.length} custom formats`}</strong>
-				<span>
+				<span class="text-muted-foreground">
 					{parsed.reduce((total, format) => total + format.includeSpecs.length, 0)} accepted /
 					{parsed.reduce((total, format) => total + format.excludeSpecs.length, 0)} rejected conditions
 				</span>
-			</div>
+			</Card>
 		{/if}
 
-		<div class="form-actions">
-			<button type="button" class="secondary" onclick={onClose}>Cancel</button>
-			<button type="submit" disabled={importing || rawJson.trim() === ''}>
+		<div class="flex justify-end gap-2">
+			<Button type="button" variant="outline" onclick={onClose}>Cancel</Button>
+			<Button type="submit" disabled={importing || rawJson.trim() === ''}>
 				{importing ? 'Importing' : 'Import'}
-			</button>
+			</Button>
 		</div>
 	</form>
 </SettingsFormModal>

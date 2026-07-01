@@ -11,12 +11,13 @@ import (
 )
 
 type CustomFormat struct {
-	ID           uuid.UUID
-	Name         string
-	IncludeSpecs []CustomFormatSpec
-	ExcludeSpecs []CustomFormatSpec
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID                      uuid.UUID
+	Name                    string
+	IncludeInRenameTemplate bool
+	IncludeSpecs            []CustomFormatSpec
+	ExcludeSpecs            []CustomFormatSpec
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
 }
 
 type CustomFormatSpec struct {
@@ -28,15 +29,16 @@ type CustomFormatSpec struct {
 }
 
 type CustomFormatInput struct {
-	ID           uuid.UUID
-	Name         string
-	IncludeSpecs []CustomFormatSpec
-	ExcludeSpecs []CustomFormatSpec
+	ID                      uuid.UUID
+	Name                    string
+	IncludeInRenameTemplate bool
+	IncludeSpecs            []CustomFormatSpec
+	ExcludeSpecs            []CustomFormatSpec
 }
 
 func (s *SettingsStore) ListCustomFormats(ctx context.Context) ([]CustomFormat, error) {
 	rows, err := s.pool.Query(ctx, `
-		select id, name, include_specs, exclude_specs, created_at, updated_at
+		select id, name, include_in_rename_template, include_specs, exclude_specs, created_at, updated_at
 		from app.custom_formats
 		order by lower(name)
 	`)
@@ -66,10 +68,10 @@ func (s *SettingsStore) CreateCustomFormat(ctx context.Context, input CustomForm
 		return CustomFormat{}, err
 	}
 	return scanCustomFormatRow(s.pool.QueryRow(ctx, `
-		insert into app.custom_formats (id, name, include_specs, exclude_specs)
-		values ($1, $2, $3::jsonb, $4::jsonb)
-		returning id, name, include_specs, exclude_specs, created_at, updated_at
-	`, id, input.Name, includeSpecs, excludeSpecs))
+		insert into app.custom_formats (id, name, include_in_rename_template, include_specs, exclude_specs)
+		values ($1, $2, $3, $4::jsonb, $5::jsonb)
+		returning id, name, include_in_rename_template, include_specs, exclude_specs, created_at, updated_at
+	`, id, input.Name, input.IncludeInRenameTemplate, includeSpecs, excludeSpecs))
 }
 
 func (s *SettingsStore) UpdateCustomFormat(ctx context.Context, id uuid.UUID, input CustomFormatInput) (CustomFormat, error) {
@@ -79,10 +81,10 @@ func (s *SettingsStore) UpdateCustomFormat(ctx context.Context, id uuid.UUID, in
 	}
 	return scanCustomFormatRow(s.pool.QueryRow(ctx, `
 		update app.custom_formats
-		set name = $2, include_specs = $3::jsonb, exclude_specs = $4::jsonb, updated_at = now()
+		set name = $2, include_in_rename_template = $3, include_specs = $4::jsonb, exclude_specs = $5::jsonb, updated_at = now()
 		where id = $1
-		returning id, name, include_specs, exclude_specs, created_at, updated_at
-	`, id, input.Name, includeSpecs, excludeSpecs))
+		returning id, name, include_in_rename_template, include_specs, exclude_specs, created_at, updated_at
+	`, id, input.Name, input.IncludeInRenameTemplate, includeSpecs, excludeSpecs))
 }
 
 func (s *SettingsStore) DeleteCustomFormat(ctx context.Context, id uuid.UUID) error {
@@ -123,6 +125,7 @@ func scanCustomFormat(row pgx.Row) (CustomFormat, error) {
 	err := row.Scan(
 		&format.ID,
 		&format.Name,
+		&format.IncludeInRenameTemplate,
 		&includeSpecs,
 		&excludeSpecs,
 		&format.CreatedAt,

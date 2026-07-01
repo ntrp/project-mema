@@ -1,8 +1,10 @@
 <script lang="ts">
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
 	import { createLibraryFolderOption, listLibraryFolderOptions } from '$lib/settings/api';
 	import { onMount } from 'svelte';
 	import LibraryFolderCreateForm from './LibraryFolderCreateForm.svelte';
-	import LibraryFolderPickerHeader from './LibraryFolderPickerHeader.svelte';
 	import LibraryFolderTree from './LibraryFolderTree.svelte';
 	import {
 		createNode,
@@ -139,41 +141,30 @@
 			onUse(selectedPath);
 		}
 	}
-
-	function handleWindowKeydown(event: { key: string }) {
-		if (event.key === 'Escape') {
-			onClose();
-		}
-	}
 </script>
 
-<svelte:window onkeydown={handleWindowKeydown} />
-
-<div class="modal-backdrop" role="presentation" onclick={onClose}>
-	<div
-		class="modal-shell folder-picker-modal"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="folder-picker-title"
-		tabindex="-1"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => event.stopPropagation()}
-	>
-		<LibraryFolderPickerHeader {selectedPath} {onClose} />
+<SettingsFormModal title="Select library folder" modalClass="grid gap-4" {onClose}>
+	<div class="grid gap-4">
+		<Card class="grid gap-2 p-3">
+			<span class="text-xs font-black text-muted-foreground uppercase">Selected</span>
+			<strong class="break-all text-sm text-foreground"
+				>{selectedPath || 'No folder selected'}</strong
+			>
+		</Card>
 
 		{#if pickerError}
-			<p class="empty">{pickerError}</p>
+			<p class="m-0 text-sm leading-6 text-muted-foreground">{pickerError}</p>
 		{:else if pickerLoading}
-			<p class="muted">Loading folders</p>
+			<p class="m-0 text-sm leading-6 text-muted-foreground">Loading folders</p>
 		{:else}
-			<div class="folder-picker-toolbar">
-				<button type="button" disabled={!selectedPath} onclick={useSelectedFolder}>
+			<div class="flex flex-wrap gap-2">
+				<Button type="button" disabled={!selectedPath} onclick={useSelectedFolder}>
 					Use selected folder
-				</button>
+				</Button>
 				{#if rootParentPath}
-					<button type="button" class="secondary" onclick={() => loadRoot(rootParentPath)}>
+					<Button type="button" variant="outline" onclick={() => loadRoot(rootParentPath)}>
 						Show parent
-					</button>
+					</Button>
 				{/if}
 			</div>
 
@@ -184,7 +175,7 @@
 				onCreate={() => void createDirectory()}
 			/>
 			{#if createFolderError}
-				<p class="folder-tree-error">{createFolderError}</p>
+				<p class="m-0 text-sm font-semibold text-destructive">{createFolderError}</p>
 			{/if}
 
 			<LibraryFolderTree
@@ -194,4 +185,4 @@
 			/>
 		{/if}
 	</div>
-</div>
+</SettingsFormModal>

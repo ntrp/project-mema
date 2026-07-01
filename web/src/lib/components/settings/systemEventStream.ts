@@ -1,5 +1,3 @@
-/* global MessageEvent */
-
 type StreamEnvelope<T> = {
 	data: T;
 };

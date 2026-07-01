@@ -1,4 +1,6 @@
 <script lang="ts">
+	import SettingsRowActionButton from '$lib/components/settings/shared/SettingsRowActionButton.svelte';
+	import * as Table from '$lib/components/ui/table';
 	import { formatDateTimeWithSeconds } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
 	import SystemEventSeverityIcon from './SystemEventSeverityIcon.svelte';
@@ -40,63 +42,65 @@
 			onLoadMore();
 		}
 	}
+
+	function eventRowClass(severity: SystemEvent['severity']) {
+		if (severity === 'error') return 'bg-destructive/5';
+		if (severity === 'warning') return 'bg-secondary/40';
+		return '';
+	}
 </script>
 
-<div class="table-wrap events-table-wrap" onscroll={handleScroll}>
-	<table class="data-table events-table">
-		<colgroup>
-			<col class="event-time-column" />
-			<col class="event-severity-column" />
-			<col class="event-category-column" />
-			<col class="event-message-column" />
-			<col class="event-error-column" />
-			<col class="event-actions-column" />
-		</colgroup>
-		<thead>
-			<tr>
-				<th>Time</th>
-				<th>Severity</th>
-				<th>Category</th>
-				<th>Message</th>
-				<th>Error</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
+<div class="max-h-[min(62vh,680px)] overflow-auto" onscroll={handleScroll}>
+	<Table.Root class="table-fixed">
+		<Table.Header>
+			<Table.Row>
+				<Table.Head class="w-[10.5rem] whitespace-nowrap">Time</Table.Head>
+				<Table.Head class="w-20 whitespace-nowrap">Severity</Table.Head>
+				<Table.Head class="w-28 whitespace-nowrap">Category</Table.Head>
+				<Table.Head>Message</Table.Head>
+				<Table.Head>Error</Table.Head>
+				<Table.Head class="w-20"></Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
 			{#each events as event (event.id)}
-				<tr class={`event-row event-${event.severity}`}>
-					<td>{formatDateTimeWithSeconds(event.createdAt)}</td>
-					<td><SystemEventSeverityIcon severity={event.severity} /></td>
-					<td>{event.category}</td>
-					<td>{event.message}</td>
-					<td>{errorText(event)}</td>
-					<td class="row-actions">
-						{#if hasData(event)}
-							<SystemLogAttributesButton attributes={event.data} />
-						{/if}
-						<button
-							type="button"
-							class="danger icon-button"
-							aria-label={`Delete event ${event.message}`}
-							disabled={deletingId === event.id}
-							onclick={() => onDelete(event.id)}
-						>
-							<span class="app-icon" aria-hidden="true">delete</span>
-						</button>
-					</td>
-				</tr>
-			{:else}
-				<tr>
-					<td colspan="6"
-						>{loading ? 'Loading events' : 'No events match the selected severity.'}</td
+				<Table.Row class={eventRowClass(event.severity)}>
+					<Table.Cell class="whitespace-nowrap py-1.5"
+						>{formatDateTimeWithSeconds(event.createdAt)}</Table.Cell
 					>
-				</tr>
+					<Table.Cell class="py-1.5"
+						><SystemEventSeverityIcon severity={event.severity} /></Table.Cell
+					>
+					<Table.Cell class="whitespace-nowrap py-1.5">{event.category}</Table.Cell>
+					<Table.Cell class="break-words py-1.5">{event.message}</Table.Cell>
+					<Table.Cell class="break-words py-1.5">{errorText(event)}</Table.Cell>
+					<Table.Cell class="py-1.5">
+						<div class="flex items-center justify-end gap-1">
+							{#if hasData(event)}
+								<SystemLogAttributesButton attributes={event.data} />
+							{/if}
+							<SettingsRowActionButton
+								label={`Delete event ${event.message}`}
+								icon="delete"
+								variant="destructive"
+								disabled={deletingId === event.id}
+								onclick={() => onDelete(event.id)}
+							/>
+						</div>
+					</Table.Cell>
+				</Table.Row>
+			{:else}
+				<Table.Row>
+					<Table.Cell colspan={6}>
+						{loading ? 'Loading events' : 'No events match the selected severity.'}
+					</Table.Cell>
+				</Table.Row>
 			{/each}
 			{#if loadingMore}
-				<tr>
-					<td colspan="6">Loading more events</td>
-				</tr>
+				<Table.Row>
+					<Table.Cell colspan={6}>Loading more events</Table.Cell>
+				</Table.Row>
 			{/if}
-		</tbody>
-	</table>
+		</Table.Body>
+	</Table.Root>
 </div>

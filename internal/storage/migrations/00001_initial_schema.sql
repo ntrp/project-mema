@@ -130,6 +130,7 @@ create unique index if not exists idx_media_profiles_name_lower
 create table if not exists app.custom_formats (
     id uuid primary key,
     name text not null,
+    include_in_rename_template boolean not null default false,
     include_specs jsonb not null default '[]'::jsonb,
     exclude_specs jsonb not null default '[]'::jsonb,
     created_at timestamptz not null default now(),

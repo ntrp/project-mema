@@ -1701,6 +1701,7 @@ export interface components {
 		};
 		CustomFormatRequest: {
 			name: string;
+			includeInRenameTemplate: boolean;
 			includeSpecs: components['schemas']['CustomFormatSpec'][];
 			excludeSpecs: components['schemas']['CustomFormatSpec'][];
 		};

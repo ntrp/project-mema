@@ -1,5 +1,9 @@
 <script lang="ts">
 	import IndexerHealthStatus from './IndexerHealthStatus.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
+	import SettingsRowActionButton from './shared/SettingsRowActionButton.svelte';
 	import type { Indexer, IntegrationTestResults } from '$lib/settings/types';
 
 	interface Props {
@@ -14,68 +18,66 @@
 	let { indexers, onEdit, onDelete, onTest, testingId, testResults }: Props = $props();
 </script>
 
-<div class="panel" aria-label="Indexers">
-	<div class="table-wrap">
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Type</th>
-					<th>Base URL</th>
-					<th>Categories</th>
-					<th>Priority</th>
-					<th>Status</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each indexers as item (item.id)}
-					<tr>
-						<td>{item.name}</td>
-						<td>{item.type}</td>
-						<td>{item.baseUrl}</td>
-						<td>{(item.categories ?? []).join(', ') || '-'}</td>
-						<td>{item.priority}</td>
-						<td>
-							<IndexerHealthStatus
-								indexer={item}
-								result={testResults[item.id]}
-								checking={testingId === item.id}
-							/>
-						</td>
-						<td class="row-actions">
-							<button
+<Card class="p-0" aria-label="Indexers">
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head>Name</Table.Head>
+				<Table.Head>Type</Table.Head>
+				<Table.Head>Base URL</Table.Head>
+				<Table.Head>Categories</Table.Head>
+				<Table.Head>Priority</Table.Head>
+				<Table.Head>Status</Table.Head>
+				<Table.Head class="text-right">Actions</Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
+			{#each indexers as item (item.id)}
+				<Table.Row>
+					<Table.Cell>{item.name}</Table.Cell>
+					<Table.Cell>{item.type}</Table.Cell>
+					<Table.Cell class="max-w-[320px] truncate">{item.baseUrl}</Table.Cell>
+					<Table.Cell>{(item.categories ?? []).join(', ') || '-'}</Table.Cell>
+					<Table.Cell>{item.priority}</Table.Cell>
+					<Table.Cell>
+						<IndexerHealthStatus
+							indexer={item}
+							result={testResults[item.id]}
+							checking={testingId === item.id}
+						/>
+					</Table.Cell>
+					<Table.Cell>
+						<div class="flex justify-end gap-2">
+							<Button
 								type="button"
-								class="secondary"
+								variant="outline"
+								size="sm"
 								disabled={testingId === item.id}
 								onclick={() => onTest(item.id)}
 							>
 								{testingId === item.id ? 'Checking' : 'Check'}
-							</button>
-							<button
-								type="button"
-								class="secondary icon-button"
-								aria-label={`Edit ${item.name}`}
+							</Button>
+							<SettingsRowActionButton
+								label={`Edit ${item.name}`}
+								icon="edit"
 								onclick={() => onEdit(item)}
-							>
-								<span class="app-icon" aria-hidden="true">edit</span>
-							</button>
-							<button
-								type="button"
-								class="danger icon-button"
-								aria-label={`Delete ${item.name}`}
+							/>
+							<SettingsRowActionButton
+								label={`Delete ${item.name}`}
+								icon="delete"
+								variant="destructive"
 								onclick={() => onDelete(item.id)}
-							>
-								<span class="app-icon" aria-hidden="true">delete</span>
-							</button>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="7" class="empty">No indexers configured</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
-</div>
+							/>
+						</div>
+					</Table.Cell>
+				</Table.Row>
+			{:else}
+				<Table.Row>
+					<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">
+						No indexers configured
+					</Table.Cell>
+				</Table.Row>
+			{/each}
+		</Table.Body>
+	</Table.Root>
+</Card>

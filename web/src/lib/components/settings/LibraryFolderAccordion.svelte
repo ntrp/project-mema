@@ -1,6 +1,11 @@
 <script lang="ts">
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
 	import LibraryScanImportTable from '$lib/components/settings/LibraryScanImportTable.svelte';
 	import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
+	import SettingsRowActionButton from '$lib/components/settings/shared/SettingsRowActionButton.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
 	import type {
 		LibraryFolder,
 		LibraryMediaKind,
@@ -49,41 +54,43 @@
 	}
 </script>
 
-<div class="folder-accordion-list">
+<div class="grid gap-3">
 	{#each folders as folder (folder.id)}
 		{@const scan = scansByFolder[folder.id]}
-		<section class="folder-accordion">
-			<div class="folder-accordion-header">
-				<button type="button" class="folder-toggle" onclick={() => toggle(folder.id)}>
-					<span class="app-icon" aria-hidden="true"
-						>{opened[folder.id] ? 'expand_less' : 'expand_more'}</span
-					>
-					<span>{folder.path}</span>
-				</button>
-				<div class="row-actions">
-					<button
-						type="button"
-						class="secondary icon-button"
-						aria-label={`Scan ${folder.path}`}
+		<Card class="overflow-hidden p-0">
+			<div class="flex items-center gap-2 border-b p-2">
+				<Button
+					type="button"
+					variant="ghost"
+					class="min-w-0 flex-1 justify-start px-2 text-left"
+					onclick={() => toggle(folder.id)}
+				>
+					{#if opened[folder.id]}
+						<ChevronUpIcon aria-hidden="true" />
+					{:else}
+						<ChevronDownIcon aria-hidden="true" />
+					{/if}
+					<span class="truncate">{folder.path}</span>
+				</Button>
+				<div class="flex shrink-0 items-center gap-2">
+					<SettingsRowActionButton
+						label={`Scan ${folder.path}`}
+						icon="sync"
 						disabled={scanningFolderId === folder.id}
 						onclick={() => onScan(folder.id)}
-					>
-						<span class="app-icon" aria-hidden="true">sync</span>
-					</button>
-					<button
-						type="button"
-						class="danger icon-button"
-						aria-label={`Delete ${folder.path}`}
+					/>
+					<SettingsRowActionButton
+						label={`Delete ${folder.path}`}
+						icon="delete"
+						variant="destructive"
 						onclick={() => onDelete(folder.id)}
-					>
-						<span class="app-icon" aria-hidden="true">delete</span>
-					</button>
+					/>
 				</div>
 			</div>
 			{#if opened[folder.id]}
-				<div class="folder-accordion-body">
+				<div class="grid gap-3 p-3">
 					{#if scanningFolderId === folder.id && !scan}
-						<p class="muted">Scanning folder</p>
+						<p class="m-0 text-sm leading-6 text-muted-foreground">Scanning folder</p>
 					{:else if scan}
 						<LibraryScanImportTable
 							{scan}
@@ -93,12 +100,14 @@
 							{onImport}
 						/>
 					{:else}
-						<p class="empty">Open or scan this folder to review media.</p>
+						<p class="m-0 text-sm leading-6 text-muted-foreground">
+							Open or scan this folder to review media.
+						</p>
 					{/if}
 				</div>
 			{/if}
-		</section>
+		</Card>
 	{:else}
-		<p class="empty">No library folders configured</p>
+		<p class="m-0 text-sm leading-6 text-muted-foreground">No library folders configured</p>
 	{/each}
 </div>

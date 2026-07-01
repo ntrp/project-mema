@@ -1,7 +1,9 @@
 <script lang="ts">
-	/* global HTMLDivElement */
+	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import { resolve } from '$app/paths';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import MediaPosterCard from '../media/MediaPosterCard.svelte';
+	import PosterRowControls from './PosterRowControls.svelte';
 	import type { MediaItem, MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
@@ -100,39 +102,25 @@
 	{#if section.results.length > 0}
 		{@const titleId = sectionId(section.title)}
 		{@const href = sectionHref(section.kind)}
-		<section class="metadata-related-section" aria-labelledby={titleId}>
-			<div class="section-heading">
+		<section aria-labelledby={titleId}>
+			<SectionHeading title={section.title} {titleId} {href}>
 				{#if href}
-					<!-- eslint-disable svelte/no-navigation-without-resolve -->
-					<a class="section-title-link" {href}>
-						<h2 id={titleId}>{section.title}</h2>
-						<span class="app-icon" aria-hidden="true">arrow_forward</span>
-					</a>
-					<!-- eslint-enable svelte/no-navigation-without-resolve -->
-				{:else}
-					<h2 id={titleId}>{section.title}</h2>
+					<ArrowRightIcon aria-hidden="true" />
 				{/if}
-				<div class="section-heading-actions">
+				{#snippet actions()}
 					<span>{section.results.length}</span>
-					<div class="poster-row-controls" aria-label={`${section.title} carousel controls`}>
-						<button
-							type="button"
-							aria-label={`Scroll ${section.title} left`}
-							onclick={() => scrollRelated(section.title, -1)}
-						>
-							<span class="app-icon" aria-hidden="true">chevron_left</span>
-						</button>
-						<button
-							type="button"
-							aria-label={`Scroll ${section.title} right`}
-							onclick={() => scrollRelated(section.title, 1)}
-						>
-							<span class="app-icon" aria-hidden="true">chevron_right</span>
-						</button>
-					</div>
-				</div>
-			</div>
-			<div class="poster-row" use:trackRelatedRow={section.title}>
+					<PosterRowControls
+						ariaLabel={`${section.title} carousel controls`}
+						leftLabel={`Scroll ${section.title} left`}
+						rightLabel={`Scroll ${section.title} right`}
+						onScroll={(direction) => scrollRelated(section.title, direction)}
+					/>
+				{/snippet}
+			</SectionHeading>
+			<div
+				class="-mx-3.5 mt-[-12px] grid auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
+				use:trackRelatedRow={section.title}
+			>
 				{#each section.results as result (resultKey(result))}
 					<MediaPosterCard
 						{result}
@@ -144,9 +132,15 @@
 				{/each}
 				{#if href}
 					<!-- eslint-disable svelte/no-navigation-without-resolve -->
-					<a class="poster-card poster-more-card" {href} aria-label={`Open ${section.title}`}>
-						<span class="poster-frame poster-more-frame">
-							<span class="app-icon" aria-hidden="true">arrow_forward</span>
+					<a
+						class="min-w-0 snap-start text-foreground no-underline"
+						{href}
+						aria-label={`Open ${section.title}`}
+					>
+						<span
+							class="relative grid aspect-[2/3] place-items-center gap-2 overflow-hidden rounded-md border border-dashed border-border bg-muted text-center text-sm font-black text-primary-hover"
+						>
+							<ArrowRightIcon aria-hidden="true" />
 							<span>View all</span>
 						</span>
 					</a>

@@ -1,0 +1,4 @@
+[mcp_servers.shadcn]
+enabled = true
+command = "sh"
+args = ["-lc", "cd web && exec npx -y shadcn@latest mcp"]

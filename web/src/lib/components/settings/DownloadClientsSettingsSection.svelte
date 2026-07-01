@@ -1,7 +1,12 @@
 <script lang="ts">
+	import ArrowLeftRightIcon from '@lucide/svelte/icons/arrow-left-right';
+	import CloudDownloadIcon from '@lucide/svelte/icons/cloud-download';
 	import DownloadClientForm from '$lib/components/settings/DownloadClientForm.svelte';
 	import DownloadClientTable from '$lib/components/settings/DownloadClientTable.svelte';
+	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import { emptyDownloadClientForm } from '$lib/settings/forms';
 	import type {
 		DownloadClient,
@@ -101,16 +106,10 @@
 	}
 </script>
 
-<div class="page-heading">
-	<p>Settings</p>
-	<h1 id="settings-title">Download clients</h1>
-</div>
-<div class="settings-stack">
-	<div class="settings-toolbar">
-		<button type="button" class="add-action-button" onclick={openModal}>
-			<span class="app-icon" aria-hidden="true">add</span>
-			<span>Add download client</span>
-		</button>
+<PageHeading eyebrow="Settings" title="Download clients" titleId="settings-title" />
+<div class="space-y-4">
+	<div class="flex justify-end">
+		<SettingsAddButton label="Add download client" onclick={openModal} />
 	</div>
 	<DownloadClientTable {clients} onEdit={editClient} {onDelete} />
 	{#if modalOpen}
@@ -130,17 +129,27 @@
 					{testResult}
 				/>
 			{:else}
-				<div class="download-client-picker" aria-label="Download client type">
-					<button type="button" onclick={() => selectType('transmission')}>
-						<span class="app-icon" aria-hidden="true">sync_alt</span>
+				<div class="grid gap-3 sm:grid-cols-2" aria-label="Download client type">
+					<Button
+						type="button"
+						variant="outline"
+						class="h-auto flex-col items-start gap-2 p-4 text-left"
+						onclick={() => selectType('transmission')}
+					>
+						<ArrowLeftRightIcon aria-hidden="true" />
 						<strong>Transmission</strong>
 						<small>Torrent download client</small>
-					</button>
-					<button type="button" onclick={() => selectType('sabnzbd')}>
-						<span class="app-icon" aria-hidden="true">cloud_download</span>
+					</Button>
+					<Button
+						type="button"
+						variant="outline"
+						class="h-auto flex-col items-start gap-2 p-4 text-left"
+						onclick={() => selectType('sabnzbd')}
+					>
+						<CloudDownloadIcon aria-hidden="true" />
 						<strong>SABnzbd</strong>
 						<small>Usenet download client</small>
-					</button>
+					</Button>
 				</div>
 			{/if}
 		</SettingsFormModal>

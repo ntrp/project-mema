@@ -1,4 +1,8 @@
 <script lang="ts">
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
 	import type { MediaItem, ReleaseCandidate, ReleaseSearchState } from '$lib/settings/types';
 
 	interface Props {
@@ -34,75 +38,60 @@
 	}
 </script>
 
-<div class="modal-backdrop" role="presentation" onclick={onClose}>
-	<div
-		class="modal-shell settings-modal media-file-modal"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="manual-search-title"
-		tabindex="-1"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => event.stopPropagation()}
-	>
-		<div class="modal-heading">
-			<h2 id="manual-search-title">Manual search</h2>
-			<button type="button" class="icon-button" aria-label="Close" onclick={onClose}>
-				<span class="app-icon" aria-hidden="true">close</span>
-			</button>
-		</div>
-		<div class="settings-toolbar">
-			<button type="button" disabled={!canManage || searching} onclick={() => onSearch(item)}>
-				{searching ? 'Searching' : 'Search releases'}
-			</button>
-		</div>
-		{#if releaseResults?.errors.length}
-			<div class="inline-errors">
-				{#each releaseResults.errors as error (error)}
-					<p>{error}</p>
-				{/each}
-			</div>
-		{/if}
-		<div class="table-wrap">
-			<table>
-				<thead>
-					<tr>
-						<th>Release</th>
-						<th>Indexer</th>
-						<th>Size</th>
-						<th>Seeders</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each releaseResults?.releases ?? [] as release (release.id)}
-						<tr>
-							<td>{release.title}</td>
-							<td>{release.indexerName}</td>
-							<td>{sizeLabel(release.sizeBytes)}</td>
-							<td>{release.seeders ?? '-'}</td>
-							<td class="row-actions">
-								{#if canManage}
-									<button
-										type="button"
-										disabled={grabbingKey === releaseKey(release)}
-										onclick={() => onGrab(item, release)}
-									>
-										{grabbingKey === releaseKey(release) ? 'Queueing' : 'Grab'}
-									</button>
-								{/if}
-							</td>
-						</tr>
-					{:else}
-						<tr>
-							<td colspan="5" class="empty">
-								{releaseResults?.loaded
-									? 'No release candidates found.'
-									: 'No search results loaded.'}
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
+<SettingsFormModal title="Manual search" modalClass="w-[min(1960px,calc(100vw-32px))]" {onClose}>
+	<div class="flex justify-end">
+		<Button type="button" disabled={!canManage || searching} onclick={() => onSearch(item)}>
+			{searching ? 'Searching' : 'Search releases'}
+		</Button>
 	</div>
-</div>
+	{#if releaseResults?.errors.length}
+		<div class="grid gap-1 rounded-md bg-secondary px-3 py-2.5 font-bold text-secondary-foreground">
+			{#each releaseResults.errors as error (error)}
+				<p class="m-0">{error}</p>
+			{/each}
+		</div>
+	{/if}
+	<Card class="overflow-hidden p-0">
+		<Table.Root>
+			<Table.Header>
+				<Table.Row>
+					<Table.Head>Release</Table.Head>
+					<Table.Head>Indexer</Table.Head>
+					<Table.Head>Size</Table.Head>
+					<Table.Head>Seeders</Table.Head>
+					<Table.Head></Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each releaseResults?.releases ?? [] as release (release.id)}
+					<Table.Row>
+						<Table.Cell>{release.title}</Table.Cell>
+						<Table.Cell>{release.indexerName}</Table.Cell>
+						<Table.Cell>{sizeLabel(release.sizeBytes)}</Table.Cell>
+						<Table.Cell>{release.seeders ?? '-'}</Table.Cell>
+						<Table.Cell class="text-right">
+							{#if canManage}
+								<Button
+									type="button"
+									size="sm"
+									disabled={grabbingKey === releaseKey(release)}
+									onclick={() => onGrab(item, release)}
+								>
+									{grabbingKey === releaseKey(release) ? 'Queueing' : 'Grab'}
+								</Button>
+							{/if}
+						</Table.Cell>
+					</Table.Row>
+				{:else}
+					<Table.Row>
+						<Table.Cell colspan={5} class="text-muted-foreground">
+							{releaseResults?.loaded
+								? 'No release candidates found.'
+								: 'No search results loaded.'}
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
+	</Card>
+</SettingsFormModal>

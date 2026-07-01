@@ -16,7 +16,7 @@ import type {
 	MediaRequestApproveRequest,
 	MediaSearchResult
 } from '$lib/settings/types';
-import { candidateKey, errorMessageFrom, mediaItemFileCount, omitResult } from './helpers';
+import { candidateKey, errorMessageFrom, omitResult } from './helpers';
 import type { AppShellState } from './state.svelte';
 
 interface MediaDeps {
@@ -164,11 +164,7 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 
 	function deleteMediaItem(item: MediaItem) {
 		clearNotice();
-		if (mediaItemFileCount(item) > 0) {
-			state.mediaDeleteCandidate = item;
-			return;
-		}
-		void removeMediaItem(item, false);
+		state.mediaDeleteCandidate = item;
 	}
 
 	function closeMediaDelete() {

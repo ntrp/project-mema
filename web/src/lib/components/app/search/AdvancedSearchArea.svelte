@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Input } from '$lib/components/ui/input';
 	import type {
 		MediaAdvancedSearchRequest,
 		MediaSearchGroup,
@@ -36,6 +41,11 @@
 	let year = $state('');
 	let selectedProviderIds = $state<string[]>([]);
 
+	const mediaTypeOptions: { value: MediaType | 'any'; label: string }[] = [
+		{ value: 'any', label: 'Any' },
+		{ value: 'movie', label: 'Movie' },
+		{ value: 'series', label: 'Series' }
+	];
 	const enabledProviders = $derived(metadataProviders.filter((provider) => provider.enabled));
 	const resultCount = $derived(groups.reduce((count, group) => count + group.results.length, 0));
 
@@ -71,53 +81,56 @@
 	}
 </script>
 
-<section class="workspace-main advanced-search" aria-labelledby="advanced-search-title">
-	<div class="page-heading">
-		<p>Search</p>
-		<h1 id="advanced-search-title">Advanced media search</h1>
-	</div>
+<section class="advanced-search grid min-w-0 gap-[18px]" aria-labelledby="advanced-search-title">
+	<PageHeading eyebrow="Search" title="Advanced media search" titleId="advanced-search-title" />
 
-	<form class="advanced-search-form panel" onsubmit={submit}>
-		<label class="wide">
-			<span>Title</span>
-			<input bind:value={query} placeholder="Movie or series title" autocomplete="off" />
+	<form
+		class="grid gap-4 rounded-md border border-border bg-card p-5 md:grid-cols-[minmax(0,1fr)_180px_150px]"
+		onsubmit={submit}
+	>
+		<label class="grid gap-1.5 md:col-span-3">
+			<span class="text-sm font-bold text-muted-foreground">Title</span>
+			<Input bind:value={query} placeholder="Movie or series title" autocomplete="off" />
 		</label>
-		<label>
-			<span>Type</span>
-			<select bind:value={type}>
-				<option value="any">Any</option>
-				<option value="movie">Movie</option>
-				<option value="series">Series</option>
-			</select>
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">Type</span>
+			<SettingsSelect
+				value={type}
+				options={mediaTypeOptions}
+				onValueChange={(value) => (type = value as MediaType | 'any')}
+			/>
 		</label>
-		<label>
-			<span>Year</span>
-			<input bind:value={year} inputmode="numeric" placeholder="Optional" />
+		<label class="grid gap-1.5">
+			<span class="text-sm font-bold text-muted-foreground">Year</span>
+			<Input bind:value={year} inputmode="numeric" placeholder="Optional" />
 		</label>
-		<fieldset class="provider-picker wide">
-			<legend>Metadata providers</legend>
+		<fieldset class="grid gap-2.5 rounded-md border border-border p-3 md:col-span-3">
+			<legend class="px-1 text-sm font-extrabold text-muted-foreground">Metadata providers</legend>
 			{#if enabledProviders.length > 0}
-				<div class="provider-options">
+				<div class="flex flex-wrap gap-2.5">
 					{#each enabledProviders as provider (provider.id)}
-						<label>
-							<input
-								type="checkbox"
+						<label
+							class="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5"
+						>
+							<Checkbox
 								checked={selectedProviderIds.includes(provider.id)}
-								onchange={() => toggleProvider(provider.id)}
+								onCheckedChange={() => toggleProvider(provider.id)}
 							/>
 							<span>{provider.name}</span>
 						</label>
 					{/each}
 				</div>
 			{:else}
-				<p>No enabled metadata providers are configured.</p>
+				<p class="m-0 text-sm text-muted-foreground">
+					No enabled metadata providers are configured.
+				</p>
 			{/if}
 		</fieldset>
-		<div class="form-actions wide">
-			<button type="submit" disabled={searching || query.trim().length === 0}>
+		<div class="flex items-center gap-3 md:col-span-3">
+			<Button type="submit" disabled={searching || query.trim().length === 0}>
 				{searching ? 'Searching' : 'Search'}
-			</button>
-			<span class="muted">{resultCount} results</span>
+			</Button>
+			<span class="text-sm text-muted-foreground">{resultCount} results</span>
 		</div>
 	</form>
 

@@ -1,4 +1,9 @@
 <script lang="ts">
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Select from '$lib/components/ui/select';
 	import { targetLanguageOptions } from '$lib/settings/languageOptions';
 	import type { MediaProfileForm, QualitySizeSetting } from '$lib/settings/types';
 
@@ -65,98 +70,117 @@
 			targetLanguageScores: scores
 		});
 	}
+
+	function upgradeUntilLabel() {
+		return (
+			selectedQualities.find((quality) => quality.id === form.upgradeUntilQualityId)?.name ??
+			'No quality cutoff'
+		);
+	}
 </script>
 
-<fieldset class="profile-fieldset wide">
-	<legend>General</legend>
-	<label>
-		<span>Upgrades allowed</span>
-		<span class="toggle">
-			<input
-				type="checkbox"
-				checked={form.upgradesAllowed}
-				onchange={(event) => patch({ upgradesAllowed: event.currentTarget.checked })}
-			/>
-			<span>Allow replacing existing releases when the candidate is better</span>
-		</span>
-	</label>
-
-	<label>
-		<span>Upgrade until</span>
-		<select
-			value={form.upgradeUntilQualityId ?? ''}
-			disabled={!form.upgradesAllowed || selectedQualities.length === 0}
-			onchange={(event) => patch({ upgradeUntilQualityId: event.currentTarget.value || undefined })}
-		>
-			<option value="">No quality cutoff</option>
-			{#each selectedQualities as quality (quality.id)}
-				<option value={quality.id}>{quality.name}</option>
-			{/each}
-		</select>
-	</label>
-
-	<label>
-		<span>Minimum custom format score</span>
-		<input
-			type="number"
-			value={form.minimumCustomFormatScore}
-			inputmode="numeric"
-			oninput={(event) => patch({ minimumCustomFormatScore: event.currentTarget.valueAsNumber })}
-		/>
-	</label>
-
-	<label>
-		<span>Upgrade until custom format score</span>
-		<input
-			type="number"
-			value={form.upgradeUntilCustomFormatScore}
-			inputmode="numeric"
-			oninput={(event) =>
-				patch({ upgradeUntilCustomFormatScore: event.currentTarget.valueAsNumber })}
-		/>
-	</label>
-
-	<label>
-		<span>Minimum score increment</span>
-		<input
-			type="number"
-			min="0"
-			value={form.minimumCustomFormatScoreIncrement}
-			inputmode="numeric"
-			oninput={(event) =>
-				patch({ minimumCustomFormatScoreIncrement: event.currentTarget.valueAsNumber })}
-		/>
-	</label>
-</fieldset>
-
-<fieldset class="profile-fieldset wide">
-	<legend>Target languages</legend>
-	<label class="profile-language-filter">
-		<span>Quick filter</span>
-		<input bind:value={languageFilter} type="search" placeholder="Filter languages" />
-	</label>
-	<div class="profile-language-list">
-		{#each filteredLanguageOptions as option (option.id)}
-			<div class="profile-language-row">
-				<label class="quality-checkbox">
-					<input
-						type="checkbox"
-						checked={selectedLanguageScores.has(option.id)}
-						onchange={() => toggleLanguage(option.id)}
-					/>
-					<span>{option.displayLabel}</span>
-				</label>
-				<input
-					type="number"
-					aria-label={`${option.displayLabel} score`}
-					value={selectedLanguageScores.get(option.id) ?? 0}
-					disabled={!selectedLanguageScores.has(option.id)}
-					inputmode="numeric"
-					oninput={(event) => updateLanguageScore(option.id, event.currentTarget.valueAsNumber)}
+<Card.Root class="md:col-span-2">
+	<Card.Header>
+		<Card.Title>General</Card.Title>
+	</Card.Header>
+	<Card.Content class="grid gap-4">
+		<div class="grid gap-2 text-sm">
+			<Label>Upgrades allowed</Label>
+			<span class="flex items-center gap-2 text-muted-foreground">
+				<Checkbox
+					checked={form.upgradesAllowed}
+					onCheckedChange={(checked) => patch({ upgradesAllowed: checked === true })}
 				/>
-			</div>
-		{:else}
-			<p class="empty">No languages match the filter.</p>
-		{/each}
-	</div>
-</fieldset>
+				Allow replacing existing releases when the candidate is better
+			</span>
+		</div>
+
+		<div class="grid gap-2 text-sm">
+			<Label>Upgrade until</Label>
+			<Select.Root
+				type="single"
+				value={form.upgradeUntilQualityId ?? ''}
+				disabled={!form.upgradesAllowed || selectedQualities.length === 0}
+				onValueChange={(value: string) => patch({ upgradeUntilQualityId: value || undefined })}
+			>
+				<Select.Trigger class="w-full">{upgradeUntilLabel()}</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="" label="No quality cutoff" />
+					{#each selectedQualities as quality (quality.id)}
+						<Select.Item value={quality.id} label={quality.name} />
+					{/each}
+				</Select.Content>
+			</Select.Root>
+		</div>
+
+		<div class="grid gap-2 text-sm">
+			<Label>Minimum custom format score</Label>
+			<Input
+				type="number"
+				value={form.minimumCustomFormatScore}
+				inputmode="numeric"
+				oninput={(event) => patch({ minimumCustomFormatScore: event.currentTarget.valueAsNumber })}
+			/>
+		</div>
+
+		<div class="grid gap-2 text-sm">
+			<Label>Upgrade until custom format score</Label>
+			<Input
+				type="number"
+				value={form.upgradeUntilCustomFormatScore}
+				inputmode="numeric"
+				oninput={(event) =>
+					patch({ upgradeUntilCustomFormatScore: event.currentTarget.valueAsNumber })}
+			/>
+		</div>
+
+		<div class="grid gap-2 text-sm">
+			<Label>Minimum score increment</Label>
+			<Input
+				type="number"
+				min="0"
+				value={form.minimumCustomFormatScoreIncrement}
+				inputmode="numeric"
+				oninput={(event) =>
+					patch({ minimumCustomFormatScoreIncrement: event.currentTarget.valueAsNumber })}
+			/>
+		</div>
+	</Card.Content>
+</Card.Root>
+
+<Card.Root class="md:col-span-2">
+	<Card.Header>
+		<Card.Title>Target languages</Card.Title>
+	</Card.Header>
+	<Card.Content>
+		<div class="grid gap-2 text-sm">
+			<Label>Quick filter</Label>
+			<Input bind:value={languageFilter} type="search" placeholder="Filter languages" />
+		</div>
+		<div class="mt-4 grid max-h-80 gap-2 overflow-auto rounded-md bg-muted/30 p-2">
+			{#each filteredLanguageOptions as option (option.id)}
+				<div class="grid gap-2 rounded-md bg-muted/20 p-2 sm:grid-cols-[1fr_120px] sm:items-center">
+					<Label class="flex items-center gap-2 text-sm">
+						<Checkbox
+							checked={selectedLanguageScores.has(option.id)}
+							onCheckedChange={() => toggleLanguage(option.id)}
+						/>
+						<span>{option.displayLabel}</span>
+					</Label>
+					<Input
+						type="number"
+						aria-label={`${option.displayLabel} score`}
+						value={selectedLanguageScores.get(option.id) ?? 0}
+						disabled={!selectedLanguageScores.has(option.id)}
+						inputmode="numeric"
+						oninput={(event) => updateLanguageScore(option.id, event.currentTarget.valueAsNumber)}
+					/>
+				</div>
+			{:else}
+				<p class="m-0 p-4 text-center text-sm text-muted-foreground">
+					No languages match the filter.
+				</p>
+			{/each}
+		</div>
+	</Card.Content>
+</Card.Root>

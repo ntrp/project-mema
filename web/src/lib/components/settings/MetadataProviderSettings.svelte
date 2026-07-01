@@ -44,7 +44,7 @@
 	];
 </script>
 
-<div class="provider-grid">
+<div class="grid items-start gap-[18px] md:grid-cols-2">
 	{#each providerDefinitions as definition (definition.type)}
 		{@const provider = metadataProviders.find((item) => item.type === definition.type)}
 		{@const key = provider?.id ?? definition.type}

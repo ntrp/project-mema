@@ -1,4 +1,10 @@
 <script lang="ts">
+	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import {
+		minimumAvailabilityOptions,
+		monitorModeOptions
+	} from '$lib/components/settings/libraryScanImport';
 	import type {
 		MediaMonitorMode,
 		MinimumAvailability,
@@ -32,33 +38,60 @@
 		onApply,
 		onImport
 	}: Props = $props();
+
+	let qualityProfileOptions = $derived([
+		{ value: '', label: 'Select profile' },
+		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
+	]);
+
+	function applyQualityProfile(value: string) {
+		qualityProfileId = value;
+		onApply();
+	}
+
+	function applyMonitorMode(value: string) {
+		monitorMode = value as MediaMonitorMode;
+		onApply();
+	}
+
+	function applyMinimumAvailability(value: string) {
+		minimumAvailability = value as MinimumAvailability;
+		onApply();
+	}
 </script>
 
-<tr class="scan-import-row">
-	<td colspan="3">{checkedCount} checked</td>
-	<td>
-		<select bind:value={qualityProfileId} disabled={!checkedRowsMatched} onchange={onApply}>
-			<option value="">Select profile</option>
-			{#each qualityProfiles as profile (profile.id)}
-				<option value={profile.id}>{profile.name}</option>
-			{/each}
-		</select>
+<tr class="sticky bottom-0 bg-muted shadow-sm">
+	<td class="align-top" colspan="3">{checkedCount} checked</td>
+	<td class="align-top">
+		<SettingsSelect
+			value={qualityProfileId}
+			options={qualityProfileOptions}
+			disabled={!checkedRowsMatched}
+			onValueChange={applyQualityProfile}
+		/>
 	</td>
-	<td>
-		<select bind:value={monitorMode} disabled={!checkedRowsMatched} onchange={onApply}>
-			<option value="only_media">Only this media</option>
-			<option value="collection">Entire collection</option>
-			<option value="none">None</option>
-		</select>
+	<td class="align-top">
+		<SettingsSelect
+			value={monitorMode}
+			options={monitorModeOptions}
+			disabled={!checkedRowsMatched}
+			onValueChange={applyMonitorMode}
+		/>
 	</td>
-	<td>
-		<select bind:value={minimumAvailability} disabled={!checkedRowsMatched} onchange={onApply}>
-			<option value="released">Released</option>
-			<option value="in_cinema">In cinema</option>
-			<option value="announced">Announced</option>
-		</select>
-		<button type="button" disabled={!canImport || loading || importing} onclick={onImport}>
+	<td class="align-top">
+		<SettingsSelect
+			value={minimumAvailability}
+			options={minimumAvailabilityOptions}
+			disabled={!checkedRowsMatched}
+			onValueChange={applyMinimumAvailability}
+		/>
+		<Button
+			type="button"
+			class="mt-2 w-full"
+			disabled={!canImport || loading || importing}
+			onclick={onImport}
+		>
 			{importing ? 'Importing' : 'Import'}
-		</button>
+		</Button>
 	</td>
 </tr>

@@ -1,7 +1,9 @@
 <script lang="ts">
+	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import UserForm from '$lib/components/settings/UserForm.svelte';
 	import UserTable from '$lib/components/settings/UserTable.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { emptyUserForm } from '$lib/settings/forms';
 	import type { ManagedUser, UserForm as UserFormValue, UserSummary } from '$lib/settings/types';
 
@@ -52,16 +54,10 @@
 	}
 </script>
 
-<div class="page-heading">
-	<p>Settings</p>
-	<h1 id="settings-title">Users</h1>
-</div>
-<div class="settings-stack">
-	<div class="settings-toolbar">
-		<button type="button" class="add-action-button" onclick={openModal}>
-			<span class="app-icon" aria-hidden="true">add</span>
-			<span>Add user</span>
-		</button>
+<PageHeading eyebrow="Settings" title="Users" titleId="settings-title" />
+<div class="space-y-4">
+	<div class="flex justify-end">
+		<SettingsAddButton label="Add user" onclick={openModal} />
 	</div>
 	<UserTable {users} currentUserId={currentUser?.id} onEdit={editUser} {onDelete} />
 	{#if modalOpen}

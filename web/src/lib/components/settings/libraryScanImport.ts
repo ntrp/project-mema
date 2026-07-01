@@ -25,13 +25,32 @@ export interface LibraryScanImportRow {
 	request: LibraryScanItemMatchRequest;
 }
 
+export type LibraryScanSortMode = 'folders' | 'mixed';
+
+export const monitorModeOptions: { value: MediaMonitorMode; label: string }[] = [
+	{ value: 'only_media', label: 'Only this media' },
+	{ value: 'collection', label: 'Entire collection' },
+	{ value: 'none', label: 'None' }
+];
+
+export const minimumAvailabilityOptions: { value: MinimumAvailability; label: string }[] = [
+	{ value: 'released', label: 'Released' },
+	{ value: 'in_cinema', label: 'In cinema' },
+	{ value: 'announced', label: 'Announced' }
+];
+
+export const scanSortModeOptions: { value: LibraryScanSortMode; label: string }[] = [
+	{ value: 'folders', label: 'Folders' },
+	{ value: 'mixed', label: 'Mixed' }
+];
+
 export function folderName(path: string) {
 	const normalized = path.replaceAll('\\', '/');
 	const parts = normalized.split('/').filter(Boolean);
 	return parts.length > 1 ? parts.slice(0, -1).join('/') : '.';
 }
 
-export function sortedScanItems(items: LibraryScanItem[], sortMode: 'folders' | 'mixed') {
+export function sortedScanItems(items: LibraryScanItem[], sortMode: LibraryScanSortMode) {
 	return [...items].sort((left, right) => {
 		const leftKey =
 			sortMode === 'folders' ? `${folderName(left.path)}/${left.fileName}` : left.fileName;

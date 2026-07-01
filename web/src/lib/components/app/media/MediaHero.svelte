@@ -1,5 +1,10 @@
 <script lang="ts">
+	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+	import TagIcon from '@lucide/svelte/icons/tag';
+	import StatusPill from '$lib/components/shared/StatusPill.svelte';
+	import { Button } from '$lib/components/ui/button';
 	import type { MediaItem, MediaItemStatus, MediaType } from '$lib/settings/types';
+	import PosterPlaceholder from './PosterPlaceholder.svelte';
 
 	interface Props {
 		mediaType: MediaType;
@@ -49,57 +54,77 @@
 	}
 </script>
 
-<section class="metadata-hero" aria-labelledby="home-title">
-	<div class="metadata-poster">
+<section
+	class="grid items-end gap-6.5 min-[641px]:grid-cols-[clamp(190px,18vw,270px)_minmax(0,1fr)]"
+	aria-labelledby="home-title"
+>
+	<div
+		class="aspect-[2/3] overflow-hidden rounded-md border border-border bg-card max-sm:w-[170px]"
+	>
 		{#if posterUrl(item.posterPath, 'w500')}
-			<img src={posterUrl(item.posterPath, 'w500')} alt="" />
+			<img class="block size-full object-cover" src={posterUrl(item.posterPath, 'w500')} alt="" />
 		{:else}
-			<div class="poster-placeholder">{mediaType === 'movie' ? 'Movie' : 'Series'}</div>
+			<PosterPlaceholder
+				label={mediaType === 'movie' ? 'Movie' : 'Series'}
+				class="h-full min-h-0"
+			/>
 		{/if}
 	</div>
-	<div class="metadata-title-block">
-		<h1 id="home-title">{item.title}</h1>
+	<div class="grid gap-3">
+		<h1 id="home-title" class="text-[clamp(42px,4.6vw,68px)] leading-none">{item.title}</h1>
 		<p>{mediaType === 'movie' ? 'Movie' : 'Series'}</p>
-		<div class="metadata-info-bar" aria-label="Library media information">
-			<span><strong>Year</strong>{item.year ?? 'Unknown'}</span>
-			<span><strong>Type</strong>{item.type}</span>
-			<span><strong>Status</strong>{statusLabel(item.status)}</span>
-			<span><strong>Profile</strong>{qualityProfileLabel}</span>
-			<span><strong>Monitor</strong>{item.monitored ? 'Monitored' : 'None'}</span>
+		<div class="flex flex-wrap gap-2" aria-label="Library media information">
+			<StatusPill class="inline-flex items-center gap-1.5">
+				<strong class="text-foreground">Year</strong>{item.year ?? 'Unknown'}
+			</StatusPill>
+			<StatusPill class="inline-flex items-center gap-1.5">
+				<strong class="text-foreground">Type</strong>{item.type}
+			</StatusPill>
+			<StatusPill class="inline-flex items-center gap-1.5">
+				<strong class="text-foreground">Status</strong>{statusLabel(item.status)}
+			</StatusPill>
+			<StatusPill class="inline-flex items-center gap-1.5">
+				<strong class="text-foreground">Profile</strong>{qualityProfileLabel}
+			</StatusPill>
+			<StatusPill class="inline-flex items-center gap-1.5">
+				<strong class="text-foreground">Monitor</strong>{item.monitored ? 'Monitored' : 'None'}
+			</StatusPill>
 		</div>
 		{#if item.tags?.length}
-			<div class="metadata-tags" aria-label="Tags">
+			<div class="flex flex-wrap gap-[7px]" aria-label="Tags">
 				{#each item.tags as tag (tag)}
-					<span><span class="app-icon" aria-hidden="true">sell</span>{tag}</span>
+					<StatusPill class="inline-flex items-center gap-1.5">
+						<TagIcon aria-hidden="true" />{tag}
+					</StatusPill>
 				{/each}
 			</div>
 		{/if}
 		{#if canManage}
-			<div class="metadata-actions">
-				<button
+			<div class="mt-1 flex flex-wrap items-center gap-2.5">
+				<Button
 					type="button"
 					disabled={searchingItemId === item.id}
 					onclick={() => onFindReleases(item)}
 				>
 					{searchingItemId === item.id ? 'Queued' : 'Find releases'}
-				</button>
-				<button
+				</Button>
+				<Button
 					type="button"
-					class="secondary"
+					variant="outline"
 					disabled={scanningMediaItemId === item.id || !item.mediaFolderPath}
 					onclick={() => onRescanMediaFiles(item)}
 				>
-					<span class="app-icon" aria-hidden="true">sync</span>
+					<RefreshCwIcon aria-hidden="true" />
 					<span>{scanningMediaItemId === item.id ? 'Scanning' : 'Rescan files'}</span>
-				</button>
-				<button
+				</Button>
+				<Button
 					type="button"
-					class="danger"
+					variant="destructive"
 					disabled={deletingMediaItemId === item.id}
 					onclick={() => onDeleteMedia(item)}
 				>
 					{deletingMediaItemId === item.id ? 'Removing' : 'Remove'}
-				</button>
+				</Button>
 			</div>
 		{/if}
 	</div>

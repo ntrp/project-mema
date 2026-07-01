@@ -1,4 +1,6 @@
 <script lang="ts">
+	import StatusPill from '$lib/components/shared/StatusPill.svelte';
+
 	interface Props {
 		keywords?: string[];
 	}
@@ -7,11 +9,11 @@
 </script>
 
 {#if keywords.length > 0}
-	<div class="metadata-keywords-block" aria-labelledby="metadata-keywords-title">
-		<h3 id="metadata-keywords-title" class="metadata-keywords-title">Keywords</h3>
-		<div class="metadata-tags" aria-label="Keywords">
+	<div class="grid gap-0" aria-labelledby="metadata-keywords-title">
+		<h3 id="metadata-keywords-title" class="mt-3 mb-4 text-xl text-foreground">Keywords</h3>
+		<div class="flex flex-wrap gap-[7px]" aria-label="Keywords">
 			{#each keywords as keyword (keyword)}
-				<span>{keyword}</span>
+				<StatusPill>{keyword}</StatusPill>
 			{/each}
 		</div>
 	</div>

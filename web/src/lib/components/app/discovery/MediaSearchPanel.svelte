@@ -1,6 +1,9 @@
 <script lang="ts">
-	/* global HTMLDivElement */
+	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import { resolve } from '$app/paths';
+	import EmptyState from '$lib/components/shared/EmptyState.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import type {
 		DiscoverBlacklistItem,
 		MediaDiscoverSection,
@@ -8,6 +11,7 @@
 		MediaSearchResult
 	} from '$lib/settings/types';
 	import MediaPosterCard from '../media/MediaPosterCard.svelte';
+	import PosterRowControls from '../media/PosterRowControls.svelte';
 
 	interface Props {
 		sections: MediaDiscoverSection[];
@@ -36,7 +40,6 @@
 	}: Props = $props();
 	let rows = $state<Record<string, HTMLDivElement>>({});
 
-	const safeSections = $derived(sections ?? []);
 	const libraryExternalKeys = $derived(
 		new Set(
 			(mediaItems ?? [])
@@ -66,18 +69,14 @@
 
 	function isInLibrary(result: MediaSearchResult) {
 		const key = externalKey(result);
-		if (key && libraryExternalKeys.has(key)) {
-			return true;
-		}
-		return libraryTitleKeys.has(titleKey(result));
+		return Boolean(key && libraryExternalKeys.has(key)) || libraryTitleKeys.has(titleKey(result));
 	}
 
 	function isBlacklisted(result: MediaSearchResult) {
 		const key = externalKey(result);
-		if (key && blacklistExternalKeys.has(key)) {
-			return true;
-		}
-		return blacklistTitleKeys.has(titleKey(result));
+		return (
+			Boolean(key && blacklistExternalKeys.has(key)) || blacklistTitleKeys.has(titleKey(result))
+		);
 	}
 
 	function externalKey(item: MediaItem | MediaSearchResult | DiscoverBlacklistItem) {
@@ -116,59 +115,47 @@
 	}
 </script>
 
-<div class="page-heading">
-	<p>Discover</p>
-	<h1 id="home-title">Browse media from metadata providers</h1>
-</div>
+<PageHeading eyebrow="Discover" title="Browse media from metadata providers" titleId="home-title" />
 
 {#if loading}
-	<div class="discover-section skeleton-section">
-		<div class="section-heading">
-			<h2>Loading discovery</h2>
-		</div>
-		<div class="poster-row">
+	<div class="skeleton-section min-w-0">
+		<SectionHeading title="Loading discovery" />
+		<div
+			class="-mx-3.5 mt-[-12px] grid auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
+		>
 			{#each Array.from({ length: 8 }) as _, index (index)}
-				<div class="poster-card skeleton-card" aria-hidden="true"></div>
+				<div class="min-w-0 snap-start aspect-[2/3] rounded-md bg-card" aria-hidden="true"></div>
 			{/each}
 		</div>
 	</div>
-{:else if safeSections.length === 0}
-	<section class="empty-state">
-		<h2>No discovery sections available</h2>
-		<p>Enable and configure TMDB in metadata settings to load provider-backed discovery.</p>
-	</section>
+{:else if sections.length === 0}
+	<EmptyState
+		title="No discovery sections available"
+		description="Enable and configure TMDB in metadata settings to load provider-backed discovery."
+	/>
 {:else}
-	<div class="discover-sections" aria-label="Discover media sections">
-		{#each safeSections as section (section.id)}
+	<div class="grid gap-[22px]" aria-label="Discover media sections">
+		{#each sections as section (section.id)}
 			{@const results = sectionResults(section)}
-			<section class="discover-section" aria-labelledby={`discover-${section.id}`}>
-				<div class="section-heading">
-					<a
-						class="section-title-link"
-						href={resolve('/discover/[sectionId]', { sectionId: section.id })}
-					>
-						<h2 id={`discover-${section.id}`}>{section.title}</h2>
-						<span class="app-icon" aria-hidden="true">arrow_forward</span>
-					</a>
-					<div class="poster-row-controls" aria-label={`${section.title} carousel controls`}>
-						<button
-							type="button"
-							aria-label="Scroll left"
-							onclick={() => scrollSection(section.id, -1)}
-						>
-							<span class="app-icon" aria-hidden="true">chevron_left</span>
-						</button>
-						<button
-							type="button"
-							aria-label="Scroll right"
-							onclick={() => scrollSection(section.id, 1)}
-						>
-							<span class="app-icon" aria-hidden="true">chevron_right</span>
-						</button>
-					</div>
-				</div>
+			<section class="min-w-0" aria-labelledby={`discover-${section.id}`}>
+				<SectionHeading
+					title={section.title}
+					titleId={`discover-${section.id}`}
+					href={resolve('/discover/[sectionId]', { sectionId: section.id })}
+				>
+					<ArrowRightIcon aria-hidden="true" />
+					{#snippet actions()}
+						<PosterRowControls
+							ariaLabel={`${section.title} carousel controls`}
+							onScroll={(direction) => scrollSection(section.id, direction)}
+						/>
+					{/snippet}
+				</SectionHeading>
 				{#if results.length > 0}
-					<div class="poster-row" use:trackRow={section.id}>
+					<div
+						class="-mx-3.5 mt-[-12px] grid auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
+						use:trackRow={section.id}
+					>
 						{#each results as result (resultKey(result))}
 							<MediaPosterCard
 								{result}
@@ -181,18 +168,24 @@
 							/>
 						{/each}
 						<a
-							class="poster-card poster-more-card"
+							class="min-w-0 snap-start text-foreground no-underline"
 							href={resolve('/discover/[sectionId]', { sectionId: section.id })}
 							aria-label={`Open all ${section.title}`}
 						>
-							<div class="poster-frame poster-more-frame">
-								<span class="app-icon" aria-hidden="true">arrow_forward</span>
+							<div
+								class="relative grid aspect-[2/3] place-items-center gap-2 overflow-hidden rounded-md border border-dashed border-border bg-muted text-center text-sm font-black text-primary-hover"
+							>
+								<ArrowRightIcon aria-hidden="true" />
 								<span>View all</span>
 							</div>
 						</a>
 					</div>
 				{:else}
-					<div class="section-empty">No results loaded for this section.</div>
+					<div
+						class="m-0 rounded-md border border-dashed border-border bg-muted p-[18px] text-sm text-muted-foreground"
+					>
+						No results loaded for this section.
+					</div>
 				{/if}
 			</section>
 		{/each}

@@ -6,6 +6,7 @@
 	import MediaProfilesSettings from '$lib/components/settings/MediaProfilesSettings.svelte';
 	import QualitySizeSettings from '$lib/components/settings/quality/QualitySizeSettings.svelte';
 	import TagSettings from '$lib/components/settings/TagSettings.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import type {
 		CustomFormat,
 		CustomFormatForm as CustomFormatFormValue,
@@ -106,11 +107,8 @@
 </script>
 
 {#if activeSection === 'metadata'}
-	<div class="page-heading">
-		<p>Settings</p>
-		<h1 id="settings-title">Metadata</h1>
-	</div>
-	<div class="settings-stack">
+	<PageHeading eyebrow="Settings" title="Metadata" titleId="settings-title" />
+	<div class="space-y-4">
 		<MetadataProviderSettings
 			{metadataProviders}
 			onSave={onSaveMetadataProvider}
@@ -130,17 +128,11 @@
 		/>
 	</div>
 {:else if activeSection === 'quality'}
-	<div class="page-heading">
-		<p>Settings</p>
-		<h1 id="settings-title">Quality</h1>
-	</div>
-	<div class="settings-stack"><QualitySizeSettings /></div>
+	<PageHeading eyebrow="Settings" title="Quality" titleId="settings-title" />
+	<div class="space-y-4"><QualitySizeSettings /></div>
 {:else if activeSection === 'profiles'}
-	<div class="page-heading">
-		<p>Settings</p>
-		<h1 id="settings-title">Profiles</h1>
-	</div>
-	<div class="settings-stack">
+	<PageHeading eyebrow="Settings" title="Profiles" titleId="settings-title" />
+	<div class="space-y-4">
 		<MediaProfilesSettings
 			profiles={mediaProfiles}
 			{customFormats}
@@ -154,11 +146,8 @@
 		/>
 	</div>
 {:else if activeSection === 'custom-formats'}
-	<div class="page-heading">
-		<p>Settings</p>
-		<h1 id="settings-title">Custom formats</h1>
-	</div>
-	<div class="settings-stack">
+	<PageHeading eyebrow="Settings" title="Custom formats" titleId="settings-title" />
+	<div class="space-y-4">
 		<CustomFormatsSettings
 			formats={customFormats}
 			bind:form={customFormatForm}
@@ -172,17 +161,11 @@
 		/>
 	</div>
 {:else if activeSection === 'file-naming'}
-	<div class="page-heading">
-		<p>Settings</p>
-		<h1 id="settings-title">File naming</h1>
-	</div>
-	<div class="settings-stack"><FileNamingSettings /></div>
+	<PageHeading eyebrow="Settings" title="File naming" titleId="settings-title" />
+	<div class="space-y-4"><FileNamingSettings /></div>
 {:else if activeSection === 'tags'}
-	<div class="page-heading">
-		<p>Settings</p>
-		<h1 id="settings-title">Tags</h1>
-	</div>
-	<div class="settings-stack">
+	<PageHeading eyebrow="Settings" title="Tags" titleId="settings-title" />
+	<div class="space-y-4">
 		<TagSettings
 			{tags}
 			bind:form={tagForm}

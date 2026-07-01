@@ -1,8 +1,13 @@
 <script lang="ts">
+	import PlusIcon from '@lucide/svelte/icons/plus';
+	import XIcon from '@lucide/svelte/icons/x';
 	import MediaActionOptions from '$lib/components/app/media/MediaActionOptions.svelte';
 	import MediaTagSelector from '$lib/components/app/media/MediaTagSelector.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Label } from '$lib/components/ui/label';
 	import {
-		mediaPosterUrl,
 		preselectLibraryFolderId,
 		preselectQualityProfileId
 	} from '$lib/components/app/media/mediaActionDefaults';
@@ -48,7 +53,6 @@
 	let selectedTags = $state<string[]>([]);
 
 	const canConfirm = $derived(!isAdmin || (qualityProfileId !== '' && libraryFolderId !== ''));
-	const posterUrl = $derived(mediaPosterUrl(candidate.posterPath));
 	const monitorMode = $derived(selectedMonitorMode ?? defaultMonitorMode(candidate.type));
 	const seriesType = $derived(selectedSeriesType ?? 'standard');
 
@@ -82,100 +86,80 @@
 	}
 </script>
 
-<div class="modal-backdrop" role="presentation" onclick={onClose}>
-	<div
-		class="modal-shell"
-		aria-labelledby="media-action-title"
-		role="dialog"
-		aria-modal="true"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => event.stopPropagation()}
-		tabindex="-1"
-	>
-		<form
-			class="media-action-modal"
-			onsubmit={submit}
-			style:--modal-bg-url={posterUrl ? `url("${posterUrl}")` : undefined}
-		>
-			<div class="section-heading">
-				<div>
-					<p class="section-kicker">{isAdmin ? 'Add media' : 'Request media'}</p>
-					<h2 id="media-action-title">{candidate.title}</h2>
-				</div>
-				<button type="button" class="secondary icon-button" aria-label="Close" onclick={onClose}>
-					<span class="app-icon" aria-hidden="true">close</span>
-				</button>
-			</div>
+<SettingsFormModal title={candidate.title} {onClose}>
+	<form class="-m-5 grid gap-3.5 overflow-hidden rounded-md bg-card p-5" onsubmit={submit}>
+		<p class="m-0 mb-1.5 text-xs font-extrabold text-muted-foreground uppercase">
+			{isAdmin ? 'Add media' : 'Request media'}
+		</p>
+		<p class="m-0 text-sm leading-6 text-muted-foreground">
+			{candidate.type}{candidate.year ? ` · ${candidate.year}` : ''}
+		</p>
 
-			<p class="muted">
-				{candidate.type}{candidate.year ? ` · ${candidate.year}` : ''}
-			</p>
-
-			{#if isAdmin}
-				<MediaActionOptions
-					{isAdmin}
-					mediaType={candidate.type}
-					{libraryFolders}
-					{qualityProfiles}
-					bind:qualityProfileId
-					bind:libraryFolderId
-					{monitorMode}
-					{seriesType}
-					bind:minimumAvailability
-					onMonitorModeChange={(mode) => (selectedMonitorMode = mode)}
-					onSeriesTypeChange={(type) => (selectedSeriesType = type)}
-				/>
-				{#if libraryFolders.length === 0}
-					<p class="error">Add a library folder in Settings before adding monitored media.</p>
-				{/if}
-			{:else}
-				<MediaActionOptions
-					{isAdmin}
-					mediaType={candidate.type}
-					{libraryFolders}
-					{qualityProfiles}
-					bind:qualityProfileId
-					bind:libraryFolderId
-					{monitorMode}
-					{seriesType}
-					bind:minimumAvailability
-					onMonitorModeChange={(mode) => (selectedMonitorMode = mode)}
-					onSeriesTypeChange={(type) => (selectedSeriesType = type)}
-				/>
-				<p class="muted">
-					Your request will be visible under Requests. An admin will choose the folder and quality
-					profile before approval.
+		{#if isAdmin}
+			<MediaActionOptions
+				{isAdmin}
+				mediaType={candidate.type}
+				{libraryFolders}
+				{qualityProfiles}
+				bind:qualityProfileId
+				bind:libraryFolderId
+				{monitorMode}
+				{seriesType}
+				bind:minimumAvailability
+				onMonitorModeChange={(mode) => (selectedMonitorMode = mode)}
+				onSeriesTypeChange={(type) => (selectedSeriesType = type)}
+			/>
+			{#if libraryFolders.length === 0}
+				<p class="m-0 text-sm leading-6 font-semibold text-destructive">
+					Add a library folder in Settings before adding monitored media.
 				</p>
 			{/if}
+		{:else}
+			<MediaActionOptions
+				{isAdmin}
+				mediaType={candidate.type}
+				{libraryFolders}
+				{qualityProfiles}
+				bind:qualityProfileId
+				bind:libraryFolderId
+				{monitorMode}
+				{seriesType}
+				bind:minimumAvailability
+				onMonitorModeChange={(mode) => (selectedMonitorMode = mode)}
+				onSeriesTypeChange={(type) => (selectedSeriesType = type)}
+			/>
+			<p class="m-0 text-sm leading-6 text-muted-foreground">
+				Your request will be visible under Requests. An admin will choose the folder and quality
+				profile before approval.
+			</p>
+		{/if}
 
-			<MediaTagSelector {tags} bind:selectedTags />
+		<MediaTagSelector {tags} bind:selectedTags />
 
-			<div class="form-actions media-action-actions">
-				{#if isAdmin}
-					<label class="inline-check">
-						<input type="checkbox" bind:checked={startSearch} />
-						<span>Start searching</span>
-					</label>
-				{/if}
-				<button type="button" class="secondary media-action-command" onclick={onClose}>
-					<span class="app-icon" aria-hidden="true">close</span>
-					<span>Cancel</span>
-				</button>
-				<button
-					type="submit"
-					class="media-action-command add-action-button"
-					disabled={!canConfirm || saving || (isAdmin && libraryFolders.length === 0)}
-				>
-					<span class="app-icon" aria-hidden="true">add</span>
-					<span>
-						{#if saving}
-							{isAdmin ? 'Adding' : 'Requesting'}
-						{:else}
-							{isAdmin ? 'Add' : 'Request'}
-						{/if}
-					</span>
-				</button>
-			</div>
-		</form>
-	</div>
-</div>
+		<div class="flex flex-wrap items-center justify-end gap-3">
+			{#if isAdmin}
+				<div class="mr-auto flex items-center gap-2">
+					<Checkbox id="start-search" bind:checked={startSearch} />
+					<Label for="start-search">Start searching</Label>
+				</div>
+			{/if}
+			<Button type="button" variant="outline" onclick={onClose}>
+				<XIcon aria-hidden="true" />
+				<span>Cancel</span>
+			</Button>
+			<Button
+				type="submit"
+				disabled={!canConfirm || saving || (isAdmin && libraryFolders.length === 0)}
+			>
+				<PlusIcon aria-hidden="true" />
+				<span>
+					{#if saving}
+						{isAdmin ? 'Adding' : 'Requesting'}
+					{:else}
+						{isAdmin ? 'Add' : 'Request'}
+					{/if}
+				</span>
+			</Button>
+		</div>
+	</form>
+</SettingsFormModal>

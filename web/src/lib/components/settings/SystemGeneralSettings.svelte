@@ -1,5 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import { getSystemEventSettings, updateSystemEventSettings } from '$lib/settings/api';
 	import SystemLogFileGeneralSettings from './SystemLogFileGeneralSettings.svelte';
 
@@ -44,34 +50,33 @@
 	}
 </script>
 
-<div class="page-heading">
-	<p>Settings</p>
-	<h1 id="settings-title">General</h1>
-</div>
+<PageHeading eyebrow="Settings" title="General" titleId="settings-title" />
 
-<section class="panel log-settings-panel" aria-label="General">
-	<div class="section-heading">
-		<button type="button" class="secondary compact-action" disabled={loading} onclick={load}>
-			Refresh
-		</button>
-	</div>
+<Card class="gap-4 p-5" aria-label="General">
+	<SectionHeading>
+		{#snippet actions()}
+			<Button type="button" variant="outline" size="sm" disabled={loading} onclick={load}>
+				Refresh
+			</Button>
+		{/snippet}
+	</SectionHeading>
 
 	{#if errorMessage}
-		<p class="inline-error">{errorMessage}</p>
+		<p class="m-0 font-bold text-destructive">{errorMessage}</p>
 	{/if}
 	{#if message}
-		<p class="muted">{message}</p>
+		<p class="m-0 text-sm leading-6 text-muted-foreground">{message}</p>
 	{/if}
 
-	<form class="settings-form compact-form event-settings-form" onsubmit={save}>
-		<label>
-			<span>Event retention days</span>
-			<input type="number" min="1" max="365" bind:value={retentionDays} />
-		</label>
-		<div class="form-actions">
-			<button type="submit" disabled={saving}>{saving ? 'Saving' : 'Save settings'}</button>
+	<form class="grid gap-4 sm:grid-cols-2" onsubmit={save}>
+		<div class="space-y-2">
+			<Label for="event-retention-days">Event retention days</Label>
+			<Input id="event-retention-days" type="number" min="1" max="365" bind:value={retentionDays} />
+		</div>
+		<div class="flex items-end justify-end">
+			<Button type="submit" disabled={saving}>{saving ? 'Saving' : 'Save settings'}</Button>
 		</div>
 	</form>
 
 	<SystemLogFileGeneralSettings bind:this={logFileSettings} />
-</section>
+</Card>

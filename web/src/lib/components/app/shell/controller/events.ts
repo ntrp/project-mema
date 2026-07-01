@@ -1,4 +1,3 @@
-/* global MessageEvent */
 import type { DownloadActivity, DownloadActivityStatus } from '$lib/settings/types';
 import type { AppShellState } from './state.svelte';
 import type { ServerEventEnvelope } from './types';

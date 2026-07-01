@@ -1,4 +1,7 @@
 <script lang="ts">
+	import BracesIcon from '@lucide/svelte/icons/braces';
+	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	interface Props {
 		attributes: Record<string, unknown>;
 	}
@@ -8,7 +11,15 @@
 	const formatted = $derived(JSON.stringify(attributes, null, 2));
 </script>
 
-<button type="button" class="log-json-trigger" aria-label="Log attributes">
-	<span class="app-icon" aria-hidden="true">data_object</span>
-	<code>{formatted}</code>
-</button>
+<Tooltip.Root>
+	<Tooltip.Trigger>
+		{#snippet child({ props })}
+			<Button type="button" variant="ghost" size="icon-xs" aria-label="Log attributes" {...props}>
+				<BracesIcon aria-hidden="true" />
+			</Button>
+		{/snippet}
+	</Tooltip.Trigger>
+	<Tooltip.Content class="max-h-80 max-w-[min(560px,70vw)] overflow-auto">
+		<code class="whitespace-pre text-left text-xs">{formatted}</code>
+	</Tooltip.Content>
+</Tooltip.Root>

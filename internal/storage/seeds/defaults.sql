@@ -60,6 +60,7 @@ insert into app.media_profiles (
 )
 values
     ('any', 'Any acceptable release', true, 'raw-hd', 0, 0, 1),
+    ('low-quality-test', 'Low Quality Test', true, 'webdl-480p', 0, 0, 1),
     ('hd-1080p', 'HD 1080p', true, 'bluray-1080p', 0, 0, 1),
     ('uhd-4k', 'UHD 4K', true, 'remux-2160p', 0, 0, 1),
     ('anime-1080p', 'Anime 1080p', true, 'bluray-1080p', 0, 0, 1)
@@ -68,6 +69,7 @@ on conflict (id) do nothing;
 insert into app.media_profile_languages (profile_id, language_id, score)
 values
     ('any', 'english', 0),
+    ('low-quality-test', 'english', 0),
     ('hd-1080p', 'english', 0),
     ('uhd-4k', 'english', 0),
     ('anime-1080p', 'japanese', 0),
@@ -106,6 +108,10 @@ values
     ('any', 'remux-2160p', 24),
     ('any', 'br-disk', 25),
     ('any', 'raw-hd', 26),
+    ('low-quality-test', 'sdtv', 8),
+    ('low-quality-test', 'dvd', 9),
+    ('low-quality-test', 'webdl-480p', 11),
+    ('low-quality-test', 'webrip-480p', 11),
     ('hd-1080p', 'hdtv-720p', 14),
     ('hd-1080p', 'webdl-720p', 15),
     ('hd-1080p', 'webrip-720p', 15),
@@ -144,12 +150,12 @@ insert into app.file_naming_settings (
 )
 values (
     1,
-    '{Movie Title} ({Release Year}) {Quality Full}',
-    '{Movie Title} ({Release Year})',
-    '{Series Title} - S{season:00}E{episode:00} - {Episode Title} {Quality Full}',
-    '{Series Title} - {Air-Date} - {Episode Title} {Quality Full}',
-    '{Series Title} - S{season:00}E{episode:00} - {Episode Title} {Quality Full}',
-    '{Series Title} ({Release Year})',
+    '{movie_title} ({release_year}) {quality_full}',
+    '{movie_title} ({release_year})',
+    '{series_title} - S{season:00}E{episode:00} - {episode_title} {quality_full}',
+    '{series_title} - {air_date} - {episode_title} {quality_full}',
+    '{series_title} - S{season:00}E{episode:00} - {episode_title} {quality_full}',
+    '{series_title} ({release_year})',
     'Season {season}',
     'Specials'
 )

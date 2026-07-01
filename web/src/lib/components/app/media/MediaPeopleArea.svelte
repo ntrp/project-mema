@@ -1,6 +1,9 @@
 <script lang="ts">
+	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
-	import { imageUrl } from './mediaDetail';
+	import MediaMetadataShell from './MediaMetadataShell.svelte';
+	import MediaPersonCard from './MediaPersonCard.svelte';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import { crewRoleLabels } from './mediaPeople';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
 
@@ -51,54 +54,38 @@
 </script>
 
 {#if loading}
-	<section class="metadata-detail-loading panel">
-		<p class="muted">Loading {pageTitle.toLowerCase()}</p>
+	<section class="min-h-[220px] rounded-md border border-border bg-card p-5">
+		<p class="m-0 text-sm leading-6 text-muted-foreground">Loading {pageTitle.toLowerCase()}</p>
 	</section>
 {:else if !detail}
-	<section class="empty-state">
-		<h2>{pageTitle} not available</h2>
-		<p>Could not load people for this item.</p>
-	</section>
+	<EmptyState
+		title={`${pageTitle} not available`}
+		description="Could not load people for this item."
+	/>
 {:else}
-	<section
-		class="metadata-detail"
-		aria-labelledby="media-people-title"
-		style:--backdrop-url={imageUrl(detail.backdropPath, 'original')
-			? `url("${imageUrl(detail.backdropPath, 'original')}")`
-			: undefined}
-	>
+	<MediaMetadataShell backdropPath={detail.backdropPath} labelledby="media-people-title">
 		<MediaMetadataHero {detail} titleId="media-people-title" />
 
-		<div class="metadata-body">
-			<main class="metadata-main">
+		<div class="grid items-start gap-7">
+			<main class="grid min-w-0 gap-6 [&>section]:grid [&>section]:min-w-0 [&>section]:gap-2.5">
 				{#each groups as group (group.title)}
 					<section aria-labelledby={`people-${group.title.toLowerCase().replaceAll(' ', '-')}`}>
-						<div class="section-heading">
-							<h2 id={`people-${group.title.toLowerCase().replaceAll(' ', '-')}`}>
-								{group.title}
-							</h2>
-							<span>{group.people.length}</span>
-						</div>
-						<div class="metadata-people-grid">
+						<SectionHeading
+							title={group.title}
+							titleId={`people-${group.title.toLowerCase().replaceAll(' ', '-')}`}
+						>
+							{#snippet actions()}
+								<span>{group.people.length}</span>
+							{/snippet}
+						</SectionHeading>
+						<div class="grid grid-cols-[repeat(auto-fill,minmax(231px,1fr))] gap-4">
 							{#each group.people as person (`${group.title}:${person.name}:${person.role ?? ''}`)}
-								<article class="metadata-cast-card">
-									<div>
-										{#if person.image && imageUrl(person.image, 'w185')}
-											<img src={imageUrl(person.image, 'w185')} alt="" loading="lazy" />
-										{:else}
-											<span>{person.name.slice(0, 1)}</span>
-										{/if}
-									</div>
-									<strong>{person.name}</strong>
-									{#if person.role}
-										<p>{person.role}</p>
-									{/if}
-								</article>
+								<MediaPersonCard name={person.name} role={person.role} image={person.image} />
 							{/each}
 						</div>
 					</section>
 				{/each}
 			</main>
 		</div>
-	</section>
+	</MediaMetadataShell>
 {/if}

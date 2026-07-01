@@ -1,6 +1,10 @@
 <script lang="ts">
+	import PlusIcon from '@lucide/svelte/icons/plus';
+	import { Button } from '$lib/components/ui/button';
+	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
+	import MediaMetadataShell from './MediaMetadataShell.svelte';
 	import MediaRelatedSections from './MediaRelatedSections.svelte';
 	import type { MediaItem, MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
@@ -17,16 +21,6 @@
 		Partial<MediaMetadataDetails> & { metadataStatus?: string };
 
 	let { detail, loading, mediaItems = [], addingKey, actionLabel, onAdd }: Props = $props();
-
-	function imageUrl(path?: string, size = 'w780') {
-		if (!path) {
-			return undefined;
-		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/${size}${path}`;
-	}
 
 	function candidate(details: MediaMetadataDetails): MetadataAddCandidate {
 		return {
@@ -64,43 +58,35 @@
 </script>
 
 {#if loading}
-	<section class="metadata-detail-loading panel">
-		<p class="muted">Loading media details</p>
+	<section class="min-h-[220px] rounded-md border border-border bg-card p-5">
+		<p class="m-0 text-sm leading-6 text-muted-foreground">Loading media details</p>
 	</section>
 {:else if !detail}
-	<section class="empty-state">
-		<h2>Details not available</h2>
-		<p>Could not load provider metadata for this item.</p>
-	</section>
+	<EmptyState
+		title="Details not available"
+		description="Could not load provider metadata for this item."
+	/>
 {:else}
-	<section
-		class="metadata-detail"
-		aria-labelledby="metadata-detail-title"
-		style:--backdrop-url={imageUrl(detail.backdropPath, 'original')
-			? `url("${imageUrl(detail.backdropPath, 'original')}")`
-			: undefined}
-	>
-		<MediaMetadataHero {detail} titleId="metadata-detail-title">
+	<MediaMetadataShell backdropPath={detail.backdropPath} labelledby="metadata-detail-title">
+		<MediaMetadataHero {detail} titleId="metadata-detail-title" showMonitorBookmark={false}>
 			{#snippet actions()}
-				<button
+				<Button
 					type="button"
-					class="add-action-button metadata-add-action"
 					aria-label={addingKey === candidateKey(detail) ? 'Working' : actionLabel}
-					title={addingKey === candidateKey(detail) ? 'Working' : actionLabel}
 					disabled={addingKey === candidateKey(detail)}
 					onclick={() => onAdd(candidate(detail))}
 				>
-					<span class="app-icon" aria-hidden="true">add</span>
+					<PlusIcon aria-hidden="true" />
 					<span>{addingKey === candidateKey(detail) ? 'Working' : actionLabel}</span>
-				</button>
+				</Button>
 			{/snippet}
 		</MediaMetadataHero>
 
-		<div class="metadata-body">
-			<main class="metadata-main">
+		<div class="grid items-start gap-7">
+			<main class="grid min-w-0 gap-6 [&>section]:grid [&>section]:min-w-0 [&>section]:gap-2.5">
 				<MediaMetadataCore {detail} />
 				<MediaRelatedSections {detail} {mediaItems} {addingKey} {actionLabel} {onAdd} />
 			</main>
 		</div>
-	</section>
+	</MediaMetadataShell>
 {/if}

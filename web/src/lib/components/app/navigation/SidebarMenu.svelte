@@ -1,5 +1,13 @@
 <script lang="ts">
+	import ActivityIcon from '@lucide/svelte/icons/clock-3';
+	import CompassIcon from '@lucide/svelte/icons/compass';
+	import ComputerIcon from '@lucide/svelte/icons/monitor';
+	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
+	import MoviesIcon from '@lucide/svelte/icons/clapperboard';
+	import SettingsIcon from '@lucide/svelte/icons/settings';
+	import SeriesIcon from '@lucide/svelte/icons/tv';
 	import { resolve } from '$app/paths';
+	import { cn } from '$lib/utils';
 
 	type MenuIcon =
 		| 'discover'
@@ -57,86 +65,93 @@
 	}
 
 	let { title, items, active, activeSubmenu, onSelect, onSubmenuSelect }: Props<string> = $props();
-	let menuOpen = $state(false);
 
 	function selectItem(value: string) {
 		onSelect(value);
-		menuOpen = false;
 	}
 
 	function selectSubmenuItem(value: string) {
 		onSubmenuSelect?.(value);
-		menuOpen = false;
+	}
+
+	type MenuIconComponent = typeof CompassIcon;
+
+	const menuIcons: Record<MenuIcon, MenuIconComponent> = {
+		discover: CompassIcon,
+		movies: MoviesIcon,
+		series: SeriesIcon,
+		activity: ActivityIcon,
+		settings: SettingsIcon,
+		computer: ComputerIcon,
+		visibility_off: EyeOffIcon
+	};
+
+	function iconComponent(icon: MenuIcon) {
+		return menuIcons[icon];
+	}
+
+	function navLinkClass(isActive: boolean) {
+		return cn(
+			'relative flex min-h-10 w-full items-center gap-3 rounded-md border border-transparent px-2.5 py-2 text-left font-bold text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-foreground',
+			'max-[640px]:h-[50px] max-[640px]:min-h-[50px] max-[640px]:w-16 max-[640px]:min-w-16 max-[640px]:shrink-0 max-[640px]:flex-col max-[640px]:justify-center max-[640px]:gap-1 max-[640px]:px-1 max-[640px]:py-1 max-[640px]:text-center max-[640px]:text-[10px] max-[640px]:leading-none',
+			isActive &&
+				'border-primary/60 bg-primary text-primary-foreground shadow-md hover:bg-primary hover:text-primary-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-md before:bg-primary-foreground max-[640px]:before:inset-x-2 max-[640px]:before:bottom-0.5 max-[640px]:before:top-auto max-[640px]:before:h-0.5 max-[640px]:before:w-auto max-[640px]:before:translate-y-0'
+		);
+	}
+
+	function submenuLinkClass(isActive: boolean) {
+		return cn(
+			'relative flex min-h-8 items-center rounded-md border border-transparent px-2.5 py-1.5 text-sm font-bold text-muted-foreground no-underline transition-colors hover:bg-primary/10 hover:text-foreground max-[640px]:min-h-[34px] max-[640px]:shrink-0 max-[640px]:whitespace-nowrap',
+			isActive &&
+				'border-primary/60 bg-primary/15 text-foreground ring-1 ring-primary/20 before:absolute before:left-0 before:top-1/2 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-md before:bg-foreground max-[640px]:before:inset-x-2 max-[640px]:before:bottom-0.5 max-[640px]:before:top-auto max-[640px]:before:h-0.5 max-[640px]:before:w-auto max-[640px]:before:translate-y-0'
+		);
 	}
 </script>
 
-<aside class="side-menu" class:menu-open={menuOpen} aria-label={title}>
-	<div class="side-menu-header">
-		<a class="brand-button" href={resolve('/discover')} onclick={() => selectItem('discover')}>
-			<span class="brand-mark" aria-hidden="true">M</span>
-			<span class="brand-name">{title}</span>
-		</a>
-		<button
-			type="button"
-			class="menu-toggle"
-			aria-expanded={menuOpen}
-			aria-controls="primary-menu"
-			onclick={() => (menuOpen = !menuOpen)}
+<aside
+	class="sticky top-0 z-20 grid content-start gap-2.5 border-b border-border bg-card px-3 py-2 shadow-lg min-[641px]:gap-4 min-[641px]:px-2.5 min-[641px]:py-6 min-[981px]:min-h-screen min-[981px]:gap-8 min-[981px]:border-r min-[981px]:border-b-0 min-[981px]:shadow-none"
+	aria-label={title}
+>
+	<div class="flex min-w-0 items-center justify-center gap-2.5 min-[981px]:justify-between">
+		<a
+			class="flex min-w-0 items-center gap-3 text-foreground no-underline"
+			href={resolve('/discover')}
+			onclick={() => selectItem('discover')}
 		>
-			{menuOpen ? 'Close' : 'Menu'}
-		</button>
+			<span
+				class="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-base font-black text-primary-foreground min-[641px]:size-9"
+				aria-hidden="true">M</span
+			>
+			<span class="truncate text-lg font-black min-[981px]:text-2xl">{title}</span>
+		</a>
 	</div>
-	<nav id="primary-menu">
+	<nav
+		id="primary-menu"
+		class="grid gap-1.5 max-[640px]:flex max-[640px]:min-w-0 max-[640px]:overflow-x-auto max-[640px]:overflow-y-hidden max-[640px]:pb-0.5 max-[640px]:[scrollbar-width:none] min-[641px]:max-[980px]:grid-cols-[repeat(auto-fit,minmax(110px,1fr))]"
+	>
 		{#each items as item (item.value)}
+			{@const itemActive = active === item.value && !item.children?.length}
+			{@const Icon = iconComponent(item.icon)}
 			<a
 				href={resolve(item.href)}
-				class:active-menu={active === item.value && !item.children?.length}
-				aria-current={active === item.value && !item.children?.length ? 'page' : undefined}
+				class={navLinkClass(itemActive)}
+				aria-current={itemActive ? 'page' : undefined}
 				onclick={() => selectItem(item.value)}
 			>
-				<span class="menu-icon" aria-hidden="true">
-					{#if item.icon === 'discover'}
-						<span class="app-icon">travel_explore</span>
-					{:else if item.icon === 'movies'}
-						<svg viewBox="0 0 24 24">
-							<rect x="4" y="5" width="16" height="14" rx="2" />
-							<path d="M8 5v14M16 5v14M4 9h16M4 15h16" />
-						</svg>
-					{:else if item.icon === 'series'}
-						<svg viewBox="0 0 24 24">
-							<rect x="4" y="5" width="16" height="12" rx="2" />
-							<path d="M9 21h6M12 17v4" />
-						</svg>
-					{:else if item.icon === 'activity'}
-						<svg viewBox="0 0 24 24">
-							<circle cx="12" cy="12" r="8" />
-							<path d="M12 8v5l3 2" />
-						</svg>
-					{:else if item.icon === 'computer'}
-						<svg viewBox="0 0 24 24">
-							<rect x="4" y="5" width="16" height="12" rx="2" />
-							<path d="M8 21h8M12 17v4" />
-						</svg>
-					{:else if item.icon === 'visibility_off'}
-						<span class="app-icon">visibility_off</span>
-					{:else}
-						<svg viewBox="0 0 24 24">
-							<circle cx="12" cy="12" r="3" />
-							<path
-								d="M19 12a7.6 7.6 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L14.5 3h-5l-.4 3.1a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.4 3.1h5l.4-3.1a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5c.1-.3.1-.7.1-1z"
-							/>
-						</svg>
-					{/if}
-				</span>
-				<span>{item.label}</span>
+				<Icon aria-hidden="true" class="size-5 max-[640px]:size-[18px]" />
+				<span class="max-[640px]:block max-[640px]:w-full max-[640px]:truncate">{item.label}</span>
 			</a>
 			{#if active === item.value && item.children?.length}
-				<div class="submenu" aria-label={`${item.label} sections`}>
+				<div
+					class="grid gap-1 border-l border-border pl-2.5 min-[641px]:max-[980px]:col-span-full min-[641px]:max-[980px]:grid-cols-[repeat(auto-fit,minmax(130px,1fr))] min-[641px]:max-[980px]:border-t min-[641px]:max-[980px]:border-l-0 min-[641px]:max-[980px]:pt-2 min-[641px]:max-[980px]:pl-0 max-[640px]:flex max-[640px]:shrink-0 max-[640px]:border-0 max-[640px]:pl-1"
+					aria-label={`${item.label} sections`}
+				>
 					{#each item.children as child (child.value)}
+						{@const childActive = activeSubmenu === child.value}
 						<a
 							href={resolve(child.href)}
-							class:active-submenu={activeSubmenu === child.value}
-							aria-current={activeSubmenu === child.value ? 'page' : undefined}
+							class={submenuLinkClass(childActive)}
+							aria-current={childActive ? 'page' : undefined}
 							onclick={() => selectSubmenuItem(child.value)}
 						>
 							{child.label}

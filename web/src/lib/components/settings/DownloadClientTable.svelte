@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { Card } from '$lib/components/ui/card';
+	import * as Table from '$lib/components/ui/table';
+	import SettingsRowActionButton from './shared/SettingsRowActionButton.svelte';
 	import type { DownloadClient } from '$lib/settings/types';
 
 	interface Props {
@@ -10,50 +13,47 @@
 	let { clients, onEdit, onDelete }: Props = $props();
 </script>
 
-<div class="panel" aria-label="Download clients">
-	<div class="table-wrap">
-		<table>
-			<thead>
-				<tr>
-					<th>Name</th>
-					<th>Type</th>
-					<th>Base URL</th>
-					<th>Priority</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each clients as item (item.id)}
-					<tr>
-						<td>{item.name}</td>
-						<td>{item.type}</td>
-						<td>{item.baseUrl}</td>
-						<td>{item.priority}</td>
-						<td class="row-actions">
-							<button
-								type="button"
-								class="secondary icon-button"
-								aria-label={`Edit ${item.name}`}
+<Card class="p-0" aria-label="Download clients">
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head>Name</Table.Head>
+				<Table.Head>Type</Table.Head>
+				<Table.Head>Base URL</Table.Head>
+				<Table.Head>Priority</Table.Head>
+				<Table.Head class="text-right">Actions</Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
+			{#each clients as item (item.id)}
+				<Table.Row>
+					<Table.Cell>{item.name}</Table.Cell>
+					<Table.Cell>{item.type}</Table.Cell>
+					<Table.Cell class="max-w-[320px] truncate">{item.baseUrl}</Table.Cell>
+					<Table.Cell>{item.priority}</Table.Cell>
+					<Table.Cell>
+						<div class="flex justify-end gap-2">
+							<SettingsRowActionButton
+								label={`Edit ${item.name}`}
+								icon="edit"
 								onclick={() => onEdit(item)}
-							>
-								<span class="app-icon" aria-hidden="true">edit</span>
-							</button>
-							<button
-								type="button"
-								class="danger icon-button"
-								aria-label={`Delete ${item.name}`}
+							/>
+							<SettingsRowActionButton
+								label={`Delete ${item.name}`}
+								icon="delete"
+								variant="destructive"
 								onclick={() => onDelete(item.id)}
-							>
-								<span class="app-icon" aria-hidden="true">delete</span>
-							</button>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="5" class="empty">No download clients configured</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
-</div>
+							/>
+						</div>
+					</Table.Cell>
+				</Table.Row>
+			{:else}
+				<Table.Row>
+					<Table.Cell colspan={5} class="py-8 text-center text-muted-foreground">
+						No download clients configured
+					</Table.Cell>
+				</Table.Row>
+			{/each}
+		</Table.Body>
+	</Table.Root>
+</Card>

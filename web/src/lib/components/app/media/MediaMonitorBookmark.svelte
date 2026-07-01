@@ -1,4 +1,7 @@
 <script lang="ts">
+	import BookmarkIcon from '@lucide/svelte/icons/bookmark';
+	import { cn } from '$lib/utils';
+
 	interface Props {
 		monitored?: boolean;
 		label?: string;
@@ -8,6 +11,13 @@
 	const title = $derived(label ?? (monitored ? 'Monitored' : 'Not monitored'));
 </script>
 
-<span class:monitored class="monitor-bookmark" {title} aria-label={title}>
-	<span class="app-icon" aria-hidden="true">{monitored ? 'bookmark' : 'bookmark_border'}</span>
+<span
+	class={cn(
+		'inline-flex shrink-0 items-center justify-center leading-none',
+		monitored ? 'text-secondary-foreground' : 'text-muted-foreground'
+	)}
+	{title}
+	aria-label={title}
+>
+	<BookmarkIcon aria-hidden="true" class={monitored ? 'fill-current' : undefined} />
 </span>

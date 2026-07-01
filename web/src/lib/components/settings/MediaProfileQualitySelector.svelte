@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import {
 		groupQualitiesByResolution,
 		type QualityResolutionGroup
@@ -56,47 +58,74 @@
 	}
 </script>
 
-<div class="wide profile-quality-header">
-	<span>Qualities</span>
-	<div>
-		<button type="button" class="secondary" onclick={selectAllQualities}>Select all</button>
-		<button type="button" class="secondary" onclick={clearQualities}>Clear</button>
+<div class="flex items-center justify-between gap-3">
+	<span class="text-sm font-bold text-muted-foreground">Qualities</span>
+	<div class="flex gap-2">
+		<Button type="button" variant="outline" size="sm" onclick={selectAllQualities}
+			>Select all</Button
+		>
+		<Button type="button" variant="outline" size="sm" onclick={clearQualities}>Clear</Button>
 	</div>
 </div>
 
 {#if error}
-	<p class="form-status error wide">{error}</p>
+	<p
+		class="m-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 font-bold text-destructive"
+	>
+		{error}
+	</p>
 {/if}
 
-<div class="quality-group-stack wide" aria-label="Profile qualities">
+<div
+	class="grid max-h-[min(640px,calc(100vh-260px))] gap-3 overflow-auto rounded-md border border-border bg-background p-2.5"
+	aria-label="Profile qualities"
+>
 	{#if loading}
-		<p class="muted">Loading qualities</p>
+		<p class="m-0 text-sm leading-6 text-muted-foreground">Loading qualities</p>
 	{:else}
 		{#each qualityGroups as group (group.id)}
-			<section class="quality-checkbox-group" aria-labelledby={`quality-group-${group.id}`}>
-				<div class="quality-group-heading">
-					<div>
-						<h3 id={`quality-group-${group.id}`}>{group.label}</h3>
-						<span>{selectedQualityCount(group)} / {group.qualities.length}</span>
+			<section
+				class="grid gap-2 rounded-md border border-border bg-card p-2.5"
+				aria-labelledby={`quality-group-${group.id}`}
+			>
+				<div class="flex items-center justify-between gap-3">
+					<div class="flex min-w-0 items-baseline gap-2">
+						<h3 id={`quality-group-${group.id}`} class="m-0 text-base text-foreground">
+							{group.label}
+						</h3>
+						<span class="text-xs font-bold text-muted-foreground"
+							>{selectedQualityCount(group)} / {group.qualities.length}</span
+						>
 					</div>
-					<div>
-						<button type="button" class="secondary" onclick={() => selectQualityGroup(group)}>
+					<div class="flex gap-1.5">
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onclick={() => selectQualityGroup(group)}
+						>
 							Select
-						</button>
-						<button type="button" class="secondary" onclick={() => clearQualityGroup(group)}>
+						</Button>
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							onclick={() => clearQualityGroup(group)}
+						>
 							Clear
-						</button>
+						</Button>
 					</div>
 				</div>
-				<div class="quality-checkbox-grid">
+				<div class="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(170px,1fr))]">
 					{#each group.qualities as quality (quality.qualityId)}
-						<label class="quality-checkbox">
-							<input
-								type="checkbox"
+						<label
+							class="grid grid-cols-[18px_minmax(0,1fr)] items-center gap-2 rounded-md border border-border bg-muted p-2"
+						>
+							<Checkbox
 								checked={form.qualityIds.includes(quality.qualityId)}
-								onchange={() => toggleQuality(quality.qualityId)}
+								onclick={() => toggleQuality(quality.qualityId)}
 							/>
-							<span>{quality.name}</span>
+							<span class="truncate">{quality.name}</span>
 						</label>
 					{/each}
 				</div>

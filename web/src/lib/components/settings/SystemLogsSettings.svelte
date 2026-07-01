@@ -1,17 +1,21 @@
 <script lang="ts">
-	/* global EventSource, HTMLSelectElement, MessageEvent, HTMLDivElement */
 	import { onMount, tick } from 'svelte';
 
+	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Label } from '$lib/components/ui/label';
 	import { getSystemLogLevel, updateSystemLogLevel } from '$lib/settings/api';
-	import { formatTimeWithSeconds } from '$lib/settings/dateFormat';
 	import type { SystemLogEntry, SystemLogLevel } from '$lib/settings/types';
-	import SystemLogAttributesButton from './SystemLogAttributesButton.svelte';
+	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
+	import SystemLogRow from './SystemLogRow.svelte';
 
 	type StreamEnvelope<T> = {
 		data: T;
 	};
 
 	const levels: SystemLogLevel[] = ['debug', 'info', 'warn', 'error'];
+	const levelOptions = levels.map((value) => ({ value, label: value.toUpperCase() }));
 	const maxEntries = 500;
 
 	interface Props {
@@ -68,9 +72,8 @@
 		}
 	}
 
-	async function changeLevel(event: Event) {
-		const select = event.currentTarget as HTMLSelectElement;
-		const nextLevel = select.value as SystemLogLevel;
+	async function changeLevel(value: string) {
+		const nextLevel = value as SystemLogLevel;
 		saving = true;
 		errorMessage = '';
 		try {
@@ -127,62 +130,61 @@
 		}
 		lastScrollTop = target.scrollTop;
 	}
-
-	function attributeText(entry: SystemLogEntry) {
-		if (!entry.attributes || Object.keys(entry.attributes).length === 0) {
-			return '';
-		}
-		return JSON.stringify(entry.attributes);
-	}
 </script>
 
-<section class="panel log-settings-panel" aria-label="Logs">
-	<div class="section-heading">
-		<div class="log-controls">
-			<button type="button" class="secondary compact-action" onclick={clearLogs}>Clear logs</button>
-			<button
-				type="button"
-				class="secondary compact-action"
-				class:active-follow={followLogs}
-				aria-pressed={followLogs}
-				onclick={enableFollow}
-			>
-				Follow logs
-			</button>
-			<label>
-				<span>Verbosity</span>
-				<select value={level} disabled={loading || saving} onchange={changeLevel}>
-					{#each levels as option (option)}
-						<option value={option}>{option.toUpperCase()}</option>
-					{/each}
-				</select>
-			</label>
-		</div>
-	</div>
+<Card class="gap-4 p-5" aria-label="Logs">
+	<SectionHeading>
+		{#snippet actions()}
+			<div class="flex flex-wrap items-end gap-3">
+				<Button type="button" variant="outline" size="sm" onclick={clearLogs}>Clear logs</Button>
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					class={followLogs ? 'border-primary text-primary' : undefined}
+					aria-pressed={followLogs}
+					onclick={enableFollow}
+				>
+					Follow logs
+				</Button>
+				<div class="grid min-w-40 gap-2">
+					<Label>Verbosity</Label>
+					<SettingsSelect
+						value={level}
+						options={levelOptions}
+						disabled={loading || saving}
+						onValueChange={changeLevel}
+					/>
+				</div>
+			</div>
+		{/snippet}
+	</SectionHeading>
 
 	{#if errorMessage}
-		<p class="inline-error">{errorMessage}</p>
+		<p class="m-0 font-bold text-destructive">{errorMessage}</p>
 	{/if}
 
 	<div
-		class="log-viewer"
+		class="h-[min(58vh,620px)] overflow-auto bg-background px-1 py-px font-mono"
 		data-log-viewer
 		bind:this={logViewport}
 		onscroll={handleLogScroll}
 		aria-live="polite"
 		aria-label="Application logs"
 	>
+		<div
+			class="sticky top-0 z-10 grid grid-cols-[max-content_44px_minmax(0,1fr)_20px] items-center gap-4 border-b border-border bg-background px-1 py-1.5 text-xs leading-tight font-extrabold text-muted-foreground uppercase"
+			aria-hidden="true"
+		>
+			<span>Time</span>
+			<span>Level</span>
+			<span>Message</span>
+			<span></span>
+		</div>
 		{#each entries as entry (entry.id)}
-			<div class={`log-row level-${entry.level}`}>
-				<time datetime={entry.time}>{formatTimeWithSeconds(entry.time)}</time>
-				<span>{entry.level.toUpperCase()}</span>
-				<p>{entry.message}</p>
-				{#if entry.attributes && attributeText(entry)}
-					<SystemLogAttributesButton attributes={entry.attributes} />
-				{/if}
-			</div>
+			<SystemLogRow {entry} />
 		{:else}
-			<div class="log-empty">Waiting for log entries</div>
+			<p class="m-0 p-5 text-center text-muted-foreground">Waiting for log entries</p>
 		{/each}
 	</div>
-</section>
+</Card>

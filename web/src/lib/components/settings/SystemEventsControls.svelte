@@ -1,4 +1,8 @@
 <script lang="ts">
+	import TrashIcon from '@lucide/svelte/icons/trash-2';
+	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	const severityOptions = ['info', 'warning', 'error'] as const;
 	type SeverityFilter = (typeof severityOptions)[number];
 
@@ -18,29 +22,37 @@
 		return severity[0].toUpperCase() + severity.slice(1);
 	}
 
-	function handleSeverityChange(event: Event) {
-		const target = event.currentTarget as unknown as { value: string };
-		onSeverityChange(target.value as SeverityFilter);
-	}
+	const severitySelectOptions = severityOptions.map((severity) => ({
+		value: severity,
+		label: severityLabel(severity)
+	}));
 </script>
 
-<div class="log-controls events-controls">
-	<label class="severity-filter">
+<div class="flex flex-wrap items-end justify-between gap-3">
+	<label class="grid gap-1.5 text-sm font-medium text-foreground">
 		<span>Severity</span>
-		<select value={severityFilter} onchange={handleSeverityChange}>
-			{#each severityOptions as severity (severity)}
-				<option value={severity}>{severityLabel(severity)}</option>
-			{/each}
-		</select>
+		<SettingsSelect
+			value={severityFilter}
+			options={severitySelectOptions}
+			onValueChange={(value) => onSeverityChange(value as SeverityFilter)}
+		/>
 	</label>
-	<button
-		type="button"
-		class="danger icon-button events-clear-button"
-		aria-label={clearing ? 'Clearing events' : 'Clear all events'}
-		title={clearing ? 'Clearing events' : 'Clear all events'}
-		disabled={loading || clearing || eventsEmpty}
-		onclick={onClear}
-	>
-		<span class="app-icon" aria-hidden="true">delete</span>
-	</button>
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<Button
+					{...props}
+					type="button"
+					variant="destructive"
+					size="icon-sm"
+					aria-label={clearing ? 'Clearing events' : 'Clear all events'}
+					disabled={loading || clearing || eventsEmpty}
+					onclick={onClear}
+				>
+					<TrashIcon aria-hidden="true" />
+				</Button>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content>{clearing ? 'Clearing events' : 'Clear all events'}</Tooltip.Content>
+	</Tooltip.Root>
 </div>

@@ -1,5 +1,3 @@
-/* global EventSource */
-
 import type { SystemEvent } from '$lib/settings/types';
 import { parseSystemEvent } from './systemEventStream';
 

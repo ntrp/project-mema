@@ -1,5 +1,9 @@
 <script lang="ts">
+	import XIcon from '@lucide/svelte/icons/x';
 	import type { Snippet } from 'svelte';
+	import { Button } from '$lib/components/ui/button';
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { cn } from '$lib/utils';
 
 	interface Props {
 		title: string;
@@ -9,22 +13,46 @@
 	}
 
 	let { title, onClose, children, modalClass = '' }: Props = $props();
+	let open = $state(true);
+
+	function handleOpenChange(nextOpen: boolean) {
+		open = nextOpen;
+		if (!nextOpen) {
+			onClose();
+		}
+	}
+
+	function stopScrollBubble(event: Event) {
+		event.stopPropagation();
+	}
 </script>
 
-<div class="modal-backdrop" role="presentation" onclick={onClose}>
-	<div
-		class={`modal-shell settings-form-modal ${modalClass}`.trim()}
-		role="dialog"
-		aria-modal="true"
+<Dialog.Root bind:open onOpenChange={handleOpenChange}>
+	<Dialog.Content
+		preventScroll
+		showCloseButton={false}
+		class={cn(
+			'w-fit min-w-[min(420px,calc(100vw-32px))] max-w-[calc(100vw-32px)] gap-5 overflow-hidden overscroll-contain p-0 sm:max-w-[calc(100vw-32px)]',
+			modalClass
+		)}
 		aria-labelledby="settings-form-modal-title"
-		tabindex="-1"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => event.stopPropagation()}
+		onwheel={stopScrollBubble}
+		ontouchmove={stopScrollBubble}
 	>
-		<div class="section-heading">
-			<h2 id="settings-form-modal-title">{title}</h2>
-			<button type="button" class="secondary" onclick={onClose}>Close</button>
+		<Dialog.Header class="border-b border-border px-6 py-4">
+			<div class="flex items-center justify-between gap-4">
+				<Dialog.Title id="settings-form-modal-title">{title}</Dialog.Title>
+				<Dialog.Close>
+					{#snippet child({ props })}
+						<Button {...props} variant="secondary" size="icon-sm" aria-label="Close">
+							<XIcon aria-hidden="true" />
+						</Button>
+					{/snippet}
+				</Dialog.Close>
+			</div>
+		</Dialog.Header>
+		<div class="max-h-[min(760px,calc(100vh-112px))] overflow-auto overscroll-contain px-6 py-5">
+			{@render children()}
 		</div>
-		{@render children()}
-	</div>
-</div>
+	</Dialog.Content>
+</Dialog.Root>

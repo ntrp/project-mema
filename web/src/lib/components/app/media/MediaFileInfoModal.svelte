@@ -1,4 +1,6 @@
 <script lang="ts">
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Card } from '$lib/components/ui/card';
 	import type { MediaFileRow } from './mediaFiles';
 
 	interface Props {
@@ -17,51 +19,53 @@
 		['Formats', row.formats.join(', ') || '-'],
 		['Score', String(row.score)]
 	]);
+	const tracks = $derived([
+		{
+			title: 'Video',
+			rows: [
+				['Codec', row.videoCodec],
+				['Resolution', row.quality],
+				['Bitrate', '-']
+			]
+		},
+		{
+			title: 'Audio',
+			rows: [
+				['Codec', row.audioInfo],
+				['Languages', row.languages],
+				['Channels', '-']
+			]
+		},
+		{
+			title: 'Subtitles',
+			rows: [
+				['Languages', '-'],
+				['Forced', '-'],
+				['Count', '-']
+			]
+		}
+	]);
 </script>
 
-<div class="modal-backdrop" role="presentation" onclick={onClose}>
-	<div
-		class="modal-shell settings-modal media-file-modal"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="media-file-info-title"
-		tabindex="-1"
-		onclick={(event) => event.stopPropagation()}
-		onkeydown={(event) => event.stopPropagation()}
-	>
-		<div class="modal-heading">
-			<h2 id="media-file-info-title">File details</h2>
-			<button type="button" class="icon-button" aria-label="Close" onclick={onClose}>
-				<span class="app-icon" aria-hidden="true">close</span>
-			</button>
-		</div>
-		<div class="metadata-facts">
-			{#each fields as [label, value] (label)}
-				<div>
-					<span>{label}</span>
-					<strong>{value}</strong>
-				</div>
-			{/each}
-		</div>
-		<div class="stream-detail-grid">
-			<section>
-				<h3>Video</h3>
-				<p>Codec: {row.videoCodec}</p>
-				<p>Resolution: {row.quality}</p>
-				<p>Bitrate: -</p>
-			</section>
-			<section>
-				<h3>Audio</h3>
-				<p>Codec: {row.audioInfo}</p>
-				<p>Languages: {row.languages}</p>
-				<p>Channels: -</p>
-			</section>
-			<section>
-				<h3>Subtitles</h3>
-				<p>Languages: -</p>
-				<p>Forced: -</p>
-				<p>Count: -</p>
-			</section>
-		</div>
+<SettingsFormModal title="File details" modalClass="w-[min(1960px,calc(100vw-32px))]" {onClose}>
+	<div class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+		{#each fields as [label, value] (label)}
+			<Card class="gap-1 rounded-md border-border bg-card p-3 shadow-none">
+				<span class="text-xs font-extrabold text-muted-foreground uppercase">{label}</span>
+				<strong class="break-anywhere text-sm text-foreground">{value}</strong>
+			</Card>
+		{/each}
 	</div>
-</div>
+	<div class="grid gap-3 sm:grid-cols-3">
+		{#each tracks as track (track.title)}
+			<Card class="gap-2 rounded-md bg-card p-3 shadow-none">
+				<h3 class="m-0 text-base font-semibold text-foreground">{track.title}</h3>
+				<div class="grid gap-1">
+					{#each track.rows as [label, value] (label)}
+						<p class="m-0 text-sm text-muted-foreground">{label}: {value}</p>
+					{/each}
+				</div>
+			</Card>
+		{/each}
+	</div>
+</SettingsFormModal>

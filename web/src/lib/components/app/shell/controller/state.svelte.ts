@@ -1,4 +1,3 @@
-/* global $derived, $state, EventSource */
 import {
 	basePrimaryItems,
 	settingsPrimaryItem,

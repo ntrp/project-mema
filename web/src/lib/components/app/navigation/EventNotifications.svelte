@@ -1,5 +1,5 @@
 <script lang="ts">
-	/* global EventSource */
+	import BellIcon from '@lucide/svelte/icons/bell';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { listSystemEvents } from '$lib/settings/api';
@@ -7,6 +7,8 @@
 	import type { SystemEvent } from '$lib/settings/types';
 	import SystemEventSeverityIcon from '$lib/components/settings/SystemEventSeverityIcon.svelte';
 	import { parseSystemEvent } from '$lib/components/settings/systemEventStream';
+	import { Button } from '$lib/components/ui/button';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
 	const maxEvents = 20;
 
@@ -58,38 +60,53 @@
 	}
 </script>
 
-<div class="event-notifications">
-	<button
-		type="button"
-		class="icon-button notification-button"
-		aria-label="Warning and error events"
-		aria-haspopup="menu"
-		aria-expanded={open}
-		title="Events"
-		onclick={() => (open = !open)}
+<DropdownMenu.Root bind:open>
+	<DropdownMenu.Trigger>
+		{#snippet child({ props })}
+			<Button
+				type="button"
+				variant="outline"
+				size="icon"
+				class="relative"
+				aria-label="Warning and error events"
+				{...props}
+			>
+				<BellIcon aria-hidden="true" />
+				{#if errorTotal > 0}
+					<span
+						class="absolute -top-1 -right-1 h-4 min-w-4 rounded-full border border-background bg-destructive px-1 text-[10px] leading-3.5 font-black text-destructive-foreground"
+					>
+						{errorTotal}
+					</span>
+				{/if}
+			</Button>
+		{/snippet}
+	</DropdownMenu.Trigger>
+	<DropdownMenu.Content
+		align="end"
+		class="grid max-h-[min(460px,calc(100vh-72px))] w-[min(380px,calc(100vw-28px))] gap-1 overflow-auto"
 	>
-		<span class="app-icon" aria-hidden="true">notifications</span>
-		{#if errorTotal > 0}
-			<span class="notification-badge">{errorTotal}</span>
-		{/if}
-	</button>
-	{#if open}
-		<div class="notification-dropdown" role="menu">
+		{#if open}
 			{#if visibleEvents.length > 0}
 				{#each visibleEvents as event (event.id)}
 					<a
-						class={`notification-item event-${event.severity}`}
+						class="grid gap-1 rounded-sm p-2 text-popover-foreground no-underline hover:bg-accent hover:text-accent-foreground"
 						href={resolve('/system/events')}
 						role="menuitem"
+						onclick={() => (open = false)}
 					>
 						<SystemEventSeverityIcon severity={event.severity} />
 						<strong>{event.message}</strong>
-						<small>{event.category} - {formatCompactDateTime(event.createdAt)}</small>
+						<small class="text-xs text-muted-foreground">
+							{event.category} - {formatCompactDateTime(event.createdAt)}
+						</small>
 					</a>
 				{/each}
 			{:else}
-				<p>{loaded ? 'No warning or error events.' : 'Loading events'}</p>
+				<p class="m-0 p-2 text-sm text-muted-foreground">
+					{loaded ? 'No warning or error events.' : 'Loading events'}
+				</p>
 			{/if}
-		</div>
-	{/if}
-</div>
+		{/if}
+	</DropdownMenu.Content>
+</DropdownMenu.Root>

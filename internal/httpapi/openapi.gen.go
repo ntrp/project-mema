@@ -564,12 +564,13 @@ func (e UserRole) Valid() bool {
 
 // CustomFormat defines model for CustomFormat.
 type CustomFormat struct {
-	CreatedAt    time.Time          `json:"createdAt"`
-	ExcludeSpecs []CustomFormatSpec `json:"excludeSpecs"`
-	Id           openapi_types.UUID `json:"id"`
-	IncludeSpecs []CustomFormatSpec `json:"includeSpecs"`
-	Name         string             `json:"name"`
-	UpdatedAt    time.Time          `json:"updatedAt"`
+	CreatedAt               time.Time          `json:"createdAt"`
+	ExcludeSpecs            []CustomFormatSpec `json:"excludeSpecs"`
+	Id                      openapi_types.UUID `json:"id"`
+	IncludeInRenameTemplate bool               `json:"includeInRenameTemplate"`
+	IncludeSpecs            []CustomFormatSpec `json:"includeSpecs"`
+	Name                    string             `json:"name"`
+	UpdatedAt               time.Time          `json:"updatedAt"`
 }
 
 // CustomFormatListResponse defines model for CustomFormatListResponse.
@@ -610,9 +611,10 @@ type CustomFormatParsingResponse struct {
 
 // CustomFormatRequest defines model for CustomFormatRequest.
 type CustomFormatRequest struct {
-	ExcludeSpecs []CustomFormatSpec `json:"excludeSpecs"`
-	IncludeSpecs []CustomFormatSpec `json:"includeSpecs"`
-	Name         string             `json:"name"`
+	ExcludeSpecs            []CustomFormatSpec `json:"excludeSpecs"`
+	IncludeInRenameTemplate bool               `json:"includeInRenameTemplate"`
+	IncludeSpecs            []CustomFormatSpec `json:"includeSpecs"`
+	Name                    string             `json:"name"`
 }
 
 // CustomFormatSpec defines model for CustomFormatSpec.

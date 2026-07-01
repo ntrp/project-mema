@@ -2,7 +2,9 @@
 	import LibraryFolderForm from '$lib/components/settings/LibraryFolderForm.svelte';
 	import LibraryFolderAccordion from '$lib/components/settings/LibraryFolderAccordion.svelte';
 	import PathMappingSettings from '$lib/components/settings/PathMappingSettings.svelte';
+	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { emptyLibraryFolderForm } from '$lib/settings/forms';
 	import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
 	import type {
@@ -78,16 +80,10 @@
 	}
 </script>
 
-<div class="page-heading">
-	<p>Settings</p>
-	<h1 id="settings-title">Library</h1>
-</div>
-<div class="settings-stack">
-	<div class="settings-toolbar">
-		<button type="button" class="add-action-button" onclick={openModal}>
-			<span class="app-icon" aria-hidden="true">add</span>
-			<span>Add library folder</span>
-		</button>
+<PageHeading eyebrow="Settings" title="Library" titleId="settings-title" />
+<div class="space-y-4">
+	<div class="flex justify-end">
+		<SettingsAddButton label="Add library folder" onclick={openModal} />
 	</div>
 	<LibraryFolderAccordion
 		{folders}

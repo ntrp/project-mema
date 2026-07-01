@@ -69,7 +69,7 @@ function arrCustomFormatToForm(format: ArrCustomFormat): CustomFormatForm {
 	if (includeSpecs.length === 0 && excludeSpecs.length === 0) {
 		throw new Error(`${name} does not contain importable specifications`);
 	}
-	return { name, includeSpecs, excludeSpecs };
+	return { name, includeInRenameTemplate: false, includeSpecs, excludeSpecs };
 }
 
 function arrSpecToCustomFormatSpec(spec: ArrSpecification): CustomFormatSpec | undefined {

@@ -1,4 +1,9 @@
 <script lang="ts">
+	import { Button } from '$lib/components/ui/button';
+	import * as Card from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+	import * as Table from '$lib/components/ui/table';
 	import { formatDateTime } from '$lib/settings/dateFormat';
 	import type { MetadataCacheResponse } from '$lib/settings/types';
 
@@ -21,88 +26,96 @@
 		onClearAll,
 		onClearPattern
 	}: Props = $props();
+
+	const stats = $derived([
+		{ label: 'Total entries', value: cache.stats.totalEntries },
+		{ label: 'Active', value: cache.stats.activeEntries },
+		{ label: 'Expired', value: cache.stats.expiredEntries },
+		{ label: 'Providers', value: cache.stats.providerCount }
+	]);
 </script>
 
-<section class="panel cache-panel" aria-labelledby="metadata-cache-title">
-	<div class="section-heading">
+<Card.Root aria-labelledby="metadata-cache-title">
+	<Card.Header>
 		<div>
-			<p class="section-kicker">Cache</p>
-			<h2 id="metadata-cache-title">Metadata provider cache</h2>
+			<Card.Description>Cache</Card.Description>
+			<Card.Title id="metadata-cache-title">Metadata provider cache</Card.Title>
 		</div>
-		<button type="button" class="secondary" disabled={loading} onclick={() => void onRefresh()}>
-			{loading ? 'Refreshing' : 'Refresh'}
-		</button>
-	</div>
+		<Card.Action>
+			<Button type="button" variant="outline" disabled={loading} onclick={() => void onRefresh()}>
+				{loading ? 'Refreshing' : 'Refresh'}
+			</Button>
+		</Card.Action>
+	</Card.Header>
 
-	<div class="status-grid cache-stats" aria-label="Metadata cache stats">
-		<div>
-			<span>Total entries</span>
-			<strong>{cache.stats.totalEntries}</strong>
-		</div>
-		<div>
-			<span>Active</span>
-			<strong>{cache.stats.activeEntries}</strong>
-		</div>
-		<div>
-			<span>Expired</span>
-			<strong>{cache.stats.expiredEntries}</strong>
-		</div>
-		<div>
-			<span>Providers</span>
-			<strong>{cache.stats.providerCount}</strong>
-		</div>
-	</div>
+	<Card.Content class="grid gap-4">
+		<dl class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Metadata cache stats">
+			{#each stats as stat (stat.label)}
+				<div class="grid gap-1 px-3 py-2.5">
+					<dt class="text-xs font-semibold text-muted-foreground">{stat.label}</dt>
+					<dd class="m-0 text-xl leading-none font-bold text-foreground">{stat.value}</dd>
+				</div>
+			{/each}
+		</dl>
 
-	<form class="cache-actions" onsubmit={onClearPattern}>
-		<label>
-			<span>Reset by regex</span>
-			<input bind:value={pattern} placeholder="discover:|details:123|matrix" autocomplete="off" />
-		</label>
-		<div class="form-actions">
-			<button type="submit" class="danger" disabled={clearing || pattern.trim().length === 0}>
-				{clearing ? 'Resetting' : 'Reset matching'}
-			</button>
-			<button type="button" class="danger" disabled={clearing} onclick={() => void onClearAll()}>
-				Reset all
-			</button>
-		</div>
-	</form>
+		<form class="grid items-end gap-3 md:grid-cols-[minmax(0,1fr)_auto]" onsubmit={onClearPattern}>
+			<div class="grid gap-1.5">
+				<Label>Reset by regex</Label>
+				<Input bind:value={pattern} placeholder="discover:|details:123|matrix" autocomplete="off" />
+			</div>
+			<div class="flex flex-wrap justify-end gap-2">
+				<Button
+					type="submit"
+					variant="destructive"
+					disabled={clearing || pattern.trim().length === 0}
+				>
+					{clearing ? 'Resetting' : 'Reset matching'}
+				</Button>
+				<Button
+					type="button"
+					variant="destructive"
+					disabled={clearing}
+					onclick={() => void onClearAll()}
+				>
+					Reset all
+				</Button>
+			</div>
+		</form>
 
-	{#if cache.entries.length > 0}
-		<div class="table-wrap">
-			<table>
-				<thead>
-					<tr>
-						<th>Provider</th>
-						<th>Kind</th>
-						<th>Media</th>
-						<th>Key</th>
-						<th>Items</th>
-						<th>Expires</th>
-					</tr>
-				</thead>
-				<tbody>
+		{#if cache.entries.length > 0}
+			<Table.Root>
+				<Table.Header>
+					<Table.Row>
+						<Table.Head>Provider</Table.Head>
+						<Table.Head>Kind</Table.Head>
+						<Table.Head>Media</Table.Head>
+						<Table.Head>Key</Table.Head>
+						<Table.Head>Items</Table.Head>
+						<Table.Head>Expires</Table.Head>
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
 					{#each cache.entries as entry (`${entry.providerName}:${entry.mediaType}:${entry.query}:${entry.year}`)}
-						<tr>
-							<td>
-								<strong>{entry.providerName}</strong>
-								<span>{entry.providerType}</span>
-							</td>
-							<td>{entry.cacheKind}</td>
-							<td>{entry.mediaType}{entry.year ? ` · ${entry.year}` : ''}</td>
-							<td><code>{entry.query}</code></td>
-							<td>{entry.itemCount}</td>
-							<td>
-								<span class:status-disabled={entry.expired} class:status-enabled={!entry.expired}>
+						<Table.Row>
+							<Table.Cell>
+								<strong class="block">{entry.providerName}</strong>
+								<span class="block text-xs text-muted-foreground">{entry.providerType}</span>
+							</Table.Cell>
+							<Table.Cell>{entry.cacheKind}</Table.Cell>
+							<Table.Cell>{entry.mediaType}{entry.year ? ` · ${entry.year}` : ''}</Table.Cell>
+							<Table.Cell><code class="text-xs">{entry.query}</code></Table.Cell>
+							<Table.Cell>{entry.itemCount}</Table.Cell>
+							<Table.Cell>
+								<span class={entry.expired ? 'text-muted-foreground' : 'text-primary'}>
 									{entry.expired ? 'Expired' : formatDateTime(entry.expiresAt)}
 								</span>
-							</td>
-						</tr>
+							</Table.Cell>
+						</Table.Row>
 					{/each}
-				</tbody>
-			</table>
-		</div>
-	{:else}
-		<p class="empty">No metadata cache entries yet.</p>
-	{/if}
-</section>
+				</Table.Body>
+			</Table.Root>
+		{:else}
+			<p class="m-0 text-sm leading-6 text-muted-foreground">No metadata cache entries yet.</p>
+		{/if}
+	</Card.Content>
+</Card.Root>

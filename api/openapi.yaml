@@ -3334,6 +3334,7 @@ components:
       additionalProperties: false
       required:
         - name
+        - includeInRenameTemplate
         - includeSpecs
         - excludeSpecs
       properties:
@@ -3341,6 +3342,8 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+        includeInRenameTemplate:
+          type: boolean
         includeSpecs:
           type: array
           items:

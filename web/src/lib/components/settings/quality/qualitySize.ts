@@ -97,7 +97,7 @@ export function labelOffset(value: number) {
 }
 
 export function activeTrackStyle(values: { minimum: number; maximum: number }) {
-	return `--min-pct: ${labelOffset(values.minimum)}; --max-pct: ${labelOffset(values.maximum)}`;
+	return `left: ${labelOffset(values.minimum)}; width: ${(Math.max(values.maximum - values.minimum, 0) / sliderMaxGibPerHour) * 100}%`;
 }
 
 export function clamp(value: number, minimum: number, maximum: number) {
