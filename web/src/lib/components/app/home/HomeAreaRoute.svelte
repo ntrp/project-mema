@@ -1,6 +1,6 @@
 <script lang="ts">
-	import HomeArea from '$lib/components/app/HomeArea.svelte';
-	import type { createAppShellController } from '$lib/components/app/appShellController.svelte';
+	import HomeArea from '$lib/components/app/home/HomeArea.svelte';
+	import type { createAppShellController } from '$lib/components/app/shell/controller/index.svelte';
 
 	type AppShellController = ReturnType<typeof createAppShellController>;
 

@@ -2,7 +2,7 @@
 	import MediaEpisodeFileSummary from './MediaEpisodeFileSummary.svelte';
 	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
-	import { activityForMovie } from './activityQueue';
+	import { activityForMovie } from '../activity/activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from './mediaFiles';
 	import type {
 		DownloadActivity,

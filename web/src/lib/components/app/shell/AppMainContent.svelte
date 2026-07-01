@@ -1,16 +1,16 @@
 <script lang="ts">
-	import AdvancedSearchArea from '$lib/components/app/search/AdvancedSearchArea.svelte';
-	import DiscoverSectionArea from '$lib/components/app/DiscoverSectionArea.svelte';
-	import HomeAreaRoute from '$lib/components/app/HomeAreaRoute.svelte';
-	import MediaCollectionArea from '$lib/components/app/MediaCollectionArea.svelte';
-	import MediaPeopleArea from '$lib/components/app/MediaPeopleArea.svelte';
-	import MetadataDetailArea from '$lib/components/app/MetadataDetailArea.svelte';
-	import SettingsArea from '$lib/components/app/settings/SettingsArea.svelte';
-	import SystemArea from '$lib/components/app/SystemArea.svelte';
+	import AdvancedSearchArea from '../search/AdvancedSearchArea.svelte';
+	import DiscoverSectionArea from '../discovery/DiscoverSectionArea.svelte';
+	import HomeAreaRoute from '../home/HomeAreaRoute.svelte';
+	import MediaCollectionArea from '../media/MediaCollectionArea.svelte';
+	import MediaPeopleArea from '../media/MediaPeopleArea.svelte';
+	import MetadataDetailArea from '../media/MetadataDetailArea.svelte';
+	import SettingsArea from '../settings/SettingsArea.svelte';
+	import SystemArea from '../system/SystemArea.svelte';
 	import type {
 		AppShellOptions,
 		createAppShellController
-	} from '$lib/components/app/appShellController.svelte';
+	} from '$lib/components/app/shell/controller/index.svelte';
 
 	type AppShellController = ReturnType<typeof createAppShellController>;
 

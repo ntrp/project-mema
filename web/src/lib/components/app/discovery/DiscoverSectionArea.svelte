@@ -6,7 +6,7 @@
 		MediaItem,
 		MediaSearchResult
 	} from '$lib/settings/types';
-	import MediaPosterCard from './MediaPosterCard.svelte';
+	import MediaPosterCard from '../media/MediaPosterCard.svelte';
 
 	interface Props {
 		section?: MediaDiscoverSection;

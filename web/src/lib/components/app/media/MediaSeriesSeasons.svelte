@@ -3,7 +3,7 @@
 	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
 	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
-	import { activityForEpisode } from './activityQueue';
+	import { activityForEpisode } from '../activity/activityQueue';
 	import {
 		episodeKey,
 		fileRow,

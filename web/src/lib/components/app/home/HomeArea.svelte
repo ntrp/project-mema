@@ -1,10 +1,10 @@
 <script lang="ts">
-	import ActivityList from './ActivityList.svelte';
-	import DiscoverBlacklistArea from './DiscoverBlacklistArea.svelte';
-	import MediaDetail from './MediaDetail.svelte';
+	import ActivityList from '../activity/ActivityList.svelte';
+	import DiscoverBlacklistArea from '../discovery/DiscoverBlacklistArea.svelte';
+	import MediaDetail from '../media/MediaDetail.svelte';
 	import MediaItemList from './MediaItemList.svelte';
-	import MediaRequestArea from './MediaRequestArea.svelte';
-	import MediaSearchPanel from './MediaSearchPanel.svelte';
+	import MediaRequestArea from '../requests/MediaRequestArea.svelte';
+	import MediaSearchPanel from '../discovery/MediaSearchPanel.svelte';
 	import WantedMediaTable from './WantedMediaTable.svelte';
 	import type {
 		DownloadActivity,

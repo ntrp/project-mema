@@ -1,12 +1,12 @@
 <script lang="ts">
-	import MediaActionOptions from '$lib/components/app/MediaActionOptions.svelte';
-	import MediaTagSelector from '$lib/components/app/MediaTagSelector.svelte';
+	import MediaActionOptions from '$lib/components/app/media/MediaActionOptions.svelte';
+	import MediaTagSelector from '$lib/components/app/media/MediaTagSelector.svelte';
 	import {
 		mediaPosterUrl,
 		preselectLibraryFolderId,
 		preselectQualityProfileId
-	} from '$lib/components/app/mediaActionDefaults';
-	import type { MediaActionSelection } from '$lib/components/app/mediaActionTypes';
+	} from '$lib/components/app/media/mediaActionDefaults';
+	import type { MediaActionSelection } from '$lib/components/app/media/mediaActionTypes';
 	import type {
 		LibraryFolder,
 		MediaSearchResult,

@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import AppDocumentHead from '$lib/components/app/AppDocumentHead.svelte';
-	import AppMainContent from '$lib/components/app/AppMainContent.svelte';
-	import AppNav from '$lib/components/app/AppNav.svelte';
+	import AppDocumentHead from './AppDocumentHead.svelte';
+	import AppMainContent from './AppMainContent.svelte';
+	import AppNav from '../navigation/AppNav.svelte';
 	import {
 		createAppShellController,
 		type AppShellOptions
-	} from '$lib/components/app/appShellController.svelte';
-	import MediaDeleteModal from '$lib/components/app/MediaDeleteModal.svelte';
-	import MediaActionModal from '$lib/components/app/MediaActionModal.svelte';
-	import SidebarMenu from '$lib/components/app/SidebarMenu.svelte';
+	} from '$lib/components/app/shell/controller/index.svelte';
+	import MediaDeleteModal from '../media/MediaDeleteModal.svelte';
+	import MediaActionModal from '../media/MediaActionModal.svelte';
+	import SidebarMenu from '../navigation/SidebarMenu.svelte';
 	import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
 	import '$lib/settings/styles.css';

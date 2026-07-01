@@ -1,7 +1,7 @@
 <script lang="ts">
 	/* global HTMLDivElement */
 	import { resolve } from '$app/paths';
-	import MediaPosterCard from './MediaPosterCard.svelte';
+	import MediaPosterCard from '../media/MediaPosterCard.svelte';
 	import type { MediaItem, MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {

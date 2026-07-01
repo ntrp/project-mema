@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { MediaFileRow } from './mediaFiles';
-	import type { ActivityQueueStatus } from './activityQueue';
+	import type { ActivityQueueStatus } from '../activity/activityQueue';
 
 	interface Props {
 		row: MediaFileRow;
