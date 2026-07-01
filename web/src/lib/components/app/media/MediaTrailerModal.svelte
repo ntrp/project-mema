@@ -40,7 +40,7 @@
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
 	<Dialog.Content class="w-[min(1120px,calc(100vw-32px))] gap-4 p-4 sm:max-w-none">
 		<Dialog.Header class="pr-10">
-			<Dialog.Title>{title}</Dialog.Title>
+			<Dialog.Title class="text-xl">{title}</Dialog.Title>
 		</Dialog.Header>
 		<div class="aspect-video overflow-hidden rounded-md bg-black">
 			<iframe
