@@ -142,7 +142,7 @@ export class AppShellState {
 	metadataProviderTests = $state<IntegrationTestResults>({});
 	activeView = $state<AppView>('home');
 	activeHomeSection = $state<HomeSection>('discover');
-	activeSettingsSection = $state<SettingsSection>('library');
+	activeSettingsSection = $state<SettingsSection>('general');
 	activeSystemSection = $state<SystemSection>('status');
 	activeDiscoverSectionId = $state<string | undefined>();
 	activeRelatedSectionKind = $state<RelatedSectionKind>('recommendations');

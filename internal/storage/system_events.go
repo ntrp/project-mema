@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const DefaultSystemEventRetentionDays = 30
+const DefaultSystemEventRetentionDays = 7
 
 type SystemEvent struct {
 	ID        uuid.UUID
@@ -58,7 +58,7 @@ func (s *SettingsStore) CreateSystemEvent(ctx context.Context, input SystemEvent
 	`, uuid.New(), input.Severity, input.Category, input.Message, payload))
 }
 
-func (s *SettingsStore) ListSystemEvents(ctx context.Context, limit int) ([]SystemEvent, error) {
+func (s *SettingsStore) ListSystemEvents(ctx context.Context, limit int, before *time.Time) ([]SystemEvent, error) {
 	if limit <= 0 || limit > 500 {
 		limit = 200
 	}
@@ -68,9 +68,10 @@ func (s *SettingsStore) ListSystemEvents(ctx context.Context, limit int) ([]Syst
 	rows, err := s.pool.Query(ctx, `
 		select id, severity, category, message, data, created_at
 		from app.system_events
+		where ($2::timestamptz is null or created_at < $2)
 		order by created_at desc
 		limit $1
-	`, limit)
+	`, limit, before)
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +96,11 @@ func (s *SettingsStore) DeleteSystemEvent(ctx context.Context, id uuid.UUID) err
 		return ErrNotFound
 	}
 	return nil
+}
+
+func (s *SettingsStore) ClearSystemEvents(ctx context.Context) error {
+	_, err := s.pool.Exec(ctx, `delete from app.system_events`)
+	return err
 }
 
 func (s *SettingsStore) GetSystemEventSettings(ctx context.Context) (SystemEventSettings, error) {

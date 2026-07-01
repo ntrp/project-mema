@@ -10,6 +10,8 @@
 	}
 
 	let { activeSection }: Props = $props();
+	let eventsConnected = $state(false);
+	let logsConnected = $state(false);
 </script>
 
 <section aria-labelledby="system-title">
@@ -24,26 +26,33 @@
 	{:else if activeSection === 'events'}
 		<div class="page-heading">
 			<p>System</p>
-			<h1 id="system-title">Events</h1>
+			<div class="page-title-row">
+				<h1 id="system-title">Events</h1>
+				<span
+					class:connected={eventsConnected}
+					class="event-connection-dot"
+					aria-label={eventsConnected ? 'Event stream connected' : 'Event stream reconnecting'}
+				></span>
+			</div>
 		</div>
 		<div class="settings-stack">
-			<SystemEventsSettings />
-		</div>
-	{:else if activeSection === 'log-files'}
-		<div class="page-heading">
-			<p>System</p>
-			<h1 id="system-title">Log files</h1>
-		</div>
-		<div class="settings-stack">
-			<SystemLogFilesSettings />
+			<SystemEventsSettings onConnectionChange={(connected) => (eventsConnected = connected)} />
 		</div>
 	{:else}
 		<div class="page-heading">
 			<p>System</p>
-			<h1 id="system-title">Live logs</h1>
+			<div class="page-title-row">
+				<h1 id="system-title">Logs</h1>
+				<span
+					class:connected={logsConnected}
+					class="event-connection-dot"
+					aria-label={logsConnected ? 'Log stream connected' : 'Log stream reconnecting'}
+				></span>
+			</div>
 		</div>
 		<div class="settings-stack">
-			<SystemLogsSettings />
+			<SystemLogsSettings onConnectionChange={(connected) => (logsConnected = connected)} />
+			<SystemLogFilesSettings />
 		</div>
 	{/if}
 </section>

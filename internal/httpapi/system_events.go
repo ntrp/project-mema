@@ -17,19 +17,30 @@ const (
 	eventSeverityError   = "error"
 )
 
-func (s *Server) ListSystemEvents(w http.ResponseWriter, r *http.Request) {
+const defaultSystemEventListLimit = 100
+
+func (s *Server) ListSystemEvents(w http.ResponseWriter, r *http.Request, params ListSystemEventsParams) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
-	events, err := s.settings.ListSystemEvents(r.Context(), 200)
+	limit := defaultSystemEventListLimit
+	if params.Limit != nil {
+		limit = int(*params.Limit)
+	}
+	events, err := s.settings.ListSystemEvents(r.Context(), limit+1, params.Before)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "system_event_list_failed", "Could not list system events")
 		return
+	}
+	hasMore := len(events) > limit
+	if hasMore {
+		events = events[:limit]
 	}
 	response := SystemEventListResponse{Events: make([]SystemEvent, 0, len(events))}
 	for _, event := range events {
 		response.Events = append(response.Events, systemEventResponse(event))
 	}
+	response.HasMore = hasMore
 	writeJSON(w, http.StatusOK, response)
 }
 
@@ -43,6 +54,18 @@ func (s *Server) DeleteSystemEvent(w http.ResponseWriter, r *http.Request, id Re
 		return
 	}
 	s.events.Publish("system.event.deleted", map[string]any{"id": eventID.String()})
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) ClearSystemEvents(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	if err := s.settings.ClearSystemEvents(r.Context()); err != nil {
+		writeError(w, http.StatusInternalServerError, "system_event_clear_failed", "Could not clear system events")
+		return
+	}
+	s.events.Publish("system.events.cleared", map[string]any{})
 	w.WriteHeader(http.StatusNoContent)
 }
 

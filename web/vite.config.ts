@@ -13,6 +13,10 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
+			inspector: {
+				showToggleButton: 'always',
+				toggleButtonPos: 'bottom-right'
+			},
 
 			adapter: adapter({
 				fallback: '200.html'

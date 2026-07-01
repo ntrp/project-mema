@@ -1,88 +1,63 @@
 <script lang="ts">
-	/* global EventSource, MessageEvent */
 	import { onMount } from 'svelte';
-	import {
-		deleteSystemEvent,
-		getSystemEventSettings,
-		listSystemEvents,
-		updateSystemEventSettings
-	} from '$lib/settings/api';
-	import { formatDateTimeWithSeconds } from '$lib/settings/dateFormat';
+	import { clearSystemEvents, deleteSystemEvent, listSystemEvents } from '$lib/settings/api';
 	import type { SystemEvent } from '$lib/settings/types';
-	import SystemLogAttributesButton from './SystemLogAttributesButton.svelte';
+	import ClearSystemEventsModal from './ClearSystemEventsModal.svelte';
+	import SystemEventsControls from './SystemEventsControls.svelte';
+	import SystemEventsTable from './SystemEventsTable.svelte';
+	import { subscribeSystemEvents } from './systemEventSubscription';
 
-	type StreamEnvelope<T> = {
-		data: T;
-	};
+	const eventPageLimit = 100;
+	type SeverityFilter = 'info' | 'warning' | 'error';
 
-	const maxEvents = 300;
+	interface Props {
+		onConnectionChange?: (connected: boolean) => void;
+	}
+
+	let { onConnectionChange }: Props = $props();
 
 	let events = $state<SystemEvent[]>([]);
 	let loading = $state(true);
-	let retentionDays = $state(30);
-	let saving = $state(false);
+	let loadingMore = $state(false);
+	let hasMore = $state(false);
+	let severityFilter = $state<SeverityFilter>('info');
+	let clearing = $state(false);
+	let clearModalOpen = $state(false);
 	let deletingId = $state<string | undefined>();
-	let connected = $state(false);
 	let errorMessage = $state('');
 	let message = $state('');
 
+	const visibleEvents = $derived(events.filter((event) => severityVisible(event, severityFilter)));
+
 	onMount(() => {
 		void load();
-		const source = new EventSource('/api/events', { withCredentials: true });
-		source.addEventListener('open', () => {
-			connected = true;
-		});
-		source.addEventListener('error', () => {
-			connected = false;
-		});
-		source.addEventListener('system.event.created', (event) => {
-			const nextEvent = parseEvent<SystemEvent>(event);
-			if (nextEvent) {
-				events = [nextEvent, ...events.filter((item) => item.id !== nextEvent.id)].slice(
-					0,
-					maxEvents
-				);
+		const close = subscribeSystemEvents({
+			onOpen: () => onConnectionChange?.(true),
+			onError: () => onConnectionChange?.(false),
+			onCreated: (event) => (events = [event, ...events.filter((item) => item.id !== event.id)]),
+			onDeleted: (id) => (events = events.filter((item) => item.id !== id)),
+			onCleared: () => {
+				events = [];
+				hasMore = false;
 			}
 		});
-		source.addEventListener('system.event.deleted', (event) => {
-			const deleted = parseEvent<{ id: string }>(event);
-			if (deleted?.id) {
-				events = events.filter((item) => item.id !== deleted.id);
-			}
-		});
-		return () => source.close();
+		return () => {
+			onConnectionChange?.(false);
+			close();
+		};
 	});
 
 	async function load() {
 		loading = true;
 		errorMessage = '';
 		try {
-			const [nextEvents, nextSettings] = await Promise.all([
-				listSystemEvents(),
-				getSystemEventSettings()
-			]);
-			events = nextEvents;
-			retentionDays = nextSettings.retentionDays;
+			const nextEvents = await listSystemEvents({ limit: eventPageLimit });
+			events = nextEvents.events;
+			hasMore = nextEvents.hasMore;
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load events';
 		} finally {
 			loading = false;
-		}
-	}
-
-	async function saveSettings(event: SubmitEvent) {
-		event.preventDefault();
-		saving = true;
-		errorMessage = '';
-		message = '';
-		try {
-			retentionDays = (await updateSystemEventSettings({ retentionDays })).retentionDays;
-			events = await listSystemEvents();
-			message = 'Event settings saved';
-		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Could not save event settings';
-		} finally {
-			saving = false;
 		}
 	}
 
@@ -99,29 +74,63 @@
 		}
 	}
 
-	function parseEvent<T>(event: Event) {
+	async function clearEvents() {
+		clearing = true;
+		errorMessage = '';
+		message = '';
 		try {
-			const message = event as MessageEvent<string>;
-			const envelope = JSON.parse(message.data) as StreamEnvelope<T>;
-			return envelope.data;
-		} catch {
-			return undefined;
+			await clearSystemEvents();
+			events = [];
+			hasMore = false;
+			clearModalOpen = false;
+			message = 'Events cleared';
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Could not clear events';
+		} finally {
+			clearing = false;
 		}
 	}
 
-	function hasData(event: SystemEvent) {
-		return Object.keys(event.data ?? {}).length > 0;
+	async function loadMoreEvents() {
+		const before = events.at(-1)?.createdAt;
+		if (!before || loading || loadingMore || !hasMore) {
+			return;
+		}
+		loadingMore = true;
+		errorMessage = '';
+		try {
+			const response = await listSystemEvents({ before, limit: eventPageLimit });
+			const existing = new Set(events.map((event) => event.id));
+			events = [...events, ...response.events.filter((event) => !existing.has(event.id))];
+			hasMore = response.hasMore;
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Could not load more events';
+		} finally {
+			loadingMore = false;
+		}
+	}
+
+	function severityVisible(event: SystemEvent, filter: SeverityFilter) {
+		if (filter === 'info') {
+			return true;
+		}
+		if (filter === 'warning') {
+			return event.severity === 'warning' || event.severity === 'error';
+		}
+		return event.severity === 'error';
 	}
 </script>
 
 <section class="panel log-settings-panel" aria-label="Events">
-	<div class="section-heading">
-		<div class="log-controls">
-			<span class:connected class="log-stream-state">{connected ? 'Live' : 'Reconnecting'}</span>
-			<button type="button" class="secondary compact-action" disabled={loading} onclick={load}>
-				Refresh
-			</button>
-		</div>
+	<div class="section-heading events-section-heading">
+		<SystemEventsControls
+			{severityFilter}
+			{loading}
+			{clearing}
+			eventsEmpty={events.length === 0}
+			onSeverityChange={(severity) => (severityFilter = severity)}
+			onClear={() => (clearModalOpen = true)}
+		/>
 	</div>
 
 	{#if errorMessage}
@@ -131,55 +140,21 @@
 		<p class="muted">{message}</p>
 	{/if}
 
-	<form class="settings-form compact-form event-settings-form" onsubmit={saveSettings}>
-		<label>
-			<span>Retention days</span>
-			<input type="number" min="1" max="365" bind:value={retentionDays} />
-		</label>
-		<div class="form-actions">
-			<button type="submit" disabled={saving}>{saving ? 'Saving' : 'Save settings'}</button>
-		</div>
-	</form>
-
-	<div class="table-wrap">
-		<table class="data-table events-table">
-			<thead>
-				<tr>
-					<th>Time</th>
-					<th>Severity</th>
-					<th>Category</th>
-					<th>Message</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each events as event (event.id)}
-					<tr class={`event-row event-${event.severity}`}>
-						<td>{formatDateTimeWithSeconds(event.createdAt)}</td>
-						<td><span class="status-pill">{event.severity}</span></td>
-						<td>{event.category}</td>
-						<td>{event.message}</td>
-						<td class="row-actions">
-							{#if hasData(event)}
-								<SystemLogAttributesButton attributes={event.data} />
-							{/if}
-							<button
-								type="button"
-								class="danger icon-button"
-								aria-label={`Delete event ${event.message}`}
-								disabled={deletingId === event.id}
-								onclick={() => deleteEvent(event.id)}
-							>
-								<span class="app-icon" aria-hidden="true">delete</span>
-							</button>
-						</td>
-					</tr>
-				{:else}
-					<tr>
-						<td colspan="5">{loading ? 'Loading events' : 'No events recorded.'}</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
-	</div>
+	<SystemEventsTable
+		events={visibleEvents}
+		{loading}
+		{hasMore}
+		{loadingMore}
+		{deletingId}
+		onDelete={(id) => void deleteEvent(id)}
+		onLoadMore={() => void loadMoreEvents()}
+	/>
 </section>
+
+{#if clearModalOpen}
+	<ClearSystemEventsModal
+		{clearing}
+		onCancel={() => (clearModalOpen = false)}
+		onConfirm={() => void clearEvents()}
+	/>
+{/if}

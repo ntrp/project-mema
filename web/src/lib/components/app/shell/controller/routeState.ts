@@ -24,6 +24,7 @@ export interface AppRouteState {
 }
 
 const settingsSections = new Set<SettingsSection>([
+	'general',
 	'library',
 	'download-clients',
 	'indexers',
@@ -35,13 +36,13 @@ const settingsSections = new Set<SettingsSection>([
 	'tags',
 	'users'
 ]);
-const systemSections = new Set<SystemSection>(['status', 'logs', 'log-files', 'events']);
+const systemSections = new Set<SystemSection>(['status', 'logs', 'events']);
 
 export function defaultRouteState(): AppRouteState {
 	return {
 		view: 'home',
 		homeSection: 'discover',
-		settingsSection: 'library',
+		settingsSection: 'general',
 		systemSection: 'status',
 		advancedQuery: '',
 		relatedSectionKind: 'recommendations',
@@ -78,7 +79,7 @@ export function routeStateFromPath(
 	if (segments[0] === 'settings') {
 		const section = settingsSections.has(segments[1] as SettingsSection)
 			? (segments[1] as SettingsSection)
-			: 'library';
+			: 'general';
 		return { ...route, view: 'settings', settingsSection: section };
 	}
 	if (segments[0] === 'system') {

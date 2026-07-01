@@ -1,65 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import {
-		downloadSystemLogFile,
-		getSystemLogFileSettings,
-		listSystemLogFiles,
-		updateSystemLogFileSettings
-	} from '$lib/settings/api';
+	import { downloadSystemLogFile, listSystemLogFiles } from '$lib/settings/api';
 	import { formatLongDateTime } from '$lib/settings/dateFormat';
-	import type { SystemLogFile, SystemLogFileSettings } from '$lib/settings/types';
+	import type { SystemLogFile } from '$lib/settings/types';
 
-	let settings = $state<SystemLogFileSettings>();
 	let files = $state<SystemLogFile[]>([]);
-	let enabled = $state(false);
-	let directory = $state('.data/logs');
-	let retentionDays = $state(7);
-	let loading = $state(true);
-	let saving = $state(false);
 	let downloadingName = $state<string | undefined>();
 	let errorMessage = $state('');
-	let message = $state('');
 
 	onMount(() => {
 		void load();
 	});
 
 	async function load() {
-		loading = true;
 		errorMessage = '';
 		try {
-			const [nextSettings, nextFiles] = await Promise.all([
-				getSystemLogFileSettings(),
-				listSystemLogFiles()
-			]);
-			applySettings(nextSettings);
-			files = nextFiles;
+			files = await listSystemLogFiles();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load log files';
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function save(event: SubmitEvent) {
-		event.preventDefault();
-		saving = true;
-		errorMessage = '';
-		message = '';
-		try {
-			applySettings(
-				await updateSystemLogFileSettings({
-					enabled,
-					directory,
-					retentionDays
-				})
-			);
-			files = await listSystemLogFiles();
-			message = 'Log file settings saved';
-		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Could not save log file settings';
-		} finally {
-			saving = false;
 		}
 	}
 
@@ -81,13 +39,6 @@
 		}
 	}
 
-	function applySettings(nextSettings: SystemLogFileSettings) {
-		settings = nextSettings;
-		enabled = nextSettings.enabled;
-		directory = nextSettings.directory;
-		retentionDays = nextSettings.retentionDays;
-	}
-
 	function formatSize(bytes: number) {
 		if (bytes < 1024) {
 			return `${bytes} B`;
@@ -100,39 +51,8 @@
 </script>
 
 <section class="panel log-settings-panel" aria-label="Log files">
-	<div class="section-heading">
-		<button type="button" class="secondary compact-action" disabled={loading} onclick={load}>
-			Refresh
-		</button>
-	</div>
-
 	{#if errorMessage}
 		<p class="inline-error">{errorMessage}</p>
-	{/if}
-	{#if message}
-		<p class="muted">{message}</p>
-	{/if}
-
-	<form class="settings-form compact-form log-file-form" onsubmit={save}>
-		<label class="inline-check">
-			<input type="checkbox" bind:checked={enabled} />
-			<span>Write logs to files</span>
-		</label>
-		<label>
-			<span>Directory</span>
-			<input bind:value={directory} />
-		</label>
-		<label>
-			<span>Retention days</span>
-			<input type="number" min="1" max="365" bind:value={retentionDays} />
-		</label>
-		<div class="form-actions">
-			<button type="submit" disabled={saving}>{saving ? 'Saving' : 'Save settings'}</button>
-		</div>
-	</form>
-
-	{#if settings}
-		<p class="muted">Effective directory: {settings.effectiveDirectory}</p>
 	{/if}
 
 	<div class="table-wrap">

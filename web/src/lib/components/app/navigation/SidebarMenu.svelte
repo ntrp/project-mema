@@ -18,6 +18,7 @@
 		| '/series'
 		| '/wanted'
 		| '/activity'
+		| '/settings/general'
 		| '/settings/library'
 		| '/settings/download-clients'
 		| '/settings/indexers'
@@ -30,7 +31,6 @@
 		| '/settings/users'
 		| '/system/status'
 		| '/system/logs'
-		| '/system/log-files'
 		| '/system/events';
 
 	interface SubmenuItem<TValue extends string> {

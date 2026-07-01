@@ -14,12 +14,16 @@
 	const levels: SystemLogLevel[] = ['debug', 'info', 'warn', 'error'];
 	const maxEntries = 500;
 
+	interface Props {
+		onConnectionChange?: (connected: boolean) => void;
+	}
+
+	let { onConnectionChange }: Props = $props();
+
 	let entries = $state<SystemLogEntry[]>([]);
 	let level = $state<SystemLogLevel>('info');
 	let loading = $state(true);
 	let saving = $state(false);
-	let connected = $state(false);
-	let streamMessage = $state('Connecting');
 	let errorMessage = $state('');
 	let followLogs = $state(true);
 	let logViewport = $state<HTMLDivElement>();
@@ -30,12 +34,10 @@
 
 		const source = new EventSource('/api/system/logs', { withCredentials: true });
 		source.addEventListener('open', () => {
-			connected = true;
-			streamMessage = 'Live';
+			onConnectionChange?.(true);
 		});
 		source.addEventListener('error', () => {
-			connected = false;
-			streamMessage = 'Reconnecting';
+			onConnectionChange?.(false);
 		});
 		source.addEventListener('system.log', (event) =>
 			appendEntry(parseEvent<SystemLogEntry>(event))
@@ -47,7 +49,10 @@
 			}
 		});
 
-		return () => source.close();
+		return () => {
+			onConnectionChange?.(false);
+			source.close();
+		};
 	});
 
 	async function loadLevel() {
@@ -131,10 +136,9 @@
 	}
 </script>
 
-<section class="panel log-settings-panel" aria-label="Live logs">
+<section class="panel log-settings-panel" aria-label="Logs">
 	<div class="section-heading">
 		<div class="log-controls">
-			<span class:connected class="log-stream-state">{streamMessage}</span>
 			<button type="button" class="secondary compact-action" onclick={clearLogs}>Clear logs</button>
 			<button
 				type="button"

@@ -24,6 +24,7 @@ export type IntegrationTestResponse = components['schemas']['IntegrationTestResp
 export type SystemLogEntry = components['schemas']['SystemLogEntry'];
 export type SystemStatusResponse = components['schemas']['SystemStatusResponse'];
 export type SystemEvent = components['schemas']['SystemEvent'];
+export type SystemEventListResponse = components['schemas']['SystemEventListResponse'];
 export type SystemEventSeverity = components['schemas']['SystemEventSeverity'];
 export type SystemEventSettings = components['schemas']['SystemEventSettings'];
 export type SystemEventSettingsRequest = components['schemas']['SystemEventSettingsRequest'];
@@ -133,8 +134,9 @@ export type HomeSection =
 	| 'series'
 	| 'wanted'
 	| 'activity';
-export type SystemSection = 'status' | 'logs' | 'log-files' | 'events';
+export type SystemSection = 'status' | 'logs' | 'events';
 export type SettingsSection =
+	| 'general'
 	| 'library'
 	| 'download-clients'
 	| 'indexers'

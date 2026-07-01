@@ -2,6 +2,7 @@
 	import DownloadClientsSettingsSection from '$lib/components/settings/DownloadClientsSettingsSection.svelte';
 	import IndexersSettingsSection from '$lib/components/settings/IndexersSettingsSection.svelte';
 	import LibrarySettingsSection from '$lib/components/settings/LibrarySettingsSection.svelte';
+	import SystemGeneralSettings from '$lib/components/settings/SystemGeneralSettings.svelte';
 	import UsersSettingsSection from '$lib/components/settings/UsersSettingsSection.svelte';
 	import SettingsStaticPanels from './SettingsStaticPanels.svelte';
 	import { isStaticSettingsSection, type SettingsAreaProps } from './settingsAreaTypes';
@@ -93,7 +94,9 @@
 </script>
 
 <section class="workspace-main" aria-labelledby="settings-title">
-	{#if activeSection === 'download-clients'}
+	{#if activeSection === 'general'}
+		<SystemGeneralSettings />
+	{:else if activeSection === 'download-clients'}
 		<DownloadClientsSettingsSection
 			clients={downloadClients}
 			bind:form={downloadForm}

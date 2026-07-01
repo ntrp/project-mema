@@ -33,13 +33,11 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[Down
 	activities, err := w.settings.ListActiveDownloadActivity(ctx)
 	if err != nil {
 		slog.Error("download activity sync list failed", "error", err)
-		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Download activity sync failed to list activity", map[string]any{"error": err.Error()})
 		return fmt.Errorf("list active download activity: %w", err)
 	}
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
 		slog.Error("download activity sync client list failed", "error", err)
-		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Download activity sync failed to list clients", map[string]any{"error": err.Error()})
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
 	slog.Debug("download activity sync started", "activityCount", len(activities), "clientCount", len(clients))
@@ -60,11 +58,7 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[Down
 		}
 	}
 	if len(failures) > 0 {
-		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Download activity sync finished with failures", map[string]any{"failureCount": len(failures)})
 		return fmt.Errorf("download activity sync failed for %d item(s): %s", len(failures), strings.Join(failures, "; "))
-	}
-	if len(activities) > 0 {
-		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Download activity sync finished", map[string]any{"activityCount": len(activities), "clientCount": len(clients)})
 	}
 	return nil
 }

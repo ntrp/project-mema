@@ -1,6 +1,7 @@
 import type { HomeSection, SettingsSection, SystemSection } from '$lib/settings/types';
 
 export type SettingsHref =
+	| '/settings/general'
 	| '/settings/library'
 	| '/settings/download-clients'
 	| '/settings/indexers'
@@ -12,7 +13,7 @@ export type SettingsHref =
 	| '/settings/tags'
 	| '/settings/users';
 
-export type SystemHref = '/system/status' | '/system/logs' | '/system/log-files' | '/system/events';
+export type SystemHref = '/system/status' | '/system/logs' | '/system/events';
 
 export type HomeHref =
 	| '/discover'
@@ -28,7 +29,7 @@ export type PrimaryItem = {
 	value: HomeSection | 'library' | 'settings' | 'system';
 	label: string;
 	icon: 'discover' | 'movies' | 'series' | 'activity' | 'settings' | 'computer' | 'visibility_off';
-	href: HomeHref | '/settings/library' | SystemHref;
+	href: HomeHref | SettingsHref | SystemHref;
 	children?: readonly {
 		value: string;
 		label: string;
@@ -37,6 +38,7 @@ export type PrimaryItem = {
 };
 
 export const settingsItems = [
+	{ value: 'general', label: 'General', href: '/settings/general' },
 	{ value: 'library', label: 'Library', href: '/settings/library' },
 	{ value: 'download-clients', label: 'Download clients', href: '/settings/download-clients' },
 	{ value: 'indexers', label: 'Indexers', href: '/settings/indexers' },
@@ -51,9 +53,8 @@ export const settingsItems = [
 
 export const systemItems = [
 	{ value: 'status', label: 'Status', href: '/system/status' },
-	{ value: 'logs', label: 'Live logs', href: '/system/logs' },
-	{ value: 'log-files', label: 'Log files', href: '/system/log-files' },
-	{ value: 'events', label: 'Events', href: '/system/events' }
+	{ value: 'events', label: 'Events', href: '/system/events' },
+	{ value: 'logs', label: 'Logs', href: '/system/logs' }
 ] satisfies PrimaryItem['children'];
 
 export const libraryItems = [
@@ -91,7 +92,7 @@ export const settingsPrimaryItem = {
 	value: 'settings',
 	label: 'Settings',
 	icon: 'settings',
-	href: '/settings/library',
+	href: '/settings/general',
 	children: settingsItems
 } satisfies PrimaryItem;
 
@@ -105,6 +106,8 @@ export const systemPrimaryItem = {
 
 export function settingsSectionHref(section: SettingsSection): SettingsHref {
 	switch (section) {
+		case 'general':
+			return '/settings/general';
 		case 'download-clients':
 			return '/settings/download-clients';
 		case 'indexers':
@@ -134,8 +137,6 @@ export function systemSectionHref(section: SystemSection): SystemHref {
 			return '/system/status';
 		case 'logs':
 			return '/system/logs';
-		case 'log-files':
-			return '/system/log-files';
 		case 'events':
 			return '/system/events';
 	}

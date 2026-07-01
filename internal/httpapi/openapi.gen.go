@@ -1530,7 +1530,8 @@ type SystemEvent struct {
 
 // SystemEventListResponse defines model for SystemEventListResponse.
 type SystemEventListResponse struct {
-	Events []SystemEvent `json:"events"`
+	Events  []SystemEvent `json:"events"`
+	HasMore bool          `json:"hasMore"`
 }
 
 // SystemEventSettings defines model for SystemEventSettings.
@@ -1705,6 +1706,13 @@ type DeleteMediaItemParams struct {
 // ListLibraryFolderOptionsParams defines parameters for ListLibraryFolderOptions.
 type ListLibraryFolderOptionsParams struct {
 	Path *string `form:"path,omitempty" json:"path,omitempty"`
+}
+
+// ListSystemEventsParams defines parameters for ListSystemEvents.
+type ListSystemEventsParams struct {
+	// Before Return events created before this timestamp.
+	Before *time.Time `form:"before,omitempty" json:"before,omitempty"`
+	Limit  *int32     `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ManualImportDownloadActivityJSONRequestBody defines body for ManualImportDownloadActivity for application/json ContentType.
@@ -2072,9 +2080,12 @@ type ServerInterface interface {
 	// Update system event retention settings
 	// (PUT /system/event-settings)
 	UpdateSystemEventSettings(w http.ResponseWriter, r *http.Request)
+	// Delete all system events
+	// (DELETE /system/events)
+	ClearSystemEvents(w http.ResponseWriter, r *http.Request)
 	// List notable application events
 	// (GET /system/events)
-	ListSystemEvents(w http.ResponseWriter, r *http.Request)
+	ListSystemEvents(w http.ResponseWriter, r *http.Request, params ListSystemEventsParams)
 	// Delete a system event
 	// (DELETE /system/events/{id})
 	DeleteSystemEvent(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -2621,9 +2632,15 @@ func (_ Unimplemented) UpdateSystemEventSettings(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Delete all system events
+// (DELETE /system/events)
+func (_ Unimplemented) ClearSystemEvents(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List notable application events
 // (GET /system/events)
-func (_ Unimplemented) ListSystemEvents(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) ListSystemEvents(w http.ResponseWriter, r *http.Request, params ListSystemEventsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4979,8 +4996,8 @@ func (siw *ServerInterfaceWrapper) UpdateSystemEventSettings(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
-// ListSystemEvents operation middleware
-func (siw *ServerInterfaceWrapper) ListSystemEvents(w http.ResponseWriter, r *http.Request) {
+// ClearSystemEvents operation middleware
+func (siw *ServerInterfaceWrapper) ClearSystemEvents(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
@@ -4989,7 +5006,59 @@ func (siw *ServerInterfaceWrapper) ListSystemEvents(w http.ResponseWriter, r *ht
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListSystemEvents(w, r)
+		siw.Handler.ClearSystemEvents(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSystemEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListSystemEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSystemEventsParams
+
+	// ------------- Optional query parameter "before" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "before", r.URL.Query(), &params.Before, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "before"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "before", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSystemEvents(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5590,6 +5659,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/system/event-settings", wrapper.UpdateSystemEventSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/system/events", wrapper.ClearSystemEvents)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/events", wrapper.ListSystemEvents)

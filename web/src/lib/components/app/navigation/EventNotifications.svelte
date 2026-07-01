@@ -1,12 +1,12 @@
 <script lang="ts">
-	/* global EventSource, MessageEvent */
+	/* global EventSource */
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { listSystemEvents } from '$lib/settings/api';
 	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
-
-	type StreamEnvelope<T> = { data: T };
+	import SystemEventSeverityIcon from '$lib/components/settings/SystemEventSeverityIcon.svelte';
+	import { parseSystemEvent } from '$lib/components/settings/systemEventStream';
 
 	const maxEvents = 20;
 
@@ -21,7 +21,7 @@
 		void load();
 		const source = new EventSource('/api/events', { withCredentials: true });
 		source.addEventListener('system.event.created', (event) => {
-			const nextEvent = parseEvent<SystemEvent>(event);
+			const nextEvent = parseSystemEvent<SystemEvent>(event);
 			if (!nextEvent || (nextEvent.severity !== 'warning' && nextEvent.severity !== 'error')) {
 				return;
 			}
@@ -29,18 +29,23 @@
 			errorTotal = events.filter((item) => item.severity === 'error').length;
 		});
 		source.addEventListener('system.event.deleted', (event) => {
-			const deleted = parseEvent<{ id: string }>(event);
+			const deleted = parseSystemEvent<{ id: string }>(event);
 			if (deleted?.id) {
 				events = events.filter((item) => item.id !== deleted.id);
 				errorTotal = events.filter((item) => item.severity === 'error').length;
 			}
+		});
+		source.addEventListener('system.events.cleared', () => {
+			events = [];
+			errorTotal = 0;
 		});
 		return () => source.close();
 	});
 
 	async function load() {
 		try {
-			events = (await listSystemEvents()).filter(
+			const response = await listSystemEvents();
+			events = response.events.filter(
 				(event) => event.severity === 'warning' || event.severity === 'error'
 			);
 			errorTotal = events.filter((event) => event.severity === 'error').length;
@@ -49,14 +54,6 @@
 			errorTotal = 0;
 		} finally {
 			loaded = true;
-		}
-	}
-
-	function parseEvent<T>(event: Event) {
-		try {
-			return (JSON.parse((event as MessageEvent<string>).data) as StreamEnvelope<T>).data;
-		} catch {
-			return undefined;
 		}
 	}
 </script>
@@ -85,7 +82,7 @@
 						href={resolve('/system/events')}
 						role="menuitem"
 					>
-						<span class="status-pill">{event.severity}</span>
+						<SystemEventSeverityIcon severity={event.severity} />
 						<strong>{event.message}</strong>
 						<small>{event.category} - {formatCompactDateTime(event.createdAt)}</small>
 					</a>

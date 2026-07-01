@@ -262,13 +262,13 @@ create index if not exists idx_system_events_created_at
 
 create table if not exists app.system_event_settings (
     id boolean primary key default true check (id),
-    retention_days integer not null default 30 check (retention_days between 1 and 365),
+    retention_days integer not null default 7 check (retention_days between 1 and 365),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
 insert into app.system_event_settings (id, retention_days)
-values (true, 30)
+values (true, 7)
 on conflict (id) do nothing;
 
 create table if not exists app.media_item_tags (

@@ -1247,7 +1247,8 @@ export interface paths {
 		get: operations['listSystemEvents'];
 		put?: never;
 		post?: never;
-		delete?: never;
+		/** Delete all system events */
+		delete: operations['clearSystemEvents'];
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -2203,6 +2204,7 @@ export interface components {
 		};
 		SystemEventListResponse: {
 			events: components['schemas']['SystemEvent'][];
+			hasMore: boolean;
 		};
 		SystemEventSettingsRequest: {
 			/** Format: int32 */
@@ -4569,7 +4571,11 @@ export interface operations {
 	};
 	listSystemEvents: {
 		parameters: {
-			query?: never;
+			query?: {
+				/** @description Return events created before this timestamp. */
+				before?: string;
+				limit?: number;
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
@@ -4584,6 +4590,26 @@ export interface operations {
 				content: {
 					'application/json': components['schemas']['SystemEventListResponse'];
 				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	clearSystemEvents: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description System events deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
 			};
 			401: components['responses']['Unauthorized'];
 			403: components['responses']['Forbidden'];

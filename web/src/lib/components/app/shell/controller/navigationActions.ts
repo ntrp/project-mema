@@ -75,8 +75,8 @@ export function createNavigationActions(state: AppShellState, deps: NavigationDe
 				return;
 			}
 			state.activeView = 'settings';
-			state.activeSettingsSection = 'library';
-			void goto(resolve('/settings/library'));
+			state.activeSettingsSection = 'general';
+			void goto(resolve('/settings/general'));
 			return;
 		}
 		if (section === 'system') {

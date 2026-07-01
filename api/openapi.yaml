@@ -2116,6 +2116,20 @@ paths:
       tags:
         - System
       summary: List notable application events
+      parameters:
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Return events created before this timestamp.
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
       security:
         - sessionCookie: []
       responses:
@@ -2125,6 +2139,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemEventListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    delete:
+      operationId: clearSystemEvents
+      tags:
+        - System
+      summary: Delete all system events
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: System events deleted
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -4663,11 +4691,14 @@ components:
       additionalProperties: false
       required:
         - events
+        - hasMore
       properties:
         events:
           type: array
           items:
             $ref: "#/components/schemas/SystemEvent"
+        hasMore:
+          type: boolean
     SystemEventSettingsRequest:
       type: object
       additionalProperties: false

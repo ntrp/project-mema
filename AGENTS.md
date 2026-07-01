@@ -5,6 +5,8 @@
 - no frontend component or module should be over 200 lines of code
 - DRY, don't repeat yourself, if you find yourself copy pasting code, refactor it into a module or component
 - Single responsibility principle, each module or component should have a single responsibility or a very small number of them
+- Always use a modal for confirmation dialogs, never use a browser confirm dialog
+- Always use a tooltip component for showing tooltips, never use a browser tooltip
 
 ## Dev workflow
 
