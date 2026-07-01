@@ -59,6 +59,7 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 		CollectionId:     details.CollectionID,
 		CollectionName:   details.CollectionName,
 		BackdropPath:     details.BackdropPath,
+		TrailerUrl:       details.TrailerURL,
 		Status:           details.Status,
 		OriginalLanguage: details.OriginalLanguage,
 		ReleaseDate:      details.ReleaseDate,

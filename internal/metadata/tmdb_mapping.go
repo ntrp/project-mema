@@ -23,6 +23,7 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 		CollectionID:     tmdbCollectionID(item.Collection),
 		CollectionName:   tmdbCollectionName(item.Collection),
 		BackdropPath:     optionalString(item.BackdropPath),
+		TrailerURL:       tmdbTrailerURL(item.Videos),
 		Status:           optionalString(item.Status),
 		OriginalLanguage: optionalString(item.OriginalLanguage),
 		Genres:           tmdbNames(item.Genres),

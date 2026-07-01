@@ -64,6 +64,7 @@ type Details struct {
 	CollectionID     *string
 	CollectionName   *string
 	BackdropPath     *string
+	TrailerURL       *string
 	Status           *string
 	OriginalLanguage *string
 	ReleaseDate      *string

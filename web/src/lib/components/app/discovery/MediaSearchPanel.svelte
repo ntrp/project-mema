@@ -12,6 +12,7 @@
 	} from '$lib/settings/types';
 	import MediaPosterCard from '../media/MediaPosterCard.svelte';
 	import PosterRowControls from '../media/PosterRowControls.svelte';
+	import { createPosterRowScroller } from '../media/posterRowScroller.svelte';
 
 	interface Props {
 		sections: MediaDiscoverSection[];
@@ -38,7 +39,7 @@
 		onAdd,
 		onBlacklist
 	}: Props = $props();
-	let rows = $state<Record<string, HTMLDivElement>>({});
+	const rowScroller = createPosterRowScroller();
 
 	const libraryExternalKeys = $derived(
 		new Set(
@@ -95,23 +96,11 @@
 	}
 
 	function trackRow(node: HTMLDivElement, sectionId: string) {
-		rows[sectionId] = node;
-		return {
-			destroy() {
-				delete rows[sectionId];
-			}
-		};
+		return rowScroller.trackRow(node, sectionId);
 	}
 
-	function scrollSection(sectionId: string, direction: number) {
-		const row = rows[sectionId];
-		if (!row) {
-			return;
-		}
-		row.scrollBy({
-			left: direction * Math.max(row.clientWidth - 140, 220),
-			behavior: 'smooth'
-		});
+	function scrollSection(sectionId: string, direction: -1 | 1) {
+		rowScroller.scrollRow(sectionId, direction);
 	}
 </script>
 
@@ -137,6 +126,7 @@
 	<div class="grid gap-[22px]" aria-label="Discover media sections">
 		{#each sections as section (section.id)}
 			{@const results = sectionResults(section)}
+			{@const edges = rowScroller.edgeState(section.id)}
 			<section class="min-w-0" aria-labelledby={`discover-${section.id}`}>
 				<SectionHeading
 					title={section.title}
@@ -147,6 +137,8 @@
 					{#snippet actions()}
 						<PosterRowControls
 							ariaLabel={`${section.title} carousel controls`}
+							canScrollLeft={edges.canScrollLeft}
+							canScrollRight={edges.canScrollRight}
 							onScroll={(direction) => scrollSection(section.id, direction)}
 						/>
 					{/snippet}

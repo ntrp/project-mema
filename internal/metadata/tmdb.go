@@ -103,7 +103,7 @@ func (s *Service) detailsTMDB(ctx context.Context, config Config, request Detail
 		return Details{}, err
 	}
 	values := url.Values{}
-	appends := []string{"credits", "external_ids", "keywords", "recommendations", "similar"}
+	appends := []string{"credits", "external_ids", "keywords", "recommendations", "similar", "videos"}
 	if request.MediaType == "movie" {
 		appends = append(appends, "release_dates")
 	} else {

@@ -29,7 +29,6 @@ const settingsSections = new Set<SettingsSection>([
 	'download-clients',
 	'indexers',
 	'quality',
-	'file-naming',
 	'profiles',
 	'custom-formats',
 	'metadata',

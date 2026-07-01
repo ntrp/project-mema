@@ -558,6 +558,31 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/metadata/refresh:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: refreshMediaItemMetadata
+      tags:
+        - Media
+      summary: Refresh a monitored media item from its metadata provider
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Media item with refreshed metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/releases:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -2640,6 +2665,8 @@ components:
         collectionName:
           type: string
         backdropPath:
+          type: string
+        trailerUrl:
           type: string
         status:
           type: string

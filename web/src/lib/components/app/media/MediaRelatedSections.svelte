@@ -4,6 +4,7 @@
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import MediaPosterCard from '../media/MediaPosterCard.svelte';
 	import PosterRowControls from './PosterRowControls.svelte';
+	import { createPosterRowScroller } from './posterRowScroller.svelte';
 	import type { MediaItem, MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
@@ -15,7 +16,7 @@
 	}
 
 	let { detail, mediaItems = [], addingKey, actionLabel, onAdd }: Props = $props();
-	let relatedRows = $state<Record<string, HTMLDivElement | undefined>>({});
+	const relatedScroller = createPosterRowScroller();
 
 	const sections = $derived([
 		{ title: 'Recommendations', kind: 'recommendations', results: detail.recommendations ?? [] },
@@ -78,23 +79,11 @@
 	}
 
 	function trackRelatedRow(node: HTMLDivElement, title: string) {
-		relatedRows[title] = node;
-		return {
-			destroy() {
-				relatedRows[title] = undefined;
-			}
-		};
+		return relatedScroller.trackRow(node, title);
 	}
 
-	function scrollRelated(title: string, direction: number) {
-		const row = relatedRows[title];
-		if (!row) {
-			return;
-		}
-		row.scrollBy({
-			left: direction * Math.max(row.clientWidth - 160, 240),
-			behavior: 'smooth'
-		});
+	function scrollRelated(title: string, direction: -1 | 1) {
+		relatedScroller.scrollRow(title, direction, 160, 240);
 	}
 </script>
 
@@ -102,6 +91,7 @@
 	{#if section.results.length > 0}
 		{@const titleId = sectionId(section.title)}
 		{@const href = sectionHref(section.kind)}
+		{@const edges = relatedScroller.edgeState(section.title)}
 		<section aria-labelledby={titleId}>
 			<SectionHeading title={section.title} {titleId} {href}>
 				{#if href}
@@ -113,6 +103,8 @@
 						ariaLabel={`${section.title} carousel controls`}
 						leftLabel={`Scroll ${section.title} left`}
 						rightLabel={`Scroll ${section.title} right`}
+						canScrollLeft={edges.canScrollLeft}
+						canScrollRight={edges.canScrollRight}
 						onScroll={(direction) => scrollRelated(section.title, direction)}
 					/>
 				{/snippet}

@@ -1139,6 +1139,7 @@ type MediaMetadataDetails struct {
 	Similar          *[]MediaSearchResult   `json:"similar,omitempty"`
 	Status           *string                `json:"status,omitempty"`
 	Title            string                 `json:"title"`
+	TrailerUrl       *string                `json:"trailerUrl,omitempty"`
 	Type             MediaType              `json:"type"`
 	VoteAverage      *float64               `json:"voteAverage,omitempty"`
 	Year             *int32                 `json:"year,omitempty"`
@@ -1899,6 +1900,9 @@ type ServerInterface interface {
 	// Enqueue a release grab with the highest-priority enabled download client
 	// (POST /media/items/{id}/grab)
 	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Refresh a monitored media item from its metadata provider
+	// (POST /media/items/{id}/metadata/refresh)
+	RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a background release search for a monitored item
 	// (POST /media/items/{id}/release-searches)
 	EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -2265,6 +2269,12 @@ func (_ Unimplemented) RescanMediaItemFiles(w http.ResponseWriter, r *http.Reque
 // Enqueue a release grab with the highest-priority enabled download client
 // (POST /media/items/{id}/grab)
 func (_ Unimplemented) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Refresh a monitored media item from its metadata provider
+// (POST /media/items/{id}/metadata/refresh)
+func (_ Unimplemented) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3399,6 +3409,38 @@ func (siw *ServerInterfaceWrapper) GrabMediaRelease(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GrabMediaRelease(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RefreshMediaItemMetadata operation middleware
+func (siw *ServerInterfaceWrapper) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RefreshMediaItemMetadata(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5478,6 +5520,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/grab", wrapper.GrabMediaRelease)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/metadata/refresh", wrapper.RefreshMediaItemMetadata)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/release-searches", wrapper.EnqueueMediaReleaseSearch)

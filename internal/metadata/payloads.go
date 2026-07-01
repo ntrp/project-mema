@@ -45,6 +45,7 @@ type tmdbDetails struct {
 	ExternalIDs      tmdbExternalIDs    `json:"external_ids"`
 	ReleaseDates     tmdbReleaseInfo    `json:"release_dates"`
 	ContentRatings   tmdbContentRatings `json:"content_ratings"`
+	Videos           tmdbVideos         `json:"videos"`
 	Recommendations  tmdbSearchResponse `json:"recommendations"`
 	Similar          tmdbSearchResponse `json:"similar"`
 }
@@ -103,6 +104,17 @@ type tmdbContentRatings struct {
 type tmdbContentRating struct {
 	Code   string `json:"iso_3166_1"`
 	Rating string `json:"rating"`
+}
+
+type tmdbVideos struct {
+	Results []tmdbVideo `json:"results"`
+}
+
+type tmdbVideo struct {
+	Key      string `json:"key"`
+	Site     string `json:"site"`
+	Type     string `json:"type"`
+	Official bool   `json:"official"`
 }
 
 type tmdbSeason struct {

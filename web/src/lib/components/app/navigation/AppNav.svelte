@@ -3,6 +3,7 @@
 	import AppNavSearch from './AppNavSearch.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import * as Sidebar from '$lib/components/ui/sidebar';
 	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
@@ -31,8 +32,9 @@
 </script>
 
 <header
-	class="sticky top-0 z-10 grid grid-cols-[minmax(260px,1fr)_auto] items-center gap-3 border-b border-border bg-card px-3 py-2 min-[641px]:gap-4 min-[641px]:px-[18px] min-[981px]:py-1.5"
+	class="sticky top-0 z-10 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-card px-3 py-2 min-[641px]:gap-4 min-[641px]:px-[18px] min-[981px]:py-1.5"
 >
+	<Sidebar.Trigger class="shrink-0" />
 	<AppNavSearch bind:searchQuery {groups} {loading} {onSearch} {onSelect} {onAdvancedSearch} />
 
 	<nav class="flex w-full justify-end gap-2.5 justify-self-end" aria-label="Application actions">

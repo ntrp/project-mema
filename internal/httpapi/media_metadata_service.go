@@ -104,7 +104,7 @@ func (s *Server) discoverMetadataProvider(
 }
 
 func (s *Server) metadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
-	cacheKey := "details:v3:" + strings.ToLower(strings.TrimSpace(request.ExternalID))
+	cacheKey := metadataDetailsCacheKey(request.ExternalID)
 	var cached metadata.Details
 	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, &cached)
 	if err != nil {
@@ -122,6 +122,22 @@ func (s *Server) metadataProviderDetails(ctx context.Context, provider storage.M
 		return metadata.Details{}, err
 	}
 	return details, nil
+}
+
+func (s *Server) freshMetadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
+	details, err := s.metadata.Details(ctx, metadataProviderConfig(provider), request)
+	if err != nil {
+		return metadata.Details{}, err
+	}
+	cacheKey := metadataDetailsCacheKey(request.ExternalID)
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, details, s.now().Add(24*time.Hour)); err != nil {
+		return metadata.Details{}, err
+	}
+	return details, nil
+}
+
+func metadataDetailsCacheKey(externalID string) string {
+	return "details:v3:" + strings.ToLower(strings.TrimSpace(externalID))
 }
 
 type groupedMediaSearchRequest struct {

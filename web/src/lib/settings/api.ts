@@ -537,6 +537,20 @@ export async function createMediaItem(request: MediaItemCreateRequest) {
 	return data;
 }
 
+export async function refreshMediaItemMetadata(id: string) {
+	const { data, error } = await client.POST('/media/items/{id}/metadata/refresh', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
 export async function listMediaRequests() {
 	const { data, error } = await client.GET('/media/requests');
 

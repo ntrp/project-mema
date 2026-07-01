@@ -116,6 +116,7 @@ export class AppShellState {
 	discoverSectionPage = $state(1);
 	discoverSectionHasMore = $state(true);
 	loadingBlacklist = $state(false);
+	loadingMediaItems = $state(false);
 	loadingMetadataDetail = $state(false);
 	loadingMediaCollection = $state(false);
 	loadingAutocomplete = $state(false);
@@ -129,6 +130,7 @@ export class AppShellState {
 	approvingRequestId = $state<string | undefined>();
 	searchingItemId = $state<string | undefined>();
 	scanningMediaItemId = $state<string | undefined>();
+	refreshingMetadataItemId = $state<string | undefined>();
 	grabbingKey = $state<string | undefined>();
 	deletingMediaItemId = $state<string | undefined>();
 	cancellingActivityId = $state<string | undefined>();

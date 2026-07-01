@@ -8,6 +8,7 @@
 	import MediaPersonCard from './MediaPersonCard.svelte';
 	import MediaSeasonPanel from './MediaSeasonPanel.svelte';
 	import PosterRowControls from './PosterRowControls.svelte';
+	import { createPosterRowScroller } from './posterRowScroller.svelte';
 	import { crewRolePreviews } from './mediaPeople';
 	import type { Snippet } from 'svelte';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
@@ -29,7 +30,8 @@
 	const cast = $derived(detail.cast ?? []);
 	const resolvedCastHref = $derived(castHref ?? resolvedPeopleHref(detail, 'cast'));
 	const resolvedCrewHref = $derived(crewHref ?? resolvedPeopleHref(detail, 'crew'));
-	let castRow = $state<HTMLDivElement | undefined>();
+	const castRowKey = 'cast';
+	const castScroller = createPosterRowScroller();
 
 	function episodeTitle(episode: { episodeNumber: number; name: string }) {
 		return `${episode.episodeNumber} - ${episode.name}`;
@@ -49,19 +51,17 @@
 			: resolve('/media/[provider]/[type]/[externalId]/crew', params);
 	}
 
-	function scrollCast(direction: number) {
-		if (!castRow) {
-			return;
-		}
-		castRow.scrollBy({
-			left: direction * Math.max(castRow.clientWidth - 140, 220),
-			behavior: 'smooth'
-		});
+	function trackCastRow(node: HTMLDivElement) {
+		return castScroller.trackRow(node, castRowKey);
+	}
+
+	function scrollCast(direction: -1 | 1) {
+		castScroller.scrollRow(castRowKey, direction);
 	}
 </script>
 
 <section
-	class="mt-4 grid items-start gap-5.5 min-[981px]:grid-cols-[minmax(0,1fr)_minmax(280px,390px)]"
+	class="grid items-start gap-5.5 min-[981px]:grid-cols-[minmax(0,1fr)_minmax(280px,390px)]"
 	aria-labelledby="metadata-overview-title"
 >
 	<div class="grid min-w-0 gap-3">
@@ -134,6 +134,7 @@
 {@render beforeCastContent?.()}
 
 {#if cast.length > 0}
+	{@const castEdges = castScroller.edgeState(castRowKey)}
 	<section aria-labelledby="metadata-cast-title">
 		<SectionHeading title="Cast" titleId="metadata-cast-title" href={resolvedCastHref}>
 			{#if resolvedCastHref}
@@ -145,13 +146,15 @@
 					ariaLabel="Cast carousel controls"
 					leftLabel="Scroll cast left"
 					rightLabel="Scroll cast right"
+					canScrollLeft={castEdges.canScrollLeft}
+					canScrollRight={castEdges.canScrollRight}
 					onScroll={scrollCast}
 				/>
 			{/snippet}
 		</SectionHeading>
 		<div
 			class="-mx-3.5 mt-[-12px] grid max-w-full auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-[980px]:auto-cols-[minmax(160px,180px)] max-[980px]:gap-3.5 max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
-			bind:this={castRow}
+			use:trackCastRow
 		>
 			{#each cast as person (`${person.name}:${person.role ?? ''}`)}
 				<MediaPersonCard name={person.name} role={person.role} image={person.profilePath} />

@@ -1,8 +1,10 @@
 <script lang="ts">
+	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import MediaDetailSkeleton from './MediaDetailSkeleton.svelte';
 	import MediaFilesTable from './MediaFilesTable.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
@@ -24,11 +26,13 @@
 	interface Props {
 		mediaType: MediaType;
 		item?: MediaItem;
+		loading?: boolean;
 		mediaItems?: MediaItem[];
 		requestedItemId: string;
 		releaseResults?: ReleaseSearchState;
 		activities: DownloadActivity[];
 		searchingItemId?: string;
+		refreshingMetadataItemId?: string;
 		grabbingKey?: string;
 		addingKey?: string;
 		deletingMediaItemId?: string;
@@ -36,6 +40,7 @@
 		actionLabel: string;
 		onFindReleases: (_item: MediaItem) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
+		onRefreshMediaMetadata: (_item: MediaItem) => void;
 		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
@@ -45,11 +50,13 @@
 	let {
 		mediaType,
 		item,
+		loading = false,
 		mediaItems = [],
 		requestedItemId,
 		releaseResults,
 		activities,
 		searchingItemId,
+		refreshingMetadataItemId,
 		grabbingKey,
 		addingKey,
 		deletingMediaItemId,
@@ -57,6 +64,7 @@
 		actionLabel,
 		onFindReleases,
 		onAutoSearchMedia,
+		onRefreshMediaMetadata,
 		onDeleteMediaFile,
 		onDeleteMedia,
 		onGrabRelease,
@@ -83,12 +91,10 @@
 	);
 </script>
 
-{#if item && detail}
-	<MediaMetadataShell
-		backdropPath={detail.backdropPath}
-		labelledby="library-media-title"
-		class="[min-height:auto]"
-	>
+{#if loading}
+	<MediaDetailSkeleton />
+{:else if item && detail}
+	<MediaMetadataShell labelledby="library-media-title">
 		<MediaMetadataHero {detail} titleId="library-media-title">
 			{#snippet actions()}
 				{#if canManage}
@@ -98,9 +104,30 @@
 								<Button
 									{...props}
 									type="button"
-									variant="destructive"
+									variant="outline"
 									size="icon-sm"
 									class="ml-auto"
+									aria-label="Refresh metadata"
+									disabled={refreshingMetadataItemId === item.id}
+									onclick={() => onRefreshMediaMetadata(item)}
+								>
+									<RefreshCwIcon
+										class={refreshingMetadataItemId === item.id ? 'animate-spin' : undefined}
+										aria-hidden="true"
+									/>
+								</Button>
+							{/snippet}
+						</Tooltip.Trigger>
+						<Tooltip.Content>Refresh metadata</Tooltip.Content>
+					</Tooltip.Root>
+					<Tooltip.Root>
+						<Tooltip.Trigger>
+							{#snippet child({ props })}
+								<Button
+									{...props}
+									type="button"
+									variant="destructive"
+									size="icon-sm"
 									aria-label="Delete media"
 									disabled={deletingMediaItemId === item.id}
 									onclick={() => onDeleteMedia(item)}

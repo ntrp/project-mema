@@ -11,6 +11,8 @@
 ## Dev workflow
 
 - When working on tasks start the frontend and backend
-- Always bind dev servers to `0.0.0.0`; use `ADDR=0.0.0.0:18080 make dev-api` for the backend and `pnpm exec vite dev --host 0.0.0.0 --port 15173` from `web/` for the frontend
+- Always bind dev servers to `0.0.0.0`;
+  - use `ADDR=0.0.0.0:18080 make dev-api` for the backend
+  - `NVIM_LISTEN_ADDRESS=/tmp/project-mema.nvim LAUNCH_EDITOR=/Users/ntrp/_pws/project-mema/scripts/open-in-nvim.sh pnpm exec vite dev --host 0.0.0.0 --port 15173` in /web for the frontend
 - if the backend changes restart it
 - if the database schema or seed changes, reset the db and restart the backend

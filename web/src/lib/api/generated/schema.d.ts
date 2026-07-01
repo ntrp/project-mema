@@ -345,6 +345,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/metadata/refresh': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Refresh a monitored media item from its metadata provider */
+		post: operations['refreshMediaItemMetadata'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/releases': {
 		parameters: {
 			query?: never;
@@ -1439,6 +1458,7 @@ export interface components {
 			collectionId?: string;
 			collectionName?: string;
 			backdropPath?: string;
+			trailerUrl?: string;
 			status?: string;
 			originalLanguage?: string;
 			seriesType?: components['schemas']['SeriesType'];
@@ -2832,6 +2852,32 @@ export interface operations {
 			};
 			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	refreshMediaItemMetadata: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media item with refreshed metadata */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
 			404: components['responses']['NotFound'];
 		};
 	};

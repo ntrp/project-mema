@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { providerPageUrl } from '$lib/settings/providerLinks';
+	import ClapperboardIcon from '@lucide/svelte/icons/clapperboard';
+	import DiscIcon from '@lucide/svelte/icons/disc-3';
+	import MonitorPlayIcon from '@lucide/svelte/icons/monitor-play';
 	import { formatDate } from '$lib/settings/dateFormat';
-	import { Button } from '$lib/components/ui/button';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
 
 	interface Props {
@@ -13,13 +14,18 @@
 
 	type InfoRow = {
 		label: string;
-		value: string | string[];
+		value: string | string[] | ReleaseDateItem[];
+	};
+
+	type ReleaseDateItem = {
+		kind: 'cinema' | 'digital' | 'physical';
+		label: string;
+		date: string;
 	};
 
 	const factMap = $derived(new Map(facts.map((fact) => [fact.label, fact.value])));
 	const score = $derived(detail.voteAverage ? Math.round(detail.voteAverage * 10) : undefined);
 	const rows = $derived(infoRows(detail, factMap));
-	const externalLinks = $derived(links(detail));
 
 	function infoRows(details: MediaMetadataDetails, lookup: Map<string, string>): InfoRow[] {
 		return [
@@ -36,23 +42,55 @@
 		].filter((item): item is InfoRow => Boolean(item));
 	}
 
-	function row(label: string, value: string | string[] | undefined): InfoRow | undefined {
+	function row(
+		label: string,
+		value: string | string[] | ReleaseDateItem[] | undefined
+	): InfoRow | undefined {
 		if (!value || (Array.isArray(value) && value.length === 0)) {
 			return undefined;
 		}
 		return { label, value };
 	}
 
-	function releaseDates(details: MediaMetadataDetails, lookup: Map<string, string>) {
+	function releaseDates(
+		details: MediaMetadataDetails,
+		lookup: Map<string, string>
+	): string[] | ReleaseDateItem[] {
 		if (details.type === 'series') {
 			return details.firstAirDate ? [formatDate(details.firstAirDate)] : [];
 		}
-		const values = [
-			lookup.get('Theatrical Release Date') ?? details.releaseDate,
-			lookup.get('Digital Release Date'),
-			lookup.get('Physical Release Date')
-		].filter((value): value is string => Boolean(value));
-		return [...new Set(values)].map(formatDate);
+		return releaseDateItems([
+			{
+				kind: 'cinema',
+				label: 'Cinema',
+				date: lookup.get('Theatrical Release Date') ?? details.releaseDate
+			},
+			{ kind: 'digital', label: 'Digital', date: lookup.get('Digital Release Date') },
+			{ kind: 'physical', label: 'Physical', date: lookup.get('Physical Release Date') }
+		]);
+	}
+
+	function releaseDateItems(items: (Omit<ReleaseDateItem, 'date'> & { date?: string })[]) {
+		return items
+			.filter((item): item is Omit<ReleaseDateItem, 'date'> & { date: string } =>
+				Boolean(item.date)
+			)
+			.map((item) => ({ ...item, date: formatDate(item.date) }));
+	}
+
+	function releaseDateIcon(kind: ReleaseDateItem['kind']) {
+		switch (kind) {
+			case 'cinema':
+				return ClapperboardIcon;
+			case 'physical':
+				return DiscIcon;
+			default:
+				return MonitorPlayIcon;
+		}
+	}
+
+	function isReleaseDateItems(value: string[] | ReleaseDateItem[]): value is ReleaseDateItem[] {
+		return value.length > 0 && typeof value[0] !== 'string';
 	}
 
 	function factList(value?: string) {
@@ -74,23 +112,17 @@
 			return code.toUpperCase();
 		}
 	}
-
-	function links(details: MediaMetadataDetails) {
-		const items = [];
-		const providerUrl = providerPageUrl(details.externalProvider, details.type, details.externalId);
-		if (providerUrl) {
-			items.push({ label: details.externalProvider.toUpperCase(), href: providerUrl });
-		}
-		return items;
-	}
 </script>
 
-<aside class="overflow-hidden rounded-md border border-border bg-card" aria-label="Media facts">
+<aside
+	class="overflow-hidden rounded-md border border-border bg-card text-sm"
+	aria-label="Media facts"
+>
 	{#if score}
 		<div class="flex flex-wrap items-center justify-center gap-2.5 px-4 py-3.5">
-			<span class="inline-flex items-center gap-3 text-lg font-black text-foreground">
+			<span class="inline-flex items-center gap-3 text-sm font-black text-foreground">
 				<span
-					class="inline-flex min-h-[22px] items-center rounded-md bg-primary px-[9px] py-[3px] text-xs leading-none font-black text-primary-foreground"
+					class="inline-flex min-h-5.5 items-center rounded-md bg-primary px-2.25 py-0.75 text-xs leading-none font-black text-primary-foreground"
 					aria-label="TMDB"
 				>
 					TMDb
@@ -103,34 +135,32 @@
 	<div class="border-t border-border">
 		{#each rows as row (`${row.label}:${row.value}`)}
 			<div
-				class="grid grid-cols-[max-content_minmax(0,1fr)] gap-3 border-b border-border px-4 py-[13px]"
+				class="grid grid-cols-[max-content_minmax(0,1fr)] gap-3 border-b border-border px-4 py-3.25"
 			>
-				<strong class="[overflow-wrap:anywhere] text-sm whitespace-nowrap text-foreground">
+				<strong class="wrap-anywhere text-sm whitespace-nowrap text-foreground">
 					{row.label}
 				</strong>
 				{#if Array.isArray(row.value)}
 					<span class="grid justify-items-end gap-1 text-right text-muted-foreground">
-						{#each row.value as value (value)}
-							<span>{value}</span>
-						{/each}
+						{#if isReleaseDateItems(row.value)}
+							{#each row.value as value (`${value.kind}:${value.date}`)}
+								{@const Icon = releaseDateIcon(value.kind)}
+								<span class="inline-flex items-center justify-end gap-1.5">
+									<Icon aria-hidden="true" class="size-3.5 text-foreground" />
+									<span class="sr-only">{value.label}</span>
+									<span>{value.date}</span>
+								</span>
+							{/each}
+						{:else}
+							{#each row.value as value (value)}
+								<span>{value}</span>
+							{/each}
+						{/if}
 					</span>
 				{:else}
-					<span class="[overflow-wrap:anywhere] text-right text-muted-foreground">{row.value}</span>
+					<span class="wrap-anywhere text-right text-muted-foreground">{row.value}</span>
 				{/if}
 			</div>
 		{/each}
 	</div>
-
-	{#if externalLinks.length > 0}
-		<div
-			class="flex flex-wrap items-center justify-center gap-2.5 px-4 py-3.5"
-			aria-label="Metadata sources"
-		>
-			{#each externalLinks as link (link.href)}
-				<Button variant="outline" size="xs" href={link.href} target="_blank" rel="noreferrer">
-					{link.label}
-				</Button>
-			{/each}
-		</div>
-	{/if}
 </aside>

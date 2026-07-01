@@ -19,5 +19,5 @@
 	{title}
 	aria-label={title}
 >
-	<BookmarkIcon aria-hidden="true" class={monitored ? 'fill-current' : undefined} />
+	<BookmarkIcon aria-hidden="true" size="64" class={monitored ? 'fill-current' : undefined} />
 </span>

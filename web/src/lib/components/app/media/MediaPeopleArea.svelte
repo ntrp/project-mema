@@ -63,8 +63,13 @@
 		description="Could not load people for this item."
 	/>
 {:else}
-	<MediaMetadataShell backdropPath={detail.backdropPath} labelledby="media-people-title">
-		<MediaMetadataHero {detail} titleId="media-people-title" />
+	<MediaMetadataShell labelledby="media-people-title">
+		<MediaMetadataHero
+			{detail}
+			titleId="media-people-title"
+			showMonitorBookmark={false}
+			showTrailerButton={false}
+		/>
 
 		<div class="grid items-start gap-7">
 			<main class="grid min-w-0 gap-6 [&>section]:grid [&>section]:min-w-0 [&>section]:gap-2.5">

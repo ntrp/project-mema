@@ -6,7 +6,6 @@ export type SettingsHref =
 	| '/settings/download-clients'
 	| '/settings/indexers'
 	| '/settings/quality'
-	| '/settings/file-naming'
 	| '/settings/profiles'
 	| '/settings/custom-formats'
 	| '/settings/metadata'
@@ -43,7 +42,6 @@ export const settingsItems = [
 	{ value: 'download-clients', label: 'Download clients', href: '/settings/download-clients' },
 	{ value: 'indexers', label: 'Indexers', href: '/settings/indexers' },
 	{ value: 'quality', label: 'Quality', href: '/settings/quality' },
-	{ value: 'file-naming', label: 'File naming', href: '/settings/file-naming' },
 	{ value: 'profiles', label: 'Profiles', href: '/settings/profiles' },
 	{ value: 'custom-formats', label: 'Custom formats', href: '/settings/custom-formats' },
 	{ value: 'metadata', label: 'Metadata', href: '/settings/metadata' },
@@ -64,7 +62,7 @@ export const libraryItems = [
 ] satisfies PrimaryItem['children'];
 
 export const discoverItems = [
-	{ value: 'discover', label: 'All sections', href: '/discover' },
+	{ value: 'discover', label: 'Home', href: '/discover' },
 	{ value: 'trending', label: 'Trending', href: '/discover/trending' },
 	{ value: 'movie-popular', label: 'Popular movies', href: '/discover/movie-popular' },
 	{ value: 'movie-upcoming', label: 'Upcoming movies', href: '/discover/movie-upcoming' },
@@ -114,8 +112,6 @@ export function settingsSectionHref(section: SettingsSection): SettingsHref {
 			return '/settings/indexers';
 		case 'quality':
 			return '/settings/quality';
-		case 'file-naming':
-			return '/settings/file-naming';
 		case 'profiles':
 			return '/settings/profiles';
 		case 'custom-formats':

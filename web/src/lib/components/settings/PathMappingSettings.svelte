@@ -6,6 +6,7 @@
 	import { Card } from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { Separator } from '$lib/components/ui/separator';
 	import * as Table from '$lib/components/ui/table';
 	import type { PathMapping, PathMappingForm } from '$lib/settings/types';
 
@@ -30,19 +31,15 @@
 </script>
 
 <section class="grid gap-4" aria-labelledby="path-mapping-title">
-	<div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-		<div>
-			<h2 id="path-mapping-title" class="m-0 text-3xl font-semibold text-foreground">
-				Path mappings
-			</h2>
-			<p class="mt-1 text-sm text-muted-foreground">
-				Map download client paths to paths visible by the app for hardlink imports.
-			</p>
+	<div class="grid gap-2">
+		<div class="flex items-center justify-between gap-3">
+			<h3 id="path-mapping-title" class="m-0 text-lg text-foreground">Path Mappings</h3>
+			<Button type="button" onclick={() => (modalOpen = true)}>
+				<PlusIcon aria-hidden="true" />
+				<span>Add path</span>
+			</Button>
 		</div>
-		<Button type="button" onclick={() => (modalOpen = true)}>
-			<PlusIcon aria-hidden="true" />
-			<span>Add path</span>
-		</Button>
+		<Separator />
 	</div>
 	<Card class="p-0">
 		<Table.Root>

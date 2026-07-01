@@ -11,9 +11,9 @@
 
 	const label = $derived(inLibrary ? 'In library' : type);
 	const toneClass = $derived(
-		!inLibrary && type === 'movie'
-			? 'border-border bg-secondary text-secondary-foreground'
-			: 'border-primary/30 bg-primary/10 text-primary'
+		type === 'movie'
+			? 'border-yellow-500 bg-yellow-400 text-yellow-950'
+			: 'border-blue-600 bg-blue-600 text-white'
 	);
 </script>
 

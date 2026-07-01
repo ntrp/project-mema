@@ -1,6 +1,5 @@
 <script lang="ts">
 	import CustomFormatsSettings from '$lib/components/settings/CustomFormatsSettings.svelte';
-	import FileNamingSettings from '$lib/components/settings/FileNamingSettings.svelte';
 	import MetadataCacheSettings from '$lib/components/settings/MetadataCacheSettings.svelte';
 	import MetadataProviderSettings from '$lib/components/settings/MetadataProviderSettings.svelte';
 	import MediaProfilesSettings from '$lib/components/settings/MediaProfilesSettings.svelte';
@@ -160,9 +159,6 @@
 			onDelete={onDeleteCustomFormat}
 		/>
 	</div>
-{:else if activeSection === 'file-naming'}
-	<PageHeading eyebrow="Settings" title="File naming" titleId="settings-title" />
-	<div class="space-y-4"><FileNamingSettings /></div>
 {:else if activeSection === 'tags'}
 	<PageHeading eyebrow="Settings" title="Tags" titleId="settings-title" />
 	<div class="space-y-4">

@@ -137,6 +137,21 @@ WEB_DIR=web/build ./bin/server
 OpenAPI is currently pinned to 3.0.3 because the selected Go generator has
 better support for OpenAPI 3.0 than 3.1.
 
+## File Naming Templates
+
+File naming settings are edited in the web UI at `/settings/library`.
+Templates use tokens wrapped in braces, for example
+`{movie_title} ({release_year}) {quality_full}`.
+
+When typing inside a template token, the UI shows an autocomplete list
+fuzzy-filtered by parameter name. Each suggestion displays the parameter and an
+example value. Press Up or Down to move through the filtered suggestions; after
+one second, the highlighted row shows the parameter description in a tooltip.
+Press Enter or Tab to insert the highlighted parameter.
+
+Season and episode numbers expose padded variants such as `{season:0}`,
+`{season:00}`, `{episode:0}`, `{episode:00}`, and `{episode:000}`.
+
 ## Database Workflow
 
 The project starts with a simple protected reset path instead of migrations.

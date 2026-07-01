@@ -27,11 +27,13 @@
 	activities={app.activities}
 	loadingDiscover={app.loadingDiscover}
 	loadingBlacklist={app.loadingBlacklist}
+	loadingMediaItems={app.loadingMediaItems}
 	addingKey={app.addingKey}
 	blacklistingKey={app.blacklistingKey}
 	removingBlacklistId={app.removingBlacklistId}
 	approvingRequestId={app.approvingRequestId}
 	searchingItemId={app.searchingItemId}
+	refreshingMetadataItemId={app.refreshingMetadataItemId}
 	grabbingKey={app.grabbingKey}
 	deletingMediaItemId={app.deletingMediaItemId}
 	cancellingActivityId={app.cancellingActivityId}
@@ -44,6 +46,7 @@
 	onApproveMediaRequest={app.approveMediaRequest}
 	onFindReleases={app.findReleases}
 	onAutoSearchMedia={app.autoSearchMedia}
+	onRefreshMediaMetadata={app.refreshMediaMetadata}
 	onDeleteMediaFile={app.deleteMediaFile}
 	onDeleteMedia={app.deleteMediaItem}
 	onGrabRelease={app.grabRelease}

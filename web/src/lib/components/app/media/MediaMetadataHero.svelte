@@ -1,11 +1,13 @@
 <script lang="ts">
 	import LibraryIcon from '@lucide/svelte/icons/library';
+	import PlayIcon from '@lucide/svelte/icons/play';
 	import TagIcon from '@lucide/svelte/icons/tag';
 	import { resolve } from '$app/paths';
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import type { Snippet } from 'svelte';
 	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
+	import MediaTrailerModal from './MediaTrailerModal.svelte';
 	import PosterPlaceholder from './PosterPlaceholder.svelte';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
@@ -13,15 +15,24 @@
 		detail: MediaMetadataDetails;
 		titleId: string;
 		showMonitorBookmark?: boolean;
+		showTrailerButton?: boolean;
 		actions?: Snippet;
 	}
 
-	let { detail, titleId, showMonitorBookmark = true, actions }: Props = $props();
+	let {
+		detail,
+		titleId,
+		showMonitorBookmark = true,
+		showTrailerButton = true,
+		actions
+	}: Props = $props();
+	let trailerOpen = $state(false);
 
 	const genres = $derived(detail.genres ?? []);
 	const factMap = $derived(new Map((detail.facts ?? []).map((fact) => [fact.label, fact.value])));
 	const certification = $derived(certificationText());
 	const duration = $derived(runtimeText(detail.runtimeMinutes));
+	const trailerTitle = $derived(`${detail.title} trailer`);
 
 	function imageUrl(path?: string, size = 'w780') {
 		if (!path) {
@@ -64,7 +75,9 @@
 	}
 </script>
 
-<div class="grid items-end gap-6.5 min-[641px]:grid-cols-[clamp(190px,18vw,270px)_minmax(0,1fr)]">
+<div
+	class="grid items-end gap-6.5 min-[641px]:grid-cols-[clamp(190px,18vw,270px)_minmax(0,1fr)] mb-6"
+>
 	<div
 		class="aspect-[2/3] overflow-hidden rounded-md border border-border bg-card max-sm:w-[170px]"
 	>
@@ -85,7 +98,7 @@
 			<p class="m-0 flex flex-wrap items-center gap-3.5 text-muted-foreground">
 				{#if certification}
 					<span
-						class="inline-flex min-h-6 items-center rounded-md border-2 border-primary/50 px-2.5 py-0.5 text-base leading-none font-extrabold text-foreground"
+						class="inline-flex min-h-6 items-center rounded-md border border-white p-1 text-base leading-none font-extrabold text-foreground"
 						>{certification}</span
 					>
 				{/if}
@@ -107,7 +120,7 @@
 			</div>
 		{/if}
 		{#if genres.length > 0}
-			<div class="flex flex-wrap gap-[7px]" aria-label="Genres">
+			<div class="flex flex-wrap gap-1.75" aria-label="Genres">
 				{#each genres as genre (genre)}
 					<StatusPill class="inline-flex items-center gap-1.5">
 						<TagIcon aria-hidden="true" />{genre}
@@ -129,7 +142,21 @@
 					<span>{detail.collectionName}</span>
 				</Button>
 			{/if}
+			{#if showTrailerButton && detail.trailerUrl}
+				<Button variant="outline" size="sm" onclick={() => (trailerOpen = true)}>
+					<PlayIcon aria-hidden="true" />
+					<span>Trailer</span>
+				</Button>
+			{/if}
 			{@render actions?.()}
 		</div>
 	</div>
 </div>
+
+{#if showTrailerButton && trailerOpen && detail.trailerUrl}
+	<MediaTrailerModal
+		title={trailerTitle}
+		url={detail.trailerUrl}
+		onClose={() => (trailerOpen = false)}
+	/>
+{/if}

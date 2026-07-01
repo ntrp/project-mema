@@ -6,7 +6,10 @@
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
-	import { defaultFileNamingTemplates } from '$lib/settings/fileNamingTemplates';
+	import {
+		defaultFileNamingTemplates,
+		fileNamingTemplateExample
+	} from '$lib/settings/fileNamingTemplates';
 	import { getFileNamingSettings, updateFileNamingSettings } from '$lib/settings/api';
 	import type { FileNamingSettingsRequest } from '$lib/settings/types';
 
@@ -31,18 +34,8 @@
 			fields: [
 				{ key: 'seriesFolderFormat', label: 'Main folder' },
 				{ key: 'seriesEpisodeFormat', label: 'Episode' },
-				{ key: 'dailyEpisodeFormat', label: 'Daily episode' }
-			]
-		},
-		{
-			id: 'anime-naming',
-			title: 'Anime',
-			fields: [{ key: 'animeEpisodeFormat', label: 'Episode' }]
-		},
-		{
-			id: 'season-naming',
-			title: 'Season',
-			fields: [
+				{ key: 'dailyEpisodeFormat', label: 'Daily episode' },
+				{ key: 'animeEpisodeFormat', label: 'Anime episode' },
 				{ key: 'seasonFolderFormat', label: 'Season folder' },
 				{ key: 'specialsFolderFormat', label: 'Specials folder' }
 			]
@@ -132,11 +125,15 @@
 			Object.entries(templates).map(([key, value]) => [key, value.trim()])
 		) as FileNamingSettingsRequest;
 	}
+
+	function example(value: string) {
+		return fileNamingTemplateExample(value);
+	}
 </script>
 
-<Card class="p-5" aria-label="File naming">
+<Card class="overflow-visible p-5" aria-label="File naming">
 	<form class="grid gap-4" onsubmit={saveSettings}>
-		<SectionHeading>
+		<SectionHeading title="File Naming">
 			{#snippet actions()}
 				<div class="flex flex-wrap justify-end gap-2.5">
 					<Button
@@ -164,7 +161,7 @@
 
 		<NoticeStack {message} {errorMessage} />
 
-		<div class="grid gap-3.5 md:grid-cols-2">
+		<div class="grid gap-3.5">
 			{#each templateSections as section (section.id)}
 				<FileNamingTemplateSection
 					id={section.id}
@@ -172,6 +169,7 @@
 					fields={section.fields}
 					{templates}
 					onChange={updateTemplate}
+					{example}
 				/>
 			{/each}
 		</div>

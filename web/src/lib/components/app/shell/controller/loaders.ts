@@ -73,10 +73,13 @@ export function createLoadActions(state: AppShellState) {
 	}
 
 	async function loadMediaItems() {
+		state.loadingMediaItems = true;
 		try {
 			state.mediaItems = await listMediaItemsRequest();
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load media items');
+		} finally {
+			state.loadingMediaItems = false;
 		}
 	}
 

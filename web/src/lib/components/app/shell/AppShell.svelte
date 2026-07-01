@@ -5,20 +5,24 @@
 	import AppNav from '../navigation/AppNav.svelte';
 	import { routeStateFromPath } from '$lib/components/app/shell/controller/routeState';
 	import { createAppShellController } from '$lib/components/app/shell/controller/index.svelte';
+	import { imageUrl } from '../media/mediaDetail';
 	import MediaDeleteModal from '../media/MediaDeleteModal.svelte';
 	import MediaActionModal from '../media/MediaActionModal.svelte';
 	import SidebarMenu from '../navigation/SidebarMenu.svelte';
 	import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
 	import ScrollTopButton from '$lib/components/shared/ScrollTopButton.svelte';
+	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { setAppShellContext } from '$lib/features/app/appShellContext';
+	import type { MediaItem } from '$lib/settings/types';
 
 	let { children } = $props();
 	const route = $derived(routeStateFromPath(page.url.pathname, page.params, page.url.searchParams));
 	// svelte-ignore state_referenced_locally
 	let app = $state(createAppShellController(route));
 	setAppShellContext(app);
+	const mainBackdropUrl = $derived(imageUrl(activeMainBackdropPath(), 'original'));
 
 	onMount(() => {
 		void app.initialise();
@@ -28,6 +32,23 @@
 	$effect(() => {
 		void app.applyRoute(route);
 	});
+
+	function activeMainBackdropPath() {
+		if (app.activeView === 'media-people') {
+			return app.mediaPeopleMetadataDetail?.backdropPath;
+		}
+		if (app.activeView === 'metadata-detail' || app.activeView === 'related-section') {
+			return app.metadataDetail?.backdropPath;
+		}
+		if (!app.selectedMediaItemId || !['movies', 'series'].includes(app.activeHomeSection)) {
+			return undefined;
+		}
+		return app.mediaItems.find(
+			(item: MediaItem) =>
+				item.id === app.selectedMediaItemId &&
+				item.type === (app.activeHomeSection === 'movies' ? 'movie' : 'series')
+		)?.backdropPath;
+	}
 </script>
 
 <AppDocumentHead />
@@ -53,9 +74,7 @@
 			<AuthPanel bind:username={app.username} bind:password={app.password} onLogin={app.login} />
 		</main>
 	{:else}
-		<div
-			class="grid min-h-screen w-full max-w-[100vw] grid-cols-1 overflow-x-clip bg-background min-[981px]:grid-cols-[220px_minmax(0,1fr)]"
-		>
+		<Sidebar.Provider>
 			<SidebarMenu
 				title="mema"
 				items={app.primaryItems}
@@ -64,7 +83,7 @@
 				onSelect={app.selectPrimarySection}
 				onSubmenuSelect={app.selectSubmenuSection}
 			/>
-			<div class="min-w-0 bg-background">
+			<Sidebar.Inset>
 				<AppNav
 					bind:searchQuery={app.searchQuery}
 					groups={app.autocompleteGroups}
@@ -76,11 +95,29 @@
 					onLogout={app.logout}
 					showNotifications={app.isAdmin}
 				/>
-				<main class="px-3.5 py-3.5 min-[641px]:px-[18px] min-[641px]:py-6 min-[641px]:pb-10">
-					{@render children?.()}
+				<main
+					class="relative isolate min-h-[calc(100vh-76px)] overflow-hidden bg-background px-3.5 py-3.5 min-[641px]:px-[18px] min-[641px]:py-6 min-[641px]:pb-10"
+				>
+					{#if mainBackdropUrl}
+						<div
+							class="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(560px,58vh)] [mask-image:linear-gradient(to_bottom,black_0%,black_48%,transparent_100%)]"
+						>
+							<img
+								class="absolute inset-x-0 top-0 h-full w-full object-cover opacity-25"
+								src={mainBackdropUrl}
+								alt=""
+							/>
+							<div
+								class="absolute inset-0 bg-linear-to-r from-background via-background/80 to-background/25"
+							></div>
+						</div>
+					{/if}
+					<div class="relative z-[1]">
+						{@render children?.()}
+					</div>
 				</main>
-			</div>
-		</div>
+			</Sidebar.Inset>
+		</Sidebar.Provider>
 		{#if app.activeMediaCandidate}
 			<MediaActionModal
 				candidate={app.activeMediaCandidate}

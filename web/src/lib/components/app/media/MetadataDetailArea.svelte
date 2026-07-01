@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
+	import MediaDetailSkeleton from './MediaDetailSkeleton.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
 	import MediaMetadataShell from './MediaMetadataShell.svelte';
 	import MediaRelatedSections from './MediaRelatedSections.svelte';
@@ -58,20 +59,20 @@
 </script>
 
 {#if loading}
-	<section class="min-h-[220px] rounded-md border border-border bg-card p-5">
-		<p class="m-0 text-sm leading-6 text-muted-foreground">Loading media details</p>
-	</section>
+	<MediaDetailSkeleton />
 {:else if !detail}
 	<EmptyState
 		title="Details not available"
 		description="Could not load provider metadata for this item."
 	/>
 {:else}
-	<MediaMetadataShell backdropPath={detail.backdropPath} labelledby="metadata-detail-title">
+	<MediaMetadataShell labelledby="metadata-detail-title">
 		<MediaMetadataHero {detail} titleId="metadata-detail-title" showMonitorBookmark={false}>
 			{#snippet actions()}
 				<Button
 					type="button"
+					size="sm"
+					class="ml-auto"
 					aria-label={addingKey === candidateKey(detail) ? 'Working' : actionLabel}
 					disabled={addingKey === candidateKey(detail)}
 					onclick={() => onAdd(candidate(detail))}

@@ -33,7 +33,6 @@ export const staticSettingsSections = [
 	'quality',
 	'profiles',
 	'custom-formats',
-	'file-naming',
 	'tags'
 ] as const;
 
