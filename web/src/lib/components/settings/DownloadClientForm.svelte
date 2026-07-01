@@ -1,5 +1,5 @@
 <script lang="ts">
-	import IntegrationTestStatus from './IntegrationTestStatus.svelte';
+	import IntegrationTestStatus from './shared/IntegrationTestStatus.svelte';
 	import type {
 		DownloadClientForm,
 		DownloadClientType,

@@ -2,7 +2,7 @@
 	import CustomFormatForm from '$lib/components/settings/CustomFormatForm.svelte';
 	import CustomFormatImportModal from '$lib/components/settings/CustomFormatImportModal.svelte';
 	import CustomFormatTestParsingModal from '$lib/components/settings/CustomFormatTestParsingModal.svelte';
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import { emptyCustomFormatForm } from '$lib/settings/forms';
 	import type {
 		CustomFormat,

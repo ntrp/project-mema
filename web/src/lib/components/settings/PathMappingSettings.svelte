@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import type { PathMapping, PathMappingForm } from '$lib/settings/types';
 
 	interface Props {

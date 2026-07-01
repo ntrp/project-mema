@@ -1,7 +1,7 @@
 <script lang="ts">
 	import DownloadClientForm from '$lib/components/settings/DownloadClientForm.svelte';
 	import DownloadClientTable from '$lib/components/settings/DownloadClientTable.svelte';
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import { emptyDownloadClientForm } from '$lib/settings/forms';
 	import type {
 		DownloadClient,

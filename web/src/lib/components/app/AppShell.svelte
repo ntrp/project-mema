@@ -11,7 +11,7 @@
 	import MediaActionModal from '$lib/components/app/MediaActionModal.svelte';
 	import SidebarMenu from '$lib/components/app/SidebarMenu.svelte';
 	import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
-	import NoticeStack from '$lib/components/settings/NoticeStack.svelte';
+	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
 	import '$lib/settings/styles.css';
 
 	let props: AppShellOptions = $props();

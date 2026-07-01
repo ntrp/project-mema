@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import NoticeStack from '$lib/components/settings/NoticeStack.svelte';
+	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
 	import { getFileNamingSettings, updateFileNamingSettings } from '$lib/settings/api';
 	import type { FileNamingSettingsRequest } from '$lib/settings/types';
 

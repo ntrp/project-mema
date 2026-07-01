@@ -2,7 +2,7 @@
 	import LibraryFolderForm from '$lib/components/settings/LibraryFolderForm.svelte';
 	import LibraryFolderAccordion from '$lib/components/settings/LibraryFolderAccordion.svelte';
 	import PathMappingSettings from '$lib/components/settings/PathMappingSettings.svelte';
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import { emptyLibraryFolderForm } from '$lib/settings/forms';
 	import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
 	import type {

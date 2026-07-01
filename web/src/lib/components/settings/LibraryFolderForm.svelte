@@ -1,5 +1,5 @@
 <script lang="ts">
-	import LibraryFolderPicker from '$lib/components/settings/LibraryFolderPicker.svelte';
+	import LibraryFolderPicker from '$lib/components/settings/library/LibraryFolderPicker.svelte';
 	import type { LibraryFolderForm } from '$lib/settings/types';
 
 	interface Props {

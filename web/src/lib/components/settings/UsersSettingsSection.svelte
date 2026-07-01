@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import UserForm from '$lib/components/settings/UserForm.svelte';
 	import UserTable from '$lib/components/settings/UserTable.svelte';
 	import { emptyUserForm } from '$lib/settings/forms';

@@ -5,7 +5,7 @@
 	import MediaProfileQualitySelector from '$lib/components/settings/MediaProfileQualitySelector.svelte';
 	import MediaProfileRules from '$lib/components/settings/MediaProfileRules.svelte';
 	import MediaProfileTable from '$lib/components/settings/MediaProfileTable.svelte';
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import { listQualitySizeSettings } from '$lib/settings/api';
 	import { emptyMediaProfileForm } from '$lib/settings/forms';
 	import type {

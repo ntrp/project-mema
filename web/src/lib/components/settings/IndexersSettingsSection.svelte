@@ -1,7 +1,7 @@
 <script lang="ts">
 	import IndexerForm from '$lib/components/settings/IndexerForm.svelte';
 	import IndexerTable from '$lib/components/settings/IndexerTable.svelte';
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import { emptyIndexerForm } from '$lib/settings/forms';
 	import type {
 		Indexer,

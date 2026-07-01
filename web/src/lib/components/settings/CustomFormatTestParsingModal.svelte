@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import CustomFormatParsingResults from '$lib/components/settings/CustomFormatParsingResults.svelte';
 	import { testCustomFormatParsing } from '$lib/settings/api';
 	import type { CustomFormatParsingResponse } from '$lib/settings/types';

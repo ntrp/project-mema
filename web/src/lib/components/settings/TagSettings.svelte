@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsFormModal from '$lib/components/settings/SettingsFormModal.svelte';
+	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import { formatDate } from '$lib/settings/dateFormat';
 	import type { Tag, TagForm } from '$lib/settings/types';
 

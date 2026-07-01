@@ -1,34 +1,24 @@
 <script lang="ts">
 	import { createLibraryFolderOption, listLibraryFolderOptions } from '$lib/settings/api';
-	import type { LibraryFolderOption } from '$lib/settings/types';
 	import { onMount } from 'svelte';
+	import LibraryFolderCreateForm from './LibraryFolderCreateForm.svelte';
+	import LibraryFolderPickerHeader from './LibraryFolderPickerHeader.svelte';
+	import LibraryFolderTree from './LibraryFolderTree.svelte';
+	import {
+		createNode,
+		flattenTree,
+		type LibraryFolderPickerProps,
+		type TreeNode
+	} from './libraryFolderTree';
 
-	interface TreeNode {
-		name: string;
-		path: string;
-		parentPath?: string;
-		depth: number;
-		expanded: boolean;
-		loaded: boolean;
-		loading: boolean;
-		error: string;
-		children: string[];
-	}
-
-	interface Props {
-		initialPath?: string;
-		onClose: () => void;
-		onUse: (_path: string) => void;
-	}
-
-	let { initialPath, onClose, onUse }: Props = $props();
+	let { initialPath, onClose, onUse }: LibraryFolderPickerProps = $props();
 	let pickerLoading = $state(false);
 	let pickerError = $state('');
 	let rootPath = $state('');
 	let rootParentPath = $state<string | undefined>();
 	let selectedPath = $state('');
 	let treeNodes = $state<Record<string, TreeNode>>({});
-	let visibleNodes = $derived(flattenTree());
+	let visibleNodes = $derived(flattenTree(treeNodes, rootPath));
 	let newFolderName = $state('');
 	let creatingFolder = $state(false);
 	let createFolderError = $state('');
@@ -150,48 +140,6 @@
 		}
 	}
 
-	function createNode(
-		entry: LibraryFolderOption,
-		parentPath: string | undefined,
-		depth: number
-	): TreeNode {
-		return {
-			name: entry.name,
-			path: entry.path,
-			parentPath,
-			depth,
-			expanded: false,
-			loaded: false,
-			loading: false,
-			error: '',
-			children: []
-		};
-	}
-
-	function flattenTree() {
-		const root = treeNodes[rootPath];
-		if (!root) {
-			return [];
-		}
-
-		const flattened: TreeNode[] = [];
-		appendVisible(root, flattened);
-		return flattened;
-	}
-
-	function appendVisible(node: TreeNode, flattened: TreeNode[]) {
-		flattened.push(node);
-		if (!node.expanded) {
-			return;
-		}
-		for (const childPath of node.children) {
-			const child = treeNodes[childPath];
-			if (child) {
-				appendVisible(child, flattened);
-			}
-		}
-	}
-
 	function handleWindowKeydown(event: { key: string }) {
 		if (event.key === 'Escape') {
 			onClose();
@@ -211,18 +159,7 @@
 		onclick={(event) => event.stopPropagation()}
 		onkeydown={(event) => event.stopPropagation()}
 	>
-		<div class="section-heading">
-			<div>
-				<p class="section-kicker">Folder picker</p>
-				<h3 id="folder-picker-title">Select library folder</h3>
-			</div>
-			<button type="button" class="secondary" onclick={onClose}>Close</button>
-		</div>
-
-		<div class="folder-picker-selected">
-			<span>Selected</span>
-			<strong>{selectedPath || 'No folder selected'}</strong>
-		</div>
+		<LibraryFolderPickerHeader {selectedPath} {onClose} />
 
 		{#if pickerError}
 			<p class="empty">{pickerError}</p>
@@ -240,74 +177,21 @@
 				{/if}
 			</div>
 
-			<form
-				class="folder-create-row"
-				onsubmit={(event) => {
-					event.preventDefault();
-					void createDirectory();
-				}}
-			>
-				<label>
-					<span>Create under selected folder</span>
-					<input
-						bind:value={newFolderName}
-						placeholder="New folder name"
-						maxlength="255"
-						disabled={creatingFolder}
-					/>
-				</label>
-				<button
-					type="submit"
-					class="secondary"
-					disabled={!selectedPath || !newFolderName.trim() || creatingFolder}
-				>
-					{creatingFolder ? 'Creating' : 'Create folder'}
-				</button>
-			</form>
+			<LibraryFolderCreateForm
+				bind:name={newFolderName}
+				disabled={!selectedPath}
+				creating={creatingFolder}
+				onCreate={() => void createDirectory()}
+			/>
 			{#if createFolderError}
 				<p class="folder-tree-error">{createFolderError}</p>
 			{/if}
 
-			<div class="folder-tree" role="tree" aria-label="Server folders">
-				{#each visibleNodes as node (node.path)}
-					<div
-						class="folder-tree-row"
-						class:selected={selectedPath === node.path}
-						role="treeitem"
-						aria-selected={selectedPath === node.path}
-						aria-expanded={node.children.length > 0 || !node.loaded ? node.expanded : undefined}
-						style={`--depth: ${node.depth}`}
-					>
-						<button
-							type="button"
-							class="folder-tree-toggle"
-							aria-label={node.expanded ? 'Collapse folder' : 'Expand folder'}
-							disabled={node.loading}
-							onclick={() => toggleNode(node.path)}
-						>
-							{#if node.loading}
-								...
-							{:else if node.expanded}
-								v
-							{:else}
-								&gt;
-							{/if}
-						</button>
-						<button
-							type="button"
-							class="folder-tree-label"
-							ondblclick={() => toggleNode(node.path)}
-							onclick={() => (selectedPath = node.path)}
-						>
-							<span>{node.name}</span>
-							<small>{node.path}</small>
-						</button>
-					</div>
-					{#if node.error}
-						<p class="folder-tree-error" style={`--depth: ${node.depth + 1}`}>{node.error}</p>
-					{/if}
-				{/each}
-			</div>
+			<LibraryFolderTree
+				{visibleNodes}
+				bind:selectedPath
+				onToggle={(path) => void toggleNode(path)}
+			/>
 		{/if}
 	</div>
 </div>
