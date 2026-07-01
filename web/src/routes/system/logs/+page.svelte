@@ -1,5 +1,5 @@
 <script lang="ts">
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
+	import SystemRoute from '$lib/features/system/SystemRoute.svelte';
 </script>
 
-<AppShell initialView="system" initialSystemSection="logs" />
+<SystemRoute section="logs" />

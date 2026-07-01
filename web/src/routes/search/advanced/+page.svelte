@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
+	import AdvancedSearchRoute from '$lib/features/search/AdvancedSearchRoute.svelte';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 </script>
 
-<AppShell
-	initialView="advanced-search"
-	initialAdvancedQuery={page.url.searchParams.get('q') ?? ''}
-/>
+<AdvancedSearchRoute initialQuery={data.q} />

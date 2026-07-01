@@ -1,20 +1,22 @@
 <script lang="ts">
 	import HomeArea from '$lib/components/app/home/HomeArea.svelte';
-	import type { createAppShellController } from '$lib/components/app/shell/controller/index.svelte';
-
-	type AppShellController = ReturnType<typeof createAppShellController>;
+	import type { HomeSection } from '$lib/settings/types';
+	import { getAppShellContext } from '$lib/features/app/appShellContext';
 
 	interface Props {
-		app: AppShellController;
+		section: HomeSection;
+		selectedMediaItemId?: string;
+		selectedRequestId?: string;
 	}
 
-	let { app }: Props = $props();
+	let { section, selectedMediaItemId, selectedRequestId }: Props = $props();
+	const app = getAppShellContext();
 </script>
 
 <HomeArea
-	activeSection={app.activeHomeSection}
-	selectedMediaItemId={app.selectedMediaItemId}
-	selectedRequestId={app.selectedRequestId}
+	activeSection={section}
+	{selectedMediaItemId}
+	{selectedRequestId}
 	mediaItems={app.mediaItems}
 	mediaRequests={app.mediaRequests}
 	discoverSections={app.discoverSections}

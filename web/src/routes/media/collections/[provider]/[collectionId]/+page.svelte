@@ -1,12 +1,5 @@
 <script lang="ts">
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
-	import type { PageProps } from './$types';
-
-	let { params }: PageProps = $props();
+	import MediaCollectionRoute from '$lib/features/media/MediaCollectionRoute.svelte';
 </script>
 
-<AppShell
-	initialView="media-collection"
-	initialCollectionProvider={params.provider}
-	initialCollectionId={params.collectionId}
-/>
+<MediaCollectionRoute />

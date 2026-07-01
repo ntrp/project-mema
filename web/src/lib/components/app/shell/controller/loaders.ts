@@ -35,18 +35,18 @@ export function createLoadActions(state: AppShellState) {
 
 	async function loadMetadataDetail() {
 		if (
-			!state.options.initialMetadataProvider ||
-			!state.options.initialMetadataType ||
-			!state.options.initialMetadataExternalId
+			!state.route.metadataProvider ||
+			!state.route.metadataType ||
+			!state.route.metadataExternalId
 		) {
 			return;
 		}
 		state.loadingMetadataDetail = true;
 		try {
 			state.metadataDetail = await getMediaMetadataDetailsRequest(
-				state.options.initialMetadataProvider as MetadataProviderType,
-				state.options.initialMetadataType as MediaType,
-				state.options.initialMetadataExternalId
+				state.route.metadataProvider as MetadataProviderType,
+				state.route.metadataType as MediaType,
+				state.route.metadataExternalId
 			);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load media details');
@@ -56,14 +56,14 @@ export function createLoadActions(state: AppShellState) {
 	}
 
 	async function loadMediaCollection() {
-		if (!state.options.initialCollectionProvider || !state.options.initialCollectionId) {
+		if (!state.route.collectionProvider || !state.route.collectionId) {
 			return;
 		}
 		state.loadingMediaCollection = true;
 		try {
 			state.mediaCollection = await getMediaCollectionRequest(
-				state.options.initialCollectionProvider as MetadataProviderType,
-				state.options.initialCollectionId
+				state.route.collectionProvider as MetadataProviderType,
+				state.route.collectionId
 			);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load media collection');

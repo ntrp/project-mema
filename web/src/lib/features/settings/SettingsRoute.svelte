@@ -1,30 +1,17 @@
 <script lang="ts">
-	import AdvancedSearchArea from '../search/AdvancedSearchArea.svelte';
-	import DiscoverSectionArea from '../discovery/DiscoverSectionArea.svelte';
-	import HomeAreaRoute from '../home/HomeAreaRoute.svelte';
-	import MediaCollectionArea from '../media/MediaCollectionArea.svelte';
-	import MediaPeopleArea from '../media/MediaPeopleArea.svelte';
-	import MetadataDetailArea from '../media/MetadataDetailArea.svelte';
-	import SettingsArea from '../settings/SettingsArea.svelte';
-	import SystemArea from '../system/SystemArea.svelte';
-	import type {
-		AppShellOptions,
-		createAppShellController
-	} from '$lib/components/app/shell/controller/index.svelte';
-
-	type AppShellController = ReturnType<typeof createAppShellController>;
+	import SettingsArea from '$lib/components/app/settings/SettingsArea.svelte';
+	import type { SettingsSection } from '$lib/settings/types';
+	import { getAppShellContext } from '$lib/features/app/appShellContext';
 
 	interface Props {
-		app: AppShellController;
-		options: AppShellOptions;
+		section: SettingsSection;
 	}
 
-	let { app = $bindable(), options }: Props = $props();
-
-	function noop() {}
+	let { section }: Props = $props();
+	const app = getAppShellContext();
 </script>
 
-{#if app.activeView === 'settings' && app.isAdmin}
+{#if app.isAdmin}
 	<SettingsArea
 		bind:downloadForm={app.downloadForm}
 		bind:indexerForm={app.indexerForm}
@@ -34,7 +21,7 @@
 		bind:customFormatForm={app.customFormatForm}
 		bind:tagForm={app.tagForm}
 		bind:userForm={app.userForm}
-		activeSection={app.activeSettingsSection}
+		activeSection={section}
 		downloadClients={app.downloadClients}
 		indexers={app.indexers}
 		metadataProviders={app.metadataProviders}
@@ -109,75 +96,4 @@
 		onSearchLibraryMatch={app.searchLibraryMatch}
 		onImportLibraryScanRows={app.importLibraryScanRows}
 	/>
-{:else if app.activeView === 'system' && app.isAdmin}
-	<SystemArea activeSection={app.activeSystemSection} />
-{:else if app.activeView === 'advanced-search'}
-	<AdvancedSearchArea
-		initialQuery={options.initialAdvancedQuery ?? ''}
-		metadataProviders={app.metadataProviders}
-		groups={app.advancedSearchGroups}
-		searching={app.searchingAdvanced}
-		addingKey={app.addingKey}
-		actionLabel={app.isAdmin ? 'Add' : 'Request'}
-		onSearch={app.advancedSearch}
-		onAdd={app.addMedia}
-	/>
-{:else if app.activeView === 'metadata-detail'}
-	<MetadataDetailArea
-		detail={app.metadataDetail}
-		loading={app.loadingMetadataDetail}
-		mediaItems={app.mediaItems}
-		addingKey={app.addingKey}
-		actionLabel={app.isAdmin ? 'Add' : 'Request'}
-		onAdd={app.addMedia}
-	/>
-{:else if app.activeView === 'media-people'}
-	<MediaPeopleArea
-		detail={app.mediaPeopleDetail}
-		kind={app.activePeopleSectionKind}
-		loading={app.loadingMetadataDetail && !app.mediaPeopleDetail}
-	/>
-{:else if app.activeView === 'media-collection'}
-	<MediaCollectionArea
-		collection={app.mediaCollection}
-		mediaItems={app.mediaItems}
-		loading={app.loadingMediaCollection}
-		addingKey={app.addingKey}
-		actionLabel={app.isAdmin ? 'Add' : 'Request'}
-		onAdd={app.addMedia}
-	/>
-{:else if app.activeView === 'related-section'}
-	<DiscoverSectionArea
-		section={app.relatedMediaSection}
-		mediaItems={app.mediaItems}
-		loading={app.loadingMetadataDetail}
-		loadingMore={false}
-		hasMore={false}
-		addingKey={app.addingKey}
-		blacklistingKey={app.blacklistingKey}
-		actionLabel={app.isAdmin ? 'Add' : 'Request'}
-		canManage={app.isAdmin}
-		blacklist={app.discoverBlacklist}
-		onAdd={app.addMedia}
-		onBlacklist={app.blacklistDiscoverMedia}
-		onLoadMore={noop}
-	/>
-{:else if app.activeView === 'discover-section'}
-	<DiscoverSectionArea
-		section={app.discoverSection}
-		mediaItems={app.mediaItems}
-		loading={app.loadingDiscoverSection}
-		loadingMore={app.loadingMoreDiscoverSection}
-		hasMore={app.discoverSectionHasMore}
-		addingKey={app.addingKey}
-		blacklistingKey={app.blacklistingKey}
-		actionLabel={app.isAdmin ? 'Add' : 'Request'}
-		canManage={app.isAdmin}
-		blacklist={app.discoverBlacklist}
-		onAdd={app.addMedia}
-		onBlacklist={app.blacklistDiscoverMedia}
-		onLoadMore={app.loadMoreDiscoverSection}
-	/>
-{:else}
-	<HomeAreaRoute {app} />
 {/if}

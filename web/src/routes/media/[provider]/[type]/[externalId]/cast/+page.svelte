@@ -1,14 +1,5 @@
 <script lang="ts">
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
-	import type { PageProps } from './$types';
-
-	let { params }: PageProps = $props();
+	import MediaPeopleRoute from '$lib/features/media/MediaPeopleRoute.svelte';
 </script>
 
-<AppShell
-	initialView="media-people"
-	initialMetadataProvider={params.provider}
-	initialMetadataType={params.type}
-	initialMetadataExternalId={params.externalId}
-	initialPeopleSectionKind="cast"
-/>
+<MediaPeopleRoute kind="cast" />

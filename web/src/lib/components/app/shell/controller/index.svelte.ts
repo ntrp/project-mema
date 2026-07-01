@@ -14,6 +14,7 @@ import { createMediaActions } from './mediaActions';
 import { createNavigationActions } from './navigationActions';
 import { createNoticeActions } from './noticeActions';
 import { createReleaseActions } from './releaseActions';
+import { createRouteActions } from './routeActions';
 import { createSearchActions } from './searchActions';
 import { createSessionActions } from './sessionActions';
 import { createSettingsDeleteActions } from './settingsDeleteActions';
@@ -21,12 +22,13 @@ import { createSettingsEditActions } from './settingsEditActions';
 import { createSettingsSaveActions } from './settingsSaveActions';
 import { createSettingsTestCacheActions } from './settingsTestCacheActions';
 import { AppShellState } from './state.svelte';
-import type { AppShellOptions } from './types';
+import { defaultRouteState, type AppRouteState } from './routeState';
 
-export type { AppShellOptions, PeopleSectionKind, RelatedSectionKind } from './types';
+export type { PeopleSectionKind, RelatedSectionKind } from './types';
+export type { AppRouteState } from './routeState';
 
-export function createAppShellController(options: AppShellOptions) {
-	const state = new AppShellState(options);
+export function createAppShellController(route: AppRouteState = defaultRouteState()) {
+	const state = new AppShellState(route);
 	const notices = createNoticeActions(state);
 	const events = createEventActions(state);
 	const loads = createLoadActions(state);
@@ -60,6 +62,11 @@ export function createAppShellController(options: AppShellOptions) {
 		loadSettings: loads.loadSettings
 	});
 	const settingsEdit = createSettingsEditActions(state);
+	const routeActions = createRouteActions(state, {
+		loadDiscoverSection: discovery.loadDiscoverSection,
+		loadMediaCollection: loads.loadMediaCollection,
+		loadMetadataDetail: loads.loadMetadataDetail
+	});
 	const navigation = createNavigationActions(state, {
 		loadDiscoverSection: discovery.loadDiscoverSection
 	});
@@ -92,6 +99,7 @@ export function createAppShellController(options: AppShellOptions) {
 		settingsDelete,
 		settingsTestCache,
 		settingsEdit,
+		routeActions,
 		navigation,
 		{
 			cancelDownloadClient: () => (state.downloadForm = emptyDownloadClientForm()),

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
+	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
 	import type { PageProps } from './$types';
 
 	let { params }: PageProps = $props();
 </script>
 
-<AppShell initialHomeSection="movies" initialSelectedMediaItemId={params.id} />
+<HomeRoute section="movies" selectedMediaItemId={params.id} />

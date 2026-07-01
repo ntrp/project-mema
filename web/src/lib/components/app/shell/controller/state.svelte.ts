@@ -53,7 +53,8 @@ import type {
 	UserSummary
 } from '$lib/settings/types';
 import { relatedSectionFromDetail } from './discoverFilters';
-import type { AppShellOptions, PeopleSectionKind, RelatedSectionKind } from './types';
+import { defaultRouteState, type AppRouteState } from './routeState';
+import type { PeopleSectionKind, RelatedSectionKind } from './types';
 
 export class AppShellState {
 	authenticated = $state(false);
@@ -149,6 +150,7 @@ export class AppShellState {
 	selectedMediaItemId = $state<string | undefined>();
 	selectedRequestId = $state<string | undefined>();
 	searchQuery = $state('');
+	route = $state<AppRouteState>(defaultRouteState());
 	eventSource: EventSource | undefined;
 
 	mediaPeopleDetail = $derived(
@@ -204,16 +206,17 @@ export class AppShellState {
 			: basePrimaryItems.filter((item) => item.value !== 'blacklist')
 	);
 
-	constructor(readonly options: AppShellOptions) {
-		this.activeView = options.initialView ?? 'home';
-		this.activeHomeSection = options.initialHomeSection ?? 'discover';
-		this.activeSettingsSection = options.initialSettingsSection ?? 'library';
-		this.activeSystemSection = options.initialSystemSection ?? 'status';
-		this.activeDiscoverSectionId = options.initialDiscoverSectionId;
-		this.activeRelatedSectionKind = options.initialRelatedSectionKind ?? 'recommendations';
-		this.activePeopleSectionKind = options.initialPeopleSectionKind ?? 'cast';
-		this.selectedMediaItemId = options.initialSelectedMediaItemId;
-		this.selectedRequestId = options.initialSelectedRequestId;
-		this.searchQuery = options.initialAdvancedQuery ?? '';
+	constructor(route: AppRouteState = defaultRouteState()) {
+		this.route = route;
+		this.activeView = route.view;
+		this.activeHomeSection = route.homeSection;
+		this.activeSettingsSection = route.settingsSection;
+		this.activeSystemSection = route.systemSection;
+		this.activeDiscoverSectionId = route.discoverSectionId;
+		this.activeRelatedSectionKind = route.relatedSectionKind;
+		this.activePeopleSectionKind = route.peopleSectionKind;
+		this.selectedMediaItemId = route.selectedMediaItemId;
+		this.selectedRequestId = route.selectedRequestId;
+		this.searchQuery = route.advancedQuery;
 	}
 }

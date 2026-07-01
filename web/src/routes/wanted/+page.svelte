@@ -1,5 +1,5 @@
 <script lang="ts">
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
+	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
 </script>
 
-<AppShell initialHomeSection="wanted" />
+<HomeRoute section="wanted" />

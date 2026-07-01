@@ -1,5 +1,5 @@
 <script lang="ts">
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
+	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
 </script>
 
-<AppShell initialView="settings" initialSettingsSection="tags" />
+<SettingsRoute section="tags" />

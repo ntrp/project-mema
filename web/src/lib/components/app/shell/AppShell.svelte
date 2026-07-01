@@ -1,26 +1,31 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import AppDocumentHead from './AppDocumentHead.svelte';
-	import AppMainContent from './AppMainContent.svelte';
 	import AppNav from '../navigation/AppNav.svelte';
-	import {
-		createAppShellController,
-		type AppShellOptions
-	} from '$lib/components/app/shell/controller/index.svelte';
+	import { routeStateFromPath } from '$lib/components/app/shell/controller/routeState';
+	import { createAppShellController } from '$lib/components/app/shell/controller/index.svelte';
 	import MediaDeleteModal from '../media/MediaDeleteModal.svelte';
 	import MediaActionModal from '../media/MediaActionModal.svelte';
 	import SidebarMenu from '../navigation/SidebarMenu.svelte';
 	import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
+	import { setAppShellContext } from '$lib/features/app/appShellContext';
 	import '$lib/settings/styles.css';
 
-	let props: AppShellOptions = $props();
+	let { children } = $props();
+	const route = $derived(routeStateFromPath(page.url.pathname, page.params, page.url.searchParams));
 	// svelte-ignore state_referenced_locally
-	let app = $state(createAppShellController(props));
+	let app = $state(createAppShellController(route));
+	setAppShellContext(app);
 
 	onMount(() => {
 		void app.initialise();
 		return app.disconnectEvents;
+	});
+
+	$effect(() => {
+		void app.applyRoute(route);
 	});
 </script>
 
@@ -63,7 +68,7 @@
 				showNotifications={app.isAdmin}
 			/>
 			<main class="app-content">
-				<AppMainContent bind:app options={props} />
+				{@render children?.()}
 			</main>
 		</div>
 	</div>

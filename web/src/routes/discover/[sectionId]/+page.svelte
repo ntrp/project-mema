@@ -1,8 +1,5 @@
 <script lang="ts">
-	import AppShell from '$lib/components/app/shell/AppShell.svelte';
-	import type { PageProps } from './$types';
-
-	let { params }: PageProps = $props();
+	import DiscoverSectionRoute from '$lib/features/discovery/DiscoverSectionRoute.svelte';
 </script>
 
-<AppShell initialView="discover-section" initialDiscoverSectionId={params.sectionId} />
+<DiscoverSectionRoute />
