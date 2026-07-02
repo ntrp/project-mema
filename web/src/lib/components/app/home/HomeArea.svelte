@@ -175,7 +175,6 @@
 				{deletingMediaItemId}
 				{canManage}
 				actionLabel={canManage ? 'Add' : 'Request'}
-				{onFindReleases}
 				{onAutoSearchMedia}
 				{onRefreshMediaMetadata}
 				{onSaveMediaItemOptions}

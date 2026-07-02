@@ -29,7 +29,6 @@
 		}[];
 		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onAutoSearch: (_item: MediaItem) => void;
-		onManualSearch: (_item: MediaItem, _query?: string) => void;
 		onDeleteFile: (_item: MediaItem, _path: string) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 	}
@@ -45,7 +44,6 @@
 		qualityProfiles,
 		onSaveOptions,
 		onAutoSearch,
-		onManualSearch,
 		onDeleteFile,
 		onGrabRelease
 	}: Props = $props();
@@ -112,10 +110,8 @@
 		{item}
 		{releaseResults}
 		searchContext={{ type: 'title' }}
-		searching={searchingItemId === item.id}
 		{grabbingKey}
 		{canManage}
-		onSearch={onManualSearch}
 		onGrab={onGrabRelease}
 		onClose={() => (searchOpen = false)}
 	/>

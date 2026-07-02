@@ -403,6 +403,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/release-searches/stream': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Stream a manual release search for a monitored item */
+		get: operations['streamMediaReleaseSearch'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/automatic-searches': {
 		parameters: {
 			query?: never;
@@ -3301,6 +3320,32 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['JobEnqueueResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	streamMediaReleaseSearch: {
+		parameters: {
+			query?: {
+				query?: string;
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Release search status and result events */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'text/event-stream': string;
 				};
 			};
 			401: components['responses']['Unauthorized'];

@@ -1951,6 +1951,11 @@ type DeleteMediaItemParams struct {
 	KeepFiles *bool `form:"keepFiles,omitempty" json:"keepFiles,omitempty"`
 }
 
+// StreamMediaReleaseSearchParams defines parameters for StreamMediaReleaseSearch.
+type StreamMediaReleaseSearchParams struct {
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
 // GetIndexerSearchParams defines parameters for GetIndexerSearch.
 type GetIndexerSearchParams struct {
 	CacheLimit   *int32 `form:"cacheLimit,omitempty" json:"cacheLimit,omitempty"`
@@ -2202,6 +2207,9 @@ type ServerInterface interface {
 	// Enqueue a background release search for a monitored item
 	// (POST /media/items/{id}/release-searches)
 	EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Stream a manual release search for a monitored item
+	// (GET /media/items/{id}/release-searches/stream)
+	StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaReleaseSearchParams)
 	// List latest release candidates for a monitored item
 	// (GET /media/items/{id}/releases)
 	SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -2613,6 +2621,12 @@ func (_ Unimplemented) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.R
 // Enqueue a background release search for a monitored item
 // (POST /media/items/{id}/release-searches)
 func (_ Unimplemented) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Stream a manual release search for a monitored item
+// (GET /media/items/{id}/release-searches/stream)
+func (_ Unimplemented) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaReleaseSearchParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3897,6 +3911,54 @@ func (siw *ServerInterfaceWrapper) EnqueueMediaReleaseSearch(w http.ResponseWrit
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.EnqueueMediaReleaseSearch(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StreamMediaReleaseSearch operation middleware
+func (siw *ServerInterfaceWrapper) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params StreamMediaReleaseSearchParams
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StreamMediaReleaseSearch(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6403,6 +6465,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/release-searches", wrapper.EnqueueMediaReleaseSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/release-searches/stream", wrapper.StreamMediaReleaseSearch)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/releases", wrapper.SearchMediaReleases)

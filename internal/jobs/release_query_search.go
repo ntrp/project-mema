@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"media-manager/internal/decisions"
 	"media-manager/internal/events"
@@ -23,6 +24,7 @@ type releaseQuerySearch struct {
 	cacheSettings  storage.IndexerSearchSettings
 	eventBroker    *events.Broker
 	manual         bool
+	progress       ReleaseSearchProgress
 }
 
 func searchReleaseQueries(
@@ -33,11 +35,16 @@ func searchReleaseQueries(
 	searchErrors := []string{}
 	for _, config := range input.configs {
 		for _, searchQuery := range input.queries {
+			startedAt := time.Now()
+			publishIndexerSearchStarted(input.progress, config.Name, searchQuery)
 			found, cacheHit, err := executeIndexerSearch(ctx, input.settings, input.indexerService, input.limiter, config, input.item.Type, searchQuery, input.cacheSettings, input.eventBroker)
+			durationMs := time.Since(startedAt).Milliseconds()
 			if err != nil {
 				if input.manual && isIndexer429(err) {
 					publishManualIndexerRateLimitEvent(ctx, input.settings, input.eventBroker, config, input.item, searchQuery, err)
-					searchErrors = append(searchErrors, branchError(config, searchQuery, err))
+					message := branchError(config, searchQuery, err)
+					publishReleaseSearchProgress(input.progress, "%s", message)
+					searchErrors = append(searchErrors, message)
 					continue
 				}
 				if !errors.Is(err, errIndexerBackoffActive) {
@@ -48,13 +55,16 @@ func searchReleaseQueries(
 					publishManualIndexerBranchFailureEvent(ctx, input.settings, input.eventBroker, config, input.item, searchQuery, err)
 				}
 				slog.Error("indexer release search failed", "mediaItemId", input.item.ID, "title", input.item.Title, "indexerName", config.Name, "query", searchQuery, "error", err)
-				searchErrors = append(searchErrors, branchError(config, searchQuery, err))
+				message := branchError(config, searchQuery, err)
+				publishReleaseSearchProgress(input.progress, "%s", message)
+				searchErrors = append(searchErrors, message)
 				continue
 			}
 			if !cacheHit {
 				recordIndexerSearchSuccess(ctx, input.settings, config)
 			}
 			slog.Debug("indexer release search finished", "mediaItemId", input.item.ID, "title", input.item.Title, "indexerName", config.Name, "query", searchQuery, "cacheHit", cacheHit, "releaseCount", len(found))
+			publishIndexerSearchFinished(input.progress, config.Name, searchQuery, len(found), cacheHit, durationMs)
 			for _, release := range found {
 				releases = append(releases, releaseCandidateInput(input.item.ID, release, input.criteria))
 			}

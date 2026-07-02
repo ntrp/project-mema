@@ -46,7 +46,6 @@
 		deletingMediaItemId?: string;
 		canManage: boolean;
 		actionLabel: string;
-		onFindReleases: (_item: MediaItem, _query?: string) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
 		onRefreshMediaMetadata: (_item: MediaItem) => void;
 		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
@@ -74,7 +73,6 @@
 		deletingMediaItemId,
 		canManage,
 		actionLabel,
-		onFindReleases,
 		onAutoSearchMedia,
 		onRefreshMediaMetadata,
 		onSaveMediaItemOptions,
@@ -154,7 +152,6 @@
 								{canManage}
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
-								onManualSearch={onFindReleases}
 								onDeleteFile={onDeleteMediaFile}
 								{onGrabRelease}
 							/>
@@ -173,7 +170,6 @@
 								{canManage}
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
-								onManualSearch={onFindReleases}
 								onDeleteFile={onDeleteMediaFile}
 								{onGrabRelease}
 							/>

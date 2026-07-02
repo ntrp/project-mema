@@ -29,6 +29,39 @@ export interface ReleaseSort {
 	direction: ReleaseSortDirection;
 }
 
+const defaultQualityOptions = [
+	'Unknown',
+	'WORKPRINT',
+	'CAM',
+	'TELESYNC',
+	'TELECINE',
+	'REGIONAL',
+	'DVDSCR',
+	'SDTV',
+	'DVD',
+	'DVD-R',
+	'WEBDL-480p',
+	'WEBRip-480p',
+	'Bluray-480p',
+	'Bluray-576p',
+	'HDTV-720p',
+	'WEBDL-720p',
+	'WEBRip-720p',
+	'Bluray-720p',
+	'HDTV-1080p',
+	'WEBDL-1080p',
+	'WEBRip-1080p',
+	'Bluray-1080p',
+	'Remux-1080p',
+	'HDTV-2160p',
+	'WEBDL-2160p',
+	'WEBRip-2160p',
+	'Bluray-2160p',
+	'Remux-2160p',
+	'BR-DISK',
+	'Raw-HD'
+];
+
 export function defaultReleaseFilters(): ReleaseFilters {
 	return { source: 'all', minSize: '', maxSize: '', minScore: '', maxScore: '', quality: 'all' };
 }
@@ -41,9 +74,11 @@ export function activeFilterCount(filters: ReleaseFilters) {
 }
 
 export function releaseQualityOptions(releases: ReleaseCandidate[]) {
-	return [...new Set(releases.map((release) => qualityMatch(release).label).filter(Boolean))].sort(
-		(left, right) => left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' })
-	);
+	const options = new Set(defaultQualityOptions);
+	for (const release of releases) {
+		options.add(qualityMatch(release).label);
+	}
+	return [...options];
 }
 
 export function filteredSortedReleases(
@@ -53,7 +88,6 @@ export function filteredSortedReleases(
 	sort: ReleaseSort
 ) {
 	const filtered = releases.filter((release) => matchesFilters(release, filters));
-	if (!sort.key) return filtered;
 	return [...filtered].sort((left, right) => compareReleases(item, left, right, sort));
 }
 
@@ -75,6 +109,9 @@ function compareReleases(
 	right: ReleaseCandidate,
 	sort: ReleaseSort
 ) {
+	const severityResult = matchSeverityRank(right.match.severity) - matchSeverityRank(left.match.severity);
+	if (severityResult !== 0) return severityResult;
+	if (!sort.key) return 0;
 	const result = compareValues(sortValue(item, left, sort.key), sortValue(item, right, sort.key));
 	return sort.direction === 'asc' ? result : -result;
 }

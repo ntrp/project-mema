@@ -25,12 +25,26 @@ func searchReleases(
 	eventBroker *events.Broker,
 	manual bool,
 ) ([]storage.ReleaseCandidateInput, []string, error) {
+	return searchReleasesWithProgress(ctx, settings, indexerService, item, query, eventBroker, manual, nil)
+}
+
+func searchReleasesWithProgress(
+	ctx context.Context,
+	settings *storage.SettingsStore,
+	indexerService *indexers.Service,
+	item storage.MediaItem,
+	query string,
+	eventBroker *events.Broker,
+	manual bool,
+	progress ReleaseSearchProgress,
+) ([]storage.ReleaseCandidateInput, []string, error) {
 	configs, err := settings.ListEnabledIndexers(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("list enabled indexers: %w", err)
 	}
 	if len(configs) == 0 {
 		slog.Debug("release search skipped because no indexers are enabled", "mediaItemId", item.ID, "title", item.Title)
+		publishReleaseSearchProgress(progress, "No enabled indexer is configured")
 		return nil, []string{"No enabled indexer is configured"}, nil
 	}
 
@@ -38,6 +52,7 @@ func searchReleases(
 	searchErrors := []string{}
 	criteria := decisions.SearchCriteriaForQuery(item, query)
 	queries := decisions.SearchQueriesForCriteria(criteria, query)
+	publishReleaseSearchProgress(progress, "Searching %d indexer(s) with %d query branch(es)", len(configs), len(queries))
 	limiter := newIndexerRateLimiter()
 	cacheSettings, err := settings.GetIndexerSearchSettings(ctx)
 	if err != nil {
@@ -57,11 +72,13 @@ func searchReleases(
 		cacheSettings:  cacheSettings,
 		eventBroker:    eventBroker,
 		manual:         manual,
+		progress:       progress,
 	})
 	if err != nil {
 		return nil, searchErrors, err
 	}
 	if len(releases) == 0 && criteria.Kind == "episode" && criteria.SeasonNumber != nil {
+		publishReleaseSearchProgress(progress, "No episode releases found; searching the whole season")
 		seasonCriteria := decisions.ReleaseSearchCriteria{
 			Kind:         "season",
 			Title:        criteria.Title,
@@ -80,6 +97,7 @@ func searchReleases(
 			cacheSettings:  cacheSettings,
 			eventBroker:    eventBroker,
 			manual:         manual,
+			progress:       progress,
 		})
 		if err != nil {
 			return nil, seasonErrors, err

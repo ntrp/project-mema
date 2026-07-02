@@ -216,35 +216,19 @@ func yearMismatch(expected *int32, actual string) bool {
 }
 
 func resourceTitleMatches(expected string, parsedTitle string, releaseTitle string) bool {
-	expectedTokens := significantTitleTokens(expected)
-	if len(expectedTokens) == 0 {
+	expectedTitle := normalizedResourceTitle(expected)
+	if expectedTitle == "" {
 		return false
 	}
-	releaseTokens := tokenSet(parsedTitle)
-	if len(releaseTokens) == 0 {
-		releaseTokens = tokenSet(releaseTitle)
+	candidateTitle := normalizedResourceTitle(parsedTitle)
+	if candidateTitle == "" {
+		candidateTitle = normalizedResourceTitle(releaseTitle)
 	}
-	for _, token := range expectedTokens {
-		if _, ok := releaseTokens[token]; !ok {
-			return false
-		}
-	}
-	return true
+	return expectedTitle == candidateTitle
 }
 
-func significantTitleTokens(title string) []string {
-	stopWords := map[string]struct{}{"the": {}, "and": {}, "for": {}, "a": {}, "an": {}}
-	tokens := []string{}
-	for token := range tokenSet(title) {
-		if len(token) <= 2 {
-			continue
-		}
-		if _, stop := stopWords[token]; stop {
-			continue
-		}
-		tokens = append(tokens, token)
-	}
-	return tokens
+func normalizedResourceTitle(title string) string {
+	return normalizedToken(cleanReleaseResourceTitle(title))
 }
 
 func sameInt32(expected *int32, actual *int32) bool {

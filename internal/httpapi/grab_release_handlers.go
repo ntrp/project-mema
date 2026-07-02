@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"media-manager/internal/decisions"
 	"media-manager/internal/jobs"
 	"media-manager/internal/storage"
 )
@@ -27,6 +28,10 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 	release, err := s.settings.GetReleaseCandidate(r.Context(), uuid.UUID(body.ReleaseId), item.ID)
 	if err != nil {
 		writeSettingsError(w, err, "Could not find release candidate")
+		return
+	}
+	if decisions.EvaluateReleaseMatch(item, release).Severity == "error" {
+		writeError(w, http.StatusBadRequest, "release_mismatch", "Release does not match this series/movie")
 		return
 	}
 
