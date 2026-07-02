@@ -642,6 +642,12 @@ paths:
       summary: Enqueue a background release search for a monitored item
       security:
         - sessionCookie: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReleaseSearchRequest"
       responses:
         "202":
           description: Release search job enqueued
@@ -1055,6 +1061,89 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/indexer-search:
+    get:
+      operationId: getIndexerSearch
+      tags:
+        - Settings
+      summary: Inspect indexer search cache and query history
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer search cache, settings, and history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerSearchResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateIndexerSearchSettings
+      tags:
+        - Settings
+      summary: Update indexer search cache and history settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexerSearchSettings"
+      responses:
+        "200":
+          description: Indexer search settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerSearchResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-search/cache:
+    delete:
+      operationId: clearIndexerSearchCache
+      tags:
+        - Settings
+      summary: Clear all indexer search cache entries
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer search cache clear result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-search/cache/reset:
+    post:
+      operationId: clearIndexerSearchCacheByPattern
+      tags:
+        - Settings
+      summary: Clear indexer search cache entries matching a regex
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetadataCacheClearRequest"
+      responses:
+        "200":
+          description: Indexer search cache clear result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /system/event-settings:
     get:
       operationId: getSystemEventSettings
@@ -2658,6 +2747,9 @@ components:
           type: string
         posterPath:
           type: string
+        popularity:
+          type: number
+          format: double
         collectionId:
           type: string
         collectionName:
@@ -3825,6 +3917,7 @@ components:
         - indexerType
         - title
         - sizeBytes
+        - match
       properties:
         id:
           type: string
@@ -3852,6 +3945,50 @@ components:
         peers:
           type: integer
           format: int32
+        publishedAt:
+          type: string
+          format: date-time
+        match:
+          $ref: "#/components/schemas/ReleaseCandidateMatch"
+    ReleaseCandidateMatch:
+      type: object
+      additionalProperties: false
+      required:
+        - severity
+        - details
+        - qualityId
+        - quality
+        - score
+        - languages
+      properties:
+        severity:
+          type: string
+          enum:
+            - info
+            - warning
+            - error
+        details:
+          type: array
+          items:
+            type: string
+        qualityId:
+          type: string
+        quality:
+          type: string
+        score:
+          type: integer
+          format: int32
+        languages:
+          type: array
+          items:
+            type: string
+    ReleaseSearchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        query:
+          type: string
+          maxLength: 500
     GrabReleaseRequest:
       type: object
       additionalProperties: false
@@ -4176,6 +4313,137 @@ components:
         - torznab
         - newznab
         - rss
+    IndexerSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - settings
+        - stats
+        - cacheEntries
+        - historyEntries
+      properties:
+        settings:
+          $ref: "#/components/schemas/IndexerSearchSettings"
+        stats:
+          $ref: "#/components/schemas/IndexerSearchCacheStats"
+        cacheEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerSearchCacheEntry"
+        historyEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerSearchHistoryEntry"
+    IndexerSearchSettings:
+      type: object
+      additionalProperties: false
+      required:
+        - cacheDurationMinutes
+        - historyRetentionDays
+      properties:
+        cacheDurationMinutes:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 43200
+        historyRetentionDays:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 365
+    IndexerSearchCacheStats:
+      type: object
+      additionalProperties: false
+      required:
+        - totalEntries
+        - activeEntries
+        - expiredEntries
+        - indexerCount
+      properties:
+        totalEntries:
+          type: integer
+          format: int32
+        activeEntries:
+          type: integer
+          format: int32
+        expiredEntries:
+          type: integer
+          format: int32
+        indexerCount:
+          type: integer
+          format: int32
+    IndexerSearchCacheEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - indexerName
+        - indexerType
+        - mediaType
+        - query
+        - resultCount
+        - expiresAt
+        - createdAt
+        - updatedAt
+        - expired
+      properties:
+        indexerName:
+          type: string
+        indexerType:
+          $ref: "#/components/schemas/IndexerType"
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        query:
+          type: string
+        resultCount:
+          type: integer
+          format: int32
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expired:
+          type: boolean
+    IndexerSearchHistoryEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - indexerName
+        - indexerType
+        - mediaType
+        - query
+        - cacheHit
+        - success
+        - resultCount
+        - response
+        - createdAt
+      properties:
+        indexerName:
+          type: string
+        indexerType:
+          $ref: "#/components/schemas/IndexerType"
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        query:
+          type: string
+        cacheHit:
+          type: boolean
+        success:
+          type: boolean
+        resultCount:
+          type: integer
+          format: int32
+        error:
+          type: string
+        response:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     MetadataProviderListResponse:
       type: object
       additionalProperties: false
@@ -4252,6 +4520,7 @@ components:
       required:
         - stats
         - entries
+        - historyEntries
       properties:
         stats:
           $ref: "#/components/schemas/MetadataCacheStats"
@@ -4259,6 +4528,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetadataCacheEntry"
+        historyEntries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataSearchHistoryEntry"
     MetadataCacheStats:
       type: object
       additionalProperties: false
@@ -4327,6 +4600,53 @@ components:
           format: date-time
         expired:
           type: boolean
+    MetadataSearchHistoryEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - providerName
+        - providerType
+        - mediaType
+        - query
+        - cacheKind
+        - year
+        - cacheHit
+        - success
+        - itemCount
+        - response
+        - createdAt
+      properties:
+        providerName:
+          type: string
+        providerType:
+          $ref: "#/components/schemas/MetadataProviderType"
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        query:
+          type: string
+        cacheKind:
+          type: string
+          enum:
+            - search
+            - discover
+            - details
+        year:
+          type: integer
+          format: int32
+        cacheHit:
+          type: boolean
+        success:
+          type: boolean
+        itemCount:
+          type: integer
+          format: int32
+        error:
+          type: string
+        response:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     MetadataCacheClearRequest:
       type: object
       additionalProperties: false

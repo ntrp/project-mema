@@ -151,7 +151,14 @@ func (s *SettingsStore) RecordIndexerSuccess(ctx context.Context, id uuid.UUID) 
 	`, id))
 }
 
-func (s *SettingsStore) RecordIndexerFailure(ctx context.Context, id uuid.UUID, statusCode *int32, message string, permanent bool) (Indexer, error) {
+func (s *SettingsStore) RecordIndexerFailure(
+	ctx context.Context,
+	id uuid.UUID,
+	statusCode *int32,
+	message string,
+	permanent bool,
+	retryUntil *time.Time,
+) (Indexer, error) {
 	return scanIndexerRow(s.pool.QueryRow(ctx, `
 		update app.indexers
 		set health_status = case
@@ -166,6 +173,8 @@ func (s *SettingsStore) RecordIndexerFailure(ctx context.Context, id uuid.UUID, 
 			failure_count = failure_count + 1,
 			next_check_at = case
 				when $4 then null
+				when failure_count >= 5 then null
+				when $5::timestamptz is not null then $5
 				when failure_count = 0 then now() + interval '1 minute'
 				when failure_count = 1 then now() + interval '5 minutes'
 				when failure_count = 2 then now() + interval '15 minutes'
@@ -176,7 +185,7 @@ func (s *SettingsStore) RecordIndexerFailure(ctx context.Context, id uuid.UUID, 
 			updated_at = now()
 		where id = $1
 		returning `+indexerColumns+`
-	`, id, statusCode, message, permanent))
+	`, id, statusCode, message, permanent, retryUntil))
 }
 
 func (s *SettingsStore) DeleteIndexer(ctx context.Context, id uuid.UUID) error {

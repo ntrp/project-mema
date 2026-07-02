@@ -12,12 +12,18 @@ export type UserUpdateRequest = components['schemas']['UserUpdateRequest'];
 export type Indexer = components['schemas']['Indexer'];
 export type IndexerHealthStatus = components['schemas']['IndexerHealthStatus'];
 export type IndexerRequest = components['schemas']['IndexerRequest'];
+export type IndexerSearchResponse = components['schemas']['IndexerSearchResponse'];
+export type IndexerSearchSettings = components['schemas']['IndexerSearchSettings'];
+export type IndexerSearchCacheEntry = components['schemas']['IndexerSearchCacheEntry'];
+export type IndexerSearchCacheStats = components['schemas']['IndexerSearchCacheStats'];
+export type IndexerSearchHistoryEntry = components['schemas']['IndexerSearchHistoryEntry'];
 export type IndexerType = components['schemas']['IndexerType'];
 export type MetadataProvider = components['schemas']['MetadataProvider'];
 export type MetadataCacheClearResponse = components['schemas']['MetadataCacheClearResponse'];
 export type MetadataCacheEntry = components['schemas']['MetadataCacheEntry'];
 export type MetadataCacheResponse = components['schemas']['MetadataCacheResponse'];
 export type MetadataCacheStats = components['schemas']['MetadataCacheStats'];
+export type MetadataSearchHistoryEntry = components['schemas']['MetadataSearchHistoryEntry'];
 export type MetadataProviderRequest = components['schemas']['MetadataProviderRequest'];
 export type MetadataProviderType = components['schemas']['MetadataProviderType'];
 export type IntegrationTestResponse = components['schemas']['IntegrationTestResponse'];
@@ -137,7 +143,7 @@ export type HomeSection =
 	| 'series'
 	| 'wanted'
 	| 'activity';
-export type SystemSection = 'status' | 'logs' | 'events';
+export type SystemSection = 'status' | 'indexing' | 'metadata' | 'logs' | 'events';
 export type SettingsSection =
 	| 'general'
 	| 'library'
@@ -153,6 +159,7 @@ export type TagForm = TagRequest & { id?: string };
 export interface SettingsData {
 	downloadClients: DownloadClient[];
 	indexers: Indexer[];
+	indexerSearch: IndexerSearchResponse;
 	metadataProviders: MetadataProvider[];
 	metadataCache: MetadataCacheResponse;
 	libraryFolders: LibraryFolder[];

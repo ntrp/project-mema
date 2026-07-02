@@ -665,6 +665,58 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/indexer-search': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Inspect indexer search cache and query history */
+		get: operations['getIndexerSearch'];
+		/** Update indexer search cache and history settings */
+		put: operations['updateIndexerSearchSettings'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-search/cache': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Clear all indexer search cache entries */
+		delete: operations['clearIndexerSearchCache'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-search/cache/reset': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Clear indexer search cache entries matching a regex */
+		post: operations['clearIndexerSearchCacheByPattern'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/event-settings': {
 		parameters: {
 			query?: never;
@@ -1443,6 +1495,8 @@ export interface components {
 			externalId?: string;
 			overview?: string;
 			posterPath?: string;
+			/** Format: double */
+			popularity?: number;
 			collectionId?: string;
 			collectionName?: string;
 		};
@@ -1894,6 +1948,22 @@ export interface components {
 			seeders?: number;
 			/** Format: int32 */
 			peers?: number;
+			/** Format: date-time */
+			publishedAt?: string;
+			match: components['schemas']['ReleaseCandidateMatch'];
+		};
+		ReleaseCandidateMatch: {
+			/** @enum {string} */
+			severity: 'info' | 'warning' | 'error';
+			details: string[];
+			qualityId: string;
+			quality: string;
+			/** Format: int32 */
+			score: number;
+			languages: string[];
+		};
+		ReleaseSearchRequest: {
+			query?: string;
 		};
 		GrabReleaseRequest: {
 			/** Format: uuid */
@@ -2019,6 +2089,57 @@ export interface components {
 		};
 		/** @enum {string} */
 		IndexerType: 'torznab' | 'newznab' | 'rss';
+		IndexerSearchResponse: {
+			settings: components['schemas']['IndexerSearchSettings'];
+			stats: components['schemas']['IndexerSearchCacheStats'];
+			cacheEntries: components['schemas']['IndexerSearchCacheEntry'][];
+			historyEntries: components['schemas']['IndexerSearchHistoryEntry'][];
+		};
+		IndexerSearchSettings: {
+			/** Format: int32 */
+			cacheDurationMinutes: number;
+			/** Format: int32 */
+			historyRetentionDays: number;
+		};
+		IndexerSearchCacheStats: {
+			/** Format: int32 */
+			totalEntries: number;
+			/** Format: int32 */
+			activeEntries: number;
+			/** Format: int32 */
+			expiredEntries: number;
+			/** Format: int32 */
+			indexerCount: number;
+		};
+		IndexerSearchCacheEntry: {
+			indexerName: string;
+			indexerType: components['schemas']['IndexerType'];
+			mediaType: components['schemas']['MediaType'];
+			query: string;
+			/** Format: int32 */
+			resultCount: number;
+			/** Format: date-time */
+			expiresAt: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+			expired: boolean;
+		};
+		IndexerSearchHistoryEntry: {
+			indexerName: string;
+			indexerType: components['schemas']['IndexerType'];
+			mediaType: components['schemas']['MediaType'];
+			query: string;
+			cacheHit: boolean;
+			success: boolean;
+			/** Format: int32 */
+			resultCount: number;
+			error?: string;
+			response: string;
+			/** Format: date-time */
+			createdAt: string;
+		};
 		MetadataProviderListResponse: {
 			providers: components['schemas']['MetadataProvider'][];
 		};
@@ -2046,6 +2167,7 @@ export interface components {
 		MetadataCacheResponse: {
 			stats: components['schemas']['MetadataCacheStats'];
 			entries: components['schemas']['MetadataCacheEntry'][];
+			historyEntries: components['schemas']['MetadataSearchHistoryEntry'][];
 		};
 		MetadataCacheStats: {
 			/** Format: int32 */
@@ -2075,6 +2197,24 @@ export interface components {
 			/** Format: date-time */
 			updatedAt: string;
 			expired: boolean;
+		};
+		MetadataSearchHistoryEntry: {
+			providerName: string;
+			providerType: components['schemas']['MetadataProviderType'];
+			mediaType: components['schemas']['MediaType'];
+			query: string;
+			/** @enum {string} */
+			cacheKind: 'search' | 'discover' | 'details';
+			/** Format: int32 */
+			year: number;
+			cacheHit: boolean;
+			success: boolean;
+			/** Format: int32 */
+			itemCount: number;
+			error?: string;
+			response: string;
+			/** Format: date-time */
+			createdAt: string;
 		};
 		MetadataCacheClearRequest: {
 			pattern: string;
@@ -2996,7 +3136,11 @@ export interface operations {
 			};
 			cookie?: never;
 		};
-		requestBody?: never;
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['ReleaseSearchRequest'];
+			};
+		};
 		responses: {
 			/** @description Release search job enqueued */
 			202: {
@@ -3459,6 +3603,100 @@ export interface operations {
 			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
+		};
+	};
+	getIndexerSearch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer search cache, settings, and history */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerSearchResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateIndexerSearchSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IndexerSearchSettings'];
+			};
+		};
+		responses: {
+			/** @description Indexer search settings updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerSearchResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	clearIndexerSearchCache: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer search cache clear result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	clearIndexerSearchCacheByPattern: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MetadataCacheClearRequest'];
+			};
+		};
+		responses: {
+			/** @description Indexer search cache clear result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
 		};
 	};
 	getSystemEventSettings: {

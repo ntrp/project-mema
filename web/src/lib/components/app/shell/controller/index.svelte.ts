@@ -81,10 +81,16 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		loadMetadataDetail: loads.loadMetadataDetail,
 		loadMediaCollection: loads.loadMediaCollection,
 		loadDiscoverSection: discovery.loadDiscoverSection,
-		loadMediaItems: loads.loadMediaItems,
-		upsertActivity: events.upsertActivity,
-		updateMediaStatusFromActivity: events.updateMediaStatusFromActivity,
-		parseEventData: events.parseEventData
+		events: {
+			loadMediaItems: loads.loadMediaItems,
+			upsertActivity: events.upsertActivity,
+			updateMediaStatusFromActivity: events.updateMediaStatusFromActivity,
+			appendIndexerSearchHistory: events.appendIndexerSearchHistory,
+			upsertIndexerSearchCache: events.upsertIndexerSearchCache,
+			upsertMetadataCache: events.upsertMetadataCache,
+			appendMetadataSearchHistory: events.appendMetadataSearchHistory,
+			parseEventData: events.parseEventData
+		}
 	});
 
 	return Object.assign(

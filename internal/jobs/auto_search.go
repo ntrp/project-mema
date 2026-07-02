@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -106,7 +105,7 @@ func autoSearchDownload(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search skipped", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "status": item.Status})
 		return nil
 	}
-	releases, searchErrors, err := searchReleases(ctx, settings, indexerService, item)
+	releases, searchErrors, err := searchReleases(ctx, settings, indexerService, item, decisions.SearchQueryForMediaItem(item), eventBroker, false)
 	if err != nil {
 		slog.Error("auto search release search failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "error": err.Error()})
@@ -118,7 +117,7 @@ func autoSearchDownload(
 		return err
 	}
 	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
-	decision, ok := decisionEngine.ChooseRelease(releases)
+	decision, ok := decisionEngine.ChooseRelease(item, releases)
 	if !ok {
 		slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseCount": len(releases), "errorCount": len(searchErrors)})
@@ -132,53 +131,6 @@ func autoSearchDownload(
 	slog.Debug("auto search grab queued", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title)
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search queued download", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title})
 	return nil
-}
-
-func searchReleases(
-	ctx context.Context,
-	settings *storage.SettingsStore,
-	indexerService *indexers.Service,
-	item storage.MediaItem,
-) ([]storage.ReleaseCandidateInput, []string, error) {
-	configs, err := settings.ListEnabledIndexers(ctx)
-	if err != nil {
-		return nil, nil, fmt.Errorf("list enabled indexers: %w", err)
-	}
-	if len(configs) == 0 {
-		slog.Debug("release search skipped because no indexers are enabled", "mediaItemId", item.ID, "title", item.Title)
-		return nil, []string{"No enabled indexer is configured"}, nil
-	}
-
-	releases := []storage.ReleaseCandidateInput{}
-	searchErrors := []string{}
-	for _, config := range configs {
-		found, err := indexerService.Search(ctx, indexerConfig(config), item.Title, item.Type)
-		if err != nil {
-			recordIndexerSearchFailure(ctx, settings, config, err)
-			slog.Error("indexer release search failed", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "error", err)
-			searchErrors = append(searchErrors, fmt.Sprintf("%s: %s", config.Name, err.Error()))
-			continue
-		}
-		if _, err := settings.RecordIndexerSuccess(ctx, config.ID); err != nil {
-			slog.Error("indexer success state update failed", "indexerName", config.Name, "error", err)
-		}
-		slog.Debug("indexer release search finished", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "releaseCount", len(found))
-		for _, release := range found {
-			releases = append(releases, releaseCandidateInput(item.ID, release))
-		}
-	}
-	sort.SliceStable(releases, func(i, j int) bool {
-		left := releases[i]
-		right := releases[j]
-		if left.Seeders != nil && right.Seeders != nil && *left.Seeders != *right.Seeders {
-			return *left.Seeders > *right.Seeders
-		}
-		return left.SizeBytes > right.SizeBytes
-	})
-	if len(releases) == 0 && len(searchErrors) == 0 {
-		searchErrors = append(searchErrors, "No releases found")
-	}
-	return releases, searchErrors, nil
 }
 
 func grabReleaseNow(
@@ -246,17 +198,6 @@ func grabReleaseNow(
 	return err
 }
 
-func indexerConfig(indexer storage.Indexer) indexers.Config {
-	return indexers.Config{
-		ID:         indexer.ID.String(),
-		Name:       indexer.Name,
-		Type:       indexer.Type,
-		BaseURL:    indexer.BaseURL,
-		APIKey:     indexer.APIKey,
-		Categories: indexer.Categories,
-	}
-}
-
 func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
 	return downloadclients.Config{
 		Name:     client.Name,
@@ -266,26 +207,6 @@ func downloadClientConfig(client storage.DownloadClient) downloadclients.Config 
 		Password: client.Password,
 		APIKey:   client.APIKey,
 		Category: client.Category,
-	}
-}
-
-func releaseCandidateInput(mediaItemID uuid.UUID, release indexers.Release) storage.ReleaseCandidateInput {
-	var indexerID *uuid.UUID
-	if parsed, err := uuid.Parse(release.IndexerID); err == nil {
-		indexerID = &parsed
-	}
-	return storage.ReleaseCandidateInput{
-		MediaItemID: mediaItemID,
-		IndexerID:   indexerID,
-		IndexerName: release.IndexerName,
-		IndexerType: release.IndexerType,
-		Title:       release.Title,
-		DownloadURL: release.DownloadURL,
-		InfoURL:     optionalString(release.InfoURL),
-		GUID:        optionalString(release.GUID),
-		SizeBytes:   release.SizeBytes,
-		Seeders:     release.Seeders,
-		Peers:       release.Peers,
 	}
 }
 

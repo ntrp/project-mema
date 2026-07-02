@@ -45,6 +45,41 @@ func (s *SettingsStore) SetMetadataSearchCache(ctx context.Context, providerID u
 	return err
 }
 
+func (s *SettingsStore) RecordMetadataSearchHistory(ctx context.Context, input MetadataSearchHistoryInput) (MetadataSearchHistoryEntry, error) {
+	raw, err := json.Marshal(input.Response)
+	if err != nil {
+		return MetadataSearchHistoryEntry{}, err
+	}
+	var entry MetadataSearchHistoryEntry
+	err = s.pool.QueryRow(ctx, `
+		insert into app.metadata_search_history (
+			id, provider_id, provider_name, provider_type, media_type, query, year,
+			cache_hit, success, item_count, error, response
+		)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		returning provider_name, provider_type, media_type, query, year, cache_hit,
+			success, item_count, error, response::text, created_at
+	`, uuid.New(), input.ProviderID, input.ProviderName, input.ProviderType, input.MediaType, input.Query,
+		cacheYear(input.Year), input.CacheHit, input.Success, input.ItemCount, input.Error, raw).Scan(
+		&entry.ProviderName,
+		&entry.ProviderType,
+		&entry.MediaType,
+		&entry.Query,
+		&entry.Year,
+		&entry.CacheHit,
+		&entry.Success,
+		&entry.ItemCount,
+		&entry.Error,
+		&entry.Response,
+		&entry.CreatedAt,
+	)
+	if err != nil {
+		return MetadataSearchHistoryEntry{}, err
+	}
+	entry.CacheKind = metadataCacheKind(entry.Query)
+	return entry, nil
+}
+
 func (s *SettingsStore) MetadataCacheStats(ctx context.Context) (MetadataCacheStats, error) {
 	var stats MetadataCacheStats
 	err := s.pool.QueryRow(ctx, `
@@ -56,6 +91,46 @@ func (s *SettingsStore) MetadataCacheStats(ctx context.Context) (MetadataCacheSt
 		from app.metadata_search_cache
 	`).Scan(&stats.TotalEntries, &stats.ActiveEntries, &stats.ExpiredEntries, &stats.ProviderCount)
 	return stats, err
+}
+
+func (s *SettingsStore) ListMetadataSearchHistoryEntries(ctx context.Context, limit int32) ([]MetadataSearchHistoryEntry, error) {
+	if limit <= 0 || limit > 200 {
+		limit = 100
+	}
+	rows, err := s.pool.Query(ctx, `
+		select provider_name, provider_type, media_type, query, year, cache_hit, success,
+			item_count, error, response::text, created_at
+		from app.metadata_search_history
+		order by created_at desc
+		limit $1
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	entries := []MetadataSearchHistoryEntry{}
+	for rows.Next() {
+		var entry MetadataSearchHistoryEntry
+		if err := rows.Scan(
+			&entry.ProviderName,
+			&entry.ProviderType,
+			&entry.MediaType,
+			&entry.Query,
+			&entry.Year,
+			&entry.CacheHit,
+			&entry.Success,
+			&entry.ItemCount,
+			&entry.Error,
+			&entry.Response,
+			&entry.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		entry.CacheKind = metadataCacheKind(entry.Query)
+		entries = append(entries, entry)
+	}
+	return entries, rows.Err()
 }
 
 func (s *SettingsStore) ListMetadataCacheEntries(ctx context.Context, limit int32) ([]MetadataCacheEntry, error) {
@@ -132,4 +207,15 @@ func cacheYear(year *int32) int32 {
 		return 0
 	}
 	return *year
+}
+
+func metadataCacheKind(query string) string {
+	switch {
+	case len(query) >= 9 && query[:9] == "discover:":
+		return "discover"
+	case len(query) >= 8 && query[:8] == "details:":
+		return "details"
+	default:
+		return "search"
+	}
 }

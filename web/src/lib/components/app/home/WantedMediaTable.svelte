@@ -5,13 +5,14 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
+	import { releaseSearchQuery } from '$lib/components/app/media/releaseSearchQuery';
 	import type { MediaItem } from '$lib/settings/types';
 
 	interface Props {
 		items: MediaItem[];
 		searchingItemId?: string;
 		canManage: boolean;
-		onFindReleases: (_item: MediaItem) => void;
+		onFindReleases: (_item: MediaItem, _query?: string) => void;
 	}
 
 	let { items, searchingItemId, canManage, onFindReleases }: Props = $props();
@@ -64,7 +65,7 @@
 									variant="outline"
 									size="sm"
 									disabled={searchingItemId === item.id}
-									onclick={() => onFindReleases(item)}
+									onclick={() => onFindReleases(item, releaseSearchQuery(item))}
 								>
 									{searchingItemId === item.id ? 'Searching' : 'Search'}
 								</Button>

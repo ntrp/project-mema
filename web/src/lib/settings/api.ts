@@ -20,6 +20,8 @@ import type {
 	FileNamingSettings,
 	FileNamingSettingsRequest,
 	IndexerForm,
+	IndexerSearchResponse,
+	IndexerSearchSettings,
 	LibraryFolderForm,
 	LibraryFolderOption,
 	LibraryFolderOptionListResponse,
@@ -230,6 +232,7 @@ export async function loadSettings(): Promise<SettingsData> {
 	const [
 		clientResult,
 		indexerResult,
+		indexerSearchResult,
 		metadataProviderResult,
 		metadataCacheResult,
 		libraryFolderResult,
@@ -241,6 +244,7 @@ export async function loadSettings(): Promise<SettingsData> {
 	] = await Promise.all([
 		client.GET('/settings/download-clients'),
 		client.GET('/settings/indexers'),
+		client.GET('/settings/indexer-search'),
 		client.GET('/settings/metadata-providers'),
 		client.GET('/settings/metadata-cache'),
 		client.GET('/settings/library/folders'),
@@ -256,6 +260,9 @@ export async function loadSettings(): Promise<SettingsData> {
 	}
 	if (indexerResult.error) {
 		throw new Error(indexerResult.error.message);
+	}
+	if (indexerSearchResult.error) {
+		throw new Error(indexerSearchResult.error.message);
 	}
 	if (metadataProviderResult.error) {
 		throw new Error(metadataProviderResult.error.message);
@@ -285,6 +292,7 @@ export async function loadSettings(): Promise<SettingsData> {
 	return {
 		downloadClients: clientResult.data?.clients ?? [],
 		indexers: indexerResult.data?.indexers ?? [],
+		indexerSearch: indexerSearchResult.data ?? emptyIndexerSearch(),
 		metadataProviders: metadataProviderResult.data?.providers ?? [],
 		metadataCache: metadataCacheResult.data ?? emptyMetadataCache(),
 		libraryFolders: libraryFolderResult.data?.folders ?? [],
@@ -296,6 +304,23 @@ export async function loadSettings(): Promise<SettingsData> {
 	};
 }
 
+export function emptyIndexerSearch(): IndexerSearchResponse {
+	return {
+		settings: {
+			cacheDurationMinutes: 1440,
+			historyRetentionDays: 30
+		},
+		stats: {
+			totalEntries: 0,
+			activeEntries: 0,
+			expiredEntries: 0,
+			indexerCount: 0
+		},
+		cacheEntries: [],
+		historyEntries: []
+	};
+}
+
 export function emptyMetadataCache(): MetadataCacheResponse {
 	return {
 		stats: {
@@ -304,7 +329,8 @@ export function emptyMetadataCache(): MetadataCacheResponse {
 			expiredEntries: 0,
 			providerCount: 0
 		},
-		entries: []
+		entries: [],
+		historyEntries: []
 	};
 }
 
@@ -670,9 +696,10 @@ export async function searchMediaReleases(id: string) {
 	};
 }
 
-export async function enqueueMediaReleaseSearch(id: string) {
+export async function enqueueMediaReleaseSearch(id: string, query?: string) {
 	const { data, error } = await client.POST('/media/items/{id}/release-searches', {
-		params: { path: { id } }
+		params: { path: { id } },
+		body: query ? { query } : undefined
 	});
 
 	if (error) {
@@ -925,6 +952,44 @@ export async function getMetadataCache() {
 		throw new Error(error.message);
 	}
 	return data ?? emptyMetadataCache();
+}
+
+export async function getIndexerSearch() {
+	const { data, error } = await client.GET('/settings/indexer-search');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? emptyIndexerSearch();
+}
+
+export async function updateIndexerSearchSettings(settings: IndexerSearchSettings) {
+	const { data, error } = await client.PUT('/settings/indexer-search', { body: settings });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? emptyIndexerSearch();
+}
+
+export async function clearIndexerSearchCache() {
+	const { data, error } = await client.DELETE('/settings/indexer-search/cache');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.deletedCount ?? 0;
+}
+
+export async function clearIndexerSearchCacheByPattern(pattern: string) {
+	const { data, error } = await client.POST('/settings/indexer-search/cache/reset', {
+		body: { pattern }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.deletedCount ?? 0;
 }
 
 export async function clearMetadataCache() {

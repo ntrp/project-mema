@@ -16,6 +16,7 @@ export function createLoadActions(state: AppShellState) {
 			const settings = await loadSettingsRequest();
 			state.downloadClients = settings.downloadClients;
 			state.indexers = settings.indexers;
+			state.indexerSearch = settings.indexerSearch;
 			state.metadataProviders = settings.metadataProviders;
 			state.metadataCache = settings.metadataCache;
 			state.libraryFolders = settings.libraryFolders;

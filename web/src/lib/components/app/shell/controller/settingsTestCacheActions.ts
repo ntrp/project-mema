@@ -1,10 +1,14 @@
 import {
+	clearIndexerSearchCache as clearIndexerSearchCacheRequest,
+	clearIndexerSearchCacheByPattern as clearIndexerSearchCacheByPatternRequest,
 	clearMetadataCache as clearMetadataCacheRequest,
 	clearMetadataCacheByPattern as clearMetadataCacheByPatternRequest,
+	getIndexerSearch as getIndexerSearchRequest,
 	getMetadataCache as getMetadataCacheRequest,
 	testDownloadClientConfig as testDownloadClientConfigRequest,
 	testIndexer as testIndexerRequest,
-	testMetadataProvider as testMetadataProviderRequest
+	testMetadataProvider as testMetadataProviderRequest,
+	updateIndexerSearchSettings as updateIndexerSearchSettingsRequest
 } from '$lib/settings/api';
 import type { DownloadClientForm as DownloadClientFormValue } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
@@ -71,6 +75,70 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		}
 	}
 
+	async function refreshIndexerSearch() {
+		state.loadingIndexerSearch = true;
+		clearNotice();
+
+		try {
+			state.indexerSearch = await getIndexerSearchRequest();
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not load indexer search cache');
+		} finally {
+			state.loadingIndexerSearch = false;
+		}
+	}
+
+	async function saveIndexerSearchSettings(settings = state.indexerSearch.settings) {
+		state.savingIndexerSearchSettings = true;
+		clearNotice();
+
+		try {
+			state.indexerSearch = await updateIndexerSearchSettingsRequest(settings);
+			state.message = 'Indexer search settings saved';
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not save indexer search settings');
+		} finally {
+			state.savingIndexerSearchSettings = false;
+		}
+	}
+
+	async function clearIndexerSearchCache() {
+		state.clearingIndexerSearchCache = true;
+		clearNotice();
+
+		try {
+			const deletedCount = await clearIndexerSearchCacheRequest();
+			state.indexerSearch = await getIndexerSearchRequest();
+			state.message = `Indexer search cache reset: ${deletedCount} entries deleted`;
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not reset indexer search cache');
+		} finally {
+			state.clearingIndexerSearchCache = false;
+		}
+	}
+
+	async function clearIndexerSearchCachePattern(pattern: string) {
+		pattern = pattern.trim();
+		if (!pattern) {
+			return;
+		}
+		state.clearingIndexerSearchCache = true;
+		clearNotice();
+
+		try {
+			const deletedCount = await clearIndexerSearchCacheByPatternRequest(pattern);
+			state.indexerSearch = await getIndexerSearchRequest();
+			state.message = `Indexer search cache reset: ${deletedCount} matching entries deleted`;
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(
+				error,
+				'Could not reset matching indexer search cache entries'
+			);
+		} finally {
+			state.clearingIndexerSearchCache = false;
+		}
+	}
+
 	async function clearMetadataCache() {
 		state.clearingMetadataCache = true;
 		clearNotice();
@@ -86,9 +154,8 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		}
 	}
 
-	async function clearMetadataCachePattern(event: SubmitEvent) {
-		event.preventDefault();
-		const pattern = state.metadataCachePattern.trim();
+	async function clearMetadataCachePattern(pattern: string) {
+		pattern = pattern.trim();
 		if (!pattern) {
 			return;
 		}
@@ -97,7 +164,6 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 
 		try {
 			const deletedCount = await clearMetadataCacheByPatternRequest(pattern);
-			state.metadataCachePattern = '';
 			state.metadataCache = await getMetadataCacheRequest();
 			state.message = `Metadata cache reset: ${deletedCount} matching entries deleted`;
 		} catch (error) {
@@ -114,6 +180,10 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		testDownloadClientConfig,
 		testIndexer,
 		testMetadataProvider,
+		refreshIndexerSearch,
+		saveIndexerSearchSettings,
+		clearIndexerSearchCache,
+		clearIndexerSearchCachePattern,
 		refreshMetadataCache,
 		clearMetadataCache,
 		clearMetadataCachePattern

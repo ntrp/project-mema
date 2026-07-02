@@ -20,12 +20,12 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 	const loadDownloadActivity = deps.loadDownloadActivity;
 	const updateMediaStatusFromActivity = deps.updateMediaStatusFromActivity;
 
-	async function findReleases(item: MediaItem) {
+	async function findReleases(item: MediaItem, query?: string) {
 		state.searchingItemId = item.id;
 		clearNotice();
 
 		try {
-			const job = await enqueueMediaReleaseSearchRequest(item.id);
+			const job = await enqueueMediaReleaseSearchRequest(item.id, query);
 			state.releaseResults = {
 				...state.releaseResults,
 				[item.id]: { loaded: false, releases: [], errors: [`${job.message} (#${job.jobId})`] }

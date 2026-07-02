@@ -222,6 +222,7 @@ func tmdbResults(items []tmdbMedia, mediaType string, limit int) []SearchResult 
 			ExternalID:       strconv.FormatInt(item.ID, 10),
 			Overview:         optionalString(item.Overview),
 			PosterPath:       optionalString(item.PosterPath),
+			Popularity:       optionalFloat64(item.Popularity),
 		})
 		if len(results) >= limit {
 			break

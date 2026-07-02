@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type StatusError struct {
 	StatusCode int
+	RetryAfter time.Duration
 }
 
 func (e StatusError) Error() string {

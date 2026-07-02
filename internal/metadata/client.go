@@ -7,9 +7,10 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
+
+	"media-manager/internal/ratelimit"
 )
 
 func (s *Service) doJSON(ctx context.Context, config Config, method string, endpoint string, body any, target any) error {
@@ -73,7 +74,7 @@ func (s *Service) doJSONOnce(ctx context.Context, config Config, method string, 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return rateLimitedError{retryAfter: parseRetryAfter(resp.Header.Get("Retry-After"))}
+		return rateLimitedError{retryAfter: ratelimit.DelayFromHeaders(resp.Header)}
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return ProviderHTTPError{StatusCode: resp.StatusCode}
@@ -141,20 +142,4 @@ func ProviderStatusCode(err error) (int, bool) {
 		return providerErr.StatusCode, true
 	}
 	return 0, false
-}
-
-func parseRetryAfter(value string) time.Duration {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return 0
-	}
-	seconds, err := strconv.ParseInt(value, 10, 64)
-	if err == nil {
-		return time.Duration(seconds) * time.Second
-	}
-	when, err := http.ParseTime(value)
-	if err != nil {
-		return 0
-	}
-	return time.Until(when)
 }

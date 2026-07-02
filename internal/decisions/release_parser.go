@@ -12,7 +12,11 @@ type ParsedRelease struct {
 	FileName      string
 	ReleaseTitle  string
 	MovieTitle    string
+	SeriesTitle   string
 	Year          string
+	SeasonNumber  *int32
+	EpisodeNumber *int32
+	SeasonPack    bool
 	Edition       string
 	ReleaseGroup  string
 	ReleaseHash   string
@@ -59,11 +63,14 @@ func ParseReleaseFileName(fileName string) ParsedRelease {
 		Proper:       containsAnyNormalized(title, "proper"),
 		Repack:       containsAnyNormalized(title, "repack", "rerip"),
 		Real:         containsAnyNormalized(title, "real"),
-		Version:       detectVersion(title),
+		Version:      detectVersion(title),
 		ReleaseType:  detectReleaseType(title),
 	}
 	parsed.AudioChannels = detectAudioChannels(title)
 	parsed.MovieTitle = releaseMovieTitle(title, parsed.Year)
+	parsed.SeriesTitle = releaseSeriesTitle(title)
+	parsed.SeasonNumber, parsed.EpisodeNumber = detectSeasonEpisode(title)
+	parsed.SeasonPack = parsed.SeasonNumber != nil && parsed.EpisodeNumber == nil
 	parsed.QualityID, parsed.Quality = detectReleaseQuality(parsed.Source, parsed.Resolution, title)
 	return parsed
 }

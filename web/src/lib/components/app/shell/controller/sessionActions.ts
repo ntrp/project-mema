@@ -14,12 +14,13 @@ import {
 	emptyPathMappingForm,
 	emptyUserForm
 } from '$lib/settings/forms';
-import type { DownloadActivity } from '$lib/settings/types';
+import {
+	connectAppEvents,
+	disconnectAppEvents,
+	type EventConnectionDeps
+} from './eventConnection';
 import { emptyTagForm, errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
-import type { createEventActions } from './events';
-
-type EventActions = ReturnType<typeof createEventActions>;
 
 interface SessionDeps {
 	clearNotice: () => void;
@@ -30,10 +31,7 @@ interface SessionDeps {
 	loadMetadataDetail: () => Promise<void>;
 	loadMediaCollection: () => Promise<void>;
 	loadDiscoverSection: () => Promise<void>;
-	loadMediaItems: () => Promise<void>;
-	upsertActivity: EventActions['upsertActivity'];
-	updateMediaStatusFromActivity: EventActions['updateMediaStatusFromActivity'];
-	parseEventData: EventActions['parseEventData'];
+	events: EventConnectionDeps;
 }
 
 export function createSessionActions(state: AppShellState, deps: SessionDeps) {
@@ -45,10 +43,7 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 	const loadMetadataDetail = deps.loadMetadataDetail;
 	const loadMediaCollection = deps.loadMediaCollection;
 	const loadDiscoverSection = deps.loadDiscoverSection;
-	const loadMediaItems = deps.loadMediaItems;
-	const upsertActivity = deps.upsertActivity;
-	const updateMediaStatusFromActivity = deps.updateMediaStatusFromActivity;
-	const parseEventData = deps.parseEventData;
+	const eventDeps = deps.events;
 	async function initialise() {
 		state.loading = true;
 		state.errorMessage = '';
@@ -88,28 +83,11 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 	}
 
 	function connectEvents() {
-		if (!state.authenticated || state.eventSource) return;
-		const source = new EventSource('/api/events', { withCredentials: true });
-		state.eventSource = source;
-		source.addEventListener('activity.download.updated', (event) => {
-			const activity = parseEventData<DownloadActivity>(event);
-			if (!activity) return;
-			upsertActivity(activity);
-			updateMediaStatusFromActivity(activity);
-			if (activity.status === 'completed') {
-				void loadMediaItems();
-			}
-		});
-		source.onerror = () => {
-			if (!state.authenticated) {
-				disconnectEvents();
-			}
-		};
+		connectAppEvents(state, eventDeps);
 	}
 
 	function disconnectEvents() {
-		state.eventSource?.close();
-		state.eventSource = undefined;
+		disconnectAppEvents(state);
 	}
 
 	async function login(event: SubmitEvent) {

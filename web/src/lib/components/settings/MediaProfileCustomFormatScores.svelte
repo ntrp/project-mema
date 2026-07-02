@@ -36,9 +36,10 @@
 	}
 
 	function updateScore(customFormatId: string, value: number) {
+		const score = Number.isFinite(value) ? value : 0;
 		patchScores(
 			form.customFormatScores.map((item) =>
-				item.customFormatId === customFormatId ? { ...item, score: value } : item
+				item.customFormatId === customFormatId ? { ...item, score } : item
 			)
 		);
 	}
@@ -84,7 +85,7 @@
 						aria-label={`Score for ${customFormatNames.get(score.customFormatId) ?? score.customFormatId}`}
 						type="number"
 						value={score.score}
-						inputmode="numeric"
+						step="1"
 						oninput={(event) =>
 							updateScore(score.customFormatId, event.currentTarget.valueAsNumber)}
 					/>

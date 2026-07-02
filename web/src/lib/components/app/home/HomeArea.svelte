@@ -54,7 +54,7 @@
 		onBlacklistMedia: (_candidate: MediaSearchResult) => void;
 		onRemoveBlacklistMedia: (_item: DiscoverBlacklistItem) => void;
 		onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
-		onFindReleases: (_item: MediaItem) => void;
+		onFindReleases: (_item: MediaItem, _query?: string) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
 		onRefreshMediaMetadata: (_item: MediaItem) => void;
 		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;

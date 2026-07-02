@@ -12,7 +12,12 @@ export type SettingsHref =
 	| '/settings/tags'
 	| '/settings/users';
 
-export type SystemHref = '/system/status' | '/system/logs' | '/system/events';
+export type SystemHref =
+	| '/system/status'
+	| '/system/indexing'
+	| '/system/metadata'
+	| '/system/logs'
+	| '/system/events';
 
 export type HomeHref =
 	| '/discover'
@@ -51,6 +56,8 @@ export const settingsItems = [
 
 export const systemItems = [
 	{ value: 'status', label: 'Status', href: '/system/status' },
+	{ value: 'indexing', label: 'Indexing', href: '/system/indexing' },
+	{ value: 'metadata', label: 'Metadata', href: '/system/metadata' },
 	{ value: 'events', label: 'Events', href: '/system/events' },
 	{ value: 'logs', label: 'Logs', href: '/system/logs' }
 ] satisfies PrimaryItem['children'];
@@ -131,6 +138,10 @@ export function systemSectionHref(section: SystemSection): SystemHref {
 	switch (section) {
 		case 'status':
 			return '/system/status';
+		case 'indexing':
+			return '/system/indexing';
+		case 'metadata':
+			return '/system/metadata';
 		case 'logs':
 			return '/system/logs';
 		case 'events':

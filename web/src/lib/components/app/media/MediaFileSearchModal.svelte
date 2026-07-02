@@ -1,17 +1,34 @@
 <script lang="ts">
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import SlidersHorizontalIcon from '@lucide/svelte/icons/sliders-horizontal';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
-	import { Card } from '$lib/components/ui/card';
-	import * as Table from '$lib/components/ui/table';
+	import { Checkbox } from '$lib/components/ui/checkbox';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
 	import type { MediaItem, ReleaseCandidate, ReleaseSearchState } from '$lib/settings/types';
+	import {
+		activeFilterCount,
+		defaultReleaseFilters,
+		filteredSortedReleases,
+		releaseQualityOptions,
+		type ReleaseFilters,
+		type ReleaseSort,
+		type ReleaseSortKey
+	} from './releaseSearchResults';
+	import { releaseSearchQuery, type ReleaseSearchContext } from './releaseSearchQuery';
+	import ReleaseSearchFilters from './ReleaseSearchFilters.svelte';
+	import ReleaseSearchResultsTable from './ReleaseSearchResultsTable.svelte';
 
 	interface Props {
 		item: MediaItem;
 		releaseResults?: ReleaseSearchState;
 		searching?: boolean;
 		grabbingKey?: string;
+		searchContext?: ReleaseSearchContext;
 		canManage: boolean;
-		onSearch: (_item: MediaItem) => void;
+		onSearch: (_item: MediaItem, _query?: string) => void;
 		onGrab: (_item: MediaItem, _release: ReleaseCandidate) => void;
 		onClose: () => void;
 	}
@@ -21,77 +38,127 @@
 		releaseResults,
 		searching = false,
 		grabbingKey,
+		searchContext = { type: 'title' },
 		canManage,
 		onSearch,
 		onGrab,
 		onClose
 	}: Props = $props();
 
-	function releaseKey(release: ReleaseCandidate) {
-		return `${item.id}:${release.id}`;
+	let overrideQuery = $state(false);
+	let customQuery = $state('');
+	let filters = $state<ReleaseFilters>(defaultReleaseFilters());
+	let sort = $state<ReleaseSort>({ direction: 'desc' });
+	let filtersOpen = $state(false);
+	const systemQuery = $derived(releaseSearchQuery(item, searchContext));
+	const searchQuery = $derived(overrideQuery ? customQuery.trim() : systemQuery);
+	const releases = $derived(releaseResults?.releases ?? []);
+	const qualityOptions = $derived(releaseQualityOptions(releases));
+	const visibleReleases = $derived(filteredSortedReleases(item, releases, filters, sort));
+	const filterCount = $derived(activeFilterCount(filters));
+
+	$effect(() => {
+		if (!overrideQuery) {
+			customQuery = systemQuery;
+		}
+	});
+
+	function submitSearch() {
+		onSearch(item, searchQuery);
 	}
 
-	function sizeLabel(sizeBytes: number) {
-		if (!sizeBytes) return '-';
-		const gib = sizeBytes / 1024 / 1024 / 1024;
-		return `${gib.toFixed(gib >= 10 ? 0 : 1)} GiB`;
+	function updateSort(key: ReleaseSortKey) {
+		sort =
+			sort.key === key
+				? { key, direction: sort.direction === 'asc' ? 'desc' : 'asc' }
+				: { key, direction: 'asc' };
 	}
 </script>
 
-<SettingsFormModal title="Manual search" modalClass="w-[min(1960px,calc(100vw-32px))]" {onClose}>
-	<div class="flex justify-end">
-		<Button type="button" disabled={!canManage || searching} onclick={() => onSearch(item)}>
-			{searching ? 'Searching' : 'Search releases'}
-		</Button>
-	</div>
-	{#if releaseResults?.errors.length}
-		<div class="grid gap-1 rounded-md bg-secondary px-3 py-2.5 font-bold text-secondary-foreground">
-			{#each releaseResults.errors as error (error)}
-				<p class="m-0">{error}</p>
-			{/each}
+<SettingsFormModal
+	title="Manual search"
+	modalClass="max-h-[calc(100vh-32px)] w-[min(1280px,calc(100vw-32px))]"
+	{onClose}
+>
+	<div class="grid gap-5">
+		<div class="grid gap-3 md:grid-cols-2 md:items-end">
+			<div class="flex min-w-0 flex-wrap items-end gap-3">
+				<div class="grid min-w-72 flex-1 gap-2">
+					<Label for="release-search-query">Search query</Label>
+					<Input
+						id="release-search-query"
+						class={!overrideQuery ? 'bg-muted text-muted-foreground opacity-80' : ''}
+						bind:value={customQuery}
+						readonly={!overrideQuery}
+						disabled={!canManage || searching}
+						maxlength={500}
+					/>
+				</div>
+				<div class="flex h-9 items-center gap-2">
+					<Checkbox
+						id="release-search-query-override"
+						bind:checked={overrideQuery}
+						disabled={!canManage || searching}
+					/>
+					<Label
+						for="release-search-query-override"
+						class={!canManage || searching ? 'text-muted-foreground opacity-70' : ''}
+					>
+						Override
+					</Label>
+				</div>
+			</div>
+			<div class="flex items-center justify-end gap-2">
+				<Button
+					type="button"
+					variant="outline"
+					aria-pressed={filtersOpen}
+					onclick={() => (filtersOpen = !filtersOpen)}
+				>
+					<SlidersHorizontalIcon aria-hidden="true" />
+					<span>Filters</span>
+					{#if filterCount > 0}
+						<Badge variant="secondary" class="ml-1 h-5 min-w-5 rounded-full px-1">
+							{filterCount}
+						</Badge>
+					{/if}
+				</Button>
+				<Button
+					type="button"
+					disabled={!canManage || searching || !searchQuery}
+					onclick={submitSearch}
+				>
+					<SearchIcon aria-hidden="true" />
+					{searching ? 'Searching' : 'Search'}
+				</Button>
+			</div>
 		</div>
-	{/if}
-	<Card class="overflow-hidden p-0">
-		<Table.Root>
-			<Table.Header>
-				<Table.Row>
-					<Table.Head>Release</Table.Head>
-					<Table.Head>Indexer</Table.Head>
-					<Table.Head>Size</Table.Head>
-					<Table.Head>Seeders</Table.Head>
-					<Table.Head></Table.Head>
-				</Table.Row>
-			</Table.Header>
-			<Table.Body>
-				{#each releaseResults?.releases ?? [] as release (release.id)}
-					<Table.Row>
-						<Table.Cell>{release.title}</Table.Cell>
-						<Table.Cell>{release.indexerName}</Table.Cell>
-						<Table.Cell>{sizeLabel(release.sizeBytes)}</Table.Cell>
-						<Table.Cell>{release.seeders ?? '-'}</Table.Cell>
-						<Table.Cell class="text-right">
-							{#if canManage}
-								<Button
-									type="button"
-									size="sm"
-									disabled={grabbingKey === releaseKey(release)}
-									onclick={() => onGrab(item, release)}
-								>
-									{grabbingKey === releaseKey(release) ? 'Queueing' : 'Grab'}
-								</Button>
-							{/if}
-						</Table.Cell>
-					</Table.Row>
-				{:else}
-					<Table.Row>
-						<Table.Cell colspan={5} class="text-muted-foreground">
-							{releaseResults?.loaded
-								? 'No release candidates found.'
-								: 'No search results loaded.'}
-						</Table.Cell>
-					</Table.Row>
+		{#if releaseResults?.loaded && releaseResults.errors.length}
+			<div
+				class="grid gap-1 rounded-md bg-secondary px-3 py-2.5 font-bold text-secondary-foreground"
+			>
+				{#each releaseResults.errors as error (error)}
+					<p class="m-0">{error}</p>
 				{/each}
-			</Table.Body>
-		</Table.Root>
-	</Card>
+			</div>
+		{/if}
+		{#if filtersOpen}
+			<ReleaseSearchFilters
+				{filters}
+				{qualityOptions}
+				onChange={(nextFilters) => (filters = nextFilters)}
+				onReset={() => (filters = defaultReleaseFilters())}
+			/>
+		{/if}
+		<ReleaseSearchResultsTable
+			{item}
+			releases={visibleReleases}
+			{releaseResults}
+			{sort}
+			{grabbingKey}
+			{canManage}
+			onSort={updateSort}
+			{onGrab}
+		/>
+	</div>
 </SettingsFormModal>

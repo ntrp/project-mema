@@ -32,6 +32,13 @@ func optionalString(value string) *string {
 	return &value
 }
 
+func optionalFloat64(value float64) *float64 {
+	if value == 0 {
+		return nil
+	}
+	return &value
+}
+
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {
 		if strings.TrimSpace(value) != "" {

@@ -35,7 +35,13 @@ const settingsSections = new Set<SettingsSection>([
 	'tags',
 	'users'
 ]);
-const systemSections = new Set<SystemSection>(['status', 'logs', 'events']);
+const systemSections = new Set<SystemSection>([
+	'status',
+	'indexing',
+	'metadata',
+	'logs',
+	'events'
+]);
 
 export function defaultRouteState(): AppRouteState {
 	return {

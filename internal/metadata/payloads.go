@@ -5,14 +5,15 @@ type tmdbSearchResponse struct {
 }
 
 type tmdbMedia struct {
-	ID           int64  `json:"id"`
-	MediaType    string `json:"media_type"`
-	Title        string `json:"title"`
-	Name         string `json:"name"`
-	ReleaseDate  string `json:"release_date"`
-	FirstAirDate string `json:"first_air_date"`
-	Overview     string `json:"overview"`
-	PosterPath   string `json:"poster_path"`
+	ID           int64   `json:"id"`
+	MediaType    string  `json:"media_type"`
+	Title        string  `json:"title"`
+	Name         string  `json:"name"`
+	ReleaseDate  string  `json:"release_date"`
+	FirstAirDate string  `json:"first_air_date"`
+	Overview     string  `json:"overview"`
+	PosterPath   string  `json:"poster_path"`
+	Popularity   float64 `json:"popularity"`
 }
 
 type tmdbDetails struct {

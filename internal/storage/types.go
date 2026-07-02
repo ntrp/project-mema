@@ -96,37 +96,96 @@ type DownloadActivityInput struct {
 }
 
 type ReleaseCandidate struct {
-	ID          uuid.UUID
-	MediaItemID uuid.UUID
-	IndexerID   *uuid.UUID
-	IndexerName string
-	IndexerType string
-	Title       string
-	DownloadURL string
-	InfoURL     *string
-	GUID        *string
-	SizeBytes   int64
-	Seeders     *int32
-	Peers       *int32
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID               uuid.UUID
+	MediaItemID      uuid.UUID
+	IndexerID        *uuid.UUID
+	IndexerName      string
+	IndexerType      string
+	Title            string
+	DownloadURL      string
+	InfoURL          *string
+	GUID             *string
+	SizeBytes        int64
+	Seeders          *int32
+	Peers            *int32
+	PublishedAt      *time.Time
+	SearchKind       string
+	RequestedSeason  *int32
+	RequestedEpisode *int32
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type ReleaseCandidateInput struct {
-	MediaItemID uuid.UUID
-	IndexerID   *uuid.UUID
-	IndexerName string
-	IndexerType string
-	Title       string
-	DownloadURL string
-	InfoURL     *string
-	GUID        *string
-	SizeBytes   int64
-	Seeders     *int32
-	Peers       *int32
+	MediaItemID      uuid.UUID
+	IndexerID        *uuid.UUID
+	IndexerName      string
+	IndexerType      string
+	Title            string
+	DownloadURL      string
+	InfoURL          *string
+	GUID             *string
+	SizeBytes        int64
+	Seeders          *int32
+	Peers            *int32
+	PublishedAt      *time.Time
+	SearchKind       string
+	RequestedSeason  *int32
+	RequestedEpisode *int32
 }
 
 type ReleaseSearchSnapshot struct {
 	Releases []ReleaseCandidate
 	Errors   []string
+}
+
+type IndexerSearchSettings struct {
+	CacheDurationMinutes int32
+	HistoryRetentionDays int32
+}
+
+type IndexerSearchCacheStats struct {
+	TotalEntries   int32
+	ActiveEntries  int32
+	ExpiredEntries int32
+	IndexerCount   int32
+}
+
+type IndexerSearchCacheEntry struct {
+	IndexerName string
+	IndexerType string
+	MediaType   string
+	Query       string
+	ResultCount int32
+	ExpiresAt   time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Expired     bool
+}
+
+type IndexerSearchHistoryEntry struct {
+	IndexerName string
+	IndexerType string
+	MediaType   string
+	Query       string
+	CacheHit    bool
+	Success     bool
+	ResultCount int32
+	Error       *string
+	Response    string
+	CreatedAt   time.Time
+}
+
+type MetadataSearchHistoryInput struct {
+	ProviderID   uuid.UUID
+	ProviderName string
+	ProviderType string
+	MediaType    string
+	Query        string
+	Year         *int32
+	CacheHit     bool
+	Success      bool
+	ItemCount    int32
+	Error        *string
+	Response     any
 }

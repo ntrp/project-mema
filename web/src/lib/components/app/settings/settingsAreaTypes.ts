@@ -6,6 +6,8 @@ import type {
 	DownloadClientForm as DownloadClientFormValue,
 	Indexer,
 	IndexerForm as IndexerFormValue,
+	IndexerSearchResponse,
+	IndexerSearchSettings,
 	IntegrationTestResponse,
 	IntegrationTestResults,
 	LibraryFolder,
@@ -15,7 +17,6 @@ import type {
 	ManagedUser,
 	MediaProfile,
 	MediaSearchResult,
-	MetadataCacheResponse,
 	MetadataProvider,
 	MetadataProviderForm as MetadataProviderFormValue,
 	PathMapping,
@@ -43,8 +44,8 @@ export interface SettingsAreaProps {
 	activeSection: SettingsSection;
 	downloadClients: DownloadClient[];
 	indexers: Indexer[];
+	indexerSearch: IndexerSearchResponse;
 	metadataProviders: MetadataProvider[];
-	metadataCache: MetadataCacheResponse;
 	libraryFolders: LibraryFolder[];
 	pathMappings: PathMapping[];
 	mediaProfiles: MediaProfile[];
@@ -63,10 +64,9 @@ export interface SettingsAreaProps {
 	userForm: UserFormValue;
 	savingDownloadClient: boolean;
 	savingIndexer: boolean;
+	clearingIndexerSearchCache: boolean;
+	savingIndexerSearchSettings: boolean;
 	savingMetadataProviderId?: string;
-	loadingMetadataCache: boolean;
-	clearingMetadataCache: boolean;
-	metadataCachePattern: string;
 	savingLibraryFolder: boolean;
 	savingPathMapping: boolean;
 	deletingPathMappingId?: string;
@@ -84,10 +84,9 @@ export interface SettingsAreaProps {
 	onSaveDownloadClient: (_event: SubmitEvent) => void | Promise<void>;
 	onTestDownloadClientConfig: (_form: DownloadClientFormValue) => Promise<IntegrationTestResponse>;
 	onSaveIndexer: (_event: SubmitEvent) => void | Promise<void>;
+	onClearIndexerSearchCache: () => void | Promise<void>;
+	onSaveIndexerSearchSettings: (_settings: IndexerSearchSettings) => void | Promise<void>;
 	onSaveMetadataProvider: (_form: MetadataProviderFormValue) => void | Promise<void>;
-	onRefreshMetadataCache: () => void | Promise<void>;
-	onClearMetadataCache: () => void | Promise<void>;
-	onClearMetadataCachePattern: (_event: SubmitEvent) => void | Promise<void>;
 	onSaveLibraryFolder: (_event: SubmitEvent) => void | Promise<void>;
 	onScanLibraryFolder: (_id: string) => void | Promise<void>;
 	onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;

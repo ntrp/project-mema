@@ -32,6 +32,7 @@ type Client struct {
 
 type ReleaseSearchArgs struct {
 	MediaItemID string `json:"media_item_id" river:"unique"`
+	Query       string `json:"query,omitempty" river:"unique"`
 }
 
 func (ReleaseSearchArgs) Kind() string {
@@ -70,9 +71,13 @@ func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSe
 		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Release search failed to load media", map[string]any{"mediaItemId": mediaItemID.String(), "error": err.Error()})
 		return fmt.Errorf("load media item: %w", err)
 	}
-	slog.Debug("release search started", "mediaItemId", item.ID, "title", item.Title)
-	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Release search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
-	releases, searchErrors, err := searchReleases(ctx, w.settings, w.indexers, item)
+	query := strings.TrimSpace(job.Args.Query)
+	if query == "" {
+		query = decisions.SearchQueryForMediaItem(item)
+	}
+	slog.Debug("release search started", "mediaItemId", item.ID, "title", item.Title, "query", query)
+	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Release search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "query": query})
+	releases, searchErrors, err := searchReleases(ctx, w.settings, w.indexers, item, query, w.events, true)
 	if err != nil {
 		slog.Error("release search failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
 		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Release search failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "error": err.Error()})
@@ -225,8 +230,8 @@ func (c *Client) Stop(ctx context.Context) error {
 	return c.river.Stop(ctx)
 }
 
-func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID) (int64, error) {
-	result, err := c.river.Insert(ctx, ReleaseSearchArgs{MediaItemID: mediaItemID.String()}, &river.InsertOpts{
+func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID, query string) (int64, error) {
+	result, err := c.river.Insert(ctx, ReleaseSearchArgs{MediaItemID: mediaItemID.String(), Query: strings.TrimSpace(query)}, &river.InsertOpts{
 		Queue: queueMediaSearch,
 		UniqueOpts: river.UniqueOpts{
 			ByArgs: true,

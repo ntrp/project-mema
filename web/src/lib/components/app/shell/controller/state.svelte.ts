@@ -4,7 +4,7 @@ import {
 	systemPrimaryItem
 } from '$lib/components/app/navigation/appNavigation';
 import { mediaMetadataDetail } from '$lib/components/app/media/mediaDetail';
-import { emptyMetadataCache } from '$lib/settings/api';
+import { emptyIndexerSearch, emptyMetadataCache } from '$lib/settings/api';
 import {
 	emptyCustomFormatForm,
 	emptyDownloadClientForm,
@@ -25,6 +25,7 @@ import type {
 	HomeSection,
 	Indexer,
 	IndexerForm as IndexerFormValue,
+	IndexerSearchResponse,
 	IntegrationTestResults,
 	LibraryFolder,
 	LibraryFolderForm as LibraryFolderFormValue,
@@ -77,6 +78,7 @@ export class AppShellState {
 	password = $state('admin');
 	downloadClients = $state<DownloadClient[]>([]);
 	indexers = $state<Indexer[]>([]);
+	indexerSearch = $state<IndexerSearchResponse>(emptyIndexerSearch());
 	metadataProviders = $state<MetadataProvider[]>([]);
 	metadataCache = $state<MetadataCacheResponse>(emptyMetadataCache());
 	libraryFolders = $state<LibraryFolder[]>([]);
@@ -109,7 +111,9 @@ export class AppShellState {
 	testingMetadataProviderId = $state<string | undefined>();
 	loadingMetadataCache = $state(false);
 	clearingMetadataCache = $state(false);
-	metadataCachePattern = $state('');
+	loadingIndexerSearch = $state(false);
+	clearingIndexerSearchCache = $state(false);
+	savingIndexerSearchSettings = $state(false);
 	loadingDiscover = $state(false);
 	loadingDiscoverSection = $state(false);
 	loadingMoreDiscoverSection = $state(false);

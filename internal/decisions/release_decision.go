@@ -42,19 +42,27 @@ func NewEngine() Engine {
 	return Engine{qualities: qualities}
 }
 
-func (e Engine) ChooseRelease(candidates []storage.ReleaseCandidateInput) (ReleaseDecision, bool) {
+func (e Engine) ChooseRelease(item storage.MediaItem, candidates []storage.ReleaseCandidateInput) (ReleaseDecision, bool) {
 	if len(candidates) == 0 {
 		return ReleaseDecision{}, false
 	}
 
-	best := candidates[0]
-	bestQuality := e.detectQuality(best.Title)
-	for _, candidate := range candidates[1:] {
+	var best storage.ReleaseCandidateInput
+	var bestQuality qualityRule
+	found := false
+	for _, candidate := range candidates {
+		if EvaluateReleaseCandidateInputMatch(item, candidate).Severity == "error" {
+			continue
+		}
 		candidateQuality := e.detectQuality(candidate.Title)
-		if betterRelease(candidate, candidateQuality, best, bestQuality) {
+		if !found || betterRelease(candidate, candidateQuality, best, bestQuality) {
 			best = candidate
 			bestQuality = candidateQuality
+			found = true
 		}
+	}
+	if !found {
+		return ReleaseDecision{}, false
 	}
 	return ReleaseDecision{Release: best, Quality: bestQuality.name}, true
 }

@@ -44,13 +44,14 @@ type DetailsRequest struct {
 }
 
 type SearchResult struct {
-	Title            string  `json:"title"`
-	Type             string  `json:"type"`
-	Year             *int32  `json:"year,omitempty"`
-	ExternalProvider string  `json:"externalProvider"`
-	ExternalID       string  `json:"externalId"`
-	Overview         *string `json:"overview,omitempty"`
-	PosterPath       *string `json:"posterPath,omitempty"`
+	Title            string   `json:"title"`
+	Type             string   `json:"type"`
+	Year             *int32   `json:"year,omitempty"`
+	ExternalProvider string   `json:"externalProvider"`
+	ExternalID       string   `json:"externalId"`
+	Overview         *string  `json:"overview,omitempty"`
+	PosterPath       *string  `json:"posterPath,omitempty"`
+	Popularity       *float64 `json:"popularity,omitempty"`
 }
 
 type Details struct {

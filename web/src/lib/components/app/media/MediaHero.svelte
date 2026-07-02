@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { MediaItem, MediaItemStatus, MediaType } from '$lib/settings/types';
 	import PosterPlaceholder from './PosterPlaceholder.svelte';
+	import { releaseSearchQuery } from './releaseSearchQuery';
 
 	interface Props {
 		mediaType: MediaType;
@@ -14,7 +15,7 @@
 		searchingItemId?: string;
 		scanningMediaItemId?: string;
 		deletingMediaItemId?: string;
-		onFindReleases: (_item: MediaItem) => void;
+		onFindReleases: (_item: MediaItem, _query?: string) => void;
 		onRescanMediaFiles: (_item: MediaItem) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 	}
@@ -104,7 +105,7 @@
 				<Button
 					type="button"
 					disabled={searchingItemId === item.id}
-					onclick={() => onFindReleases(item)}
+					onclick={() => onFindReleases(item, releaseSearchQuery(item))}
 				>
 					{searchingItemId === item.id ? 'Queued' : 'Find releases'}
 				</Button>

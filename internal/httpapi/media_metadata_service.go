@@ -50,16 +50,21 @@ func (s *Server) searchMetadataProvider(ctx context.Context, provider storage.Me
 		return nil, err
 	}
 	if found {
+		s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, request.Year, true, cached, nil)
 		return cached, nil
 	}
 
 	results, err := s.metadata.Search(ctx, metadataProviderConfig(provider), request)
 	if err != nil {
+		s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, request.Year, false, nil, err)
 		return nil, err
 	}
-	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, request.Year, results, s.now().Add(24*time.Hour)); err != nil {
+	expiresAt := s.now().Add(24 * time.Hour)
+	s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, request.Year, false, results, nil)
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, request.Year, results, expiresAt); err != nil {
 		return nil, err
 	}
+	s.publishMetadataCacheUpdated(ctx, provider, request.MediaType, cacheKey, request.Year, results, expiresAt)
 	return results, nil
 }
 
@@ -85,6 +90,7 @@ func (s *Server) discoverMetadataProvider(
 		return nil, err
 	}
 	if found {
+		s.recordMetadataSearchHistory(ctx, provider, mediaType, cacheKey, nil, true, cached, nil)
 		return cached, nil
 	}
 
@@ -95,11 +101,15 @@ func (s *Server) discoverMetadataProvider(
 		Page:      page,
 	})
 	if err != nil {
+		s.recordMetadataSearchHistory(ctx, provider, mediaType, cacheKey, nil, false, nil, err)
 		return nil, err
 	}
-	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, cacheMediaType, cacheKey, nil, results, s.now().Add(24*time.Hour)); err != nil {
+	expiresAt := s.now().Add(24 * time.Hour)
+	s.recordMetadataSearchHistory(ctx, provider, mediaType, cacheKey, nil, false, results, nil)
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, cacheMediaType, cacheKey, nil, results, expiresAt); err != nil {
 		return nil, err
 	}
+	s.publishMetadataCacheUpdated(ctx, provider, cacheMediaType, cacheKey, nil, results, expiresAt)
 	return results, nil
 }
 
@@ -111,28 +121,38 @@ func (s *Server) metadataProviderDetails(ctx context.Context, provider storage.M
 		return metadata.Details{}, err
 	}
 	if found {
+		s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, nil, true, cached, nil)
 		return cached, nil
 	}
 
 	details, err := s.metadata.Details(ctx, metadataProviderConfig(provider), request)
 	if err != nil {
+		s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, nil, false, nil, err)
 		return metadata.Details{}, err
 	}
-	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, details, s.now().Add(24*time.Hour)); err != nil {
+	expiresAt := s.now().Add(24 * time.Hour)
+	s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, nil, false, details, nil)
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, details, expiresAt); err != nil {
 		return metadata.Details{}, err
 	}
+	s.publishMetadataCacheUpdated(ctx, provider, request.MediaType, cacheKey, nil, details, expiresAt)
 	return details, nil
 }
 
 func (s *Server) freshMetadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
 	details, err := s.metadata.Details(ctx, metadataProviderConfig(provider), request)
 	if err != nil {
+		cacheKey := metadataDetailsCacheKey(request.ExternalID)
+		s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, nil, false, nil, err)
 		return metadata.Details{}, err
 	}
 	cacheKey := metadataDetailsCacheKey(request.ExternalID)
-	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, details, s.now().Add(24*time.Hour)); err != nil {
+	expiresAt := s.now().Add(24 * time.Hour)
+	s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, nil, false, details, nil)
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, details, expiresAt); err != nil {
 		return metadata.Details{}, err
 	}
+	s.publishMetadataCacheUpdated(ctx, provider, request.MediaType, cacheKey, nil, details, expiresAt)
 	return details, nil
 }
 
@@ -149,6 +169,7 @@ type groupedMediaSearchRequest struct {
 	limit               int
 	includeLibrary      bool
 	includeProviders    bool
+	sortByPopularity    bool
 }
 
 func (s *Server) groupedMediaSearch(ctx context.Context, request groupedMediaSearchRequest) ([]MediaSearchGroup, error) {
@@ -179,52 +200,11 @@ func (s *Server) groupedMediaSearch(ctx context.Context, request groupedMediaSea
 		return groups, nil
 	}
 
-	providerGroups := map[uuid.UUID]int{}
-	if request.providerIDsProvided && len(request.providerIDs) == 0 {
-		return groups, nil
+	providerGroups, err := s.providerMediaSearchGroups(ctx, request, limit)
+	if err != nil {
+		return nil, err
 	}
-	for _, mediaType := range request.mediaTypes {
-		providers, err := s.settings.ListEnabledMetadataProviders(ctx, mediaType)
-		if err != nil {
-			return nil, err
-		}
-		for _, provider := range providers {
-			if len(request.providerIDs) > 0 {
-				if _, ok := request.providerIDs[provider.ID]; !ok {
-					continue
-				}
-			}
-			results, err := s.searchMetadataProvider(ctx, provider, metadata.SearchRequest{
-				Query:     request.query,
-				MediaType: mediaType,
-				Year:      request.year,
-			})
-			if err != nil {
-				continue
-			}
-			if len(results) == 0 {
-				continue
-			}
-			index, ok := providerGroups[provider.ID]
-			if !ok {
-				providerID := openapi_types.UUID(provider.ID)
-				groups = append(groups, MediaSearchGroup{
-					SourceType: "provider",
-					SourceName: provider.Name,
-					ProviderId: &providerID,
-					Results:    []MediaSearchResult{},
-				})
-				index = len(groups) - 1
-				providerGroups[provider.ID] = index
-			}
-			for _, result := range results {
-				if len(groups[index].Results) >= limit {
-					break
-				}
-				groups[index].Results = append(groups[index].Results, metadataSearchResultResponse(result))
-			}
-		}
-	}
+	groups = append(groups, providerGroups...)
 	return groups, nil
 }
 
@@ -237,7 +217,15 @@ func metadataSearchResultResponse(result metadata.SearchResult) MediaSearchResul
 		ExternalId:       optionalString(result.ExternalID),
 		Overview:         result.Overview,
 		PosterPath:       result.PosterPath,
+		Popularity:       result.Popularity,
 	}
+}
+
+func popularityValue(result metadata.SearchResult) float64 {
+	if result.Popularity == nil {
+		return 0
+	}
+	return *result.Popularity
 }
 
 func mediaItemSearchResultResponse(item storage.MediaItem) MediaSearchResult {

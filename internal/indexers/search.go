@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
+
+	"media-manager/internal/ratelimit"
 )
 
 type releaseFeed struct {
@@ -19,6 +22,9 @@ type releaseItem struct {
 	Title     string        `xml:"title"`
 	Link      string        `xml:"link"`
 	GUID      string        `xml:"guid"`
+	PubDate   string        `xml:"pubDate"`
+	Published string        `xml:"published"`
+	Updated   string        `xml:"updated"`
 	Size      int64         `xml:"size"`
 	Attrs     []torznabAttr `xml:"attr"`
 	Enclosure struct {
@@ -65,7 +71,7 @@ func (s *Service) searchTorznab(ctx context.Context, config Config, query string
 	}
 	defer closeBody(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return nil, httpStatusError(resp.StatusCode)
+		return nil, httpStatusError(resp)
 	}
 
 	body, err := readLimitedBody(resp.Body)
@@ -112,7 +118,41 @@ func (item releaseItem) toRelease(config Config) Release {
 		SizeBytes:   size,
 		Seeders:     item.int32Attr("seeders"),
 		Peers:       item.int32Attr("peers"),
+		PublishedAt: item.publishedAt(),
 	}
+}
+
+func (item releaseItem) publishedAt() *time.Time {
+	for _, value := range []string{item.PubDate, item.Published, item.Updated, item.attr("publishdate")} {
+		parsed, ok := parseFeedTime(value)
+		if ok {
+			return &parsed
+		}
+	}
+	return nil
+}
+
+func parseFeedTime(value string) (time.Time, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return time.Time{}, false
+	}
+	for _, layout := range []string{time.RFC1123Z, time.RFC1123, time.RFC3339, time.RFC3339Nano} {
+		parsed, err := time.Parse(layout, value)
+		if err == nil {
+			return parsed, true
+		}
+	}
+	return time.Time{}, false
+}
+
+func (item releaseItem) attr(name string) string {
+	for _, attr := range item.Attrs {
+		if attr.Name == name {
+			return attr.Value
+		}
+	}
+	return ""
 }
 
 func (item releaseItem) int32Attr(name string) *int32 {
@@ -155,6 +195,6 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func httpStatusError(statusCode int) error {
-	return StatusError{StatusCode: statusCode}
+func httpStatusError(resp *http.Response) error {
+	return StatusError{StatusCode: resp.StatusCode, RetryAfter: ratelimit.DelayFromHeaders(resp.Header)}
 }

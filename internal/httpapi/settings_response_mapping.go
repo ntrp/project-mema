@@ -52,6 +52,65 @@ func indexerResponse(indexer storage.Indexer) Indexer {
 	}
 }
 
+func indexerSearchResponse(
+	settings storage.IndexerSearchSettings,
+	stats storage.IndexerSearchCacheStats,
+	cacheEntries []storage.IndexerSearchCacheEntry,
+	historyEntries []storage.IndexerSearchHistoryEntry,
+) IndexerSearchResponse {
+	cache := make([]IndexerSearchCacheEntry, 0, len(cacheEntries))
+	for _, entry := range cacheEntries {
+		cache = append(cache, indexerSearchCacheEntryResponse(entry))
+	}
+	history := make([]IndexerSearchHistoryEntry, 0, len(historyEntries))
+	for _, entry := range historyEntries {
+		history = append(history, indexerSearchHistoryEntryResponse(entry))
+	}
+	return IndexerSearchResponse{
+		Settings: IndexerSearchSettings{
+			CacheDurationMinutes: settings.CacheDurationMinutes,
+			HistoryRetentionDays: settings.HistoryRetentionDays,
+		},
+		Stats: IndexerSearchCacheStats{
+			TotalEntries:   stats.TotalEntries,
+			ActiveEntries:  stats.ActiveEntries,
+			ExpiredEntries: stats.ExpiredEntries,
+			IndexerCount:   stats.IndexerCount,
+		},
+		CacheEntries:   cache,
+		HistoryEntries: history,
+	}
+}
+
+func indexerSearchCacheEntryResponse(entry storage.IndexerSearchCacheEntry) IndexerSearchCacheEntry {
+	return IndexerSearchCacheEntry{
+		IndexerName: entry.IndexerName,
+		IndexerType: IndexerType(entry.IndexerType),
+		MediaType:   MediaType(entry.MediaType),
+		Query:       entry.Query,
+		ResultCount: entry.ResultCount,
+		ExpiresAt:   entry.ExpiresAt,
+		CreatedAt:   entry.CreatedAt,
+		UpdatedAt:   entry.UpdatedAt,
+		Expired:     entry.Expired,
+	}
+}
+
+func indexerSearchHistoryEntryResponse(entry storage.IndexerSearchHistoryEntry) IndexerSearchHistoryEntry {
+	return IndexerSearchHistoryEntry{
+		IndexerName: entry.IndexerName,
+		IndexerType: IndexerType(entry.IndexerType),
+		MediaType:   MediaType(entry.MediaType),
+		Query:       entry.Query,
+		CacheHit:    entry.CacheHit,
+		Success:     entry.Success,
+		ResultCount: entry.ResultCount,
+		Error:       entry.Error,
+		Response:    entry.Response,
+		CreatedAt:   entry.CreatedAt,
+	}
+}
+
 func metadataProviderResponse(provider storage.MetadataProvider) MetadataProvider {
 	return MetadataProvider{
 		Id:          openapi_types.UUID(provider.ID),
@@ -90,6 +149,23 @@ func metadataCacheEntryResponse(entry storage.MetadataCacheEntry) MetadataCacheE
 		CreatedAt:    entry.CreatedAt,
 		UpdatedAt:    entry.UpdatedAt,
 		Expired:      entry.Expired,
+	}
+}
+
+func metadataSearchHistoryEntryResponse(entry storage.MetadataSearchHistoryEntry) MetadataSearchHistoryEntry {
+	return MetadataSearchHistoryEntry{
+		ProviderName: entry.ProviderName,
+		ProviderType: MetadataProviderType(entry.ProviderType),
+		MediaType:    MediaType(entry.MediaType),
+		Query:        entry.Query,
+		CacheKind:    MetadataSearchHistoryEntryCacheKind(cacheKind(entry.Query)),
+		Year:         entry.Year,
+		CacheHit:     entry.CacheHit,
+		Success:      entry.Success,
+		ItemCount:    entry.ItemCount,
+		Error:        entry.Error,
+		Response:     entry.Response,
+		CreatedAt:    entry.CreatedAt,
 	}
 }
 

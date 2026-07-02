@@ -1,18 +1,48 @@
 <script lang="ts">
 	import SystemEventsSettings from '$lib/components/settings/SystemEventsSettings.svelte';
+	import IndexerSearchCacheSettings from '$lib/components/settings/IndexerSearchCacheSettings.svelte';
+	import MetadataCacheSettings from '$lib/components/settings/MetadataCacheSettings.svelte';
 	import SystemLogFilesSettings from '$lib/components/settings/SystemLogFilesSettings.svelte';
 	import SystemLogsSettings from '$lib/components/settings/SystemLogsSettings.svelte';
 	import SystemStatusSettings from '$lib/components/settings/SystemStatusSettings.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
-	import type { SystemSection } from '$lib/settings/types';
+	import type { IndexerSearchResponse, MetadataCacheResponse, SystemSection } from '$lib/settings/types';
 
 	interface Props {
 		activeSection: SystemSection;
+		indexerSearch: IndexerSearchResponse;
+		metadataCache: MetadataCacheResponse;
+		loadingIndexerSearch: boolean;
+		loadingMetadataCache: boolean;
+		clearingIndexerSearchCache: boolean;
+		clearingMetadataCache: boolean;
+		onRefreshIndexerSearch: () => void | Promise<void>;
+		onRefreshMetadataCache: () => void | Promise<void>;
+		onClearIndexerSearchCache: () => void | Promise<void>;
+		onClearIndexerSearchCachePattern: (_pattern: string) => void | Promise<void>;
+		onClearMetadataCache: () => void | Promise<void>;
+		onClearMetadataCachePattern: (_pattern: string) => void | Promise<void>;
 	}
 
-	let { activeSection }: Props = $props();
+	let {
+		activeSection,
+		indexerSearch,
+		metadataCache,
+		loadingIndexerSearch,
+		loadingMetadataCache,
+		clearingIndexerSearchCache,
+		clearingMetadataCache,
+		onRefreshIndexerSearch,
+		onRefreshMetadataCache,
+		onClearIndexerSearchCache,
+		onClearIndexerSearchCachePattern,
+		onClearMetadataCache,
+		onClearMetadataCachePattern
+	}: Props = $props();
 	let eventsConnected = $state(false);
 	let logsConnected = $state(false);
+	let indexerCachePattern = $state('');
+	let metadataCachePattern = $state('');
 
 	function connectionDotClass(connected: boolean) {
 		const base = 'ml-2 inline-block size-3 translate-y-[-2px] rounded-full';
@@ -27,6 +57,32 @@
 		<PageHeading eyebrow="System" title="Status" titleId="system-title" />
 		<div class="space-y-4">
 			<SystemStatusSettings />
+		</div>
+	{:else if activeSection === 'indexing'}
+		<PageHeading eyebrow="System" title="Indexing" titleId="system-title" />
+		<div class="space-y-4">
+			<IndexerSearchCacheSettings
+				search={indexerSearch}
+				bind:pattern={indexerCachePattern}
+				loading={loadingIndexerSearch}
+				clearing={clearingIndexerSearchCache}
+				onRefresh={onRefreshIndexerSearch}
+				onClearAll={onClearIndexerSearchCache}
+				onClearPattern={onClearIndexerSearchCachePattern}
+			/>
+		</div>
+	{:else if activeSection === 'metadata'}
+		<PageHeading eyebrow="System" title="Metadata" titleId="system-title" />
+		<div class="space-y-4">
+			<MetadataCacheSettings
+				cache={metadataCache}
+				bind:pattern={metadataCachePattern}
+				loading={loadingMetadataCache}
+				clearing={clearingMetadataCache}
+				onRefresh={onRefreshMetadataCache}
+				onClearAll={onClearMetadataCache}
+				onClearPattern={onClearMetadataCachePattern}
+			/>
 		</div>
 	{:else if activeSection === 'events'}
 		<PageHeading eyebrow="System" title="Events" titleId="system-title">

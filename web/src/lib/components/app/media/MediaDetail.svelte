@@ -8,7 +8,6 @@
 	import MediaMetadataShell from './MediaMetadataShell.svelte';
 	import MediaRelatedSections from './MediaRelatedSections.svelte';
 	import MediaSeriesSeasons from './MediaSeriesSeasons.svelte';
-	import ReleaseCandidatesSection from './ReleaseCandidatesSection.svelte';
 	import { resolve } from '$app/paths';
 	import { mediaMetadataDetail } from './mediaDetail';
 	import {
@@ -47,7 +46,7 @@
 		deletingMediaItemId?: string;
 		canManage: boolean;
 		actionLabel: string;
-		onFindReleases: (_item: MediaItem) => void;
+		onFindReleases: (_item: MediaItem, _query?: string) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
 		onRefreshMediaMetadata: (_item: MediaItem) => void;
 		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
@@ -181,13 +180,6 @@
 						{/if}
 					{/snippet}
 				</MediaMetadataCore>
-				<ReleaseCandidatesSection
-					{item}
-					{releaseResults}
-					{grabbingKey}
-					{canManage}
-					{onGrabRelease}
-				/>
 				<MediaRelatedSections {detail} {mediaItems} {addingKey} {actionLabel} onAdd={onAddMedia} />
 			</main>
 		</div>

@@ -25,7 +25,8 @@ func (s *Server) recordIndexerTestResult(
 
 	statusCode := indexers.StatusCodeFromDetails(result.Details)
 	permanent := indexers.IsPermanentFailure(statusCode)
-	if _, err := s.settings.RecordIndexerFailure(ctx, indexer.ID, statusCode, result.Message, permanent); err != nil {
+	updated, err := s.settings.RecordIndexerFailure(ctx, indexer.ID, statusCode, result.Message, permanent, nil)
+	if err != nil {
 		slog.Error("indexer status update failed", "indexerName", indexer.Name, "error", err)
 	}
 	severity := eventSeverityWarning
@@ -38,6 +39,14 @@ func (s *Server) recordIndexerTestResult(
 		"statusCode":  statusCode,
 		"message":     result.Message,
 	})
+	if err == nil && updated.HealthStatus == "disabled" {
+		s.recordEvent(ctx, eventSeverityError, "indexers", "Indexer disabled", map[string]any{
+			"indexerId":   indexer.ID.String(),
+			"indexerName": indexer.Name,
+			"statusCode":  statusCode,
+			"message":     result.Message,
+		})
+	}
 }
 
 func (s *Server) refreshedIndexer(ctx context.Context, id uuid.UUID) (storage.Indexer, error) {

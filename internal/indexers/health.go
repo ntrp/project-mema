@@ -1,6 +1,9 @@
 package indexers
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 func StatusCode(err error) *int32 {
 	var statusErr StatusError
@@ -9,6 +12,14 @@ func StatusCode(err error) *int32 {
 	}
 	code := int32(statusErr.StatusCode)
 	return &code
+}
+
+func RetryAfter(err error) time.Duration {
+	var statusErr StatusError
+	if !errors.As(err, &statusErr) {
+		return 0
+	}
+	return statusErr.RetryAfter
 }
 
 func IsPermanentFailure(statusCode *int32) bool {

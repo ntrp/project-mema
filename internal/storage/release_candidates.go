@@ -43,18 +43,21 @@ func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID
 	_, err := q.Exec(ctx, `
 		insert into app.media_release_candidates (
 			id, media_item_id, indexer_id, indexer_name, indexer_type, title, download_url,
-			info_url, guid, size_bytes, seeders, peers
+			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
+			requested_season, requested_episode
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 	`, uuid.New(), mediaItemID, release.IndexerID, release.IndexerName, release.IndexerType, release.Title,
-		release.DownloadURL, release.InfoURL, release.GUID, release.SizeBytes, release.Seeders, release.Peers)
+		release.DownloadURL, release.InfoURL, release.GUID, release.SizeBytes, release.Seeders, release.Peers,
+		release.PublishedAt, release.SearchKind, release.RequestedSeason, release.RequestedEpisode)
 	return err
 }
 
 func (s *SettingsStore) GetReleaseCandidate(ctx context.Context, id uuid.UUID, mediaItemID uuid.UUID) (ReleaseCandidate, error) {
 	release, err := scanReleaseCandidate(s.pool.QueryRow(ctx, `
 		select id, media_item_id, indexer_id, indexer_name, indexer_type, title, download_url,
-			info_url, guid, size_bytes, seeders, peers, created_at, updated_at
+			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
+			requested_season, requested_episode, created_at, updated_at
 		from app.media_release_candidates
 		where id = $1 and media_item_id = $2
 	`, id, mediaItemID))
@@ -79,7 +82,8 @@ func (s *SettingsStore) ListReleaseSearchResults(ctx context.Context, mediaItemI
 func (s *SettingsStore) listReleaseCandidates(ctx context.Context, mediaItemID uuid.UUID) ([]ReleaseCandidate, error) {
 	rows, err := s.pool.Query(ctx, `
 		select id, media_item_id, indexer_id, indexer_name, indexer_type, title, download_url,
-			info_url, guid, size_bytes, seeders, peers, created_at, updated_at
+			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
+			requested_season, requested_episode, created_at, updated_at
 		from app.media_release_candidates
 		where media_item_id = $1
 		order by coalesce(seeders, -1) desc, size_bytes desc, created_at desc
@@ -138,6 +142,10 @@ func scanReleaseCandidate(row pgx.Row) (ReleaseCandidate, error) {
 		&release.SizeBytes,
 		&release.Seeders,
 		&release.Peers,
+		&release.PublishedAt,
+		&release.SearchKind,
+		&release.RequestedSeason,
+		&release.RequestedEpisode,
 		&release.CreatedAt,
 		&release.UpdatedAt,
 	)

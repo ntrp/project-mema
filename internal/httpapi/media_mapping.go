@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
+	"media-manager/internal/decisions"
 	"media-manager/internal/storage"
 )
 
@@ -223,12 +224,13 @@ func mediaRelatedResponses(values []storage.MediaRelatedItem) []MediaSearchResul
 	return items
 }
 
-func releaseCandidateResponse(release storage.ReleaseCandidate) ReleaseCandidate {
+func releaseCandidateResponse(item storage.MediaItem, release storage.ReleaseCandidate) ReleaseCandidate {
 	var indexerID *openapi_types.UUID
 	if release.IndexerID != nil {
 		value := openapi_types.UUID(*release.IndexerID)
 		indexerID = &value
 	}
+	match := decisions.EvaluateReleaseMatch(item, release)
 	return ReleaseCandidate{
 		Id:          openapi_types.UUID(release.ID),
 		IndexerId:   indexerID,
@@ -240,6 +242,15 @@ func releaseCandidateResponse(release storage.ReleaseCandidate) ReleaseCandidate
 		SizeBytes:   release.SizeBytes,
 		Seeders:     release.Seeders,
 		Peers:       release.Peers,
+		PublishedAt: release.PublishedAt,
+		Match: ReleaseCandidateMatch{
+			Severity:  ReleaseCandidateMatchSeverity(match.Severity),
+			Details:   match.Details,
+			QualityId: match.QualityID,
+			Quality:   match.Quality,
+			Score:     match.Score,
+			Languages: match.Languages,
+		},
 	}
 }
 

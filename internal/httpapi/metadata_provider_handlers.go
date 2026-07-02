@@ -112,13 +112,22 @@ func (s *Server) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "metadata_cache_entries_failed", "Could not load metadata cache entries")
 		return
 	}
+	historyEntries, err := s.settings.ListMetadataSearchHistoryEntries(r.Context(), 100)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_history_entries_failed", "Could not load metadata query history")
+		return
+	}
 
 	response := MetadataCacheResponse{
-		Stats:   metadataCacheStatsResponse(stats),
-		Entries: make([]MetadataCacheEntry, 0, len(entries)),
+		Stats:          metadataCacheStatsResponse(stats),
+		Entries:        make([]MetadataCacheEntry, 0, len(entries)),
+		HistoryEntries: make([]MetadataSearchHistoryEntry, 0, len(historyEntries)),
 	}
 	for _, entry := range entries {
 		response.Entries = append(response.Entries, metadataCacheEntryResponse(entry))
+	}
+	for _, entry := range historyEntries {
+		response.HistoryEntries = append(response.HistoryEntries, metadataSearchHistoryEntryResponse(entry))
 	}
 	writeJSON(w, http.StatusOK, response)
 }

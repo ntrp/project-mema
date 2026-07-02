@@ -38,7 +38,7 @@ func (s *Service) searchRSS(ctx context.Context, config Config, query string) ([
 	}
 	defer closeBody(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return nil, httpStatusError(resp.StatusCode)
+		return nil, httpStatusError(resp)
 	}
 
 	body, err := readLimitedBody(resp.Body)

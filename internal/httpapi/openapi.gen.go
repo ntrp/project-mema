@@ -414,19 +414,19 @@ func (e MediaType) Valid() bool {
 
 // Defines values for MetadataCacheEntryCacheKind.
 const (
-	Details  MetadataCacheEntryCacheKind = "details"
-	Discover MetadataCacheEntryCacheKind = "discover"
-	Search   MetadataCacheEntryCacheKind = "search"
+	MetadataCacheEntryCacheKindDetails  MetadataCacheEntryCacheKind = "details"
+	MetadataCacheEntryCacheKindDiscover MetadataCacheEntryCacheKind = "discover"
+	MetadataCacheEntryCacheKindSearch   MetadataCacheEntryCacheKind = "search"
 )
 
 // Valid indicates whether the value is a known member of the MetadataCacheEntryCacheKind enum.
 func (e MetadataCacheEntryCacheKind) Valid() bool {
 	switch e {
-	case Details:
+	case MetadataCacheEntryCacheKindDetails:
 		return true
-	case Discover:
+	case MetadataCacheEntryCacheKindDiscover:
 		return true
-	case Search:
+	case MetadataCacheEntryCacheKindSearch:
 		return true
 	default:
 		return false
@@ -451,6 +451,27 @@ func (e MetadataProviderType) Valid() bool {
 	}
 }
 
+// Defines values for MetadataSearchHistoryEntryCacheKind.
+const (
+	MetadataSearchHistoryEntryCacheKindDetails  MetadataSearchHistoryEntryCacheKind = "details"
+	MetadataSearchHistoryEntryCacheKindDiscover MetadataSearchHistoryEntryCacheKind = "discover"
+	MetadataSearchHistoryEntryCacheKindSearch   MetadataSearchHistoryEntryCacheKind = "search"
+)
+
+// Valid indicates whether the value is a known member of the MetadataSearchHistoryEntryCacheKind enum.
+func (e MetadataSearchHistoryEntryCacheKind) Valid() bool {
+	switch e {
+	case MetadataSearchHistoryEntryCacheKindDetails:
+		return true
+	case MetadataSearchHistoryEntryCacheKindDiscover:
+		return true
+	case MetadataSearchHistoryEntryCacheKindSearch:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MinimumAvailability.
 const (
 	Announced MinimumAvailability = "announced"
@@ -466,6 +487,27 @@ func (e MinimumAvailability) Valid() bool {
 	case InCinema:
 		return true
 	case Released:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReleaseCandidateMatchSeverity.
+const (
+	ReleaseCandidateMatchSeverityError   ReleaseCandidateMatchSeverity = "error"
+	ReleaseCandidateMatchSeverityInfo    ReleaseCandidateMatchSeverity = "info"
+	ReleaseCandidateMatchSeverityWarning ReleaseCandidateMatchSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the ReleaseCandidateMatchSeverity enum.
+func (e ReleaseCandidateMatchSeverity) Valid() bool {
+	switch e {
+	case ReleaseCandidateMatchSeverityError:
+		return true
+	case ReleaseCandidateMatchSeverityInfo:
+		return true
+	case ReleaseCandidateMatchSeverityWarning:
 		return true
 	default:
 		return false
@@ -516,22 +558,22 @@ func (e SystemEventSeverity) Valid() bool {
 
 // Defines values for SystemLogLevel.
 const (
-	SystemLogLevelDebug SystemLogLevel = "debug"
-	SystemLogLevelError SystemLogLevel = "error"
-	SystemLogLevelInfo  SystemLogLevel = "info"
-	SystemLogLevelWarn  SystemLogLevel = "warn"
+	Debug SystemLogLevel = "debug"
+	Error SystemLogLevel = "error"
+	Info  SystemLogLevel = "info"
+	Warn  SystemLogLevel = "warn"
 )
 
 // Valid indicates whether the value is a known member of the SystemLogLevel enum.
 func (e SystemLogLevel) Valid() bool {
 	switch e {
-	case SystemLogLevelDebug:
+	case Debug:
 		return true
-	case SystemLogLevelError:
+	case Error:
 		return true
-	case SystemLogLevelInfo:
+	case Info:
 		return true
-	case SystemLogLevelWarn:
+	case Warn:
 		return true
 	default:
 		return false
@@ -842,6 +884,55 @@ type IndexerRequest struct {
 	Name       string      `json:"name"`
 	Priority   int32       `json:"priority"`
 	Type       IndexerType `json:"type"`
+}
+
+// IndexerSearchCacheEntry defines model for IndexerSearchCacheEntry.
+type IndexerSearchCacheEntry struct {
+	CreatedAt   time.Time   `json:"createdAt"`
+	Expired     bool        `json:"expired"`
+	ExpiresAt   time.Time   `json:"expiresAt"`
+	IndexerName string      `json:"indexerName"`
+	IndexerType IndexerType `json:"indexerType"`
+	MediaType   MediaType   `json:"mediaType"`
+	Query       string      `json:"query"`
+	ResultCount int32       `json:"resultCount"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+}
+
+// IndexerSearchCacheStats defines model for IndexerSearchCacheStats.
+type IndexerSearchCacheStats struct {
+	ActiveEntries  int32 `json:"activeEntries"`
+	ExpiredEntries int32 `json:"expiredEntries"`
+	IndexerCount   int32 `json:"indexerCount"`
+	TotalEntries   int32 `json:"totalEntries"`
+}
+
+// IndexerSearchHistoryEntry defines model for IndexerSearchHistoryEntry.
+type IndexerSearchHistoryEntry struct {
+	CacheHit    bool        `json:"cacheHit"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	Error       *string     `json:"error,omitempty"`
+	IndexerName string      `json:"indexerName"`
+	IndexerType IndexerType `json:"indexerType"`
+	MediaType   MediaType   `json:"mediaType"`
+	Query       string      `json:"query"`
+	Response    string      `json:"response"`
+	ResultCount int32       `json:"resultCount"`
+	Success     bool        `json:"success"`
+}
+
+// IndexerSearchResponse defines model for IndexerSearchResponse.
+type IndexerSearchResponse struct {
+	CacheEntries   []IndexerSearchCacheEntry   `json:"cacheEntries"`
+	HistoryEntries []IndexerSearchHistoryEntry `json:"historyEntries"`
+	Settings       IndexerSearchSettings       `json:"settings"`
+	Stats          IndexerSearchCacheStats     `json:"stats"`
+}
+
+// IndexerSearchSettings defines model for IndexerSearchSettings.
+type IndexerSearchSettings struct {
+	CacheDurationMinutes int32 `json:"cacheDurationMinutes"`
+	HistoryRetentionDays int32 `json:"historyRetentionDays"`
 }
 
 // IndexerType defines model for IndexerType.
@@ -1392,6 +1483,7 @@ type MediaSearchResult struct {
 	ExternalProvider *string             `json:"externalProvider,omitempty"`
 	Id               *openapi_types.UUID `json:"id,omitempty"`
 	Overview         *string             `json:"overview,omitempty"`
+	Popularity       *float64            `json:"popularity,omitempty"`
 	PosterPath       *string             `json:"posterPath,omitempty"`
 	Title            string              `json:"title"`
 	Type             MediaType           `json:"type"`
@@ -1434,8 +1526,9 @@ type MetadataCacheEntryCacheKind string
 
 // MetadataCacheResponse defines model for MetadataCacheResponse.
 type MetadataCacheResponse struct {
-	Entries []MetadataCacheEntry `json:"entries"`
-	Stats   MetadataCacheStats   `json:"stats"`
+	Entries        []MetadataCacheEntry         `json:"entries"`
+	HistoryEntries []MetadataSearchHistoryEntry `json:"historyEntries"`
+	Stats          MetadataCacheStats           `json:"stats"`
 }
 
 // MetadataCacheStats defines model for MetadataCacheStats.
@@ -1480,6 +1573,25 @@ type MetadataProviderRequest struct {
 
 // MetadataProviderType defines model for MetadataProviderType.
 type MetadataProviderType string
+
+// MetadataSearchHistoryEntry defines model for MetadataSearchHistoryEntry.
+type MetadataSearchHistoryEntry struct {
+	CacheHit     bool                                `json:"cacheHit"`
+	CacheKind    MetadataSearchHistoryEntryCacheKind `json:"cacheKind"`
+	CreatedAt    time.Time                           `json:"createdAt"`
+	Error        *string                             `json:"error,omitempty"`
+	ItemCount    int32                               `json:"itemCount"`
+	MediaType    MediaType                           `json:"mediaType"`
+	ProviderName string                              `json:"providerName"`
+	ProviderType MetadataProviderType                `json:"providerType"`
+	Query        string                              `json:"query"`
+	Response     string                              `json:"response"`
+	Success      bool                                `json:"success"`
+	Year         int32                               `json:"year"`
+}
+
+// MetadataSearchHistoryEntryCacheKind defines model for MetadataSearchHistoryEntry.CacheKind.
+type MetadataSearchHistoryEntryCacheKind string
 
 // MinimumAvailability defines model for MinimumAvailability.
 type MinimumAvailability string
@@ -1568,16 +1680,36 @@ type QualitySizeSettingsUpdateRequest struct {
 
 // ReleaseCandidate defines model for ReleaseCandidate.
 type ReleaseCandidate struct {
-	Guid        *string             `json:"guid,omitempty"`
-	Id          openapi_types.UUID  `json:"id"`
-	IndexerId   *openapi_types.UUID `json:"indexerId,omitempty"`
-	IndexerName string              `json:"indexerName"`
-	IndexerType IndexerType         `json:"indexerType"`
-	InfoUrl     *string             `json:"infoUrl,omitempty"`
-	Peers       *int32              `json:"peers,omitempty"`
-	Seeders     *int32              `json:"seeders,omitempty"`
-	SizeBytes   int64               `json:"sizeBytes"`
-	Title       string              `json:"title"`
+	Guid        *string               `json:"guid,omitempty"`
+	Id          openapi_types.UUID    `json:"id"`
+	IndexerId   *openapi_types.UUID   `json:"indexerId,omitempty"`
+	IndexerName string                `json:"indexerName"`
+	IndexerType IndexerType           `json:"indexerType"`
+	InfoUrl     *string               `json:"infoUrl,omitempty"`
+	Match       ReleaseCandidateMatch `json:"match"`
+	Peers       *int32                `json:"peers,omitempty"`
+	PublishedAt *time.Time            `json:"publishedAt,omitempty"`
+	Seeders     *int32                `json:"seeders,omitempty"`
+	SizeBytes   int64                 `json:"sizeBytes"`
+	Title       string                `json:"title"`
+}
+
+// ReleaseCandidateMatch defines model for ReleaseCandidateMatch.
+type ReleaseCandidateMatch struct {
+	Details   []string                      `json:"details"`
+	Languages []string                      `json:"languages"`
+	Quality   string                        `json:"quality"`
+	QualityId string                        `json:"qualityId"`
+	Score     int32                         `json:"score"`
+	Severity  ReleaseCandidateMatchSeverity `json:"severity"`
+}
+
+// ReleaseCandidateMatchSeverity defines model for ReleaseCandidateMatch.Severity.
+type ReleaseCandidateMatchSeverity string
+
+// ReleaseSearchRequest defines model for ReleaseSearchRequest.
+type ReleaseSearchRequest struct {
+	Query *string `json:"query,omitempty"`
 }
 
 // ReleaseSearchResponse defines model for ReleaseSearchResponse.
@@ -1817,6 +1949,9 @@ type DeleteMediaItemFileJSONRequestBody = MediaFileDeleteRequest
 // GrabMediaReleaseJSONRequestBody defines body for GrabMediaRelease for application/json ContentType.
 type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
 
+// EnqueueMediaReleaseSearchJSONRequestBody defines body for EnqueueMediaReleaseSearch for application/json ContentType.
+type EnqueueMediaReleaseSearchJSONRequestBody = ReleaseSearchRequest
+
 // CreateMediaRequestJSONRequestBody defines body for CreateMediaRequest for application/json ContentType.
 type CreateMediaRequestJSONRequestBody = MediaRequestCreateRequest
 
@@ -1846,6 +1981,12 @@ type UpdateDownloadClientJSONRequestBody = DownloadClientRequest
 
 // UpdateFileNamingSettingsJSONRequestBody defines body for UpdateFileNamingSettings for application/json ContentType.
 type UpdateFileNamingSettingsJSONRequestBody = FileNamingSettingsRequest
+
+// UpdateIndexerSearchSettingsJSONRequestBody defines body for UpdateIndexerSearchSettings for application/json ContentType.
+type UpdateIndexerSearchSettingsJSONRequestBody = IndexerSearchSettings
+
+// ClearIndexerSearchCacheByPatternJSONRequestBody defines body for ClearIndexerSearchCacheByPattern for application/json ContentType.
+type ClearIndexerSearchCacheByPatternJSONRequestBody = MetadataCacheClearRequest
 
 // CreateIndexerJSONRequestBody defines body for CreateIndexer for application/json ContentType.
 type CreateIndexerJSONRequestBody = IndexerRequest
@@ -2047,6 +2188,18 @@ type ServerInterface interface {
 	// Update file naming settings
 	// (PUT /settings/file-naming)
 	UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request)
+	// Inspect indexer search cache and query history
+	// (GET /settings/indexer-search)
+	GetIndexerSearch(w http.ResponseWriter, r *http.Request)
+	// Update indexer search cache and history settings
+	// (PUT /settings/indexer-search)
+	UpdateIndexerSearchSettings(w http.ResponseWriter, r *http.Request)
+	// Clear all indexer search cache entries
+	// (DELETE /settings/indexer-search/cache)
+	ClearIndexerSearchCache(w http.ResponseWriter, r *http.Request)
+	// Clear indexer search cache entries matching a regex
+	// (POST /settings/indexer-search/cache/reset)
+	ClearIndexerSearchCacheByPattern(w http.ResponseWriter, r *http.Request)
 	// List configured indexers
 	// (GET /settings/indexers)
 	ListIndexers(w http.ResponseWriter, r *http.Request)
@@ -2488,6 +2641,30 @@ func (_ Unimplemented) GetFileNamingSettings(w http.ResponseWriter, r *http.Requ
 // Update file naming settings
 // (PUT /settings/file-naming)
 func (_ Unimplemented) UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Inspect indexer search cache and query history
+// (GET /settings/indexer-search)
+func (_ Unimplemented) GetIndexerSearch(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update indexer search cache and history settings
+// (PUT /settings/indexer-search)
+func (_ Unimplemented) UpdateIndexerSearchSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Clear all indexer search cache entries
+// (DELETE /settings/indexer-search/cache)
+func (_ Unimplemented) ClearIndexerSearchCache(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Clear indexer search cache entries matching a regex
+// (POST /settings/indexer-search/cache/reset)
+func (_ Unimplemented) ClearIndexerSearchCacheByPattern(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4127,6 +4304,86 @@ func (siw *ServerInterfaceWrapper) UpdateFileNamingSettings(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// GetIndexerSearch operation middleware
+func (siw *ServerInterfaceWrapper) GetIndexerSearch(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIndexerSearch(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateIndexerSearchSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateIndexerSearchSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateIndexerSearchSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ClearIndexerSearchCache operation middleware
+func (siw *ServerInterfaceWrapper) ClearIndexerSearchCache(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClearIndexerSearchCache(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ClearIndexerSearchCacheByPattern operation middleware
+func (siw *ServerInterfaceWrapper) ClearIndexerSearchCacheByPattern(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClearIndexerSearchCacheByPattern(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListIndexers operation middleware
 func (siw *ServerInterfaceWrapper) ListIndexers(w http.ResponseWriter, r *http.Request) {
 
@@ -5708,6 +5965,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/file-naming", wrapper.UpdateFileNamingSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/indexer-search", wrapper.GetIndexerSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/indexer-search", wrapper.UpdateIndexerSearchSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/indexer-search/cache", wrapper.ClearIndexerSearchCache)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/indexer-search/cache/reset", wrapper.ClearIndexerSearchCacheByPattern)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/indexers", wrapper.ListIndexers)

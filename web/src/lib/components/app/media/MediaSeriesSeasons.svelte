@@ -8,9 +8,10 @@
 	import MediaSeasonPanel from './MediaSeasonPanel.svelte';
 	import MediaSeriesMonitorBookmark from './MediaSeriesMonitorBookmark.svelte';
 	import { monitorUpdate, toggledEpisodeMonitor, toggledSeasonMonitor } from './mediaMonitoring';
-	import { fileRow, type MediaFileRow } from './mediaFiles';
+	import { fileRow, seasonNumberFromName, type MediaFileRow } from './mediaFiles';
 	import { seasonFileSummary } from './mediaSeasonSummary';
 	import { episodeTitle, seasonEpisodeRows, seasonMonitored } from './mediaSeriesRows';
+	import type { ReleaseSearchContext } from './releaseSearchQuery';
 	import type {
 		DownloadActivity,
 		LibraryFolder,
@@ -37,7 +38,7 @@
 		}[];
 		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onAutoSearch: (_item: MediaItem) => void;
-		onManualSearch: (_item: MediaItem) => void;
+		onManualSearch: (_item: MediaItem, _query?: string) => void;
 		onDeleteFile: (_item: MediaItem, _path: string) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 	}
@@ -59,7 +60,7 @@
 	}: Props = $props();
 
 	let deleteRow = $state<MediaFileRow | undefined>();
-	let searchOpen = $state(false);
+	let searchContext = $state<ReleaseSearchContext | undefined>();
 	const seasons = $derived(item.seasons ?? []);
 	const mediaRows = $derived(item.filePaths.map((path) => fileRow(item, path, qualityProfiles)));
 
@@ -80,6 +81,14 @@
 		if (!deleteRow?.path) return;
 		onDeleteFile(item, deleteRow.path);
 		deleteRow = undefined;
+	}
+
+	function seasonSearchContext(season: MediaMetadataSeason, index: number): ReleaseSearchContext {
+		return { type: 'season', seasonNumber: seasonNumberFromName(season.name) ?? index + 1 };
+	}
+
+	function episodeSearchContext(row: MediaFileRow): ReleaseSearchContext {
+		return { type: 'episode', seasonNumber: row.seasonNumber, episodeNumber: row.episodeNumber };
 	}
 </script>
 
@@ -110,7 +119,7 @@
 							{canManage}
 							busy={searchingItemId === item.id || summary.hasActive}
 							onAutoSearch={() => onAutoSearch(item)}
-							onManualSearch={() => (searchOpen = true)}
+							onManualSearch={() => (searchContext = seasonSearchContext(season, index))}
 						/>
 					{/snippet}
 					{#if seasonRows.length > 0}
@@ -132,7 +141,7 @@
 										{canManage}
 										searching={searchingItemId === item.id}
 										onAutoSearch={() => onAutoSearch(item)}
-										onManualSearch={() => (searchOpen = true)}
+										onManualSearch={() => (searchContext = episodeSearchContext(file.row))}
 										onDelete={requestDelete}
 									/>
 								</MediaEpisodeRow>
@@ -155,15 +164,16 @@
 	/>
 {/if}
 
-{#if searchOpen}
+{#if searchContext}
 	<MediaFileSearchModal
 		{item}
 		{releaseResults}
+		{searchContext}
 		searching={searchingItemId === item.id}
 		{grabbingKey}
 		{canManage}
 		onSearch={onManualSearch}
 		onGrab={onGrabRelease}
-		onClose={() => (searchOpen = false)}
+		onClose={() => (searchContext = undefined)}
 	/>
 {/if}

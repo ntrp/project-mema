@@ -56,6 +56,21 @@ type MetadataCacheEntry struct {
 	Expired      bool
 }
 
+type MetadataSearchHistoryEntry struct {
+	ProviderName string
+	ProviderType string
+	MediaType    string
+	Query        string
+	CacheKind    string
+	Year         int32
+	CacheHit     bool
+	Success      bool
+	ItemCount    int32
+	Error        *string
+	Response     string
+	CreatedAt    time.Time
+}
+
 func (s *SettingsStore) EnsureDefaultMetadataProviders(ctx context.Context) error {
 	defaults := []MetadataProviderInput{
 		{

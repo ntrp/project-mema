@@ -11,8 +11,8 @@
 		activeSection,
 		downloadClients,
 		indexers,
+		indexerSearch,
 		metadataProviders,
-		metadataCache,
 		libraryFolders,
 		pathMappings,
 		mediaProfiles,
@@ -31,10 +31,9 @@
 		userForm = $bindable(),
 		savingDownloadClient,
 		savingIndexer,
+		clearingIndexerSearchCache,
+		savingIndexerSearchSettings,
 		savingMetadataProviderId,
-		loadingMetadataCache,
-		clearingMetadataCache,
-		metadataCachePattern = $bindable(),
 		savingLibraryFolder,
 		savingPathMapping,
 		deletingPathMappingId,
@@ -52,10 +51,9 @@
 		onSaveDownloadClient,
 		onTestDownloadClientConfig,
 		onSaveIndexer,
+		onClearIndexerSearchCache,
+		onSaveIndexerSearchSettings,
 		onSaveMetadataProvider,
-		onRefreshMetadataCache,
-		onClearMetadataCache,
-		onClearMetadataCachePattern,
 		onSaveLibraryFolder,
 		onScanLibraryFolder,
 		onSavePathMapping,
@@ -105,8 +103,11 @@
 	{:else if activeSection === 'indexers'}
 		<IndexersSettingsSection
 			{indexers}
+			{indexerSearch}
 			bind:form={indexerForm}
 			saving={savingIndexer}
+			{clearingIndexerSearchCache}
+			{savingIndexerSearchSettings}
 			testingId={testingIndexerId}
 			testResults={indexerTests}
 			onSave={onSaveIndexer}
@@ -114,22 +115,20 @@
 			onEdit={onEditIndexer}
 			onDelete={onDeleteIndexer}
 			onTest={onTestIndexer}
+			{onClearIndexerSearchCache}
+			{onSaveIndexerSearchSettings}
 		/>
 	{:else if isStaticSettingsSection(activeSection)}
 		<SettingsStaticPanels
 			{activeSection}
 			{metadataProviders}
-			{metadataCache}
 			{mediaProfiles}
 			{customFormats}
 			{tags}
-			bind:metadataCachePattern
 			bind:customFormatForm
 			bind:tagForm
 			{savingMetadataProviderId}
 			{testingMetadataProviderId}
-			{loadingMetadataCache}
-			{clearingMetadataCache}
 			{deletingMediaProfileId}
 			{savingCustomFormat}
 			{deletingCustomFormatId}
@@ -138,9 +137,6 @@
 			{metadataProviderTests}
 			{onSaveMetadataProvider}
 			{onTestMetadataProvider}
-			{onRefreshMetadataCache}
-			{onClearMetadataCache}
-			{onClearMetadataCachePattern}
 			{onDeleteMediaProfile}
 			{onSaveCustomFormat}
 			{onImportCustomFormat}

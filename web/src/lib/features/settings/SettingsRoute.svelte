@@ -23,8 +23,8 @@
 		activeSection={section}
 		downloadClients={app.downloadClients}
 		indexers={app.indexers}
+		indexerSearch={app.indexerSearch}
 		metadataProviders={app.metadataProviders}
-		metadataCache={app.metadataCache}
 		libraryFolders={app.libraryFolders}
 		pathMappings={app.pathMappings}
 		mediaProfiles={app.mediaProfiles}
@@ -36,9 +36,9 @@
 		openLibraryFolderId={app.openLibraryFolderId}
 		savingDownloadClient={app.savingDownloadClient}
 		savingIndexer={app.savingIndexer}
+		clearingIndexerSearchCache={app.clearingIndexerSearchCache}
+		savingIndexerSearchSettings={app.savingIndexerSearchSettings}
 		savingMetadataProviderId={app.savingMetadataProviderId}
-		loadingMetadataCache={app.loadingMetadataCache}
-		clearingMetadataCache={app.clearingMetadataCache}
 		savingLibraryFolder={app.savingLibraryFolder}
 		scanningLibraryFolderId={app.scanningLibraryFolderId}
 		savingPathMapping={app.savingPathMapping}
@@ -49,7 +49,6 @@
 		savingTag={app.savingTag}
 		deletingTagId={app.deletingTagId}
 		savingUser={app.savingUser}
-		bind:metadataCachePattern={app.metadataCachePattern}
 		testingIndexerId={app.testingIndexerId}
 		testingMetadataProviderId={app.testingMetadataProviderId}
 		indexerTests={app.indexerTests}
@@ -57,10 +56,9 @@
 		onSaveDownloadClient={app.saveDownloadClient}
 		onTestDownloadClientConfig={app.testDownloadClientConfig}
 		onSaveIndexer={app.saveIndexer}
+		onClearIndexerSearchCache={app.clearIndexerSearchCache}
+		onSaveIndexerSearchSettings={app.saveIndexerSearchSettings}
 		onSaveMetadataProvider={app.saveMetadataProvider}
-		onRefreshMetadataCache={app.refreshMetadataCache}
-		onClearMetadataCache={app.clearMetadataCache}
-		onClearMetadataCachePattern={app.clearMetadataCachePattern}
 		onSaveLibraryFolder={app.saveLibraryFolder}
 		onScanLibraryFolder={app.scanLibraryFolder}
 		onSavePathMapping={app.savePathMapping}

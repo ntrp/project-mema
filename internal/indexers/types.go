@@ -32,6 +32,7 @@ type Release struct {
 	SizeBytes   int64
 	Seeders     *int32
 	Peers       *int32
+	PublishedAt *time.Time
 }
 
 type HTTPDoer interface {

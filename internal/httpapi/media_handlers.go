@@ -195,6 +195,7 @@ func (s *Server) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
 		limit:               int(limit),
 		includeLibrary:      true,
 		includeProviders:    true,
+		sortByPopularity:    true,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "media_advanced_search_failed", "Could not search media")

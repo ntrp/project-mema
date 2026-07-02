@@ -3,6 +3,7 @@
 - Always keep modules small and refactor them when they grow too much, this includes svelte components and go modules
 - no backend module should be over 300 lines of code, excluding generated files
 - no frontend component or module should be over 200 lines of code
+- when multiple components are in the same feature organize them in a directory, try to keep maximum number files in a single directory to 10
 - DRY, don't repeat yourself, if you find yourself copy pasting code, refactor it into a module or component
 - Single responsibility principle, each module or component should have a single responsibility or a very small number of them
 - Always use a modal for confirmation dialogs, never use a browser confirm dialog

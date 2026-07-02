@@ -1,6 +1,5 @@
 <script lang="ts">
 	import CustomFormatsSettings from '$lib/components/settings/CustomFormatsSettings.svelte';
-	import MetadataCacheSettings from '$lib/components/settings/MetadataCacheSettings.svelte';
 	import MetadataProviderSettings from '$lib/components/settings/MetadataProviderSettings.svelte';
 	import MediaProfilesSettings from '$lib/components/settings/MediaProfilesSettings.svelte';
 	import QualitySizeSettings from '$lib/components/settings/quality/QualitySizeSettings.svelte';
@@ -11,7 +10,6 @@
 		CustomFormatForm as CustomFormatFormValue,
 		IntegrationTestResults,
 		MediaProfile,
-		MetadataCacheResponse,
 		MetadataProvider,
 		MetadataProviderForm as MetadataProviderFormValue,
 		SettingsSection,
@@ -22,17 +20,13 @@
 	interface Props {
 		activeSection: SettingsSection;
 		metadataProviders: MetadataProvider[];
-		metadataCache: MetadataCacheResponse;
 		mediaProfiles: MediaProfile[];
 		customFormats: CustomFormat[];
 		tags: Tag[];
-		metadataCachePattern: string;
 		customFormatForm: CustomFormatFormValue;
 		tagForm: TagForm;
 		savingMetadataProviderId?: string;
 		testingMetadataProviderId?: string;
-		loadingMetadataCache: boolean;
-		clearingMetadataCache: boolean;
 		deletingMediaProfileId?: string;
 		savingCustomFormat: boolean;
 		deletingCustomFormatId?: string;
@@ -41,9 +35,6 @@
 		metadataProviderTests: IntegrationTestResults;
 		onSaveMetadataProvider: (_form: MetadataProviderFormValue) => void | Promise<void>;
 		onTestMetadataProvider: (_id: string) => void | Promise<void>;
-		onRefreshMetadataCache: () => void | Promise<void>;
-		onClearMetadataCache: () => void | Promise<void>;
-		onClearMetadataCachePattern: (_event: SubmitEvent) => void | Promise<void>;
 		onDeleteMediaProfile: (_id: string) => void | Promise<void>;
 		onSaveCustomFormat: (_event: SubmitEvent) => void | Promise<void>;
 		onImportCustomFormat: (_format: CustomFormatFormValue) => void | Promise<void>;
@@ -59,17 +50,13 @@
 	let {
 		activeSection,
 		metadataProviders,
-		metadataCache,
 		mediaProfiles,
 		customFormats,
 		tags,
-		metadataCachePattern = $bindable(),
 		customFormatForm = $bindable(),
 		tagForm = $bindable(),
 		savingMetadataProviderId,
 		testingMetadataProviderId,
-		loadingMetadataCache,
-		clearingMetadataCache,
 		deletingMediaProfileId,
 		savingCustomFormat,
 		deletingCustomFormatId,
@@ -78,9 +65,6 @@
 		metadataProviderTests,
 		onSaveMetadataProvider,
 		onTestMetadataProvider,
-		onRefreshMetadataCache,
-		onClearMetadataCache,
-		onClearMetadataCachePattern,
 		onDeleteMediaProfile,
 		onSaveCustomFormat,
 		onImportCustomFormat,
@@ -104,15 +88,6 @@
 			testingId={testingMetadataProviderId}
 			savingId={savingMetadataProviderId}
 			testResults={metadataProviderTests}
-		/>
-		<MetadataCacheSettings
-			cache={metadataCache}
-			bind:pattern={metadataCachePattern}
-			loading={loadingMetadataCache}
-			clearing={clearingMetadataCache}
-			onRefresh={onRefreshMetadataCache}
-			onClearAll={onClearMetadataCache}
-			onClearPattern={onClearMetadataCachePattern}
 		/>
 	</div>
 {:else if activeSection === 'quality'}
