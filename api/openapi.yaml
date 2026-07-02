@@ -4215,6 +4215,7 @@ components:
         - qualityId
         - quality
         - score
+        - scoreContributors
         - languages
       properties:
         severity:
@@ -4234,10 +4235,26 @@ components:
         score:
           type: integer
           format: int32
+        scoreContributors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseScoreContributor"
         languages:
           type: array
           items:
             type: string
+    ReleaseScoreContributor:
+      type: object
+      additionalProperties: false
+      required:
+        - label
+        - score
+      properties:
+        label:
+          type: string
+        score:
+          type: integer
+          format: int32
     ReleaseSearchRequest:
       type: object
       additionalProperties: false

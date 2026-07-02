@@ -9,12 +9,18 @@ import (
 )
 
 type ReleaseMatch struct {
-	Severity  string
-	Details   []string
-	QualityID string
-	Quality   string
-	Score     int32
-	Languages []string
+	Severity          string
+	Details           []string
+	QualityID         string
+	Quality           string
+	Score             int32
+	ScoreContributors []ReleaseScoreContributor
+	Languages         []string
+}
+
+type ReleaseScoreContributor struct {
+	Label string
+	Score int32
 }
 
 type ReleaseSearchCriteria struct {
@@ -180,13 +186,22 @@ func criteriaMismatch(criteria ReleaseSearchCriteria, parsed ParsedRelease) stri
 
 func releaseMatch(severity string, parsed ParsedRelease, score int32, details ...string) ReleaseMatch {
 	return ReleaseMatch{
-		Severity:  severity,
-		Details:   append([]string{}, details...),
-		QualityID: parsed.QualityID,
-		Quality:   parsed.Quality,
-		Score:     score,
-		Languages: append([]string{}, parsed.Languages...),
+		Severity:          severity,
+		Details:           append([]string{}, details...),
+		QualityID:         parsed.QualityID,
+		Quality:           parsed.Quality,
+		Score:             score,
+		ScoreContributors: releaseScoreContributors(parsed, score),
+		Languages:         append([]string{}, parsed.Languages...),
 	}
+}
+
+func releaseScoreContributors(parsed ParsedRelease, score int32) []ReleaseScoreContributor {
+	label := "Quality"
+	if parsed.Quality != "" {
+		label = fmt.Sprintf("Quality: %s", parsed.Quality)
+	}
+	return []ReleaseScoreContributor{{Label: label, Score: score}}
 }
 
 func currentQualityScore(item storage.MediaItem) int32 {

@@ -2083,7 +2083,13 @@ export interface components {
 			quality: string;
 			/** Format: int32 */
 			score: number;
+			scoreContributors: components['schemas']['ReleaseScoreContributor'][];
 			languages: string[];
+		};
+		ReleaseScoreContributor: {
+			label: string;
+			/** Format: int32 */
+			score: number;
 		};
 		ReleaseSearchRequest: {
 			query?: string;

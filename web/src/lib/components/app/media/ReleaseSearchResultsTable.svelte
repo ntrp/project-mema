@@ -1,7 +1,6 @@
 <script lang="ts">
 	import ArrowDownIcon from '@lucide/svelte/icons/arrow-down';
 	import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
-	import CopyIcon from '@lucide/svelte/icons/copy';
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import { Badge } from '$lib/components/ui/badge';
@@ -11,6 +10,8 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { MediaItem, ReleaseCandidate } from '$lib/settings/types';
 	import ReleaseMatchInfo from './ReleaseMatchInfo.svelte';
+	import ReleaseScoreCell from './ReleaseScoreCell.svelte';
+	import ReleaseTitleCell from './ReleaseTitleCell.svelte';
 	import {
 		ageLabel,
 		languageLabels,
@@ -18,7 +19,6 @@
 		qualityMatch,
 		releaseSource,
 		releaseSourceBadgeClass,
-		signedScore,
 		sizeLabel
 	} from './releaseCandidateDisplay';
 	import type { ReleaseSort, ReleaseSortKey } from './releaseSearchResults';
@@ -131,35 +131,7 @@
 						<Table.Cell>{release.indexerName}</Table.Cell>
 						<Table.Cell>{ageLabel(release)}</Table.Cell>
 						<Table.Cell class="max-w-96">
-							<div class="flex max-w-96 items-center gap-1.5">
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										{#snippet child({ props })}
-											<span {...props} class="block min-w-0 flex-1 truncate">{release.title}</span>
-										{/snippet}
-									</Tooltip.Trigger>
-									<Tooltip.Content class="max-w-160">{release.title}</Tooltip.Content>
-								</Tooltip.Root>
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										{#snippet child({ props })}
-											<Button
-												{...props}
-												type="button"
-												variant="ghost"
-												size="icon-sm"
-												aria-label="Copy release title"
-												onclick={() => void copyTitle(release)}
-											>
-												<CopyIcon aria-hidden="true" />
-											</Button>
-										{/snippet}
-									</Tooltip.Trigger>
-									<Tooltip.Content>
-										{copiedReleaseId === release.id ? 'Copied title' : 'Copy title'}
-									</Tooltip.Content>
-								</Tooltip.Root>
-							</div>
+							<ReleaseTitleCell {release} {copiedReleaseId} onCopy={(value) => void copyTitle(value)} />
 						</Table.Cell>
 						<Table.Cell>{sizeLabel(release.sizeBytes)}</Table.Cell>
 						<Table.Cell>{releaseSource(release) === 'torrent' ? peerLabel(release) : ''}</Table.Cell
@@ -178,7 +150,7 @@
 								{qualityMatch(release).label}
 							</Badge>
 						</Table.Cell>
-						<Table.Cell>{signedScore(qualityMatch(release).score)}</Table.Cell>
+						<Table.Cell><ReleaseScoreCell match={release.match} /></Table.Cell>
 						<Table.Cell>
 							<ReleaseMatchInfo info={release.match} />
 						</Table.Cell>

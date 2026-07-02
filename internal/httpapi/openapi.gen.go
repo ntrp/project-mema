@@ -1710,16 +1710,23 @@ type ReleaseCandidate struct {
 
 // ReleaseCandidateMatch defines model for ReleaseCandidateMatch.
 type ReleaseCandidateMatch struct {
-	Details   []string                      `json:"details"`
-	Languages []string                      `json:"languages"`
-	Quality   string                        `json:"quality"`
-	QualityId string                        `json:"qualityId"`
-	Score     int32                         `json:"score"`
-	Severity  ReleaseCandidateMatchSeverity `json:"severity"`
+	Details           []string                      `json:"details"`
+	Languages         []string                      `json:"languages"`
+	Quality           string                        `json:"quality"`
+	QualityId         string                        `json:"qualityId"`
+	Score             int32                         `json:"score"`
+	ScoreContributors []ReleaseScoreContributor     `json:"scoreContributors"`
+	Severity          ReleaseCandidateMatchSeverity `json:"severity"`
 }
 
 // ReleaseCandidateMatchSeverity defines model for ReleaseCandidateMatch.Severity.
 type ReleaseCandidateMatchSeverity string
+
+// ReleaseScoreContributor defines model for ReleaseScoreContributor.
+type ReleaseScoreContributor struct {
+	Label string `json:"label"`
+	Score int32  `json:"score"`
+}
 
 // ReleaseSearchRequest defines model for ReleaseSearchRequest.
 type ReleaseSearchRequest struct {
