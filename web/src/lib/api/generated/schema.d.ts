@@ -317,7 +317,8 @@ export interface paths {
 			cookie?: never;
 		};
 		get?: never;
-		put?: never;
+		/** Update monitored media item settings */
+		put: operations['updateMediaItem'];
 		post?: never;
 		/** Remove a monitored media item */
 		delete: operations['deleteMediaItem'];
@@ -1549,6 +1550,7 @@ export interface components {
 			libraryFolderPath?: string;
 			mediaFolderPath?: string;
 			filePaths: string[];
+			files?: components['schemas']['MediaFileInfo'][];
 			metadataFilePaths: string[];
 			/** Format: date-time */
 			createdAt: string;
@@ -1576,8 +1578,51 @@ export interface components {
 		MediaItemCreateRequest: components['schemas']['MediaItemRequest'] & {
 			startSearch: boolean;
 		};
+		MediaItemUpdateRequest: {
+			qualityProfileId?: string;
+			minimumAvailability?: components['schemas']['MinimumAvailability'];
+			/** Format: uuid */
+			libraryFolderId?: string;
+			monitored?: boolean;
+			monitorMode?: components['schemas']['MediaMonitorMode'];
+			seasons?: components['schemas']['MediaMetadataSeason'][];
+		};
 		MediaFileDeleteRequest: {
 			path: string;
+		};
+		MediaFileInfo: {
+			path: string;
+			/** Format: int64 */
+			sizeBytes?: number;
+			tracks?: components['schemas']['MediaFileTrack'][];
+			chapters?: components['schemas']['MediaFileChapter'][];
+		};
+		MediaFileChapter: {
+			/** Format: int32 */
+			index: number;
+			title?: string;
+			startTime?: string;
+			endTime?: string;
+		};
+		MediaFileTrack: {
+			/** @enum {string} */
+			type: 'video' | 'audio' | 'subtitle';
+			/** Format: int32 */
+			index?: number;
+			codec?: string;
+			language?: string;
+			title?: string;
+			/** Format: int32 */
+			width?: number;
+			/** Format: int32 */
+			height?: number;
+			profile?: string;
+			pixelFormat?: string;
+			frameRate?: string;
+			/** Format: int32 */
+			channels?: number;
+			channelLayout?: string;
+			bitRate?: string;
 		};
 		/** @enum {string} */
 		MediaItemStatus: 'missing' | 'downloading' | 'downloaded';
@@ -2797,6 +2842,36 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['MediaRequestApproveResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	updateMediaItem: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaItemUpdateRequest'];
+			};
+		};
+		responses: {
+			/** @description Updated media item */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
 				};
 			};
 			400: components['responses']['BadRequest'];

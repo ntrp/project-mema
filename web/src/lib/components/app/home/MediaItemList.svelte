@@ -30,10 +30,10 @@
 		return `https://image.tmdb.org/t/p/w500${path}`;
 	}
 
-	function statusLabel(status: MediaItem['status']) {
-		switch (status) {
+	function statusLabel(item: MediaItem) {
+		switch (item.status) {
 			case 'downloaded':
-				return 'Downloaded';
+				return isContinuingSeries(item) ? 'Downloaded available episodes' : 'Downloaded';
 			case 'downloading':
 				return 'Downloading';
 			default:
@@ -45,14 +45,18 @@
 		return type === 'movie' ? 'Movie' : 'Series';
 	}
 
-	function statusLineClass(status: MediaItem['status']) {
-		if (status === 'downloaded') {
+	function statusLineClass(item: MediaItem) {
+		if (item.status === 'downloaded') {
+			return isContinuingSeries(item) ? 'bg-sky-300' : 'bg-green-500';
+		}
+		if (item.status === 'downloading') {
 			return 'bg-primary';
 		}
-		if (status === 'downloading') {
-			return 'bg-secondary';
-		}
 		return 'bg-destructive';
+	}
+
+	function isContinuingSeries(item: MediaItem) {
+		return item.type === 'series' && item.metadataStatus?.trim().toLowerCase() === 'continuing';
 	}
 </script>
 
@@ -102,8 +106,8 @@
 					</p>
 				</div>
 				<span
-					class={`absolute right-0 bottom-0 left-0 z-[4] h-[5px] ${statusLineClass(item.status)}`}
-					aria-label={statusLabel(item.status)}
+					class={`absolute right-0 bottom-0 left-0 z-[4] h-[5px] ${statusLineClass(item)}`}
+					aria-label={statusLabel(item)}
 				></span>
 			</a>
 		{/each}

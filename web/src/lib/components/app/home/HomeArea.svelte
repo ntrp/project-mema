@@ -13,6 +13,7 @@
 		LibraryFolder,
 		MediaDiscoverSection,
 		MediaItem,
+		MediaItemUpdateRequest,
 		MediaRequest,
 		MediaRequestApproveRequest,
 		MediaSearchResult,
@@ -42,6 +43,7 @@
 		approvingRequestId?: string;
 		searchingItemId?: string;
 		refreshingMetadataItemId?: string;
+		savingMediaItemOptionsId?: string;
 		grabbingKey?: string;
 		deletingMediaItemId?: string;
 		cancellingActivityId?: string;
@@ -55,6 +57,7 @@
 		onFindReleases: (_item: MediaItem) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
 		onRefreshMediaMetadata: (_item: MediaItem) => void;
+		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
@@ -84,6 +87,7 @@
 		approvingRequestId,
 		searchingItemId,
 		refreshingMetadataItemId,
+		savingMediaItemOptionsId,
 		grabbingKey,
 		deletingMediaItemId,
 		cancellingActivityId,
@@ -97,6 +101,7 @@
 		onFindReleases,
 		onAutoSearchMedia,
 		onRefreshMediaMetadata,
+		onSaveMediaItemOptions,
 		onDeleteMediaFile,
 		onDeleteMedia,
 		onGrabRelease,
@@ -157,11 +162,14 @@
 				item={selectedMediaItem}
 				loading={loadingMediaItems && !selectedMediaItem}
 				{mediaItems}
+				{libraryFolders}
+				{qualityProfiles}
 				requestedItemId={selectedMediaItemId}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{activities}
 				{searchingItemId}
 				{refreshingMetadataItemId}
+				{savingMediaItemOptionsId}
 				{grabbingKey}
 				{addingKey}
 				{deletingMediaItemId}
@@ -170,6 +178,7 @@
 				{onFindReleases}
 				{onAutoSearchMedia}
 				{onRefreshMediaMetadata}
+				{onSaveMediaItemOptions}
 				{onDeleteMediaFile}
 				{onDeleteMedia}
 				{onGrabRelease}

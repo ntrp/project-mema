@@ -65,6 +65,7 @@ export type MediaRequestStatus = components['schemas']['MediaRequestStatus'];
 export type MediaSearchGroup = components['schemas']['MediaSearchGroup'];
 export type MediaItem = components['schemas']['MediaItem'];
 export type MediaItemCreateRequest = components['schemas']['MediaItemCreateRequest'];
+export type MediaItemUpdateRequest = components['schemas']['MediaItemUpdateRequest'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type MediaItemStatus = components['schemas']['MediaItemStatus'];
 export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
@@ -114,6 +115,7 @@ export type UserForm = {
 export interface QualityProfileOption {
 	id: string;
 	name: string;
+	targetLanguages?: string[];
 }
 
 export type AppView =

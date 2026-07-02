@@ -1,5 +1,10 @@
+import { mediaFileLanguageInfo } from './mediaFileLanguages';
+import { matchedFormats } from './mediaFileFormats';
+import { expectedProfileLanguages, type MediaFileProfileOption } from './mediaFileProfiles';
+import { mediaFileInfo, mediaFileSize } from './mediaFileSize';
 import type { MediaItem } from '$lib/settings/types';
-
+type MediaFileTrack = NonNullable<NonNullable<MediaItem['files']>[number]['tracks']>[number];
+type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['chapters']>[number];
 export interface MediaFileRow {
 	key: string;
 	path?: string;
@@ -11,9 +16,13 @@ export interface MediaFileRow {
 	videoCodec: string;
 	audioInfo: string;
 	size: string;
+	sizeBytes?: number;
 	languages: string;
 	quality: string;
 	formats: string[];
+	tracks: MediaFileTrack[];
+	chapters: MediaFileChapter[];
+	expectedLanguages: string[];
 	score: number;
 }
 
@@ -22,46 +31,31 @@ export interface MediaFileGroup {
 	title: string;
 	rows: MediaFileRow[];
 }
-
-const formatPatterns = [
-	'Remux',
-	'BluRay',
-	'WEB-DL',
-	'WEBDL',
-	'WEBRip',
-	'HDTV',
-	'AMZN',
-	'DSNP',
-	'NF',
-	'ATVP',
-	'DD+',
-	'TrueHD',
-	'Atmos',
-	'DTS',
-	'HDR',
-	'DV',
-	'Proper',
-	'Repack'
-];
-
-export function mediaFileGroups(item: MediaItem): MediaFileGroup[] {
-	return item.type === 'series' ? seriesGroups(item) : movieGroups(item);
+export function mediaFileGroups(
+	item: MediaItem,
+	qualityProfiles: MediaFileProfileOption[] = []
+): MediaFileGroup[] {
+	return item.type === 'series'
+		? seriesGroups(item, qualityProfiles)
+		: movieGroups(item, qualityProfiles);
 }
 
-function movieGroups(item: MediaItem): MediaFileGroup[] {
+function movieGroups(item: MediaItem, qualityProfiles: MediaFileProfileOption[]): MediaFileGroup[] {
 	const rows = item.filePaths.length
-		? item.filePaths.map((path) => fileRow(item, path))
+		? item.filePaths.map((path) => fileRow(item, path, qualityProfiles))
 		: [missingRow('movie-missing', item.title)];
 	return [{ key: 'movie', title: 'Movie file', rows }];
 }
 
-function seriesGroups(item: MediaItem): MediaFileGroup[] {
-	const rows = item.filePaths.map((path) => fileRow(item, path));
+function seriesGroups(
+	item: MediaItem,
+	qualityProfiles: MediaFileProfileOption[]
+): MediaFileGroup[] {
+	const rows = item.filePaths.map((path) => fileRow(item, path, qualityProfiles));
 	const byEpisode = new Map(
 		rows.map((row) => [episodeKey(row.seasonNumber, row.episodeNumber), row])
 	);
 	const groups = (item.seasons ?? [])
-		.filter((season) => season.name.toLowerCase() !== 'specials')
 		.map((season, index) => {
 			const seasonNumber = seasonNumberFromName(season.name) ?? index + 1;
 			const rows = (season.episodes ?? []).map(
@@ -103,9 +97,15 @@ function seriesGroups(item: MediaItem): MediaFileGroup[] {
 			];
 }
 
-export function fileRow(item: MediaItem, path: string): MediaFileRow {
+export function fileRow(
+	item: MediaItem,
+	path: string,
+	qualityProfiles: MediaFileProfileOption[] = []
+): MediaFileRow {
 	const name = fileName(path);
 	const formats = matchedFormats(name);
+	const info = mediaFileInfo(item, path);
+	const sizeBytes = info?.sizeBytes;
 	return {
 		key: path,
 		path,
@@ -114,10 +114,14 @@ export function fileRow(item: MediaItem, path: string): MediaFileRow {
 		...episodeParts(path),
 		videoCodec: matchToken(name, ['x265', 'h265', 'hevc', 'x264', 'h264', 'avc']),
 		audioInfo: audioInfo(name),
-		size: '-',
-		languages: languageInfo(name),
+		size: mediaFileSize(item, path),
+		sizeBytes,
+		languages: mediaFileLanguageInfo(name),
 		quality: qualityInfo(name),
 		formats,
+		tracks: info?.tracks ?? [],
+		chapters: info?.chapters ?? [],
+		expectedLanguages: expectedProfileLanguages(item, qualityProfiles),
 		score: 0
 	};
 }
@@ -138,9 +142,13 @@ export function missingRow(
 		videoCodec: '-',
 		audioInfo: '-',
 		size: '-',
+		sizeBytes: undefined,
 		languages: '-',
 		quality: '-',
 		formats: [],
+		tracks: [],
+		chapters: [],
+		expectedLanguages: [],
 		score: 0
 	};
 }
@@ -169,6 +177,9 @@ export function episodeKey(season?: number, episode?: number) {
 }
 
 export function seasonNumberFromName(name: string) {
+	if (name.trim().toLowerCase() === 'specials') {
+		return 0;
+	}
 	const match = /(\d+)/.exec(name);
 	return match ? Number(match[1]) : undefined;
 }
@@ -177,22 +188,11 @@ function qualityInfo(value: string) {
 	return matchToken(value, ['2160p', '1080p', '720p', '576p', '480p']);
 }
 
-function languageInfo(value: string) {
-	if (/\bmulti\b/i.test(value)) return 'Multi';
-	if (/\bdual\b/i.test(value)) return 'Dual';
-	if (/\benglish\b/i.test(value)) return 'English';
-	return '-';
-}
-
 function audioInfo(value: string) {
 	const tokens = ['TrueHD', 'Atmos', 'DTS-HD', 'DTS', 'DDP', 'DD+', 'EAC3', 'AC3', 'AAC']
 		.map((token) => matchToken(value, [token]))
 		.filter((token) => token !== '-');
 	return tokens.join(' ') || '-';
-}
-
-function matchedFormats(value: string) {
-	return formatPatterns.filter((format) => new RegExp(format.replace('+', '\\+'), 'i').test(value));
 }
 
 function matchToken(value: string, tokens: string[]) {

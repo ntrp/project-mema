@@ -12,6 +12,7 @@
 		onValueChange: (_value: string) => void;
 		disabled?: boolean;
 		placeholder?: string;
+		size?: 'sm' | 'default';
 	}
 
 	let {
@@ -19,7 +20,8 @@
 		options,
 		onValueChange,
 		disabled = false,
-		placeholder = 'Select option'
+		placeholder = 'Select option',
+		size = 'default'
 	}: Props = $props();
 
 	let selectedLabel = $derived(
@@ -28,7 +30,7 @@
 </script>
 
 <Select.Root type="single" {value} {disabled} {onValueChange}>
-	<Select.Trigger class="w-full">{selectedLabel}</Select.Trigger>
+	<Select.Trigger {size} class="w-full">{selectedLabel}</Select.Trigger>
 	<Select.Content>
 		{#each options as option (option.value)}
 			<Select.Item value={option.value} label={option.label} />

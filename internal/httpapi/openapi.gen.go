@@ -280,6 +280,27 @@ func (e MediaDiscoverMediaType) Valid() bool {
 	}
 }
 
+// Defines values for MediaFileTrackType.
+const (
+	Audio    MediaFileTrackType = "audio"
+	Subtitle MediaFileTrackType = "subtitle"
+	Video    MediaFileTrackType = "video"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileTrackType enum.
+func (e MediaFileTrackType) Valid() bool {
+	switch e {
+	case Audio:
+		return true
+	case Subtitle:
+		return true
+	case Video:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaItemStatus.
 const (
 	Downloaded  MediaItemStatus = "downloaded"
@@ -1013,10 +1034,46 @@ type MediaDiscoverSection struct {
 	Title        string                 `json:"title"`
 }
 
+// MediaFileChapter defines model for MediaFileChapter.
+type MediaFileChapter struct {
+	EndTime   *string `json:"endTime,omitempty"`
+	Index     int32   `json:"index"`
+	StartTime *string `json:"startTime,omitempty"`
+	Title     *string `json:"title,omitempty"`
+}
+
 // MediaFileDeleteRequest defines model for MediaFileDeleteRequest.
 type MediaFileDeleteRequest struct {
 	Path string `json:"path"`
 }
+
+// MediaFileInfo defines model for MediaFileInfo.
+type MediaFileInfo struct {
+	Chapters  *[]MediaFileChapter `json:"chapters,omitempty"`
+	Path      string              `json:"path"`
+	SizeBytes *int64              `json:"sizeBytes,omitempty"`
+	Tracks    *[]MediaFileTrack   `json:"tracks,omitempty"`
+}
+
+// MediaFileTrack defines model for MediaFileTrack.
+type MediaFileTrack struct {
+	BitRate       *string            `json:"bitRate,omitempty"`
+	ChannelLayout *string            `json:"channelLayout,omitempty"`
+	Channels      *int32             `json:"channels,omitempty"`
+	Codec         *string            `json:"codec,omitempty"`
+	FrameRate     *string            `json:"frameRate,omitempty"`
+	Height        *int32             `json:"height,omitempty"`
+	Index         *int32             `json:"index,omitempty"`
+	Language      *string            `json:"language,omitempty"`
+	PixelFormat   *string            `json:"pixelFormat,omitempty"`
+	Profile       *string            `json:"profile,omitempty"`
+	Title         *string            `json:"title,omitempty"`
+	Type          MediaFileTrackType `json:"type"`
+	Width         *int32             `json:"width,omitempty"`
+}
+
+// MediaFileTrackType defines model for MediaFileTrack.Type.
+type MediaFileTrackType string
 
 // MediaGroupedSearchResponse defines model for MediaGroupedSearchResponse.
 type MediaGroupedSearchResponse struct {
@@ -1035,6 +1092,7 @@ type MediaItem struct {
 	ExternalProvider    *string                `json:"externalProvider,omitempty"`
 	Facts               *[]MediaMetadataFact   `json:"facts,omitempty"`
 	FilePaths           []string               `json:"filePaths"`
+	Files               *[]MediaFileInfo       `json:"files,omitempty"`
 	FirstAirDate        *string                `json:"firstAirDate,omitempty"`
 	Genres              *[]string              `json:"genres,omitempty"`
 	Id                  openapi_types.UUID     `json:"id"`
@@ -1112,6 +1170,16 @@ type MediaItemRequest struct {
 
 // MediaItemStatus defines model for MediaItemStatus.
 type MediaItemStatus string
+
+// MediaItemUpdateRequest defines model for MediaItemUpdateRequest.
+type MediaItemUpdateRequest struct {
+	LibraryFolderId     *openapi_types.UUID    `json:"libraryFolderId,omitempty"`
+	MinimumAvailability *MinimumAvailability   `json:"minimumAvailability,omitempty"`
+	MonitorMode         *MediaMonitorMode      `json:"monitorMode,omitempty"`
+	Monitored           *bool                  `json:"monitored,omitempty"`
+	QualityProfileId    *string                `json:"qualityProfileId,omitempty"`
+	Seasons             *[]MediaMetadataSeason `json:"seasons,omitempty"`
+}
 
 // MediaMetadataDetails defines model for MediaMetadataDetails.
 type MediaMetadataDetails struct {
@@ -1733,6 +1801,9 @@ type AddDiscoverBlacklistItemJSONRequestBody = DiscoverBlacklistRequest
 // CreateMediaItemJSONRequestBody defines body for CreateMediaItem for application/json ContentType.
 type CreateMediaItemJSONRequestBody = MediaItemCreateRequest
 
+// UpdateMediaItemJSONRequestBody defines body for UpdateMediaItem for application/json ContentType.
+type UpdateMediaItemJSONRequestBody = MediaItemUpdateRequest
+
 // DeleteMediaItemFileJSONRequestBody defines body for DeleteMediaItemFile for application/json ContentType.
 type DeleteMediaItemFileJSONRequestBody = MediaFileDeleteRequest
 
@@ -1888,6 +1959,9 @@ type ServerInterface interface {
 	// Remove a monitored media item
 	// (DELETE /media/items/{id})
 	DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId, params DeleteMediaItemParams)
+	// Update monitored media item settings
+	// (PUT /media/items/{id})
+	UpdateMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue an automatic search and grab for a monitored item
 	// (POST /media/items/{id}/automatic-searches)
 	EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -2245,6 +2319,12 @@ func (_ Unimplemented) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
 // Remove a monitored media item
 // (DELETE /media/items/{id})
 func (_ Unimplemented) DeleteMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId, params DeleteMediaItemParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update monitored media item settings
+// (PUT /media/items/{id})
+func (_ Unimplemented) UpdateMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3281,6 +3361,38 @@ func (siw *ServerInterfaceWrapper) DeleteMediaItem(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteMediaItem(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMediaItem operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMediaItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMediaItem(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5508,6 +5620,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/media/items/{id}", wrapper.DeleteMediaItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/media/items/{id}", wrapper.UpdateMediaItem)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/automatic-searches", wrapper.EnqueueMediaAutomaticSearch)

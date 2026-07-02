@@ -51,6 +51,15 @@ type MediaItemInput struct {
 	Tags                []string
 }
 
+type MediaItemOptionsInput struct {
+	QualityProfileID    *string
+	MinimumAvailability *string
+	LibraryFolderID     *uuid.UUID
+	Monitored           *bool
+	MonitorMode         *string
+	Seasons             *[]MediaSeason
+}
+
 type DownloadActivity struct {
 	ID                 uuid.UUID
 	MediaItemID        uuid.UUID

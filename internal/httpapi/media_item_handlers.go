@@ -61,6 +61,65 @@ func (s *Server) CreateMediaItem(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, mediaItemResponse(items[0]))
 }
 
+func (s *Server) UpdateMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body MediaItemUpdateRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	if body.QualityProfileId != nil && strings.TrimSpace(*body.QualityProfileId) == "" {
+		writeError(w, http.StatusBadRequest, "invalid_media_item_settings", "Quality profile is required")
+		return
+	}
+	if body.MinimumAvailability != nil && !body.MinimumAvailability.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_media_item_settings", "Minimum availability is not supported")
+		return
+	}
+	if body.MonitorMode != nil && !body.MonitorMode.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_media_monitor_mode", "Monitor mode is not supported")
+		return
+	}
+	if body.LibraryFolderId != nil {
+		exists, err := s.settings.LibraryFolderExists(r.Context(), uuid.UUID(*body.LibraryFolderId))
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "media_target_validation_failed", "Could not validate media target")
+			return
+		}
+		if !exists {
+			writeError(w, http.StatusBadRequest, "library_folder_invalid", "Library folder is not supported")
+			return
+		}
+	}
+	if body.QualityProfileId != nil {
+		exists, err := s.settings.MediaProfileExists(r.Context(), strings.TrimSpace(*body.QualityProfileId))
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "media_target_validation_failed", "Could not validate media target")
+			return
+		}
+		if !exists {
+			writeError(w, http.StatusBadRequest, "quality_profile_invalid", "Quality profile is not supported")
+			return
+		}
+	}
+
+	item, err := s.settings.UpdateMediaItemOptions(r.Context(), uuid.UUID(id), storage.MediaItemOptionsInput{
+		QualityProfileID:    body.QualityProfileId,
+		MinimumAvailability: optionalMinimumAvailability(body.MinimumAvailability),
+		LibraryFolderID:     optionalUUID(body.LibraryFolderId),
+		Monitored:           body.Monitored,
+		MonitorMode:         optionalMediaMonitorMode(body.MonitorMode),
+		Seasons:             storageMediaSeasons(body.Seasons),
+	})
+	if err != nil {
+		writeSettingsError(w, err, "Could not update media item")
+		return
+	}
+	writeJSON(w, http.StatusOK, mediaItemResponse(item))
+}
+
 func (s *Server) ListMediaRequests(w http.ResponseWriter, r *http.Request) {
 	session, ok := s.requireSession(w, r)
 	if !ok {

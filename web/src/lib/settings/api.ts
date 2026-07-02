@@ -28,6 +28,7 @@ import type {
 	ManualImportRequest,
 	MediaAdvancedSearchRequest,
 	MediaItemCreateRequest,
+	MediaItemUpdateRequest,
 	MediaProfile,
 	MediaProfileForm,
 	MediaRequestApproveRequest,
@@ -527,6 +528,21 @@ export async function listMediaItems() {
 
 export async function createMediaItem(request: MediaItemCreateRequest) {
 	const { data, error } = await client.POST('/media/items', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
+export async function updateMediaItem(id: string, request: MediaItemUpdateRequest) {
+	const { data, error } = await client.PUT('/media/items/{id}', {
+		params: { path: { id } },
+		body: request
+	});
 
 	if (error) {
 		throw new Error(error.message);

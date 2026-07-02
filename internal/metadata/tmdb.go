@@ -154,7 +154,7 @@ func (s *Service) Collection(ctx context.Context, config Config, collectionID st
 func (s *Service) loadTMDBSeasonEpisodes(ctx context.Context, config Config, mediaPath string, externalID string, details *tmdbDetails) error {
 	for seasonIndex := range details.Seasons {
 		season := &details.Seasons[seasonIndex]
-		if season.SeasonNumber <= 0 || season.EpisodeCount <= 0 {
+		if season.SeasonNumber < 0 || season.EpisodeCount <= 0 {
 			continue
 		}
 		endpoint, err := url.JoinPath(

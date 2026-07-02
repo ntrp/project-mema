@@ -1,22 +1,21 @@
 <script lang="ts">
-	import MediaEpisodeFileSummary from './MediaEpisodeFileSummary.svelte';
+	import MediaFileSummary from './MediaFileSummary.svelte';
 	import MediaFileDeleteModal from './MediaFileDeleteModal.svelte';
-	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
 	import MediaEpisodeRow from './MediaEpisodeRow.svelte';
-	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
+	import MediaRootPanel from './MediaRootPanel.svelte';
+	import MediaSeasonActions from './MediaSeasonActions.svelte';
 	import MediaSeasonPanel from './MediaSeasonPanel.svelte';
-	import { activityForEpisode } from '../activity/activityQueue';
-	import {
-		episodeKey,
-		fileRow,
-		missingRow,
-		seasonNumberFromName,
-		type MediaFileRow
-	} from './mediaFiles';
+	import MediaSeriesMonitorBookmark from './MediaSeriesMonitorBookmark.svelte';
+	import { monitorUpdate, toggledEpisodeMonitor, toggledSeasonMonitor } from './mediaMonitoring';
+	import { fileRow, type MediaFileRow } from './mediaFiles';
+	import { seasonFileSummary } from './mediaSeasonSummary';
+	import { episodeTitle, seasonEpisodeRows, seasonMonitored } from './mediaSeriesRows';
 	import type {
 		DownloadActivity,
+		LibraryFolder,
 		MediaItem,
+		MediaItemUpdateRequest,
 		MediaMetadataEpisode,
 		MediaMetadataSeason,
 		ReleaseCandidate,
@@ -30,6 +29,9 @@
 		searchingItemId?: string;
 		grabbingKey?: string;
 		canManage: boolean;
+		libraryFolders: LibraryFolder[];
+		qualityProfiles: { id: string; targetLanguages?: string[] }[];
+		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onAutoSearch: (_item: MediaItem) => void;
 		onManualSearch: (_item: MediaItem) => void;
 		onDeleteFile: (_item: MediaItem, _path: string) => void;
@@ -43,41 +45,26 @@
 		searchingItemId,
 		grabbingKey,
 		canManage,
+		libraryFolders,
+		qualityProfiles,
+		onSaveOptions,
 		onAutoSearch,
 		onManualSearch,
 		onDeleteFile,
 		onGrabRelease
 	}: Props = $props();
 
-	let detailRow = $state<MediaFileRow | undefined>();
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
 	const seasons = $derived(item.seasons ?? []);
-	const mediaRows = $derived(item.filePaths.map((path) => fileRow(item, path)));
+	const mediaRows = $derived(item.filePaths.map((path) => fileRow(item, path, qualityProfiles)));
 
-	function episodeTitle(episode: MediaMetadataEpisode) {
-		return `${episode.episodeNumber} - ${episode.name}`;
+	function saveSeasonMonitor(season: MediaMetadataSeason) {
+		onSaveOptions(item, monitorUpdate(toggledSeasonMonitor(item, seasons, season)));
 	}
 
-	function episodeFileRow(
-		season: MediaMetadataSeason,
-		seasonIndex: number,
-		episode: MediaMetadataEpisode
-	) {
-		const seasonNumber = seasonNumberFromName(season.name) ?? seasonIndex + 1;
-		return (
-			mediaRows.find(
-				(row) =>
-					episodeKey(row.seasonNumber, row.episodeNumber) ===
-					episodeKey(seasonNumber, episode.episodeNumber)
-			) ??
-			missingRow(
-				`s${seasonNumber}e${episode.episodeNumber}`,
-				episode.name,
-				seasonNumber,
-				episode.episodeNumber
-			)
-		);
+	function saveEpisodeMonitor(season: MediaMetadataSeason, episode: MediaMetadataEpisode) {
+		onSaveOptions(item, monitorUpdate(toggledEpisodeMonitor(item, seasons, season, episode)));
 	}
 
 	function requestDelete(row: MediaFileRow) {
@@ -94,44 +81,52 @@
 
 {#if seasons.length > 0}
 	<section aria-labelledby="metadata-seasons-title">
-		<h2 id="metadata-seasons-title" class="m-0 text-3xl font-semibold text-foreground">Seasons</h2>
+		<h2 id="metadata-seasons-title" class="m-0 text-3xl font-semibold text-foreground">Files</h2>
 		<div class="grid gap-2.5">
+			<MediaRootPanel {item} {libraryFolders} {canManage} {onSaveOptions} />
+			<h3 class="m-0 text-xl font-semibold text-foreground">Seasons</h3>
 			{#each seasons as season, index (season.name)}
-				<MediaSeasonPanel
-					meta={season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}
-				>
+				{@const seasonRows = seasonEpisodeRows(season, index, mediaRows, activities, item.id)}
+				{@const summary = seasonFileSummary(seasonRows)}
+				<MediaSeasonPanel summary={summary.label} size={summary.size} tone={summary.tone}>
 					{#snippet title()}
 						<span class="inline-flex min-w-0 items-center gap-2.5">
-							<MediaMonitorBookmark
-								monitored={season.monitored === true}
-								label={`${season.name} ${season.monitored ? 'monitored' : 'not monitored'}`}
+							<MediaSeriesMonitorBookmark
+								name={season.name}
+								monitored={seasonMonitored(season)}
+								target="season"
+								disabled={!canManage}
+								onToggle={() => saveSeasonMonitor(season)}
 							/>
 							<span>{season.name}</span>
 						</span>
 					{/snippet}
-					{#if season.episodes && season.episodes.length > 0}
+					{#snippet actions()}
+						<MediaSeasonActions
+							{canManage}
+							busy={searchingItemId === item.id || summary.hasActive}
+							onAutoSearch={() => onAutoSearch(item)}
+							onManualSearch={() => (searchOpen = true)}
+						/>
+					{/snippet}
+					{#if seasonRows.length > 0}
 						<div class="grid px-4.5">
-							{#each season.episodes as episode (episode.episodeNumber)}
-								{@const row = episodeFileRow(season, index, episode)}
-								{@const activityStatus = activityForEpisode(
-									activities,
-									item.id,
-									row.seasonNumber,
-									row.episodeNumber
-								)}
-								<MediaEpisodeRow {episode} title={episodeTitle(episode)}>
+							{#each seasonRows as file (file.episode.episodeNumber)}
+								<MediaEpisodeRow episode={file.episode} title={episodeTitle(file.episode)}>
 									{#snippet beforeTitle()}
-										<MediaMonitorBookmark
-											monitored={episode.monitored === true}
-											label={`${episode.name} ${episode.monitored ? 'monitored' : 'not monitored'}`}
+										<MediaSeriesMonitorBookmark
+											name={file.episode.name}
+											monitored={file.episode.monitored === true}
+											target="episode"
+											disabled={!canManage}
+											onToggle={() => saveEpisodeMonitor(season, file.episode)}
 										/>
 									{/snippet}
-									<MediaEpisodeFileSummary
-										{row}
-										{activityStatus}
+									<MediaFileSummary
+										row={file.row}
+										activityStatus={file.activityStatus}
 										{canManage}
 										searching={searchingItemId === item.id}
-										onInfo={(nextRow) => (detailRow = nextRow)}
 										onAutoSearch={() => onAutoSearch(item)}
 										onManualSearch={() => (searchOpen = true)}
 										onDelete={requestDelete}
@@ -154,10 +149,6 @@
 		onCancel={() => (deleteRow = undefined)}
 		onConfirm={confirmDelete}
 	/>
-{/if}
-
-{#if detailRow}
-	<MediaFileInfoModal row={detailRow} onClose={() => (detailRow = undefined)} />
 {/if}
 
 {#if searchOpen}

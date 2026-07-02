@@ -513,6 +513,34 @@ paths:
   /media/items/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateMediaItem
+      tags:
+        - Media
+      summary: Update monitored media item settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaItemUpdateRequest"
+      responses:
+        "200":
+          description: Updated media item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       operationId: deleteMediaItem
       tags:
@@ -2899,6 +2927,10 @@ components:
               type: array
               items:
                 type: string
+            files:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaFileInfo"
             metadataFilePaths:
               type: array
               items:
@@ -2972,6 +3004,27 @@ components:
           properties:
             startSearch:
               type: boolean
+    MediaItemUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        qualityProfileId:
+          type: string
+          minLength: 1
+          maxLength: 100
+        minimumAvailability:
+          $ref: "#/components/schemas/MinimumAvailability"
+        libraryFolderId:
+          type: string
+          format: uuid
+        monitored:
+          type: boolean
+        monitorMode:
+          $ref: "#/components/schemas/MediaMonitorMode"
+        seasons:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaMetadataSeason"
     MediaFileDeleteRequest:
       type: object
       additionalProperties: false
@@ -2981,6 +3034,83 @@ components:
         path:
           type: string
           minLength: 1
+    MediaFileInfo:
+      type: object
+      additionalProperties: false
+      required:
+        - path
+      properties:
+        path:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        tracks:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaFileTrack"
+        chapters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaFileChapter"
+    MediaFileChapter:
+      type: object
+      additionalProperties: false
+      required:
+        - index
+      properties:
+        index:
+          type: integer
+          format: int32
+          minimum: 0
+        title:
+          type: string
+        startTime:
+          type: string
+        endTime:
+          type: string
+    MediaFileTrack:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum:
+            - video
+            - audio
+            - subtitle
+        index:
+          type: integer
+          format: int32
+          minimum: 0
+        codec:
+          type: string
+        language:
+          type: string
+        title:
+          type: string
+        width:
+          type: integer
+          format: int32
+        height:
+          type: integer
+          format: int32
+        profile:
+          type: string
+        pixelFormat:
+          type: string
+        frameRate:
+          type: string
+        channels:
+          type: integer
+          format: int32
+        channelLayout:
+          type: string
+        bitRate:
+          type: string
     MediaItemStatus:
       type: string
       enum:

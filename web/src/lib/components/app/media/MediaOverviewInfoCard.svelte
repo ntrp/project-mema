@@ -2,7 +2,11 @@
 	import ClapperboardIcon from '@lucide/svelte/icons/clapperboard';
 	import DiscIcon from '@lucide/svelte/icons/disc-3';
 	import MonitorPlayIcon from '@lucide/svelte/icons/monitor-play';
+	import PauseIcon from '@lucide/svelte/icons/pause';
+	import PlayIcon from '@lucide/svelte/icons/play';
+	import SquareIcon from '@lucide/svelte/icons/square';
 	import { formatDate } from '$lib/settings/dateFormat';
+	import { displayLanguage } from '$lib/settings/languageDisplay';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
 
 	interface Props {
@@ -89,6 +93,21 @@
 		}
 	}
 
+	function seriesStatusIcon(value: string) {
+		switch (value.trim().toLowerCase()) {
+			case 'continuing':
+			case 'returning series':
+				return PlayIcon;
+			case 'ended':
+				return SquareIcon;
+			case 'on hold':
+			case 'on_hold':
+				return PauseIcon;
+			default:
+				return undefined;
+		}
+	}
+
 	function isReleaseDateItems(value: string[] | ReleaseDateItem[]): value is ReleaseDateItem[] {
 		return value.length > 0 && typeof value[0] !== 'string';
 	}
@@ -105,12 +124,7 @@
 	}
 
 	function languageName(code?: string) {
-		if (!code) return undefined;
-		try {
-			return new Intl.DisplayNames(undefined, { type: 'language' }).of(code) ?? code.toUpperCase();
-		} catch {
-			return code.toUpperCase();
-		}
+		return code ? displayLanguage(code) : undefined;
 	}
 </script>
 
@@ -158,7 +172,15 @@
 						{/if}
 					</span>
 				{:else}
-					<span class="wrap-anywhere text-right text-muted-foreground">{row.value}</span>
+					<span
+						class="wrap-anywhere inline-flex items-center justify-end gap-1.5 text-right text-muted-foreground"
+					>
+						{#if row.label === 'Status' && detail.type === 'series' && seriesStatusIcon(row.value)}
+							{@const Icon = seriesStatusIcon(row.value)}
+							<Icon aria-hidden="true" class="size-3.5 text-foreground" />
+						{/if}
+						<span>{row.value}</span>
+					</span>
 				{/if}
 			</div>
 		{/each}

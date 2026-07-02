@@ -131,6 +131,7 @@ export class AppShellState {
 	searchingItemId = $state<string | undefined>();
 	scanningMediaItemId = $state<string | undefined>();
 	refreshingMetadataItemId = $state<string | undefined>();
+	savingMediaItemOptionsId = $state<string | undefined>();
 	grabbingKey = $state<string | undefined>();
 	deletingMediaItemId = $state<string | undefined>();
 	cancellingActivityId = $state<string | undefined>();

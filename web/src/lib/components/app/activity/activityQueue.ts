@@ -22,7 +22,7 @@ export function activityForEpisode(
 	seasonNumber?: number,
 	episodeNumber?: number
 ): ActivityQueueStatus | undefined {
-	if (!seasonNumber || !episodeNumber) return undefined;
+	if (seasonNumber === undefined || episodeNumber === undefined) return undefined;
 	return queueStatus(
 		activities.find(
 			(activity) =>

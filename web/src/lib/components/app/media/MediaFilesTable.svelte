@@ -1,13 +1,15 @@
 <script lang="ts">
-	import MediaEpisodeFileSummary from './MediaEpisodeFileSummary.svelte';
+	import MediaFileSummary from './MediaFileSummary.svelte';
 	import MediaFileDeleteModal from './MediaFileDeleteModal.svelte';
-	import MediaFileInfoModal from './MediaFileInfoModal.svelte';
 	import MediaFileSearchModal from './MediaFileSearchModal.svelte';
+	import MediaRootPanel from './MediaRootPanel.svelte';
 	import { activityForMovie } from '../activity/activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from './mediaFiles';
 	import type {
 		DownloadActivity,
+		LibraryFolder,
 		MediaItem,
+		MediaItemUpdateRequest,
 		ReleaseCandidate,
 		ReleaseSearchState
 	} from '$lib/settings/types';
@@ -19,6 +21,9 @@
 		searchingItemId?: string;
 		grabbingKey?: string;
 		canManage: boolean;
+		libraryFolders: LibraryFolder[];
+		qualityProfiles: { id: string; targetLanguages?: string[] }[];
+		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onAutoSearch: (_item: MediaItem) => void;
 		onManualSearch: (_item: MediaItem) => void;
 		onDeleteFile: (_item: MediaItem, _path: string) => void;
@@ -32,16 +37,18 @@
 		searchingItemId,
 		grabbingKey,
 		canManage,
+		libraryFolders,
+		qualityProfiles,
+		onSaveOptions,
 		onAutoSearch,
 		onManualSearch,
 		onDeleteFile,
 		onGrabRelease
 	}: Props = $props();
 
-	let detailRow = $state<MediaFileRow | undefined>();
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
-	const groups = $derived(mediaFileGroups(item));
+	const groups = $derived(mediaFileGroups(item, qualityProfiles));
 	const activityStatus = $derived(
 		item.type === 'movie' ? activityForMovie(activities, item.id) : undefined
 	);
@@ -67,17 +74,17 @@
 <section aria-labelledby="media-files-title">
 	<h2 id="media-files-title" class="m-0 text-3xl font-semibold text-foreground">Files</h2>
 	<div class="grid gap-3.5">
+		<MediaRootPanel {item} {libraryFolders} {canManage} {onSaveOptions} />
 		{#each groups as group (group.key)}
-			<div class="grid px-4.5" aria-label={group.title}>
+			<div class="grid" aria-label={group.title}>
 				{#each group.rows as row (row.key)}
-					<MediaEpisodeFileSummary
+					<MediaFileSummary
 						{row}
 						{activityStatus}
 						{canManage}
 						searching={busy}
 						fileLabel="Movie file"
 						missingLabel="No matched file for this movie"
-						onInfo={(nextRow) => (detailRow = nextRow)}
 						onAutoSearch={() => onAutoSearch(item)}
 						onManualSearch={() => (searchOpen = true)}
 						onDelete={requestDelete}
@@ -94,10 +101,6 @@
 		onCancel={() => (deleteRow = undefined)}
 		onConfirm={confirmDelete}
 	/>
-{/if}
-
-{#if detailRow}
-	<MediaFileInfoModal row={detailRow} onClose={() => (detailRow = undefined)} />
 {/if}
 
 {#if searchOpen}

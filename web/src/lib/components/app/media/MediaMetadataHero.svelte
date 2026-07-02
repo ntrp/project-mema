@@ -4,18 +4,34 @@
 	import TagIcon from '@lucide/svelte/icons/tag';
 	import { resolve } from '$app/paths';
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import type { Snippet } from 'svelte';
 	import MediaMonitorBookmark from './MediaMonitorBookmark.svelte';
 	import MediaTrailerModal from './MediaTrailerModal.svelte';
 	import PosterPlaceholder from './PosterPlaceholder.svelte';
-	import type { MediaMetadataDetails } from '$lib/settings/types';
+	import {
+		imageUrl,
+		mediaHeroTopInfo,
+		monitorHint,
+		monitorStatus,
+		runtimeText,
+		statusBadgeClass,
+		statusLabel
+	} from './mediaHeroDisplay';
+	import type { MediaItemStatus, MediaMetadataDetails } from '$lib/settings/types';
 
 	interface Props {
 		detail: MediaMetadataDetails;
 		titleId: string;
 		showMonitorBookmark?: boolean;
 		showTrailerButton?: boolean;
+		mediaStatus?: MediaItemStatus;
+		monitorMonitored?: boolean;
+		monitorStatusText?: string;
+		monitorHintText?: string;
+		monitorDisabled?: boolean;
+		onToggleMonitor?: () => void;
 		actions?: Snippet;
 	}
 
@@ -24,6 +40,12 @@
 		titleId,
 		showMonitorBookmark = true,
 		showTrailerButton = true,
+		mediaStatus,
+		monitorMonitored = detail.monitored === true,
+		monitorStatusText = monitorStatus(detail),
+		monitorHintText = monitorHint(detail),
+		monitorDisabled = false,
+		onToggleMonitor = () => {},
 		actions
 	}: Props = $props();
 	let trailerOpen = $state(false);
@@ -34,53 +56,19 @@
 	const duration = $derived(runtimeText(detail.runtimeMinutes));
 	const trailerTitle = $derived(`${detail.title} trailer`);
 
-	function imageUrl(path?: string, size = 'w780') {
-		if (!path) {
-			return undefined;
-		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/${size}${path}`;
-	}
-
 	function hasSubtitle(details: MediaMetadataDetails) {
-		return Boolean(certification || details.year || duration);
-	}
-
-	function topInfo(details: MediaMetadataDetails) {
-		return [
-			details.seasonCount ? ['Seasons', `${details.seasonCount}`] : undefined,
-			details.episodeCount ? ['Episodes', `${details.episodeCount}`] : undefined
-		].filter((item): item is [string, string] => Boolean(item));
+		return Boolean(mediaStatus || certification || details.year || duration);
 	}
 
 	function certificationText() {
 		return factMap.get('Certification');
-	}
-
-	function runtimeText(minutes?: number) {
-		if (!minutes || minutes <= 0) {
-			return undefined;
-		}
-		const hours = Math.floor(minutes / 60);
-		const remainingMinutes = minutes % 60;
-		if (hours > 0 && remainingMinutes > 0) {
-			return `${hours}h ${remainingMinutes}m`;
-		}
-		if (hours > 0) {
-			return `${hours}h`;
-		}
-		return `${remainingMinutes}m`;
 	}
 </script>
 
 <div
 	class="grid items-end gap-6.5 min-[641px]:grid-cols-[clamp(190px,18vw,270px)_minmax(0,1fr)] mb-6"
 >
-	<div
-		class="aspect-[2/3] overflow-hidden rounded-md border border-border bg-card max-sm:w-[170px]"
-	>
+	<div class="aspect-2/3 overflow-hidden rounded-md border border-border bg-card max-sm:w-42.5">
 		{#if imageUrl(detail.posterPath, 'w342')}
 			<img class="block size-full object-cover" src={imageUrl(detail.posterPath, 'w342')} alt="" />
 		{:else}
@@ -90,7 +78,14 @@
 	<div class="grid gap-3">
 		<h1 id={titleId} class="flex items-center gap-3 text-[clamp(42px,4.6vw,68px)] leading-none">
 			{#if showMonitorBookmark}
-				<MediaMonitorBookmark monitored={detail.monitored === true} />
+				<MediaMonitorBookmark
+					monitored={monitorMonitored}
+					status={monitorStatusText}
+					hint={monitorHintText}
+					disabled={monitorDisabled}
+					size={64}
+					onToggle={onToggleMonitor}
+				/>
 			{/if}
 			<span>{detail.title}</span>
 		</h1>
@@ -108,11 +103,19 @@
 				{#if duration}
 					<span>{duration}</span>
 				{/if}
+				{#if mediaStatus}
+					<Badge
+						variant="outline"
+						class={`min-h-6 rounded-md bg-popover px-2 py-1 text-base leading-none font-extrabold ${statusBadgeClass(mediaStatus)}`}
+					>
+						{statusLabel(mediaStatus)}
+					</Badge>
+				{/if}
 			</p>
 		{/if}
-		{#if topInfo(detail).length > 0}
+		{#if mediaHeroTopInfo(detail).length > 0}
 			<div class="flex flex-wrap gap-2" aria-label="Media information">
-				{#each topInfo(detail) as [label, value] (`${label}:${value}`)}
+				{#each mediaHeroTopInfo(detail) as [label, value] (`${label}:${value}`)}
 					<StatusPill class="inline-flex items-center gap-1.5">
 						<strong class="text-foreground">{label}</strong>{value}
 					</StatusPill>
@@ -128,7 +131,7 @@
 				{/each}
 			</div>
 		{/if}
-		<div class="mt-1 flex flex-wrap items-center gap-2.5">
+		<div class="mt-1 flex flex-wrap items-end gap-2.5">
 			{#if detail.collectionId && detail.collectionName}
 				<Button
 					variant="outline"

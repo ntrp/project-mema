@@ -1,9 +1,6 @@
 <script lang="ts">
-	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
-	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
-	import { Button } from '$lib/components/ui/button';
-	import * as Tooltip from '$lib/components/ui/tooltip';
+	import MediaDetailActions from './MediaDetailActions.svelte';
 	import MediaDetailSkeleton from './MediaDetailSkeleton.svelte';
 	import MediaFilesTable from './MediaFilesTable.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
@@ -14,25 +11,37 @@
 	import ReleaseCandidatesSection from './ReleaseCandidatesSection.svelte';
 	import { resolve } from '$app/paths';
 	import { mediaMetadataDetail } from './mediaDetail';
+	import {
+		monitorUpdate,
+		titleMonitorActive,
+		titleMonitorHint,
+		titleMonitorStatus,
+		toggledMediaMonitor
+	} from './mediaMonitoring';
 	import type {
 		DownloadActivity,
+		LibraryFolder,
 		MediaItem,
+		MediaItemUpdateRequest,
+		QualityProfileOption,
 		MediaSearchResult,
 		MediaType,
 		ReleaseCandidate,
 		ReleaseSearchState
 	} from '$lib/settings/types';
-
 	interface Props {
 		mediaType: MediaType;
 		item?: MediaItem;
 		loading?: boolean;
 		mediaItems?: MediaItem[];
+		libraryFolders: LibraryFolder[];
+		qualityProfiles: QualityProfileOption[];
 		requestedItemId: string;
 		releaseResults?: ReleaseSearchState;
 		activities: DownloadActivity[];
 		searchingItemId?: string;
 		refreshingMetadataItemId?: string;
+		savingMediaItemOptionsId?: string;
 		grabbingKey?: string;
 		addingKey?: string;
 		deletingMediaItemId?: string;
@@ -41,6 +50,7 @@
 		onFindReleases: (_item: MediaItem) => void;
 		onAutoSearchMedia: (_item: MediaItem) => void;
 		onRefreshMediaMetadata: (_item: MediaItem) => void;
+		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
 		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
@@ -52,11 +62,14 @@
 		item,
 		loading = false,
 		mediaItems = [],
+		libraryFolders,
+		qualityProfiles,
 		requestedItemId,
 		releaseResults,
 		activities,
 		searchingItemId,
 		refreshingMetadataItemId,
+		savingMediaItemOptionsId,
 		grabbingKey,
 		addingKey,
 		deletingMediaItemId,
@@ -65,6 +78,7 @@
 		onFindReleases,
 		onAutoSearchMedia,
 		onRefreshMediaMetadata,
+		onSaveMediaItemOptions,
 		onDeleteMediaFile,
 		onDeleteMedia,
 		onGrabRelease,
@@ -89,55 +103,38 @@
 				})
 			: undefined
 	);
+
+	function toggleMediaMonitor(nextItem: MediaItem) {
+		onSaveMediaItemOptions(nextItem, monitorUpdate(toggledMediaMonitor(nextItem)));
+	}
 </script>
 
 {#if loading}
 	<MediaDetailSkeleton />
 {:else if item && detail}
 	<MediaMetadataShell labelledby="library-media-title">
-		<MediaMetadataHero {detail} titleId="library-media-title">
+		<MediaMetadataHero
+			{detail}
+			titleId="library-media-title"
+			mediaStatus={item.status}
+			monitorMonitored={titleMonitorActive(item)}
+			monitorStatusText={titleMonitorStatus(item)}
+			monitorHintText={titleMonitorHint(item)}
+			monitorDisabled={!canManage}
+			onToggleMonitor={() => toggleMediaMonitor(item)}
+		>
 			{#snippet actions()}
 				{#if canManage}
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Button
-									{...props}
-									type="button"
-									variant="outline"
-									size="icon-sm"
-									class="ml-auto"
-									aria-label="Refresh metadata"
-									disabled={refreshingMetadataItemId === item.id}
-									onclick={() => onRefreshMediaMetadata(item)}
-								>
-									<RefreshCwIcon
-										class={refreshingMetadataItemId === item.id ? 'animate-spin' : undefined}
-										aria-hidden="true"
-									/>
-								</Button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>Refresh metadata</Tooltip.Content>
-					</Tooltip.Root>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Button
-									{...props}
-									type="button"
-									variant="destructive"
-									size="icon-sm"
-									aria-label="Delete media"
-									disabled={deletingMediaItemId === item.id}
-									onclick={() => onDeleteMedia(item)}
-								>
-									<TrashIcon aria-hidden="true" />
-								</Button>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>Delete media</Tooltip.Content>
-					</Tooltip.Root>
+					<MediaDetailActions
+						{item}
+						{qualityProfiles}
+						refreshing={refreshingMetadataItemId === item.id}
+						savingOptions={savingMediaItemOptionsId === item.id}
+						deleting={deletingMediaItemId === item.id}
+						onRefreshMetadata={onRefreshMediaMetadata}
+						onSaveOptions={onSaveMediaItemOptions}
+						onDelete={onDeleteMedia}
+					/>
 				{/if}
 			{/snippet}
 		</MediaMetadataHero>
@@ -151,9 +148,12 @@
 								{item}
 								{releaseResults}
 								activities={itemActivities}
+								{libraryFolders}
+								{qualityProfiles}
 								{searchingItemId}
 								{grabbingKey}
 								{canManage}
+								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
 								onManualSearch={onFindReleases}
 								onDeleteFile={onDeleteMediaFile}
@@ -167,9 +167,12 @@
 								{item}
 								{releaseResults}
 								activities={itemActivities}
+								{libraryFolders}
+								{qualityProfiles}
 								{searchingItemId}
 								{grabbingKey}
 								{canManage}
+								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
 								onManualSearch={onFindReleases}
 								onDeleteFile={onDeleteMediaFile}

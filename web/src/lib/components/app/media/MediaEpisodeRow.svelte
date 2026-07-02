@@ -17,7 +17,7 @@
 </script>
 
 <article
-	class="grid min-h-[118px] items-start gap-5.5 border-t border-border py-4.5 first:border-t-0 md:grid-cols-[minmax(0,1fr)_244px] max-[980px]:md:grid-cols-[minmax(0,1fr)_200px] max-sm:grid-cols-1"
+	class="grid min-h-29.5 items-start gap-5.5 border-t border-border py-4.5 first:border-t-0 md:grid-cols-[minmax(0,1fr)_244px] max-[980px]:md:grid-cols-[minmax(0,1fr)_200px] max-sm:grid-cols-1"
 >
 	<div class="grid min-w-0 gap-2.5">
 		<h3 class="m-0 flex flex-wrap items-center gap-2 text-xl text-foreground">
@@ -35,11 +35,13 @@
 	</div>
 	{#if stillUrl}
 		<img
-			class="aspect-video w-full rounded-md object-cover md:w-[244px] max-[980px]:md:w-[200px] max-sm:max-w-80"
+			class="aspect-video w-full rounded-md object-cover md:w-61 max-[980px]:md:w-50 max-sm:max-w-80"
 			src={stillUrl}
 			alt=""
 			loading="lazy"
 		/>
 	{/if}
-	{@render children?.()}
+	<div class="col-span-full">
+		{@render children?.()}
+	</div>
 </article>

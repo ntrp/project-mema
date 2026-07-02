@@ -111,7 +111,9 @@
 		<div class="grid gap-2.5">
 			{#each seasons as season (season.name)}
 				<MediaSeasonPanel
-					meta={season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}
+					summary={season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}
+					size="-"
+					tone="neutral"
 				>
 					{#snippet title()}
 						<span>{season.name}</span>

@@ -1,38 +1,70 @@
 <script lang="ts">
-	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-	import { Button } from '$lib/components/ui/button';
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import { Card } from '$lib/components/ui/card';
+	import { cn } from '$lib/utils';
 	import type { Snippet } from 'svelte';
 
 	interface Props {
-		meta: string;
+		summary: string;
+		size: string;
+		tone: 'success' | 'active' | 'missing' | 'neutral';
 		title: Snippet;
+		actions?: Snippet;
 		children: Snippet;
 	}
 
-	let { meta, title, children }: Props = $props();
+	let { summary, size, tone, title, actions, children }: Props = $props();
 	let open = $state(false);
+
+	function toggle() {
+		open = !open;
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		event.preventDefault();
+		toggle();
+	}
+
+	function toneClass(value: Props['tone']) {
+		switch (value) {
+			case 'success':
+				return 'bg-green-600 text-white';
+			case 'active':
+				return 'bg-primary text-primary-foreground';
+			case 'missing':
+				return 'bg-destructive text-destructive-foreground';
+			default:
+				return 'bg-border text-muted-foreground';
+		}
+	}
 </script>
 
 <Card class="overflow-hidden bg-sidebar/80 p-0">
-	<Button
-		type="button"
-		variant="ghost"
-		class="flex h-auto min-h-12 w-full items-center justify-between gap-3 rounded-none border-0 bg-muted/70 px-4 py-3 text-left font-black text-muted-foreground hover:bg-muted hover:text-foreground"
+	<div
+		role="button"
+		tabindex="0"
 		aria-expanded={open}
-		onclick={() => (open = !open)}
+		class="grid min-h-12 cursor-pointer grid-cols-[minmax(0,1fr)_auto_minmax(88px,auto)] items-center gap-3 bg-muted/70 px-4 py-3 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+		onclick={toggle}
+		onkeydown={handleKeydown}
 	>
-		<span class="inline-flex min-w-0 items-center gap-2.5">{@render title()}</span>
-		<span
-			class="inline-flex items-center gap-2 rounded-md bg-border px-2 py-0.5 text-xs font-black text-muted-foreground"
-		>
-			{meta}
-			<ChevronRightIcon
-				aria-hidden="true"
-				class={open ? 'rotate-90 transition-transform' : 'transition-transform'}
-			/>
+		<span class="inline-flex min-w-0 items-center gap-2.5 font-black">
+			{@render title()}
+			<span class={cn('rounded-md px-2 py-0.5 text-xs font-black', toneClass(tone))}>
+				{summary}
+			</span>
+			<span class="rounded-md bg-border px-2 py-0.5 text-xs font-black text-muted-foreground">
+				{size}
+			</span>
 		</span>
-	</Button>
+		<span class="grid place-items-center text-muted-foreground" aria-hidden="true">
+			<ChevronDownIcon class={open ? 'rotate-180 transition-transform' : 'transition-transform'} />
+		</span>
+		<span class="flex min-w-0 items-center justify-end gap-2">
+			{@render actions?.()}
+		</span>
+	</div>
 	{#if open}
 		<div class="border-t border-border">
 			{@render children()}

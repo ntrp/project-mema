@@ -7,16 +7,19 @@ import {
 	deleteMediaItem as deleteMediaItemRequest,
 	deleteMediaItemFile as deleteMediaItemFileRequest,
 	enqueueMediaAutomaticSearch as enqueueMediaAutomaticSearchRequest,
-	rescanMediaItemFiles as rescanMediaItemFilesRequest
+	rescanMediaItemFiles as rescanMediaItemFilesRequest,
+	updateMediaItem as updateMediaItemRequest
 } from '$lib/settings/api';
 import type { MediaActionSelection } from '$lib/components/app/media/mediaActionTypes';
 import type {
 	MediaItem,
+	MediaItemUpdateRequest,
 	MediaRequest,
 	MediaRequestApproveRequest,
 	MediaSearchResult
 } from '$lib/settings/types';
 import { candidateKey, errorMessageFrom, omitResult } from './helpers';
+import { mediaUpdateMessage, optimisticMediaItem } from './mediaOptimisticUpdate';
 import type { AppShellState } from './state.svelte';
 
 interface MediaDeps {
@@ -162,6 +165,34 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 		}
 	}
 
+	async function saveMediaItemOptions(item: MediaItem, request: MediaItemUpdateRequest) {
+		state.savingMediaItemOptionsId = item.id;
+		clearNotice();
+		const previous = state.mediaItems.find((mediaItem) => mediaItem.id === item.id) ?? item;
+		const optimistic = optimisticMediaItem(previous, request);
+		const message = mediaUpdateMessage(previous, optimistic, request);
+		state.mediaItems = state.mediaItems.map((mediaItem) =>
+			mediaItem.id === optimistic.id ? optimistic : mediaItem
+		);
+		state.message = message;
+
+		try {
+			const updated = await updateMediaItemRequest(item.id, request);
+			state.mediaItems = state.mediaItems.map((mediaItem) =>
+				mediaItem.id === updated.id ? updated : mediaItem
+			);
+			state.message = message;
+		} catch (error) {
+			state.mediaItems = state.mediaItems.map((mediaItem) =>
+				mediaItem.id === previous.id ? previous : mediaItem
+			);
+			state.message = '';
+			state.errorMessage = errorMessageFrom(error, 'Could not save media settings');
+		} finally {
+			state.savingMediaItemOptionsId = undefined;
+		}
+	}
+
 	function deleteMediaItem(item: MediaItem) {
 		clearNotice();
 		state.mediaDeleteCandidate = item;
@@ -231,6 +262,7 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 		autoSearchMedia,
 		rescanMediaFiles,
 		deleteMediaFile,
+		saveMediaItemOptions,
 		deleteMediaItem,
 		closeMediaDelete,
 		confirmMediaDelete,

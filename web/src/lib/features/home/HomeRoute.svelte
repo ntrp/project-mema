@@ -34,6 +34,7 @@
 	approvingRequestId={app.approvingRequestId}
 	searchingItemId={app.searchingItemId}
 	refreshingMetadataItemId={app.refreshingMetadataItemId}
+	savingMediaItemOptionsId={app.savingMediaItemOptionsId}
 	grabbingKey={app.grabbingKey}
 	deletingMediaItemId={app.deletingMediaItemId}
 	cancellingActivityId={app.cancellingActivityId}
@@ -47,6 +48,7 @@
 	onFindReleases={app.findReleases}
 	onAutoSearchMedia={app.autoSearchMedia}
 	onRefreshMediaMetadata={app.refreshMediaMetadata}
+	onSaveMediaItemOptions={app.saveMediaItemOptions}
 	onDeleteMediaFile={app.deleteMediaFile}
 	onDeleteMedia={app.deleteMediaItem}
 	onGrabRelease={app.grabRelease}
