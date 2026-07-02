@@ -9,6 +9,9 @@ import type { DownloadActivity, MediaItem, ReleaseCandidate } from '$lib/setting
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
+const RELEASE_SEARCH_POLL_MS = 1000;
+const RELEASE_SEARCH_MAX_POLLS = 120;
+
 interface ReleaseDeps {
 	clearNotice: () => void;
 	loadDownloadActivity: () => Promise<void>;
@@ -26,12 +29,13 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 
 		try {
 			const job = await enqueueMediaReleaseSearchRequest(item.id, query);
+			const queuedMessage = `${job.message} (#${job.jobId})`;
 			state.releaseResults = {
 				...state.releaseResults,
-				[item.id]: { loaded: false, releases: [], errors: [`${job.message} (#${job.jobId})`] }
+				[item.id]: { loaded: false, releases: [], errors: [queuedMessage] }
 			};
 			state.message = job.message;
-			window.setTimeout(() => void loadReleaseResults(item.id), 1200);
+			await pollReleaseResults(item.id, queuedMessage);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not enqueue release search');
 		} finally {
@@ -39,15 +43,37 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 		}
 	}
 
-	async function loadReleaseResults(id: string) {
+	async function pollReleaseResults(id: string, queuedMessage: string) {
+		for (let attempt = 0; attempt < RELEASE_SEARCH_MAX_POLLS; attempt += 1) {
+			await sleep(RELEASE_SEARCH_POLL_MS);
+			const loaded = await loadReleaseResults(id, false);
+			if (loaded) return;
+			state.releaseResults = {
+				...state.releaseResults,
+				[id]: { loaded: false, releases: [], errors: [queuedMessage] }
+			};
+		}
+		state.releaseResults = {
+			...state.releaseResults,
+			[id]: { loaded: true, releases: [], errors: ['Release search is still running.'] }
+		};
+	}
+
+	async function loadReleaseResults(id: string, markEmptyLoaded = true) {
 		try {
 			const results = await searchMediaReleasesRequest(id);
+			const complete = results.releases.length > 0 || results.errors.length > 0;
+			if (!complete && !markEmptyLoaded) {
+				return false;
+			}
 			state.releaseResults = {
 				...state.releaseResults,
 				[id]: { loaded: true, releases: results.releases, errors: results.errors }
 			};
+			return true;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load release results');
+			return true;
 		}
 	}
 
@@ -74,4 +100,8 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 	}
 
 	return { findReleases, grabRelease };
+}
+
+function sleep(ms: number) {
+	return new Promise((resolve) => window.setTimeout(resolve, ms));
 }

@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -47,30 +46,46 @@ func searchReleases(
 	if _, err := settings.CleanupIndexerSearchHistory(ctx, cacheSettings.HistoryRetentionDays); err != nil {
 		slog.Error("indexer search history cleanup failed", "error", err)
 	}
-	for _, config := range configs {
-		for _, searchQuery := range queries {
-			found, cacheHit, err := executeIndexerSearch(ctx, settings, indexerService, limiter, config, item.Type, searchQuery, cacheSettings, eventBroker)
-			if err != nil {
-				if manual && isIndexer429(err) {
-					publishManualIndexerRateLimitEvent(ctx, settings, eventBroker, config, item, searchQuery, err)
-					return nil, []string{fmt.Sprintf("%s (%s): %s", config.Name, searchQuery, err.Error())}, err
-				}
-				if !errors.Is(err, errIndexerBackoffActive) {
-					recordIndexerSearchFailure(ctx, settings, eventBroker, config, err)
-					limiter.recordError(config.ID, err)
-				}
-				slog.Error("indexer release search failed", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "query", searchQuery, "error", err)
-				searchErrors = append(searchErrors, fmt.Sprintf("%s (%s): %s", config.Name, searchQuery, err.Error()))
-				continue
-			}
-			if !cacheHit {
-				recordIndexerSearchSuccess(ctx, settings, config)
-			}
-			slog.Debug("indexer release search finished", "mediaItemId", item.ID, "title", item.Title, "indexerName", config.Name, "query", searchQuery, "cacheHit", cacheHit, "releaseCount", len(found))
-			for _, release := range found {
-				releases = append(releases, releaseCandidateInput(item.ID, release, criteria))
-			}
+	releases, searchErrors, err = searchReleaseQueries(ctx, releaseQuerySearch{
+		settings:       settings,
+		indexerService: indexerService,
+		limiter:        limiter,
+		configs:        configs,
+		item:           item,
+		criteria:       criteria,
+		queries:        queries,
+		cacheSettings:  cacheSettings,
+		eventBroker:    eventBroker,
+		manual:         manual,
+	})
+	if err != nil {
+		return nil, searchErrors, err
+	}
+	if len(releases) == 0 && criteria.Kind == "episode" && criteria.SeasonNumber != nil {
+		seasonCriteria := decisions.ReleaseSearchCriteria{
+			Kind:         "season",
+			Title:        criteria.Title,
+			Year:         criteria.Year,
+			SeasonNumber: criteria.SeasonNumber,
 		}
+		seasonQueries := decisions.SearchQueriesForCriteria(seasonCriteria, "")
+		seasonReleases, seasonErrors, err := searchReleaseQueries(ctx, releaseQuerySearch{
+			settings:       settings,
+			indexerService: indexerService,
+			limiter:        limiter,
+			configs:        configs,
+			item:           item,
+			criteria:       criteria,
+			queries:        seasonQueries,
+			cacheSettings:  cacheSettings,
+			eventBroker:    eventBroker,
+			manual:         manual,
+		})
+		if err != nil {
+			return nil, seasonErrors, err
+		}
+		releases = append(releases, seasonReleases...)
+		searchErrors = append(searchErrors, seasonErrors...)
 	}
 	releases = dedupeReleaseCandidates(item, releases)
 	sortReleaseCandidates(releases)

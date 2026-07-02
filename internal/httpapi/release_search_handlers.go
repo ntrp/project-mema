@@ -22,6 +22,11 @@ func (s *Server) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Reques
 		writeSettingsError(w, err, "Could not find media item")
 		return
 	}
+	if err := s.settings.ReplaceReleaseSearchResults(r.Context(), mediaItemID, nil, nil); err != nil {
+		writeError(w, http.StatusInternalServerError, "release_search_reset_failed", "Could not reset release search results")
+		s.recordEvent(r.Context(), eventSeverityError, "media", "Release search reset failed", map[string]any{"mediaItemId": mediaItemID.String(), "error": err.Error()})
+		return
+	}
 
 	jobID, err := s.jobs.EnqueueReleaseSearch(r.Context(), mediaItemID, query)
 	if err != nil {

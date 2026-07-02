@@ -50,3 +50,22 @@ func TestEvaluateReleaseMatchWarnsSeasonPackForEpisodeSearch(t *testing.T) {
 		t.Fatalf("expected warning, got %q: %v", match.Severity, match.Details)
 	}
 }
+
+func TestSearchQueriesForSeasonFallback(t *testing.T) {
+	season := int32(1)
+	queries := SearchQueriesForCriteria(ReleaseSearchCriteria{
+		Kind:         "season",
+		Title:        "The Show",
+		SeasonNumber: &season,
+	}, "")
+
+	want := []string{"The Show s1", "The Show S01"}
+	if len(queries) != len(want) {
+		t.Fatalf("queries = %#v, want %#v", queries, want)
+	}
+	for index, expected := range want {
+		if queries[index] != expected {
+			t.Fatalf("queries[%d] = %q, want %q", index, queries[index], expected)
+		}
+	}
+}
