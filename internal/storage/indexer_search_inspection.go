@@ -20,11 +20,10 @@ func (s *SettingsStore) IndexerSearchCacheStats(ctx context.Context) (IndexerSea
 }
 
 func (s *SettingsStore) ListIndexerSearchCacheEntries(ctx context.Context, limit int32) ([]IndexerSearchCacheEntry, error) {
-	if limit <= 0 || limit > 200 {
-		limit = 100
-	}
+	limit = inspectionLimit(limit)
 	rows, err := s.pool.Query(ctx, `
-		select i.name,
+		select i.id,
+			i.name,
 			i.type,
 			c.media_type,
 			c.query,
@@ -47,6 +46,7 @@ func (s *SettingsStore) ListIndexerSearchCacheEntries(ctx context.Context, limit
 	for rows.Next() {
 		var entry IndexerSearchCacheEntry
 		if err := rows.Scan(
+			&entry.IndexerID,
 			&entry.IndexerName,
 			&entry.IndexerType,
 			&entry.MediaType,
@@ -72,7 +72,8 @@ func (s *SettingsStore) GetIndexerSearchCacheEntry(
 ) (IndexerSearchCacheEntry, error) {
 	var entry IndexerSearchCacheEntry
 	err := s.pool.QueryRow(ctx, `
-		select i.name,
+		select i.id,
+			i.name,
 			i.type,
 			c.media_type,
 			c.query,
@@ -85,6 +86,7 @@ func (s *SettingsStore) GetIndexerSearchCacheEntry(
 		join app.indexers i on i.id = c.indexer_id
 		where c.indexer_id = $1 and c.media_type = $2 and c.query = $3
 	`, indexerID, mediaType, query).Scan(
+		&entry.IndexerID,
 		&entry.IndexerName,
 		&entry.IndexerType,
 		&entry.MediaType,
@@ -99,9 +101,7 @@ func (s *SettingsStore) GetIndexerSearchCacheEntry(
 }
 
 func (s *SettingsStore) ListIndexerSearchHistoryEntries(ctx context.Context, limit int32) ([]IndexerSearchHistoryEntry, error) {
-	if limit <= 0 || limit > 200 {
-		limit = 100
-	}
+	limit = inspectionLimit(limit)
 	rows, err := s.pool.Query(ctx, `
 		select indexer_name, indexer_type, media_type, query, cache_hit, success,
 			result_count, error, response::text, created_at
@@ -134,4 +134,33 @@ func (s *SettingsStore) ListIndexerSearchHistoryEntries(ctx context.Context, lim
 		entries = append(entries, entry)
 	}
 	return entries, rows.Err()
+}
+
+func (s *SettingsStore) IndexerSearchHistoryCount(ctx context.Context) (int32, error) {
+	var count int32
+	err := s.pool.QueryRow(ctx, `select count(*)::int from app.indexer_search_history`).Scan(&count)
+	return count, err
+}
+
+func (s *SettingsStore) IndexerSearchHistoryStats(ctx context.Context) (QueryHistoryStats, error) {
+	var stats QueryHistoryStats
+	err := s.pool.QueryRow(ctx, `
+		select
+			count(*)::int,
+			count(*) filter (where cache_hit)::int,
+			count(*) filter (where not cache_hit)::int,
+			count(*) filter (where not success)::int
+		from app.indexer_search_history
+	`).Scan(&stats.TotalEntries, &stats.CacheHits, &stats.CacheMisses, &stats.Failures)
+	return stats, err
+}
+
+func inspectionLimit(limit int32) int32 {
+	if limit <= 0 {
+		return 10
+	}
+	if limit > 500 {
+		return 500
+	}
+	return limit
 }

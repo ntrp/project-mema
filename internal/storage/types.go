@@ -151,7 +151,15 @@ type IndexerSearchCacheStats struct {
 	IndexerCount   int32
 }
 
+type QueryHistoryStats struct {
+	TotalEntries int32
+	CacheHits    int32
+	CacheMisses  int32
+	Failures     int32
+}
+
 type IndexerSearchCacheEntry struct {
+	IndexerID   uuid.UUID
 	IndexerName string
 	IndexerType string
 	MediaType   string

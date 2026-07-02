@@ -6,7 +6,13 @@
 	import SystemLogsSettings from '$lib/components/settings/SystemLogsSettings.svelte';
 	import SystemStatusSettings from '$lib/components/settings/SystemStatusSettings.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
-	import type { IndexerSearchResponse, MetadataCacheResponse, SystemSection } from '$lib/settings/types';
+	import type {
+		IndexerSearchCacheEntry,
+		IndexerSearchResponse,
+		MetadataCacheEntry,
+		MetadataCacheResponse,
+		SystemSection
+	} from '$lib/settings/types';
 
 	interface Props {
 		activeSection: SystemSection;
@@ -16,12 +22,18 @@
 		loadingMetadataCache: boolean;
 		clearingIndexerSearchCache: boolean;
 		clearingMetadataCache: boolean;
-		onRefreshIndexerSearch: () => void | Promise<void>;
-		onRefreshMetadataCache: () => void | Promise<void>;
 		onClearIndexerSearchCache: () => void | Promise<void>;
 		onClearIndexerSearchCachePattern: (_pattern: string) => void | Promise<void>;
+		onDeleteIndexerSearchCacheEntry: (_entry: IndexerSearchCacheEntry) => void | Promise<void>;
+		onClearIndexerSearchHistory: () => void | Promise<void>;
+		onLoadMoreIndexerSearchCache: () => void | Promise<void>;
+		onLoadMoreIndexerSearchHistory: () => void | Promise<void>;
 		onClearMetadataCache: () => void | Promise<void>;
 		onClearMetadataCachePattern: (_pattern: string) => void | Promise<void>;
+		onDeleteMetadataCacheEntry: (_entry: MetadataCacheEntry) => void | Promise<void>;
+		onClearMetadataSearchHistory: () => void | Promise<void>;
+		onLoadMoreMetadataCache: () => void | Promise<void>;
+		onLoadMoreMetadataSearchHistory: () => void | Promise<void>;
 	}
 
 	let {
@@ -32,12 +44,18 @@
 		loadingMetadataCache,
 		clearingIndexerSearchCache,
 		clearingMetadataCache,
-		onRefreshIndexerSearch,
-		onRefreshMetadataCache,
 		onClearIndexerSearchCache,
 		onClearIndexerSearchCachePattern,
+		onDeleteIndexerSearchCacheEntry,
+		onClearIndexerSearchHistory,
+		onLoadMoreIndexerSearchCache,
+		onLoadMoreIndexerSearchHistory,
 		onClearMetadataCache,
-		onClearMetadataCachePattern
+		onClearMetadataCachePattern,
+		onDeleteMetadataCacheEntry,
+		onClearMetadataSearchHistory,
+		onLoadMoreMetadataCache,
+		onLoadMoreMetadataSearchHistory
 	}: Props = $props();
 	let eventsConnected = $state(false);
 	let logsConnected = $state(false);
@@ -64,11 +82,14 @@
 			<IndexerSearchCacheSettings
 				search={indexerSearch}
 				bind:pattern={indexerCachePattern}
-				loading={loadingIndexerSearch}
 				clearing={clearingIndexerSearchCache}
-				onRefresh={onRefreshIndexerSearch}
+				loading={loadingIndexerSearch}
 				onClearAll={onClearIndexerSearchCache}
 				onClearPattern={onClearIndexerSearchCachePattern}
+				onDeleteEntry={onDeleteIndexerSearchCacheEntry}
+				onClearHistory={onClearIndexerSearchHistory}
+				onLoadMoreCache={onLoadMoreIndexerSearchCache}
+				onLoadMoreHistory={onLoadMoreIndexerSearchHistory}
 			/>
 		</div>
 	{:else if activeSection === 'metadata'}
@@ -77,11 +98,14 @@
 			<MetadataCacheSettings
 				cache={metadataCache}
 				bind:pattern={metadataCachePattern}
-				loading={loadingMetadataCache}
 				clearing={clearingMetadataCache}
-				onRefresh={onRefreshMetadataCache}
+				loading={loadingMetadataCache}
 				onClearAll={onClearMetadataCache}
 				onClearPattern={onClearMetadataCachePattern}
+				onDeleteEntry={onDeleteMetadataCacheEntry}
+				onClearHistory={onClearMetadataSearchHistory}
+				onLoadMoreCache={onLoadMoreMetadataCache}
+				onLoadMoreHistory={onLoadMoreMetadataSearchHistory}
 			/>
 		</div>
 	{:else if activeSection === 'events'}

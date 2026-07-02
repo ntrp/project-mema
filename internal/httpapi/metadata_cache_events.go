@@ -27,6 +27,7 @@ func (s *Server) publishMetadataCacheUpdated(
 		return
 	}
 	entry := storage.MetadataCacheEntry{
+		ProviderID:   provider.ID,
 		ProviderName: provider.Name,
 		ProviderType: provider.Type,
 		MediaType:    mediaType,

@@ -15,7 +15,7 @@
 
 	let { search, clearing, saving, onClearCache, onSaveSettings }: Props = $props();
 	let cacheDurationMinutes = $state(0);
-	let historyRetentionDays = $state(30);
+	let historyRetentionDays = $state(7);
 	const settingsChanged = $derived(
 		cacheDurationMinutes !== search.settings.cacheDurationMinutes ||
 			historyRetentionDays !== search.settings.historyRetentionDays

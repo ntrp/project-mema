@@ -77,13 +77,13 @@ create index if not exists idx_indexers_health
 create table if not exists app.indexer_search_settings (
     id boolean primary key default true check (id),
     cache_duration_minutes integer not null default 1440 check (cache_duration_minutes between 0 and 43200),
-    history_retention_days integer not null default 30 check (history_retention_days between 1 and 365),
+    history_retention_days integer not null default 7 check (history_retention_days between 1 and 365),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
 insert into app.indexer_search_settings (id, cache_duration_minutes, history_retention_days)
-values (true, 1440, 30)
+values (true, 1440, 7)
 on conflict (id) do nothing;
 
 create table if not exists app.indexer_search_cache (

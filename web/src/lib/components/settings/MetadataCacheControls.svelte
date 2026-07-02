@@ -5,12 +5,21 @@
 
 	interface Props {
 		pattern: string;
+		placeholder?: string;
 		clearing: boolean;
+		showClearAll?: boolean;
 		onClearAll: () => void | Promise<void>;
 		onClearPattern: (_pattern: string) => void | Promise<void>;
 	}
 
-	let { pattern = $bindable(), clearing, onClearAll, onClearPattern }: Props = $props();
+	let {
+		pattern = $bindable(),
+		placeholder = 'Enter the pattern',
+		clearing,
+		showClearAll = true,
+		onClearAll,
+		onClearPattern
+	}: Props = $props();
 
 	async function clearPattern(event: SubmitEvent) {
 		event.preventDefault();
@@ -23,20 +32,22 @@
 
 <form class="grid items-end gap-3 md:grid-cols-[minmax(0,1fr)_auto]" onsubmit={clearPattern}>
 	<div class="grid gap-1.5">
-		<Label>Reset by regex</Label>
-		<Input bind:value={pattern} placeholder="discover:|details:123|matrix" autocomplete="off" />
+		<Label>Evict by regex</Label>
+		<Input bind:value={pattern} {placeholder} autocomplete="off" />
 	</div>
 	<div class="flex flex-wrap justify-end gap-2">
 		<Button type="submit" variant="destructive" disabled={clearing || pattern.trim().length === 0}>
-			{clearing ? 'Resetting' : 'Reset matching'}
+			{clearing ? 'Evicting' : 'Evict'}
 		</Button>
-		<Button
-			type="button"
-			variant="destructive"
-			disabled={clearing}
-			onclick={() => void onClearAll()}
-		>
-			Reset all
-		</Button>
+		{#if showClearAll}
+			<Button
+				type="button"
+				variant="destructive"
+				disabled={clearing}
+				onclick={() => void onClearAll()}
+			>
+				Reset all
+			</Button>
+		{/if}
 	</div>
 </form>

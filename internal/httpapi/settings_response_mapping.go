@@ -57,6 +57,7 @@ func indexerSearchResponse(
 	stats storage.IndexerSearchCacheStats,
 	cacheEntries []storage.IndexerSearchCacheEntry,
 	historyEntries []storage.IndexerSearchHistoryEntry,
+	historyStats storage.QueryHistoryStats,
 ) IndexerSearchResponse {
 	cache := make([]IndexerSearchCacheEntry, 0, len(cacheEntries))
 	for _, entry := range cacheEntries {
@@ -77,13 +78,25 @@ func indexerSearchResponse(
 			ExpiredEntries: stats.ExpiredEntries,
 			IndexerCount:   stats.IndexerCount,
 		},
-		CacheEntries:   cache,
-		HistoryEntries: history,
+		CacheEntries:        cache,
+		HistoryEntries:      history,
+		HistoryTotalEntries: historyStats.TotalEntries,
+		HistoryStats:        queryHistoryStatsResponse(historyStats),
+	}
+}
+
+func queryHistoryStatsResponse(stats storage.QueryHistoryStats) QueryHistoryStats {
+	return QueryHistoryStats{
+		TotalEntries: stats.TotalEntries,
+		CacheHits:    stats.CacheHits,
+		CacheMisses:  stats.CacheMisses,
+		Failures:     stats.Failures,
 	}
 }
 
 func indexerSearchCacheEntryResponse(entry storage.IndexerSearchCacheEntry) IndexerSearchCacheEntry {
 	return IndexerSearchCacheEntry{
+		IndexerId:   openapi_types.UUID(entry.IndexerID),
 		IndexerName: entry.IndexerName,
 		IndexerType: IndexerType(entry.IndexerType),
 		MediaType:   MediaType(entry.MediaType),
@@ -138,6 +151,7 @@ func metadataCacheStatsResponse(stats storage.MetadataCacheStats) MetadataCacheS
 
 func metadataCacheEntryResponse(entry storage.MetadataCacheEntry) MetadataCacheEntry {
 	return MetadataCacheEntry{
+		ProviderId:   openapi_types.UUID(entry.ProviderID),
 		ProviderName: entry.ProviderName,
 		ProviderType: MetadataProviderType(entry.ProviderType),
 		MediaType:    MediaType(entry.MediaType),

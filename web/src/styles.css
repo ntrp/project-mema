@@ -130,3 +130,17 @@
 		background: color-mix(in srgb, var(--background) 82%, var(--muted));
 	}
 }
+
+@keyframes live-row-pulse {
+	0% {
+		background-color: color-mix(in srgb, var(--ring) 34%, transparent);
+	}
+	100% {
+		background-color: transparent;
+	}
+}
+
+.live-row-pulse,
+.live-row-pulse > [data-slot='table-cell'] {
+	animation: live-row-pulse 1200ms ease-out 1;
+}

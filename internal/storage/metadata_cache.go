@@ -94,9 +94,7 @@ func (s *SettingsStore) MetadataCacheStats(ctx context.Context) (MetadataCacheSt
 }
 
 func (s *SettingsStore) ListMetadataSearchHistoryEntries(ctx context.Context, limit int32) ([]MetadataSearchHistoryEntry, error) {
-	if limit <= 0 || limit > 200 {
-		limit = 100
-	}
+	limit = inspectionLimit(limit)
 	rows, err := s.pool.Query(ctx, `
 		select provider_name, provider_type, media_type, query, year, cache_hit, success,
 			item_count, error, response::text, created_at
@@ -134,11 +132,10 @@ func (s *SettingsStore) ListMetadataSearchHistoryEntries(ctx context.Context, li
 }
 
 func (s *SettingsStore) ListMetadataCacheEntries(ctx context.Context, limit int32) ([]MetadataCacheEntry, error) {
-	if limit <= 0 || limit > 200 {
-		limit = 100
-	}
+	limit = inspectionLimit(limit)
 	rows, err := s.pool.Query(ctx, `
-		select p.name,
+		select p.id,
+			p.name,
 			p.type,
 			c.media_type,
 			c.query,
@@ -165,6 +162,7 @@ func (s *SettingsStore) ListMetadataCacheEntries(ctx context.Context, limit int3
 	for rows.Next() {
 		var entry MetadataCacheEntry
 		if err := rows.Scan(
+			&entry.ProviderID,
 			&entry.ProviderName,
 			&entry.ProviderType,
 			&entry.MediaType,
@@ -183,6 +181,25 @@ func (s *SettingsStore) ListMetadataCacheEntries(ctx context.Context, limit int3
 	return entries, rows.Err()
 }
 
+func (s *SettingsStore) MetadataSearchHistoryCount(ctx context.Context) (int32, error) {
+	var count int32
+	err := s.pool.QueryRow(ctx, `select count(*)::int from app.metadata_search_history`).Scan(&count)
+	return count, err
+}
+
+func (s *SettingsStore) MetadataSearchHistoryStats(ctx context.Context) (QueryHistoryStats, error) {
+	var stats QueryHistoryStats
+	err := s.pool.QueryRow(ctx, `
+		select
+			count(*)::int,
+			count(*) filter (where cache_hit)::int,
+			count(*) filter (where not cache_hit)::int,
+			count(*) filter (where not success)::int
+		from app.metadata_search_history
+	`).Scan(&stats.TotalEntries, &stats.CacheHits, &stats.CacheMisses, &stats.Failures)
+	return stats, err
+}
+
 func (s *SettingsStore) ClearMetadataCache(ctx context.Context) (int32, error) {
 	tag, err := s.pool.Exec(ctx, `delete from app.metadata_search_cache`)
 	if err != nil {
@@ -196,6 +213,25 @@ func (s *SettingsStore) ClearMetadataCacheByPattern(ctx context.Context, pattern
 		delete from app.metadata_search_cache
 		where query ~* $1
 	`, pattern)
+	if err != nil {
+		return 0, err
+	}
+	return int32(tag.RowsAffected()), nil
+}
+
+func (s *SettingsStore) DeleteMetadataCacheEntry(ctx context.Context, providerID uuid.UUID, mediaType string, query string, year int32) (int32, error) {
+	tag, err := s.pool.Exec(ctx, `
+		delete from app.metadata_search_cache
+		where provider_id = $1 and media_type = $2 and query = $3 and year = $4
+	`, providerID, mediaType, query, year)
+	if err != nil {
+		return 0, err
+	}
+	return int32(tag.RowsAffected()), nil
+}
+
+func (s *SettingsStore) ClearMetadataSearchHistory(ctx context.Context) (int32, error) {
+	tag, err := s.pool.Exec(ctx, `delete from app.metadata_search_history`)
 	if err != nil {
 		return 0, err
 	}

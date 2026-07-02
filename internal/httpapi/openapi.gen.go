@@ -888,15 +888,16 @@ type IndexerRequest struct {
 
 // IndexerSearchCacheEntry defines model for IndexerSearchCacheEntry.
 type IndexerSearchCacheEntry struct {
-	CreatedAt   time.Time   `json:"createdAt"`
-	Expired     bool        `json:"expired"`
-	ExpiresAt   time.Time   `json:"expiresAt"`
-	IndexerName string      `json:"indexerName"`
-	IndexerType IndexerType `json:"indexerType"`
-	MediaType   MediaType   `json:"mediaType"`
-	Query       string      `json:"query"`
-	ResultCount int32       `json:"resultCount"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	Expired     bool               `json:"expired"`
+	ExpiresAt   time.Time          `json:"expiresAt"`
+	IndexerId   openapi_types.UUID `json:"indexerId"`
+	IndexerName string             `json:"indexerName"`
+	IndexerType IndexerType        `json:"indexerType"`
+	MediaType   MediaType          `json:"mediaType"`
+	Query       string             `json:"query"`
+	ResultCount int32              `json:"resultCount"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
 }
 
 // IndexerSearchCacheStats defines model for IndexerSearchCacheStats.
@@ -923,10 +924,12 @@ type IndexerSearchHistoryEntry struct {
 
 // IndexerSearchResponse defines model for IndexerSearchResponse.
 type IndexerSearchResponse struct {
-	CacheEntries   []IndexerSearchCacheEntry   `json:"cacheEntries"`
-	HistoryEntries []IndexerSearchHistoryEntry `json:"historyEntries"`
-	Settings       IndexerSearchSettings       `json:"settings"`
-	Stats          IndexerSearchCacheStats     `json:"stats"`
+	CacheEntries        []IndexerSearchCacheEntry   `json:"cacheEntries"`
+	HistoryEntries      []IndexerSearchHistoryEntry `json:"historyEntries"`
+	HistoryStats        QueryHistoryStats           `json:"historyStats"`
+	HistoryTotalEntries int32                       `json:"historyTotalEntries"`
+	Settings            IndexerSearchSettings       `json:"settings"`
+	Stats               IndexerSearchCacheStats     `json:"stats"`
 }
 
 // IndexerSearchSettings defines model for IndexerSearchSettings.
@@ -1514,6 +1517,7 @@ type MetadataCacheEntry struct {
 	ExpiresAt    time.Time                   `json:"expiresAt"`
 	ItemCount    int32                       `json:"itemCount"`
 	MediaType    MediaType                   `json:"mediaType"`
+	ProviderId   openapi_types.UUID          `json:"providerId"`
 	ProviderName string                      `json:"providerName"`
 	ProviderType MetadataProviderType        `json:"providerType"`
 	Query        string                      `json:"query"`
@@ -1526,9 +1530,11 @@ type MetadataCacheEntryCacheKind string
 
 // MetadataCacheResponse defines model for MetadataCacheResponse.
 type MetadataCacheResponse struct {
-	Entries        []MetadataCacheEntry         `json:"entries"`
-	HistoryEntries []MetadataSearchHistoryEntry `json:"historyEntries"`
-	Stats          MetadataCacheStats           `json:"stats"`
+	Entries             []MetadataCacheEntry         `json:"entries"`
+	HistoryEntries      []MetadataSearchHistoryEntry `json:"historyEntries"`
+	HistoryStats        QueryHistoryStats            `json:"historyStats"`
+	HistoryTotalEntries int32                        `json:"historyTotalEntries"`
+	Stats               MetadataCacheStats           `json:"stats"`
 }
 
 // MetadataCacheStats defines model for MetadataCacheStats.
@@ -1676,6 +1682,14 @@ type QualitySizeSettingsResponse struct {
 // QualitySizeSettingsUpdateRequest defines model for QualitySizeSettingsUpdateRequest.
 type QualitySizeSettingsUpdateRequest struct {
 	Qualities []QualitySizeSettingRequest `json:"qualities"`
+}
+
+// QueryHistoryStats defines model for QueryHistoryStats.
+type QueryHistoryStats struct {
+	CacheHits    int32 `json:"cacheHits"`
+	CacheMisses  int32 `json:"cacheMisses"`
+	Failures     int32 `json:"failures"`
+	TotalEntries int32 `json:"totalEntries"`
 }
 
 // ReleaseCandidate defines model for ReleaseCandidate.
@@ -1913,9 +1927,36 @@ type DeleteMediaItemParams struct {
 	KeepFiles *bool `form:"keepFiles,omitempty" json:"keepFiles,omitempty"`
 }
 
+// GetIndexerSearchParams defines parameters for GetIndexerSearch.
+type GetIndexerSearchParams struct {
+	CacheLimit   *int32 `form:"cacheLimit,omitempty" json:"cacheLimit,omitempty"`
+	HistoryLimit *int32 `form:"historyLimit,omitempty" json:"historyLimit,omitempty"`
+}
+
+// DeleteIndexerSearchCacheEntryParams defines parameters for DeleteIndexerSearchCacheEntry.
+type DeleteIndexerSearchCacheEntryParams struct {
+	IndexerId openapi_types.UUID `form:"indexerId" json:"indexerId"`
+	MediaType MediaType          `form:"mediaType" json:"mediaType"`
+	Query     string             `form:"query" json:"query"`
+}
+
 // ListLibraryFolderOptionsParams defines parameters for ListLibraryFolderOptions.
 type ListLibraryFolderOptionsParams struct {
 	Path *string `form:"path,omitempty" json:"path,omitempty"`
+}
+
+// GetMetadataCacheParams defines parameters for GetMetadataCache.
+type GetMetadataCacheParams struct {
+	CacheLimit   *int32 `form:"cacheLimit,omitempty" json:"cacheLimit,omitempty"`
+	HistoryLimit *int32 `form:"historyLimit,omitempty" json:"historyLimit,omitempty"`
+}
+
+// DeleteMetadataCacheEntryParams defines parameters for DeleteMetadataCacheEntry.
+type DeleteMetadataCacheEntryParams struct {
+	ProviderId openapi_types.UUID `form:"providerId" json:"providerId"`
+	MediaType  MediaType          `form:"mediaType" json:"mediaType"`
+	Query      string             `form:"query" json:"query"`
+	Year       int32              `form:"year" json:"year"`
 }
 
 // ListSystemEventsParams defines parameters for ListSystemEvents.
@@ -2190,16 +2231,22 @@ type ServerInterface interface {
 	UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request)
 	// Inspect indexer search cache and query history
 	// (GET /settings/indexer-search)
-	GetIndexerSearch(w http.ResponseWriter, r *http.Request)
+	GetIndexerSearch(w http.ResponseWriter, r *http.Request, params GetIndexerSearchParams)
 	// Update indexer search cache and history settings
 	// (PUT /settings/indexer-search)
 	UpdateIndexerSearchSettings(w http.ResponseWriter, r *http.Request)
 	// Clear all indexer search cache entries
 	// (DELETE /settings/indexer-search/cache)
 	ClearIndexerSearchCache(w http.ResponseWriter, r *http.Request)
+	// Delete one indexer search cache entry
+	// (DELETE /settings/indexer-search/cache/entry)
+	DeleteIndexerSearchCacheEntry(w http.ResponseWriter, r *http.Request, params DeleteIndexerSearchCacheEntryParams)
 	// Clear indexer search cache entries matching a regex
 	// (POST /settings/indexer-search/cache/reset)
 	ClearIndexerSearchCacheByPattern(w http.ResponseWriter, r *http.Request)
+	// Clear all indexer query history entries
+	// (DELETE /settings/indexer-search/history)
+	ClearIndexerSearchHistory(w http.ResponseWriter, r *http.Request)
 	// List configured indexers
 	// (GET /settings/indexers)
 	ListIndexers(w http.ResponseWriter, r *http.Request)
@@ -2253,7 +2300,13 @@ type ServerInterface interface {
 	ClearMetadataCache(w http.ResponseWriter, r *http.Request)
 	// Inspect metadata provider cache entries and stats
 	// (GET /settings/metadata-cache)
-	GetMetadataCache(w http.ResponseWriter, r *http.Request)
+	GetMetadataCache(w http.ResponseWriter, r *http.Request, params GetMetadataCacheParams)
+	// Delete one metadata cache entry
+	// (DELETE /settings/metadata-cache/entry)
+	DeleteMetadataCacheEntry(w http.ResponseWriter, r *http.Request, params DeleteMetadataCacheEntryParams)
+	// Clear all metadata query history entries
+	// (DELETE /settings/metadata-cache/history)
+	ClearMetadataSearchHistory(w http.ResponseWriter, r *http.Request)
 	// Clear metadata provider cache entries matching a regex
 	// (POST /settings/metadata-cache/reset)
 	ClearMetadataCacheByPattern(w http.ResponseWriter, r *http.Request)
@@ -2646,7 +2699,7 @@ func (_ Unimplemented) UpdateFileNamingSettings(w http.ResponseWriter, r *http.R
 
 // Inspect indexer search cache and query history
 // (GET /settings/indexer-search)
-func (_ Unimplemented) GetIndexerSearch(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) GetIndexerSearch(w http.ResponseWriter, r *http.Request, params GetIndexerSearchParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2662,9 +2715,21 @@ func (_ Unimplemented) ClearIndexerSearchCache(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Delete one indexer search cache entry
+// (DELETE /settings/indexer-search/cache/entry)
+func (_ Unimplemented) DeleteIndexerSearchCacheEntry(w http.ResponseWriter, r *http.Request, params DeleteIndexerSearchCacheEntryParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Clear indexer search cache entries matching a regex
 // (POST /settings/indexer-search/cache/reset)
 func (_ Unimplemented) ClearIndexerSearchCacheByPattern(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Clear all indexer query history entries
+// (DELETE /settings/indexer-search/history)
+func (_ Unimplemented) ClearIndexerSearchHistory(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2772,7 +2837,19 @@ func (_ Unimplemented) ClearMetadataCache(w http.ResponseWriter, r *http.Request
 
 // Inspect metadata provider cache entries and stats
 // (GET /settings/metadata-cache)
-func (_ Unimplemented) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
+func (_ Unimplemented) GetMetadataCache(w http.ResponseWriter, r *http.Request, params GetMetadataCacheParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete one metadata cache entry
+// (DELETE /settings/metadata-cache/entry)
+func (_ Unimplemented) DeleteMetadataCacheEntry(w http.ResponseWriter, r *http.Request, params DeleteMetadataCacheEntryParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Clear all metadata query history entries
+// (DELETE /settings/metadata-cache/history)
+func (_ Unimplemented) ClearMetadataSearchHistory(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4307,14 +4384,46 @@ func (siw *ServerInterfaceWrapper) UpdateFileNamingSettings(w http.ResponseWrite
 // GetIndexerSearch operation middleware
 func (siw *ServerInterfaceWrapper) GetIndexerSearch(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
 	ctx := r.Context()
 
 	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
 
 	r = r.WithContext(ctx)
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetIndexerSearchParams
+
+	// ------------- Optional query parameter "cacheLimit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cacheLimit", r.URL.Query(), &params.CacheLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cacheLimit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cacheLimit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "historyLimit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "historyLimit", r.URL.Query(), &params.HistoryLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "historyLimit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "historyLimit", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetIndexerSearch(w, r)
+		siw.Handler.GetIndexerSearch(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4364,6 +4473,71 @@ func (siw *ServerInterfaceWrapper) ClearIndexerSearchCache(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteIndexerSearchCacheEntry operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIndexerSearchCacheEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteIndexerSearchCacheEntryParams
+
+	// ------------- Required query parameter "indexerId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "indexerId", r.URL.Query(), &params.IndexerId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "indexerId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "indexerId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "mediaType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "mediaType", r.URL.Query(), &params.MediaType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "mediaType"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "mediaType", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteIndexerSearchCacheEntry(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ClearIndexerSearchCacheByPattern operation middleware
 func (siw *ServerInterfaceWrapper) ClearIndexerSearchCacheByPattern(w http.ResponseWriter, r *http.Request) {
 
@@ -4375,6 +4549,26 @@ func (siw *ServerInterfaceWrapper) ClearIndexerSearchCacheByPattern(w http.Respo
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ClearIndexerSearchCacheByPattern(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ClearIndexerSearchHistory operation middleware
+func (siw *ServerInterfaceWrapper) ClearIndexerSearchHistory(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClearIndexerSearchHistory(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4851,6 +5045,136 @@ func (siw *ServerInterfaceWrapper) ClearMetadataCache(w http.ResponseWriter, r *
 // GetMetadataCache operation middleware
 func (siw *ServerInterfaceWrapper) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMetadataCacheParams
+
+	// ------------- Optional query parameter "cacheLimit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cacheLimit", r.URL.Query(), &params.CacheLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cacheLimit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cacheLimit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "historyLimit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "historyLimit", r.URL.Query(), &params.HistoryLimit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "historyLimit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "historyLimit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMetadataCache(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMetadataCacheEntry operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMetadataCacheEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteMetadataCacheEntryParams
+
+	// ------------- Required query parameter "providerId" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "providerId", r.URL.Query(), &params.ProviderId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "providerId"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "providerId", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "mediaType" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "mediaType", r.URL.Query(), &params.MediaType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "mediaType"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "mediaType", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "year" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "year", r.URL.Query(), &params.Year, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "year"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "year", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMetadataCacheEntry(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ClearMetadataSearchHistory operation middleware
+func (siw *ServerInterfaceWrapper) ClearMetadataSearchHistory(w http.ResponseWriter, r *http.Request) {
+
 	ctx := r.Context()
 
 	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
@@ -4858,7 +5182,7 @@ func (siw *ServerInterfaceWrapper) GetMetadataCache(w http.ResponseWriter, r *ht
 	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetMetadataCache(w, r)
+		siw.Handler.ClearMetadataSearchHistory(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5976,7 +6300,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/settings/indexer-search/cache", wrapper.ClearIndexerSearchCache)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/indexer-search/cache/entry", wrapper.DeleteIndexerSearchCacheEntry)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/indexer-search/cache/reset", wrapper.ClearIndexerSearchCacheByPattern)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/indexer-search/history", wrapper.ClearIndexerSearchHistory)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/indexers", wrapper.ListIndexers)
@@ -6031,6 +6361,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/metadata-cache", wrapper.GetMetadataCache)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/metadata-cache/entry", wrapper.DeleteMetadataCacheEntry)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/metadata-cache/history", wrapper.ClearMetadataSearchHistory)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/metadata-cache/reset", wrapper.ClearMetadataCacheByPattern)

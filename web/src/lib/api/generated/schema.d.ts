@@ -700,6 +700,40 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/indexer-search/cache/entry': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete one indexer search cache entry */
+		delete: operations['deleteIndexerSearchCacheEntry'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-search/history': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Clear all indexer query history entries */
+		delete: operations['clearIndexerSearchHistory'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/indexer-search/cache/reset': {
 		parameters: {
 			query?: never;
@@ -951,6 +985,40 @@ export interface paths {
 		/** Clear metadata provider cache entries matching a regex */
 		post: operations['clearMetadataCacheByPattern'];
 		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/metadata-cache/entry': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete one metadata cache entry */
+		delete: operations['deleteMetadataCacheEntry'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/metadata-cache/history': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Clear all metadata query history entries */
+		delete: operations['clearMetadataSearchHistory'];
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -2094,6 +2162,9 @@ export interface components {
 			stats: components['schemas']['IndexerSearchCacheStats'];
 			cacheEntries: components['schemas']['IndexerSearchCacheEntry'][];
 			historyEntries: components['schemas']['IndexerSearchHistoryEntry'][];
+			/** Format: int32 */
+			historyTotalEntries: number;
+			historyStats: components['schemas']['QueryHistoryStats'];
 		};
 		IndexerSearchSettings: {
 			/** Format: int32 */
@@ -2112,6 +2183,8 @@ export interface components {
 			indexerCount: number;
 		};
 		IndexerSearchCacheEntry: {
+			/** Format: uuid */
+			indexerId: string;
 			indexerName: string;
 			indexerType: components['schemas']['IndexerType'];
 			mediaType: components['schemas']['MediaType'];
@@ -2168,6 +2241,19 @@ export interface components {
 			stats: components['schemas']['MetadataCacheStats'];
 			entries: components['schemas']['MetadataCacheEntry'][];
 			historyEntries: components['schemas']['MetadataSearchHistoryEntry'][];
+			/** Format: int32 */
+			historyTotalEntries: number;
+			historyStats: components['schemas']['QueryHistoryStats'];
+		};
+		QueryHistoryStats: {
+			/** Format: int32 */
+			totalEntries: number;
+			/** Format: int32 */
+			cacheHits: number;
+			/** Format: int32 */
+			cacheMisses: number;
+			/** Format: int32 */
+			failures: number;
 		};
 		MetadataCacheStats: {
 			/** Format: int32 */
@@ -2180,6 +2266,8 @@ export interface components {
 			providerCount: number;
 		};
 		MetadataCacheEntry: {
+			/** Format: uuid */
+			providerId: string;
 			providerName: string;
 			providerType: components['schemas']['MetadataProviderType'];
 			mediaType: components['schemas']['MediaType'];
@@ -3607,7 +3695,10 @@ export interface operations {
 	};
 	getIndexerSearch: {
 		parameters: {
-			query?: never;
+			query?: {
+				cacheLimit?: number;
+				historyLimit?: number;
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
@@ -3662,6 +3753,53 @@ export interface operations {
 		requestBody?: never;
 		responses: {
 			/** @description Indexer search cache clear result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteIndexerSearchCacheEntry: {
+		parameters: {
+			query: {
+				indexerId: string;
+				mediaType: components['schemas']['MediaType'];
+				query: string;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer search cache delete result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	clearIndexerSearchHistory: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer query history clear result */
 			200: {
 				headers: {
 					[name: string]: unknown;
@@ -4188,7 +4326,10 @@ export interface operations {
 	};
 	getMetadataCache: {
 		parameters: {
-			query?: never;
+			query?: {
+				cacheLimit?: number;
+				historyLimit?: number;
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
@@ -4251,6 +4392,54 @@ export interface operations {
 				};
 			};
 			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteMetadataCacheEntry: {
+		parameters: {
+			query: {
+				providerId: string;
+				mediaType: components['schemas']['MediaType'];
+				query: string;
+				year: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Metadata cache delete result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	clearMetadataSearchHistory: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Metadata query history clear result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MetadataCacheClearResponse'];
+				};
+			};
 			401: components['responses']['Unauthorized'];
 		};
 	};

@@ -44,6 +44,7 @@ type MetadataCacheStats struct {
 }
 
 type MetadataCacheEntry struct {
+	ProviderID   uuid.UUID
 	ProviderName string
 	ProviderType string
 	MediaType    string

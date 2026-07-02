@@ -128,8 +128,16 @@ func (s *SettingsStore) RecordIndexerSearchHistory(ctx context.Context, input In
 func (s *SettingsStore) CleanupIndexerSearchHistory(ctx context.Context, retentionDays int32) (int32, error) {
 	tag, err := s.pool.Exec(ctx, `
 		delete from app.indexer_search_history
-		where created_at < now() - ($1::text || ' days')::interval
+		where created_at < now() - make_interval(days => $1::int)
 	`, retentionDays)
+	if err != nil {
+		return 0, err
+	}
+	return int32(tag.RowsAffected()), nil
+}
+
+func (s *SettingsStore) ClearIndexerSearchHistory(ctx context.Context) (int32, error) {
+	tag, err := s.pool.Exec(ctx, `delete from app.indexer_search_history`)
 	if err != nil {
 		return 0, err
 	}
@@ -155,10 +163,21 @@ func (s *SettingsStore) ClearIndexerSearchCacheByPattern(ctx context.Context, pa
 	return int32(tag.RowsAffected()), nil
 }
 
+func (s *SettingsStore) DeleteIndexerSearchCacheEntry(ctx context.Context, indexerID uuid.UUID, mediaType string, query string) (int32, error) {
+	tag, err := s.pool.Exec(ctx, `
+		delete from app.indexer_search_cache
+		where indexer_id = $1 and media_type = $2 and query = $3
+	`, indexerID, mediaType, query)
+	if err != nil {
+		return 0, err
+	}
+	return int32(tag.RowsAffected()), nil
+}
+
 func (s *SettingsStore) ensureIndexerSearchSettings(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `
 		insert into app.indexer_search_settings (id, cache_duration_minutes, history_retention_days)
-		values (true, 1440, 30)
+		values (true, 1440, 7)
 		on conflict (id) do nothing
 	`)
 	return err

@@ -97,7 +97,7 @@ func (s *Server) TestMetadataProvider(w http.ResponseWriter, r *http.Request, id
 	writeJSON(w, http.StatusOK, metadataProviderTestResponse(s.now(), result))
 }
 
-func (s *Server) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetMetadataCache(w http.ResponseWriter, r *http.Request, params GetMetadataCacheParams) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
@@ -107,21 +107,28 @@ func (s *Server) GetMetadataCache(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "metadata_cache_stats_failed", "Could not load metadata cache stats")
 		return
 	}
-	entries, err := s.settings.ListMetadataCacheEntries(r.Context(), 100)
+	entries, err := s.settings.ListMetadataCacheEntries(r.Context(), optionalLimit(params.CacheLimit))
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "metadata_cache_entries_failed", "Could not load metadata cache entries")
 		return
 	}
-	historyEntries, err := s.settings.ListMetadataSearchHistoryEntries(r.Context(), 100)
+	historyEntries, err := s.settings.ListMetadataSearchHistoryEntries(r.Context(), optionalLimit(params.HistoryLimit))
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "metadata_history_entries_failed", "Could not load metadata query history")
 		return
 	}
+	historyStats, err := s.settings.MetadataSearchHistoryStats(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_history_stats_failed", "Could not load metadata query history stats")
+		return
+	}
 
 	response := MetadataCacheResponse{
-		Stats:          metadataCacheStatsResponse(stats),
-		Entries:        make([]MetadataCacheEntry, 0, len(entries)),
-		HistoryEntries: make([]MetadataSearchHistoryEntry, 0, len(historyEntries)),
+		Stats:               metadataCacheStatsResponse(stats),
+		Entries:             make([]MetadataCacheEntry, 0, len(entries)),
+		HistoryEntries:      make([]MetadataSearchHistoryEntry, 0, len(historyEntries)),
+		HistoryTotalEntries: historyStats.TotalEntries,
+		HistoryStats:        queryHistoryStatsResponse(historyStats),
 	}
 	for _, entry := range entries {
 		response.Entries = append(response.Entries, metadataCacheEntryResponse(entry))
@@ -167,6 +174,42 @@ func (s *Server) ClearMetadataCacheByPattern(w http.ResponseWriter, r *http.Requ
 	count, err := s.settings.ClearMetadataCacheByPattern(r.Context(), pattern)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "metadata_cache_clear_failed", "Could not clear metadata cache")
+		return
+	}
+	writeJSON(w, http.StatusOK, MetadataCacheClearResponse{DeletedCount: count})
+}
+
+func (s *Server) DeleteMetadataCacheEntry(w http.ResponseWriter, r *http.Request, params DeleteMetadataCacheEntryParams) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	if strings.TrimSpace(params.Query) == "" {
+		writeError(w, http.StatusBadRequest, "invalid_cache_entry", "Cache entry query is required")
+		return
+	}
+	count, err := s.settings.DeleteMetadataCacheEntry(
+		r.Context(),
+		uuid.UUID(params.ProviderId),
+		string(params.MediaType),
+		params.Query,
+		params.Year,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_cache_delete_failed", "Could not delete metadata cache entry")
+		return
+	}
+	writeJSON(w, http.StatusOK, MetadataCacheClearResponse{DeletedCount: count})
+}
+
+func (s *Server) ClearMetadataSearchHistory(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	count, err := s.settings.ClearMetadataSearchHistory(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "metadata_history_clear_failed", "Could not clear metadata query history")
 		return
 	}
 	writeJSON(w, http.StatusOK, MetadataCacheClearResponse{DeletedCount: count})

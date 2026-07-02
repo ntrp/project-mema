@@ -20,11 +20,17 @@
 		loadingMetadataCache={app.loadingMetadataCache}
 		clearingIndexerSearchCache={app.clearingIndexerSearchCache}
 		clearingMetadataCache={app.clearingMetadataCache}
-		onRefreshIndexerSearch={app.refreshIndexerSearch}
-		onRefreshMetadataCache={app.refreshMetadataCache}
 		onClearIndexerSearchCache={app.clearIndexerSearchCache}
 		onClearIndexerSearchCachePattern={app.clearIndexerSearchCachePattern}
+		onDeleteIndexerSearchCacheEntry={app.deleteIndexerSearchCacheEntry}
+		onClearIndexerSearchHistory={app.clearIndexerSearchHistory}
+		onLoadMoreIndexerSearchCache={app.loadMoreIndexerSearchCache}
+		onLoadMoreIndexerSearchHistory={app.loadMoreIndexerSearchHistory}
 		onClearMetadataCache={app.clearMetadataCache}
 		onClearMetadataCachePattern={app.clearMetadataCachePattern}
+		onDeleteMetadataCacheEntry={app.deleteMetadataCacheEntry}
+		onClearMetadataSearchHistory={app.clearMetadataSearchHistory}
+		onLoadMoreMetadataCache={app.loadMoreMetadataCache}
+		onLoadMoreMetadataSearchHistory={app.loadMoreMetadataSearchHistory}
 	/>
 {/if}

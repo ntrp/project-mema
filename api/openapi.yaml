@@ -1069,6 +1069,23 @@ paths:
       summary: Inspect indexer search cache and query history
       security:
         - sessionCookie: []
+      parameters:
+        - name: cacheLimit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+        - name: historyLimit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
       responses:
         "200":
           description: Indexer search cache, settings, and history
@@ -1113,6 +1130,59 @@ paths:
       responses:
         "200":
           description: Indexer search cache clear result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-search/cache/entry:
+    delete:
+      operationId: deleteIndexerSearchCacheEntry
+      tags:
+        - Settings
+      summary: Delete one indexer search cache entry
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: indexerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mediaType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaType"
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Indexer search cache delete result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-search/history:
+    delete:
+      operationId: clearIndexerSearchHistory
+      tags:
+        - Settings
+      summary: Clear all indexer query history entries
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer query history clear result
           content:
             application/json:
               schema:
@@ -1577,6 +1647,23 @@ paths:
       summary: Inspect metadata provider cache entries and stats
       security:
         - sessionCookie: []
+      parameters:
+        - name: cacheLimit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+        - name: historyLimit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
       responses:
         "200":
           description: Metadata cache stats and entries
@@ -1625,6 +1712,65 @@ paths:
                 $ref: "#/components/schemas/MetadataCacheClearResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/metadata-cache/entry:
+    delete:
+      operationId: deleteMetadataCacheEntry
+      tags:
+        - Settings
+      summary: Delete one metadata cache entry
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: providerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: mediaType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MediaType"
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: Metadata cache delete result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/metadata-cache/history:
+    delete:
+      operationId: clearMetadataSearchHistory
+      tags:
+        - Settings
+      summary: Clear all metadata query history entries
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Metadata query history clear result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetadataCacheClearResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /settings/tags:
@@ -4321,6 +4467,8 @@ components:
         - stats
         - cacheEntries
         - historyEntries
+        - historyTotalEntries
+        - historyStats
       properties:
         settings:
           $ref: "#/components/schemas/IndexerSearchSettings"
@@ -4334,6 +4482,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/IndexerSearchHistoryEntry"
+        historyTotalEntries:
+          type: integer
+          format: int32
+        historyStats:
+          $ref: "#/components/schemas/QueryHistoryStats"
     IndexerSearchSettings:
       type: object
       additionalProperties: false
@@ -4376,6 +4529,7 @@ components:
       type: object
       additionalProperties: false
       required:
+        - indexerId
         - indexerName
         - indexerType
         - mediaType
@@ -4386,6 +4540,9 @@ components:
         - updatedAt
         - expired
       properties:
+        indexerId:
+          type: string
+          format: uuid
         indexerName:
           type: string
         indexerType:
@@ -4521,6 +4678,8 @@ components:
         - stats
         - entries
         - historyEntries
+        - historyTotalEntries
+        - historyStats
       properties:
         stats:
           $ref: "#/components/schemas/MetadataCacheStats"
@@ -4532,6 +4691,32 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetadataSearchHistoryEntry"
+        historyTotalEntries:
+          type: integer
+          format: int32
+        historyStats:
+          $ref: "#/components/schemas/QueryHistoryStats"
+    QueryHistoryStats:
+      type: object
+      additionalProperties: false
+      required:
+        - totalEntries
+        - cacheHits
+        - cacheMisses
+        - failures
+      properties:
+        totalEntries:
+          type: integer
+          format: int32
+        cacheHits:
+          type: integer
+          format: int32
+        cacheMisses:
+          type: integer
+          format: int32
+        failures:
+          type: integer
+          format: int32
     MetadataCacheStats:
       type: object
       additionalProperties: false
@@ -4557,6 +4742,7 @@ components:
       type: object
       additionalProperties: false
       required:
+        - providerId
         - providerName
         - providerType
         - mediaType
@@ -4569,6 +4755,9 @@ components:
         - updatedAt
         - expired
       properties:
+        providerId:
+          type: string
+          format: uuid
         providerName:
           type: string
         providerType:

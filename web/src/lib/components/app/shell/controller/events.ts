@@ -29,7 +29,12 @@ export function createEventActions(state: AppShellState) {
 	function appendIndexerSearchHistory(entry: IndexerSearchHistoryEntry) {
 		state.indexerSearch = {
 			...state.indexerSearch,
-			historyEntries: [entry, ...state.indexerSearch.historyEntries].slice(0, 100)
+			historyTotalEntries: state.indexerSearch.historyTotalEntries + 1,
+			historyStats: incrementHistoryStats(state.indexerSearch.historyStats, entry),
+			historyEntries: [entry, ...state.indexerSearch.historyEntries].slice(
+				0,
+				displayLimit(state.indexerSearch.historyEntries.length)
+			)
 		};
 	}
 
@@ -41,7 +46,7 @@ export function createEventActions(state: AppShellState) {
 				state.indexerSearch.cacheEntries,
 				update.entry,
 				indexerCacheKey
-			).slice(0, 100)
+			).slice(0, displayLimit(state.indexerSearch.cacheEntries.length))
 		};
 	}
 
@@ -49,14 +54,22 @@ export function createEventActions(state: AppShellState) {
 		state.metadataCache = {
 			...state.metadataCache,
 			stats: update.stats,
-			entries: upsertByKey(state.metadataCache.entries, update.entry, metadataCacheKey).slice(0, 100)
+			entries: upsertByKey(state.metadataCache.entries, update.entry, metadataCacheKey).slice(
+				0,
+				displayLimit(state.metadataCache.entries.length)
+			)
 		};
 	}
 
 	function appendMetadataSearchHistory(entry: MetadataSearchHistoryEntry) {
 		state.metadataCache = {
 			...state.metadataCache,
-			historyEntries: [entry, ...state.metadataCache.historyEntries].slice(0, 100)
+			historyTotalEntries: state.metadataCache.historyTotalEntries + 1,
+			historyStats: incrementHistoryStats(state.metadataCache.historyStats, entry),
+			historyEntries: [entry, ...state.metadataCache.historyEntries].slice(
+				0,
+				displayLimit(state.metadataCache.historyEntries.length)
+			)
 		};
 	}
 
@@ -105,10 +118,26 @@ function upsertByKey<T>(items: T[], next: T, keyFor: (_item: T) => string) {
 	return [next, ...items.filter((item) => keyFor(item) !== key)];
 }
 
+function displayLimit(length: number) {
+	return Math.max(length, 10);
+}
+
+function incrementHistoryStats<T extends { cacheHit: boolean; success: boolean }>(
+	stats: { totalEntries: number; cacheHits: number; cacheMisses: number; failures: number },
+	entry: T
+) {
+	return {
+		totalEntries: stats.totalEntries + 1,
+		cacheHits: stats.cacheHits + (entry.cacheHit ? 1 : 0),
+		cacheMisses: stats.cacheMisses + (entry.cacheHit ? 0 : 1),
+		failures: stats.failures + (entry.success ? 0 : 1)
+	};
+}
+
 function indexerCacheKey(entry: IndexerSearchCacheEntry) {
-	return `${entry.indexerName}:${entry.indexerType}:${entry.mediaType}:${entry.query}`;
+	return `${entry.indexerId}:${entry.mediaType}:${entry.query}`;
 }
 
 function metadataCacheKey(entry: MetadataCacheEntry) {
-	return `${entry.providerName}:${entry.providerType}:${entry.mediaType}:${entry.query}:${entry.year}`;
+	return `${entry.providerId}:${entry.mediaType}:${entry.query}:${entry.year}`;
 }
