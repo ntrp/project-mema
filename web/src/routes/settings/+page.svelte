@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import LibrarySettingsRoute from '$lib/features/settings/routes/LibrarySettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="library" />
+<LibrarySettingsRoute />

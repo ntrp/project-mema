@@ -20,7 +20,7 @@ import {
 	emptyUserForm
 } from '$lib/settings/forms';
 import type { LibraryMediaKind, LibraryScan } from '$lib/settings/types';
-import type { LibraryScanImportRow } from '$lib/components/settings/libraryScanImport';
+import type { LibraryScanImportRow } from '$lib/components/settings/library/scan/libraryScanImport';
 import { emptyTagForm, errorMessageFrom, omitResult } from './helpers';
 import type { AppShellState } from './state.svelte';
 

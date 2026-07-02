@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import TagsSettingsRoute from '$lib/features/settings/routes/TagsSettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="tags" />
+<TagsSettingsRoute />

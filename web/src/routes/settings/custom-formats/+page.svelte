@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import CustomFormatsSettingsRoute from '$lib/features/settings/routes/CustomFormatsSettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="custom-formats" />
+<CustomFormatsSettingsRoute />

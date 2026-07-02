@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import DownloadClientsSettingsRoute from '$lib/features/settings/routes/DownloadClientsSettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="download-clients" />
+<DownloadClientsSettingsRoute />

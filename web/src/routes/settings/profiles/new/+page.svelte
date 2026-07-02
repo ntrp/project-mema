@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MediaProfileEditorRoute from '$lib/features/settings/MediaProfileEditorRoute.svelte';
+	import NewMediaProfileRoute from '$lib/features/settings/routes/profiles/NewMediaProfileRoute.svelte';
 </script>
 
-<MediaProfileEditorRoute />
+<NewMediaProfileRoute />

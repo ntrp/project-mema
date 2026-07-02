@@ -112,7 +112,7 @@
 		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,220px))] sm:gap-5"
 	>
 		{#each Array.from({ length: 12 }) as _, index (index)}
-			<div class="min-w-0 snap-start aspect-[2/3] rounded-md bg-card" aria-hidden="true"></div>
+			<div class="min-w-0 snap-start aspect-2/3 rounded-md bg-card" aria-hidden="true"></div>
 		{/each}
 	</div>
 {:else if !section}
@@ -121,7 +121,7 @@
 		description="Could not load this discover section."
 	/>
 {:else}
-	<PageHeading eyebrow="Discover" title={section.title} description={`${results.length} titles`} />
+	<PageHeading eyebrow="Discover" title={section.title} />
 
 	{#if results.length > 0}
 		<div

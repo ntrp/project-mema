@@ -1,8 +1,8 @@
 <script lang="ts">
-	import MediaProfileEditorRoute from '$lib/features/settings/MediaProfileEditorRoute.svelte';
+	import EditMediaProfileRoute from '$lib/features/settings/routes/profiles/EditMediaProfileRoute.svelte';
 	import type { PageProps } from './$types';
 
 	let { params }: PageProps = $props();
 </script>
 
-<MediaProfileEditorRoute profileId={params.id} />
+<EditMediaProfileRoute profileId={params.id} />

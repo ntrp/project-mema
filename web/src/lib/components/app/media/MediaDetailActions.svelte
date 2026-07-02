@@ -2,7 +2,7 @@
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
-	import { minimumAvailabilityOptions } from '$lib/components/settings/libraryScanImport';
+	import { minimumAvailabilityOptions } from '$lib/components/settings/library/scan/libraryScanImport';
 	import { Button } from '$lib/components/ui/button';
 	import { Label } from '$lib/components/ui/label';
 	import * as Tooltip from '$lib/components/ui/tooltip';

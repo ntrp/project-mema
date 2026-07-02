@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import UsersSettingsRoute from '$lib/features/settings/routes/UsersSettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="users" />
+<UsersSettingsRoute />

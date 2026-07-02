@@ -1,11 +1,11 @@
 <script lang="ts">
-	import SystemEventsSettings from '$lib/components/settings/SystemEventsSettings.svelte';
-	import IndexerSearchCacheSettings from '$lib/components/settings/IndexerSearchCacheSettings.svelte';
-	import MetadataCacheSettings from '$lib/components/settings/MetadataCacheSettings.svelte';
-	import SystemJobsSettings from '$lib/components/settings/SystemJobsSettings.svelte';
-	import SystemLogFilesSettings from '$lib/components/settings/SystemLogFilesSettings.svelte';
-	import SystemLogsSettings from '$lib/components/settings/SystemLogsSettings.svelte';
-	import SystemStatusSettings from '$lib/components/settings/SystemStatusSettings.svelte';
+	import SystemEventsSettings from '$lib/components/settings/system/events/SystemEventsSettings.svelte';
+	import IndexerSearchCacheSettings from '$lib/components/settings/system/cache/IndexerSearchCacheSettings.svelte';
+	import MetadataCacheSettings from '$lib/components/settings/system/cache/MetadataCacheSettings.svelte';
+	import SystemJobsSettings from '$lib/components/settings/system/jobs/SystemJobsSettings.svelte';
+	import SystemLogFilesSettings from '$lib/components/settings/system/logs/SystemLogFilesSettings.svelte';
+	import SystemLogsSettings from '$lib/components/settings/system/logs/SystemLogsSettings.svelte';
+	import SystemStatusSettings from '$lib/components/settings/system/SystemStatusSettings.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import type {
 		IndexerSearchCacheEntry,

@@ -5,8 +5,8 @@
 	import { listSystemEvents } from '$lib/settings/api';
 	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
-	import SystemEventSeverityIcon from '$lib/components/settings/SystemEventSeverityIcon.svelte';
-	import { parseSystemEvent } from '$lib/components/settings/systemEventStream';
+	import SystemEventSeverityIcon from '$lib/components/settings/system/events/SystemEventSeverityIcon.svelte';
+	import { parseSystemEvent } from '$lib/components/settings/system/events/systemEventStream';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 

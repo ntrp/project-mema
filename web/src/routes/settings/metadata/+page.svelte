@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import MetadataSettingsRoute from '$lib/features/settings/routes/MetadataSettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="metadata" />
+<MetadataSettingsRoute />

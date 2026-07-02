@@ -1,13 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Input } from '$lib/components/ui/input';
 	import { Slider } from '$lib/components/ui/slider';
 	import * as Table from '$lib/components/ui/table';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { QualitySizeSetting } from '$lib/settings/types';
+	import QualitySizeField from './QualitySizeField.svelte';
 	import {
-		gibValue,
-		mbPerMinuteTitle,
 		nextSliderQuality,
 		rowError,
 		activeTrackStyle,
@@ -65,10 +62,6 @@
 			: 'z-10';
 	}
 
-	function fieldInputClass() {
-		return validationError ? 'min-w-0 border-destructive pr-12' : 'min-w-0 pr-12';
-	}
-
 	function scrollGibValue(event: globalThis.WheelEvent, field: SliderField, value: number) {
 		event.preventDefault();
 		event.stopPropagation();
@@ -110,45 +103,18 @@
 	</Table.Cell>
 	<Table.Cell class="align-top whitespace-normal">
 		<div class="grid grid-cols-[124px_minmax(240px,1fr)_124px_124px] items-center gap-3">
-			<label class="relative block w-[124px]">
-				<span
-					class="absolute -top-2 left-2 z-10 bg-card px-1 text-xs font-black text-muted-foreground"
-				>
-					Min
-				</span>
-				<span
-					class="relative block"
-					onwheel={(event) => scrollGibValue(event, 'minimum', values.minimum)}
-				>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Input
-									{...props}
-									type="number"
-									min="0"
-									max={values.maximum - sliderHandleGap * 2}
-									step={0.01}
-									required
-									aria-label={`${quality.name} minimum size GiB per hour`}
-									class={fieldInputClass()}
-									value={gibValue(values.minimum)}
-									oninput={(event) => updateGibValue('minimum', event.currentTarget.value)}
-									onpointerenter={focusInput}
-									onwheelcapture={(event) => scrollGibValue(event, 'minimum', values.minimum)}
-									onwheel={(event) => scrollGibValue(event, 'minimum', values.minimum)}
-								/>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>{mbPerMinuteTitle('Minimum', values.minimum)}</Tooltip.Content>
-					</Tooltip.Root>
-					<span
-						class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs font-black text-muted-foreground"
-					>
-						GiB/h
-					</span>
-				</span>
-			</label>
+			<QualitySizeField
+				field="minimum"
+				label="Min"
+				qualityName={quality.name}
+				value={values.minimum}
+				min={0}
+				max={values.maximum - sliderHandleGap * 2}
+				{validationError}
+				onChange={updateGibValue}
+				onScroll={scrollGibValue}
+				onFocus={focusInput}
+			/>
 			<Slider
 				value={rangeValue}
 				min={0}
@@ -161,81 +127,29 @@
 				thumbClass={sliderThumbClass}
 				onValueChange={updateRange}
 			/>
-			<label class="relative block w-[124px]">
-				<span
-					class="absolute -top-2 left-2 z-10 bg-card px-1 text-xs font-black text-muted-foreground"
-				>
-					Preferred
-				</span>
-				<span
-					class="relative block"
-					onwheel={(event) => scrollGibValue(event, 'preferred', values.preferred)}
-				>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Input
-									{...props}
-									type="number"
-									min={values.minimum}
-									max={values.maximum}
-									step={0.01}
-									aria-label={`${quality.name} preferred size GiB per hour`}
-									class={fieldInputClass()}
-									value={gibValue(values.preferred)}
-									oninput={(event) => updateGibValue('preferred', event.currentTarget.value)}
-									onpointerenter={focusInput}
-									onwheelcapture={(event) => scrollGibValue(event, 'preferred', values.preferred)}
-									onwheel={(event) => scrollGibValue(event, 'preferred', values.preferred)}
-								/>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>{mbPerMinuteTitle('Preferred', values.preferred)}</Tooltip.Content>
-					</Tooltip.Root>
-					<span
-						class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs font-black text-muted-foreground"
-					>
-						GiB/h
-					</span>
-				</span>
-			</label>
-			<label class="relative block w-[124px]">
-				<span
-					class="absolute -top-2 left-2 z-10 bg-card px-1 text-xs font-black text-muted-foreground"
-				>
-					Max
-				</span>
-				<span
-					class="relative block"
-					onwheel={(event) => scrollGibValue(event, 'maximum', values.maximum)}
-				>
-					<Tooltip.Root>
-						<Tooltip.Trigger>
-							{#snippet child({ props })}
-								<Input
-									{...props}
-									type="number"
-									min={values.minimum + sliderHandleGap * 2}
-									step={0.01}
-									aria-label={`${quality.name} maximum size GiB per hour`}
-									class={fieldInputClass()}
-									value={gibValue(values.maximum)}
-									oninput={(event) => updateGibValue('maximum', event.currentTarget.value)}
-									onpointerenter={focusInput}
-									onwheelcapture={(event) => scrollGibValue(event, 'maximum', values.maximum)}
-									onwheel={(event) => scrollGibValue(event, 'maximum', values.maximum)}
-								/>
-							{/snippet}
-						</Tooltip.Trigger>
-						<Tooltip.Content>{mbPerMinuteTitle('Maximum', values.maximum)}</Tooltip.Content>
-					</Tooltip.Root>
-					<span
-						class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-xs font-black text-muted-foreground"
-					>
-						GiB/h
-					</span>
-				</span>
-			</label>
+			<QualitySizeField
+				field="preferred"
+				label="Preferred"
+				qualityName={quality.name}
+				value={values.preferred}
+				min={values.minimum}
+				max={values.maximum}
+				{validationError}
+				onChange={updateGibValue}
+				onScroll={scrollGibValue}
+				onFocus={focusInput}
+			/>
+			<QualitySizeField
+				field="maximum"
+				label="Max"
+				qualityName={quality.name}
+				value={values.maximum}
+				min={values.minimum + sliderHandleGap * 2}
+				{validationError}
+				onChange={updateGibValue}
+				onScroll={scrollGibValue}
+				onFocus={focusInput}
+			/>
 		</div>
 		{#if validationError}
 			<span class="mt-2 block text-xs font-black text-destructive">{validationError}</span>

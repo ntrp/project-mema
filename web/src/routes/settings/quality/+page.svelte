@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import QualitySettingsRoute from '$lib/features/settings/routes/QualitySettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="quality" />
+<QualitySettingsRoute />

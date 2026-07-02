@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SettingsRoute from '$lib/features/settings/SettingsRoute.svelte';
+	import IndexersSettingsRoute from '$lib/features/settings/routes/IndexersSettingsRoute.svelte';
 </script>
 
-<SettingsRoute section="indexers" />
+<IndexersSettingsRoute />
