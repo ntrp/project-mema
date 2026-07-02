@@ -64,7 +64,7 @@ func loadMediaProfileLanguages(
 	profileID string,
 ) ([]MediaProfileLanguageScore, error) {
 	rows, err := q.Query(ctx, `
-		select language_id, score
+		select language_id, score, required
 		from app.media_profile_languages
 		where profile_id = $1
 		order by language_id
@@ -77,7 +77,7 @@ func loadMediaProfileLanguages(
 	scores := []MediaProfileLanguageScore{}
 	for rows.Next() {
 		var score MediaProfileLanguageScore
-		if err := rows.Scan(&score.LanguageID, &score.Score); err != nil {
+		if err := rows.Scan(&score.LanguageID, &score.Score, &score.Required); err != nil {
 			return nil, err
 		}
 		scores = append(scores, score)
@@ -144,9 +144,9 @@ func replaceMediaProfileLanguages(
 	}
 	for _, score := range scores {
 		if _, err := q.Exec(ctx, `
-			insert into app.media_profile_languages (profile_id, language_id, score)
-			values ($1, $2, $3)
-		`, profileID, score.LanguageID, score.Score); err != nil {
+			insert into app.media_profile_languages (profile_id, language_id, score, required)
+			values ($1, $2, $3, $4)
+		`, profileID, score.LanguageID, score.Score, score.Required); err != nil {
 			return normalizeMediaProfileWriteError(err)
 		}
 	}

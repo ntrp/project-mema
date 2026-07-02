@@ -77,7 +77,7 @@
 {/if}
 
 <div
-	class="grid max-h-[min(640px,calc(100vh-260px))] gap-3 overflow-auto rounded-md border border-border bg-background p-2.5"
+	class="grid gap-3 overflow-auto rounded-md border border-border bg-background p-2.5"
 	aria-label="Profile qualities"
 >
 	{#if loading}

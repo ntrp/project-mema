@@ -30,7 +30,11 @@
 		grabbingKey?: string;
 		canManage: boolean;
 		libraryFolders: LibraryFolder[];
-		qualityProfiles: { id: string; targetLanguages?: string[] }[];
+		qualityProfiles: {
+			id: string;
+			targetLanguages?: string[];
+			removeNonEnabledLanguages?: boolean;
+		}[];
 		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onAutoSearch: (_item: MediaItem) => void;
 		onManualSearch: (_item: MediaItem) => void;

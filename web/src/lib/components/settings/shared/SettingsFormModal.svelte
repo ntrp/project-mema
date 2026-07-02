@@ -51,7 +51,7 @@
 				</Dialog.Close>
 			</div>
 		</Dialog.Header>
-		<div class="max-h-[min(760px,calc(100vh-112px))] overflow-auto overscroll-contain px-6 py-5">
+		<div class="overflow-auto overscroll-contain px-6 py-5">
 			{@render children()}
 		</div>
 	</Dialog.Content>

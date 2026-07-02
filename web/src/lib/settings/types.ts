@@ -116,6 +116,7 @@ export interface QualityProfileOption {
 	id: string;
 	name: string;
 	targetLanguages?: string[];
+	removeNonEnabledLanguages?: boolean;
 }
 
 export type AppView =

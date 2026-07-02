@@ -45,7 +45,7 @@
 </script>
 
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
-	<Dialog.Content class="w-[min(780px,calc(100vw-32px))] sm:max-w-none">
+	<Dialog.Content class="w-[min(780px,calc(100vw-32px))]">
 		<Dialog.Header>
 			<Dialog.Title>Edit media root</Dialog.Title>
 			<Dialog.Description>

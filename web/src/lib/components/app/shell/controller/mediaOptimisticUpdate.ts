@@ -6,6 +6,7 @@ import type {
 } from '$lib/settings/types';
 
 export function optimisticMediaItem(item: MediaItem, request: MediaItemUpdateRequest): MediaItem {
+	const seasons = optimisticSeasons(item.seasons, request);
 	return {
 		...item,
 		qualityProfileId: request.qualityProfileId ?? item.qualityProfileId,
@@ -13,7 +14,7 @@ export function optimisticMediaItem(item: MediaItem, request: MediaItemUpdateReq
 		libraryFolderId: request.libraryFolderId ?? item.libraryFolderId,
 		monitored: request.monitored ?? item.monitored,
 		monitorMode: request.monitorMode ?? item.monitorMode,
-		seasons: request.seasons ?? item.seasons
+		seasons
 	};
 }
 
@@ -22,8 +23,8 @@ export function mediaUpdateMessage(
 	nextItem: MediaItem,
 	request: MediaItemUpdateRequest
 ) {
-	if (request.seasons && item.type === 'series') {
-		return seriesSeasonMessage(item.seasons ?? [], request.seasons);
+	if (isSeasonPatch(request) && item.type === 'series') {
+		return seriesSeasonMessage(item.seasons ?? [], nextItem.seasons ?? []);
 	}
 	if (request.libraryFolderId) {
 		return 'Media root updated';
@@ -32,6 +33,40 @@ export function mediaUpdateMessage(
 		return titleMonitorMessage(item, nextItem);
 	}
 	return 'Media settings saved';
+}
+
+function optimisticSeasons(
+	seasons: MediaMetadataSeason[] | undefined,
+	request: MediaItemUpdateRequest
+) {
+	if (!seasons) return request.seasons;
+	if (request.seasons) return request.seasons;
+	if (!isSeasonPatch(request)) return seasons;
+	return seasons.map((season) => optimisticSeason(season, request));
+}
+
+function optimisticSeason(season: MediaMetadataSeason, request: MediaItemUpdateRequest) {
+	if (season.name !== request.monitorSeasonName) return season;
+	if (request.seasonMonitored !== undefined) {
+		const episodes = (season.episodes ?? []).map((episode) => ({
+			...episode,
+			monitored: request.seasonMonitored
+		}));
+		return { ...season, episodes, monitored: request.seasonMonitored };
+	}
+	const episodes = (season.episodes ?? []).map((episode) =>
+		episode.episodeNumber === request.monitorEpisodeNumber
+			? { ...episode, monitored: request.episodeMonitored }
+			: episode
+	);
+	return { ...season, episodes, monitored: episodes.some((episode) => episode.monitored) };
+}
+
+function isSeasonPatch(request: MediaItemUpdateRequest) {
+	return Boolean(
+		request.monitorSeasonName &&
+		(request.seasonMonitored !== undefined || request.episodeMonitored !== undefined)
+	);
 }
 
 function titleMonitorMessage(item: MediaItem, nextItem: MediaItem) {

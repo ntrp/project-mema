@@ -46,6 +46,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		targetLanguageScores = append(targetLanguageScores, storage.MediaProfileLanguageScore{
 			LanguageID: value.LanguageId,
 			Score:      value.Score,
+			Required:   value.Required,
 		})
 	}
 	customFormatScores := make([]storage.MediaProfileCustomFormatScore, 0, len(request.CustomFormatScores))
@@ -64,6 +65,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		MinimumCustomFormatScore:          request.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     request.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: request.MinimumCustomFormatScoreIncrement,
+		RemoveNonEnabledLanguages:         request.RemoveNonEnabledLanguages,
 		TargetLanguages:                   targetLanguages,
 		TargetLanguageScores:              targetLanguageScores,
 		CustomFormatScores:                customFormatScores,
@@ -88,6 +90,7 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		MinimumCustomFormatScore:          profile.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     profile.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: profile.MinimumCustomFormatScoreIncrement,
+		RemoveNonEnabledLanguages:         profile.RemoveNonEnabledLanguages,
 		TargetLanguages:                   profile.TargetLanguages,
 		TargetLanguageScores:              mediaProfileLanguageScoreResponses(profile.TargetLanguageScores),
 		CustomFormatScores:                mediaProfileCustomFormatScoreResponses(profile.CustomFormatScores),
@@ -102,6 +105,7 @@ func mediaProfileLanguageScoreResponses(scores []storage.MediaProfileLanguageSco
 		response = append(response, MediaProfileLanguageScore{
 			LanguageId: score.LanguageID,
 			Score:      score.Score,
+			Required:   score.Required,
 		})
 	}
 	return response

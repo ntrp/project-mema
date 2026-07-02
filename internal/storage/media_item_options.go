@@ -15,7 +15,12 @@ func (s *SettingsStore) UpdateMediaItemOptions(ctx context.Context, id uuid.UUID
 	if err != nil {
 		return MediaItem{}, err
 	}
-	seasonsPayload, updateSeasons, err := mediaItemSeasonsPayload(input.Seasons)
+	item, err := s.GetMediaItem(ctx, id)
+	if err != nil {
+		return MediaItem{}, err
+	}
+	seasons, updateSeasons := mediaItemUpdateSeasons(item.Seasons, input)
+	seasonsPayload, err := mediaItemSeasonsPayload(seasons)
 	if err != nil {
 		return MediaItem{}, err
 	}
@@ -84,12 +89,60 @@ func optionalMinimumAvailability(value *string) *string {
 	return &normalized
 }
 
-func mediaItemSeasonsPayload(seasons *[]MediaSeason) ([]byte, bool, error) {
+func mediaItemUpdateSeasons(current []MediaSeason, input MediaItemOptionsInput) (*[]MediaSeason, bool) {
+	if input.Seasons != nil {
+		return input.Seasons, true
+	}
+	if input.MonitorSeasonName == nil {
+		return nil, false
+	}
+	seasons := make([]MediaSeason, len(current))
+	copy(seasons, current)
+	for index := range seasons {
+		if seasons[index].Name != *input.MonitorSeasonName {
+			continue
+		}
+		applySeasonMonitorPatch(&seasons[index], input)
+		return &seasons, true
+	}
+	return nil, false
+}
+
+func applySeasonMonitorPatch(season *MediaSeason, input MediaItemOptionsInput) {
+	if input.SeasonMonitored != nil {
+		season.Monitored = *input.SeasonMonitored
+		for index := range season.Episodes {
+			season.Episodes[index].Monitored = *input.SeasonMonitored
+		}
+		return
+	}
+	if input.MonitorEpisodeNumber == nil || input.EpisodeMonitored == nil {
+		return
+	}
+	for index := range season.Episodes {
+		if season.Episodes[index].EpisodeNumber == *input.MonitorEpisodeNumber {
+			season.Episodes[index].Monitored = *input.EpisodeMonitored
+			break
+		}
+	}
+	season.Monitored = mediaSeasonHasMonitoredEpisode(*season)
+}
+
+func mediaSeasonHasMonitoredEpisode(season MediaSeason) bool {
+	for _, episode := range season.Episodes {
+		if episode.Monitored {
+			return true
+		}
+	}
+	return false
+}
+
+func mediaItemSeasonsPayload(seasons *[]MediaSeason) ([]byte, error) {
 	if seasons == nil {
-		return []byte("[]"), false, nil
+		return []byte("[]"), nil
 	}
 	payload, err := marshalJSONArray(*seasons)
-	return payload, true, err
+	return payload, err
 }
 
 func optionalTrimmed(value *string) *string {

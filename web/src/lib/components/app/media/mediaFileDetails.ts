@@ -12,6 +12,7 @@ export interface MediaFileDetailRow {
 	language: string;
 	description: string;
 	missing?: boolean;
+	unwanted?: boolean;
 }
 
 export function fileDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
@@ -28,8 +29,22 @@ function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): Medi
 		trackNumber: track.index === undefined ? String(index + 1) : String(track.index),
 		type: track.type,
 		language: displayLanguage(track.language),
-		description: trackDescription(row, track)
+		description: trackDescription(row, track),
+		unwanted: unwantedAudioTrack(row, track)
 	};
+}
+
+function unwantedAudioTrack(row: MediaFileRow, track: MediaFileTrack) {
+	if (
+		!row.removeNonEnabledLanguages ||
+		track.type !== 'audio' ||
+		row.expectedLanguages.length === 0
+	) {
+		return false;
+	}
+	const enabled = new Set(row.expectedLanguages.map(languageMatchKey).filter(Boolean));
+	const language = languageMatchKey(track.language);
+	return language !== '' && !enabled.has(language);
 }
 
 function chapterRow(chapter: MediaFileChapter): MediaFileDetailRow {

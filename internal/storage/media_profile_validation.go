@@ -81,7 +81,11 @@ func normalizeLanguageScoreValues(values []MediaProfileLanguageScore) []MediaPro
 			continue
 		}
 		seen[language] = struct{}{}
-		scores = append(scores, MediaProfileLanguageScore{LanguageID: language, Score: value.Score})
+		scores = append(scores, MediaProfileLanguageScore{
+			LanguageID: language,
+			Score:      value.Score,
+			Required:   value.Required,
+		})
 	}
 	return scores
 }
@@ -118,6 +122,7 @@ func scanMediaProfileBase(row pgx.Row) (MediaProfile, error) {
 		&profile.MinimumCustomFormatScore,
 		&profile.UpgradeUntilCustomFormatScore,
 		&profile.MinimumCustomFormatScoreIncrement,
+		&profile.RemoveNonEnabledLanguages,
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 	)

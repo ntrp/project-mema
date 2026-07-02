@@ -1173,12 +1173,16 @@ type MediaItemStatus string
 
 // MediaItemUpdateRequest defines model for MediaItemUpdateRequest.
 type MediaItemUpdateRequest struct {
-	LibraryFolderId     *openapi_types.UUID    `json:"libraryFolderId,omitempty"`
-	MinimumAvailability *MinimumAvailability   `json:"minimumAvailability,omitempty"`
-	MonitorMode         *MediaMonitorMode      `json:"monitorMode,omitempty"`
-	Monitored           *bool                  `json:"monitored,omitempty"`
-	QualityProfileId    *string                `json:"qualityProfileId,omitempty"`
-	Seasons             *[]MediaMetadataSeason `json:"seasons,omitempty"`
+	EpisodeMonitored     *bool                  `json:"episodeMonitored,omitempty"`
+	LibraryFolderId      *openapi_types.UUID    `json:"libraryFolderId,omitempty"`
+	MinimumAvailability  *MinimumAvailability   `json:"minimumAvailability,omitempty"`
+	MonitorEpisodeNumber *int32                 `json:"monitorEpisodeNumber,omitempty"`
+	MonitorMode          *MediaMonitorMode      `json:"monitorMode,omitempty"`
+	MonitorSeasonName    *string                `json:"monitorSeasonName,omitempty"`
+	Monitored            *bool                  `json:"monitored,omitempty"`
+	QualityProfileId     *string                `json:"qualityProfileId,omitempty"`
+	SeasonMonitored      *bool                  `json:"seasonMonitored,omitempty"`
+	Seasons              *[]MediaMetadataSeason `json:"seasons,omitempty"`
 }
 
 // MediaMetadataDetails defines model for MediaMetadataDetails.
@@ -1258,6 +1262,7 @@ type MediaProfile struct {
 	MinimumCustomFormatScoreIncrement int32                           `json:"minimumCustomFormatScoreIncrement"`
 	Name                              string                          `json:"name"`
 	QualityIds                        []string                        `json:"qualityIds"`
+	RemoveNonEnabledLanguages         bool                            `json:"removeNonEnabledLanguages"`
 	TargetLanguageScores              []MediaProfileLanguageScore     `json:"targetLanguageScores"`
 	TargetLanguages                   []string                        `json:"targetLanguages"`
 	UpdatedAt                         time.Time                       `json:"updatedAt"`
@@ -1275,6 +1280,7 @@ type MediaProfileCustomFormatScore struct {
 // MediaProfileLanguageScore defines model for MediaProfileLanguageScore.
 type MediaProfileLanguageScore struct {
 	LanguageId string `json:"languageId"`
+	Required   bool   `json:"required"`
 	Score      int32  `json:"score"`
 }
 
@@ -1290,6 +1296,7 @@ type MediaProfileRequest struct {
 	MinimumCustomFormatScoreIncrement int32                           `json:"minimumCustomFormatScoreIncrement"`
 	Name                              string                          `json:"name"`
 	QualityIds                        []string                        `json:"qualityIds"`
+	RemoveNonEnabledLanguages         bool                            `json:"removeNonEnabledLanguages"`
 	TargetLanguageScores              []MediaProfileLanguageScore     `json:"targetLanguageScores"`
 	TargetLanguages                   []string                        `json:"targetLanguages"`
 	UpgradeUntilCustomFormatScore     int32                           `json:"upgradeUntilCustomFormatScore"`

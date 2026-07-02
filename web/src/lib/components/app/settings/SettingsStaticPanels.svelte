@@ -11,7 +11,6 @@
 		CustomFormatForm as CustomFormatFormValue,
 		IntegrationTestResults,
 		MediaProfile,
-		MediaProfileForm as MediaProfileFormValue,
 		MetadataCacheResponse,
 		MetadataProvider,
 		MetadataProviderForm as MetadataProviderFormValue,
@@ -28,14 +27,12 @@
 		customFormats: CustomFormat[];
 		tags: Tag[];
 		metadataCachePattern: string;
-		mediaProfileForm: MediaProfileFormValue;
 		customFormatForm: CustomFormatFormValue;
 		tagForm: TagForm;
 		savingMetadataProviderId?: string;
 		testingMetadataProviderId?: string;
 		loadingMetadataCache: boolean;
 		clearingMetadataCache: boolean;
-		savingMediaProfile: boolean;
 		deletingMediaProfileId?: string;
 		savingCustomFormat: boolean;
 		deletingCustomFormatId?: string;
@@ -47,9 +44,6 @@
 		onRefreshMetadataCache: () => void | Promise<void>;
 		onClearMetadataCache: () => void | Promise<void>;
 		onClearMetadataCachePattern: (_event: SubmitEvent) => void | Promise<void>;
-		onSaveMediaProfile: (_event: SubmitEvent) => void | Promise<void>;
-		onCancelMediaProfile: () => void;
-		onEditMediaProfile: (_profile: MediaProfile) => void;
 		onDeleteMediaProfile: (_id: string) => void | Promise<void>;
 		onSaveCustomFormat: (_event: SubmitEvent) => void | Promise<void>;
 		onImportCustomFormat: (_format: CustomFormatFormValue) => void | Promise<void>;
@@ -70,14 +64,12 @@
 		customFormats,
 		tags,
 		metadataCachePattern = $bindable(),
-		mediaProfileForm = $bindable(),
 		customFormatForm = $bindable(),
 		tagForm = $bindable(),
 		savingMetadataProviderId,
 		testingMetadataProviderId,
 		loadingMetadataCache,
 		clearingMetadataCache,
-		savingMediaProfile,
 		deletingMediaProfileId,
 		savingCustomFormat,
 		deletingCustomFormatId,
@@ -89,9 +81,6 @@
 		onRefreshMetadataCache,
 		onClearMetadataCache,
 		onClearMetadataCachePattern,
-		onSaveMediaProfile,
-		onCancelMediaProfile,
-		onEditMediaProfile,
 		onDeleteMediaProfile,
 		onSaveCustomFormat,
 		onImportCustomFormat,
@@ -134,13 +123,7 @@
 	<div class="space-y-4">
 		<MediaProfilesSettings
 			profiles={mediaProfiles}
-			{customFormats}
-			bind:form={mediaProfileForm}
-			saving={savingMediaProfile}
 			deletingId={deletingMediaProfileId}
-			onSave={onSaveMediaProfile}
-			onCancel={onCancelMediaProfile}
-			onEdit={onEditMediaProfile}
 			onDelete={onDeleteMediaProfile}
 		/>
 	</div>

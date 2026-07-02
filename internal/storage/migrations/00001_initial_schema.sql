@@ -120,6 +120,7 @@ create table if not exists app.media_profiles (
     minimum_custom_format_score integer not null default 0,
     upgrade_until_custom_format_score integer not null default 0,
     minimum_custom_format_score_increment integer not null default 1 check (minimum_custom_format_score_increment >= 0),
+    remove_non_enabled_languages boolean not null default false,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
@@ -156,6 +157,7 @@ create table if not exists app.media_profile_languages (
     profile_id text not null references app.media_profiles(id) on delete cascade,
     language_id text not null,
     score integer not null default 0,
+    required boolean not null default false,
     primary key (profile_id, language_id)
 );
 

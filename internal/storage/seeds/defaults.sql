@@ -56,14 +56,15 @@ insert into app.media_profiles (
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
-    minimum_custom_format_score_increment
+    minimum_custom_format_score_increment,
+    remove_non_enabled_languages
 )
 values
-    ('any', 'Any acceptable release', true, 'raw-hd', 0, 0, 1),
-    ('low-quality-test', 'Low Quality Test', true, 'webdl-480p', 0, 0, 1),
-    ('hd-1080p', 'HD 1080p', true, 'bluray-1080p', 0, 0, 1),
-    ('uhd-4k', 'UHD 4K', true, 'remux-2160p', 0, 0, 1),
-    ('anime-1080p', 'Anime 1080p', true, 'bluray-1080p', 0, 0, 1)
+    ('any', 'Any acceptable release', true, 'raw-hd', 0, 0, 1, false),
+    ('low-quality-test', 'Low Quality Test', true, 'webdl-480p', 0, 0, 1, false),
+    ('hd-1080p', 'HD 1080p', true, 'bluray-1080p', 0, 0, 1, false),
+    ('uhd-4k', 'UHD 4K', true, 'remux-2160p', 0, 0, 1, false),
+    ('anime-1080p', 'Anime 1080p', true, 'bluray-1080p', 0, 0, 1, false)
 on conflict (id) do nothing;
 
 insert into app.media_profile_languages (profile_id, language_id, score)

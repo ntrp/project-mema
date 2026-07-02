@@ -17,7 +17,6 @@
 		bind:indexerForm={app.indexerForm}
 		bind:libraryFolderForm={app.libraryFolderForm}
 		bind:pathMappingForm={app.pathMappingForm}
-		bind:mediaProfileForm={app.mediaProfileForm}
 		bind:customFormatForm={app.customFormatForm}
 		bind:tagForm={app.tagForm}
 		bind:userForm={app.userForm}
@@ -44,7 +43,6 @@
 		scanningLibraryFolderId={app.scanningLibraryFolderId}
 		savingPathMapping={app.savingPathMapping}
 		deletingPathMappingId={app.deletingPathMappingId}
-		savingMediaProfile={app.savingMediaProfile}
 		deletingMediaProfileId={app.deletingMediaProfileId}
 		savingCustomFormat={app.savingCustomFormat}
 		deletingCustomFormatId={app.deletingCustomFormatId}
@@ -66,20 +64,17 @@
 		onSaveLibraryFolder={app.saveLibraryFolder}
 		onScanLibraryFolder={app.scanLibraryFolder}
 		onSavePathMapping={app.savePathMapping}
-		onSaveMediaProfile={app.saveMediaProfile}
 		onSaveCustomFormat={app.saveCustomFormat}
 		onImportCustomFormat={app.importCustomFormat}
 		onSaveTag={app.saveTag}
 		onSaveUser={app.saveUser}
 		onCancelDownloadClient={app.cancelDownloadClient}
 		onCancelIndexer={app.cancelIndexer}
-		onCancelMediaProfile={app.cancelMediaProfile}
 		onCancelCustomFormat={app.cancelCustomFormat}
 		onCancelTag={app.cancelTag}
 		onCancelUser={app.cancelUser}
 		onEditDownloadClient={app.editDownloadClient}
 		onEditIndexer={app.editIndexer}
-		onEditMediaProfile={app.editMediaProfile}
 		onEditCustomFormat={app.editCustomFormat}
 		onEditUser={app.editUser}
 		onEditTag={app.editTag}

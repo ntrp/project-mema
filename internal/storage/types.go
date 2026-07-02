@@ -52,12 +52,16 @@ type MediaItemInput struct {
 }
 
 type MediaItemOptionsInput struct {
-	QualityProfileID    *string
-	MinimumAvailability *string
-	LibraryFolderID     *uuid.UUID
-	Monitored           *bool
-	MonitorMode         *string
-	Seasons             *[]MediaSeason
+	QualityProfileID     *string
+	MinimumAvailability  *string
+	LibraryFolderID      *uuid.UUID
+	Monitored            *bool
+	MonitorMode          *string
+	Seasons              *[]MediaSeason
+	MonitorSeasonName    *string
+	MonitorEpisodeNumber *int32
+	SeasonMonitored      *bool
+	EpisodeMonitored     *bool
 }
 
 type DownloadActivity struct {

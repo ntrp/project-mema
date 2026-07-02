@@ -1586,6 +1586,11 @@ export interface components {
 			monitored?: boolean;
 			monitorMode?: components['schemas']['MediaMonitorMode'];
 			seasons?: components['schemas']['MediaMetadataSeason'][];
+			monitorSeasonName?: string;
+			/** Format: int32 */
+			monitorEpisodeNumber?: number;
+			seasonMonitored?: boolean;
+			episodeMonitored?: boolean;
 		};
 		MediaFileDeleteRequest: {
 			path: string;
@@ -1738,6 +1743,7 @@ export interface components {
 			upgradeUntilCustomFormatScore: number;
 			/** Format: int32 */
 			minimumCustomFormatScoreIncrement: number;
+			removeNonEnabledLanguages: boolean;
 			targetLanguages: string[];
 			targetLanguageScores: components['schemas']['MediaProfileLanguageScore'][];
 			customFormatScores: components['schemas']['MediaProfileCustomFormatScore'][];
@@ -1746,6 +1752,7 @@ export interface components {
 			languageId: string;
 			/** Format: int32 */
 			score: number;
+			required: boolean;
 		};
 		MediaProfileCustomFormatScore: {
 			/** Format: uuid */

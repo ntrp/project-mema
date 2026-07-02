@@ -13,6 +13,16 @@
 	}
 
 	let { monitored = false, status, hint, disabled = false, size = 32, onToggle }: Props = $props();
+
+	function handleClick(event: globalThis.MouseEvent) {
+		event.stopPropagation();
+		onToggle();
+	}
+
+	function handleKeydown(event: globalThis.KeyboardEvent) {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		event.stopPropagation();
+	}
 </script>
 
 <Tooltip.Root>
@@ -27,7 +37,8 @@
 				)}
 				aria-label={`${status}. ${hint}`}
 				{disabled}
-				onclick={onToggle}
+				onclick={handleClick}
+				onkeydown={handleKeydown}
 			>
 				<BookmarkIcon aria-hidden="true" {size} class={monitored ? 'fill-current' : undefined} />
 			</button>

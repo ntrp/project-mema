@@ -96,11 +96,11 @@
 					showNotifications={app.isAdmin}
 				/>
 				<main
-					class="relative isolate min-h-[calc(100vh-76px)] overflow-hidden bg-background px-3.5 py-3.5 min-[641px]:px-[18px] min-[641px]:py-6 min-[641px]:pb-10"
+					class="relative isolate min-h-[calc(100vh-76px)] overflow-hidden bg-background px-3.5 py-3.5 min-[641px]:px-4.5 min-[641px]:py-6 min-[641px]:pb-10"
 				>
 					{#if mainBackdropUrl}
 						<div
-							class="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(560px,58vh)] [mask-image:linear-gradient(to_bottom,black_0%,black_48%,transparent_100%)]"
+							class="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(560px,58vh)] mask-[linear-gradient(to_bottom,black_0%,black_48%,transparent_100%)]"
 						>
 							<img
 								class="absolute inset-x-0 top-0 h-full w-full object-cover opacity-25"
@@ -112,7 +112,7 @@
 							></div>
 						</div>
 					{/if}
-					<div class="relative z-[1]">
+					<div class="relative z-1">
 						{@render children?.()}
 					</div>
 				</main>

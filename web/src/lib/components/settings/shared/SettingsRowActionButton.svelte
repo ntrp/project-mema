@@ -11,13 +11,14 @@
 		icon: RowActionIcon;
 		variant?: 'outline' | 'destructive';
 		disabled?: boolean;
-		onclick: () => void | Promise<void>;
+		href?: string;
+		onclick?: () => void | Promise<void>;
 	}
 
-	let { label, icon, variant = 'outline', disabled = false, onclick }: Props = $props();
+	let { label, icon, variant = 'outline', disabled = false, href, onclick }: Props = $props();
 	const Icon = $derived(icon === 'delete' ? TrashIcon : icon === 'sync' ? RefreshCwIcon : EditIcon);
 </script>
 
-<Button type="button" {variant} size="icon-sm" aria-label={label} {disabled} {onclick}>
+<Button type="button" {href} {variant} size="icon-sm" aria-label={label} {disabled} {onclick}>
 	<Icon aria-hidden="true" />
 </Button>

@@ -7,7 +7,16 @@ import type {
 } from '$lib/settings/types';
 
 export function monitorUpdate(
-	updates: Pick<MediaItemUpdateRequest, 'monitored' | 'monitorMode' | 'seasons'>
+	updates: Pick<
+		MediaItemUpdateRequest,
+		| 'monitored'
+		| 'monitorMode'
+		| 'seasons'
+		| 'monitorSeasonName'
+		| 'monitorEpisodeNumber'
+		| 'seasonMonitored'
+		| 'episodeMonitored'
+	>
 ): MediaItemUpdateRequest {
 	return updates;
 }
@@ -45,44 +54,46 @@ export function toggledEpisodeMonitor(
 	seasons: MediaMetadataSeason[],
 	targetSeason: MediaMetadataSeason,
 	targetEpisode: MediaMetadataEpisode
-): Pick<MediaItemUpdateRequest, 'monitored' | 'monitorMode' | 'seasons'> {
-	const nextSeasons = seasons.map((season) => {
-		if (season !== targetSeason) return season;
-		const episodes = (season.episodes ?? []).map((episode) =>
-			episode === targetEpisode ? { ...episode, monitored: !episode.monitored } : episode
-		);
-		return { ...season, episodes, monitored: episodes.some((episode) => episode.monitored) };
-	});
-	return seriesMonitorUpdate(item, nextSeasons);
+): Pick<
+	MediaItemUpdateRequest,
+	'monitored' | 'monitorMode' | 'monitorSeasonName' | 'monitorEpisodeNumber' | 'episodeMonitored'
+> {
+	const nextMonitored = !targetEpisode.monitored;
+	const nextSeasons = nextEpisodeSeasons(seasons, targetSeason, targetEpisode, nextMonitored);
+	return {
+		...seriesMonitorUpdate(item, nextSeasons),
+		monitorSeasonName: targetSeason.name,
+		monitorEpisodeNumber: targetEpisode.episodeNumber,
+		episodeMonitored: nextMonitored
+	};
 }
 
 export function toggledSeasonMonitor(
 	item: MediaItem,
 	seasons: MediaMetadataSeason[],
 	targetSeason: MediaMetadataSeason
-): Pick<MediaItemUpdateRequest, 'monitored' | 'monitorMode' | 'seasons'> {
-	const nextSeasons = seasons.map((season) => {
-		if (season !== targetSeason) return season;
-		const nextMonitored = !isSeasonMonitored(season);
-		const episodes = (season.episodes ?? []).map((episode) => ({
-			...episode,
-			monitored: nextMonitored
-		}));
-		return { ...season, episodes, monitored: nextMonitored };
-	});
-	return seriesMonitorUpdate(item, nextSeasons);
+): Pick<
+	MediaItemUpdateRequest,
+	'monitored' | 'monitorMode' | 'monitorSeasonName' | 'seasonMonitored'
+> {
+	const nextMonitored = !isSeasonMonitored(targetSeason);
+	const nextSeasons = nextSeasonSeasons(seasons, targetSeason, nextMonitored);
+	return {
+		...seriesMonitorUpdate(item, nextSeasons),
+		monitorSeasonName: targetSeason.name,
+		seasonMonitored: nextMonitored
+	};
 }
 
 function seriesMonitorUpdate(
 	item: MediaItem,
 	seasons: MediaMetadataSeason[]
-): Pick<MediaItemUpdateRequest, 'monitored' | 'monitorMode' | 'seasons'> {
+): Pick<MediaItemUpdateRequest, 'monitored' | 'monitorMode'> {
 	const manuallyMonitored = seasons.some(isSeasonMonitored);
 	const futureMonitored = item.monitorMode === 'future_episodes';
 	return {
 		monitored: futureMonitored || manuallyMonitored,
-		monitorMode: futureMonitored ? 'future_episodes' : manuallyMonitored ? 'all_episodes' : 'none',
-		seasons
+		monitorMode: futureMonitored ? 'future_episodes' : manuallyMonitored ? 'all_episodes' : 'none'
 	};
 }
 
@@ -93,4 +104,31 @@ function nextMonitorMode(type: MediaItem['type'], monitored: boolean): MediaMoni
 
 function isSeasonMonitored(season: MediaMetadataSeason) {
 	return (season.episodes ?? []).some((episode) => episode.monitored) || season.monitored === true;
+}
+
+function nextEpisodeSeasons(
+	seasons: MediaMetadataSeason[],
+	targetSeason: MediaMetadataSeason,
+	targetEpisode: MediaMetadataEpisode,
+	monitored: boolean
+) {
+	return seasons.map((season) => {
+		if (season !== targetSeason) return season;
+		const episodes = (season.episodes ?? []).map((episode) =>
+			episode === targetEpisode ? { ...episode, monitored } : episode
+		);
+		return { ...season, episodes, monitored: episodes.some((episode) => episode.monitored) };
+	});
+}
+
+function nextSeasonSeasons(
+	seasons: MediaMetadataSeason[],
+	targetSeason: MediaMetadataSeason,
+	monitored: boolean
+) {
+	return seasons.map((season) => {
+		if (season !== targetSeason) return season;
+		const episodes = (season.episodes ?? []).map((episode) => ({ ...episode, monitored }));
+		return { ...season, episodes, monitored };
+	});
 }

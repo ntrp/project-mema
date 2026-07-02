@@ -1,6 +1,6 @@
 import { mediaFileLanguageInfo } from './mediaFileLanguages';
 import { matchedFormats } from './mediaFileFormats';
-import { expectedProfileLanguages, type MediaFileProfileOption } from './mediaFileProfiles';
+import { fileProfileSettings, type MediaFileProfileOption } from './mediaFileProfiles';
 import { mediaFileInfo, mediaFileSize } from './mediaFileSize';
 import type { MediaItem } from '$lib/settings/types';
 type MediaFileTrack = NonNullable<NonNullable<MediaItem['files']>[number]['tracks']>[number];
@@ -23,9 +23,9 @@ export interface MediaFileRow {
 	tracks: MediaFileTrack[];
 	chapters: MediaFileChapter[];
 	expectedLanguages: string[];
+	removeNonEnabledLanguages: boolean;
 	score: number;
 }
-
 export interface MediaFileGroup {
 	key: string;
 	title: string;
@@ -39,7 +39,6 @@ export function mediaFileGroups(
 		? seriesGroups(item, qualityProfiles)
 		: movieGroups(item, qualityProfiles);
 }
-
 function movieGroups(item: MediaItem, qualityProfiles: MediaFileProfileOption[]): MediaFileGroup[] {
 	const rows = item.filePaths.length
 		? item.filePaths.map((path) => fileRow(item, path, qualityProfiles))
@@ -96,7 +95,6 @@ function seriesGroups(
 				}
 			];
 }
-
 export function fileRow(
 	item: MediaItem,
 	path: string,
@@ -106,6 +104,7 @@ export function fileRow(
 	const formats = matchedFormats(name);
 	const info = mediaFileInfo(item, path);
 	const sizeBytes = info?.sizeBytes;
+	const profile = fileProfileSettings(item, qualityProfiles);
 	return {
 		key: path,
 		path,
@@ -121,11 +120,11 @@ export function fileRow(
 		formats,
 		tracks: info?.tracks ?? [],
 		chapters: info?.chapters ?? [],
-		expectedLanguages: expectedProfileLanguages(item, qualityProfiles),
+		expectedLanguages: profile.expectedLanguages,
+		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
 		score: 0
 	};
 }
-
 export function missingRow(
 	key: string,
 	title: string,
@@ -149,14 +148,13 @@ export function missingRow(
 		tracks: [],
 		chapters: [],
 		expectedLanguages: [],
+		removeNonEnabledLanguages: false,
 		score: 0
 	};
 }
-
 function fileName(path: string) {
 	return path.replaceAll('\\', '/').split('/').filter(Boolean).pop() ?? path;
 }
-
 function relativePath(root: string | undefined, path: string) {
 	if (!root) return fileName(path);
 	const normalizedRoot = root.replaceAll('\\', '/').replace(/\/+$/, '');

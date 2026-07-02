@@ -20,6 +20,7 @@ type MediaProfile struct {
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
+	RemoveNonEnabledLanguages         bool
 	TargetLanguages                   []string
 	TargetLanguageScores              []MediaProfileLanguageScore
 	CustomFormatScores                []MediaProfileCustomFormatScore
@@ -35,6 +36,7 @@ type MediaProfileInput struct {
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
+	RemoveNonEnabledLanguages         bool
 	TargetLanguages                   []string
 	TargetLanguageScores              []MediaProfileLanguageScore
 	CustomFormatScores                []MediaProfileCustomFormatScore
@@ -43,6 +45,7 @@ type MediaProfileInput struct {
 type MediaProfileLanguageScore struct {
 	LanguageID string
 	Score      int32
+	Required   bool
 }
 
 type MediaProfileCustomFormatScore struct {
@@ -60,6 +63,7 @@ func (s *SettingsStore) ListMediaProfiles(ctx context.Context) ([]MediaProfile, 
 			minimum_custom_format_score,
 			upgrade_until_custom_format_score,
 			minimum_custom_format_score_increment,
+			remove_non_enabled_languages,
 			created_at,
 			updated_at
 		from app.media_profiles
@@ -164,9 +168,10 @@ func (s *SettingsStore) saveMediaProfile(
 				upgrade_until_quality_id,
 				minimum_custom_format_score,
 				upgrade_until_custom_format_score,
-				minimum_custom_format_score_increment
+				minimum_custom_format_score_increment,
+				remove_non_enabled_languages
 			)
-			values ($1, $2, $3, $4, $5, $6, $7)
+			values ($1, $2, $3, $4, $5, $6, $7, $8)
 		`,
 			id,
 			name,
@@ -175,6 +180,7 @@ func (s *SettingsStore) saveMediaProfile(
 			input.MinimumCustomFormatScore,
 			input.UpgradeUntilCustomFormatScore,
 			input.MinimumCustomFormatScoreIncrement,
+			input.RemoveNonEnabledLanguages,
 		); err != nil {
 			return MediaProfile{}, normalizeMediaProfileWriteError(err)
 		}
@@ -187,6 +193,7 @@ func (s *SettingsStore) saveMediaProfile(
 				minimum_custom_format_score = $5,
 				upgrade_until_custom_format_score = $6,
 				minimum_custom_format_score_increment = $7,
+				remove_non_enabled_languages = $8,
 				updated_at = now()
 			where id = $1
 		`,
@@ -197,6 +204,7 @@ func (s *SettingsStore) saveMediaProfile(
 			input.MinimumCustomFormatScore,
 			input.UpgradeUntilCustomFormatScore,
 			input.MinimumCustomFormatScoreIncrement,
+			input.RemoveNonEnabledLanguages,
 		)
 		if err != nil {
 			return MediaProfile{}, normalizeMediaProfileWriteError(err)
@@ -231,6 +239,7 @@ func (s *SettingsStore) getMediaProfile(ctx context.Context, id string) (MediaPr
 			minimum_custom_format_score,
 			upgrade_until_custom_format_score,
 			minimum_custom_format_score_increment,
+			remove_non_enabled_languages,
 			created_at,
 			updated_at
 		from app.media_profiles

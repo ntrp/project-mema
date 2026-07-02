@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
@@ -11,11 +12,10 @@
 		profiles: MediaProfile[];
 		qualities: QualitySizeSetting[];
 		deletingId?: string;
-		onEdit: (_profile: MediaProfile) => void;
 		onDelete: (_id: string) => void | Promise<void>;
 	}
 
-	let { profiles, qualities, deletingId, onEdit, onDelete }: Props = $props();
+	let { profiles, qualities, deletingId, onDelete }: Props = $props();
 	let qualityNames = $derived(
 		new Map(qualities.map((quality) => [quality.qualityId, quality.name]))
 	);
@@ -78,7 +78,7 @@
 							<SettingsRowActionButton
 								label={`Edit ${profile.name}`}
 								icon="edit"
-								onclick={() => onEdit(profile)}
+								href={resolve('/settings/profiles/[id]', { id: profile.id })}
 							/>
 							<SettingsRowActionButton
 								label={`${deletingId === profile.id ? 'Deleting' : 'Delete'} ${profile.name}`}

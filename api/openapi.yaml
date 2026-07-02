@@ -3025,6 +3025,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaMetadataSeason"
+        monitorSeasonName:
+          type: string
+        monitorEpisodeNumber:
+          type: integer
+          format: int32
+        seasonMonitored:
+          type: boolean
+        episodeMonitored:
+          type: boolean
     MediaFileDeleteRequest:
       type: object
       additionalProperties: false
@@ -3385,6 +3394,7 @@ components:
         - minimumCustomFormatScore
         - upgradeUntilCustomFormatScore
         - minimumCustomFormatScoreIncrement
+        - removeNonEnabledLanguages
         - targetLanguages
         - targetLanguageScores
         - customFormatScores
@@ -3416,6 +3426,8 @@ components:
           type: integer
           format: int32
           minimum: 0
+        removeNonEnabledLanguages:
+          type: boolean
         targetLanguages:
           type: array
           items:
@@ -3436,6 +3448,7 @@ components:
       required:
         - languageId
         - score
+        - required
       properties:
         languageId:
           type: string
@@ -3444,6 +3457,8 @@ components:
         score:
           type: integer
           format: int32
+        required:
+          type: boolean
     MediaProfileCustomFormatScore:
       type: object
       additionalProperties: false

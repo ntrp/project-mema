@@ -106,12 +106,16 @@ func (s *Server) UpdateMediaItem(w http.ResponseWriter, r *http.Request, id Reso
 	}
 
 	item, err := s.settings.UpdateMediaItemOptions(r.Context(), uuid.UUID(id), storage.MediaItemOptionsInput{
-		QualityProfileID:    body.QualityProfileId,
-		MinimumAvailability: optionalMinimumAvailability(body.MinimumAvailability),
-		LibraryFolderID:     optionalUUID(body.LibraryFolderId),
-		Monitored:           body.Monitored,
-		MonitorMode:         optionalMediaMonitorMode(body.MonitorMode),
-		Seasons:             storageMediaSeasons(body.Seasons),
+		QualityProfileID:     body.QualityProfileId,
+		MinimumAvailability:  optionalMinimumAvailability(body.MinimumAvailability),
+		LibraryFolderID:      optionalUUID(body.LibraryFolderId),
+		Monitored:            body.Monitored,
+		MonitorMode:          optionalMediaMonitorMode(body.MonitorMode),
+		Seasons:              storageMediaSeasons(body.Seasons),
+		MonitorSeasonName:    optionalTrimmedString(body.MonitorSeasonName),
+		MonitorEpisodeNumber: body.MonitorEpisodeNumber,
+		SeasonMonitored:      body.SeasonMonitored,
+		EpisodeMonitored:     body.EpisodeMonitored,
 	})
 	if err != nil {
 		writeSettingsError(w, err, "Could not update media item")

@@ -85,8 +85,9 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 		minimumCustomFormatScore: 0,
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
+		removeNonEnabledLanguages: false,
 		targetLanguages: ['english'],
-		targetLanguageScores: [{ languageId: 'english', score: 0 }],
+		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
 		customFormatScores: []
 	};
 }
@@ -160,6 +161,7 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		minimumCustomFormatScore: profile.minimumCustomFormatScore,
 		upgradeUntilCustomFormatScore: profile.upgradeUntilCustomFormatScore,
 		minimumCustomFormatScoreIncrement: profile.minimumCustomFormatScoreIncrement,
+		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
 		targetLanguages: [...(profile.targetLanguages ?? [])],
 		targetLanguageScores: languageScoresFromProfile(profile),
 		customFormatScores: (profile.customFormatScores ?? []).map((score) => ({ ...score }))
@@ -260,6 +262,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 			0,
 			normalizedInteger(form.minimumCustomFormatScoreIncrement)
 		),
+		removeNonEnabledLanguages: form.removeNonEnabledLanguages,
 		targetLanguages: targetLanguageScores.map((score) => score.languageId),
 		targetLanguageScores,
 		customFormatScores
@@ -270,14 +273,18 @@ function languageScoresFromProfile(profile: MediaProfile) {
 	if (profile.targetLanguageScores?.length) {
 		return profile.targetLanguageScores.map((score) => ({ ...score }));
 	}
-	return (profile.targetLanguages ?? []).map((languageId) => ({ languageId, score: 0 }));
+	return (profile.targetLanguages ?? []).map((languageId) => ({
+		languageId,
+		score: 0,
+		required: false
+	}));
 }
 
 function languageScoresFromForm(form: MediaProfileForm) {
 	const seen = new Set<string>();
 	const source = form.targetLanguageScores?.length
 		? form.targetLanguageScores
-		: form.targetLanguages.map((languageId) => ({ languageId, score: 0 }));
+		: form.targetLanguages.map((languageId) => ({ languageId, score: 0, required: false }));
 	const scores = [];
 	for (const value of source) {
 		const languageId = value.languageId.trim();
@@ -285,7 +292,7 @@ function languageScoresFromForm(form: MediaProfileForm) {
 			continue;
 		}
 		seen.add(languageId);
-		scores.push({ languageId, score: normalizedInteger(value.score) });
+		scores.push({ languageId, score: normalizedInteger(value.score), required: value.required });
 	}
 	return scores;
 }

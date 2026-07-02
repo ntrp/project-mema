@@ -26,7 +26,6 @@
 		indexerForm = $bindable(),
 		libraryFolderForm = $bindable(),
 		pathMappingForm = $bindable(),
-		mediaProfileForm = $bindable(),
 		customFormatForm = $bindable(),
 		tagForm = $bindable(),
 		userForm = $bindable(),
@@ -39,7 +38,6 @@
 		savingLibraryFolder,
 		savingPathMapping,
 		deletingPathMappingId,
-		savingMediaProfile,
 		deletingMediaProfileId,
 		savingCustomFormat,
 		deletingCustomFormatId,
@@ -61,20 +59,17 @@
 		onSaveLibraryFolder,
 		onScanLibraryFolder,
 		onSavePathMapping,
-		onSaveMediaProfile,
 		onSaveCustomFormat,
 		onImportCustomFormat,
 		onSaveTag,
 		onSaveUser,
 		onCancelDownloadClient,
 		onCancelIndexer,
-		onCancelMediaProfile,
 		onCancelCustomFormat,
 		onCancelTag,
 		onCancelUser,
 		onEditDownloadClient,
 		onEditIndexer,
-		onEditMediaProfile,
 		onEditCustomFormat,
 		onEditTag,
 		onEditUser,
@@ -129,14 +124,12 @@
 			{customFormats}
 			{tags}
 			bind:metadataCachePattern
-			bind:mediaProfileForm
 			bind:customFormatForm
 			bind:tagForm
 			{savingMetadataProviderId}
 			{testingMetadataProviderId}
 			{loadingMetadataCache}
 			{clearingMetadataCache}
-			{savingMediaProfile}
 			{deletingMediaProfileId}
 			{savingCustomFormat}
 			{deletingCustomFormatId}
@@ -148,9 +141,6 @@
 			{onRefreshMetadataCache}
 			{onClearMetadataCache}
 			{onClearMetadataCachePattern}
-			{onSaveMediaProfile}
-			{onCancelMediaProfile}
-			{onEditMediaProfile}
 			{onDeleteMediaProfile}
 			{onSaveCustomFormat}
 			{onImportCustomFormat}

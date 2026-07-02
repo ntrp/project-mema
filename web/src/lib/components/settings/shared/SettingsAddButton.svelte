@@ -4,13 +4,14 @@
 
 	interface Props {
 		label: string;
-		onclick: () => void;
+		onclick?: () => void;
+		href?: string;
 	}
 
-	let { label, onclick }: Props = $props();
+	let { label, onclick, href }: Props = $props();
 </script>
 
-<Button type="button" {onclick}>
+<Button type="button" {href} {onclick}>
 	<PlusIcon aria-hidden="true" />
 	<span>{label}</span>
 </Button>

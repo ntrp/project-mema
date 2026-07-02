@@ -14,7 +14,6 @@ import type {
 	LibraryScan,
 	ManagedUser,
 	MediaProfile,
-	MediaProfileForm as MediaProfileFormValue,
 	MediaSearchResult,
 	MetadataCacheResponse,
 	MetadataProvider,
@@ -59,7 +58,6 @@ export interface SettingsAreaProps {
 	indexerForm: IndexerFormValue;
 	libraryFolderForm: LibraryFolderFormValue;
 	pathMappingForm: PathMappingForm;
-	mediaProfileForm: MediaProfileFormValue;
 	customFormatForm: CustomFormatFormValue;
 	tagForm: TagForm;
 	userForm: UserFormValue;
@@ -72,7 +70,6 @@ export interface SettingsAreaProps {
 	savingLibraryFolder: boolean;
 	savingPathMapping: boolean;
 	deletingPathMappingId?: string;
-	savingMediaProfile: boolean;
 	deletingMediaProfileId?: string;
 	savingCustomFormat: boolean;
 	deletingCustomFormatId?: string;
@@ -94,20 +91,17 @@ export interface SettingsAreaProps {
 	onSaveLibraryFolder: (_event: SubmitEvent) => void | Promise<void>;
 	onScanLibraryFolder: (_id: string) => void | Promise<void>;
 	onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;
-	onSaveMediaProfile: (_event: SubmitEvent) => void | Promise<void>;
 	onSaveCustomFormat: (_event: SubmitEvent) => void | Promise<void>;
 	onImportCustomFormat: (_format: CustomFormatFormValue) => void | Promise<void>;
 	onSaveTag: (_event: SubmitEvent) => void | Promise<void>;
 	onSaveUser: (_event: SubmitEvent) => void | Promise<void>;
 	onCancelDownloadClient: () => void;
 	onCancelIndexer: () => void;
-	onCancelMediaProfile: () => void;
 	onCancelCustomFormat: () => void;
 	onCancelTag: () => void;
 	onCancelUser: () => void;
 	onEditDownloadClient: (_client: DownloadClient) => void;
 	onEditIndexer: (_indexer: Indexer) => void;
-	onEditMediaProfile: (_profile: MediaProfile) => void;
 	onEditCustomFormat: (_format: CustomFormat) => void;
 	onEditTag: (_tag: Tag) => void;
 	onEditUser: (_user: ManagedUser) => void;
