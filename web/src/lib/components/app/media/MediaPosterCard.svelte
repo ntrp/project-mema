@@ -1,11 +1,11 @@
 <script lang="ts">
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
-	import PlusIcon from '@lucide/svelte/icons/plus';
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { resolve } from '$app/paths';
 	import type { MediaSearchResult } from '$lib/settings/types';
+	import MediaAddButton from './MediaAddButton.svelte';
 	import MediaBadge from './MediaBadge.svelte';
 	import PosterPlaceholder from './PosterPlaceholder.svelte';
 
@@ -103,18 +103,13 @@
 			{#if inLibrary}
 				<StatusPill tone="success">In library</StatusPill>
 			{:else}
-				<Button
-					type="button"
+				<MediaAddButton
+					{result}
+					{adding}
+					label={actionLabel}
 					class="pointer-events-auto mt-0.5 min-h-[30px] self-start px-3 text-[13px]"
-					disabled={adding}
-					onclick={(event) => {
-						event.stopPropagation();
-						onAdd(result);
-					}}
-				>
-					<PlusIcon aria-hidden="true" />
-					<span>{adding ? 'Working' : actionLabel}</span>
-				</Button>
+					{onAdd}
+				/>
 			{/if}
 		</div>
 	</div>

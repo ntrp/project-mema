@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
+	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -17,6 +18,7 @@
 	} from './releaseOverrideDetails';
 	import ReleaseOverrideLanguageSelect from './ReleaseOverrideLanguageSelect.svelte';
 	import ReleaseOverrideMovieField from './ReleaseOverrideMovieField.svelte';
+	import ReleaseOverrideSeriesFields from './ReleaseOverrideSeriesFields.svelte';
 	import ReleaseOverrideIcon from './ReleaseOverrideIcon.svelte';
 
 	interface Props {
@@ -43,7 +45,9 @@
 		onBack,
 		onConfirm
 	}: Props = $props();
-	let draft: ReleaseOverrideDraft = $derived(overrideDraftFromRelease(item, release, languages));
+	let draft = $state<ReleaseOverrideDraft>(
+		untrack(() => overrideDraftFromRelease(item, release, languages))
+	);
 
 	const isSeries = $derived(item.type === 'series');
 	const qualities = $derived([...new Set([draft.quality, ...qualityOptions].filter(Boolean))]);
@@ -68,26 +72,7 @@
 			</div>
 		</div>
 		{#if isSeries}
-			<div class="grid gap-3 md:grid-cols-2">
-				<div class="grid gap-1.5">
-					<Label for="override-series">Series</Label>
-					<Input id="override-series" bind:value={draft.seriesTitle} />
-				</div>
-				<div class="grid gap-1.5">
-					<Label for="override-season">Season</Label>
-					<Input
-						id="override-season"
-						type="number"
-						min="0"
-						step="1"
-						bind:value={draft.seasonNumber}
-					/>
-				</div>
-			</div>
-			<div class="grid gap-1.5">
-				<Label for="override-episodes">Episodes</Label>
-				<Input id="override-episodes" bind:value={draft.episodeNumbers} placeholder="1, 2, 3" />
-			</div>
+			<ReleaseOverrideSeriesFields {item} {draft} />
 		{:else}
 			<ReleaseOverrideMovieField bind:value={draft.movieTitle} />
 		{/if}

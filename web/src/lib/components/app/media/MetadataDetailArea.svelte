@@ -1,7 +1,6 @@
 <script lang="ts">
-	import PlusIcon from '@lucide/svelte/icons/plus';
-	import { Button } from '$lib/components/ui/button';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
+	import MediaAddButton from './MediaAddButton.svelte';
 	import MediaMetadataCore from './MediaMetadataCore.svelte';
 	import MediaDetailSkeleton from './MediaDetailSkeleton.svelte';
 	import MediaMetadataHero from './MediaMetadataHero.svelte';
@@ -69,17 +68,14 @@
 	<MediaMetadataShell labelledby="metadata-detail-title">
 		<MediaMetadataHero {detail} titleId="metadata-detail-title" showMonitorBookmark={false}>
 			{#snippet actions()}
-				<Button
-					type="button"
+				<MediaAddButton
+					result={candidate(detail)}
+					adding={addingKey === candidateKey(detail)}
+					label={actionLabel}
 					size="sm"
 					class="ml-auto"
-					aria-label={addingKey === candidateKey(detail) ? 'Working' : actionLabel}
-					disabled={addingKey === candidateKey(detail)}
-					onclick={() => onAdd(candidate(detail))}
-				>
-					<PlusIcon aria-hidden="true" />
-					<span>{addingKey === candidateKey(detail) ? 'Working' : actionLabel}</span>
-				</Button>
+					{onAdd}
+				/>
 			{/snippet}
 		</MediaMetadataHero>
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import PlusIcon from '@lucide/svelte/icons/plus';
 	import { resolve } from '$app/paths';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
@@ -7,6 +6,7 @@
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import type { MediaCollection, MediaItem, MediaSearchResult } from '$lib/settings/types';
+	import MediaAddButton from './MediaAddButton.svelte';
 	import MediaBadge from './MediaBadge.svelte';
 	import PosterPlaceholder from './PosterPlaceholder.svelte';
 
@@ -136,15 +136,13 @@
 									>In library</StatusPill
 								>
 							{:else}
-								<Button
-									type="button"
+								<MediaAddButton
+									{result}
+									adding={addingKey === resultKey(result)}
+									label={actionLabel}
 									class="pointer-events-auto mt-0.5 min-h-[30px] self-start px-3 text-[13px]"
-									disabled={addingKey === resultKey(result)}
-									onclick={() => onAdd(result)}
-								>
-									<PlusIcon aria-hidden="true" />
-									<span>{addingKey === resultKey(result) ? 'Working' : actionLabel}</span>
-								</Button>
+									{onAdd}
+								/>
 							{/if}
 						</div>
 					</div>

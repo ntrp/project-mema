@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import { selectedFirst } from '$lib/components/shared/multiSelectOrdering';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Label } from '$lib/components/ui/label';
@@ -20,6 +21,8 @@
 	let { id, label, values = $bindable(), options, placeholder }: Props = $props();
 
 	const selectedLabel = $derived(summary(values, options, placeholder));
+	const selectedSet = $derived(new Set(values));
+	const sortedOptions = $derived(selectedFirst(options, selectedSet, (option) => option.value));
 
 	function toggle(value: string, checked: boolean) {
 		values = checked ? unique([...values, value]) : values.filter((item) => item !== value);
@@ -65,7 +68,7 @@
 				<span class="text-muted-foreground">All</span>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
-			{#each options as option (option.value)}
+			{#each sortedOptions as option (option.value)}
 				<DropdownMenu.CheckboxItem
 					checked={values.includes(option.value)}
 					onCheckedChange={(checked) => toggle(option.value, checked === true)}

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
-	import PlusIcon from '@lucide/svelte/icons/plus';
 	import { resolve } from '$app/paths';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
+	import MediaAddButton from '../media/MediaAddButton.svelte';
 	import PosterPlaceholder from '../media/PosterPlaceholder.svelte';
 
 	interface Props {
@@ -124,14 +124,12 @@
 								{#if group.sourceType === 'library'}
 									<StatusPill tone="success">In library</StatusPill>
 								{:else}
-									<Button
-										type="button"
-										disabled={addingKey === candidateKey(result)}
-										onclick={() => onAdd(result)}
-									>
-										<PlusIcon aria-hidden="true" />
-										<span>{addingKey === candidateKey(result) ? 'Working' : actionLabel}</span>
-									</Button>
+									<MediaAddButton
+										{result}
+										adding={addingKey === candidateKey(result)}
+										label={actionLabel}
+										{onAdd}
+									/>
 								{/if}
 							</div>
 						</article>

@@ -86,5 +86,5 @@ function integerList(value: string) {
 	return value
 		.split(/[\s,]+/)
 		.map((part) => Number(part))
-		.filter((part) => Number.isInteger(part));
+		.filter((part) => Number.isInteger(part) && part > 0);
 }

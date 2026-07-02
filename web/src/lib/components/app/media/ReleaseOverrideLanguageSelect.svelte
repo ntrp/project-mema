@@ -1,5 +1,7 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import { selectedFirst } from '$lib/components/shared/multiSelectOrdering';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Label } from '$lib/components/ui/label';
@@ -16,8 +18,12 @@
 
 	let { values = $bindable(), languages }: Props = $props();
 
-	const selectedLabel = $derived(summary(values));
 	const options = $derived(languageOptionsFromCatalog(languages));
+	const selectedSet = $derived(new Set(values));
+	const sortedOptions = $derived(selectedFirst(options, selectedSet, (option) => option.id));
+	const selectedLabels = $derived(
+		values.map((value) => languageLabelFromCatalog(value, languages))
+	);
 
 	function toggle(value: string, checked: boolean) {
 		values = checked ? unique([...values, value]) : values.filter((item) => item !== value);
@@ -25,12 +31,6 @@
 
 	function clear() {
 		values = [];
-	}
-
-	function summary(selected: string[]) {
-		if (selected.length === 0) return 'Select languages';
-		if (selected.length === 1) return languageLabelFromCatalog(selected[0], languages);
-		return `${selected.length} languages`;
 	}
 
 	function unique(items: string[]) {
@@ -48,9 +48,17 @@
 					id="override-languages"
 					type="button"
 					variant="outline"
-					class="w-full justify-between gap-2"
+					class="min-h-9 w-full justify-between gap-2 py-1.5"
 				>
-					<span class="truncate">{selectedLabel}</span>
+					<span class="flex min-w-0 flex-1 flex-wrap gap-1">
+						{#if selectedLabels.length > 0}
+							{#each selectedLabels as label (label)}
+								<Badge variant="secondary" class="max-w-32 truncate">{label}</Badge>
+							{/each}
+						{:else}
+							<span class="truncate text-muted-foreground">Select languages</span>
+						{/if}
+					</span>
 					<ChevronDownIcon class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
 				</Button>
 			{/snippet}
@@ -60,7 +68,7 @@
 				<span class="text-muted-foreground">Clear languages</span>
 			</DropdownMenu.Item>
 			<DropdownMenu.Separator />
-			{#each options as option (option.id)}
+			{#each sortedOptions as option (option.id)}
 				<DropdownMenu.CheckboxItem
 					checked={values.includes(option.id)}
 					onCheckedChange={(checked) => toggle(option.id, checked === true)}

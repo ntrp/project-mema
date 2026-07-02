@@ -1,5 +1,6 @@
 <script lang="ts">
 	import PlusIcon from '@lucide/svelte/icons/plus';
+	import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 	import XIcon from '@lucide/svelte/icons/x';
 	import MediaActionOptions from '$lib/components/app/media/MediaActionOptions.svelte';
 	import MediaTagSelector from '$lib/components/app/media/MediaTagSelector.svelte';
@@ -151,7 +152,11 @@
 				type="submit"
 				disabled={!canConfirm || saving || (isAdmin && libraryFolders.length === 0)}
 			>
-				<PlusIcon aria-hidden="true" />
+				{#if saving}
+					<LoaderCircleIcon class="animate-spin" aria-hidden="true" />
+				{:else}
+					<PlusIcon aria-hidden="true" />
+				{/if}
 				<span>
 					{#if saving}
 						{isAdmin ? 'Adding' : 'Requesting'}

@@ -84,14 +84,9 @@ func searchReleasesWithProgress(
 		releases = append(releases, branchReleases...)
 		searchErrors = append(searchErrors, branchErrors...)
 	}
-	if len(releases) == 0 && criteria.Kind == "episode" && criteria.SeasonNumber != nil {
-		publishReleaseSearchProgress(progress, "No episode releases found; searching the whole season")
-		seasonCriteria := decisions.ReleaseSearchCriteria{
-			Kind:         "season",
-			Title:        criteria.Title,
-			Year:         criteria.Year,
-			SeasonNumber: criteria.SeasonNumber,
-		}
+	if shouldFallbackEpisodeToSeason(item, criteria, profile, formats, languages, releases) {
+		publishReleaseSearchProgress(progress, "No matching episode release found; searching the whole season")
+		seasonCriteria := seasonFallbackCriteria(criteria)
 		seasonQueries := decisions.SearchQueriesForCriteria(seasonCriteria, "")
 		seasonReleases, seasonErrors, err := searchReleaseQueries(ctx, releaseQuerySearch{
 			settings:       settings,
@@ -99,7 +94,7 @@ func searchReleasesWithProgress(
 			limiter:        limiter,
 			configs:        configs,
 			item:           item,
-			criteria:       criteria,
+			criteria:       seasonCriteria,
 			queries:        seasonQueries,
 			cacheSettings:  cacheSettings,
 			eventBroker:    eventBroker,
