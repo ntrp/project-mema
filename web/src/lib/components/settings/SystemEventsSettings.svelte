@@ -2,8 +2,7 @@
 	import { onMount } from 'svelte';
 	import { clearSystemEvents, deleteSystemEvent, listSystemEvents } from '$lib/settings/api';
 	import type { SystemEvent } from '$lib/settings/types';
-	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
-	import { Card } from '$lib/components/ui/card';
+	import * as Card from '$lib/components/ui/card';
 	import ClearSystemEventsModal from './ClearSystemEventsModal.svelte';
 	import SystemEventsControls from './SystemEventsControls.svelte';
 	import SystemEventsTable from './SystemEventsTable.svelte';
@@ -123,9 +122,21 @@
 	}
 </script>
 
-<Card class="gap-4 p-5" aria-label="Events">
-	<SectionHeading class="items-start">
-		{#snippet actions()}
+<Card.Root aria-labelledby="system-events-title">
+	<Card.Header>
+		<div>
+			<Card.Description class="flex items-center gap-2">
+				<span class="relative flex size-2.5">
+					<span
+						class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"
+					></span>
+					<span class="relative inline-flex size-2.5 rounded-full bg-emerald-500"></span>
+				</span>
+				<span>Live</span>
+			</Card.Description>
+			<Card.Title id="system-events-title">Events</Card.Title>
+		</div>
+		<Card.Action>
 			<SystemEventsControls
 				{severityFilter}
 				{loading}
@@ -134,26 +145,28 @@
 				onSeverityChange={(severity) => (severityFilter = severity)}
 				onClear={() => (clearModalOpen = true)}
 			/>
-		{/snippet}
-	</SectionHeading>
+		</Card.Action>
+	</Card.Header>
 
-	{#if errorMessage}
-		<p class="m-0 font-bold text-destructive">{errorMessage}</p>
-	{/if}
-	{#if message}
-		<p class="m-0 text-sm leading-6 text-muted-foreground">{message}</p>
-	{/if}
+	<Card.Content class="grid gap-4">
+		{#if errorMessage}
+			<p class="m-0 font-bold text-destructive">{errorMessage}</p>
+		{/if}
+		{#if message}
+			<p class="m-0 text-sm leading-6 text-muted-foreground">{message}</p>
+		{/if}
 
-	<SystemEventsTable
-		events={visibleEvents}
-		{loading}
-		{hasMore}
-		{loadingMore}
-		{deletingId}
-		onDelete={(id) => void deleteEvent(id)}
-		onLoadMore={() => void loadMoreEvents()}
-	/>
-</Card>
+		<SystemEventsTable
+			events={visibleEvents}
+			{loading}
+			{hasMore}
+			{loadingMore}
+			{deletingId}
+			onDelete={(id) => void deleteEvent(id)}
+			onLoadMore={() => void loadMoreEvents()}
+		/>
+	</Card.Content>
+</Card.Root>
 
 {#if clearModalOpen}
 	<ClearSystemEventsModal

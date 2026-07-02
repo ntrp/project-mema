@@ -1769,6 +1769,30 @@ type SystemEventSettingsRequest struct {
 // SystemEventSeverity defines model for SystemEventSeverity.
 type SystemEventSeverity string
 
+// SystemJob defines model for SystemJob.
+type SystemJob struct {
+	Args        string     `json:"args"`
+	Attempt     int32      `json:"attempt"`
+	AttemptedAt *time.Time `json:"attemptedAt,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	Errors      string     `json:"errors"`
+	FinalizedAt *time.Time `json:"finalizedAt,omitempty"`
+	Id          int64      `json:"id"`
+	InfoMessage string     `json:"infoMessage"`
+	Kind        string     `json:"kind"`
+	MaxAttempts int32      `json:"maxAttempts"`
+	Metadata    string     `json:"metadata"`
+	Priority    int32      `json:"priority"`
+	Queue       string     `json:"queue"`
+	ScheduledAt time.Time  `json:"scheduledAt"`
+	Status      string     `json:"status"`
+}
+
+// SystemJobListResponse defines model for SystemJobListResponse.
+type SystemJobListResponse struct {
+	Jobs []SystemJob `json:"jobs"`
+}
+
 // SystemLogFile defines model for SystemLogFile.
 type SystemLogFile struct {
 	ModifiedAt time.Time `json:"modifiedAt"`
@@ -1964,6 +1988,15 @@ type ListSystemEventsParams struct {
 	// Before Return events created before this timestamp.
 	Before *time.Time `form:"before,omitempty" json:"before,omitempty"`
 	Limit  *int32     `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListSystemJobsParams defines parameters for ListSystemJobs.
+type ListSystemJobsParams struct {
+	Status *[]string `form:"status,omitempty" json:"status,omitempty"`
+	Queue  *string   `form:"queue,omitempty" json:"queue,omitempty"`
+	Kind   *string   `form:"kind,omitempty" json:"kind,omitempty"`
+	Query  *string   `form:"query,omitempty" json:"query,omitempty"`
+	Limit  *int32    `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ManualImportDownloadActivityJSONRequestBody defines body for ManualImportDownloadActivity for application/json ContentType.
@@ -2382,6 +2415,12 @@ type ServerInterface interface {
 	// Delete a system event
 	// (DELETE /system/events/{id})
 	DeleteSystemEvent(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List background jobs
+	// (GET /system/jobs)
+	ListSystemJobs(w http.ResponseWriter, r *http.Request, params ListSystemJobsParams)
+	// Abort a background job
+	// (POST /system/jobs/{id}/abort)
+	AbortSystemJob(w http.ResponseWriter, r *http.Request, id int64)
 	// Get log file settings
 	// (GET /system/log-file-settings)
 	GetSystemLogFileSettings(w http.ResponseWriter, r *http.Request)
@@ -3000,6 +3039,18 @@ func (_ Unimplemented) ListSystemEvents(w http.ResponseWriter, r *http.Request, 
 // Delete a system event
 // (DELETE /system/events/{id})
 func (_ Unimplemented) DeleteSystemEvent(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List background jobs
+// (GET /system/jobs)
+func (_ Unimplemented) ListSystemJobs(w http.ResponseWriter, r *http.Request, params ListSystemJobsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Abort a background job
+// (POST /system/jobs/{id}/abort)
+func (_ Unimplemented) AbortSystemJob(w http.ResponseWriter, r *http.Request, id int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5844,6 +5895,129 @@ func (siw *ServerInterfaceWrapper) DeleteSystemEvent(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ListSystemJobs operation middleware
+func (siw *ServerInterfaceWrapper) ListSystemJobs(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListSystemJobsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "queue" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "queue", r.URL.Query(), &params.Queue, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "queue"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "queue", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSystemJobs(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AbortSystemJob operation middleware
+func (siw *ServerInterfaceWrapper) AbortSystemJob(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AbortSystemJob(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetSystemLogFileSettings operation middleware
 func (siw *ServerInterfaceWrapper) GetSystemLogFileSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -6442,6 +6616,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/system/events/{id}", wrapper.DeleteSystemEvent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/system/jobs", wrapper.ListSystemJobs)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/system/jobs/{id}/abort", wrapper.AbortSystemJob)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/log-file-settings", wrapper.GetSystemLogFileSettings)

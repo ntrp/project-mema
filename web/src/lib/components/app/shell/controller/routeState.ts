@@ -39,6 +39,7 @@ const systemSections = new Set<SystemSection>([
 	'status',
 	'indexing',
 	'metadata',
+	'jobs',
 	'logs',
 	'events'
 ]);

@@ -2,6 +2,7 @@
 	import SystemEventsSettings from '$lib/components/settings/SystemEventsSettings.svelte';
 	import IndexerSearchCacheSettings from '$lib/components/settings/IndexerSearchCacheSettings.svelte';
 	import MetadataCacheSettings from '$lib/components/settings/MetadataCacheSettings.svelte';
+	import SystemJobsSettings from '$lib/components/settings/SystemJobsSettings.svelte';
 	import SystemLogFilesSettings from '$lib/components/settings/SystemLogFilesSettings.svelte';
 	import SystemLogsSettings from '$lib/components/settings/SystemLogsSettings.svelte';
 	import SystemStatusSettings from '$lib/components/settings/SystemStatusSettings.svelte';
@@ -57,7 +58,6 @@
 		onLoadMoreMetadataCache,
 		onLoadMoreMetadataSearchHistory
 	}: Props = $props();
-	let eventsConnected = $state(false);
 	let logsConnected = $state(false);
 	let indexerCachePattern = $state('');
 	let metadataCachePattern = $state('');
@@ -108,15 +108,15 @@
 				onLoadMoreHistory={onLoadMoreMetadataSearchHistory}
 			/>
 		</div>
-	{:else if activeSection === 'events'}
-		<PageHeading eyebrow="System" title="Events" titleId="system-title">
-			<span
-				class={connectionDotClass(eventsConnected)}
-				aria-label={eventsConnected ? 'Event stream connected' : 'Event stream reconnecting'}
-			></span>
-		</PageHeading>
+	{:else if activeSection === 'jobs'}
+		<PageHeading eyebrow="System" title="Jobs" titleId="system-title" />
 		<div class="space-y-4">
-			<SystemEventsSettings onConnectionChange={(connected) => (eventsConnected = connected)} />
+			<SystemJobsSettings />
+		</div>
+	{:else if activeSection === 'events'}
+		<PageHeading eyebrow="System" title="Events" titleId="system-title" />
+		<div class="space-y-4">
+			<SystemEventsSettings />
 		</div>
 	{:else}
 		<PageHeading eyebrow="System" title="Logs" titleId="system-title">

@@ -216,6 +216,39 @@ export async function getSystemEventSettings(): Promise<SystemEventSettings> {
 	return data;
 }
 
+export interface SystemJobFilters {
+	status?: string[];
+	queue?: string;
+	kind?: string;
+	query?: string;
+	limit?: number;
+}
+
+export async function listSystemJobs(filters: SystemJobFilters = {}) {
+	const { data, error } = await client.GET('/system/jobs', {
+		params: { query: filters }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.jobs ?? [];
+}
+
+export async function abortSystemJob(id: number) {
+	const { data, error } = await client.POST('/system/jobs/{id}/abort', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Job abort did not return a job');
+	}
+	return data;
+}
+
 export async function updateSystemEventSettings(
 	request: SystemEventSettingsRequest
 ): Promise<SystemEventSettings> {

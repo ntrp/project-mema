@@ -3,6 +3,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import { formatDateTimeWithSeconds } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
+	import { createRowPulse } from './rowPulse.svelte';
 	import SystemEventSeverityIcon from './SystemEventSeverityIcon.svelte';
 	import SystemLogAttributesButton from './SystemLogAttributesButton.svelte';
 
@@ -17,6 +18,10 @@
 	}
 
 	let { events, loading, hasMore, loadingMore, deletingId, onDelete, onLoadMore }: Props = $props();
+	const rowPulse = createRowPulse();
+	const rowKeys = $derived(events.map((event) => event.id));
+
+	$effect(() => rowPulse.update(rowKeys));
 
 	function hasData(event: SystemEvent) {
 		return Object.keys(event.data ?? {}).length > 0;
@@ -42,29 +47,23 @@
 			onLoadMore();
 		}
 	}
-
-	function eventRowClass(severity: SystemEvent['severity']) {
-		if (severity === 'error') return 'bg-destructive/5';
-		if (severity === 'warning') return 'bg-secondary/40';
-		return '';
-	}
 </script>
 
-<div class="max-h-[min(62vh,680px)] overflow-auto" onscroll={handleScroll}>
-	<Table.Root class="table-fixed">
-		<Table.Header>
+<div class="min-h-0 overflow-auto rounded-md border border-border" onscroll={handleScroll}>
+	<Table.Root class="min-w-full table-auto border-collapse">
+		<Table.Header class="sticky top-0 bg-card">
 			<Table.Row>
-				<Table.Head class="w-[10.5rem] whitespace-nowrap">Time</Table.Head>
-				<Table.Head class="w-20 whitespace-nowrap">Severity</Table.Head>
-				<Table.Head class="w-28 whitespace-nowrap">Category</Table.Head>
+				<Table.Head class="w-px whitespace-nowrap">Time</Table.Head>
+				<Table.Head class="w-px whitespace-nowrap">Severity</Table.Head>
+				<Table.Head class="w-px whitespace-nowrap">Category</Table.Head>
 				<Table.Head>Message</Table.Head>
 				<Table.Head>Error</Table.Head>
-				<Table.Head class="w-20"></Table.Head>
+				<Table.Head class="w-px"></Table.Head>
 			</Table.Row>
 		</Table.Header>
 		<Table.Body>
 			{#each events as event (event.id)}
-				<Table.Row class={eventRowClass(event.severity)}>
+				<Table.Row class={rowPulse.classFor(event.id)}>
 					<Table.Cell class="whitespace-nowrap py-1.5"
 						>{formatDateTimeWithSeconds(event.createdAt)}</Table.Cell
 					>
@@ -72,9 +71,13 @@
 						><SystemEventSeverityIcon severity={event.severity} /></Table.Cell
 					>
 					<Table.Cell class="whitespace-nowrap py-1.5">{event.category}</Table.Cell>
-					<Table.Cell class="break-words py-1.5">{event.message}</Table.Cell>
-					<Table.Cell class="break-words py-1.5">{errorText(event)}</Table.Cell>
-					<Table.Cell class="py-1.5">
+					<Table.Cell class="max-w-96 py-1.5">
+						<span class="block truncate">{event.message}</span>
+					</Table.Cell>
+					<Table.Cell class="max-w-80 py-1.5">
+						<span class="block truncate text-muted-foreground">{errorText(event)}</span>
+					</Table.Cell>
+					<Table.Cell class="w-px py-1.5">
 						<div class="flex items-center justify-end gap-1">
 							{#if hasData(event)}
 								<SystemLogAttributesButton attributes={event.data} />

@@ -39,6 +39,8 @@ export type SystemLogFileSettings = components['schemas']['SystemLogFileSettings
 export type SystemLogFileSettingsRequest = components['schemas']['SystemLogFileSettingsRequest'];
 export type SystemLogLevel = components['schemas']['SystemLogLevel'];
 export type SystemLogLevelResponse = components['schemas']['SystemLogLevelResponse'];
+export type SystemJob = components['schemas']['SystemJob'];
+export type SystemJobListResponse = components['schemas']['SystemJobListResponse'];
 export type LibraryFolder = components['schemas']['LibraryFolder'];
 export type LibraryFolderOption = components['schemas']['LibraryFolderOption'];
 export type LibraryFolderOptionCreateRequest =
@@ -143,7 +145,7 @@ export type HomeSection =
 	| 'series'
 	| 'wanted'
 	| 'activity';
-export type SystemSection = 'status' | 'indexing' | 'metadata' | 'logs' | 'events';
+export type SystemSection = 'status' | 'indexing' | 'metadata' | 'jobs' | 'logs' | 'events';
 export type SettingsSection =
 	| 'general'
 	| 'library'

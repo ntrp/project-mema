@@ -1284,6 +1284,42 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/system/jobs': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List background jobs */
+		get: operations['listSystemJobs'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/jobs/{id}/abort': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: number;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Abort a background job */
+		post: operations['abortSystemJob'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/logs': {
 		parameters: {
 			query?: never;
@@ -2047,6 +2083,34 @@ export interface components {
 			/** Format: int64 */
 			jobId: number;
 			message: string;
+		};
+		SystemJobListResponse: {
+			jobs: components['schemas']['SystemJob'][];
+		};
+		SystemJob: {
+			/** Format: int64 */
+			id: number;
+			status: string;
+			kind: string;
+			queue: string;
+			/** Format: int32 */
+			attempt: number;
+			/** Format: int32 */
+			maxAttempts: number;
+			/** Format: int32 */
+			priority: number;
+			args: string;
+			metadata: string;
+			errors: string;
+			infoMessage: string;
+			/** Format: date-time */
+			scheduledAt: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			attemptedAt?: string | null;
+			/** Format: date-time */
+			finalizedAt?: string | null;
 		};
 		DownloadActivityListResponse: {
 			activities: components['schemas']['DownloadActivity'][];
@@ -4956,6 +5020,60 @@ export interface operations {
 			};
 			401: components['responses']['Unauthorized'];
 			403: components['responses']['Forbidden'];
+		};
+	};
+	listSystemJobs: {
+		parameters: {
+			query?: {
+				status?: string[];
+				queue?: string;
+				kind?: string;
+				query?: string;
+				limit?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Background jobs */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	abortSystemJob: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Background job aborted */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJob'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	streamSystemLogs: {

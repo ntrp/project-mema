@@ -40,7 +40,10 @@ type AutoSearchDownloadWorker struct {
 	events          *events.Broker
 }
 
-func (w *AutoSearchDownloadWorker) Work(ctx context.Context, job *river.Job[AutoSearchDownloadArgs]) error {
+func (w *AutoSearchDownloadWorker) Work(ctx context.Context, job *river.Job[AutoSearchDownloadArgs]) (err error) {
+	publishJobUpdated(w.events, job.JobRow, "running")
+	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+
 	mediaItemID, err := uuid.Parse(job.Args.MediaItemID)
 	if err != nil {
 		slog.Error("auto search download invalid media item id", "mediaItemId", job.Args.MediaItemID, "error", err)
@@ -67,7 +70,10 @@ type MissingMediaRetryWorker struct {
 	events          *events.Broker
 }
 
-func (w *MissingMediaRetryWorker) Work(ctx context.Context, _ *river.Job[MissingMediaRetryArgs]) error {
+func (w *MissingMediaRetryWorker) Work(ctx context.Context, job *river.Job[MissingMediaRetryArgs]) (err error) {
+	publishJobUpdated(w.events, job.JobRow, "running")
+	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+
 	items, err := w.settings.ListMissingMediaItems(ctx)
 	if err != nil {
 		slog.Error("missing media retry list failed", "error", err)

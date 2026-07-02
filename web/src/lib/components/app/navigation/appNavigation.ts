@@ -16,6 +16,7 @@ export type SystemHref =
 	| '/system/status'
 	| '/system/indexing'
 	| '/system/metadata'
+	| '/system/jobs'
 	| '/system/logs'
 	| '/system/events';
 
@@ -58,6 +59,7 @@ export const systemItems = [
 	{ value: 'status', label: 'Status', href: '/system/status' },
 	{ value: 'indexing', label: 'Indexing', href: '/system/indexing' },
 	{ value: 'metadata', label: 'Metadata', href: '/system/metadata' },
+	{ value: 'jobs', label: 'Jobs', href: '/system/jobs' },
 	{ value: 'events', label: 'Events', href: '/system/events' },
 	{ value: 'logs', label: 'Logs', href: '/system/logs' }
 ] satisfies PrimaryItem['children'];
@@ -142,6 +144,8 @@ export function systemSectionHref(section: SystemSection): SystemHref {
 			return '/system/indexing';
 		case 'metadata':
 			return '/system/metadata';
+		case 'jobs':
+			return '/system/jobs';
 		case 'logs':
 			return '/system/logs';
 		case 'events':

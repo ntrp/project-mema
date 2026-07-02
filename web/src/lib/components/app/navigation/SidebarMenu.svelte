@@ -37,6 +37,9 @@
 		| '/settings/tags'
 		| '/settings/users'
 		| '/system/status'
+		| '/system/indexing'
+		| '/system/metadata'
+		| '/system/jobs'
 		| '/system/logs'
 		| '/system/events';
 

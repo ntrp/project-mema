@@ -27,7 +27,8 @@ const (
 )
 
 type Client struct {
-	river *river.Client[pgx.Tx]
+	river  *river.Client[pgx.Tx]
+	events *events.Broker
 }
 
 type ReleaseSearchArgs struct {
@@ -59,7 +60,10 @@ type ReleaseSearchWorker struct {
 	events   *events.Broker
 }
 
-func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSearchArgs]) error {
+func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSearchArgs]) (err error) {
+	publishJobUpdated(w.events, job.JobRow, "running")
+	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+
 	mediaItemID, err := uuid.Parse(job.Args.MediaItemID)
 	if err != nil {
 		slog.Error("release search invalid media item id", "mediaItemId", job.Args.MediaItemID, "error", err)
@@ -100,7 +104,10 @@ type GrabReleaseWorker struct {
 	events          *events.Broker
 }
 
-func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabReleaseArgs]) error {
+func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabReleaseArgs]) (err error) {
+	publishJobUpdated(w.events, job.JobRow, "running")
+	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+
 	activityID, err := uuid.Parse(job.Args.ActivityID)
 	if err != nil {
 		slog.Error("grab release invalid activity id", "activityId", job.Args.ActivityID, "error", err)
@@ -219,7 +226,7 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 	if err != nil {
 		return nil, err
 	}
-	return &Client{river: riverClient}, nil
+	return &Client{river: riverClient, events: eventBroker}, nil
 }
 
 func (c *Client) Start(ctx context.Context) error {
@@ -228,6 +235,11 @@ func (c *Client) Start(ctx context.Context) error {
 
 func (c *Client) Stop(ctx context.Context) error {
 	return c.river.Stop(ctx)
+}
+
+func (c *Client) AbortJob(ctx context.Context, id int64) error {
+	_, err := c.river.JobCancel(ctx, id)
+	return err
 }
 
 func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID, query string) (int64, error) {
@@ -240,6 +252,7 @@ func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID
 	if err != nil {
 		return 0, err
 	}
+	publishJobUpdated(c.events, result.Job, "")
 	return result.Job.ID, nil
 }
 
@@ -253,6 +266,7 @@ func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid
 	if err != nil {
 		return 0, err
 	}
+	publishJobUpdated(c.events, result.Job, "")
 	return result.Job.ID, nil
 }
 
@@ -266,5 +280,6 @@ func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (
 	if err != nil {
 		return 0, err
 	}
+	publishJobUpdated(c.events, result.Job, "")
 	return result.Job.ID, nil
 }

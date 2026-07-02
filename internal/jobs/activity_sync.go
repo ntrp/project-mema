@@ -29,7 +29,10 @@ type DownloadActivitySyncWorker struct {
 	events          *events.Broker
 }
 
-func (w *DownloadActivitySyncWorker) Work(ctx context.Context, _ *river.Job[DownloadActivitySyncArgs]) error {
+func (w *DownloadActivitySyncWorker) Work(ctx context.Context, job *river.Job[DownloadActivitySyncArgs]) (err error) {
+	publishJobUpdated(w.events, job.JobRow, "running")
+	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+
 	activities, err := w.settings.ListActiveDownloadActivity(ctx)
 	if err != nil {
 		slog.Error("download activity sync list failed", "error", err)

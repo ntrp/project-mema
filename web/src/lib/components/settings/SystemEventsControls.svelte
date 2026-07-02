@@ -28,15 +28,12 @@
 	}));
 </script>
 
-<div class="flex flex-wrap items-end justify-between gap-3">
-	<label class="grid gap-1.5 text-sm font-medium text-foreground">
-		<span>Severity</span>
-		<SettingsSelect
-			value={severityFilter}
-			options={severitySelectOptions}
-			onValueChange={(value) => onSeverityChange(value as SeverityFilter)}
-		/>
-	</label>
+<div class="flex flex-wrap items-center justify-end gap-3">
+	<SettingsSelect
+		value={severityFilter}
+		options={severitySelectOptions}
+		onValueChange={(value) => onSeverityChange(value as SeverityFilter)}
+	/>
 	<Tooltip.Root>
 		<Tooltip.Trigger>
 			{#snippet child({ props })}

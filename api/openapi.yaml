@@ -2239,6 +2239,88 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /system/jobs:
+    get:
+      operationId: listSystemJobs
+      tags:
+        - System
+      summary: List background jobs
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: queue
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+      responses:
+        "200":
+          description: Background jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /system/jobs/{id}/abort:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      operationId: abortSystemJob
+      tags:
+        - System
+      summary: Abort a background job
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Background job aborted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJob"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /system/logs:
     get:
       operationId: streamSystemLogs
@@ -4171,6 +4253,74 @@ components:
           format: int64
         message:
           type: string
+    SystemJobListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - jobs
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemJob"
+    SystemJob:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - status
+        - kind
+        - queue
+        - attempt
+        - maxAttempts
+        - priority
+        - args
+        - metadata
+        - errors
+        - infoMessage
+        - scheduledAt
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        status:
+          type: string
+        kind:
+          type: string
+        queue:
+          type: string
+        attempt:
+          type: integer
+          format: int32
+        maxAttempts:
+          type: integer
+          format: int32
+        priority:
+          type: integer
+          format: int32
+        args:
+          type: string
+        metadata:
+          type: string
+        errors:
+          type: string
+        infoMessage:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        attemptedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finalizedAt:
+          type: string
+          format: date-time
+          nullable: true
     DownloadActivityListResponse:
       type: object
       additionalProperties: false
