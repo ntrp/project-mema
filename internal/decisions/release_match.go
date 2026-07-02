@@ -11,6 +11,7 @@ import (
 type ReleaseMatch struct {
 	Severity                 string
 	Details                  []string
+	Parsed                   ParsedRelease
 	QualityID                string
 	Quality                  string
 	Score                    int32
@@ -159,7 +160,11 @@ func evaluateParsedRelease(
 	details := []string{}
 	matchedMedia := parsedResourceTitle(item.Type, parsed)
 	customScore, customContributors := customFormatScore(parsed, context.Profile, context.Formats)
-	languageScore, languageContributors, languageReject := languageScore(parsed, context.Profile)
+	languageScore, languageContributors, languageReject := languageScore(
+		parsed,
+		context.Profile,
+		context.Languages,
+	)
 
 	if !resourceTitleMatches(criteria.Title, matchedMedia, meta.Title) {
 		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.")

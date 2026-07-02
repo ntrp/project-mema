@@ -10,9 +10,10 @@
 		onClose: () => void;
 		children: Snippet;
 		modalClass?: string;
+		preventScroll?: boolean;
 	}
 
-	let { title, onClose, children, modalClass = '' }: Props = $props();
+	let { title, onClose, children, modalClass = '', preventScroll = true }: Props = $props();
 	let open = $state(true);
 
 	function handleOpenChange(nextOpen: boolean) {
@@ -29,7 +30,7 @@
 
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
 	<Dialog.Content
-		preventScroll
+		{preventScroll}
 		showCloseButton={false}
 		class={cn(
 			'w-fit min-w-[min(420px,calc(100vw-32px))] max-w-[calc(100vw-32px)] gap-5 overflow-hidden overscroll-contain p-0 sm:max-w-[calc(100vw-32px)]',

@@ -1,13 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
-	import type {
-		MediaItem,
-		Language,
-		ReleaseCandidate,
-		ReleaseOverrideDetails,
-		ReleaseSearchState
-	} from '$lib/settings/types';
+	import type { MediaItem, ReleaseCandidate, ReleaseOverrideDetails } from '$lib/settings/types';
 	import {
 		activeFilterCount,
 		defaultReleaseFilters,
@@ -17,11 +11,7 @@
 		type ReleaseSort,
 		type ReleaseSortKey
 	} from './releaseSearchResults';
-	import {
-		releaseSearchQuery,
-		releaseSearchQueryVariants,
-		type ReleaseSearchContext
-	} from './releaseSearchQuery';
+	import { releaseSearchQuery, releaseSearchQueryVariants } from './releaseSearchQuery';
 	import ReleaseOverrideDetailsStep from './ReleaseOverrideDetailsStep.svelte';
 	import ReleaseSearchControls from './ReleaseSearchControls.svelte';
 	import ReleaseSearchFilters from './ReleaseSearchFilters.svelte';
@@ -37,33 +27,17 @@
 		subscribeReleaseSearchStream,
 		type ReleaseSearchStreamResult
 	} from './releaseSearchStream';
-
-	interface Props {
-		item: MediaItem;
-		releaseResults?: ReleaseSearchState;
-		grabbingKey?: string;
-		searchContext?: ReleaseSearchContext;
-		languages: Language[];
-		canManage: boolean;
-		onGrab: (
-			_item: MediaItem,
-			_release: ReleaseCandidate,
-			_overrideMatch?: boolean,
-			_details?: ReleaseOverrideDetails
-		) => void;
-		onClose: () => void;
-	}
+	import type { MediaFileSearchModalProps } from './mediaFileSearchModalTypes';
 
 	let {
 		item,
-		releaseResults,
 		grabbingKey,
 		searchContext = { type: 'title' },
 		languages,
 		canManage,
 		onGrab,
 		onClose
-	}: Props = $props();
+	}: MediaFileSearchModalProps = $props();
 
 	let overrideQuery = $state(false);
 	let customQuery = $state('');
@@ -78,11 +52,12 @@
 	const systemQuery = $derived(releaseSearchQuery(item, searchContext));
 	const systemQueryVariants = $derived(releaseSearchQueryVariants(item, searchContext));
 	const searchQuery = $derived(overrideQuery ? customQuery.trim() : systemQuery);
-	const currentResults = $derived(localResults ?? releaseResults);
+	const currentResults = $derived(localResults);
 	const releases = $derived(currentResults?.releases ?? []);
 	const qualityOptions = $derived(releaseQualityOptions(releases));
 	const visibleReleases = $derived(filteredSortedReleases(item, releases, filters, sort));
 	const filterCount = $derived(activeFilterCount(filters));
+	const showResultsTable = $derived(searching || releases.length > 0);
 
 	$effect(() => {
 		if (!overrideQuery) {
@@ -146,6 +121,7 @@
 <SettingsFormModal
 	title={overrideRelease ? 'Grab with override' : 'Manual search'}
 	modalClass="max-h-[calc(100vh-32px)] w-[min(1280px,calc(100vw-32px))]"
+	preventScroll={false}
 	{onClose}
 >
 	{#if overrideRelease}
@@ -181,16 +157,18 @@
 					onReset={() => (filters = defaultReleaseFilters())}
 				/>
 			{/if}
-			<ReleaseSearchResultsTable
-				{item}
-				releases={visibleReleases}
-				{searching}
-				{sort}
-				{grabbingKey}
-				{canManage}
-				onSort={updateSort}
-				onGrab={handleGrab}
-			/>
+			{#if showResultsTable}
+				<ReleaseSearchResultsTable
+					{item}
+					releases={visibleReleases}
+					{searching}
+					{sort}
+					{grabbingKey}
+					{canManage}
+					onSort={updateSort}
+					onGrab={handleGrab}
+				/>
+			{/if}
 		</div>
 	{/if}
 </SettingsFormModal>

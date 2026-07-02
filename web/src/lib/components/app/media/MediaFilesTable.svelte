@@ -11,13 +11,11 @@
 		LibraryFolder,
 		MediaItem,
 		MediaItemUpdateRequest,
-		ReleaseCandidate,
-		ReleaseSearchState
+		ReleaseCandidate
 	} from '$lib/settings/types';
 
 	interface Props {
 		item: MediaItem;
-		releaseResults?: ReleaseSearchState;
 		activities: DownloadActivity[];
 		searchingItemId?: string;
 		grabbingKey?: string;
@@ -37,7 +35,6 @@
 
 	let {
 		item,
-		releaseResults,
 		activities,
 		searchingItemId,
 		grabbingKey,
@@ -111,7 +108,6 @@
 {#if searchOpen}
 	<MediaFileSearchModal
 		{item}
-		{releaseResults}
 		{languages}
 		searchContext={{ type: 'title' }}
 		{grabbingKey}

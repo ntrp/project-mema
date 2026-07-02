@@ -53,6 +53,7 @@ func customFormatScore(
 func languageScore(
 	parsed ParsedRelease,
 	profile *storage.MediaProfile,
+	languageCatalog []storage.Language,
 ) (int32, []ReleaseScoreContributor, string) {
 	if profile == nil || len(profile.TargetLanguageScores) == 0 {
 		return 0, nil, ""
@@ -61,15 +62,16 @@ func languageScore(
 	var total int32
 	contributors := []ReleaseScoreContributor{}
 	for _, target := range profile.TargetLanguageScores {
+		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
 		if _, ok := releaseLanguages[target.LanguageID]; !ok {
 			if target.Required {
-				return 0, nil, fmt.Sprintf("Required language %s is missing.", target.LanguageID)
+				return 0, nil, fmt.Sprintf("Required language %s is missing.", displayName)
 			}
 			continue
 		}
 		total += target.Score
 		contributors = append(contributors, ReleaseScoreContributor{
-			Label: fmt.Sprintf("Language: %s", target.LanguageID),
+			Label: displayName,
 			Score: target.Score,
 		})
 	}
@@ -83,11 +85,31 @@ func languageScore(
 				continue
 			}
 			if _, ok := targets[language]; !ok {
-				return 0, nil, fmt.Sprintf("Language %s is not enabled in the profile.", language)
+				return 0, nil, fmt.Sprintf("Language %s is not enabled in the profile.", languageScoreDisplayName(language, languageCatalog))
 			}
 		}
 	}
 	return total, contributors, ""
+}
+
+func languageScoreDisplayName(languageID string, catalog []storage.Language) string {
+	normalized := normalizedLanguageValue(languageID)
+	for _, language := range catalog {
+		if normalized == normalizedLanguageValue(language.Code) ||
+			normalized == normalizedLanguageValue(language.DisplayName) {
+			return language.DisplayName
+		}
+		for _, alias := range language.Aliases {
+			if normalized == normalizedLanguageValue(alias) {
+				return language.DisplayName
+			}
+		}
+	}
+	return languageID
+}
+
+func normalizedLanguageValue(value string) string {
+	return strings.ToLower(strings.Join(strings.Fields(value), "-"))
 }
 
 func normalizedLanguages(values []string) map[string]struct{} {

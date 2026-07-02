@@ -26,8 +26,7 @@
 		QualityProfileOption,
 		MediaSearchResult,
 		MediaType,
-		ReleaseCandidate,
-		ReleaseSearchState
+		ReleaseCandidate
 	} from '$lib/settings/types';
 	interface Props {
 		mediaType: MediaType;
@@ -38,7 +37,6 @@
 		languages: Language[];
 		qualityProfiles: QualityProfileOption[];
 		requestedItemId: string;
-		releaseResults?: ReleaseSearchState;
 		activities: DownloadActivity[];
 		searchingItemId?: string;
 		refreshingMetadataItemId?: string;
@@ -66,7 +64,6 @@
 		languages,
 		qualityProfiles,
 		requestedItemId,
-		releaseResults,
 		activities,
 		searchingItemId,
 		refreshingMetadataItemId,
@@ -146,7 +143,6 @@
 						{#if item.type === 'series'}
 							<MediaSeriesSeasons
 								{item}
-								{releaseResults}
 								activities={itemActivities}
 								{libraryFolders}
 								{languages}
@@ -165,7 +161,6 @@
 						{#if item.type === 'movie'}
 							<MediaFilesTable
 								{item}
-								{releaseResults}
 								activities={itemActivities}
 								{libraryFolders}
 								{languages}

@@ -20,13 +20,11 @@
 		MediaItemUpdateRequest,
 		MediaMetadataEpisode,
 		MediaMetadataSeason,
-		ReleaseCandidate,
-		ReleaseSearchState
+		ReleaseCandidate
 	} from '$lib/settings/types';
 
 	interface Props {
 		item: MediaItem;
-		releaseResults?: ReleaseSearchState;
 		activities: DownloadActivity[];
 		searchingItemId?: string;
 		grabbingKey?: string;
@@ -46,7 +44,6 @@
 
 	let {
 		item,
-		releaseResults,
 		activities,
 		searchingItemId,
 		grabbingKey,
@@ -168,7 +165,6 @@
 {#if searchContext}
 	<MediaFileSearchModal
 		{item}
-		{releaseResults}
 		{languages}
 		{searchContext}
 		{grabbingKey}

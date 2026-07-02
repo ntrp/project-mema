@@ -11,8 +11,7 @@ import type {
 	MediaRequestApproveRequest,
 	MediaSearchResult,
 	QualityProfileOption,
-	ReleaseCandidate,
-	ReleaseSearchResults
+	ReleaseCandidate
 } from '$lib/settings/types';
 
 export interface HomeAreaProps {
@@ -26,7 +25,6 @@ export interface HomeAreaProps {
 	libraryFolders: LibraryFolder[];
 	languages: Language[];
 	qualityProfiles: QualityProfileOption[];
-	releaseResults: ReleaseSearchResults;
 	activities: DownloadActivity[];
 	loadingDiscover: boolean;
 	loadingBlacklist: boolean;

@@ -19,7 +19,6 @@
 		libraryFolders,
 		languages,
 		qualityProfiles,
-		releaseResults,
 		activities,
 		loadingDiscover,
 		loadingBlacklist,
@@ -109,7 +108,6 @@
 				{languages}
 				{qualityProfiles}
 				requestedItemId={selectedMediaItemId}
-				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}
 				{activities}
 				{searchingItemId}
 				{refreshingMetadataItemId}

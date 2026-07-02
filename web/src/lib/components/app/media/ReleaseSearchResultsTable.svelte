@@ -15,19 +15,9 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { MediaItem, ReleaseCandidate, ReleaseOverrideDetails } from '$lib/settings/types';
-	import ReleaseGrabActions from './ReleaseGrabActions.svelte';
-	import ReleaseMatchInfo from './ReleaseMatchInfo.svelte';
-	import ReleaseScoreCell from './ReleaseScoreCell.svelte';
-	import ReleaseTitleCell from './ReleaseTitleCell.svelte';
-	import {
-		ageLabel,
-		peerLabel,
-		qualityMatch,
-		releaseSource,
-		releaseSourceBadgeClass,
-		sizeLabel
-	} from './releaseCandidateDisplay';
+	import ReleaseSearchResultRow from './ReleaseSearchResultRow.svelte';
 	import type { ReleaseSort, ReleaseSortKey } from './releaseSearchResults';
+	import { containWheelBoundary } from './scrollBoundary';
 
 	interface Props {
 		item: MediaItem;
@@ -57,6 +47,10 @@
 	}: Props = $props();
 
 	let copiedReleaseId = $state<string | undefined>();
+	let renderLimit = $state(80);
+	const releaseSignature = $derived(releases.map((release) => release.id).join('\0'));
+	const renderedReleases = $derived(releases.slice(0, renderLimit));
+	const hiddenReleaseCount = $derived(Math.max(0, releases.length - renderedReleases.length));
 
 	const columns: { key: ReleaseSortKey; label: string; icon?: string }[] = [
 		{ key: 'source', label: 'Protocol', icon: 'transfer' },
@@ -78,9 +72,17 @@
 			}
 		}, 1200);
 	}
+
+	$effect(() => {
+		releaseSignature;
+		renderLimit = 80;
+	});
 </script>
 
-<Card class="min-h-64 max-h-[min(520px,calc(100vh-340px))] overflow-auto p-0">
+<Card
+	class="min-h-64 max-h-[min(520px,calc(100vh-340px))] overflow-auto overscroll-contain p-0"
+	onwheel={containWheelBoundary}
+>
 	{#if searching && releases.length === 0}
 		<div class="grid min-h-64 place-items-center">
 			<InlineSpinner label="Searching releases" />
@@ -157,53 +159,27 @@
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each releases as release (release.id)}
+				{#each renderedReleases as release (release.id)}
+					<ReleaseSearchResultRow
+						{item}
+						{release}
+						{copiedReleaseId}
+						{grabbingKey}
+						{canManage}
+						onCopy={(value) => void copyTitle(value)}
+						{onGrab}
+					/>
+				{/each}
+				{#if hiddenReleaseCount > 0}
 					<Table.Row>
-						<Table.Cell class="whitespace-nowrap">
-							<Badge
-								variant="outline"
-								class={`relative overflow-visible uppercase ${releaseSourceBadgeClass(release)}`}
-							>
-								{releaseSource(release)}
-								{#if releaseSource(release) === 'torrent' && peerLabel(release) !== '-'}
-									<span
-										class="absolute -right-2 -bottom-2 rounded-[3px] border border-background bg-background px-1 text-[9px] leading-3 font-black text-foreground shadow-sm"
-									>
-										{peerLabel(release)}
-									</span>
-								{/if}
-							</Badge>
-						</Table.Cell>
-						<Table.Cell class="max-w-[160px] truncate whitespace-nowrap"
-							>{release.indexerName}</Table.Cell
-						>
-						<Table.Cell class="whitespace-nowrap">{ageLabel(release)}</Table.Cell>
-						<Table.Cell class="w-full min-w-0 max-w-0">
-							<ReleaseTitleCell
-								{release}
-								{copiedReleaseId}
-								onCopy={(value) => void copyTitle(value)}
-							/>
-						</Table.Cell>
-						<Table.Cell class="whitespace-nowrap">{sizeLabel(release.sizeBytes)}</Table.Cell>
-						<Table.Cell class="whitespace-nowrap">
-							<Badge variant="secondary" class="bg-muted text-muted-foreground">
-								{qualityMatch(release).label}
-							</Badge>
-						</Table.Cell>
-						<Table.Cell class="whitespace-nowrap"
-							><ReleaseScoreCell match={release.match} /></Table.Cell
-						>
-						<Table.Cell class="whitespace-nowrap">
-							<ReleaseMatchInfo info={release.match} />
-						</Table.Cell>
-						<Table.Cell class="text-right">
-							{#if canManage}
-								<ReleaseGrabActions {item} {release} {grabbingKey} {onGrab} />
-							{/if}
+						<Table.Cell colspan={9} class="py-3 text-center">
+							<Button type="button" variant="outline" onclick={() => (renderLimit += 80)}>
+								Show {Math.min(80, hiddenReleaseCount)} more
+								<span class="text-muted-foreground">({hiddenReleaseCount} hidden)</span>
+							</Button>
 						</Table.Cell>
 					</Table.Row>
-				{/each}
+				{/if}
 			</Table.Body>
 		</Table.Root>
 	{/if}

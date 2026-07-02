@@ -47,6 +47,7 @@ func releaseMatch(severity string, parsed ParsedRelease, score int32, details ..
 	return ReleaseMatch{
 		Severity:  severity,
 		Details:   append([]string{}, details...),
+		Parsed:    parsed,
 		QualityID: parsed.QualityID,
 		Quality:   parsed.Quality,
 		Score:     score,

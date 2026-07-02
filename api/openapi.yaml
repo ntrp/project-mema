@@ -4157,7 +4157,11 @@ components:
       required:
         - releaseTitle
         - movieTitle
+        - seriesTitle
         - year
+        - seasonNumber
+        - episodeNumber
+        - seasonPack
         - edition
         - releaseGroup
         - releaseHash
@@ -4166,8 +4170,20 @@ components:
           type: string
         movieTitle:
           type: string
+        seriesTitle:
+          type: string
         year:
           type: string
+        seasonNumber:
+          type: integer
+          format: int32
+          nullable: true
+        episodeNumber:
+          type: integer
+          format: int32
+          nullable: true
+        seasonPack:
+          type: boolean
         edition:
           type: string
         releaseGroup:
@@ -4229,6 +4245,25 @@ components:
         matchedSpecCount:
           type: integer
           format: int32
+    ParsedReleaseMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        - release
+        - quality
+        - languages
+        - details
+      properties:
+        release:
+          $ref: "#/components/schemas/ParsedReleaseInfo"
+        quality:
+          $ref: "#/components/schemas/ParsedQualityInfo"
+        languages:
+          type: array
+          items:
+            type: string
+        details:
+          $ref: "#/components/schemas/ParsedReleaseDetails"
     CustomFormatParsingMatch:
       type: object
       additionalProperties: false
@@ -4407,6 +4442,7 @@ components:
         - customFormatContributors
         - languageContributors
         - rankContributors
+        - parsed
       properties:
         severity:
           type: string
@@ -4450,6 +4486,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ReleaseScoreContributor"
+        parsed:
+          $ref: "#/components/schemas/ParsedReleaseMetadata"
     ReleaseScoreContributor:
       type: object
       additionalProperties: false

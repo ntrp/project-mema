@@ -8,6 +8,7 @@
 	}
 
 	let { match }: Props = $props();
+	let open = $state(false);
 
 	const contributorGroups = $derived(
 		[
@@ -17,7 +18,7 @@
 	);
 </script>
 
-<Tooltip.Root>
+<Tooltip.Root bind:open>
 	<Tooltip.Trigger>
 		{#snippet child({ props })}
 			<span
@@ -29,21 +30,23 @@
 			</span>
 		{/snippet}
 	</Tooltip.Trigger>
-	<Tooltip.Content class="max-w-80">
-		<div class="grid gap-1 text-left">
-			{#if contributorGroups.length > 0}
-				{#each contributorGroups as group (group.label)}
-					<span class="pt-1 font-bold first:pt-0">{group.label}</span>
-					{#each group.values as contributor (`${group.label}:${contributor.label}:${contributor.score}`)}
-						<div class="grid grid-cols-[1fr_auto] gap-4">
-							<span>{contributor.label}</span>
-							<span class="font-mono tabular-nums">{signedScore(contributor.score)}</span>
-						</div>
+	{#if open}
+		<Tooltip.Content class="max-w-80">
+			<div class="grid gap-1 text-left">
+				{#if contributorGroups.length > 0}
+					{#each contributorGroups as group (group.label)}
+						<span class="pt-1 font-bold first:pt-0">{group.label}</span>
+						{#each group.values as contributor (`${group.label}:${contributor.label}:${contributor.score}`)}
+							<div class="grid grid-cols-[1fr_auto] gap-4">
+								<span>{contributor.label}</span>
+								<span class="font-mono tabular-nums">{signedScore(contributor.score)}</span>
+							</div>
+						{/each}
 					{/each}
-				{/each}
-			{:else}
-				<span>No matched custom formats or scored languages.</span>
-			{/if}
-		</div>
-	</Tooltip.Content>
+				{:else}
+					<span>No matched custom formats or scored languages.</span>
+				{/if}
+			</div>
+		</Tooltip.Content>
+	{/if}
 </Tooltip.Root>

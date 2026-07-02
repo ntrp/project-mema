@@ -1755,12 +1755,24 @@ type ParsedReleaseDetails struct {
 
 // ParsedReleaseInfo defines model for ParsedReleaseInfo.
 type ParsedReleaseInfo struct {
-	Edition      string `json:"edition"`
-	MovieTitle   string `json:"movieTitle"`
-	ReleaseGroup string `json:"releaseGroup"`
-	ReleaseHash  string `json:"releaseHash"`
-	ReleaseTitle string `json:"releaseTitle"`
-	Year         string `json:"year"`
+	Edition       string `json:"edition"`
+	EpisodeNumber *int32 `json:"episodeNumber"`
+	MovieTitle    string `json:"movieTitle"`
+	ReleaseGroup  string `json:"releaseGroup"`
+	ReleaseHash   string `json:"releaseHash"`
+	ReleaseTitle  string `json:"releaseTitle"`
+	SeasonNumber  *int32 `json:"seasonNumber"`
+	SeasonPack    bool   `json:"seasonPack"`
+	SeriesTitle   string `json:"seriesTitle"`
+	Year          string `json:"year"`
+}
+
+// ParsedReleaseMetadata defines model for ParsedReleaseMetadata.
+type ParsedReleaseMetadata struct {
+	Details   ParsedReleaseDetails `json:"details"`
+	Languages []string             `json:"languages"`
+	Quality   ParsedQualityInfo    `json:"quality"`
+	Release   ParsedReleaseInfo    `json:"release"`
 }
 
 // PathMapping defines model for PathMapping.
@@ -1845,6 +1857,7 @@ type ReleaseCandidateMatch struct {
 	LanguageContributors     []ReleaseScoreContributor     `json:"languageContributors"`
 	Languages                []string                      `json:"languages"`
 	MatchedMedia             string                        `json:"matchedMedia"`
+	Parsed                   ParsedReleaseMetadata         `json:"parsed"`
 	Quality                  string                        `json:"quality"`
 	QualityId                string                        `json:"qualityId"`
 	RankContributors         []ReleaseScoreContributor     `json:"rankContributors"`

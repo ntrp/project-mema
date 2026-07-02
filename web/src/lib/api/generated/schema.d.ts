@@ -2058,7 +2058,13 @@ export interface components {
 		ParsedReleaseInfo: {
 			releaseTitle: string;
 			movieTitle: string;
+			seriesTitle: string;
 			year: string;
+			/** Format: int32 */
+			seasonNumber: number | null;
+			/** Format: int32 */
+			episodeNumber: number | null;
+			seasonPack: boolean;
 			edition: string;
 			releaseGroup: string;
 			releaseHash: string;
@@ -2081,6 +2087,12 @@ export interface components {
 			customFormatNames: string[];
 			/** Format: int32 */
 			matchedSpecCount: number;
+		};
+		ParsedReleaseMetadata: {
+			release: components['schemas']['ParsedReleaseInfo'];
+			quality: components['schemas']['ParsedQualityInfo'];
+			languages: string[];
+			details: components['schemas']['ParsedReleaseDetails'];
 		};
 		CustomFormatParsingMatch: {
 			id: string;
@@ -2154,6 +2166,7 @@ export interface components {
 			customFormatContributors: components['schemas']['ReleaseScoreContributor'][];
 			languageContributors: components['schemas']['ReleaseScoreContributor'][];
 			rankContributors: components['schemas']['ReleaseScoreContributor'][];
+			parsed: components['schemas']['ParsedReleaseMetadata'];
 		};
 		ReleaseScoreContributor: {
 			label: string;

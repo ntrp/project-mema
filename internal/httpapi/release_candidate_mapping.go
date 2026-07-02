@@ -53,6 +53,7 @@ func releaseCandidateResponse(
 			),
 			LanguageContributors: releaseScoreContributorResponses(match.LanguageContributors),
 			RankContributors:     releaseScoreContributorResponses(match.RankContributors),
+			Parsed:               parsedReleaseMetadataResponse(match.Parsed, languages),
 		},
 	}
 }

@@ -19,6 +19,7 @@
 		queryVariants,
 		disabled = false
 	}: Props = $props();
+	let variantsOpen = $state(false);
 </script>
 
 <div class="flex min-w-0 flex-wrap items-end gap-3">
@@ -34,7 +35,7 @@
 				maxlength={500}
 			/>
 			{#if !overrideQuery}
-				<Tooltip.Root>
+				<Tooltip.Root bind:open={variantsOpen}>
 					<Tooltip.Trigger>
 						{#snippet child({ props })}
 							<Button
@@ -49,14 +50,16 @@
 							</Button>
 						{/snippet}
 					</Tooltip.Trigger>
-					<Tooltip.Content class="max-w-96">
-						<div class="grid gap-1 text-left">
-							<span class="font-bold">Search branches</span>
-							{#each queryVariants as query (query)}
-								<span class="font-mono text-xs">{query}</span>
-							{/each}
-						</div>
-					</Tooltip.Content>
+					{#if variantsOpen}
+						<Tooltip.Content class="max-w-96">
+							<div class="grid gap-1 text-left">
+								<span class="font-bold">Search branches</span>
+								{#each queryVariants as query (query)}
+									<span class="font-mono text-xs">{query}</span>
+								{/each}
+							</div>
+						</Tooltip.Content>
+					{/if}
 				</Tooltip.Root>
 			{/if}
 		</div>

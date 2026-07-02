@@ -31,11 +31,13 @@
 	});
 
 	const overrideGrabTooltip = $derived(grabbing ? 'Queueing release' : 'Grab with override');
+	let grabOpen = $state(false);
+	let overrideOpen = $state(false);
 </script>
 
 <div class="flex justify-end gap-1">
 	{#if showGrab}
-		<Tooltip.Root>
+		<Tooltip.Root bind:open={grabOpen}>
 			<Tooltip.Trigger>
 				{#snippet child({ props })}
 					<Button
@@ -51,12 +53,14 @@
 					</Button>
 				{/snippet}
 			</Tooltip.Trigger>
-			<Tooltip.Content>
-				{grabTooltip}
-			</Tooltip.Content>
+			{#if grabOpen}
+				<Tooltip.Content>
+					{grabTooltip}
+				</Tooltip.Content>
+			{/if}
 		</Tooltip.Root>
 	{/if}
-	<Tooltip.Root>
+	<Tooltip.Root bind:open={overrideOpen}>
 		<Tooltip.Trigger>
 			{#snippet child({ props })}
 				<Button
@@ -72,8 +76,10 @@
 				</Button>
 			{/snippet}
 		</Tooltip.Trigger>
-		<Tooltip.Content>
-			{overrideGrabTooltip}
-		</Tooltip.Content>
+		{#if overrideOpen}
+			<Tooltip.Content>
+				{overrideGrabTooltip}
+			</Tooltip.Content>
+		{/if}
 	</Tooltip.Root>
 </div>

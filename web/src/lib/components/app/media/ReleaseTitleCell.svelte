@@ -11,18 +11,22 @@
 	}
 
 	let { release, copiedReleaseId, onCopy }: Props = $props();
+	let titleOpen = $state(false);
+	let copyOpen = $state(false);
 </script>
 
 <div class="group/title relative w-full min-w-0">
-	<Tooltip.Root>
+	<Tooltip.Root bind:open={titleOpen}>
 		<Tooltip.Trigger>
 			{#snippet child({ props })}
 				<span {...props} class="block min-w-0 truncate pr-7">{release.title}</span>
 			{/snippet}
 		</Tooltip.Trigger>
-		<Tooltip.Content class="max-w-160">{release.title}</Tooltip.Content>
+		{#if titleOpen}
+			<Tooltip.Content class="max-w-160">{release.title}</Tooltip.Content>
+		{/if}
 	</Tooltip.Root>
-	<Tooltip.Root>
+	<Tooltip.Root bind:open={copyOpen}>
 		<Tooltip.Trigger>
 			{#snippet child({ props })}
 				<Button
@@ -38,8 +42,10 @@
 				</Button>
 			{/snippet}
 		</Tooltip.Trigger>
-		<Tooltip.Content class="max-w-160">
-			{copiedReleaseId === release.id ? 'Copied title' : release.title}
-		</Tooltip.Content>
+		{#if copyOpen}
+			<Tooltip.Content class="max-w-160">
+				{copiedReleaseId === release.id ? 'Copied title' : release.title}
+			</Tooltip.Content>
+		{/if}
 	</Tooltip.Root>
 </div>
