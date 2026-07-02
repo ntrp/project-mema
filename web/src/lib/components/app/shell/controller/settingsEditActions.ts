@@ -4,6 +4,7 @@ import {
 	customFormatFormFromFormat,
 	downloadClientFormFromClient,
 	indexerFormFromIndexer,
+	languageFormFromLanguage,
 	mediaProfileFormFromProfile,
 	userFormFromUser
 } from '$lib/settings/forms';
@@ -11,6 +12,7 @@ import type {
 	CustomFormat,
 	DownloadClient,
 	Indexer,
+	Language,
 	ManagedUser,
 	MediaProfile,
 	Tag
@@ -42,6 +44,12 @@ export function createSettingsEditActions(state: AppShellState) {
 		void goto(resolve('/settings/tags'));
 	}
 
+	function editLanguage(language: Language) {
+		state.languageForm = languageFormFromLanguage(language);
+		state.activeSettingsSection = 'languages';
+		void goto(resolve('/settings/languages'));
+	}
+
 	function editMediaProfile(profile: MediaProfile) {
 		state.mediaProfileForm = mediaProfileFormFromProfile(profile);
 		state.activeSettingsSection = 'profiles';
@@ -59,6 +67,7 @@ export function createSettingsEditActions(state: AppShellState) {
 		editIndexer,
 		editUser,
 		editTag,
+		editLanguage,
 		editMediaProfile,
 		editCustomFormat
 	};

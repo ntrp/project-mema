@@ -4,6 +4,8 @@ import {
 	normalizeCustomFormatForm,
 	normalizeDownloadClientForm,
 	normalizeIndexerForm,
+	normalizeLanguageForm,
+	normalizeLanguageUpdateForm,
 	normalizeLibraryFolderForm,
 	normalizeMediaProfileForm,
 	normalizeMetadataProviderForm,
@@ -23,6 +25,7 @@ import type {
 	IndexerSearchCacheEntry,
 	IndexerSearchResponse,
 	IndexerSearchSettings,
+	LanguageForm,
 	LibraryFolderForm,
 	LibraryFolderOption,
 	LibraryFolderOptionListResponse,
@@ -46,6 +49,7 @@ import type {
 	QualitySizeSettingRequest,
 	QualitySizeSettingsResponse,
 	ReleaseCandidate,
+	ReleaseOverrideDetails,
 	SessionResponse,
 	SettingsData,
 	SystemEventSettings,
@@ -275,7 +279,8 @@ export async function loadSettings(): Promise<SettingsData> {
 		mediaProfileResult,
 		customFormatResult,
 		userResult,
-		tagResult
+		tagResult,
+		languageResult
 	] = await Promise.all([
 		client.GET('/settings/download-clients'),
 		client.GET('/settings/indexers'),
@@ -287,7 +292,8 @@ export async function loadSettings(): Promise<SettingsData> {
 		client.GET('/settings/profiles'),
 		client.GET('/settings/custom-formats'),
 		client.GET('/settings/users'),
-		client.GET('/settings/tags')
+		client.GET('/settings/tags'),
+		client.GET('/settings/languages')
 	]);
 
 	if (clientResult.error) {
@@ -323,6 +329,9 @@ export async function loadSettings(): Promise<SettingsData> {
 	if (tagResult.error) {
 		throw new Error(tagResult.error.message);
 	}
+	if (languageResult.error) {
+		throw new Error(languageResult.error.message);
+	}
 
 	return {
 		downloadClients: clientResult.data?.clients ?? [],
@@ -335,7 +344,8 @@ export async function loadSettings(): Promise<SettingsData> {
 		mediaProfiles: mediaProfileResult.data?.profiles ?? [],
 		customFormats: customFormatResult.data?.formats ?? [],
 		users: userResult.data?.users ?? [],
-		tags: tagResult.data?.tags ?? []
+		tags: tagResult.data?.tags ?? [],
+		languages: languageResult.data?.languages ?? []
 	};
 }
 
@@ -774,11 +784,18 @@ export async function enqueueMediaAutomaticSearch(id: string) {
 	return data;
 }
 
-export async function grabMediaRelease(id: string, release: ReleaseCandidate) {
+export async function grabMediaRelease(
+	id: string,
+	release: ReleaseCandidate,
+	overrideMatch = false,
+	overrideDetails?: ReleaseOverrideDetails
+) {
 	const { data, error } = await client.POST('/media/items/{id}/grab', {
 		params: { path: { id } },
 		body: {
-			releaseId: release.id
+			releaseId: release.id,
+			overrideMatch,
+			...(overrideDetails ? { overrideDetails } : {})
 		}
 	});
 
@@ -946,6 +963,19 @@ export async function saveTag(form: TagForm) {
 				body
 			})
 		: await client.POST('/settings/tags', { body });
+
+	if (result.error) {
+		throw new Error(result.error.message);
+	}
+}
+
+export async function saveLanguage(form: LanguageForm) {
+	const result = form.originalCode
+		? await client.PUT('/settings/languages/{code}', {
+				params: { path: { code: form.originalCode } },
+				body: normalizeLanguageUpdateForm(form)
+			})
+		: await client.POST('/settings/languages', { body: normalizeLanguageForm(form) });
 
 	if (result.error) {
 		throw new Error(result.error.message);
@@ -1166,6 +1196,16 @@ export async function deleteUser(id: string) {
 export async function deleteTag(id: string) {
 	const { error } = await client.DELETE('/settings/tags/{id}', {
 		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function deleteLanguage(code: string) {
+	const { error } = await client.DELETE('/settings/languages/{code}', {
+		params: { path: { code } }
 	});
 
 	if (error) {

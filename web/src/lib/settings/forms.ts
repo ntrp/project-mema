@@ -1,28 +1,41 @@
 import type {
-	CustomFormat,
-	CustomFormatForm,
-	CustomFormatRequest,
 	DownloadClient,
 	DownloadClientForm,
 	DownloadClientRequest,
 	Indexer,
 	IndexerForm,
 	IndexerRequest,
-	ManagedUser,
-	MediaProfile,
-	MediaProfileForm,
-	MediaProfileRequest,
 	MetadataProvider,
 	MetadataProviderForm,
 	MetadataProviderRequest,
 	LibraryFolderForm,
 	LibraryFolderRequest,
 	PathMappingForm,
-	PathMappingRequest,
-	UserCreateRequest,
-	UserForm,
-	UserUpdateRequest
+	PathMappingRequest
 } from './types';
+
+export {
+	customFormatFormFromFormat,
+	emptyCustomFormatForm,
+	normalizeCustomFormatForm
+} from './customFormatForms';
+export {
+	emptyLanguageForm,
+	languageFormFromLanguage,
+	normalizeLanguageForm,
+	normalizeLanguageUpdateForm
+} from './languageForms';
+export {
+	emptyMediaProfileForm,
+	mediaProfileFormFromProfile,
+	normalizeMediaProfileForm
+} from './mediaProfileForms';
+export {
+	emptyUserForm,
+	normalizeUserCreateForm,
+	normalizeUserUpdateForm,
+	userFormFromUser
+} from './userForms';
 
 export function emptyDownloadClientForm(): DownloadClientForm {
 	return {
@@ -76,39 +89,6 @@ export function emptyPathMappingForm(): PathMappingForm {
 	};
 }
 
-export function emptyMediaProfileForm(): MediaProfileForm {
-	return {
-		name: '',
-		qualityIds: [],
-		upgradesAllowed: true,
-		upgradeUntilQualityId: undefined,
-		minimumCustomFormatScore: 0,
-		upgradeUntilCustomFormatScore: 0,
-		minimumCustomFormatScoreIncrement: 1,
-		removeNonEnabledLanguages: false,
-		targetLanguages: ['english'],
-		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
-		customFormatScores: []
-	};
-}
-
-export function emptyCustomFormatForm(): CustomFormatForm {
-	return {
-		name: '',
-		includeInRenameTemplate: false,
-		includeSpecs: [],
-		excludeSpecs: []
-	};
-}
-
-export function emptyUserForm(): UserForm {
-	return {
-		username: '',
-		password: '',
-		role: 'user'
-	};
-}
-
 export function downloadClientFormFromClient(client: DownloadClient): DownloadClientForm {
 	return {
 		id: client.id,
@@ -148,42 +128,6 @@ export function metadataProviderFormFromProvider(provider: MetadataProvider): Me
 		accessToken: provider.accessToken ?? '',
 		enabled: provider.enabled,
 		priority: provider.priority
-	};
-}
-
-export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfileForm {
-	return {
-		id: profile.id,
-		name: profile.name,
-		qualityIds: [...(profile.qualityIds ?? [])],
-		upgradesAllowed: profile.upgradesAllowed,
-		upgradeUntilQualityId: profile.upgradeUntilQualityId,
-		minimumCustomFormatScore: profile.minimumCustomFormatScore,
-		upgradeUntilCustomFormatScore: profile.upgradeUntilCustomFormatScore,
-		minimumCustomFormatScoreIncrement: profile.minimumCustomFormatScoreIncrement,
-		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
-		targetLanguages: [...(profile.targetLanguages ?? [])],
-		targetLanguageScores: languageScoresFromProfile(profile),
-		customFormatScores: (profile.customFormatScores ?? []).map((score) => ({ ...score }))
-	};
-}
-
-export function customFormatFormFromFormat(format: CustomFormat): CustomFormatForm {
-	return {
-		id: format.id,
-		name: format.name,
-		includeInRenameTemplate: format.includeInRenameTemplate,
-		includeSpecs: format.includeSpecs.map((spec) => ({ ...spec })),
-		excludeSpecs: format.excludeSpecs.map((spec) => ({ ...spec }))
-	};
-}
-
-export function userFormFromUser(user: ManagedUser): UserForm {
-	return {
-		id: user.id,
-		username: user.username,
-		password: '',
-		role: user.role
 	};
 }
 
@@ -239,112 +183,9 @@ export function normalizePathMappingForm(form: PathMappingForm): PathMappingRequ
 	};
 }
 
-export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileRequest {
-	const qualityIds = [...new Set(form.qualityIds.map((id) => id.trim()).filter(Boolean))];
-	const customFormatScores = form.customFormatScores
-		.filter((score) => score.customFormatId)
-		.map((score) => ({
-			customFormatId: score.customFormatId,
-			score: normalizedInteger(score.score)
-		}));
-	const targetLanguageScores = languageScoresFromForm(form);
-	return {
-		name: form.name.trim(),
-		qualityIds,
-		upgradesAllowed: form.upgradesAllowed,
-		upgradeUntilQualityId:
-			form.upgradeUntilQualityId && qualityIds.includes(form.upgradeUntilQualityId)
-				? form.upgradeUntilQualityId
-				: undefined,
-		minimumCustomFormatScore: normalizedInteger(form.minimumCustomFormatScore),
-		upgradeUntilCustomFormatScore: normalizedInteger(form.upgradeUntilCustomFormatScore),
-		minimumCustomFormatScoreIncrement: Math.max(
-			0,
-			normalizedInteger(form.minimumCustomFormatScoreIncrement)
-		),
-		removeNonEnabledLanguages: form.removeNonEnabledLanguages,
-		targetLanguages: targetLanguageScores.map((score) => score.languageId),
-		targetLanguageScores,
-		customFormatScores
-	};
-}
-
-function languageScoresFromProfile(profile: MediaProfile) {
-	if (profile.targetLanguageScores?.length) {
-		return profile.targetLanguageScores.map((score) => ({ ...score }));
-	}
-	return (profile.targetLanguages ?? []).map((languageId) => ({
-		languageId,
-		score: 0,
-		required: false
-	}));
-}
-
-function languageScoresFromForm(form: MediaProfileForm) {
-	const seen = new Set<string>();
-	const source = form.targetLanguageScores?.length
-		? form.targetLanguageScores
-		: form.targetLanguages.map((languageId) => ({ languageId, score: 0, required: false }));
-	const scores = [];
-	for (const value of source) {
-		const languageId = value.languageId.trim();
-		if (!languageId || seen.has(languageId)) {
-			continue;
-		}
-		seen.add(languageId);
-		scores.push({ languageId, score: normalizedInteger(value.score), required: value.required });
-	}
-	return scores;
-}
-
-function normalizedInteger(value: number | string | undefined) {
-	const parsed = Number(value ?? 0);
-	if (!Number.isFinite(parsed)) {
-		return 0;
-	}
-	return Math.trunc(parsed);
-}
-
-export function normalizeCustomFormatForm(form: CustomFormatForm): CustomFormatRequest {
-	return {
-		name: form.name.trim(),
-		includeInRenameTemplate: form.includeInRenameTemplate,
-		includeSpecs: normalizeCustomFormatSpecs(form.includeSpecs),
-		excludeSpecs: normalizeCustomFormatSpecs(form.excludeSpecs)
-	};
-}
-
-export function normalizeUserCreateForm(form: UserForm): UserCreateRequest {
-	return {
-		username: form.username.trim(),
-		password: form.password,
-		role: form.role
-	};
-}
-
-export function normalizeUserUpdateForm(form: UserForm): UserUpdateRequest {
-	return {
-		username: form.username.trim(),
-		password: optionalString(form.password),
-		role: form.role
-	};
-}
-
 function optionalString(value: string | undefined) {
 	const trimmed = value?.trim() ?? '';
 	return trimmed === '' ? undefined : trimmed;
-}
-
-function normalizeCustomFormatSpecs(specs: CustomFormatRequest['includeSpecs']) {
-	return specs
-		.map((spec) => ({
-			id: spec.id.trim(),
-			name: spec.name.trim(),
-			type: spec.type,
-			value: spec.value.trim(),
-			required: spec.required
-		}))
-		.filter((spec) => spec.id !== '' && spec.name !== '' && spec.value !== '');
 }
 
 function parseCategories(value: string) {

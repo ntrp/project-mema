@@ -14,11 +14,7 @@ import {
 	emptyPathMappingForm,
 	emptyUserForm
 } from '$lib/settings/forms';
-import {
-	connectAppEvents,
-	disconnectAppEvents,
-	type EventConnectionDeps
-} from './eventConnection';
+import { connectAppEvents, disconnectAppEvents, type EventConnectionDeps } from './eventConnection';
 import { emptyTagForm, errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
@@ -144,6 +140,7 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			state.customFormats = [];
 			state.users = [];
 			state.tags = [];
+			state.languages = [];
 			state.mediaItems = [];
 			state.mediaRequests = [];
 			state.discoverSections = [];

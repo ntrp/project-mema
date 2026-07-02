@@ -20,6 +20,7 @@
 	import type {
 		DownloadActivity,
 		LibraryFolder,
+		Language,
 		MediaItem,
 		MediaItemUpdateRequest,
 		QualityProfileOption,
@@ -34,6 +35,7 @@
 		loading?: boolean;
 		mediaItems?: MediaItem[];
 		libraryFolders: LibraryFolder[];
+		languages: Language[];
 		qualityProfiles: QualityProfileOption[];
 		requestedItemId: string;
 		releaseResults?: ReleaseSearchState;
@@ -61,6 +63,7 @@
 		loading = false,
 		mediaItems = [],
 		libraryFolders,
+		languages,
 		qualityProfiles,
 		requestedItemId,
 		releaseResults,
@@ -146,6 +149,7 @@
 								{releaseResults}
 								activities={itemActivities}
 								{libraryFolders}
+								{languages}
 								{qualityProfiles}
 								{searchingItemId}
 								{grabbingKey}
@@ -164,6 +168,7 @@
 								{releaseResults}
 								activities={itemActivities}
 								{libraryFolders}
+								{languages}
 								{qualityProfiles}
 								{searchingItemId}
 								{grabbingKey}

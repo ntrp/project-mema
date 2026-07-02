@@ -1893,6 +1893,104 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/languages:
+    get:
+      operationId: listLanguages
+      tags:
+        - Settings
+      summary: List release languages
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Release languages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LanguageListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createLanguage
+      tags:
+        - Settings
+      summary: Create a release language
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LanguageRequest"
+      responses:
+        "201":
+          description: Release language created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Language"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /settings/languages/{code}:
+    parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 8
+    put:
+      operationId: updateLanguage
+      tags:
+        - Settings
+      summary: Update a release language
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LanguageUpdateRequest"
+      responses:
+        "200":
+          description: Release language updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Language"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteLanguage
+      tags:
+        - Settings
+      summary: Delete a release language
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Release language deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/library/folder-options:
     get:
       operationId: listLibraryFolderOptions
@@ -3637,6 +3735,79 @@ components:
           type: string
           minLength: 1
           maxLength: 80
+    LanguageListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - languages
+      properties:
+        languages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Language"
+    Language:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - displayName
+        - aliases
+        - createdAt
+        - updatedAt
+      properties:
+        code:
+          type: string
+        displayName:
+          type: string
+        aliases:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LanguageRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - displayName
+        - aliases
+      properties:
+        code:
+          type: string
+          minLength: 2
+          maxLength: 8
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 120
+    LanguageUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - displayName
+        - aliases
+      properties:
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 120
     QualitySizeSettingsResponse:
       type: object
       additionalProperties: false
@@ -3743,6 +3914,8 @@ components:
         - upgradeUntilCustomFormatScore
         - minimumCustomFormatScoreIncrement
         - removeNonEnabledLanguages
+        - preferredProtocol
+        - seriesPackPreference
         - targetLanguages
         - targetLanguageScores
         - customFormatScores
@@ -3776,6 +3949,18 @@ components:
           minimum: 0
         removeNonEnabledLanguages:
           type: boolean
+        preferredProtocol:
+          type: string
+          enum:
+            - any
+            - torrent
+            - usenet
+        seriesPackPreference:
+          type: string
+          enum:
+            - auto
+            - preferPacks
+            - preferEpisodes
         targetLanguages:
           type: array
           items:
@@ -4217,6 +4402,11 @@ components:
         - score
         - scoreContributors
         - languages
+        - matchedMedia
+        - customFormatScore
+        - customFormatContributors
+        - languageContributors
+        - rankContributors
       properties:
         severity:
           type: string
@@ -4243,6 +4433,23 @@ components:
           type: array
           items:
             type: string
+        matchedMedia:
+          type: string
+        customFormatScore:
+          type: integer
+          format: int32
+        customFormatContributors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseScoreContributor"
+        languageContributors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseScoreContributor"
+        rankContributors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseScoreContributor"
     ReleaseScoreContributor:
       type: object
       additionalProperties: false
@@ -4271,6 +4478,42 @@ components:
         releaseId:
           type: string
           format: uuid
+        overrideMatch:
+          type: boolean
+          default: false
+        overrideDetails:
+          $ref: "#/components/schemas/ReleaseOverrideDetails"
+    ReleaseOverrideDetails:
+      type: object
+      additionalProperties: false
+      properties:
+        seriesTitle:
+          type: string
+          maxLength: 500
+        movieTitle:
+          type: string
+          maxLength: 500
+        seasonNumber:
+          type: integer
+          format: int32
+          minimum: 0
+        episodeNumbers:
+          type: array
+          items:
+            type: integer
+            format: int32
+            minimum: 0
+        releaseGroup:
+          type: string
+          maxLength: 200
+        quality:
+          type: string
+          maxLength: 100
+        languages:
+          type: array
+          items:
+            type: string
+            maxLength: 100
     GrabReleaseResponse:
       type: object
       additionalProperties: false

@@ -3,6 +3,7 @@ package decisions
 import (
 	"regexp"
 	"strings"
+	"sync"
 
 	"media-manager/internal/storage"
 )
@@ -143,14 +144,35 @@ func valueMatches(pattern string, candidate string) bool {
 	if strings.TrimSpace(pattern) == "" || strings.TrimSpace(candidate) == "" {
 		return false
 	}
-	compiled, err := regexp.Compile("(?i)" + pattern)
-	if err == nil {
-		return compiled.MatchString(candidate)
+	compiled := cachedPattern(pattern)
+	if compiled.regex != nil {
+		return compiled.regex.MatchString(candidate)
 	}
-	if literalPattern.MatchString(pattern) {
+	if compiled.literal {
 		return containsAnyNormalized(candidate, pattern)
 	}
 	return false
+}
+
+type cachedRegexPattern struct {
+	regex   *regexp.Regexp
+	literal bool
+}
+
+var regexPatternCache sync.Map
+
+func cachedPattern(pattern string) cachedRegexPattern {
+	if cached, ok := regexPatternCache.Load(pattern); ok {
+		return cached.(cachedRegexPattern)
+	}
+	compiled := cachedRegexPattern{}
+	if regex, err := regexp.Compile("(?i)" + pattern); err == nil {
+		compiled.regex = regex
+	} else {
+		compiled.literal = literalPattern.MatchString(pattern)
+	}
+	actual, _ := regexPatternCache.LoadOrStore(pattern, compiled)
+	return actual.(cachedRegexPattern)
 }
 
 var literalPattern = regexp.MustCompile(`^[A-Za-z0-9 ._+-]+$`)

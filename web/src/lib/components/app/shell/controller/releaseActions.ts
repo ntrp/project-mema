@@ -5,7 +5,12 @@ import {
 	grabMediaRelease as grabMediaReleaseRequest,
 	searchMediaReleases as searchMediaReleasesRequest
 } from '$lib/settings/api';
-import type { DownloadActivity, MediaItem, ReleaseCandidate } from '$lib/settings/types';
+import type {
+	DownloadActivity,
+	MediaItem,
+	ReleaseCandidate,
+	ReleaseOverrideDetails
+} from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
@@ -77,12 +82,17 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 		}
 	}
 
-	async function grabRelease(item: MediaItem, release: ReleaseCandidate) {
+	async function grabRelease(
+		item: MediaItem,
+		release: ReleaseCandidate,
+		overrideMatch = false,
+		overrideDetails?: ReleaseOverrideDetails
+	) {
 		state.grabbingKey = `${item.id}:${release.id}`;
 		clearNotice();
 
 		try {
-			const result = await grabMediaReleaseRequest(item.id, release);
+			const result = await grabMediaReleaseRequest(item.id, release, overrideMatch, overrideDetails);
 			state.activities = [
 				result.activity,
 				...state.activities.filter((activity) => activity.id !== result.activity.id)

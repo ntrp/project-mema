@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import SearchIcon from '@lucide/svelte/icons/search';
-	import SlidersHorizontalIcon from '@lucide/svelte/icons/sliders-horizontal';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
-	import { Badge } from '$lib/components/ui/badge';
-	import { Button } from '$lib/components/ui/button';
-	import type { MediaItem, ReleaseCandidate, ReleaseSearchState } from '$lib/settings/types';
+	import type {
+		MediaItem,
+		Language,
+		ReleaseCandidate,
+		ReleaseOverrideDetails,
+		ReleaseSearchState
+	} from '$lib/settings/types';
 	import {
 		activeFilterCount,
 		defaultReleaseFilters,
@@ -20,8 +22,9 @@
 		releaseSearchQueryVariants,
 		type ReleaseSearchContext
 	} from './releaseSearchQuery';
+	import ReleaseOverrideDetailsStep from './ReleaseOverrideDetailsStep.svelte';
+	import ReleaseSearchControls from './ReleaseSearchControls.svelte';
 	import ReleaseSearchFilters from './ReleaseSearchFilters.svelte';
-	import ReleaseSearchQueryInput from './ReleaseSearchQueryInput.svelte';
 	import ReleaseSearchResultsTable from './ReleaseSearchResultsTable.svelte';
 	import ReleaseSearchStatusLog from './ReleaseSearchStatusLog.svelte';
 	import {
@@ -40,8 +43,14 @@
 		releaseResults?: ReleaseSearchState;
 		grabbingKey?: string;
 		searchContext?: ReleaseSearchContext;
+		languages: Language[];
 		canManage: boolean;
-		onGrab: (_item: MediaItem, _release: ReleaseCandidate) => void;
+		onGrab: (
+			_item: MediaItem,
+			_release: ReleaseCandidate,
+			_overrideMatch?: boolean,
+			_details?: ReleaseOverrideDetails
+		) => void;
 		onClose: () => void;
 	}
 
@@ -50,6 +59,7 @@
 		releaseResults,
 		grabbingKey,
 		searchContext = { type: 'title' },
+		languages,
 		canManage,
 		onGrab,
 		onClose
@@ -61,8 +71,9 @@
 	let searching = $state(false);
 	let statusMessages = $state<ReleaseSearchLogEntry[]>([placeholderLogEntry()]);
 	let filters = $state<ReleaseFilters>(defaultReleaseFilters());
-	let sort = $state<ReleaseSort>({ direction: 'desc' });
+	let sort = $state<ReleaseSort>({ key: 'score', direction: 'desc' });
 	let filtersOpen = $state(false);
+	let overrideRelease = $state<ReleaseCandidate | undefined>();
 	let unsubscribeSearch: (() => void) | undefined;
 	const systemQuery = $derived(releaseSearchQuery(item, searchContext));
 	const systemQueryVariants = $derived(releaseSearchQueryVariants(item, searchContext));
@@ -117,64 +128,69 @@
 	function appendStatus(status: Parameters<typeof applyStatusToLog>[1]) {
 		statusMessages = applyStatusToLog(statusMessages, status).slice(-100);
 	}
+
+	function handleGrab(
+		grabItem: MediaItem,
+		release: ReleaseCandidate,
+		overrideMatch = false,
+		details?: ReleaseOverrideDetails
+	) {
+		if (overrideMatch && !details) {
+			overrideRelease = release;
+			return;
+		}
+		onGrab(grabItem, release, overrideMatch, details);
+	}
 </script>
 
 <SettingsFormModal
-	title="Manual search"
+	title={overrideRelease ? 'Grab with override' : 'Manual search'}
 	modalClass="max-h-[calc(100vh-32px)] w-[min(1280px,calc(100vw-32px))]"
 	{onClose}
 >
-	<div class="grid gap-5">
-		<div class="grid gap-3 md:grid-cols-2 md:items-end">
-			<ReleaseSearchQueryInput
+	{#if overrideRelease}
+		<ReleaseOverrideDetailsStep
+			{item}
+			release={overrideRelease}
+			{languages}
+			{qualityOptions}
+			grabbing={grabbingKey === `${item.id}:${overrideRelease.id}`}
+			onBack={() => (overrideRelease = undefined)}
+			onConfirm={handleGrab}
+		/>
+	{:else}
+		<div class="grid gap-5">
+			<ReleaseSearchControls
 				bind:overrideQuery
 				bind:customQuery
 				queryVariants={systemQueryVariants}
 				disabled={!canManage || searching}
+				{filtersOpen}
+				{filterCount}
+				{searching}
+				searchDisabled={!canManage || searching || !searchQuery}
+				onToggleFilters={() => (filtersOpen = !filtersOpen)}
+				onSearch={submitSearch}
 			/>
-			<div class="flex items-center justify-end gap-2">
-				<Button
-					type="button"
-					variant="outline"
-					aria-pressed={filtersOpen}
-					onclick={() => (filtersOpen = !filtersOpen)}
-				>
-					<SlidersHorizontalIcon aria-hidden="true" />
-					<span>Filters</span>
-					{#if filterCount > 0}
-						<Badge variant="secondary" class="ml-1 h-5 min-w-5 rounded-full px-1">
-							{filterCount}
-						</Badge>
-					{/if}
-				</Button>
-				<Button
-					type="button"
-					disabled={!canManage || searching || !searchQuery}
-					onclick={submitSearch}
-				>
-					<SearchIcon aria-hidden="true" />
-					{searching ? 'Searching' : 'Search'}
-				</Button>
-			</div>
+			<ReleaseSearchStatusLog messages={statusMessages} />
+			{#if filtersOpen}
+				<ReleaseSearchFilters
+					{filters}
+					{qualityOptions}
+					onChange={(nextFilters) => (filters = nextFilters)}
+					onReset={() => (filters = defaultReleaseFilters())}
+				/>
+			{/if}
+			<ReleaseSearchResultsTable
+				{item}
+				releases={visibleReleases}
+				{searching}
+				{sort}
+				{grabbingKey}
+				{canManage}
+				onSort={updateSort}
+				onGrab={handleGrab}
+			/>
 		</div>
-		<ReleaseSearchStatusLog messages={statusMessages} />
-		{#if filtersOpen}
-			<ReleaseSearchFilters
-				{filters}
-				{qualityOptions}
-				onChange={(nextFilters) => (filters = nextFilters)}
-				onReset={() => (filters = defaultReleaseFilters())}
-			/>
-		{/if}
-		<ReleaseSearchResultsTable
-			{item}
-			releases={visibleReleases}
-			{searching}
-			{sort}
-			{grabbingKey}
-			{canManage}
-			onSort={updateSort}
-			{onGrab}
-		/>
-	</div>
+	{/if}
 </SettingsFormModal>

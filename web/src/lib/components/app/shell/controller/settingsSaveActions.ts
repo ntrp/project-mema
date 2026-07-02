@@ -2,6 +2,7 @@ import {
 	saveCustomFormat as saveCustomFormatRequest,
 	saveDownloadClient as saveDownloadClientRequest,
 	saveIndexer as saveIndexerRequest,
+	saveLanguage as saveLanguageRequest,
 	saveLibraryFolder as saveLibraryFolderRequest,
 	saveMediaProfile as saveMediaProfileRequest,
 	saveMetadataProvider as saveMetadataProviderRequest,
@@ -13,6 +14,7 @@ import {
 	emptyCustomFormatForm,
 	emptyDownloadClientForm,
 	emptyIndexerForm,
+	emptyLanguageForm,
 	emptyLibraryFolderForm,
 	emptyMediaProfileForm,
 	emptyPathMappingForm,
@@ -171,6 +173,23 @@ export function createSettingsSaveActions(state: AppShellState, deps: SettingsSa
 		}
 	}
 
+	async function saveLanguage(event: SubmitEvent) {
+		event.preventDefault();
+		state.savingLanguage = true;
+		clearNotice();
+
+		try {
+			await saveLanguageRequest(state.languageForm);
+			state.languageForm = emptyLanguageForm();
+			state.message = 'Language saved';
+			await loadSettings();
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not save language');
+		} finally {
+			state.savingLanguage = false;
+		}
+	}
+
 	async function saveMediaProfile(event: SubmitEvent) {
 		event.preventDefault();
 		state.savingMediaProfile = true;
@@ -229,6 +248,7 @@ export function createSettingsSaveActions(state: AppShellState, deps: SettingsSa
 		savePathMapping,
 		saveUser,
 		saveTag,
+		saveLanguage,
 		saveMediaProfile,
 		saveCustomFormat,
 		importCustomFormat

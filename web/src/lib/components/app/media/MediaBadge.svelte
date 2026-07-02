@@ -19,7 +19,7 @@
 
 <span
 	class={cn(
-		'absolute top-2 left-2 z-[3] rounded-md border px-[7px] py-1 text-[11px] font-black uppercase',
+		'absolute top-2 left-2 z-[3] rounded-[3px] border px-[7px] py-1 text-[11px] font-black uppercase',
 		toneClass
 	)}
 >

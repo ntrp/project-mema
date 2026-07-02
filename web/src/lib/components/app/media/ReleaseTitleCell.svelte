@@ -13,11 +13,11 @@
 	let { release, copiedReleaseId, onCopy }: Props = $props();
 </script>
 
-<div class="flex max-w-96 items-center gap-1.5">
+<div class="group/title relative w-full min-w-0">
 	<Tooltip.Root>
 		<Tooltip.Trigger>
 			{#snippet child({ props })}
-				<span {...props} class="block min-w-0 flex-1 truncate">{release.title}</span>
+				<span {...props} class="block min-w-0 truncate pr-7">{release.title}</span>
 			{/snippet}
 		</Tooltip.Trigger>
 		<Tooltip.Content class="max-w-160">{release.title}</Tooltip.Content>
@@ -31,12 +31,15 @@
 					variant="ghost"
 					size="icon-sm"
 					aria-label="Copy release title"
+					class="pointer-events-none absolute top-1/2 right-0 -translate-y-1/2 opacity-0 transition-opacity group-hover/title:pointer-events-auto group-hover/title:opacity-100 group-focus-within/title:pointer-events-auto group-focus-within/title:opacity-100"
 					onclick={() => onCopy(release)}
 				>
 					<CopyIcon aria-hidden="true" />
 				</Button>
 			{/snippet}
 		</Tooltip.Trigger>
-		<Tooltip.Content>{copiedReleaseId === release.id ? 'Copied title' : 'Copy title'}</Tooltip.Content>
+		<Tooltip.Content class="max-w-160">
+			{copiedReleaseId === release.id ? 'Copied title' : release.title}
+		</Tooltip.Content>
 	</Tooltip.Root>
 </div>

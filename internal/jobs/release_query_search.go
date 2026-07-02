@@ -35,10 +35,7 @@ func searchReleaseQueries(
 	searchErrors := []string{}
 	for _, config := range input.configs {
 		for _, searchQuery := range input.queries {
-			startedAt := time.Now()
-			publishIndexerSearchStarted(input.progress, config.Name, searchQuery)
-			found, cacheHit, err := executeIndexerSearch(ctx, input.settings, input.indexerService, input.limiter, config, input.item.Type, searchQuery, input.cacheSettings, input.eventBroker)
-			durationMs := time.Since(startedAt).Milliseconds()
+			found, err := searchIndexerQuery(ctx, input, config, searchQuery)
 			if err != nil {
 				if input.manual && isIndexer429(err) {
 					publishManualIndexerRateLimitEvent(ctx, input.settings, input.eventBroker, config, input.item, searchQuery, err)
@@ -60,17 +57,66 @@ func searchReleaseQueries(
 				searchErrors = append(searchErrors, message)
 				continue
 			}
-			if !cacheHit {
-				recordIndexerSearchSuccess(ctx, input.settings, config)
-			}
-			slog.Debug("indexer release search finished", "mediaItemId", input.item.ID, "title", input.item.Title, "indexerName", config.Name, "query", searchQuery, "cacheHit", cacheHit, "releaseCount", len(found))
-			publishIndexerSearchFinished(input.progress, config.Name, searchQuery, len(found), cacheHit, durationMs)
 			for _, release := range found {
 				releases = append(releases, releaseCandidateInput(input.item.ID, release, input.criteria))
 			}
 		}
 	}
 	return releases, searchErrors, nil
+}
+
+func searchIndexerQuery(
+	ctx context.Context,
+	input releaseQuerySearch,
+	config storage.Indexer,
+	query string,
+) ([]indexers.Release, error) {
+	found, err := runIndexerQuery(ctx, input, config, query)
+	if err != nil || len(found) > 0 {
+		return found, err
+	}
+	fallback := movieYearFallbackQuery(input.item, query)
+	if fallback == "" || fallback == query {
+		return found, nil
+	}
+	publishReleaseSearchProgress(
+		input.progress,
+		"%s returned no releases for %q; retrying without year",
+		config.Name,
+		query,
+	)
+	return runIndexerQuery(ctx, input, config, fallback)
+}
+
+func runIndexerQuery(
+	ctx context.Context,
+	input releaseQuerySearch,
+	config storage.Indexer,
+	query string,
+) ([]indexers.Release, error) {
+	startedAt := time.Now()
+	publishIndexerSearchStarted(input.progress, config.Name, query)
+	found, cacheHit, err := executeIndexerSearch(
+		ctx,
+		input.settings,
+		input.indexerService,
+		input.limiter,
+		config,
+		input.item.Type,
+		query,
+		input.cacheSettings,
+		input.eventBroker,
+	)
+	durationMs := time.Since(startedAt).Milliseconds()
+	if err != nil {
+		return nil, err
+	}
+	if !cacheHit {
+		recordIndexerSearchSuccess(ctx, input.settings, config)
+	}
+	slog.Debug("indexer release search finished", "mediaItemId", input.item.ID, "title", input.item.Title, "indexerName", config.Name, "query", query, "cacheHit", cacheHit, "releaseCount", len(found))
+	publishIndexerSearchFinished(input.progress, config.Name, query, len(found), cacheHit, durationMs)
+	return found, nil
 }
 
 func branchError(config storage.Indexer, query string, err error) string {

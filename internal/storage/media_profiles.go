@@ -4,54 +4,10 @@ import (
 	"context"
 	"errors"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
-
-type MediaProfile struct {
-	ID                                string
-	Name                              string
-	QualityIDs                        []string
-	UpgradesAllowed                   bool
-	UpgradeUntilQualityID             *string
-	MinimumCustomFormatScore          int32
-	UpgradeUntilCustomFormatScore     int32
-	MinimumCustomFormatScoreIncrement int32
-	RemoveNonEnabledLanguages         bool
-	TargetLanguages                   []string
-	TargetLanguageScores              []MediaProfileLanguageScore
-	CustomFormatScores                []MediaProfileCustomFormatScore
-	CreatedAt                         time.Time
-	UpdatedAt                         time.Time
-}
-
-type MediaProfileInput struct {
-	Name                              string
-	QualityIDs                        []string
-	UpgradesAllowed                   bool
-	UpgradeUntilQualityID             *string
-	MinimumCustomFormatScore          int32
-	UpgradeUntilCustomFormatScore     int32
-	MinimumCustomFormatScoreIncrement int32
-	RemoveNonEnabledLanguages         bool
-	TargetLanguages                   []string
-	TargetLanguageScores              []MediaProfileLanguageScore
-	CustomFormatScores                []MediaProfileCustomFormatScore
-}
-
-type MediaProfileLanguageScore struct {
-	LanguageID string
-	Score      int32
-	Required   bool
-}
-
-type MediaProfileCustomFormatScore struct {
-	CustomFormatID uuid.UUID
-	Score          int32
-}
 
 func (s *SettingsStore) ListMediaProfiles(ctx context.Context) ([]MediaProfile, error) {
 	rows, err := s.pool.Query(ctx, `
@@ -64,6 +20,8 @@ func (s *SettingsStore) ListMediaProfiles(ctx context.Context) ([]MediaProfile, 
 			upgrade_until_custom_format_score,
 			minimum_custom_format_score_increment,
 			remove_non_enabled_languages,
+			preferred_protocol,
+			series_pack_preference,
 			created_at,
 			updated_at
 		from app.media_profiles
@@ -169,9 +127,11 @@ func (s *SettingsStore) saveMediaProfile(
 				minimum_custom_format_score,
 				upgrade_until_custom_format_score,
 				minimum_custom_format_score_increment,
-				remove_non_enabled_languages
+				remove_non_enabled_languages,
+				preferred_protocol,
+				series_pack_preference
 			)
-			values ($1, $2, $3, $4, $5, $6, $7, $8)
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		`,
 			id,
 			name,
@@ -181,6 +141,8 @@ func (s *SettingsStore) saveMediaProfile(
 			input.UpgradeUntilCustomFormatScore,
 			input.MinimumCustomFormatScoreIncrement,
 			input.RemoveNonEnabledLanguages,
+			input.PreferredProtocol,
+			input.SeriesPackPreference,
 		); err != nil {
 			return MediaProfile{}, normalizeMediaProfileWriteError(err)
 		}
@@ -194,6 +156,8 @@ func (s *SettingsStore) saveMediaProfile(
 				upgrade_until_custom_format_score = $6,
 				minimum_custom_format_score_increment = $7,
 				remove_non_enabled_languages = $8,
+				preferred_protocol = $9,
+				series_pack_preference = $10,
 				updated_at = now()
 			where id = $1
 		`,
@@ -205,6 +169,8 @@ func (s *SettingsStore) saveMediaProfile(
 			input.UpgradeUntilCustomFormatScore,
 			input.MinimumCustomFormatScoreIncrement,
 			input.RemoveNonEnabledLanguages,
+			input.PreferredProtocol,
+			input.SeriesPackPreference,
 		)
 		if err != nil {
 			return MediaProfile{}, normalizeMediaProfileWriteError(err)
@@ -240,6 +206,8 @@ func (s *SettingsStore) getMediaProfile(ctx context.Context, id string) (MediaPr
 			upgrade_until_custom_format_score,
 			minimum_custom_format_score_increment,
 			remove_non_enabled_languages,
+			preferred_protocol,
+			series_pack_preference,
 			created_at,
 			updated_at
 		from app.media_profiles

@@ -123,10 +123,23 @@ func autoSearchDownload(
 		return err
 	}
 	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
-	decision, ok := decisionEngine.ChooseRelease(item, releases)
+	profile, formats, languages := releaseDecisionContext(ctx, settings, item)
+	decision, ok := decisionEngine.ChooseReleaseWithProfileAndLanguages(
+		item,
+		profile,
+		formats,
+		languages,
+		releases,
+	)
 	if !ok {
 		slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
-		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseCount": len(releases), "errorCount": len(searchErrors)})
+		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{
+			"mediaItemId":  item.ID.String(),
+			"title":        item.Title,
+			"releaseCount": len(releases),
+			"errorCount":   len(searchErrors),
+			"reasons":      topDecisionRejections(item, profile, formats, languages, releases),
+		})
 		return nil
 	}
 	if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, item, decision.Release); err != nil {
@@ -137,6 +150,40 @@ func autoSearchDownload(
 	slog.Debug("auto search grab queued", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title)
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search queued download", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title})
 	return nil
+}
+
+func topDecisionRejections(
+	item storage.MediaItem,
+	profile *storage.MediaProfile,
+	formats []storage.CustomFormat,
+	languages []storage.Language,
+	releases []storage.ReleaseCandidateInput,
+) []string {
+	seen := map[string]struct{}{}
+	reasons := []string{}
+	for _, release := range releases {
+		match := decisions.EvaluateReleaseCandidateInputMatchWithLanguageContext(
+			item,
+			release,
+			profile,
+			formats,
+			languages,
+		)
+		if match.Severity != "error" {
+			continue
+		}
+		for _, detail := range match.Details {
+			if _, ok := seen[detail]; ok {
+				continue
+			}
+			seen[detail] = struct{}{}
+			reasons = append(reasons, detail)
+			if len(reasons) == 3 {
+				return reasons
+			}
+		}
+	}
+	return reasons
 }
 
 func grabReleaseNow(

@@ -2,6 +2,7 @@ import {
 	deleteCustomFormat as deleteCustomFormatRequest,
 	deleteDownloadClient as deleteDownloadClientRequest,
 	deleteIndexer as deleteIndexerRequest,
+	deleteLanguage as deleteLanguageRequest,
 	deleteLibraryFolder as deleteLibraryFolderRequest,
 	deleteMediaProfile as deleteMediaProfileRequest,
 	deletePathMapping as deletePathMappingRequest,
@@ -16,6 +17,7 @@ import {
 	emptyCustomFormatForm,
 	emptyDownloadClientForm,
 	emptyIndexerForm,
+	emptyLanguageForm,
 	emptyMediaProfileForm,
 	emptyUserForm
 } from '$lib/settings/forms';
@@ -145,6 +147,24 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 		}
 	}
 
+	async function deleteLanguage(code: string) {
+		state.deletingLanguageCode = code;
+		clearNotice();
+
+		try {
+			await deleteLanguageRequest(code);
+			if (state.languageForm.originalCode === code) {
+				state.languageForm = emptyLanguageForm();
+			}
+			state.languages = state.languages.filter((language) => language.code !== code);
+			state.message = 'Language deleted';
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not delete language');
+		} finally {
+			state.deletingLanguageCode = undefined;
+		}
+	}
+
 	async function deleteMediaProfile(id: string) {
 		state.deletingMediaProfileId = id;
 		clearNotice();
@@ -225,6 +245,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 		deletePathMapping,
 		deleteUser,
 		deleteTag,
+		deleteLanguage,
 		deleteMediaProfile,
 		deleteCustomFormat,
 		searchLibraryMatch,

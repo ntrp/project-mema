@@ -26,7 +26,7 @@
 
 <Badge
 	variant="secondary"
-	class={cn('h-auto rounded-md px-2 py-1 leading-tight font-extrabold', toneClass, className)}
+	class={cn('h-auto rounded-[3px] px-2 py-1 leading-tight font-extrabold', toneClass, className)}
 >
 	{@render children()}
 </Badge>

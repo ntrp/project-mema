@@ -7,13 +7,19 @@
 	import { Card } from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import type { CustomFormat, MediaProfileForm, QualitySizeSetting } from '$lib/settings/types';
+	import type {
+		CustomFormat,
+		Language,
+		MediaProfileForm,
+		QualitySizeSetting
+	} from '$lib/settings/types';
 
 	interface Props {
 		title: string;
 		form: MediaProfileForm;
 		customFormats: CustomFormat[];
 		qualities: QualitySizeSetting[];
+		languages: Language[];
 		loadingQualities: boolean;
 		qualityError: string;
 		saving: boolean;
@@ -27,6 +33,7 @@
 		form = $bindable(),
 		customFormats,
 		qualities,
+		languages,
 		loadingQualities,
 		qualityError,
 		saving,
@@ -58,7 +65,7 @@
 					<Input bind:value={form.name} type="text" maxlength={200} required />
 				</div>
 
-				<MediaProfileRules {form} {qualities} onChange={(value) => (form = value)} />
+				<MediaProfileRules {form} {qualities} {languages} onChange={(value) => (form = value)} />
 				<MediaProfileCustomFormatScores
 					{form}
 					{customFormats}

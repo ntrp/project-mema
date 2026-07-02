@@ -9,13 +9,18 @@ import (
 )
 
 type ReleaseMatch struct {
-	Severity          string
-	Details           []string
-	QualityID         string
-	Quality           string
-	Score             int32
-	ScoreContributors []ReleaseScoreContributor
-	Languages         []string
+	Severity                 string
+	Details                  []string
+	QualityID                string
+	Quality                  string
+	Score                    int32
+	ScoreContributors        []ReleaseScoreContributor
+	Languages                []string
+	MatchedMedia             string
+	CustomFormatScore        int32
+	CustomFormatContributors []ReleaseScoreContributor
+	LanguageContributors     []ReleaseScoreContributor
+	RankContributors         []ReleaseScoreContributor
 }
 
 type ReleaseScoreContributor struct {
@@ -89,19 +94,91 @@ func SearchQueriesForCriteria(criteria ReleaseSearchCriteria, original string) [
 }
 
 func EvaluateReleaseMatch(item storage.MediaItem, release storage.ReleaseCandidate) ReleaseMatch {
+	return EvaluateReleaseMatchWithContext(item, release, nil, nil)
+}
+
+func EvaluateReleaseMatchWithContext(
+	item storage.MediaItem,
+	release storage.ReleaseCandidate,
+	profile *storage.MediaProfile,
+	formats []storage.CustomFormat,
+) ReleaseMatch {
+	return EvaluateReleaseMatchWithLanguageContext(item, release, profile, formats, nil)
+}
+
+func EvaluateReleaseMatchWithLanguageContext(
+	item storage.MediaItem,
+	release storage.ReleaseCandidate,
+	profile *storage.MediaProfile,
+	formats []storage.CustomFormat,
+	languages []storage.Language,
+) ReleaseMatch {
 	criteria := releaseCriteria(item, release)
 	parsed := ParseReleaseFileName(release.Title)
-	score := releaseQualityScore(parsed.QualityID)
-	details := []string{}
+	context := ReleaseEvaluationContext{
+		Item:      item,
+		Profile:   profile,
+		Formats:   formats,
+		Languages: languages,
+	}
+	return evaluateParsedRelease(context, criteria, parsed, releaseMeta{
+		Title:       release.Title,
+		IndexerType: release.IndexerType,
+		SizeBytes:   release.SizeBytes,
+		Seeders:     release.Seeders,
+		Peers:       release.Peers,
+		PublishedAt: release.PublishedAt,
+	})
+}
 
-	if !resourceTitleMatches(criteria.Title, parsedResourceTitle(item.Type, parsed), release.Title) {
-		return releaseMatch("error", parsed, score, "Does not match this series/movie.")
+type ReleaseEvaluationContext struct {
+	Item      storage.MediaItem
+	Profile   *storage.MediaProfile
+	Formats   []storage.CustomFormat
+	Languages []storage.Language
+}
+
+type releaseMeta struct {
+	Title       string
+	IndexerType string
+	SizeBytes   int64
+	Seeders     *int32
+	Peers       *int32
+	PublishedAt any
+}
+
+func evaluateParsedRelease(
+	context ReleaseEvaluationContext,
+	criteria ReleaseSearchCriteria,
+	parsed ParsedRelease,
+	meta releaseMeta,
+) ReleaseMatch {
+	item := context.Item
+	parsed = applyLanguageCatalog(parsed, context.Languages)
+	score := profileQualityScore(parsed.QualityID, context.Profile)
+	details := []string{}
+	matchedMedia := parsedResourceTitle(item.Type, parsed)
+	customScore, customContributors := customFormatScore(parsed, context.Profile, context.Formats)
+	languageScore, languageContributors, languageReject := languageScore(parsed, context.Profile)
+
+	if !resourceTitleMatches(criteria.Title, matchedMedia, meta.Title) {
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.")
 	}
 	if yearMismatch(criteria.Year, parsed.Year) {
-		return releaseMatch("error", parsed, score, "Does not match this series/movie.", fmt.Sprintf("Release year is %s.", parsed.Year))
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.", fmt.Sprintf("Release year is %s.", parsed.Year))
 	}
 	if reason := criteriaMismatch(criteria, parsed); reason != "" {
-		return releaseMatch("error", parsed, score, "Does not match this series/movie.", reason)
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.", reason)
+	}
+	if reason := qualityRejection(parsed, context.Profile); reason != "" {
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, reason)
+	}
+
+	if languageReject != "" {
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, languageReject)
+	}
+	if context.Profile != nil && customScore < context.Profile.MinimumCustomFormatScore {
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Custom format score is below the profile minimum.")
 	}
 
 	details = append(details, "Matches the requested resource.")
@@ -116,92 +193,19 @@ func EvaluateReleaseMatch(item storage.MediaItem, release storage.ReleaseCandida
 	}
 	if criteria.Kind == "episode" && parsed.SeasonPack {
 		details = append(details, "This is a whole season release, but the search requested an episode.")
-		return releaseMatch("warning", parsed, score, details...)
+		return decisionMatch("warning", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
 	}
 	if score <= currentScore && currentScore > 0 {
-		return releaseMatch("warning", parsed, score, details...)
+		return decisionMatch("warning", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
 	}
-	return releaseMatch("info", parsed, score, details...)
+	return decisionMatch("info", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
 }
 
 func EvaluateReleaseCandidateInputMatch(
 	item storage.MediaItem,
 	release storage.ReleaseCandidateInput,
 ) ReleaseMatch {
-	return EvaluateReleaseMatch(item, storage.ReleaseCandidate{
-		MediaItemID:      release.MediaItemID,
-		IndexerID:        release.IndexerID,
-		IndexerName:      release.IndexerName,
-		IndexerType:      release.IndexerType,
-		Title:            release.Title,
-		DownloadURL:      release.DownloadURL,
-		InfoURL:          release.InfoURL,
-		GUID:             release.GUID,
-		SizeBytes:        release.SizeBytes,
-		Seeders:          release.Seeders,
-		Peers:            release.Peers,
-		PublishedAt:      release.PublishedAt,
-		SearchKind:       release.SearchKind,
-		RequestedSeason:  release.RequestedSeason,
-		RequestedEpisode: release.RequestedEpisode,
-	})
-}
-
-func releaseCriteria(item storage.MediaItem, release storage.ReleaseCandidate) ReleaseSearchCriteria {
-	criteria := SearchCriteriaForQuery(item, "")
-	if release.SearchKind != "" {
-		criteria.Kind = release.SearchKind
-	}
-	criteria.SeasonNumber = release.RequestedSeason
-	criteria.EpisodeNumber = release.RequestedEpisode
-	return criteria
-}
-
-func parsedResourceTitle(mediaType string, parsed ParsedRelease) string {
-	if mediaType == "series" && parsed.SeriesTitle != "" {
-		return parsed.SeriesTitle
-	}
-	return parsed.MovieTitle
-}
-
-func criteriaMismatch(criteria ReleaseSearchCriteria, parsed ParsedRelease) string {
-	switch criteria.Kind {
-	case "season":
-		if criteria.SeasonNumber != nil && !sameInt32(criteria.SeasonNumber, parsed.SeasonNumber) {
-			return fmt.Sprintf("Release season does not match S%s.", padded(*criteria.SeasonNumber, 2))
-		}
-	case "episode":
-		if criteria.SeasonNumber != nil && !sameInt32(criteria.SeasonNumber, parsed.SeasonNumber) {
-			return fmt.Sprintf("Release season does not match S%s.", padded(*criteria.SeasonNumber, 2))
-		}
-		if parsed.SeasonPack {
-			return ""
-		}
-		if criteria.EpisodeNumber != nil && !sameInt32(criteria.EpisodeNumber, parsed.EpisodeNumber) {
-			return fmt.Sprintf("Release episode does not match E%s.", padded(*criteria.EpisodeNumber, 2))
-		}
-	}
-	return ""
-}
-
-func releaseMatch(severity string, parsed ParsedRelease, score int32, details ...string) ReleaseMatch {
-	return ReleaseMatch{
-		Severity:          severity,
-		Details:           append([]string{}, details...),
-		QualityID:         parsed.QualityID,
-		Quality:           parsed.Quality,
-		Score:             score,
-		ScoreContributors: releaseScoreContributors(parsed, score),
-		Languages:         append([]string{}, parsed.Languages...),
-	}
-}
-
-func releaseScoreContributors(parsed ParsedRelease, score int32) []ReleaseScoreContributor {
-	label := "Quality"
-	if parsed.Quality != "" {
-		label = fmt.Sprintf("Quality: %s", parsed.Quality)
-	}
-	return []ReleaseScoreContributor{{Label: label, Score: score}}
+	return EvaluateReleaseCandidateInputMatchWithContext(item, release, nil, nil)
 }
 
 func currentQualityScore(item storage.MediaItem) int32 {

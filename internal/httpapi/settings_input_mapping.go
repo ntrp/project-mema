@@ -158,6 +158,29 @@ func tagInput(w http.ResponseWriter, request TagRequest) (string, bool) {
 	return name, true
 }
 
+func languageInput(w http.ResponseWriter, request LanguageRequest) (storage.LanguageInput, bool) {
+	return validateLanguageInput(w, storage.LanguageInput{
+		Code:        request.Code,
+		DisplayName: request.DisplayName,
+		Aliases:     request.Aliases,
+	})
+}
+
+func languageUpdateInput(w http.ResponseWriter, request LanguageUpdateRequest) (storage.LanguageInput, bool) {
+	return validateLanguageInput(w, storage.LanguageInput{
+		DisplayName: request.DisplayName,
+		Aliases:     request.Aliases,
+	})
+}
+
+func validateLanguageInput(w http.ResponseWriter, input storage.LanguageInput) (storage.LanguageInput, bool) {
+	if strings.TrimSpace(input.DisplayName) == "" {
+		writeError(w, http.StatusBadRequest, "invalid_display_name", "Display name is required")
+		return storage.LanguageInput{}, false
+	}
+	return input, true
+}
+
 func qualitySizeSettingsInput(
 	w http.ResponseWriter,
 	request QualitySizeSettingsUpdateRequest,

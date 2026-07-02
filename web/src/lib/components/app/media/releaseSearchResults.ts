@@ -1,5 +1,5 @@
 import type { MediaItem, ReleaseCandidate } from '$lib/settings/types';
-import { languageLabels, qualityMatch, releaseSource } from './releaseCandidateDisplay';
+import { qualityMatch, releaseSource } from './releaseCandidateDisplay';
 
 export type ReleaseSortKey =
 	| 'source'
@@ -8,7 +8,6 @@ export type ReleaseSortKey =
 	| 'title'
 	| 'size'
 	| 'peers'
-	| 'languages'
 	| 'quality'
 	| 'score'
 	| 'match';
@@ -109,7 +108,8 @@ function compareReleases(
 	right: ReleaseCandidate,
 	sort: ReleaseSort
 ) {
-	const severityResult = matchSeverityRank(right.match.severity) - matchSeverityRank(left.match.severity);
+	const severityResult =
+		matchSeverityRank(right.match.severity) - matchSeverityRank(left.match.severity);
 	if (severityResult !== 0) return severityResult;
 	if (!sort.key) return 0;
 	const result = compareValues(sortValue(item, left, sort.key), sortValue(item, right, sort.key));
@@ -130,8 +130,6 @@ function sortValue(item: MediaItem, release: ReleaseCandidate, key?: ReleaseSort
 			return release.sizeBytes;
 		case 'peers':
 			return release.peers ?? release.seeders ?? -1;
-		case 'languages':
-			return languageLabels(release).join(', ');
 		case 'quality':
 			return qualityMatch(release).label;
 		case 'score':

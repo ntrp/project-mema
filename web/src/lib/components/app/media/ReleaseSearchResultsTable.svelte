@@ -1,20 +1,26 @@
 <script lang="ts">
 	import ArrowDownIcon from '@lucide/svelte/icons/arrow-down';
+	import ArrowLeftRightIcon from '@lucide/svelte/icons/arrow-left-right';
 	import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
-	import DownloadIcon from '@lucide/svelte/icons/download';
+	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
+	import ClockIcon from '@lucide/svelte/icons/clock';
+	import HardDriveIcon from '@lucide/svelte/icons/hard-drive';
+	import ListChecksIcon from '@lucide/svelte/icons/list-checks';
+	import ServerIcon from '@lucide/svelte/icons/server';
+	import StarIcon from '@lucide/svelte/icons/star';
 	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import type { MediaItem, ReleaseCandidate } from '$lib/settings/types';
+	import type { MediaItem, ReleaseCandidate, ReleaseOverrideDetails } from '$lib/settings/types';
+	import ReleaseGrabActions from './ReleaseGrabActions.svelte';
 	import ReleaseMatchInfo from './ReleaseMatchInfo.svelte';
 	import ReleaseScoreCell from './ReleaseScoreCell.svelte';
 	import ReleaseTitleCell from './ReleaseTitleCell.svelte';
 	import {
 		ageLabel,
-		languageLabels,
 		peerLabel,
 		qualityMatch,
 		releaseSource,
@@ -31,7 +37,12 @@
 		grabbingKey?: string;
 		canManage: boolean;
 		onSort: (_key: ReleaseSortKey) => void;
-		onGrab: (_item: MediaItem, _release: ReleaseCandidate) => void;
+		onGrab: (
+			_item: MediaItem,
+			_release: ReleaseCandidate,
+			_overrideMatch?: boolean,
+			_details?: ReleaseOverrideDetails
+		) => void;
 	}
 
 	let {
@@ -47,36 +58,16 @@
 
 	let copiedReleaseId = $state<string | undefined>();
 
-	const columns: { key: ReleaseSortKey; label: string }[] = [
-		{ key: 'source', label: 'Protocol' },
-		{ key: 'indexer', label: 'Indexer' },
-		{ key: 'age', label: 'Age' },
+	const columns: { key: ReleaseSortKey; label: string; icon?: string }[] = [
+		{ key: 'source', label: 'Protocol', icon: 'transfer' },
+		{ key: 'indexer', label: 'Indexer', icon: 'server' },
+		{ key: 'age', label: 'Age', icon: 'time' },
 		{ key: 'title', label: 'Title' },
-		{ key: 'size', label: 'Size' },
-		{ key: 'peers', label: 'Peers' },
-		{ key: 'languages', label: 'Languages' },
-		{ key: 'quality', label: 'Identified quality' },
-		{ key: 'score', label: 'Score' },
-		{ key: 'match', label: 'Match info' }
+		{ key: 'size', label: 'Size', icon: 'size' },
+		{ key: 'quality', label: 'Quality', icon: 'quality' },
+		{ key: 'score', label: 'Score', icon: 'score' },
+		{ key: 'match', label: 'Match', icon: 'match' }
 	];
-
-	function releaseKey(release: ReleaseCandidate) {
-		return `${item.id}:${release.id}`;
-	}
-
-	function grabDisabled(release: ReleaseCandidate) {
-		return grabbingKey === releaseKey(release) || release.match.severity === 'error';
-	}
-
-	function grabTooltip(release: ReleaseCandidate) {
-		if (release.match.severity === 'error') {
-			return 'Cannot grab a release that does not match this series/movie';
-		}
-		if (grabbingKey === releaseKey(release)) {
-			return 'Queueing release';
-		}
-		return 'Grab release';
-	}
 
 	async function copyTitle(release: ReleaseCandidate) {
 		await globalThis.navigator.clipboard.writeText(release.title);
@@ -95,86 +86,120 @@
 			<InlineSpinner label="Searching releases" />
 		</div>
 	{:else}
-		<Table.Root class="min-w-[1180px]">
+		<Table.Root class="table-auto">
+			<colgroup>
+				<col class="w-[1%]" />
+				<col class="w-[1%]" />
+				<col class="w-[1%]" />
+				<col class="w-full" />
+				<col class="w-[1%]" />
+				<col class="w-[1%]" />
+				<col class="w-[1%]" />
+				<col class="w-[1%]" />
+				<col class="w-[1%]" />
+			</colgroup>
 			<Table.Header class="sticky top-0 z-10 bg-card">
 				<Table.Row>
 					{#each columns as column (column.key)}
-						<Table.Head>
-							<Button
-								type="button"
-								variant="ghost"
-								class="-ml-2 h-8 px-2"
-								onclick={() => onSort(column.key)}
-							>
-								<span>{column.label}</span>
-								{#if sort.key === column.key}
-									{#if sort.direction === 'asc'}
-										<ArrowUpIcon aria-hidden="true" />
-									{:else}
-										<ArrowDownIcon aria-hidden="true" />
-									{/if}
-								{/if}
-							</Button>
+						<Table.Head class={column.key === 'title' ? 'w-full min-w-0 max-w-0' : 'w-[1%]'}>
+							<Tooltip.Root>
+								<Tooltip.Trigger>
+									{#snippet child({ props })}
+										<Button
+											{...props}
+											type="button"
+											variant="ghost"
+											class="-ml-2 h-8 px-2"
+											aria-label={`Sort by ${column.label}`}
+											onclick={() => onSort(column.key)}
+										>
+											{#if column.icon === 'transfer'}
+												<ArrowLeftRightIcon aria-hidden="true" />
+												<span class="sr-only">{column.label}</span>
+											{:else if column.icon === 'time'}
+												<ClockIcon aria-hidden="true" />
+												<span class="sr-only">{column.label}</span>
+											{:else if column.icon === 'size'}
+												<HardDriveIcon aria-hidden="true" />
+												<span class="sr-only">{column.label}</span>
+											{:else if column.icon === 'server'}
+												<ServerIcon aria-hidden="true" />
+												<span class="sr-only">{column.label}</span>
+											{:else if column.icon === 'quality'}
+												<BadgeCheckIcon aria-hidden="true" />
+												<span class="sr-only">{column.label}</span>
+											{:else if column.icon === 'score'}
+												<StarIcon aria-hidden="true" />
+												<span class="sr-only">{column.label}</span>
+											{:else if column.icon === 'match'}
+												<ListChecksIcon aria-hidden="true" />
+												<span class="sr-only">{column.label}</span>
+											{:else}
+												<span>{column.label}</span>
+											{/if}
+											{#if sort.key === column.key}
+												{#if sort.direction === 'asc'}
+													<ArrowUpIcon aria-hidden="true" />
+												{:else}
+													<ArrowDownIcon aria-hidden="true" />
+												{/if}
+											{/if}
+										</Button>
+									{/snippet}
+								</Tooltip.Trigger>
+								<Tooltip.Content>
+									{column.label}
+								</Tooltip.Content>
+							</Tooltip.Root>
 						</Table.Head>
 					{/each}
-					<Table.Head>Actions</Table.Head>
+					<Table.Head />
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
 				{#each releases as release (release.id)}
 					<Table.Row>
-						<Table.Cell>
-							<Badge variant="outline" class={`uppercase ${releaseSourceBadgeClass(release)}`}>
+						<Table.Cell class="whitespace-nowrap">
+							<Badge
+								variant="outline"
+								class={`relative overflow-visible uppercase ${releaseSourceBadgeClass(release)}`}
+							>
 								{releaseSource(release)}
+								{#if releaseSource(release) === 'torrent' && peerLabel(release) !== '-'}
+									<span
+										class="absolute -right-2 -bottom-2 rounded-[3px] border border-background bg-background px-1 text-[9px] leading-3 font-black text-foreground shadow-sm"
+									>
+										{peerLabel(release)}
+									</span>
+								{/if}
 							</Badge>
 						</Table.Cell>
-						<Table.Cell>{release.indexerName}</Table.Cell>
-						<Table.Cell>{ageLabel(release)}</Table.Cell>
-						<Table.Cell class="max-w-96">
-							<ReleaseTitleCell {release} {copiedReleaseId} onCopy={(value) => void copyTitle(value)} />
-						</Table.Cell>
-						<Table.Cell>{sizeLabel(release.sizeBytes)}</Table.Cell>
-						<Table.Cell>{releaseSource(release) === 'torrent' ? peerLabel(release) : ''}</Table.Cell
+						<Table.Cell class="max-w-[160px] truncate whitespace-nowrap"
+							>{release.indexerName}</Table.Cell
 						>
-						<Table.Cell>
-							<div class="flex max-w-56 flex-wrap gap-1">
-								{#each languageLabels(release) as language (language)}
-									<Badge variant="secondary" class="bg-muted text-muted-foreground"
-										>{language}</Badge
-									>
-								{/each}
-							</div>
+						<Table.Cell class="whitespace-nowrap">{ageLabel(release)}</Table.Cell>
+						<Table.Cell class="w-full min-w-0 max-w-0">
+							<ReleaseTitleCell
+								{release}
+								{copiedReleaseId}
+								onCopy={(value) => void copyTitle(value)}
+							/>
 						</Table.Cell>
-						<Table.Cell>
+						<Table.Cell class="whitespace-nowrap">{sizeLabel(release.sizeBytes)}</Table.Cell>
+						<Table.Cell class="whitespace-nowrap">
 							<Badge variant="secondary" class="bg-muted text-muted-foreground">
 								{qualityMatch(release).label}
 							</Badge>
 						</Table.Cell>
-						<Table.Cell><ReleaseScoreCell match={release.match} /></Table.Cell>
-						<Table.Cell>
+						<Table.Cell class="whitespace-nowrap"
+							><ReleaseScoreCell match={release.match} /></Table.Cell
+						>
+						<Table.Cell class="whitespace-nowrap">
 							<ReleaseMatchInfo info={release.match} />
 						</Table.Cell>
 						<Table.Cell class="text-right">
 							{#if canManage}
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										{#snippet child({ props })}
-											<Button
-												{...props}
-												type="button"
-												size="icon-sm"
-												aria-label="Grab release"
-												disabled={grabDisabled(release)}
-												onclick={() => onGrab(item, release)}
-											>
-												<DownloadIcon aria-hidden="true" />
-											</Button>
-										{/snippet}
-									</Tooltip.Trigger>
-									<Tooltip.Content>
-										{grabTooltip(release)}
-									</Tooltip.Content>
-								</Tooltip.Root>
+								<ReleaseGrabActions {item} {release} {grabbingKey} {onGrab} />
 							{/if}
 						</Table.Cell>
 					</Table.Row>

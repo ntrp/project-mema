@@ -2,6 +2,7 @@ import {
 	emptyCustomFormatForm,
 	emptyDownloadClientForm,
 	emptyIndexerForm,
+	emptyLanguageForm,
 	emptyMediaProfileForm,
 	emptyUserForm
 } from '$lib/settings/forms';
@@ -116,6 +117,7 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 			cancelMediaProfile: () => (state.mediaProfileForm = emptyMediaProfileForm()),
 			cancelCustomFormat: () => (state.customFormatForm = emptyCustomFormatForm()),
 			cancelTag: () => (state.tagForm = emptyTagForm()),
+			cancelLanguage: () => (state.languageForm = emptyLanguageForm()),
 			cancelUser: () => (state.userForm = emptyUserForm())
 		}
 	);

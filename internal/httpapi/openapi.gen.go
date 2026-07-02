@@ -21,43 +21,43 @@ const (
 
 // Defines values for CustomFormatSpecType.
 const (
-	AudioCodec   CustomFormatSpecType = "audioCodec"
-	Edition      CustomFormatSpecType = "edition"
-	IndexerFlag  CustomFormatSpecType = "indexerFlag"
-	Language     CustomFormatSpecType = "language"
-	Quality      CustomFormatSpecType = "quality"
-	ReleaseGroup CustomFormatSpecType = "releaseGroup"
-	ReleaseTitle CustomFormatSpecType = "releaseTitle"
-	ReleaseType  CustomFormatSpecType = "releaseType"
-	Resolution   CustomFormatSpecType = "resolution"
-	Source       CustomFormatSpecType = "source"
-	VideoCodec   CustomFormatSpecType = "videoCodec"
+	CustomFormatSpecTypeAudioCodec   CustomFormatSpecType = "audioCodec"
+	CustomFormatSpecTypeEdition      CustomFormatSpecType = "edition"
+	CustomFormatSpecTypeIndexerFlag  CustomFormatSpecType = "indexerFlag"
+	CustomFormatSpecTypeLanguage     CustomFormatSpecType = "language"
+	CustomFormatSpecTypeQuality      CustomFormatSpecType = "quality"
+	CustomFormatSpecTypeReleaseGroup CustomFormatSpecType = "releaseGroup"
+	CustomFormatSpecTypeReleaseTitle CustomFormatSpecType = "releaseTitle"
+	CustomFormatSpecTypeReleaseType  CustomFormatSpecType = "releaseType"
+	CustomFormatSpecTypeResolution   CustomFormatSpecType = "resolution"
+	CustomFormatSpecTypeSource       CustomFormatSpecType = "source"
+	CustomFormatSpecTypeVideoCodec   CustomFormatSpecType = "videoCodec"
 )
 
 // Valid indicates whether the value is a known member of the CustomFormatSpecType enum.
 func (e CustomFormatSpecType) Valid() bool {
 	switch e {
-	case AudioCodec:
+	case CustomFormatSpecTypeAudioCodec:
 		return true
-	case Edition:
+	case CustomFormatSpecTypeEdition:
 		return true
-	case IndexerFlag:
+	case CustomFormatSpecTypeIndexerFlag:
 		return true
-	case Language:
+	case CustomFormatSpecTypeLanguage:
 		return true
-	case Quality:
+	case CustomFormatSpecTypeQuality:
 		return true
-	case ReleaseGroup:
+	case CustomFormatSpecTypeReleaseGroup:
 		return true
-	case ReleaseTitle:
+	case CustomFormatSpecTypeReleaseTitle:
 		return true
-	case ReleaseType:
+	case CustomFormatSpecTypeReleaseType:
 		return true
-	case Resolution:
+	case CustomFormatSpecTypeResolution:
 		return true
-	case Source:
+	case CustomFormatSpecTypeSource:
 		return true
-	case VideoCodec:
+	case CustomFormatSpecTypeVideoCodec:
 		return true
 	default:
 		return false
@@ -352,6 +352,90 @@ func (e MediaMonitorMode) Valid() bool {
 	case None:
 		return true
 	case OnlyMedia:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaProfilePreferredProtocol.
+const (
+	MediaProfilePreferredProtocolAny     MediaProfilePreferredProtocol = "any"
+	MediaProfilePreferredProtocolTorrent MediaProfilePreferredProtocol = "torrent"
+	MediaProfilePreferredProtocolUsenet  MediaProfilePreferredProtocol = "usenet"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfilePreferredProtocol enum.
+func (e MediaProfilePreferredProtocol) Valid() bool {
+	switch e {
+	case MediaProfilePreferredProtocolAny:
+		return true
+	case MediaProfilePreferredProtocolTorrent:
+		return true
+	case MediaProfilePreferredProtocolUsenet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaProfileSeriesPackPreference.
+const (
+	MediaProfileSeriesPackPreferenceAuto           MediaProfileSeriesPackPreference = "auto"
+	MediaProfileSeriesPackPreferencePreferEpisodes MediaProfileSeriesPackPreference = "preferEpisodes"
+	MediaProfileSeriesPackPreferencePreferPacks    MediaProfileSeriesPackPreference = "preferPacks"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileSeriesPackPreference enum.
+func (e MediaProfileSeriesPackPreference) Valid() bool {
+	switch e {
+	case MediaProfileSeriesPackPreferenceAuto:
+		return true
+	case MediaProfileSeriesPackPreferencePreferEpisodes:
+		return true
+	case MediaProfileSeriesPackPreferencePreferPacks:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaProfileRequestPreferredProtocol.
+const (
+	MediaProfileRequestPreferredProtocolAny     MediaProfileRequestPreferredProtocol = "any"
+	MediaProfileRequestPreferredProtocolTorrent MediaProfileRequestPreferredProtocol = "torrent"
+	MediaProfileRequestPreferredProtocolUsenet  MediaProfileRequestPreferredProtocol = "usenet"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileRequestPreferredProtocol enum.
+func (e MediaProfileRequestPreferredProtocol) Valid() bool {
+	switch e {
+	case MediaProfileRequestPreferredProtocolAny:
+		return true
+	case MediaProfileRequestPreferredProtocolTorrent:
+		return true
+	case MediaProfileRequestPreferredProtocolUsenet:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaProfileRequestSeriesPackPreference.
+const (
+	MediaProfileRequestSeriesPackPreferenceAuto           MediaProfileRequestSeriesPackPreference = "auto"
+	MediaProfileRequestSeriesPackPreferencePreferEpisodes MediaProfileRequestSeriesPackPreference = "preferEpisodes"
+	MediaProfileRequestSeriesPackPreferencePreferPacks    MediaProfileRequestSeriesPackPreference = "preferPacks"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileRequestSeriesPackPreference enum.
+func (e MediaProfileRequestSeriesPackPreference) Valid() bool {
+	switch e {
+	case MediaProfileRequestSeriesPackPreferenceAuto:
+		return true
+	case MediaProfileRequestSeriesPackPreferencePreferEpisodes:
+		return true
+	case MediaProfileRequestSeriesPackPreferencePreferPacks:
 		return true
 	default:
 		return false
@@ -824,7 +908,9 @@ type FileNamingSettingsRequest struct {
 
 // GrabReleaseRequest defines model for GrabReleaseRequest.
 type GrabReleaseRequest struct {
-	ReleaseId openapi_types.UUID `json:"releaseId"`
+	OverrideDetails *ReleaseOverrideDetails `json:"overrideDetails,omitempty"`
+	OverrideMatch   *bool                   `json:"overrideMatch,omitempty"`
+	ReleaseId       openapi_types.UUID      `json:"releaseId"`
 }
 
 // GrabReleaseResponse defines model for GrabReleaseResponse.
@@ -954,6 +1040,33 @@ type IntegrationTestResponse struct {
 type JobEnqueueResponse struct {
 	JobId   int64  `json:"jobId"`
 	Message string `json:"message"`
+}
+
+// Language defines model for Language.
+type Language struct {
+	Aliases     []string  `json:"aliases"`
+	Code        string    `json:"code"`
+	CreatedAt   time.Time `json:"createdAt"`
+	DisplayName string    `json:"displayName"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// LanguageListResponse defines model for LanguageListResponse.
+type LanguageListResponse struct {
+	Languages []Language `json:"languages"`
+}
+
+// LanguageRequest defines model for LanguageRequest.
+type LanguageRequest struct {
+	Aliases     []string `json:"aliases"`
+	Code        string   `json:"code"`
+	DisplayName string   `json:"displayName"`
+}
+
+// LanguageUpdateRequest defines model for LanguageUpdateRequest.
+type LanguageUpdateRequest struct {
+	Aliases     []string `json:"aliases"`
+	DisplayName string   `json:"displayName"`
 }
 
 // LibraryFolder defines model for LibraryFolder.
@@ -1349,21 +1462,29 @@ type MediaMonitorMode string
 
 // MediaProfile defines model for MediaProfile.
 type MediaProfile struct {
-	CreatedAt                         time.Time                       `json:"createdAt"`
-	CustomFormatScores                []MediaProfileCustomFormatScore `json:"customFormatScores"`
-	Id                                string                          `json:"id"`
-	MinimumCustomFormatScore          int32                           `json:"minimumCustomFormatScore"`
-	MinimumCustomFormatScoreIncrement int32                           `json:"minimumCustomFormatScoreIncrement"`
-	Name                              string                          `json:"name"`
-	QualityIds                        []string                        `json:"qualityIds"`
-	RemoveNonEnabledLanguages         bool                            `json:"removeNonEnabledLanguages"`
-	TargetLanguageScores              []MediaProfileLanguageScore     `json:"targetLanguageScores"`
-	TargetLanguages                   []string                        `json:"targetLanguages"`
-	UpdatedAt                         time.Time                       `json:"updatedAt"`
-	UpgradeUntilCustomFormatScore     int32                           `json:"upgradeUntilCustomFormatScore"`
-	UpgradeUntilQualityId             *string                         `json:"upgradeUntilQualityId,omitempty"`
-	UpgradesAllowed                   bool                            `json:"upgradesAllowed"`
+	CreatedAt                         time.Time                        `json:"createdAt"`
+	CustomFormatScores                []MediaProfileCustomFormatScore  `json:"customFormatScores"`
+	Id                                string                           `json:"id"`
+	MinimumCustomFormatScore          int32                            `json:"minimumCustomFormatScore"`
+	MinimumCustomFormatScoreIncrement int32                            `json:"minimumCustomFormatScoreIncrement"`
+	Name                              string                           `json:"name"`
+	PreferredProtocol                 MediaProfilePreferredProtocol    `json:"preferredProtocol"`
+	QualityIds                        []string                         `json:"qualityIds"`
+	RemoveNonEnabledLanguages         bool                             `json:"removeNonEnabledLanguages"`
+	SeriesPackPreference              MediaProfileSeriesPackPreference `json:"seriesPackPreference"`
+	TargetLanguageScores              []MediaProfileLanguageScore      `json:"targetLanguageScores"`
+	TargetLanguages                   []string                         `json:"targetLanguages"`
+	UpdatedAt                         time.Time                        `json:"updatedAt"`
+	UpgradeUntilCustomFormatScore     int32                            `json:"upgradeUntilCustomFormatScore"`
+	UpgradeUntilQualityId             *string                          `json:"upgradeUntilQualityId,omitempty"`
+	UpgradesAllowed                   bool                             `json:"upgradesAllowed"`
 }
+
+// MediaProfilePreferredProtocol defines model for MediaProfile.PreferredProtocol.
+type MediaProfilePreferredProtocol string
+
+// MediaProfileSeriesPackPreference defines model for MediaProfile.SeriesPackPreference.
+type MediaProfileSeriesPackPreference string
 
 // MediaProfileCustomFormatScore defines model for MediaProfileCustomFormatScore.
 type MediaProfileCustomFormatScore struct {
@@ -1385,18 +1506,26 @@ type MediaProfileListResponse struct {
 
 // MediaProfileRequest defines model for MediaProfileRequest.
 type MediaProfileRequest struct {
-	CustomFormatScores                []MediaProfileCustomFormatScore `json:"customFormatScores"`
-	MinimumCustomFormatScore          int32                           `json:"minimumCustomFormatScore"`
-	MinimumCustomFormatScoreIncrement int32                           `json:"minimumCustomFormatScoreIncrement"`
-	Name                              string                          `json:"name"`
-	QualityIds                        []string                        `json:"qualityIds"`
-	RemoveNonEnabledLanguages         bool                            `json:"removeNonEnabledLanguages"`
-	TargetLanguageScores              []MediaProfileLanguageScore     `json:"targetLanguageScores"`
-	TargetLanguages                   []string                        `json:"targetLanguages"`
-	UpgradeUntilCustomFormatScore     int32                           `json:"upgradeUntilCustomFormatScore"`
-	UpgradeUntilQualityId             *string                         `json:"upgradeUntilQualityId,omitempty"`
-	UpgradesAllowed                   bool                            `json:"upgradesAllowed"`
+	CustomFormatScores                []MediaProfileCustomFormatScore         `json:"customFormatScores"`
+	MinimumCustomFormatScore          int32                                   `json:"minimumCustomFormatScore"`
+	MinimumCustomFormatScoreIncrement int32                                   `json:"minimumCustomFormatScoreIncrement"`
+	Name                              string                                  `json:"name"`
+	PreferredProtocol                 MediaProfileRequestPreferredProtocol    `json:"preferredProtocol"`
+	QualityIds                        []string                                `json:"qualityIds"`
+	RemoveNonEnabledLanguages         bool                                    `json:"removeNonEnabledLanguages"`
+	SeriesPackPreference              MediaProfileRequestSeriesPackPreference `json:"seriesPackPreference"`
+	TargetLanguageScores              []MediaProfileLanguageScore             `json:"targetLanguageScores"`
+	TargetLanguages                   []string                                `json:"targetLanguages"`
+	UpgradeUntilCustomFormatScore     int32                                   `json:"upgradeUntilCustomFormatScore"`
+	UpgradeUntilQualityId             *string                                 `json:"upgradeUntilQualityId,omitempty"`
+	UpgradesAllowed                   bool                                    `json:"upgradesAllowed"`
 }
+
+// MediaProfileRequestPreferredProtocol defines model for MediaProfileRequest.PreferredProtocol.
+type MediaProfileRequestPreferredProtocol string
+
+// MediaProfileRequestSeriesPackPreference defines model for MediaProfileRequest.SeriesPackPreference.
+type MediaProfileRequestSeriesPackPreference string
 
 // MediaRequest defines model for MediaRequest.
 type MediaRequest struct {
@@ -1710,17 +1839,33 @@ type ReleaseCandidate struct {
 
 // ReleaseCandidateMatch defines model for ReleaseCandidateMatch.
 type ReleaseCandidateMatch struct {
-	Details           []string                      `json:"details"`
-	Languages         []string                      `json:"languages"`
-	Quality           string                        `json:"quality"`
-	QualityId         string                        `json:"qualityId"`
-	Score             int32                         `json:"score"`
-	ScoreContributors []ReleaseScoreContributor     `json:"scoreContributors"`
-	Severity          ReleaseCandidateMatchSeverity `json:"severity"`
+	CustomFormatContributors []ReleaseScoreContributor     `json:"customFormatContributors"`
+	CustomFormatScore        int32                         `json:"customFormatScore"`
+	Details                  []string                      `json:"details"`
+	LanguageContributors     []ReleaseScoreContributor     `json:"languageContributors"`
+	Languages                []string                      `json:"languages"`
+	MatchedMedia             string                        `json:"matchedMedia"`
+	Quality                  string                        `json:"quality"`
+	QualityId                string                        `json:"qualityId"`
+	RankContributors         []ReleaseScoreContributor     `json:"rankContributors"`
+	Score                    int32                         `json:"score"`
+	ScoreContributors        []ReleaseScoreContributor     `json:"scoreContributors"`
+	Severity                 ReleaseCandidateMatchSeverity `json:"severity"`
 }
 
 // ReleaseCandidateMatchSeverity defines model for ReleaseCandidateMatch.Severity.
 type ReleaseCandidateMatchSeverity string
+
+// ReleaseOverrideDetails defines model for ReleaseOverrideDetails.
+type ReleaseOverrideDetails struct {
+	EpisodeNumbers *[]int32  `json:"episodeNumbers,omitempty"`
+	Languages      *[]string `json:"languages,omitempty"`
+	MovieTitle     *string   `json:"movieTitle,omitempty"`
+	Quality        *string   `json:"quality,omitempty"`
+	ReleaseGroup   *string   `json:"releaseGroup,omitempty"`
+	SeasonNumber   *int32    `json:"seasonNumber,omitempty"`
+	SeriesTitle    *string   `json:"seriesTitle,omitempty"`
+}
 
 // ReleaseScoreContributor defines model for ReleaseScoreContributor.
 type ReleaseScoreContributor struct {
@@ -2080,6 +2225,12 @@ type CreateIndexerJSONRequestBody = IndexerRequest
 // UpdateIndexerJSONRequestBody defines body for UpdateIndexer for application/json ContentType.
 type UpdateIndexerJSONRequestBody = IndexerRequest
 
+// CreateLanguageJSONRequestBody defines body for CreateLanguage for application/json ContentType.
+type CreateLanguageJSONRequestBody = LanguageRequest
+
+// UpdateLanguageJSONRequestBody defines body for UpdateLanguage for application/json ContentType.
+type UpdateLanguageJSONRequestBody = LanguageUpdateRequest
+
 // CreateLibraryFolderOptionJSONRequestBody defines body for CreateLibraryFolderOption for application/json ContentType.
 type CreateLibraryFolderOptionJSONRequestBody = LibraryFolderOptionCreateRequest
 
@@ -2310,6 +2461,18 @@ type ServerInterface interface {
 	// Test a configured indexer
 	// (POST /settings/indexers/{id}/test)
 	TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List release languages
+	// (GET /settings/languages)
+	ListLanguages(w http.ResponseWriter, r *http.Request)
+	// Create a release language
+	// (POST /settings/languages)
+	CreateLanguage(w http.ResponseWriter, r *http.Request)
+	// Delete a release language
+	// (DELETE /settings/languages/{code})
+	DeleteLanguage(w http.ResponseWriter, r *http.Request, code string)
+	// Update a release language
+	// (PUT /settings/languages/{code})
+	UpdateLanguage(w http.ResponseWriter, r *http.Request, code string)
 	// Browse server-visible folders for library selection
 	// (GET /settings/library/folder-options)
 	ListLibraryFolderOptions(w http.ResponseWriter, r *http.Request, params ListLibraryFolderOptionsParams)
@@ -2820,6 +2983,30 @@ func (_ Unimplemented) UpdateIndexer(w http.ResponseWriter, r *http.Request, id 
 // Test a configured indexer
 // (POST /settings/indexers/{id}/test)
 func (_ Unimplemented) TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List release languages
+// (GET /settings/languages)
+func (_ Unimplemented) ListLanguages(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a release language
+// (POST /settings/languages)
+func (_ Unimplemented) CreateLanguage(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a release language
+// (DELETE /settings/languages/{code})
+func (_ Unimplemented) DeleteLanguage(w http.ResponseWriter, r *http.Request, code string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a release language
+// (PUT /settings/languages/{code})
+func (_ Unimplemented) UpdateLanguage(w http.ResponseWriter, r *http.Request, code string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -4834,6 +5021,110 @@ func (siw *ServerInterfaceWrapper) TestIndexer(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListLanguages operation middleware
+func (siw *ServerInterfaceWrapper) ListLanguages(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLanguages(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLanguage operation middleware
+func (siw *ServerInterfaceWrapper) CreateLanguage(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLanguage(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteLanguage operation middleware
+func (siw *ServerInterfaceWrapper) DeleteLanguage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "code" -------------
+	var code string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "code", chi.URLParam(r, "code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteLanguage(w, r, code)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLanguage operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLanguage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "code" -------------
+	var code string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "code", chi.URLParam(r, "code"), &code, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLanguage(w, r, code)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListLibraryFolderOptions operation middleware
 func (siw *ServerInterfaceWrapper) ListLibraryFolderOptions(w http.ResponseWriter, r *http.Request) {
 
@@ -6568,6 +6859,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/indexers/{id}/test", wrapper.TestIndexer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/languages", wrapper.ListLanguages)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/languages", wrapper.CreateLanguage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/languages/{code}", wrapper.DeleteLanguage)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/languages/{code}", wrapper.UpdateLanguage)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/library/folder-options", wrapper.ListLibraryFolderOptions)

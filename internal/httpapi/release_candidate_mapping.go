@@ -7,13 +7,25 @@ import (
 	"media-manager/internal/storage"
 )
 
-func releaseCandidateResponse(item storage.MediaItem, release storage.ReleaseCandidate) ReleaseCandidate {
+func releaseCandidateResponse(
+	item storage.MediaItem,
+	release storage.ReleaseCandidate,
+	profile *storage.MediaProfile,
+	formats []storage.CustomFormat,
+	languages []storage.Language,
+) ReleaseCandidate {
 	var indexerID *openapi_types.UUID
 	if release.IndexerID != nil {
 		value := openapi_types.UUID(*release.IndexerID)
 		indexerID = &value
 	}
-	match := decisions.EvaluateReleaseMatch(item, release)
+	match := decisions.EvaluateReleaseMatchWithLanguageContext(
+		item,
+		release,
+		profile,
+		formats,
+		languages,
+	)
 	return ReleaseCandidate{
 		Id:          openapi_types.UUID(release.ID),
 		IndexerId:   indexerID,
@@ -34,6 +46,13 @@ func releaseCandidateResponse(item storage.MediaItem, release storage.ReleaseCan
 			Score:             match.Score,
 			ScoreContributors: releaseScoreContributorResponses(match.ScoreContributors),
 			Languages:         match.Languages,
+			MatchedMedia:      match.MatchedMedia,
+			CustomFormatScore: match.CustomFormatScore,
+			CustomFormatContributors: releaseScoreContributorResponses(
+				match.CustomFormatContributors,
+			),
+			LanguageContributors: releaseScoreContributorResponses(match.LanguageContributors),
+			RankContributors:     releaseScoreContributorResponses(match.RankContributors),
 		},
 	}
 }

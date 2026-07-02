@@ -106,7 +106,7 @@
 				{#if mediaStatus}
 					<Badge
 						variant="outline"
-						class={`min-h-6 rounded-md bg-popover px-2 py-1 text-base leading-none font-extrabold ${statusBadgeClass(mediaStatus)}`}
+						class={`min-h-6 rounded-[3px] bg-popover px-2 py-1 text-base leading-none font-extrabold ${statusBadgeClass(mediaStatus)}`}
 					>
 						{statusLabel(mediaStatus)}
 					</Badge>

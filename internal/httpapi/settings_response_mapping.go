@@ -213,6 +213,16 @@ func tagResponse(tag storage.Tag) Tag {
 	}
 }
 
+func languageResponse(language storage.Language) Language {
+	return Language{
+		Code:        language.Code,
+		DisplayName: language.DisplayName,
+		Aliases:     append([]string{}, language.Aliases...),
+		CreatedAt:   language.CreatedAt,
+		UpdatedAt:   language.UpdatedAt,
+	}
+}
+
 func qualitySizeSettingsResponse(settings []storage.QualitySizeSetting) QualitySizeSettingsResponse {
 	response := QualitySizeSettingsResponse{Qualities: make([]QualitySizeSetting, 0, len(settings))}
 	for _, setting := range settings {

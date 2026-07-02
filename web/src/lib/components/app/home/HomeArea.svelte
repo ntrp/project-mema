@@ -6,65 +6,7 @@
 	import MediaRequestArea from '../requests/MediaRequestArea.svelte';
 	import MediaSearchPanel from '../discovery/MediaSearchPanel.svelte';
 	import WantedMediaTable from './WantedMediaTable.svelte';
-	import type {
-		DownloadActivity,
-		DiscoverBlacklistItem,
-		HomeSection,
-		LibraryFolder,
-		MediaDiscoverSection,
-		MediaItem,
-		MediaItemUpdateRequest,
-		MediaRequest,
-		MediaRequestApproveRequest,
-		MediaSearchResult,
-		QualityProfileOption,
-		ReleaseCandidate,
-		ReleaseSearchResults
-	} from '$lib/settings/types';
-
-	interface Props {
-		activeSection: HomeSection;
-		selectedMediaItemId?: string;
-		selectedRequestId?: string;
-		mediaItems: MediaItem[];
-		mediaRequests: MediaRequest[];
-		discoverSections: MediaDiscoverSection[];
-		discoverBlacklist: DiscoverBlacklistItem[];
-		libraryFolders: LibraryFolder[];
-		qualityProfiles: QualityProfileOption[];
-		releaseResults: ReleaseSearchResults;
-		activities: DownloadActivity[];
-		loadingDiscover: boolean;
-		loadingBlacklist: boolean;
-		loadingMediaItems: boolean;
-		addingKey?: string;
-		blacklistingKey?: string;
-		removingBlacklistId?: string;
-		approvingRequestId?: string;
-		searchingItemId?: string;
-		refreshingMetadataItemId?: string;
-		savingMediaItemOptionsId?: string;
-		grabbingKey?: string;
-		deletingMediaItemId?: string;
-		cancellingActivityId?: string;
-		deletingActivityId?: string;
-		canManage: boolean;
-		loadingActivity: boolean;
-		onAddMedia: (_candidate: MediaSearchResult) => void;
-		onBlacklistMedia: (_candidate: MediaSearchResult) => void;
-		onRemoveBlacklistMedia: (_item: DiscoverBlacklistItem) => void;
-		onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
-		onFindReleases: (_item: MediaItem, _query?: string) => void;
-		onAutoSearchMedia: (_item: MediaItem) => void;
-		onRefreshMediaMetadata: (_item: MediaItem) => void;
-		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
-		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
-		onDeleteMedia: (_item: MediaItem) => void;
-		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
-		onRefreshActivity: () => void;
-		onCancelActivity: (_activity: DownloadActivity) => void;
-		onDeleteActivity: (_activity: DownloadActivity) => void;
-	}
+	import type { HomeAreaProps } from './homeAreaTypes';
 
 	let {
 		activeSection,
@@ -75,6 +17,7 @@
 		discoverSections,
 		discoverBlacklist,
 		libraryFolders,
+		languages,
 		qualityProfiles,
 		releaseResults,
 		activities,
@@ -108,7 +51,7 @@
 		onRefreshActivity,
 		onCancelActivity,
 		onDeleteActivity
-	}: Props = $props();
+	}: HomeAreaProps = $props();
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
 	const series = $derived(mediaItems.filter((item) => item.type === 'series'));
@@ -163,6 +106,7 @@
 				loading={loadingMediaItems && !selectedMediaItem}
 				{mediaItems}
 				{libraryFolders}
+				{languages}
 				{qualityProfiles}
 				requestedItemId={selectedMediaItemId}
 				releaseResults={selectedMediaItem ? releaseResults[selectedMediaItem.id] : undefined}

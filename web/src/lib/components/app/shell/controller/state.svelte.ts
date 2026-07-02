@@ -9,6 +9,7 @@ import {
 	emptyCustomFormatForm,
 	emptyDownloadClientForm,
 	emptyIndexerForm,
+	emptyLanguageForm,
 	emptyLibraryFolderForm,
 	emptyMediaProfileForm,
 	emptyPathMappingForm,
@@ -27,6 +28,8 @@ import type {
 	IndexerForm as IndexerFormValue,
 	IndexerSearchResponse,
 	IntegrationTestResults,
+	Language,
+	LanguageForm,
 	LibraryFolder,
 	LibraryFolderForm as LibraryFolderFormValue,
 	LibraryScan,
@@ -71,6 +74,8 @@ export class AppShellState {
 	deletingCustomFormatId = $state<string | undefined>();
 	savingTag = $state(false);
 	deletingTagId = $state<string | undefined>();
+	savingLanguage = $state(false);
+	deletingLanguageCode = $state<string | undefined>();
 	savingUser = $state(false);
 	message = $state('');
 	errorMessage = $state('');
@@ -87,6 +92,7 @@ export class AppShellState {
 	customFormats = $state<CustomFormat[]>([]);
 	users = $state<ManagedUser[]>([]);
 	tags = $state<Tag[]>([]);
+	languages = $state<Language[]>([]);
 	currentUser = $state<UserSummary | undefined>();
 	mediaItems = $state<MediaItem[]>([]);
 	mediaRequests = $state<MediaRequest[]>([]);
@@ -106,6 +112,7 @@ export class AppShellState {
 	mediaProfileForm = $state<MediaProfileFormValue>(emptyMediaProfileForm());
 	customFormatForm = $state<CustomFormatFormValue>(emptyCustomFormatForm());
 	tagForm = $state<TagForm>({ name: '' });
+	languageForm = $state<LanguageForm>(emptyLanguageForm());
 	userForm = $state<UserFormValue>(emptyUserForm());
 	testingIndexerId = $state<string | undefined>();
 	testingMetadataProviderId = $state<string | undefined>();

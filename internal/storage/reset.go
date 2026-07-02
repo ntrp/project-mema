@@ -21,10 +21,12 @@ const (
 	gooseMigrationsDir = "migrations"
 	gooseVersionTable  = "app.goose_db_version"
 	defaultSeedPath    = "seeds/defaults.sql"
+	languageSeedPath   = "seeds/languages.sql"
+	devDefaultSeedPath = "seeds/dev.defaults.sql"
 	devSeedPath        = "internal/storage/seeds/dev.local.sql"
 )
 
-//go:embed migrations/*.sql seeds/defaults.sql
+//go:embed migrations/*.sql seeds/defaults.sql seeds/languages.sql seeds/dev.defaults.sql
 var storageFS embed.FS
 
 func init() {
@@ -71,6 +73,9 @@ func ResetDevelopment(ctx context.Context, cfg config.Config) error {
 	if err := applyDefaultSeed(ctx, db); err != nil {
 		return err
 	}
+	if err := applyDevDefaultSeed(ctx, db); err != nil {
+		return err
+	}
 	return applyDevSeed(ctx, db)
 }
 
@@ -97,7 +102,14 @@ func runMigrations(ctx context.Context, db *sql.DB) error {
 }
 
 func applyDefaultSeed(ctx context.Context, db *sql.DB) error {
-	return applySeed(ctx, db, defaultSeedPath, storageFS.ReadFile)
+	if err := applySeed(ctx, db, defaultSeedPath, storageFS.ReadFile); err != nil {
+		return err
+	}
+	return applySeed(ctx, db, languageSeedPath, storageFS.ReadFile)
+}
+
+func applyDevDefaultSeed(ctx context.Context, db *sql.DB) error {
+	return applySeed(ctx, db, devDefaultSeedPath, storageFS.ReadFile)
 }
 
 func applyDevSeed(ctx context.Context, db *sql.DB) error {

@@ -9,6 +9,7 @@ export type SettingsHref =
 	| '/settings/profiles'
 	| '/settings/custom-formats'
 	| '/settings/metadata'
+	| '/settings/languages'
 	| '/settings/tags'
 	| '/settings/users';
 
@@ -51,6 +52,7 @@ export const settingsItems = [
 	{ value: 'profiles', label: 'Profiles', href: '/settings/profiles' },
 	{ value: 'custom-formats', label: 'Custom formats', href: '/settings/custom-formats' },
 	{ value: 'metadata', label: 'Metadata', href: '/settings/metadata' },
+	{ value: 'languages', label: 'Languages', href: '/settings/languages' },
 	{ value: 'tags', label: 'Tags', href: '/settings/tags' },
 	{ value: 'users', label: 'Users', href: '/settings/users' }
 ] satisfies PrimaryItem['children'];
@@ -127,6 +129,8 @@ export function settingsSectionHref(section: SettingsSection): SettingsHref {
 			return '/settings/custom-formats';
 		case 'metadata':
 			return '/settings/metadata';
+		case 'languages':
+			return '/settings/languages';
 		case 'tags':
 			return '/settings/tags';
 		case 'users':

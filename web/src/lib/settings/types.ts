@@ -80,12 +80,16 @@ export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
 export type SeriesType = components['schemas']['SeriesType'];
 export type MinimumAvailability = components['schemas']['MinimumAvailability'];
 export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
+export type ReleaseOverrideDetails = components['schemas']['ReleaseOverrideDetails'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];
 export type DownloadActivityStatus = components['schemas']['DownloadActivity']['status'];
 export type ManualImportRequest = components['schemas']['ManualImportRequest'];
 export type JobEnqueueResponse = components['schemas']['JobEnqueueResponse'];
 export type Tag = components['schemas']['Tag'];
 export type TagRequest = components['schemas']['TagRequest'];
+export type Language = components['schemas']['Language'];
+export type LanguageRequest = components['schemas']['LanguageRequest'];
+export type LanguageUpdateRequest = components['schemas']['LanguageUpdateRequest'];
 export type QualitySizeSetting = components['schemas']['QualitySizeSetting'];
 export type QualitySizeSettingRequest = components['schemas']['QualitySizeSettingRequest'];
 export type QualitySizeSettingsResponse = components['schemas']['QualitySizeSettingsResponse'];
@@ -113,6 +117,12 @@ export type LibraryFolderForm = LibraryFolderRequest;
 export type PathMappingForm = PathMappingRequest;
 export type MediaProfileForm = MediaProfileRequest & { id?: string };
 export type CustomFormatForm = CustomFormatRequest & { id?: string };
+export type LanguageForm = {
+	code: string;
+	originalCode?: string;
+	displayName: string;
+	aliasesText: string;
+};
 export type UserForm = {
 	id?: string;
 	username: string;
@@ -155,6 +165,7 @@ export type SettingsSection =
 	| 'profiles'
 	| 'custom-formats'
 	| 'metadata'
+	| 'languages'
 	| 'tags'
 	| 'users';
 export type TagForm = TagRequest & { id?: string };
@@ -170,6 +181,7 @@ export interface SettingsData {
 	customFormats: CustomFormat[];
 	users: ManagedUser[];
 	tags: Tag[];
+	languages: Language[];
 }
 
 export type IntegrationTestResults = Record<string, IntegrationTestResponse | undefined>;

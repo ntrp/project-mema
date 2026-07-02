@@ -57,20 +57,20 @@ insert into app.media_profiles (
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages
+    remove_non_enabled_languages,
+    preferred_protocol,
+    series_pack_preference
 )
 values
-    ('any', 'Any acceptable release', true, 'raw-hd', 0, 0, 1, false),
-    ('low-quality-test', 'Low Quality Test', true, 'webdl-480p', 0, 0, 1, false),
-    ('hd-1080p', 'HD 1080p', true, 'bluray-1080p', 0, 0, 1, false),
-    ('uhd-4k', 'UHD 4K', true, 'remux-2160p', 0, 0, 1, false),
-    ('anime-1080p', 'Anime 1080p', true, 'bluray-1080p', 0, 0, 1, false)
+    ('any', 'Any acceptable release', true, 'raw-hd', 0, 0, 1, false, 'any', 'auto'),
+    ('hd-1080p', 'HD 1080p', true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto'),
+    ('uhd-4k', 'UHD 4K', true, 'remux-2160p', 0, 10000, 1, false, 'any', 'auto'),
+    ('anime-1080p', 'Anime 1080p', true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto')
 on conflict (id) do nothing;
 
 insert into app.media_profile_languages (profile_id, language_id, score)
 values
     ('any', 'english', 0),
-    ('low-quality-test', 'english', 0),
     ('hd-1080p', 'english', 0),
     ('uhd-4k', 'english', 0),
     ('anime-1080p', 'japanese', 0),
@@ -109,10 +109,6 @@ values
     ('any', 'remux-2160p', 24),
     ('any', 'br-disk', 25),
     ('any', 'raw-hd', 26),
-    ('low-quality-test', 'sdtv', 8),
-    ('low-quality-test', 'dvd', 9),
-    ('low-quality-test', 'webdl-480p', 11),
-    ('low-quality-test', 'webrip-480p', 11),
     ('hd-1080p', 'hdtv-720p', 14),
     ('hd-1080p', 'webdl-720p', 15),
     ('hd-1080p', 'webrip-720p', 15),
@@ -502,3 +498,48 @@ values
     ('839bea857ed2c0a8e084f3cbdbd65ecb', 'x265 (no HDR/DV)', '[{"id":"x265-hevc-0","name":"x265/HEVC","type":"releaseTitle","value":"[xh][ ._-]?265|\\bHEVC(\\b|\\d)","required":true}]'::jsonb, '[{"id":"not-hdr-dv-1","name":"Not HDR/DV","type":"releaseTitle","value":"\\b(dv|dovi|dolby[ .]?v(ision)?|hdr(10(P(lus)?)?)?|pq)\\b","required":true},{"id":"not-2160p-2","name":"Not 2160p","type":"resolution","value":"2160","required":true}]'::jsonb),
     ('02d24b392bdb901822d95c96e9fa30f1', 'YOUKU', '[{"id":"youku-0","name":"YOUKU","type":"releaseTitle","value":"\\b(YOUKU)\\b","required":true},{"id":"webdl-1","name":"WEBDL","type":"source","value":"WEBDL","required":false},{"id":"webrip-2","name":"WEBRIP","type":"source","value":"WEBRIP","required":false}]'::jsonb, '[]'::jsonb)
 on conflict (id) do nothing;
+
+insert into app.media_profile_custom_formats (profile_id, custom_format_id, score)
+values
+    ('hd-1080p', 'd6819cba26b1a6508138d25fb5e32293', 1800),
+    ('hd-1080p', 'c2216b7b8aa545dc1ce8388c618f8d57', 1750),
+    ('hd-1080p', '5608c71bcebba0a5e666223bae8c9227', 1700),
+    ('hd-1080p', 'c20f169ef63c5f40c2def54abaf4438e', 1700),
+    ('hd-1080p', '58790d4e2fdcd9733aa7ae68ba2bb503', 1650),
+    ('hd-1080p', 'd84935abd3f8556dcd51d4f27e22d0a6', 1600),
+    ('hd-1080p', '3df5e6dfef4b09bb6002f732bed5b774', 5),
+    ('hd-1080p', 'db92c27ba606996b146b57fbe6d09186', 6),
+    ('hd-1080p', 'd4e5e842fad129a3c097bdb2d20d31a0', 7),
+    ('hd-1080p', 'ed38b889b31be83fda192888e2286d83', -10000),
+    ('hd-1080p', 'e6886871085226c3da1830830146846c', -10000),
+    ('hd-1080p', '90a6f9a284dff5103f6346090e6280c8', -10000),
+    ('hd-1080p', 'e2315f990da2e2cbfc9fa5b7a6fcfe48', -10000),
+    ('hd-1080p', 'dc98083864ea246d05a42df0d05f81cc', -10000),
+    ('hd-1080p', 'cae4ca30163749b891686f95532519bd', -10000),
+    ('uhd-4k', '9965a052eb87b0d10313b1cea89eb451', 2000),
+    ('uhd-4k', '8a1d0c3d7497e741736761a1da866a2e', 1950),
+    ('uhd-4k', '8baaf0b3142bf4d94c42a724f034e27a', 1900),
+    ('uhd-4k', '4d74ac4c4db0b64bff6ce0cffef99bf0', 1800),
+    ('uhd-4k', 'a58f517a70193f8e578056642178419d', 1750),
+    ('uhd-4k', 'e71939fae578037e7aed3ee219bbe7c1', 1700),
+    ('uhd-4k', '43b3cf48cb385cd3eac608ee6bca7f09', 1500),
+    ('uhd-4k', '493b6d1dbec3c3364c59d7607f7e3405', 1000),
+    ('uhd-4k', 'caa37d0df9c348912df1fb1d88f9273a', 500),
+    ('uhd-4k', '3df5e6dfef4b09bb6002f732bed5b774', 5),
+    ('uhd-4k', 'db92c27ba606996b146b57fbe6d09186', 6),
+    ('uhd-4k', 'd4e5e842fad129a3c097bdb2d20d31a0', 7),
+    ('uhd-4k', 'ed38b889b31be83fda192888e2286d83', -10000),
+    ('uhd-4k', 'e6886871085226c3da1830830146846c', -10000),
+    ('uhd-4k', '90a6f9a284dff5103f6346090e6280c8', -10000),
+    ('uhd-4k', 'e2315f990da2e2cbfc9fa5b7a6fcfe48', -10000),
+    ('uhd-4k', '839bea857ed2c0a8e084f3cbdbd65ecb', -10000),
+    ('anime-1080p', '4a3b087eea2ce012fcc1ce319259a3be', 1000),
+    ('anime-1080p', 'e0014372773c8f0e1bef8824f00c7dc4', 1700),
+    ('anime-1080p', '19180499de5ef2b84b6ec59aae444696', 1650),
+    ('anime-1080p', 'c27f2ae6a4e82373b0f1da094e2489ad', 1600),
+    ('anime-1080p', '3bc5f395426614e155e585a2f056cdf1', 50),
+    ('anime-1080p', 'e0c1a67f23908a55b6ae9834e8ed6727', 10),
+    ('anime-1080p', 'b0fdc5897f68c9a68c70c25169f77447', -10000),
+    ('anime-1080p', '06b6542a47037d1e33b15aa3677c2365', -500),
+    ('anime-1080p', 'cae4ca30163749b891686f95532519bd', -10000)
+on conflict (profile_id, custom_format_id) do nothing;

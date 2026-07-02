@@ -58,6 +58,7 @@
 		title="Add profile"
 		bind:form
 		customFormats={app.customFormats}
+		languages={app.languages}
 		{qualities}
 		{loadingQualities}
 		{qualityError}

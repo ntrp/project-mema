@@ -32,6 +32,7 @@ const settingsSections = new Set<SettingsSection>([
 	'profiles',
 	'custom-formats',
 	'metadata',
+	'languages',
 	'tags',
 	'users'
 ]);

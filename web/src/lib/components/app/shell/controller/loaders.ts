@@ -25,6 +25,7 @@ export function createLoadActions(state: AppShellState) {
 			state.customFormats = settings.customFormats;
 			state.users = settings.users;
 			state.tags = settings.tags;
+			state.languages = settings.languages;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load settings');
 		}

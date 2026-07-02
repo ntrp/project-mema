@@ -1081,6 +1081,44 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/languages': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List release languages */
+		get: operations['listLanguages'];
+		put?: never;
+		/** Create a release language */
+		post: operations['createLanguage'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/languages/{code}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				code: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a release language */
+		put: operations['updateLanguage'];
+		post?: never;
+		/** Delete a release language */
+		delete: operations['deleteLanguage'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/library/folder-options': {
 		parameters: {
 			query?: never;
@@ -1875,6 +1913,27 @@ export interface components {
 		TagRequest: {
 			name: string;
 		};
+		LanguageListResponse: {
+			languages: components['schemas']['Language'][];
+		};
+		Language: {
+			code: string;
+			displayName: string;
+			aliases: string[];
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		LanguageRequest: {
+			code: string;
+			displayName: string;
+			aliases: string[];
+		};
+		LanguageUpdateRequest: {
+			displayName: string;
+			aliases: string[];
+		};
 		QualitySizeSettingsResponse: {
 			qualities: components['schemas']['QualitySizeSetting'][];
 		};
@@ -1921,6 +1980,10 @@ export interface components {
 			/** Format: int32 */
 			minimumCustomFormatScoreIncrement: number;
 			removeNonEnabledLanguages: boolean;
+			/** @enum {string} */
+			preferredProtocol: 'any' | 'torrent' | 'usenet';
+			/** @enum {string} */
+			seriesPackPreference: 'auto' | 'preferPacks' | 'preferEpisodes';
 			targetLanguages: string[];
 			targetLanguageScores: components['schemas']['MediaProfileLanguageScore'][];
 			customFormatScores: components['schemas']['MediaProfileCustomFormatScore'][];
@@ -2085,6 +2148,12 @@ export interface components {
 			score: number;
 			scoreContributors: components['schemas']['ReleaseScoreContributor'][];
 			languages: string[];
+			matchedMedia: string;
+			/** Format: int32 */
+			customFormatScore: number;
+			customFormatContributors: components['schemas']['ReleaseScoreContributor'][];
+			languageContributors: components['schemas']['ReleaseScoreContributor'][];
+			rankContributors: components['schemas']['ReleaseScoreContributor'][];
 		};
 		ReleaseScoreContributor: {
 			label: string;
@@ -2097,6 +2166,19 @@ export interface components {
 		GrabReleaseRequest: {
 			/** Format: uuid */
 			releaseId: string;
+			/** @default false */
+			overrideMatch: boolean;
+			overrideDetails?: components['schemas']['ReleaseOverrideDetails'];
+		};
+		ReleaseOverrideDetails: {
+			seriesTitle?: string;
+			movieTitle?: string;
+			/** Format: int32 */
+			seasonNumber?: number;
+			episodeNumbers?: number[];
+			releaseGroup?: string;
+			quality?: string;
+			languages?: string[];
 		};
 		GrabReleaseResponse: {
 			/** Format: int64 */
@@ -4649,6 +4731,108 @@ export interface operations {
 		requestBody?: never;
 		responses: {
 			/** @description Media tag deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listLanguages: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Release languages */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LanguageListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	createLanguage: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LanguageRequest'];
+			};
+		};
+		responses: {
+			/** @description Release language created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Language'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	updateLanguage: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				code: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LanguageUpdateRequest'];
+			};
+		};
+		responses: {
+			/** @description Release language updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Language'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteLanguage: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				code: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Release language deleted */
 			204: {
 				headers: {
 					[name: string]: unknown;

@@ -51,11 +51,31 @@ func normalizeMediaProfileInput(
 	if input.MinimumCustomFormatScoreIncrement < 0 {
 		return MediaProfileInput{}, ErrInvalidInput
 	}
+	normalized.PreferredProtocol = normalizePreferredProtocol(input.PreferredProtocol)
+	normalized.SeriesPackPreference = normalizeSeriesPackPreference(input.SeriesPackPreference)
 	normalized.QualityIDs = qualityIDs
 	normalized.TargetLanguageScores = normalizeTargetLanguageScores(input)
 	normalized.TargetLanguages = languageIDsFromScores(normalized.TargetLanguageScores)
 	normalized.CustomFormatScores = normalizeCustomFormatScores(input.CustomFormatScores)
 	return normalized, nil
+}
+
+func normalizePreferredProtocol(value string) string {
+	switch strings.TrimSpace(value) {
+	case "torrent", "usenet":
+		return strings.TrimSpace(value)
+	default:
+		return "any"
+	}
+}
+
+func normalizeSeriesPackPreference(value string) string {
+	switch strings.TrimSpace(value) {
+	case "preferPacks", "preferEpisodes":
+		return strings.TrimSpace(value)
+	default:
+		return "auto"
+	}
 }
 
 func normalizeTargetLanguageScores(input MediaProfileInput) []MediaProfileLanguageScore {
@@ -123,6 +143,8 @@ func scanMediaProfileBase(row pgx.Row) (MediaProfile, error) {
 		&profile.UpgradeUntilCustomFormatScore,
 		&profile.MinimumCustomFormatScoreIncrement,
 		&profile.RemoveNonEnabledLanguages,
+		&profile.PreferredProtocol,
+		&profile.SeriesPackPreference,
 		&profile.CreatedAt,
 		&profile.UpdatedAt,
 	)

@@ -166,6 +166,8 @@ create table if not exists app.media_profiles (
     upgrade_until_custom_format_score integer not null default 0,
     minimum_custom_format_score_increment integer not null default 1 check (minimum_custom_format_score_increment >= 0),
     remove_non_enabled_languages boolean not null default false,
+    preferred_protocol text not null default 'any' check (preferred_protocol in ('any', 'torrent', 'usenet')),
+    series_pack_preference text not null default 'auto' check (series_pack_preference in ('auto', 'preferPacks', 'preferEpisodes')),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
@@ -208,6 +210,20 @@ create table if not exists app.media_profile_languages (
 
 create index if not exists idx_media_profile_languages_profile
     on app.media_profile_languages (profile_id, language_id);
+
+create table if not exists app.languages (
+    code text primary key,
+    display_name text not null,
+    aliases jsonb not null default '[]'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint languages_code_check check (code = upper(code) and length(code) between 2 and 8),
+    constraint languages_display_name_check check (length(trim(display_name)) > 0),
+    constraint languages_aliases_array_check check (jsonb_typeof(aliases) = 'array')
+);
+
+create unique index if not exists idx_languages_display_name_lower
+    on app.languages (lower(display_name));
 
 create table if not exists app.media_profile_qualities (
     profile_id text not null references app.media_profiles(id) on delete cascade,

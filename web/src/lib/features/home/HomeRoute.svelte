@@ -22,6 +22,7 @@
 	discoverSections={app.discoverSections}
 	discoverBlacklist={app.discoverBlacklist}
 	libraryFolders={app.libraryFolders}
+	languages={app.languages}
 	qualityProfiles={app.mediaProfiles}
 	releaseResults={app.releaseResults}
 	activities={app.activities}

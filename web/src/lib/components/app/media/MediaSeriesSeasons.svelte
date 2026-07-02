@@ -14,6 +14,7 @@
 	import type { ReleaseSearchContext } from './releaseSearchQuery';
 	import type {
 		DownloadActivity,
+		Language,
 		LibraryFolder,
 		MediaItem,
 		MediaItemUpdateRequest,
@@ -31,6 +32,7 @@
 		grabbingKey?: string;
 		canManage: boolean;
 		libraryFolders: LibraryFolder[];
+		languages: Language[];
 		qualityProfiles: {
 			id: string;
 			targetLanguages?: string[];
@@ -50,6 +52,7 @@
 		grabbingKey,
 		canManage,
 		libraryFolders,
+		languages,
 		qualityProfiles,
 		onSaveOptions,
 		onAutoSearch,
@@ -166,6 +169,7 @@
 	<MediaFileSearchModal
 		{item}
 		{releaseResults}
+		{languages}
 		{searchContext}
 		{grabbingKey}
 		{canManage}

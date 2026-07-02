@@ -1,10 +1,13 @@
 package httpapi
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
+
+	"media-manager/internal/storage"
 )
 
 func (s *Server) EnqueueMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -61,10 +64,30 @@ func (s *Server) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id 
 		Releases: make([]ReleaseCandidate, 0, len(snapshot.Releases)),
 		Errors:   snapshot.Errors,
 	}
+	profile, formats, languages := s.releaseDecisionContext(r.Context(), item)
 	for _, release := range snapshot.Releases {
-		response.Releases = append(response.Releases, releaseCandidateResponse(item, release))
+		response.Releases = append(
+			response.Releases,
+			releaseCandidateResponse(item, release, profile, formats, languages),
+		)
 	}
 	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) releaseDecisionContext(
+	ctx context.Context,
+	item storage.MediaItem,
+) (*storage.MediaProfile, []storage.CustomFormat, []storage.Language) {
+	var profile *storage.MediaProfile
+	if item.QualityProfileID != nil {
+		value, err := s.settings.GetMediaProfile(ctx, *item.QualityProfileID)
+		if err == nil {
+			profile = &value
+		}
+	}
+	formats, _ := s.settings.ListCustomFormats(ctx)
+	languages, _ := s.settings.ListLanguages(ctx)
+	return profile, formats, languages
 }
 
 func releaseSearchQuery(w http.ResponseWriter, r *http.Request) (string, bool) {

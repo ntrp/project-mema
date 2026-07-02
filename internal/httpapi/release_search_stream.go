@@ -56,8 +56,12 @@ func (s *Server) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request
 		return
 	}
 	response := ReleaseSearchResponse{Releases: make([]ReleaseCandidate, 0, len(snapshot.Releases)), Errors: snapshot.Errors}
+	profile, formats, languages := s.releaseDecisionContext(r.Context(), item)
 	for _, release := range snapshot.Releases {
-		response.Releases = append(response.Releases, releaseCandidateResponse(item, release))
+		response.Releases = append(
+			response.Releases,
+			releaseCandidateResponse(item, release, profile, formats, languages),
+		)
 	}
 	writeSSE(w, flusher, "media.release_search.result", response)
 }

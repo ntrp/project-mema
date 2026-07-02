@@ -30,7 +30,7 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 		writeSettingsError(w, err, "Could not find release candidate")
 		return
 	}
-	if decisions.EvaluateReleaseMatch(item, release).Severity == "error" {
+	if shouldBlockReleaseMismatch(item, release, boolValue(body.OverrideMatch)) {
 		writeError(w, http.StatusBadRequest, "release_mismatch", "Release does not match this series/movie")
 		return
 	}
@@ -81,4 +81,16 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 		Message:  "Download queued",
 		Activity: downloadActivityResponse(activity),
 	})
+}
+
+func boolValue(value *bool) bool {
+	return value != nil && *value
+}
+
+func shouldBlockReleaseMismatch(
+	item storage.MediaItem,
+	release storage.ReleaseCandidate,
+	overrideMatch bool,
+) bool {
+	return !overrideMatch && decisions.EvaluateReleaseMatch(item, release).Severity == "error"
 }
