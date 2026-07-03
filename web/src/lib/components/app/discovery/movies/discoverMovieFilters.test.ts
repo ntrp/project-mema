@@ -15,8 +15,9 @@ describe('discover movie filters', () => {
 
 		expect(filters.runtime).toEqual([0, 400]);
 		expect(filters.score).toEqual([0, 10]);
-		expect(filters.minVoteCount).toBe(0);
-		expect(movieFilterUrl(defaultMovieFilters())).toBe('/discover/movies');
+		expect(filters.minVoteCount).toBe(10);
+		expect(movieFilterUrl(defaultMovieFilters())).toBe('/discover/movies?minVoteCount=10');
+		expect(movieQuery(defaultMovieFilters())).toMatchObject({ minVoteCount: 10 });
 	});
 
 	it('parses explicit numeric range params', () => {
@@ -51,7 +52,7 @@ describe('discover movie filters', () => {
 		};
 
 		expect(movieFilterUrl(filters)).toBe(
-			'/discover/movies?withoutGenres=Horror&withoutKeywords=ghost'
+			'/discover/movies?withoutGenres=Horror&withoutKeywords=ghost&minVoteCount=10'
 		);
 		expect(movieQuery(filters)).toMatchObject({
 			withoutGenres: ['Horror'],

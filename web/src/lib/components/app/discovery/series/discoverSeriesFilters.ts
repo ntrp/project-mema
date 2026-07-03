@@ -1,6 +1,7 @@
 import type { DiscoverSeriesSearchQuery } from '$lib/settings/api';
 import {
 	contentRatingOptions,
+	defaultMinVoteCount,
 	languageOptions,
 	type DiscoverMovieFilters
 } from '../movies/discoverMovieFilters';
@@ -49,7 +50,7 @@ export function defaultSeriesFilters(): DiscoverSeriesFilters {
 		status: [],
 		runtime: [0, 400],
 		score: [0, 10],
-		minVoteCount: 0
+		minVoteCount: defaultMinVoteCount
 	};
 }
 
@@ -71,7 +72,7 @@ export function filtersFromParams(params: URLSearchParams): DiscoverSeriesFilter
 		status: params.getAll('status'),
 		runtime: [numberParam(params, 'runtimeMin', 0), numberParam(params, 'runtimeMax', 400)],
 		score: [numberParam(params, 'scoreMin', 0), numberParam(params, 'scoreMax', 10)],
-		minVoteCount: numberParam(params, 'minVoteCount', 0)
+		minVoteCount: numberParam(params, 'minVoteCount', defaultMinVoteCount)
 	};
 }
 
@@ -114,7 +115,7 @@ export function seriesFilterUrl(filters: DiscoverSeriesFilters) {
 	setParam(params, 'runtimeMax', String(filters.runtime[1]), '400');
 	setParam(params, 'scoreMin', String(filters.score[0]), '0');
 	setParam(params, 'scoreMax', String(filters.score[1]), '10');
-	setParam(params, 'minVoteCount', String(filters.minVoteCount), '0');
+	params.set('minVoteCount', String(filters.minVoteCount));
 	const query = params.toString();
 	return query ? `/discover/series?${query}` : '/discover/series';
 }

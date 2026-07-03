@@ -1,21 +1,47 @@
 <script lang="ts">
+	import SearchIcon from '@lucide/svelte/icons/search';
+	import UserIcon from '@lucide/svelte/icons/user';
 	import { resolve } from '$app/paths';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import MediaFileSearchModal from '$lib/components/app/media/files/MediaFileSearchModal.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { releaseSearchQuery } from '$lib/components/app/media/release-search/releaseSearchQuery';
-	import type { MediaItem } from '$lib/settings/types';
+	import type {
+		Language,
+		MediaItem,
+		ReleaseCandidate,
+		ReleaseOverrideDetails
+	} from '$lib/settings/types';
 
 	interface Props {
 		items: MediaItem[];
+		languages: Language[];
 		searchingItemId?: string;
+		grabbingKey?: string;
 		canManage: boolean;
 		onFindReleases: (_item: MediaItem, _query?: string) => void;
+		onGrabRelease: (
+			_item: MediaItem,
+			_release: ReleaseCandidate,
+			_overrideMatch?: boolean,
+			_details?: ReleaseOverrideDetails
+		) => void;
 	}
 
-	let { items, searchingItemId, canManage, onFindReleases }: Props = $props();
+	let {
+		items,
+		languages,
+		searchingItemId,
+		grabbingKey,
+		canManage,
+		onFindReleases,
+		onGrabRelease
+	}: Props = $props();
+	let manualSearchItem = $state<MediaItem | undefined>();
 
 	function monitorLabel(item: MediaItem) {
 		if (!item.monitored || item.monitorMode === 'none') {
@@ -60,15 +86,44 @@
 						<Table.Cell>{item.minimumAvailability}</Table.Cell>
 						<Table.Cell class="text-right">
 							{#if canManage}
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									disabled={searchingItemId === item.id}
-									onclick={() => onFindReleases(item, releaseSearchQuery(item))}
-								>
-									{searchingItemId === item.id ? 'Searching' : 'Search'}
-								</Button>
+								<div class="flex items-center justify-end gap-2">
+									<Tooltip.Root>
+										<Tooltip.Trigger>
+											{#snippet child({ props })}
+												<Button
+													{...props}
+													type="button"
+													variant="outline"
+													size="icon-sm"
+													aria-label={`Automatic search ${item.title}`}
+													disabled={searchingItemId === item.id}
+													onclick={() => onFindReleases(item, releaseSearchQuery(item))}
+												>
+													<SearchIcon aria-hidden="true" />
+												</Button>
+											{/snippet}
+										</Tooltip.Trigger>
+										<Tooltip.Content>Automatic search</Tooltip.Content>
+									</Tooltip.Root>
+									<Tooltip.Root>
+										<Tooltip.Trigger>
+											{#snippet child({ props })}
+												<Button
+													{...props}
+													type="button"
+													variant="outline"
+													size="icon-sm"
+													aria-label={`Manual search ${item.title}`}
+													disabled={searchingItemId === item.id}
+													onclick={() => (manualSearchItem = item)}
+												>
+													<UserIcon aria-hidden="true" />
+												</Button>
+											{/snippet}
+										</Tooltip.Trigger>
+										<Tooltip.Content>Manual search</Tooltip.Content>
+									</Tooltip.Root>
+								</div>
 							{/if}
 						</Table.Cell>
 					</Table.Row>
@@ -82,4 +137,16 @@
 	>
 		<p class="m-0 text-lg font-black text-foreground">No missing media.</p>
 	</EmptyState>
+{/if}
+
+{#if manualSearchItem}
+	<MediaFileSearchModal
+		item={manualSearchItem}
+		{languages}
+		searchContext={{ type: 'title' }}
+		{grabbingKey}
+		{canManage}
+		onGrab={onGrabRelease}
+		onClose={() => (manualSearchItem = undefined)}
+	/>
 {/if}

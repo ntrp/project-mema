@@ -26,7 +26,8 @@
 		QualityProfileOption,
 		MediaSearchResult,
 		MediaType,
-		ReleaseCandidate
+		ReleaseCandidate,
+		ReleaseOverrideDetails
 	} from '$lib/settings/types';
 	interface Props {
 		mediaType: MediaType;
@@ -51,7 +52,12 @@
 		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 		onDeleteMedia: (_item: MediaItem) => void;
-		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
+		onGrabRelease: (
+			_item: MediaItem,
+			_release: ReleaseCandidate,
+			_overrideMatch?: boolean,
+			_details?: ReleaseOverrideDetails
+		) => void;
 		onAddMedia: (_candidate: MediaSearchResult) => void;
 	}
 

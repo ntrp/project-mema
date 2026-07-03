@@ -135,7 +135,15 @@
 			/>
 		{/if}
 	{:else if activeSection === 'wanted'}
-		<WantedMediaTable items={wanted} {searchingItemId} {canManage} {onFindReleases} />
+		<WantedMediaTable
+			items={wanted}
+			{languages}
+			{searchingItemId}
+			{grabbingKey}
+			{canManage}
+			{onFindReleases}
+			{onGrabRelease}
+		/>
 	{:else}
 		<ActivityList
 			section={activitySection}

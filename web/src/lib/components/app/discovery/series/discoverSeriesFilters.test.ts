@@ -15,8 +15,9 @@ describe('discover series filters', () => {
 
 		expect(filters.runtime).toEqual([0, 400]);
 		expect(filters.score).toEqual([0, 10]);
-		expect(filters.minVoteCount).toBe(0);
-		expect(seriesFilterUrl(defaultSeriesFilters())).toBe('/discover/series');
+		expect(filters.minVoteCount).toBe(10);
+		expect(seriesFilterUrl(defaultSeriesFilters())).toBe('/discover/series?minVoteCount=10');
+		expect(seriesQuery(defaultSeriesFilters())).toMatchObject({ minVoteCount: 10 });
 	});
 
 	it('counts status as an active filter group without sorting', () => {
@@ -39,7 +40,7 @@ describe('discover series filters', () => {
 		};
 
 		expect(seriesFilterUrl(filters)).toBe(
-			'/discover/series?withoutGenres=Reality&withoutKeywords=soap'
+			'/discover/series?withoutGenres=Reality&withoutKeywords=soap&minVoteCount=10'
 		);
 		expect(seriesQuery(filters)).toMatchObject({
 			withoutGenres: ['Reality'],

@@ -32,7 +32,8 @@
 		MediaItemUpdateRequest,
 		MediaMetadataEpisode,
 		MediaMetadataSeason,
-		ReleaseCandidate
+		ReleaseCandidate,
+		ReleaseOverrideDetails
 	} from '$lib/settings/types';
 
 	interface Props {
@@ -51,7 +52,12 @@
 		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onAutoSearch: (_item: MediaItem) => void;
 		onDeleteFile: (_item: MediaItem, _path: string) => void;
-		onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
+		onGrabRelease: (
+			_item: MediaItem,
+			_release: ReleaseCandidate,
+			_overrideMatch?: boolean,
+			_details?: ReleaseOverrideDetails
+		) => void;
 	}
 
 	let {

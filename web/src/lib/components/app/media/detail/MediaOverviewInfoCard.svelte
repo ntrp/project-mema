@@ -180,7 +180,7 @@
 							{#each row.value as value (value)}
 								{@const href = discoverHref(row.label, value)}
 								{#if href}
-									<a class="text-muted-foreground hover:text-foreground" {href}>{value}</a>
+									<a class="text-muted-foreground hover:underline" {href}>{value}</a>
 								{:else}
 									<span>{value}</span>
 								{/if}
@@ -197,7 +197,7 @@
 							<Icon aria-hidden="true" class="size-3.5 text-foreground" />
 						{/if}
 						{#if href}
-							<a class="text-muted-foreground hover:text-foreground" {href}>{row.value}</a>
+							<a class="text-muted-foreground hover:underline" {href}>{row.value}</a>
 						{:else}
 							<span>{row.value}</span>
 						{/if}

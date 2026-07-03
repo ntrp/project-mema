@@ -25,16 +25,16 @@
 			Crew
 		{/if}
 	</h3>
-	<div class="grid items-start gap-x-7 gap-y-[18px] md:grid-cols-3" aria-label="Crew">
+	<div class="grid items-start gap-x-7 gap-y-4.5 md:grid-cols-3" aria-label="Crew">
 		{#each groups as group (group.title)}
 			<div class="grid min-w-0 content-start gap-1">
-				<strong class="[overflow-wrap:anywhere] text-foreground">{group.title}</strong>
-				<span class="[overflow-wrap:anywhere] text-muted-foreground">
+				<strong class="wrap-anywhere text-foreground">{group.title}</strong>
+				<span class="wrap-anywhere text-muted-foreground">
 					{#each group.people.slice(0, 3) as person, index (`${group.title}:${person.name}:${person.externalId ?? index}`)}
 						{@const personUrl = mediaPersonHref(person)}
-						{#if index > 0},
+						{#if index > 0},&nbsp;
 						{/if}{#if personUrl}<a
-								class="text-inherit no-underline hover:text-primary-hover focus-visible:text-primary-hover focus-visible:outline-none"
+								class="text-inherit no-underline hover:underline hover:text-primary-hover focus-visible:text-primary-hover focus-visible:outline-none"
 								href={personUrl}
 							>
 								{person.name}</a

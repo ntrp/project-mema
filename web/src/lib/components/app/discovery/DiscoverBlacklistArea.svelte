@@ -3,6 +3,7 @@
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { DiscoverBlacklistItem } from '$lib/settings/types';
 	import MediaBadge from '$lib/components/app/media/shared/MediaBadge.svelte';
@@ -37,10 +38,12 @@
 
 {#if loading}
 	<div
+		aria-busy="true"
+		aria-live="polite"
 		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,220px))] sm:gap-5"
 	>
 		{#each Array.from({ length: 8 }) as _, index (index)}
-			<div class="min-w-0 snap-start aspect-[2/3] rounded-md bg-card" aria-hidden="true"></div>
+			<Skeleton class="min-w-0 snap-start aspect-[2/3]" aria-hidden="true" />
 		{/each}
 	</div>
 {:else if items.length === 0}

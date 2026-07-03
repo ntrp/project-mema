@@ -88,19 +88,19 @@ describe('rendered home media components (SCN-MEDIA-003)', () => {
 	});
 
 	it('renders wanted table with monitor, profile, and search state', () => {
-		const { body } = render(WantedMediaTable, {
-			props: {
-				items: [
-					mediaItem({
-						monitorMode: 'collection',
-						qualityProfileName: 'Scenario Profile',
-						minimumAvailability: 'released'
-					})
-				],
-				searchingItemId: 'media-1',
-				canManage: true,
-				onFindReleases: vi.fn()
-			}
+		const { body } = renderWithTooltip(WantedMediaTable, {
+			items: [
+				mediaItem({
+					monitorMode: 'collection',
+					qualityProfileName: 'Scenario Profile',
+					minimumAvailability: 'released'
+				})
+			],
+			languages: [],
+			searchingItemId: 'media-1',
+			canManage: true,
+			onFindReleases: vi.fn(),
+			onGrabRelease: vi.fn()
 		});
 
 		expect(body).toContain('Wanted');
@@ -108,7 +108,8 @@ describe('rendered home media components (SCN-MEDIA-003)', () => {
 		expect(body).toContain('Entire collection');
 		expect(body).toContain('Scenario Profile');
 		expect(body).toContain('released');
-		expect(body).toContain('Searching');
+		expect(body).toContain('Automatic search Scenario Movie');
+		expect(body).toContain('Manual search Scenario Movie');
 	});
 
 	it('renders empty library and wanted states', () => {
@@ -119,7 +120,13 @@ describe('rendered home media components (SCN-MEDIA-003)', () => {
 		expect(library.body).toContain('Discover');
 
 		const wanted = render(WantedMediaTable, {
-			props: { items: [], canManage: false, onFindReleases: vi.fn() }
+			props: {
+				items: [],
+				languages: [],
+				canManage: false,
+				onFindReleases: vi.fn(),
+				onGrabRelease: vi.fn()
+			}
 		});
 		expect(wanted.body).toContain('No missing media.');
 	});

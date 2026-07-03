@@ -10,6 +10,7 @@
 		MediaSearchResult
 	} from '$lib/settings/types';
 	import MediaPosterCard from '$lib/components/app/media/posters/MediaPosterCard.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 
 	interface Props {
 		section?: MediaDiscoverSection;
@@ -109,10 +110,12 @@
 {#if loading}
 	<PageHeading eyebrow="Discover" title="Loading section" />
 	<div
+		aria-busy="true"
+		aria-live="polite"
 		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] sm:gap-5"
 	>
 		{#each Array.from({ length: 12 }) as _, index (index)}
-			<div class="min-w-0 snap-start aspect-2/3 rounded-md bg-card" aria-hidden="true"></div>
+			<Skeleton class="min-w-0 snap-start aspect-2/3" aria-hidden="true" />
 		{/each}
 	</div>
 {:else if !section}

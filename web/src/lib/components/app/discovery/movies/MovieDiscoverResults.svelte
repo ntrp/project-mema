@@ -2,6 +2,7 @@
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import MediaPosterCard from '$lib/components/app/media/posters/MediaPosterCard.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import type { DiscoverBlacklistItem, MediaItem, MediaSearchResult } from '$lib/settings/types';
 
 	interface Props {
@@ -54,12 +55,14 @@
 	}
 </script>
 
-{#if loading && results.length === 0}
+{#if loading}
 	<div
+		aria-busy="true"
+		aria-live="polite"
 		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] items-start gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] sm:gap-5"
 	>
 		{#each Array.from({ length: 12 }) as _, index (index)}
-			<div class="min-w-0 aspect-[2/3] rounded-md bg-card" aria-hidden="true"></div>
+			<Skeleton class="min-w-0 aspect-[2/3]" aria-hidden="true" />
 		{/each}
 	</div>
 {:else if results.length > 0}

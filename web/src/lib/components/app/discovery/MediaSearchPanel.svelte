@@ -13,6 +13,7 @@
 	import MediaPosterCard from '$lib/components/app/media/posters/MediaPosterCard.svelte';
 	import PosterRowControls from '$lib/components/app/media/posters/PosterRowControls.svelte';
 	import { createPosterRowScroller } from '$lib/components/app/media/posters/posterRowScroller.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 
 	interface Props {
 		sections: MediaDiscoverSection[];
@@ -107,13 +108,13 @@
 <PageHeading eyebrow="Discover" title="Browse media from metadata providers" titleId="home-title" />
 
 {#if loading}
-	<div class="skeleton-section min-w-0">
+	<div class="min-w-0" aria-busy="true" aria-live="polite">
 		<SectionHeading title="Loading discovery" />
 		<div
 			class="-mx-3.5 mt-[-12px] grid auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
 		>
 			{#each Array.from({ length: 8 }) as _, index (index)}
-				<div class="min-w-0 snap-start aspect-[2/3] rounded-md bg-card" aria-hidden="true"></div>
+				<Skeleton class="min-w-0 snap-start aspect-[2/3]" aria-hidden="true" />
 			{/each}
 		</div>
 	</div>

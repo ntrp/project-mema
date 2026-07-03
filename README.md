@@ -64,6 +64,24 @@ POSTGRES_PORT=16432 docker compose up -d postgres
 export DATABASE_URL=postgres://media_manager:media_manager@localhost:16432/media_manager?sslmode=disable
 ```
 
+Optional Transmission over PIA OpenVPN setup:
+
+```sh
+cp docker/transmission-openvpn.env.example .data/secrets/transmission-openvpn.env
+$EDITOR .data/secrets/transmission-openvpn.env
+docker compose up -d transmission-openvpn
+```
+
+Transmission is exposed at `http://localhost:19091` by default. The service uses
+PIA via `haugene/transmission-openvpn`, stores its ignored local config under
+`.data/transmission-openvpn/config`, and stores downloads under
+`.data/media/transmission`. Override the PIA region with
+`TRANSMISSION_OPENVPN_CONFIG`, for example:
+
+```sh
+TRANSMISSION_OPENVPN_CONFIG=sweden docker compose up -d transmission-openvpn
+```
+
 Create the development schema:
 
 ```sh

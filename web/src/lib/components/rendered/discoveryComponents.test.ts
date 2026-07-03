@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import DiscoverBlacklistArea from '$lib/components/app/discovery/DiscoverBlacklistArea.svelte';
 import DiscoverSectionArea from '$lib/components/app/discovery/DiscoverSectionArea.svelte';
 import MediaSearchPanel from '$lib/components/app/discovery/MediaSearchPanel.svelte';
+import MovieDiscoverResults from '$lib/components/app/discovery/movies/MovieDiscoverResults.svelte';
 import type {
 	DiscoverBlacklistItem,
 	MediaDiscoverSection,
@@ -44,6 +45,7 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onBlacklist: vi.fn()
 		});
 		expect(loading.body).toContain('Loading discovery');
+		expect(loading.body).toContain('data-slot="skeleton"');
 
 		const empty = renderWithTooltip(MediaSearchPanel, {
 			sections: [],
@@ -56,6 +58,41 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onBlacklist: vi.fn()
 		});
 		expect(empty.body).toContain('No discovery sections available');
+	});
+
+	it('renders skeleton cards while loading a discover section page', () => {
+		const loading = renderWithTooltip(DiscoverSectionArea, {
+			section: undefined,
+			mediaItems: [],
+			blacklist: [],
+			loading: true,
+			actionLabel: 'Add',
+			canManage: false,
+			onAdd: vi.fn(),
+			onBlacklist: vi.fn(),
+			onLoadMore: vi.fn()
+		});
+
+		expect(loading.body).toContain('Loading section');
+		expect(loading.body).toContain('data-slot="skeleton"');
+	});
+
+	it('renders skeleton cards while discover movie and series grids load', () => {
+		const loading = renderWithTooltip(MovieDiscoverResults, {
+			results: [searchResult()],
+			mediaItems: [],
+			blacklist: [],
+			loading: true,
+			loadingMore: false,
+			hasSearched: true,
+			actionLabel: 'Add',
+			canManage: true,
+			onAdd: vi.fn(),
+			onBlacklist: vi.fn()
+		});
+
+		expect(loading.body).toContain('data-slot="skeleton"');
+		expect(loading.body).not.toContain('Visible Movie');
 	});
 
 	it('renders a discover section page with library and blacklist filtering', () => {
@@ -104,6 +141,13 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onRemove: vi.fn()
 		});
 		expect(empty.body).toContain('No blacklisted media');
+
+		const loading = renderWithTooltip(DiscoverBlacklistArea, {
+			items: [],
+			loading: true,
+			onRemove: vi.fn()
+		});
+		expect(loading.body).toContain('data-slot="skeleton"');
 	});
 });
 
