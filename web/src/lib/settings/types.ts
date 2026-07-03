@@ -85,6 +85,7 @@ export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
 export type SeriesType = components['schemas']['SeriesType'];
 export type MinimumAvailability = components['schemas']['MinimumAvailability'];
 export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
+export type ReleaseBlocklistItem = components['schemas']['ReleaseBlocklistItem'];
 export type ReleaseOverrideDetails = components['schemas']['ReleaseOverrideDetails'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];
 export type DownloadActivityStatus = components['schemas']['DownloadActivity']['status'];

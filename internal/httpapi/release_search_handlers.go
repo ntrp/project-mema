@@ -66,9 +66,18 @@ func (s *Server) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id 
 	}
 	profile, formats, languages := s.releaseDecisionContext(r.Context(), item)
 	for _, release := range snapshot.Releases {
+		block, blocked, err := s.settings.FindReleaseBlock(r.Context(), release)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "release_blocklist_failed", "Could not check release blocklist")
+			return
+		}
+		var blockPtr *storage.ReleaseBlocklistItem
+		if blocked {
+			blockPtr = &block
+		}
 		response.Releases = append(
 			response.Releases,
-			releaseCandidateResponse(item, release, profile, formats, languages),
+			releaseCandidateResponseWithBlock(item, release, profile, formats, languages, blockPtr),
 		)
 	}
 	writeJSON(w, http.StatusOK, response)

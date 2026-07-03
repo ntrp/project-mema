@@ -12,6 +12,7 @@ import type {
 	MediaRequestApproveRequest,
 	MediaSearchResult,
 	QualityProfileOption,
+	ReleaseBlocklistItem,
 	ReleaseCandidate
 } from '$lib/settings/types';
 
@@ -28,6 +29,7 @@ export interface HomeAreaProps {
 	languages: Language[];
 	qualityProfiles: QualityProfileOption[];
 	activities: DownloadActivity[];
+	releaseBlocklist: ReleaseBlocklistItem[];
 	loadingDiscover: boolean;
 	loadingBlacklist: boolean;
 	loadingMediaItems: boolean;
@@ -56,6 +58,7 @@ export interface HomeAreaProps {
 	onDeleteMedia: (_item: MediaItem) => void;
 	onGrabRelease: (_item: MediaItem, _release: ReleaseCandidate) => void;
 	onRefreshActivity: () => void;
+	onRefreshReleaseBlocklist: () => void;
 	onCancelActivity: (_activity: DownloadActivity) => void;
 	onDeleteActivity: (_activity: DownloadActivity) => void;
 }

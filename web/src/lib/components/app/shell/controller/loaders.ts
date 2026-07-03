@@ -3,6 +3,7 @@ import {
 	getMediaMetadataDetails as getMediaMetadataDetailsRequest,
 	getPersonDetails as getPersonDetailsRequest,
 	listDownloadActivity as listDownloadActivityRequest,
+	listReleaseBlocklist as listReleaseBlocklistRequest,
 	listMediaItems as listMediaItemsRequest,
 	listMediaRequests as listMediaRequestsRequest,
 	loadSettings as loadSettingsRequest
@@ -33,7 +34,12 @@ export function createLoadActions(state: AppShellState) {
 	}
 
 	async function loadLibrary() {
-		await Promise.all([loadMediaItems(), loadMediaRequests(), loadDownloadActivity()]);
+		await Promise.all([
+			loadMediaItems(),
+			loadMediaRequests(),
+			loadDownloadActivity(),
+			loadReleaseBlocklist()
+		]);
 	}
 
 	async function loadMetadataDetail() {
@@ -122,6 +128,17 @@ export function createLoadActions(state: AppShellState) {
 		}
 	}
 
+	async function loadReleaseBlocklist() {
+		state.loadingActivity = true;
+		try {
+			state.releaseBlocklist = await listReleaseBlocklistRequest();
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not load release blocklist');
+		} finally {
+			state.loadingActivity = false;
+		}
+	}
+
 	return {
 		loadSettings,
 		loadLibrary,
@@ -130,6 +147,7 @@ export function createLoadActions(state: AppShellState) {
 		loadMediaCollection,
 		loadMediaItems,
 		loadMediaRequests,
-		loadDownloadActivity
+		loadDownloadActivity,
+		loadReleaseBlocklist
 	};
 }

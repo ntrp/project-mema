@@ -50,6 +50,7 @@ import type {
 	PathMapping,
 	PathMappingForm,
 	ReleaseSearchResults,
+	ReleaseBlocklistItem,
 	SettingsSection,
 	SystemSection,
 	Tag,
@@ -108,6 +109,7 @@ export class AppShellState {
 	advancedSearchGroups = $state<MediaSearchGroup[]>([]);
 	releaseResults = $state<ReleaseSearchResults>({});
 	activities = $state<DownloadActivity[]>([]);
+	releaseBlocklist = $state<ReleaseBlocklistItem[]>([]);
 	downloadForm = $state<DownloadClientFormValue>(emptyDownloadClientForm());
 	indexerForm = $state<IndexerFormValue>(emptyIndexerForm());
 	libraryFolderForm = $state<LibraryFolderFormValue>(emptyLibraryFolderForm());

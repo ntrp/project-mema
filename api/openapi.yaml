@@ -1123,6 +1123,23 @@ paths:
                 $ref: "#/components/schemas/DownloadActivityListResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /activity/blocklist:
+    get:
+      operationId: listReleaseBlocklist
+      tags:
+        - Activity
+      summary: List blocked releases
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Blocked releases
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReleaseBlocklistListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /activity/downloads/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4998,6 +5015,61 @@ components:
             $ref: "#/components/schemas/ReleaseScoreContributor"
         parsed:
           $ref: "#/components/schemas/ParsedReleaseMetadata"
+    ReleaseBlocklistListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseBlocklistItem"
+    ReleaseBlocklistItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mediaItemId
+        - mediaTitle
+        - mediaType
+        - releaseTitle
+        - indexerName
+        - reason
+        - source
+        - temporary
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
+        mediaTitle:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        releaseTitle:
+          type: string
+        indexerName:
+          type: string
+        reason:
+          type: string
+        source:
+          type: string
+        temporary:
+          type: boolean
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     ReleaseScoreContributor:
       type: object
       additionalProperties: false

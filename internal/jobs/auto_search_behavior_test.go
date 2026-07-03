@@ -92,6 +92,9 @@ func TestSCNSystem008JobArgumentKindsAreStable(t *testing.T) {
 	if (DownloadActivitySyncArgs{}).Kind() != "download.activity_sync" {
 		t.Fatalf("activity sync kind = %q", (DownloadActivitySyncArgs{}).Kind())
 	}
+	if (ReleaseBlocklistCleanupArgs{}).Kind() != "release.blocklist_cleanup" {
+		t.Fatalf("blocklist cleanup kind = %q", (ReleaseBlocklistCleanupArgs{}).Kind())
+	}
 }
 
 func int32Ptr(value int32) *int32 {

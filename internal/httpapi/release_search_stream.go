@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 
 	"media-manager/internal/jobs"
+	"media-manager/internal/storage"
 )
 
 func (s *Server) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaReleaseSearchParams) {
@@ -58,9 +59,18 @@ func (s *Server) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request
 	response := ReleaseSearchResponse{Releases: make([]ReleaseCandidate, 0, len(snapshot.Releases)), Errors: snapshot.Errors}
 	profile, formats, languages := s.releaseDecisionContext(r.Context(), item)
 	for _, release := range snapshot.Releases {
+		block, blocked, err := s.settings.FindReleaseBlock(r.Context(), release)
+		if err != nil {
+			writeSSE(w, flusher, "media.release_search.error", jobs.ReleaseSearchProgressEvent{Kind: "error", Message: "Could not check release blocklist"})
+			return
+		}
+		var blockPtr *storage.ReleaseBlocklistItem
+		if blocked {
+			blockPtr = &block
+		}
 		response.Releases = append(
 			response.Releases,
-			releaseCandidateResponse(item, release, profile, formats, languages),
+			releaseCandidateResponseWithBlock(item, release, profile, formats, languages, blockPtr),
 		)
 	}
 	writeSSE(w, flusher, "media.release_search.result", response)

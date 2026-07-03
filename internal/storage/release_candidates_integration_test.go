@@ -98,3 +98,58 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 		t.Fatalf("expected stale release lookup to be not found, got %v", err)
 	}
 }
+
+func TestScenarioSCNMedia011ReleaseBlocklistMatchesAndExpires(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:      "movie",
+		Title:     "Blocked Release Movie " + uuid.NewString(),
+		Monitored: true,
+	})
+	if err != nil {
+		t.Fatalf("create media item: %v", err)
+	}
+	guid := "blocked-guid-" + uuid.NewString()
+	expiresAt := time.Now().Add(time.Hour).UTC().Truncate(time.Second)
+	release := ReleaseCandidateInput{
+		MediaItemID: item.ID,
+		IndexerName: "Scenario Indexer",
+		IndexerType: "newznab",
+		Title:       "Blocked.Release.2026.1080p",
+		DownloadURL: "https://indexer.test/download/blocked",
+		GUID:        &guid,
+		SizeBytes:   1,
+		SearchKind:  "manual",
+	}
+	if _, err := store.BlockReleaseCandidate(ctx, release, "missing pieces", "download_failed", &expiresAt); err != nil {
+		t.Fatalf("block release: %v", err)
+	}
+	blocked, err := store.ReleaseCandidateInputBlocked(ctx, ReleaseCandidateInput{
+		MediaItemID: item.ID,
+		Title:       "Different title",
+		GUID:        &guid,
+	})
+	if err != nil || !blocked {
+		t.Fatalf("blocked by guid = %v, %v", blocked, err)
+	}
+	items, err := store.ListReleaseBlocklist(ctx)
+	if err != nil || len(items) != 1 || items[0].MediaTitle != item.Title {
+		t.Fatalf("list blocklist = %#v, %v", items, err)
+	}
+	expired := time.Now().Add(-time.Hour)
+	if _, err := store.BlockReleaseCandidate(ctx, ReleaseCandidateInput{
+		MediaItemID: item.ID,
+		IndexerName: "Scenario Indexer",
+		IndexerType: "newznab",
+		Title:       "Expired.Release.2026.1080p",
+		DownloadURL: "https://indexer.test/download/expired",
+		SizeBytes:   1,
+		SearchKind:  "manual",
+	}, "server unavailable", "download_status_unavailable", &expired); err != nil {
+		t.Fatalf("block expired release: %v", err)
+	}
+	deleted, err := store.CleanupExpiredReleaseBlocks(ctx)
+	if err != nil || deleted != 1 {
+		t.Fatalf("cleanup expired = %d, %v", deleted, err)
+	}
+}

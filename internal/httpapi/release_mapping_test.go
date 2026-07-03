@@ -102,6 +102,31 @@ func TestSCNMedia002ReleaseCandidateResponsePreservesIndexerAndMatchDetails(t *t
 	}
 }
 
+func TestSCNMedia002ReleaseCandidateResponseMarksBlocklistedRelease(t *testing.T) {
+	response := releaseCandidateResponseWithBlock(
+		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},
+		storage.ReleaseCandidate{
+			ID:          uuid.New(),
+			MediaItemID: uuid.New(),
+			IndexerName: "Local Indexer",
+			IndexerType: "newznab",
+			Title:       "Scenario.Movie.2026.1080p.WEBDL-GRP",
+			SizeBytes:   1,
+		},
+		nil,
+		nil,
+		nil,
+		&storage.ReleaseBlocklistItem{Reason: "missing pieces"},
+	)
+
+	if response.Match.Severity != ReleaseCandidateMatchSeverityError {
+		t.Fatalf("severity = %q", response.Match.Severity)
+	}
+	if len(response.Match.Details) == 0 || response.Match.Details[0] != "Release is blocklisted: missing pieces" {
+		t.Fatalf("details = %#v", response.Match.Details)
+	}
+}
+
 func TestSCNMedia002ReleaseScoreContributorResponsesPreserveOrder(t *testing.T) {
 	responses := releaseScoreContributorResponses([]decisions.ReleaseScoreContributor{
 		{Label: "Quality", Score: 100},

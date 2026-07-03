@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ActivityManualImportModal from './ActivityManualImportModal.svelte';
+	import ActivityBlocklistTable from './ActivityBlocklistTable.svelte';
 	import ActivityActions from './ActivityActions.svelte';
 	import ActivityProgressCell from './ActivityProgressCell.svelte';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
@@ -11,11 +12,17 @@
 	import { activityDisplay } from './activityDisplay';
 	import { activitySectionHeading, visibleInActivitySection } from './activitySections';
 	import { manualImportDownloadActivity } from '$lib/settings/api';
-	import type { ActivitySection, DownloadActivity, ManualImportRequest } from '$lib/settings/types';
+	import type {
+		ActivitySection,
+		DownloadActivity,
+		ManualImportRequest,
+		ReleaseBlocklistItem
+	} from '$lib/settings/types';
 
 	interface Props {
 		section?: ActivitySection;
 		activities: DownloadActivity[];
+		releaseBlocklist?: ReleaseBlocklistItem[];
 		loading: boolean;
 		canManage: boolean;
 		cancellingId?: string;
@@ -28,6 +35,7 @@
 	let {
 		section = 'queue',
 		activities,
+		releaseBlocklist = [],
 		loading,
 		canManage,
 		cancellingId,
@@ -74,15 +82,19 @@
 </PageHeading>
 
 {#if section === 'blocklist'}
-	<EmptyState
-		class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
-	>
-		<p class="m-0 text-lg font-black text-foreground">{heading.empty}</p>
-		<p class="m-0 max-w-2xl text-sm font-semibold text-muted-foreground">
-			Ignored releases will live here. Manual ignores and automatic blocks for broken download
-			candidates will expire according to the indexer search setting.
-		</p>
-	</EmptyState>
+	{#if releaseBlocklist.length > 0}
+		<ActivityBlocklistTable items={releaseBlocklist} />
+	{:else}
+		<EmptyState
+			class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
+		>
+			<p class="m-0 text-lg font-black text-foreground">{heading.empty}</p>
+			<p class="m-0 max-w-2xl text-sm font-semibold text-muted-foreground">
+				Automatic blocks for broken or temporarily unavailable releases will appear here and expire
+				according to the indexer search setting.
+			</p>
+		</EmptyState>
+	{/if}
 {:else if visibleActivities.length > 0}
 	<Card class="overflow-hidden p-0">
 		<Table.Root class="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">

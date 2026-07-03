@@ -33,7 +33,7 @@ describe('rendered activity components (SCN-ACTIVITY-001)', () => {
 			onDelete: vi.fn()
 		});
 
-		expect(body).toContain('Downloads and imports');
+		expect(body).toContain('Activity queue');
 		expect(body).toContain('Scenario Movie');
 		expect(body).toContain('German');
 		expect(body).toContain('1080p');
@@ -55,7 +55,7 @@ describe('rendered activity components (SCN-ACTIVITY-001)', () => {
 		});
 
 		expect(body).toContain('Refreshing');
-		expect(body).toContain('No download activity yet');
+		expect(body).toContain('No queued activity');
 	});
 });
 

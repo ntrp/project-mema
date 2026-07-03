@@ -34,6 +34,13 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 		writeError(w, http.StatusBadRequest, "release_mismatch", "Release does not match this series/movie")
 		return
 	}
+	if blocked, err := s.settings.ReleaseCandidateBlocked(r.Context(), release); err != nil {
+		writeError(w, http.StatusInternalServerError, "release_blocklist_failed", "Could not check release blocklist")
+		return
+	} else if blocked && !boolValue(body.OverrideMatch) {
+		writeError(w, http.StatusBadRequest, "release_blocklisted", "Release is blocklisted")
+		return
+	}
 
 	clients, err := s.settings.ListEnabledDownloadClients(r.Context())
 	if err != nil {

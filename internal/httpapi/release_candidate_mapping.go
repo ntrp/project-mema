@@ -14,6 +14,17 @@ func releaseCandidateResponse(
 	formats []storage.CustomFormat,
 	languages []storage.Language,
 ) ReleaseCandidate {
+	return releaseCandidateResponseWithBlock(item, release, profile, formats, languages, nil)
+}
+
+func releaseCandidateResponseWithBlock(
+	item storage.MediaItem,
+	release storage.ReleaseCandidate,
+	profile *storage.MediaProfile,
+	formats []storage.CustomFormat,
+	languages []storage.Language,
+	block *storage.ReleaseBlocklistItem,
+) ReleaseCandidate {
 	var indexerID *openapi_types.UUID
 	if release.IndexerID != nil {
 		value := openapi_types.UUID(*release.IndexerID)
@@ -26,6 +37,10 @@ func releaseCandidateResponse(
 		formats,
 		languages,
 	)
+	if block != nil {
+		match.Severity = "error"
+		match.Details = append([]string{"Release is blocklisted: " + block.Reason}, match.Details...)
+	}
 	return ReleaseCandidate{
 		Id:          openapi_types.UUID(release.ID),
 		IndexerId:   indexerID,

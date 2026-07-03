@@ -78,6 +78,7 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		}
 		updated, err := w.settings.FailDownloadActivity(ctx, activity.ID, &message, "download")
 		if err == nil {
+			w.blockActivity(ctx, activity, message, "download_status_unavailable")
 			w.publishActivity(updated, activity)
 			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity status check failed", map[string]any{"activityId": activity.ID.String(), "message": message})
 		} else {
@@ -106,6 +107,11 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		if trimmed != "" {
 			message = &trimmed
 		}
+		blockMessage := "Download failed"
+		if message != nil {
+			blockMessage = *message
+		}
+		w.blockActivity(ctx, activity, blockMessage, "download_failed")
 	}
 	updated, err := w.settings.UpdateDownloadActivityProgress(ctx, activity.ID, result.Status, result.ProgressPercent, message)
 	if err != nil {
@@ -130,7 +136,15 @@ func (w *DownloadActivitySyncWorker) failActivity(ctx context.Context, activity 
 		return err
 	}
 	w.publishActivity(updated, activity)
+	w.blockActivity(ctx, activity, message, "import_failed")
 	return nil
+}
+
+func (w *DownloadActivitySyncWorker) blockActivity(ctx context.Context, activity storage.DownloadActivity, reason string, source string) {
+	expiresAt := automaticBlockExpiry(ctx, w.settings)
+	if _, err := w.settings.BlockReleaseActivity(ctx, activity, reason, source, &expiresAt); err != nil {
+		slog.Error("release block failed", "activityId", activity.ID, "releaseTitle", activity.ReleaseTitle, "source", source, "error", err)
+	}
 }
 
 func (w *DownloadActivitySyncWorker) publishActivity(updated storage.DownloadActivity, previous storage.DownloadActivity) {

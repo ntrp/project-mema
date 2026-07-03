@@ -123,6 +123,10 @@ func autoSearchDownload(
 		return err
 	}
 	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
+	releases, err = unblockedReleaseCandidates(ctx, settings, releases)
+	if err != nil {
+		return err
+	}
 	profile, formats, languages := releaseDecisionContext(ctx, settings, item)
 	decision, ok := decisionEngine.ChooseReleaseWithProfileAndLanguages(
 		item,
@@ -234,6 +238,7 @@ func grabReleaseNow(
 		}
 		slog.Error("download client rejected release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "message", message)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download client rejected automatic release", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "releaseTitle": release.Title, "downloadClientName": client.Name, "message": message})
+		blockAutomaticRelease(ctx, settings, eventBroker, release, message, "download_client_rejected")
 		_, err := settings.FailDownloadActivity(ctx, activity.ID, &message, "download")
 		return err
 	}
@@ -249,6 +254,20 @@ func grabReleaseNow(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download activity state update failed", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "error": err.Error()})
 	}
 	return err
+}
+
+func unblockedReleaseCandidates(ctx context.Context, settings *storage.SettingsStore, releases []storage.ReleaseCandidateInput) ([]storage.ReleaseCandidateInput, error) {
+	filtered := releases[:0]
+	for _, release := range releases {
+		blocked, err := settings.ReleaseCandidateInputBlocked(ctx, release)
+		if err != nil {
+			return nil, fmt.Errorf("check release blocklist: %w", err)
+		}
+		if !blocked {
+			filtered = append(filtered, release)
+		}
+	}
+	return filtered, nil
 }
 
 func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {

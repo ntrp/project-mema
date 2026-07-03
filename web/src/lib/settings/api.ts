@@ -50,6 +50,7 @@ import type {
 	PathMappingForm,
 	QualitySizeSettingRequest,
 	QualitySizeSettingsResponse,
+	ReleaseBlocklistItem,
 	ReleaseCandidate,
 	ReleaseOverrideDetails,
 	SessionResponse,
@@ -909,6 +910,15 @@ export async function listDownloadActivity() {
 		throw new Error(error.message);
 	}
 	return data?.activities ?? [];
+}
+
+export async function listReleaseBlocklist(): Promise<ReleaseBlocklistItem[]> {
+	const { data, error } = await client.GET('/activity/blocklist');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.items ?? [];
 }
 
 export async function cancelDownloadActivity(id: string) {

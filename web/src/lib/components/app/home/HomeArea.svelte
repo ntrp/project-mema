@@ -21,6 +21,7 @@
 		languages,
 		qualityProfiles,
 		activities,
+		releaseBlocklist,
 		loadingDiscover,
 		loadingBlacklist,
 		loadingMediaItems,
@@ -49,6 +50,7 @@
 		onDeleteMedia,
 		onGrabRelease,
 		onRefreshActivity,
+		onRefreshReleaseBlocklist,
 		onCancelActivity,
 		onDeleteActivity
 	}: HomeAreaProps = $props();
@@ -138,11 +140,12 @@
 		<ActivityList
 			section={activitySection}
 			{activities}
+			{releaseBlocklist}
 			loading={loadingActivity}
 			{canManage}
 			cancellingId={cancellingActivityId}
 			deletingId={deletingActivityId}
-			onRefresh={onRefreshActivity}
+			onRefresh={activitySection === 'blocklist' ? onRefreshReleaseBlocklist : onRefreshActivity}
 			onCancel={onCancelActivity}
 			onDelete={onDeleteActivity}
 		/>

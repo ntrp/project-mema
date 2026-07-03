@@ -1948,6 +1948,27 @@ type QueryHistoryStats struct {
 	TotalEntries int32 `json:"totalEntries"`
 }
 
+// ReleaseBlocklistItem defines model for ReleaseBlocklistItem.
+type ReleaseBlocklistItem struct {
+	CreatedAt    time.Time          `json:"createdAt"`
+	ExpiresAt    *time.Time         `json:"expiresAt,omitempty"`
+	Id           openapi_types.UUID `json:"id"`
+	IndexerName  string             `json:"indexerName"`
+	MediaItemId  openapi_types.UUID `json:"mediaItemId"`
+	MediaTitle   string             `json:"mediaTitle"`
+	MediaType    MediaType          `json:"mediaType"`
+	Reason       string             `json:"reason"`
+	ReleaseTitle string             `json:"releaseTitle"`
+	Source       string             `json:"source"`
+	Temporary    bool               `json:"temporary"`
+	UpdatedAt    time.Time          `json:"updatedAt"`
+}
+
+// ReleaseBlocklistListResponse defines model for ReleaseBlocklistListResponse.
+type ReleaseBlocklistListResponse struct {
+	Items []ReleaseBlocklistItem `json:"items"`
+}
+
 // ReleaseCandidate defines model for ReleaseCandidate.
 type ReleaseCandidate struct {
 	Guid        *string               `json:"guid,omitempty"`
@@ -2469,6 +2490,9 @@ type UpdateSystemLogLevelJSONRequestBody = SystemLogLevelRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List blocked releases
+	// (GET /activity/blocklist)
+	ListReleaseBlocklist(w http.ResponseWriter, r *http.Request)
 	// List recent download activity
 	// (GET /activity/downloads)
 	ListDownloadActivity(w http.ResponseWriter, r *http.Request)
@@ -2831,6 +2855,12 @@ type ServerInterface interface {
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
+
+// List blocked releases
+// (GET /activity/blocklist)
+func (_ Unimplemented) ListReleaseBlocklist(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // List recent download activity
 // (GET /activity/downloads)
@@ -3554,6 +3584,26 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListReleaseBlocklist operation middleware
+func (siw *ServerInterfaceWrapper) ListReleaseBlocklist(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReleaseBlocklist(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // ListDownloadActivity operation middleware
 func (siw *ServerInterfaceWrapper) ListDownloadActivity(w http.ResponseWriter, r *http.Request) {
@@ -7531,6 +7581,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/activity/blocklist", wrapper.ListReleaseBlocklist)
+	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/activity/downloads", wrapper.ListDownloadActivity)
 	})

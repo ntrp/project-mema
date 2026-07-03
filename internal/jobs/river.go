@@ -165,6 +165,13 @@ func (w *GrabReleaseWorker) markGrabFailed(ctx context.Context, activityID uuid.
 		message = "Download client rejected the release"
 	}
 	slog.Error("marking grab release failed", "activityId", activityID, "message", message)
+	activity, loadErr := w.settings.GetDownloadActivity(ctx, activityID)
+	if loadErr == nil {
+		expiresAt := automaticBlockExpiry(ctx, w.settings)
+		if _, err := w.settings.BlockReleaseActivity(ctx, activity, message, "download_client_rejected", &expiresAt); err != nil {
+			slog.Error("manual release block failed", "activityId", activityID, "releaseTitle", activity.ReleaseTitle, "error", err)
+		}
+	}
 	_, err := w.settings.FailDownloadActivity(ctx, activityID, &message, "download")
 	return err
 }
@@ -198,6 +205,7 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 		imports:         importService,
 		events:          eventBroker,
 	})
+	river.AddWorker(workers, &ReleaseBlocklistCleanupWorker{settings: settings, events: eventBroker})
 
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
@@ -218,6 +226,13 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 					return DownloadActivitySyncArgs{}, &river.InsertOpts{Queue: queueDownloads}
 				},
 				&river.PeriodicJobOpts{ID: "download_activity_sync"},
+			),
+			river.NewPeriodicJob(
+				river.PeriodicInterval(1*time.Hour),
+				func() (river.JobArgs, *river.InsertOpts) {
+					return ReleaseBlocklistCleanupArgs{}, &river.InsertOpts{Queue: queueDownloads}
+				},
+				&river.PeriodicJobOpts{ID: "release_blocklist_cleanup"},
 			),
 		},
 		SoftStopTimeout: 10 * time.Second,

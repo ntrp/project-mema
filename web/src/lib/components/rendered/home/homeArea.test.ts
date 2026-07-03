@@ -67,6 +67,7 @@ function baseProps(): HomeAreaProps {
 		languages: [],
 		qualityProfiles: [],
 		activities: [downloadActivity()],
+		releaseBlocklist: [],
 		loadingDiscover: false,
 		loadingBlacklist: false,
 		loadingMediaItems: false,
@@ -84,6 +85,7 @@ function baseProps(): HomeAreaProps {
 		onDeleteMedia: vi.fn(),
 		onGrabRelease: vi.fn(),
 		onRefreshActivity: vi.fn(),
+		onRefreshReleaseBlocklist: vi.fn(),
 		onCancelActivity: vi.fn(),
 		onDeleteActivity: vi.fn()
 	};

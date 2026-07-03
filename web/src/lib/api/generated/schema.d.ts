@@ -584,6 +584,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/activity/blocklist': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List blocked releases */
+		get: operations['listReleaseBlocklist'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/activity/downloads/{id}': {
 		parameters: {
 			query?: never;
@@ -2322,6 +2339,28 @@ export interface components {
 			rankContributors: components['schemas']['ReleaseScoreContributor'][];
 			parsed: components['schemas']['ParsedReleaseMetadata'];
 		};
+		ReleaseBlocklistListResponse: {
+			items: components['schemas']['ReleaseBlocklistItem'][];
+		};
+		ReleaseBlocklistItem: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId: string;
+			mediaTitle: string;
+			mediaType: components['schemas']['MediaType'];
+			releaseTitle: string;
+			indexerName: string;
+			reason: string;
+			source: string;
+			temporary: boolean;
+			/** Format: date-time */
+			expiresAt?: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
 		ReleaseScoreContributor: {
 			label: string;
 			/** Format: int32 */
@@ -3860,6 +3899,27 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['DownloadActivityListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listReleaseBlocklist: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Blocked releases */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ReleaseBlocklistListResponse'];
 				};
 			};
 			401: components['responses']['Unauthorized'];

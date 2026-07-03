@@ -32,6 +32,7 @@
 	languages={app.languages}
 	qualityProfiles={app.mediaProfiles}
 	activities={app.activities}
+	releaseBlocklist={app.releaseBlocklist}
 	loadingDiscover={app.loadingDiscover}
 	loadingBlacklist={app.loadingBlacklist}
 	loadingMediaItems={app.loadingMediaItems}
@@ -60,6 +61,7 @@
 	onDeleteMedia={app.deleteMediaItem}
 	onGrabRelease={app.grabRelease}
 	onRefreshActivity={app.loadDownloadActivity}
+	onRefreshReleaseBlocklist={app.loadReleaseBlocklist}
 	onCancelActivity={app.cancelActivity}
 	onDeleteActivity={app.deleteActivity}
 />
