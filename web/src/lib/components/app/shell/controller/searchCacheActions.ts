@@ -11,17 +11,13 @@ import {
 	getMetadataCache as getMetadataCacheRequest,
 	updateIndexerSearchSettings as updateIndexerSearchSettingsRequest
 } from '$lib/settings/api';
-import type {
-	IndexerSearchCacheEntry,
-	MetadataCacheEntry
-} from '$lib/settings/types';
+import type { IndexerSearchCacheEntry, MetadataCacheEntry } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import { createSearchInspectionActions } from './searchInspectionActions';
 import type { AppShellState } from './state.svelte';
 
 export function createSearchCacheActions(state: AppShellState, clearNotice: () => void) {
 	const inspectionActions = createSearchInspectionActions(state, clearNotice);
-
 
 	async function saveIndexerSearchSettings(settings = state.indexerSearch.settings) {
 		state.savingIndexerSearchSettings = true;

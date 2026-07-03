@@ -83,6 +83,9 @@ func jobInfoMessage(errors []rivertype.AttemptError, status string) string {
 }
 
 func errorsJSON(errors []rivertype.AttemptError) string {
+	if len(errors) == 0 {
+		return "[]"
+	}
 	data, err := json.Marshal(errors)
 	if err != nil {
 		return "[]"

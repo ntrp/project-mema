@@ -127,7 +127,11 @@ func movieTitleAndYear(value string) (string, *int32) {
 }
 
 func cleanTitle(value string) string {
-	value = strings.TrimSuffix(value, filepath.Ext(value))
+	if extension := strings.ToLower(filepath.Ext(value)); extension != "" {
+		if _, ok := videoExtensions[extension]; ok {
+			value = strings.TrimSuffix(value, filepath.Ext(value))
+		}
+	}
 	value = strings.NewReplacer(".", " ", "_", " ", "-", " ").Replace(value)
 	value = strings.ReplaceAll(value, "(", " ")
 	value = strings.ReplaceAll(value, ")", " ")

@@ -99,6 +99,9 @@ func mediaItemUpdateSeasons(current []MediaSeason, input MediaItemOptionsInput) 
 	seasons := make([]MediaSeason, len(current))
 	copy(seasons, current)
 	for index := range seasons {
+		seasons[index].Episodes = append([]MediaEpisode(nil), seasons[index].Episodes...)
+	}
+	for index := range seasons {
 		if seasons[index].Name != *input.MonitorSeasonName {
 			continue
 		}

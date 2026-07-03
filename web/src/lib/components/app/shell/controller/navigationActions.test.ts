@@ -1,0 +1,95 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const gotoMock = vi.hoisted(() => vi.fn());
+
+vi.mock('$app/navigation', () => ({ goto: gotoMock }));
+vi.mock('$app/paths', () => ({
+	resolve: (path: string, params?: Record<string, string>) =>
+		params ? path.replace('[sectionId]', params.sectionId) : path
+}));
+
+import { createNavigationActions } from './navigationActions';
+import type { AppShellState } from './state.svelte';
+
+describe('navigation actions (SCN-MEDIA-004)', () => {
+	beforeEach(() => {
+		gotoMock.mockReset();
+	});
+
+	it('guards admin-only sections and routes public library sections', () => {
+		const state = testState({ isAdmin: false });
+		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+
+		actions.selectHomeSection('blacklist');
+		expect(gotoMock).not.toHaveBeenCalled();
+		expect(state.activeHomeSection).toBe('movies');
+
+		actions.selectHomeSection('series');
+		expect(state.activeView).toBe('home');
+		expect(state.activeHomeSection).toBe('series');
+		expect(gotoMock).toHaveBeenLastCalledWith('/series');
+
+		actions.selectPrimarySection('settings');
+		expect(state.activeView).toBe('home');
+		expect(gotoMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('routes admin settings and system sections', () => {
+		const state = testState({ isAdmin: true });
+		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+
+		actions.selectPrimarySection('settings');
+		expect(state.activeView).toBe('settings');
+		expect(state.activeSettingsSection).toBe('general');
+		expect(gotoMock).toHaveBeenLastCalledWith('/settings/general');
+
+		actions.selectSettingsSection('download-clients');
+		expect(state.activeSettingsSection).toBe('download-clients');
+		expect(gotoMock).toHaveBeenLastCalledWith('/settings/download-clients');
+
+		actions.selectPrimarySection('system');
+		expect(state.activeView).toBe('system');
+		expect(state.activeSystemSection).toBe('status');
+		expect(gotoMock).toHaveBeenLastCalledWith('/system/status');
+
+		actions.selectSystemSection('jobs');
+		expect(state.activeSystemSection).toBe('jobs');
+		expect(gotoMock).toHaveBeenLastCalledWith('/system/jobs');
+	});
+
+	it('opens discover subsections and resets pagination before loading', () => {
+		const loadDiscoverSection = vi.fn();
+		const state = testState({
+			activeView: 'home',
+			activePrimarySection: 'discover',
+			discoverSectionPage: 4,
+			discoverSectionHasMore: false
+		});
+		const actions = createNavigationActions(state, { loadDiscoverSection });
+
+		actions.selectSubmenuSection('trending');
+
+		expect(state.activeView).toBe('discover-section');
+		expect(state.activeHomeSection).toBe('discover');
+		expect(state.activeDiscoverSectionId).toBe('trending');
+		expect(state.discoverSection).toBeUndefined();
+		expect(state.discoverSectionPage).toBe(1);
+		expect(state.discoverSectionHasMore).toBe(true);
+		expect(gotoMock).toHaveBeenLastCalledWith('/discover/trending');
+		expect(loadDiscoverSection).toHaveBeenCalledTimes(1);
+	});
+});
+
+function testState(overrides: Partial<AppShellState> = {}): AppShellState {
+	return {
+		isAdmin: true,
+		activeView: 'home',
+		activePrimarySection: 'library',
+		activeHomeSection: 'movies',
+		activeSettingsSection: 'general',
+		activeSystemSection: 'status',
+		discoverSectionPage: 1,
+		discoverSectionHasMore: true,
+		...overrides
+	} as AppShellState;
+}

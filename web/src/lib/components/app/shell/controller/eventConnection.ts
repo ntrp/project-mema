@@ -29,15 +29,11 @@ export function connectAppEvents(state: AppShellState, deps: EventConnectionDeps
 		}
 	});
 	source.addEventListener('indexer.search.history.created', (event) => {
-		const entry = deps.parseEventData<Parameters<typeof deps.appendIndexerSearchHistory>[0]>(
-			event
-		);
+		const entry = deps.parseEventData<Parameters<typeof deps.appendIndexerSearchHistory>[0]>(event);
 		if (entry) deps.appendIndexerSearchHistory(entry);
 	});
 	source.addEventListener('indexer.search.cache.updated', (event) => {
-		const update = deps.parseEventData<Parameters<typeof deps.upsertIndexerSearchCache>[0]>(
-			event
-		);
+		const update = deps.parseEventData<Parameters<typeof deps.upsertIndexerSearchCache>[0]>(event);
 		if (update) deps.upsertIndexerSearchCache(update);
 	});
 	source.addEventListener('metadata.cache.updated', (event) => {
@@ -45,9 +41,8 @@ export function connectAppEvents(state: AppShellState, deps: EventConnectionDeps
 		if (update) deps.upsertMetadataCache(update);
 	});
 	source.addEventListener('metadata.search.history.created', (event) => {
-		const entry = deps.parseEventData<Parameters<typeof deps.appendMetadataSearchHistory>[0]>(
-			event
-		);
+		const entry =
+			deps.parseEventData<Parameters<typeof deps.appendMetadataSearchHistory>[0]>(event);
 		if (entry) deps.appendMetadataSearchHistory(entry);
 	});
 	source.onerror = () => {

@@ -243,6 +243,9 @@ func (s *Server) tmdbProvider(ctx context.Context) (storage.MetadataProvider, bo
 }
 
 func (s *Server) enqueueAutomaticSearch(ctx context.Context, items []storage.MediaItem) {
+	if s.jobs == nil {
+		return
+	}
 	for _, item := range items {
 		_, _ = s.jobs.EnqueueAutoSearchDownload(ctx, item.ID)
 	}

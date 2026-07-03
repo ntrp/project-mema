@@ -11,11 +11,19 @@ const browserGlobals = {
 	Event: 'readonly',
 	EventSource: 'readonly',
 	HTMLDivElement: 'readonly',
+	HTMLElement: 'readonly',
 	HTMLSelectElement: 'readonly',
 	KeyboardEvent: 'readonly',
 	MessageEvent: 'readonly',
 	SubmitEvent: 'readonly',
+	URL: 'readonly',
+	WheelEvent: 'readonly',
 	window: 'readonly'
+};
+
+const nodeGlobals = {
+	process: 'readonly',
+	URL: 'readonly'
 };
 
 const domTypeGlobals = {
@@ -34,7 +42,7 @@ export default [
 	js.configs.recommended,
 	...svelte.configs['flat/recommended'],
 	{
-		ignores: ['.svelte-kit/**', 'build/**', 'node_modules/**']
+		ignores: ['.svelte-kit/**', 'build/**', 'coverage/**', 'node_modules/**', 'test-results/**']
 	},
 	{
 		files: ['**/*.{js,ts}'],
@@ -55,6 +63,12 @@ export default [
 				'error',
 				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
 			]
+		}
+	},
+	{
+		files: ['playwright.config.ts', 'e2e/**/*.{js,mjs,ts}'],
+		languageOptions: {
+			globals: nodeGlobals
 		}
 	},
 	{

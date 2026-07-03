@@ -4,7 +4,6 @@
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import type { MediaCollection, MediaItem, MediaSearchResult } from '$lib/settings/types';
 	import MediaAddButton from './MediaAddButton.svelte';
 	import MediaBadge from './MediaBadge.svelte';

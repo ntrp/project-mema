@@ -33,9 +33,7 @@
 		{...restProps}
 	>
 		<SelectScrollUpButton />
-		<SelectPrimitive.Viewport
-			class={cn('w-full min-w-(--bits-select-anchor-width) scroll-my-1')}
-		>
+		<SelectPrimitive.Viewport class={cn('w-full min-w-(--bits-select-anchor-width) scroll-my-1')}>
 			{@render children?.()}
 		</SelectPrimitive.Viewport>
 		<SelectScrollDownButton />

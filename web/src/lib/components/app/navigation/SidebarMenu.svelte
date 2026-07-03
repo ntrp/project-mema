@@ -34,6 +34,7 @@
 		| '/settings/profiles'
 		| '/settings/custom-formats'
 		| '/settings/metadata'
+		| '/settings/languages'
 		| '/settings/tags'
 		| '/settings/users'
 		| '/system/status'

@@ -92,7 +92,12 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 		clearNotice();
 
 		try {
-			const result = await grabMediaReleaseRequest(item.id, release, overrideMatch, overrideDetails);
+			const result = await grabMediaReleaseRequest(
+				item.id,
+				release,
+				overrideMatch,
+				overrideDetails
+			);
 			state.activities = [
 				result.activity,
 				...state.activities.filter((activity) => activity.id !== result.activity.id)

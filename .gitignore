@@ -5,10 +5,12 @@
 # Go
 bin/
 coverage.out
+coverage/
 
 # SvelteKit
 web/.svelte-kit/
 web/build/
+web/coverage/
 web/node_modules/
 web/test-results/
 web/playwright-report/

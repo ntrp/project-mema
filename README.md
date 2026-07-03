@@ -113,6 +113,27 @@ Run backend tests, Svelte checks, linting, and formatting checks:
 make check
 ```
 
+Run the behavior-backed API/integration and E2E suites:
+
+```sh
+make test-api
+make test-e2e
+```
+
+Behavior scenarios live in `features/behavior` and use stable IDs such as
+`SCN-AUTH-001`. Gherkin scenarios drive API/integration and E2E tests; focused
+Go and TypeScript unit tests remain normal code tests and reference the relevant
+scenario ID when they cover cataloged behavior.
+
+Generate coverage reports with the shared 60% target:
+
+```sh
+make coverage
+```
+
+Backend reports are written to `coverage/`. Frontend reports are written to
+`web/coverage/`.
+
 Build the static web app and Go server binary:
 
 ```sh

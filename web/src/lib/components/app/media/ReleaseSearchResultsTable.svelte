@@ -9,7 +9,6 @@
 	import ServerIcon from '@lucide/svelte/icons/server';
 	import StarIcon from '@lucide/svelte/icons/star';
 	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
-	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';

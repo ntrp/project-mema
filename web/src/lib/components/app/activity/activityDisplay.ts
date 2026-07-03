@@ -58,7 +58,7 @@ export function createdLabel(value: string) {
 }
 
 export function releaseGroupFromTitle(value: string) {
-	const match = /-([A-Za-z0-9][A-Za-z0-9._-]{1,24})$/.exec(value.trim());
+	const match = /-([A-Za-z0-9][A-Za-z0-9._]{1,24})$/.exec(value.trim());
 	return match?.[1] ?? '';
 }
 

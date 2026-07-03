@@ -45,7 +45,11 @@ export const fileNamingTemplateParameterDetails: FileNamingTemplateParameter[] =
 	{ param: 'season:00', example: '01', description: 'Season number padded to at least 2 digits' },
 	{ param: 'episode:0', example: '3', description: 'Episode number padded to at least 1 digit' },
 	{ param: 'episode:00', example: '03', description: 'Episode number padded to at least 2 digits' },
-	{ param: 'episode:000', example: '003', description: 'Episode number padded to at least 3 digits' },
+	{
+		param: 'episode:000',
+		example: '003',
+		description: 'Episode number padded to at least 3 digits'
+	},
 	{
 		param: 'episode_title',
 		example: 'Dulcinea',
@@ -74,7 +78,9 @@ export const fileNamingTemplateParameterDetails: FileNamingTemplateParameter[] =
 	{ param: 'release_hash', example: 'A1B2C3D4', description: 'Stable hash for release uniqueness' }
 ];
 
-export const fileNamingTemplateParameters = fileNamingTemplateParameterDetails.map(({ param }) => param);
+export const fileNamingTemplateParameters = fileNamingTemplateParameterDetails.map(
+	({ param }) => param
+);
 
 export function fileNamingTemplateSuggestions(query: string) {
 	const normalized = query.toLowerCase();
