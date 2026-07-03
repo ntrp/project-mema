@@ -13,7 +13,25 @@ type tmdbMedia struct {
 	FirstAirDate string  `json:"first_air_date"`
 	Overview     string  `json:"overview"`
 	PosterPath   string  `json:"poster_path"`
+	BackdropPath string  `json:"backdrop_path"`
 	Popularity   float64 `json:"popularity"`
+	VoteAverage  float64 `json:"vote_average"`
+	VoteCount    int32   `json:"vote_count"`
+	GenreIDs     []int64 `json:"genre_ids"`
+	Language     string  `json:"original_language"`
+}
+
+type tmdbGenreList struct {
+	Genres []tmdbIDName `json:"genres"`
+}
+
+type tmdbFacetSearchResponse struct {
+	Results []tmdbIDName `json:"results"`
+}
+
+type tmdbIDName struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type tmdbDetails struct {
@@ -61,7 +79,9 @@ type tmdbCollection struct {
 }
 
 type tmdbName struct {
-	Name string `json:"name"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	ProfilePath string `json:"profile_path"`
 }
 
 type tmdbKeywords struct {
@@ -145,15 +165,62 @@ type tmdbCredits struct {
 }
 
 type tmdbCastMember struct {
+	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	Character   string `json:"character"`
 	ProfilePath string `json:"profile_path"`
 }
 
 type tmdbCrewMember struct {
-	Name       string `json:"name"`
-	Job        string `json:"job"`
-	Department string `json:"department"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Job         string `json:"job"`
+	Department  string `json:"department"`
+	ProfilePath string `json:"profile_path"`
+}
+
+type tmdbPersonDetails struct {
+	ID           int64               `json:"id"`
+	Name         string              `json:"name"`
+	Biography    string              `json:"biography"`
+	Birthday     string              `json:"birthday"`
+	Deathday     string              `json:"deathday"`
+	PlaceOfBirth string              `json:"place_of_birth"`
+	ProfilePath  string              `json:"profile_path"`
+	AlsoKnownAs  []string            `json:"also_known_as"`
+	Credits      tmdbCombinedCredits `json:"combined_credits"`
+}
+
+type tmdbPersonSearchResponse struct {
+	Results []tmdbPersonSearchResult `json:"results"`
+}
+
+type tmdbPersonSearchResult struct {
+	ID          int64       `json:"id"`
+	Name        string      `json:"name"`
+	ProfilePath string      `json:"profile_path"`
+	Popularity  float64     `json:"popularity"`
+	KnownFor    []tmdbMedia `json:"known_for"`
+}
+
+type tmdbCombinedCredits struct {
+	Cast []tmdbCreditMedia `json:"cast"`
+	Crew []tmdbCreditMedia `json:"crew"`
+}
+
+type tmdbCreditMedia struct {
+	ID           int64   `json:"id"`
+	MediaType    string  `json:"media_type"`
+	Title        string  `json:"title"`
+	Name         string  `json:"name"`
+	ReleaseDate  string  `json:"release_date"`
+	FirstAirDate string  `json:"first_air_date"`
+	Overview     string  `json:"overview"`
+	PosterPath   string  `json:"poster_path"`
+	BackdropPath string  `json:"backdrop_path"`
+	Character    string  `json:"character"`
+	Job          string  `json:"job"`
+	Popularity   float64 `json:"popularity"`
 }
 
 type tvdbLoginResponse struct {

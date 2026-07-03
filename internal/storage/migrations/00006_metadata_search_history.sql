@@ -4,7 +4,7 @@ create table if not exists app.metadata_search_history (
     provider_id uuid references app.metadata_providers(id) on delete set null,
     provider_name text not null,
     provider_type text not null,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
+    media_type text not null check (media_type in ('movie', 'series', 'mixed', 'person')),
     query text not null,
     year integer not null default 0,
     cache_hit boolean not null,

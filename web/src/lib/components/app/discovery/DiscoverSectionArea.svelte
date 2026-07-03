@@ -109,7 +109,7 @@
 {#if loading}
 	<PageHeading eyebrow="Discover" title="Loading section" />
 	<div
-		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,220px))] sm:gap-5"
+		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] sm:gap-5"
 	>
 		{#each Array.from({ length: 12 }) as _, index (index)}
 			<div class="min-w-0 snap-start aspect-2/3 rounded-md bg-card" aria-hidden="true"></div>
@@ -125,7 +125,7 @@
 
 	{#if results.length > 0}
 		<div
-			class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] items-start gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,220px))] sm:gap-5"
+			class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] items-start gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,1fr))] sm:gap-5"
 		>
 			{#each results as result (resultKey(result))}
 				<MediaPosterCard

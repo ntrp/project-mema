@@ -11,13 +11,11 @@ import (
 
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/storage"
+	"media-manager/internal/testdb"
 )
 
 func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("DATABASE_URL is required for import integration test")
-	}
+	databaseURL := testdb.Create(t)
 
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, databaseURL)

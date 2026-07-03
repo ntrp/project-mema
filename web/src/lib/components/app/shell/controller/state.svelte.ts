@@ -38,6 +38,7 @@ import type {
 	MediaDiscoverSection,
 	MediaItem,
 	MediaMetadataDetails,
+	PersonDetails,
 	MediaProfile,
 	MediaProfileForm as MediaProfileFormValue,
 	MediaRequest,
@@ -100,6 +101,7 @@ export class AppShellState {
 	discoverSection = $state<MediaDiscoverSection | undefined>();
 	discoverBlacklist = $state<DiscoverBlacklistItem[]>([]);
 	metadataDetail = $state<MediaMetadataDetails | undefined>();
+	personDetail = $state<PersonDetails | undefined>();
 	mediaCollection = $state<MediaCollection | undefined>();
 	autocompleteGroups = $state<MediaSearchGroup[]>([]);
 	advancedSearchGroups = $state<MediaSearchGroup[]>([]);
@@ -129,6 +131,7 @@ export class AppShellState {
 	loadingBlacklist = $state(false);
 	loadingMediaItems = $state(false);
 	loadingMetadataDetail = $state(false);
+	loadingPersonDetail = $state(false);
 	loadingMediaCollection = $state(false);
 	loadingAutocomplete = $state(false);
 	searchingAdvanced = $state(false);
@@ -158,6 +161,7 @@ export class AppShellState {
 	activeSettingsSection = $state<SettingsSection>('general');
 	activeSystemSection = $state<SystemSection>('status');
 	activeDiscoverSectionId = $state<string | undefined>();
+	activeDiscoverSubmenuSection = $state<string | undefined>();
 	activeRelatedSectionKind = $state<RelatedSectionKind>('recommendations');
 	activePeopleSectionKind = $state<PeopleSectionKind>('cast');
 	selectedMediaItemId = $state<string | undefined>();
@@ -194,7 +198,9 @@ export class AppShellState {
 			? 'settings'
 			: this.activeView === 'system'
 				? 'system'
-				: this.activeView === 'discover-section'
+				: this.activeView === 'discover-section' ||
+					  this.activeView === 'discover-movies' ||
+					  this.activeView === 'discover-series'
 					? 'discover'
 					: this.activeHomeSection === 'movies' ||
 						  this.activeHomeSection === 'series' ||
@@ -205,13 +211,17 @@ export class AppShellState {
 	activeSubmenuSection = $derived(
 		this.activeView === 'system'
 			? this.activeSystemSection
-			: this.activeView === 'discover-section'
-				? this.activeDiscoverSectionId
-				: this.activePrimarySection === 'library'
-					? this.activeHomeSection
-					: this.activePrimarySection === 'discover'
-						? this.activeHomeSection
-						: this.activeSettingsSection
+			: this.activeView === 'discover-movies'
+				? (this.activeDiscoverSubmenuSection ?? 'movies')
+				: this.activeView === 'discover-series'
+					? (this.activeDiscoverSubmenuSection ?? 'series')
+					: this.activeView === 'discover-section'
+						? this.activeDiscoverSectionId
+						: this.activePrimarySection === 'library'
+							? this.activeHomeSection
+							: this.activePrimarySection === 'discover'
+								? this.activeHomeSection
+								: this.activeSettingsSection
 	);
 	primaryItems = $derived(
 		this.isAdmin
@@ -226,6 +236,7 @@ export class AppShellState {
 		this.activeSettingsSection = route.settingsSection;
 		this.activeSystemSection = route.systemSection;
 		this.activeDiscoverSectionId = route.discoverSectionId;
+		this.activeDiscoverSubmenuSection = route.discoverSubmenuSection;
 		this.activeRelatedSectionKind = route.relatedSectionKind;
 		this.activePeopleSectionKind = route.peopleSectionKind;
 		this.selectedMediaItemId = route.selectedMediaItemId;

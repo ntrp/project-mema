@@ -68,7 +68,8 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 	const routeActions = createRouteActions(state, {
 		loadDiscoverSection: discovery.loadDiscoverSection,
 		loadMediaCollection: loads.loadMediaCollection,
-		loadMetadataDetail: loads.loadMetadataDetail
+		loadMetadataDetail: loads.loadMetadataDetail,
+		loadPersonDetail: loads.loadPersonDetail
 	});
 	const navigation = createNavigationActions(state, {
 		loadDiscoverSection: discovery.loadDiscoverSection
@@ -80,6 +81,7 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		loadLibrary: loads.loadLibrary,
 		loadDiscoverSections: discovery.loadDiscoverSections,
 		loadMetadataDetail: loads.loadMetadataDetail,
+		loadPersonDetail: loads.loadPersonDetail,
 		loadMediaCollection: loads.loadMediaCollection,
 		loadDiscoverSection: discovery.loadDiscoverSection,
 		events: {

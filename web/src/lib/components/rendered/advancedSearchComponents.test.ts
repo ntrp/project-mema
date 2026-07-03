@@ -20,8 +20,10 @@ describe('rendered advanced search results (SCN-MEDIA-008)', () => {
 		expect(body).toContain('Remote Movie');
 		expect(body).toContain('Working');
 		expect(body).toContain('Open TMDB page in a new tab');
+		expect(body).toContain('/media/tmdb/movie/movie-1');
 		expect(body).toContain('Local Series');
 		expect(body).toContain('In library');
+		expect(body).toContain('/series/series-1');
 	});
 });
 

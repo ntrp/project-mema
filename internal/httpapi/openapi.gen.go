@@ -709,6 +709,48 @@ func (e UserRole) Valid() bool {
 	}
 }
 
+// Defines values for AutocompleteDiscoverMovieFacetParamsFacet.
+const (
+	AutocompleteDiscoverMovieFacetParamsFacetGenres   AutocompleteDiscoverMovieFacetParamsFacet = "genres"
+	AutocompleteDiscoverMovieFacetParamsFacetKeywords AutocompleteDiscoverMovieFacetParamsFacet = "keywords"
+	AutocompleteDiscoverMovieFacetParamsFacetStudios  AutocompleteDiscoverMovieFacetParamsFacet = "studios"
+)
+
+// Valid indicates whether the value is a known member of the AutocompleteDiscoverMovieFacetParamsFacet enum.
+func (e AutocompleteDiscoverMovieFacetParamsFacet) Valid() bool {
+	switch e {
+	case AutocompleteDiscoverMovieFacetParamsFacetGenres:
+		return true
+	case AutocompleteDiscoverMovieFacetParamsFacetKeywords:
+		return true
+	case AutocompleteDiscoverMovieFacetParamsFacetStudios:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AutocompleteDiscoverSeriesFacetParamsFacet.
+const (
+	AutocompleteDiscoverSeriesFacetParamsFacetGenres   AutocompleteDiscoverSeriesFacetParamsFacet = "genres"
+	AutocompleteDiscoverSeriesFacetParamsFacetKeywords AutocompleteDiscoverSeriesFacetParamsFacet = "keywords"
+	AutocompleteDiscoverSeriesFacetParamsFacetStudios  AutocompleteDiscoverSeriesFacetParamsFacet = "studios"
+)
+
+// Valid indicates whether the value is a known member of the AutocompleteDiscoverSeriesFacetParamsFacet enum.
+func (e AutocompleteDiscoverSeriesFacetParamsFacet) Valid() bool {
+	switch e {
+	case AutocompleteDiscoverSeriesFacetParamsFacetGenres:
+		return true
+	case AutocompleteDiscoverSeriesFacetParamsFacetKeywords:
+		return true
+	case AutocompleteDiscoverSeriesFacetParamsFacetStudios:
+		return true
+	default:
+		return false
+	}
+}
+
 // CustomFormat defines model for CustomFormat.
 type CustomFormat struct {
 	CreatedAt               time.Time          `json:"createdAt"`
@@ -803,6 +845,23 @@ type DiscoverBlacklistRequest struct {
 // DiscoverBlacklistResponse defines model for DiscoverBlacklistResponse.
 type DiscoverBlacklistResponse struct {
 	Items []DiscoverBlacklistItem `json:"items"`
+}
+
+// DiscoverMovieFacetOption defines model for DiscoverMovieFacetOption.
+type DiscoverMovieFacetOption struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// DiscoverMovieFacetResponse defines model for DiscoverMovieFacetResponse.
+type DiscoverMovieFacetResponse struct {
+	Options []DiscoverMovieFacetOption `json:"options"`
+}
+
+// DiscoverMovieSearchResponse defines model for DiscoverMovieSearchResponse.
+type DiscoverMovieSearchResponse struct {
+	HasMore bool                `json:"hasMore"`
+	Results []MediaSearchResult `json:"results"`
 }
 
 // DownloadActivity defines model for DownloadActivity.
@@ -1206,11 +1265,13 @@ type ManualImportRequest struct {
 
 // MediaAdvancedSearchRequest defines model for MediaAdvancedSearchRequest.
 type MediaAdvancedSearchRequest struct {
-	Limit       *int32                `json:"limit,omitempty"`
-	ProviderIds *[]openapi_types.UUID `json:"providerIds,omitempty"`
-	Query       *string               `json:"query,omitempty"`
-	Type        *MediaType            `json:"type,omitempty"`
-	Year        *int32                `json:"year,omitempty"`
+	IncludeMedia  *bool                 `json:"includeMedia,omitempty"`
+	IncludePeople *bool                 `json:"includePeople,omitempty"`
+	Limit         *int32                `json:"limit,omitempty"`
+	ProviderIds   *[]openapi_types.UUID `json:"providerIds,omitempty"`
+	Query         *string               `json:"query,omitempty"`
+	Type          *MediaType            `json:"type,omitempty"`
+	Year          *int32                `json:"year,omitempty"`
 }
 
 // MediaCollection defines model for MediaCollection.
@@ -1294,6 +1355,7 @@ type MediaItem struct {
 	CollectionId        *string                `json:"collectionId,omitempty"`
 	CollectionName      *string                `json:"collectionName,omitempty"`
 	CreatedAt           time.Time              `json:"createdAt"`
+	Crew                *[]MediaMetadataPerson `json:"crew,omitempty"`
 	EpisodeCount        *int32                 `json:"episodeCount,omitempty"`
 	ExternalId          *string                `json:"externalId,omitempty"`
 	ExternalProvider    *string                `json:"externalProvider,omitempty"`
@@ -1398,6 +1460,7 @@ type MediaMetadataDetails struct {
 	Cast             *[]MediaMetadataPerson `json:"cast,omitempty"`
 	CollectionId     *string                `json:"collectionId,omitempty"`
 	CollectionName   *string                `json:"collectionName,omitempty"`
+	Crew             *[]MediaMetadataPerson `json:"crew,omitempty"`
 	EpisodeCount     *int32                 `json:"episodeCount,omitempty"`
 	ExternalId       string                 `json:"externalId"`
 	ExternalProvider string                 `json:"externalProvider"`
@@ -1442,9 +1505,11 @@ type MediaMetadataFact struct {
 
 // MediaMetadataPerson defines model for MediaMetadataPerson.
 type MediaMetadataPerson struct {
-	Name        string  `json:"name"`
-	ProfilePath *string `json:"profilePath,omitempty"`
-	Role        *string `json:"role,omitempty"`
+	ExternalId       *string               `json:"externalId,omitempty"`
+	ExternalProvider *MetadataProviderType `json:"externalProvider,omitempty"`
+	Name             string                `json:"name"`
+	ProfilePath      *string               `json:"profilePath,omitempty"`
+	Role             *string               `json:"role,omitempty"`
 }
 
 // MediaMetadataSeason defines model for MediaMetadataSeason.
@@ -1589,6 +1654,7 @@ type MediaRequestStatus string
 
 // MediaSearchGroup defines model for MediaSearchGroup.
 type MediaSearchGroup struct {
+	People     *[]PersonSearchResult `json:"people,omitempty"`
 	ProviderId *openapi_types.UUID   `json:"providerId,omitempty"`
 	Results    []MediaSearchResult   `json:"results"`
 	SourceName string                `json:"sourceName"`
@@ -1609,16 +1675,26 @@ type MediaSearchResponse struct {
 
 // MediaSearchResult defines model for MediaSearchResult.
 type MediaSearchResult struct {
+	BackdropPath     *string             `json:"backdropPath,omitempty"`
 	CollectionId     *string             `json:"collectionId,omitempty"`
 	CollectionName   *string             `json:"collectionName,omitempty"`
+	ContentRating    *string             `json:"contentRating,omitempty"`
 	ExternalId       *string             `json:"externalId,omitempty"`
 	ExternalProvider *string             `json:"externalProvider,omitempty"`
+	Genres           *[]string           `json:"genres,omitempty"`
 	Id               *openapi_types.UUID `json:"id,omitempty"`
+	Keywords         *[]string           `json:"keywords,omitempty"`
+	OriginalLanguage *string             `json:"originalLanguage,omitempty"`
 	Overview         *string             `json:"overview,omitempty"`
 	Popularity       *float64            `json:"popularity,omitempty"`
 	PosterPath       *string             `json:"posterPath,omitempty"`
+	ReleaseDate      *openapi_types.Date `json:"releaseDate,omitempty"`
+	RuntimeMinutes   *int32              `json:"runtimeMinutes,omitempty"`
+	Studios          *[]string           `json:"studios,omitempty"`
 	Title            string              `json:"title"`
 	Type             MediaType           `json:"type"`
+	VoteAverage      *float64            `json:"voteAverage,omitempty"`
+	VoteCount        *int32              `json:"voteCount,omitempty"`
 	Year             *int32              `json:"year,omitempty"`
 }
 
@@ -1793,6 +1869,44 @@ type PathMappingListResponse struct {
 type PathMappingRequest struct {
 	AppPath    string `json:"appPath"`
 	ClientPath string `json:"clientPath"`
+}
+
+// PersonAppearance defines model for PersonAppearance.
+type PersonAppearance struct {
+	BackdropPath     *string              `json:"backdropPath,omitempty"`
+	ExternalId       string               `json:"externalId"`
+	ExternalProvider MetadataProviderType `json:"externalProvider"`
+	Overview         *string              `json:"overview,omitempty"`
+	PosterPath       *string              `json:"posterPath,omitempty"`
+	ReleaseDate      *string              `json:"releaseDate,omitempty"`
+	Role             *string              `json:"role,omitempty"`
+	Title            string               `json:"title"`
+	Type             MediaType            `json:"type"`
+	Year             *int32               `json:"year,omitempty"`
+}
+
+// PersonDetails defines model for PersonDetails.
+type PersonDetails struct {
+	AlsoKnownAs  *[]string            `json:"alsoKnownAs,omitempty"`
+	Appearances  []PersonAppearance   `json:"appearances"`
+	Biography    *string              `json:"biography,omitempty"`
+	Birthday     *string              `json:"birthday,omitempty"`
+	Deathday     *string              `json:"deathday,omitempty"`
+	Id           string               `json:"id"`
+	Name         string               `json:"name"`
+	PlaceOfBirth *string              `json:"placeOfBirth,omitempty"`
+	ProfilePath  *string              `json:"profilePath,omitempty"`
+	Provider     MetadataProviderType `json:"provider"`
+}
+
+// PersonSearchResult defines model for PersonSearchResult.
+type PersonSearchResult struct {
+	ExternalId       string    `json:"externalId"`
+	ExternalProvider string    `json:"externalProvider"`
+	KnownFor         *[]string `json:"knownFor,omitempty"`
+	Name             string    `json:"name"`
+	Popularity       *float64  `json:"popularity,omitempty"`
+	ProfilePath      *string   `json:"profilePath,omitempty"`
 }
 
 // QualitySizeSetting defines model for QualitySizeSetting.
@@ -2104,6 +2218,63 @@ type AutocompleteMediaParams struct {
 	IncludeProviders *bool  `form:"includeProviders,omitempty" json:"includeProviders,omitempty"`
 }
 
+// AutocompleteDiscoverMovieFacetParams defines parameters for AutocompleteDiscoverMovieFacet.
+type AutocompleteDiscoverMovieFacetParams struct {
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
+// AutocompleteDiscoverMovieFacetParamsFacet defines parameters for AutocompleteDiscoverMovieFacet.
+type AutocompleteDiscoverMovieFacetParamsFacet string
+
+// SearchDiscoverMoviesParams defines parameters for SearchDiscoverMovies.
+type SearchDiscoverMoviesParams struct {
+	Sort              *string             `form:"sort,omitempty" json:"sort,omitempty"`
+	Page              *int32              `form:"page,omitempty" json:"page,omitempty"`
+	ReleaseDateFrom   *openapi_types.Date `form:"releaseDateFrom,omitempty" json:"releaseDateFrom,omitempty"`
+	ReleaseDateTo     *openapi_types.Date `form:"releaseDateTo,omitempty" json:"releaseDateTo,omitempty"`
+	Studios           *[]string           `form:"studios,omitempty" json:"studios,omitempty"`
+	Genres            *[]string           `form:"genres,omitempty" json:"genres,omitempty"`
+	Keywords          *[]string           `form:"keywords,omitempty" json:"keywords,omitempty"`
+	WithoutGenres     *[]string           `form:"withoutGenres,omitempty" json:"withoutGenres,omitempty"`
+	WithoutKeywords   *[]string           `form:"withoutKeywords,omitempty" json:"withoutKeywords,omitempty"`
+	OriginalLanguages *[]string           `form:"originalLanguages,omitempty" json:"originalLanguages,omitempty"`
+	ContentRatings    *[]string           `form:"contentRatings,omitempty" json:"contentRatings,omitempty"`
+	RuntimeMin        *int32              `form:"runtimeMin,omitempty" json:"runtimeMin,omitempty"`
+	RuntimeMax        *int32              `form:"runtimeMax,omitempty" json:"runtimeMax,omitempty"`
+	ScoreMin          *float64            `form:"scoreMin,omitempty" json:"scoreMin,omitempty"`
+	ScoreMax          *float64            `form:"scoreMax,omitempty" json:"scoreMax,omitempty"`
+	MinVoteCount      *int32              `form:"minVoteCount,omitempty" json:"minVoteCount,omitempty"`
+}
+
+// AutocompleteDiscoverSeriesFacetParams defines parameters for AutocompleteDiscoverSeriesFacet.
+type AutocompleteDiscoverSeriesFacetParams struct {
+	Query *string `form:"query,omitempty" json:"query,omitempty"`
+}
+
+// AutocompleteDiscoverSeriesFacetParamsFacet defines parameters for AutocompleteDiscoverSeriesFacet.
+type AutocompleteDiscoverSeriesFacetParamsFacet string
+
+// SearchDiscoverSeriesParams defines parameters for SearchDiscoverSeries.
+type SearchDiscoverSeriesParams struct {
+	Sort              *string             `form:"sort,omitempty" json:"sort,omitempty"`
+	Page              *int32              `form:"page,omitempty" json:"page,omitempty"`
+	ReleaseDateFrom   *openapi_types.Date `form:"releaseDateFrom,omitempty" json:"releaseDateFrom,omitempty"`
+	ReleaseDateTo     *openapi_types.Date `form:"releaseDateTo,omitempty" json:"releaseDateTo,omitempty"`
+	Studios           *[]string           `form:"studios,omitempty" json:"studios,omitempty"`
+	Genres            *[]string           `form:"genres,omitempty" json:"genres,omitempty"`
+	Keywords          *[]string           `form:"keywords,omitempty" json:"keywords,omitempty"`
+	WithoutGenres     *[]string           `form:"withoutGenres,omitempty" json:"withoutGenres,omitempty"`
+	WithoutKeywords   *[]string           `form:"withoutKeywords,omitempty" json:"withoutKeywords,omitempty"`
+	OriginalLanguages *[]string           `form:"originalLanguages,omitempty" json:"originalLanguages,omitempty"`
+	ContentRatings    *[]string           `form:"contentRatings,omitempty" json:"contentRatings,omitempty"`
+	Status            *[]string           `form:"status,omitempty" json:"status,omitempty"`
+	RuntimeMin        *int32              `form:"runtimeMin,omitempty" json:"runtimeMin,omitempty"`
+	RuntimeMax        *int32              `form:"runtimeMax,omitempty" json:"runtimeMax,omitempty"`
+	ScoreMin          *float64            `form:"scoreMin,omitempty" json:"scoreMin,omitempty"`
+	ScoreMax          *float64            `form:"scoreMax,omitempty" json:"scoreMax,omitempty"`
+	MinVoteCount      *int32              `form:"minVoteCount,omitempty" json:"minVoteCount,omitempty"`
+}
+
 // GetMediaDiscoverSectionParams defines parameters for GetMediaDiscoverSection.
 type GetMediaDiscoverSectionParams struct {
 	Page  *int32 `form:"page,omitempty" json:"page,omitempty"`
@@ -2345,6 +2516,18 @@ type ServerInterface interface {
 	// Remove media from the discover blacklist
 	// (DELETE /media/discover/blacklist/{id})
 	DeleteDiscoverBlacklistItem(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Autocomplete movie discovery filters
+	// (GET /media/discover/movies/facets/{facet})
+	AutocompleteDiscoverMovieFacet(w http.ResponseWriter, r *http.Request, facet AutocompleteDiscoverMovieFacetParamsFacet, params AutocompleteDiscoverMovieFacetParams)
+	// Search provider-backed movie discovery with filters
+	// (GET /media/discover/movies/search)
+	SearchDiscoverMovies(w http.ResponseWriter, r *http.Request, params SearchDiscoverMoviesParams)
+	// Autocomplete series discovery filters
+	// (GET /media/discover/series/facets/{facet})
+	AutocompleteDiscoverSeriesFacet(w http.ResponseWriter, r *http.Request, facet AutocompleteDiscoverSeriesFacetParamsFacet, params AutocompleteDiscoverSeriesFacetParams)
+	// Search provider-backed series discovery with filters
+	// (GET /media/discover/series/search)
+	SearchDiscoverSeries(w http.ResponseWriter, r *http.Request, params SearchDiscoverSeriesParams)
 	// Get one provider-backed discovery section
 	// (GET /media/discover/{sectionId})
 	GetMediaDiscoverSection(w http.ResponseWriter, r *http.Request, sectionId string, params GetMediaDiscoverSectionParams)
@@ -2402,6 +2585,9 @@ type ServerInterface interface {
 	// Search for a movie or series candidate
 	// (POST /media/search)
 	SearchMedia(w http.ResponseWriter, r *http.Request)
+	// Get provider person details and appearances
+	// (GET /people/{provider}/{personId})
+	GetPersonDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, personId string)
 	// List custom formats
 	// (GET /settings/custom-formats)
 	ListCustomFormats(w http.ResponseWriter, r *http.Request)
@@ -2741,6 +2927,30 @@ func (_ Unimplemented) DeleteDiscoverBlacklistItem(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Autocomplete movie discovery filters
+// (GET /media/discover/movies/facets/{facet})
+func (_ Unimplemented) AutocompleteDiscoverMovieFacet(w http.ResponseWriter, r *http.Request, facet AutocompleteDiscoverMovieFacetParamsFacet, params AutocompleteDiscoverMovieFacetParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Search provider-backed movie discovery with filters
+// (GET /media/discover/movies/search)
+func (_ Unimplemented) SearchDiscoverMovies(w http.ResponseWriter, r *http.Request, params SearchDiscoverMoviesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Autocomplete series discovery filters
+// (GET /media/discover/series/facets/{facet})
+func (_ Unimplemented) AutocompleteDiscoverSeriesFacet(w http.ResponseWriter, r *http.Request, facet AutocompleteDiscoverSeriesFacetParamsFacet, params AutocompleteDiscoverSeriesFacetParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Search provider-backed series discovery with filters
+// (GET /media/discover/series/search)
+func (_ Unimplemented) SearchDiscoverSeries(w http.ResponseWriter, r *http.Request, params SearchDiscoverSeriesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Get one provider-backed discovery section
 // (GET /media/discover/{sectionId})
 func (_ Unimplemented) GetMediaDiscoverSection(w http.ResponseWriter, r *http.Request, sectionId string, params GetMediaDiscoverSectionParams) {
@@ -2852,6 +3062,12 @@ func (_ Unimplemented) ApproveMediaRequest(w http.ResponseWriter, r *http.Reques
 // Search for a movie or series candidate
 // (POST /media/search)
 func (_ Unimplemented) SearchMedia(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get provider person details and appearances
+// (GET /people/{provider}/{personId})
+func (_ Unimplemented) GetPersonDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, personId string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3754,6 +3970,583 @@ func (siw *ServerInterfaceWrapper) DeleteDiscoverBlacklistItem(w http.ResponseWr
 	handler.ServeHTTP(w, r)
 }
 
+// AutocompleteDiscoverMovieFacet operation middleware
+func (siw *ServerInterfaceWrapper) AutocompleteDiscoverMovieFacet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "facet" -------------
+	var facet AutocompleteDiscoverMovieFacetParamsFacet
+
+	err = runtime.BindStyledParameterWithOptions("simple", "facet", chi.URLParam(r, "facet"), &facet, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "facet", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AutocompleteDiscoverMovieFacetParams
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AutocompleteDiscoverMovieFacet(w, r, facet, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SearchDiscoverMovies operation middleware
+func (siw *ServerInterfaceWrapper) SearchDiscoverMovies(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchDiscoverMoviesParams
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "releaseDateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "releaseDateFrom", r.URL.Query(), &params.ReleaseDateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "releaseDateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "releaseDateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "releaseDateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "releaseDateTo", r.URL.Query(), &params.ReleaseDateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "releaseDateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "releaseDateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "studios" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "studios", r.URL.Query(), &params.Studios, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "studios"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "studios", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "genres" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "genres", r.URL.Query(), &params.Genres, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "genres"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "genres", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "keywords" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "keywords", r.URL.Query(), &params.Keywords, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "keywords"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keywords", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "withoutGenres" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "withoutGenres", r.URL.Query(), &params.WithoutGenres, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "withoutGenres"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "withoutGenres", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "withoutKeywords" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "withoutKeywords", r.URL.Query(), &params.WithoutKeywords, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "withoutKeywords"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "withoutKeywords", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "originalLanguages" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "originalLanguages", r.URL.Query(), &params.OriginalLanguages, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "originalLanguages"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "originalLanguages", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contentRatings" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contentRatings", r.URL.Query(), &params.ContentRatings, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contentRatings"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contentRatings", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "runtimeMin" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "runtimeMin", r.URL.Query(), &params.RuntimeMin, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "runtimeMin"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runtimeMin", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "runtimeMax" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "runtimeMax", r.URL.Query(), &params.RuntimeMax, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "runtimeMax"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runtimeMax", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "scoreMin" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scoreMin", r.URL.Query(), &params.ScoreMin, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scoreMin"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scoreMin", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "scoreMax" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scoreMax", r.URL.Query(), &params.ScoreMax, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scoreMax"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scoreMax", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "minVoteCount" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "minVoteCount", r.URL.Query(), &params.MinVoteCount, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "minVoteCount"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "minVoteCount", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchDiscoverMovies(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AutocompleteDiscoverSeriesFacet operation middleware
+func (siw *ServerInterfaceWrapper) AutocompleteDiscoverSeriesFacet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "facet" -------------
+	var facet AutocompleteDiscoverSeriesFacetParamsFacet
+
+	err = runtime.BindStyledParameterWithOptions("simple", "facet", chi.URLParam(r, "facet"), &facet, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "facet", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params AutocompleteDiscoverSeriesFacetParams
+
+	// ------------- Optional query parameter "query" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "query", r.URL.Query(), &params.Query, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "query"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "query", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AutocompleteDiscoverSeriesFacet(w, r, facet, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SearchDiscoverSeries operation middleware
+func (siw *ServerInterfaceWrapper) SearchDiscoverSeries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchDiscoverSeriesParams
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "page" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "page", r.URL.Query(), &params.Page, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "page"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "releaseDateFrom" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "releaseDateFrom", r.URL.Query(), &params.ReleaseDateFrom, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "releaseDateFrom"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "releaseDateFrom", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "releaseDateTo" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "releaseDateTo", r.URL.Query(), &params.ReleaseDateTo, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "releaseDateTo"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "releaseDateTo", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "studios" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "studios", r.URL.Query(), &params.Studios, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "studios"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "studios", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "genres" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "genres", r.URL.Query(), &params.Genres, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "genres"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "genres", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "keywords" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "keywords", r.URL.Query(), &params.Keywords, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "keywords"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keywords", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "withoutGenres" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "withoutGenres", r.URL.Query(), &params.WithoutGenres, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "withoutGenres"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "withoutGenres", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "withoutKeywords" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "withoutKeywords", r.URL.Query(), &params.WithoutKeywords, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "withoutKeywords"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "withoutKeywords", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "originalLanguages" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "originalLanguages", r.URL.Query(), &params.OriginalLanguages, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "originalLanguages"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "originalLanguages", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "contentRatings" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "contentRatings", r.URL.Query(), &params.ContentRatings, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "contentRatings"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "contentRatings", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "runtimeMin" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "runtimeMin", r.URL.Query(), &params.RuntimeMin, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "runtimeMin"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runtimeMin", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "runtimeMax" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "runtimeMax", r.URL.Query(), &params.RuntimeMax, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "runtimeMax"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "runtimeMax", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "scoreMin" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scoreMin", r.URL.Query(), &params.ScoreMin, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scoreMin"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scoreMin", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "scoreMax" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scoreMax", r.URL.Query(), &params.ScoreMax, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scoreMax"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scoreMax", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "minVoteCount" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "minVoteCount", r.URL.Query(), &params.MinVoteCount, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "minVoteCount"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "minVoteCount", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchDiscoverSeries(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetMediaDiscoverSection operation middleware
 func (siw *ServerInterfaceWrapper) GetMediaDiscoverSection(w http.ResponseWriter, r *http.Request) {
 
@@ -4372,6 +5165,47 @@ func (siw *ServerInterfaceWrapper) SearchMedia(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchMedia(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPersonDetails operation middleware
+func (siw *ServerInterfaceWrapper) GetPersonDetails(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "provider" -------------
+	var provider MetadataProviderType
+
+	err = runtime.BindStyledParameterWithOptions("simple", "provider", chi.URLParam(r, "provider"), &provider, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "provider", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "personId" -------------
+	var personId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "personId", chi.URLParam(r, "personId"), &personId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "personId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPersonDetails(w, r, provider, personId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6745,6 +7579,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Delete(options.BaseURL+"/media/discover/blacklist/{id}", wrapper.DeleteDiscoverBlacklistItem)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/discover/movies/facets/{facet}", wrapper.AutocompleteDiscoverMovieFacet)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/discover/movies/search", wrapper.SearchDiscoverMovies)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/discover/series/facets/{facet}", wrapper.AutocompleteDiscoverSeriesFacet)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/discover/series/search", wrapper.SearchDiscoverSeries)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/discover/{sectionId}", wrapper.GetMediaDiscoverSection)
 	})
 	r.Group(func(r chi.Router) {
@@ -6800,6 +7646,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/search", wrapper.SearchMedia)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/people/{provider}/{personId}", wrapper.GetPersonDetails)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/custom-formats", wrapper.ListCustomFormats)

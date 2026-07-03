@@ -23,6 +23,8 @@ export type SystemHref =
 
 export type HomeHref =
 	| '/discover'
+	| '/discover/movies'
+	| '/discover/series'
 	| `/discover/${string}`
 	| '/blacklist'
 	| '/requests'
@@ -75,13 +77,33 @@ export const libraryItems = [
 export const discoverItems = [
 	{ value: 'discover', label: 'Home', href: '/discover' },
 	{ value: 'trending', label: 'Trending', href: '/discover/trending' },
-	{ value: 'movie-popular', label: 'Popular movies', href: '/discover/movie-popular' },
-	{ value: 'movie-upcoming', label: 'Upcoming movies', href: '/discover/movie-upcoming' },
-	{ value: 'movie-top-rated', label: 'Top rated movies', href: '/discover/movie-top-rated' },
-	{ value: 'series-popular', label: 'Popular series', href: '/discover/series-popular' },
-	{ value: 'series-on-the-air', label: 'Airing series', href: '/discover/series-on-the-air' },
-	{ value: 'series-top-rated', label: 'Top rated series', href: '/discover/series-top-rated' }
+	{ value: 'movies', label: 'Movies', href: '/discover/movies' },
+	{
+		value: 'animated-movies',
+		label: 'Animated Movies',
+		href: '/discover/movies?genres=Animation&withoutKeywords=anime'
+	},
+	{
+		value: 'anime-movies',
+		label: 'Anime Movies',
+		href: '/discover/movies?genres=Animation&keywords=anime'
+	},
+	{ value: 'series', label: 'Series', href: '/discover/series' },
+	{
+		value: 'animated-series',
+		label: 'Animated Series',
+		href: '/discover/series?genres=Animation&withoutKeywords=anime'
+	},
+	{
+		value: 'anime-series',
+		label: 'Anime Series',
+		href: '/discover/series?genres=Animation&keywords=anime'
+	}
 ] satisfies PrimaryItem['children'];
+
+export function discoverSectionHref(section: string): HomeHref {
+	return discoverItems.find((item) => item.value === section)?.href ?? `/discover/${section}`;
+}
 
 export const basePrimaryItems = [
 	{

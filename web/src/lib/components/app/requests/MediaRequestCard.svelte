@@ -44,7 +44,7 @@
 				loading="lazy"
 			/>
 		{:else}
-			<PosterPlaceholder label={request.type} class="h-full min-h-0" />
+			<PosterPlaceholder label={request.title} class="h-full min-h-0" />
 		{/if}
 	</div>
 	<div class="grid min-w-0 gap-2">

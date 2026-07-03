@@ -7,6 +7,7 @@ interface RouteDeps {
 	loadDiscoverSection: () => Promise<void>;
 	loadMediaCollection: () => Promise<void>;
 	loadMetadataDetail: () => Promise<void>;
+	loadPersonDetail: () => Promise<void>;
 }
 
 export function createRouteActions(state: AppShellState, deps: RouteDeps) {
@@ -19,6 +20,7 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 		}
 
 		const previousMetadataKey = metadataKey(state.route);
+		const previousPersonKey = personKey(state.route);
 		const previousCollectionKey = collectionKey(state.route);
 		const previousDiscoverId = state.route.discoverSectionId;
 		state.route = route;
@@ -29,6 +31,7 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 		state.activeSettingsSection = route.settingsSection;
 		state.activeSystemSection = route.systemSection;
 		state.activeDiscoverSectionId = route.discoverSectionId;
+		state.activeDiscoverSubmenuSection = route.discoverSubmenuSection;
 		state.activeRelatedSectionKind = route.relatedSectionKind;
 		state.activePeopleSectionKind = route.peopleSectionKind;
 		state.selectedMediaItemId = route.selectedMediaItemId;
@@ -37,6 +40,9 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 
 		if (metadataKey(route) !== previousMetadataKey) {
 			state.metadataDetail = undefined;
+		}
+		if (personKey(route) !== previousPersonKey) {
+			state.personDetail = undefined;
 		}
 		if (collectionKey(route) !== previousCollectionKey) {
 			state.mediaCollection = undefined;
@@ -65,6 +71,8 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 			await deps.loadMetadataDetail();
 		} else if (route.view === 'media-collection') {
 			await deps.loadMediaCollection();
+		} else if (route.view === 'person-detail') {
+			await deps.loadPersonDetail();
 		} else if (route.view === 'discover-section') {
 			await deps.loadDiscoverSection();
 		}
@@ -83,4 +91,8 @@ function metadataKey(route: AppRouteState) {
 
 function collectionKey(route: AppRouteState) {
 	return `${route.collectionProvider ?? ''}:${route.collectionId ?? ''}`;
+}
+
+function personKey(route: AppRouteState) {
+	return `${route.personProvider ?? ''}:${route.personId ?? ''}`;
 }

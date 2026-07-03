@@ -11,8 +11,8 @@ import (
 )
 
 func TestScenarioSCNSettings021AdminInspectsAndClearsMetadataCache(t *testing.T) {
-	client := newAcceptanceClient(t, "SCN-SETTINGS-021")
 	store := testSettingsStore(t)
+	client := newAcceptanceClientWithStore(t, "SCN-SETTINGS-021", store)
 	ctx := context.Background()
 	provider, query, year := seedMetadataCacheState(t, ctx, store)
 

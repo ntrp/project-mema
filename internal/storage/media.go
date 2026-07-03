@@ -12,7 +12,7 @@ const mediaItemSelectFields = `
 	m.id, m.media_type, m.title, m.year, m.monitored, m.external_provider, m.external_id, m.overview, m.poster_path,
 	m.collection_id, m.collection_name, m.backdrop_path, m.metadata_status, m.original_language,
 	m.series_type, m.release_date, m.first_air_date, m.runtime_minutes, m.season_count, m.episode_count, m.vote_average,
-	m.genres, m.keywords, m.facts, m.seasons, m.cast_members, m.recommendations, m.similar_media,
+	m.genres, m.keywords, m.facts, m.seasons, m.cast_members, m.crew_members, m.recommendations, m.similar_media,
 	m.monitor_mode, m.minimum_availability,
 	m.quality_profile_id, mp.name as quality_profile_name,
 	case
@@ -158,14 +158,14 @@ func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInpu
 			id, media_type, title, year, monitored, external_provider, external_id, overview, poster_path,
 			collection_id, collection_name, backdrop_path, metadata_status, original_language,
 			series_type, release_date, first_air_date, runtime_minutes, season_count, episode_count, vote_average,
-			genres, keywords, facts, seasons, cast_members, recommendations, similar_media,
+			genres, keywords, facts, seasons, cast_members, crew_members, recommendations, similar_media,
 			monitor_mode, minimum_availability, quality_profile_id, library_folder_id, media_folder_path
 		)
 		values (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9,
 			$10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
-			$22::jsonb, $23::jsonb, $24::jsonb, $25::jsonb, $26::jsonb, $27::jsonb, $28::jsonb,
-			$29, $30, $31, $32, $33
+			$22::jsonb, $23::jsonb, $24::jsonb, $25::jsonb, $26::jsonb, $27::jsonb, $28::jsonb, $29::jsonb,
+			$30, $31, $32, $33, $34
 		)
 		returning id
 	`, id, input.Type, input.Title, input.Year, input.Monitored, input.ExternalProvider, input.ExternalID,
@@ -173,7 +173,7 @@ func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInpu
 		input.MetadataStatus, input.OriginalLanguage, input.SeriesType, input.ReleaseDate, input.FirstAirDate,
 		input.RuntimeMinutes, input.SeasonCount, input.EpisodeCount, input.VoteAverage,
 		metadataPayloads.genres, metadataPayloads.keywords, metadataPayloads.facts, metadataPayloads.seasons,
-		metadataPayloads.cast, metadataPayloads.recommendations, metadataPayloads.similar,
+		metadataPayloads.cast, metadataPayloads.crew, metadataPayloads.recommendations, metadataPayloads.similar,
 		input.MonitorMode, input.MinimumAvailability, input.QualityProfileID, input.LibraryFolderID,
 		mediaFolderPath).Scan(&itemID); err != nil {
 		return MediaItem{}, err
@@ -241,6 +241,7 @@ func scanMediaItem(row pgx.Row) (MediaItem, error) {
 	var facts []byte
 	var seasons []byte
 	var cast []byte
+	var crew []byte
 	var recommendations []byte
 	var similar []byte
 	err := row.Scan(
@@ -270,6 +271,7 @@ func scanMediaItem(row pgx.Row) (MediaItem, error) {
 		&facts,
 		&seasons,
 		&cast,
+		&crew,
 		&recommendations,
 		&similar,
 		&item.MonitorMode,
@@ -285,7 +287,7 @@ func scanMediaItem(row pgx.Row) (MediaItem, error) {
 		&item.CreatedAt,
 		&item.UpdatedAt,
 	)
-	scanMediaMetadata(&item.MediaMetadataSnapshot, genres, keywords, facts, seasons, cast, recommendations, similar)
+	scanMediaMetadata(&item.MediaMetadataSnapshot, genres, keywords, facts, seasons, cast, crew, recommendations, similar)
 	item.MetadataFilePaths = collectMetadataFilePaths(item.FilePaths)
 	return item, err
 }

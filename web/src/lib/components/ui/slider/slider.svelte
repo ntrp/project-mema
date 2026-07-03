@@ -10,6 +10,7 @@
 		disabled?: boolean;
 		ariaLabel?: string;
 		onValueChange?: (_value: number[]) => void;
+		onValueCommit?: (_value: number[]) => void;
 		ref?: HTMLElement | null;
 		class?: string;
 		rangeClass?: string;
@@ -29,7 +30,8 @@
 		step = 1,
 		disabled = false,
 		ariaLabel,
-		onValueChange
+		onValueChange,
+		onValueCommit
 	}: SliderProps = $props();
 
 	function resolvedThumbClass(index: number) {
@@ -37,7 +39,11 @@
 	}
 
 	function handleValueChange(nextValue: number[]) {
-		onValueChange?.(nextValue);
+		onValueChange?.(Array.isArray(nextValue) ? nextValue : [nextValue]);
+	}
+
+	function handleValueCommit(nextValue: number[]) {
+		onValueCommit?.(Array.isArray(nextValue) ? nextValue : [nextValue]);
 	}
 </script>
 
@@ -56,6 +62,7 @@
 	{disabled}
 	aria-label={ariaLabel}
 	onValueChange={handleValueChange}
+	onValueCommit={handleValueCommit}
 >
 	{#snippet children({ thumbItems })}
 		<span data-slot="slider-track" class="bg-muted relative h-1.5 w-full grow rounded-full">
@@ -76,7 +83,7 @@
 				index={thumb.index}
 				data-slot="slider-thumb"
 				class={cn(
-					'border-primary bg-background ring-ring/50 focus-visible:ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50',
+					'border-primary bg-background ring-ring/50 focus-visible:ring-ring/50 block size-4 shrink-0 cursor-pointer rounded-full border shadow-sm transition-[color,box-shadow] outline-none focus-visible:ring-3 disabled:pointer-events-none disabled:opacity-50',
 					resolvedThumbClass(thumb.index)
 				)}
 			/>

@@ -35,9 +35,21 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 	cast := make([]MediaMetadataPerson, 0, len(details.Cast))
 	for _, person := range details.Cast {
 		cast = append(cast, MediaMetadataPerson{
-			Name:        person.Name,
-			Role:        person.Role,
-			ProfilePath: person.ProfilePath,
+			ExternalProvider: metadataProviderType(person.ExternalProvider),
+			ExternalId:       person.ExternalID,
+			Name:             person.Name,
+			Role:             person.Role,
+			ProfilePath:      person.ProfilePath,
+		})
+	}
+	crew := make([]MediaMetadataPerson, 0, len(details.Crew))
+	for _, person := range details.Crew {
+		crew = append(crew, MediaMetadataPerson{
+			ExternalProvider: metadataProviderType(person.ExternalProvider),
+			ExternalId:       person.ExternalID,
+			Name:             person.Name,
+			Role:             person.Role,
+			ProfilePath:      person.ProfilePath,
 		})
 	}
 	recommendations := make([]MediaSearchResult, 0, len(details.Recommendations))
@@ -73,7 +85,16 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 		Facts:            &facts,
 		Seasons:          &seasons,
 		Cast:             &cast,
+		Crew:             &crew,
 		Recommendations:  &recommendations,
 		Similar:          &similar,
 	}
+}
+
+func metadataProviderType(value *string) *MetadataProviderType {
+	if value == nil {
+		return nil
+	}
+	provider := MetadataProviderType(*value)
+	return &provider
 }

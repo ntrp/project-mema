@@ -59,12 +59,17 @@ export type MediaSearchRequest = components['schemas']['MediaSearchRequest'];
 export type MediaSearchResult = components['schemas']['MediaSearchResult'];
 export type DiscoverBlacklistItem = components['schemas']['DiscoverBlacklistItem'];
 export type DiscoverBlacklistRequest = components['schemas']['DiscoverBlacklistRequest'];
+export type DiscoverMovieFacetOption = components['schemas']['DiscoverMovieFacetOption'];
+export type DiscoverMovieSearchResponse = components['schemas']['DiscoverMovieSearchResponse'];
 export type MediaAdvancedSearchRequest = components['schemas']['MediaAdvancedSearchRequest'];
 export type MediaDiscoverSection = components['schemas']['MediaDiscoverSection'];
 export type MediaMetadataDetails = components['schemas']['MediaMetadataDetails'];
 export type MediaMetadataFact = components['schemas']['MediaMetadataFact'];
 export type MediaMetadataEpisode = components['schemas']['MediaMetadataEpisode'];
 export type MediaMetadataSeason = components['schemas']['MediaMetadataSeason'];
+export type PersonAppearance = components['schemas']['PersonAppearance'];
+export type PersonDetails = components['schemas']['PersonDetails'];
+export type PersonSearchResult = components['schemas']['PersonSearchResult'];
 export type MediaCollection = components['schemas']['MediaCollection'];
 export type MediaRequest = components['schemas']['MediaRequest'];
 export type MediaRequestApproveRequest = components['schemas']['MediaRequestApproveRequest'];
@@ -144,9 +149,12 @@ export type AppView =
 	| 'advanced-search'
 	| 'metadata-detail'
 	| 'media-people'
+	| 'person-detail'
 	| 'media-collection'
 	| 'related-section'
-	| 'discover-section';
+	| 'discover-section'
+	| 'discover-movies'
+	| 'discover-series';
 export type HomeSection =
 	| 'discover'
 	| 'blacklist'

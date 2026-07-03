@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import AppDocumentHead from './AppDocumentHead.svelte';
 	import AppNav from '../navigation/AppNav.svelte';
 	import { routeStateFromPath } from '$lib/components/app/shell/controller/routeState';
@@ -15,13 +16,15 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { setAppShellContext } from '$lib/features/app/appShellContext';
-	import type { MediaItem } from '$lib/settings/types';
+	import type { MediaItem, PersonAppearance } from '$lib/settings/types';
 
 	let { children } = $props();
 	const route = $derived(routeStateFromPath(page.url.pathname, page.params, page.url.searchParams));
 	// svelte-ignore state_referenced_locally
 	let app = $state(createAppShellController(route));
 	setAppShellContext(app);
+	let personBackdropIndex = $state(0);
+	const personBackdropPaths = $derived(personAppearanceBackdrops());
 	const mainBackdropUrl = $derived(imageUrl(activeMainBackdropPath(), 'original'));
 
 	onMount(() => {
@@ -33,7 +36,28 @@
 		void app.applyRoute(route);
 	});
 
+	$effect(() => {
+		const paths = personBackdropPaths;
+		personBackdropIndex = 0;
+		if (app.activeView !== 'person-detail' || paths.length < 2) return;
+		const interval = window.setInterval(() => {
+			personBackdropIndex = (personBackdropIndex + 1) % paths.length;
+		}, 6000);
+		return () => window.clearInterval(interval);
+	});
+
+	function personAppearanceBackdrops(): string[] {
+		const appearances: PersonAppearance[] = app.personDetail?.appearances ?? [];
+		const paths = appearances
+			.map((appearance: PersonAppearance) => appearance.backdropPath)
+			.filter((path: string | undefined): path is string => Boolean(path));
+		return paths.filter((path: string, index: number) => paths.indexOf(path) === index);
+	}
+
 	function activeMainBackdropPath() {
+		if (app.activeView === 'person-detail') {
+			return personBackdropPaths[personBackdropIndex % personBackdropPaths.length];
+		}
 		if (app.activeView === 'media-people') {
 			return app.mediaPeopleMetadataDetail?.backdropPath;
 		}
@@ -99,18 +123,21 @@
 					class="relative isolate min-h-[calc(100vh-76px)] overflow-hidden bg-background px-3.5 py-3.5 min-[641px]:px-4.5 min-[641px]:py-6 min-[641px]:pb-10"
 				>
 					{#if mainBackdropUrl}
-						<div
-							class="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(560px,58vh)] mask-[linear-gradient(to_bottom,black_0%,black_48%,transparent_100%)]"
-						>
-							<img
-								class="absolute inset-x-0 top-0 h-full w-full object-cover opacity-25"
-								src={mainBackdropUrl}
-								alt=""
-							/>
+						{#key mainBackdropUrl}
 							<div
-								class="absolute inset-0 bg-linear-to-r from-background via-background/80 to-background/25"
-							></div>
-						</div>
+								class="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(620px,64vh)] mask-[linear-gradient(to_bottom,black_0%,black_70%,transparent_100%)]"
+								transition:fade={{ duration: 650 }}
+							>
+								<img
+									class="absolute inset-x-0 top-0 h-full w-full object-cover opacity-45"
+									src={mainBackdropUrl}
+									alt=""
+								/>
+								<div
+									class="absolute inset-0 bg-linear-to-b from-background/10 via-background/45 to-background"
+								></div>
+							</div>
+						{/key}
 					{/if}
 					<div class="relative z-1">
 						{@render children?.()}

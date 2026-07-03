@@ -25,6 +25,7 @@ interface SessionDeps {
 	loadLibrary: () => Promise<void>;
 	loadDiscoverSections: () => Promise<void>;
 	loadMetadataDetail: () => Promise<void>;
+	loadPersonDetail: () => Promise<void>;
 	loadMediaCollection: () => Promise<void>;
 	loadDiscoverSection: () => Promise<void>;
 	events: EventConnectionDeps;
@@ -37,6 +38,7 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 	const loadLibrary = deps.loadLibrary;
 	const loadDiscoverSections = deps.loadDiscoverSections;
 	const loadMetadataDetail = deps.loadMetadataDetail;
+	const loadPersonDetail = deps.loadPersonDetail;
 	const loadMediaCollection = deps.loadMediaCollection;
 	const loadDiscoverSection = deps.loadDiscoverSection;
 	const eventDeps = deps.events;
@@ -69,6 +71,8 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 				await loadMetadataDetail();
 			} else if (state.activeView === 'media-collection') {
 				await loadMediaCollection();
+			} else if (state.activeView === 'person-detail') {
+				await loadPersonDetail();
 			} else if (state.activeView === 'discover-section') {
 				await loadDiscoverSection();
 			}
@@ -111,6 +115,8 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 				await loadMetadataDetail();
 			} else if (state.activeView === 'media-collection') {
 				await loadMediaCollection();
+			} else if (state.activeView === 'person-detail') {
+				await loadPersonDetail();
 			} else if (state.activeView === 'discover-section') {
 				await loadDiscoverSection();
 			}
@@ -148,6 +154,7 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			state.discoverSectionPage = 1;
 			state.discoverSectionHasMore = true;
 			state.metadataDetail = undefined;
+			state.personDetail = undefined;
 			state.mediaCollection = undefined;
 			state.autocompleteGroups = [];
 			state.advancedSearchGroups = [];

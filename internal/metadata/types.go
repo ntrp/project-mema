@@ -52,6 +52,69 @@ type SearchResult struct {
 	Overview         *string  `json:"overview,omitempty"`
 	PosterPath       *string  `json:"posterPath,omitempty"`
 	Popularity       *float64 `json:"popularity,omitempty"`
+	ReleaseDate      *string  `json:"releaseDate,omitempty"`
+	RuntimeMinutes   *int32   `json:"runtimeMinutes,omitempty"`
+	VoteAverage      *float64 `json:"voteAverage,omitempty"`
+	VoteCount        *int32   `json:"voteCount,omitempty"`
+	OriginalLanguage *string  `json:"originalLanguage,omitempty"`
+	ContentRating    *string  `json:"contentRating,omitempty"`
+	Genres           []string `json:"genres,omitempty"`
+	Keywords         []string `json:"keywords,omitempty"`
+	Studios          []string `json:"studios,omitempty"`
+	BackdropPath     *string  `json:"backdropPath,omitempty"`
+}
+
+type PersonSearchResult struct {
+	Name             string   `json:"name"`
+	ExternalProvider string   `json:"externalProvider"`
+	ExternalID       string   `json:"externalId"`
+	ProfilePath      *string  `json:"profilePath,omitempty"`
+	Popularity       *float64 `json:"popularity,omitempty"`
+	KnownFor         []string `json:"knownFor,omitempty"`
+}
+
+type DiscoverMovieRequest struct {
+	Sort              string
+	Page              int
+	ReleaseDateFrom   *string
+	ReleaseDateTo     *string
+	Studios           []string
+	Genres            []string
+	Keywords          []string
+	WithoutGenres     []string
+	WithoutKeywords   []string
+	OriginalLanguages []string
+	ContentRatings    []string
+	RuntimeMin        *int32
+	RuntimeMax        *int32
+	ScoreMin          *float64
+	ScoreMax          *float64
+	MinVoteCount      *int32
+}
+
+type DiscoverSeriesRequest struct {
+	Sort              string
+	Page              int
+	ReleaseDateFrom   *string
+	ReleaseDateTo     *string
+	Studios           []string
+	Genres            []string
+	Keywords          []string
+	WithoutGenres     []string
+	WithoutKeywords   []string
+	OriginalLanguages []string
+	ContentRatings    []string
+	Status            []string
+	RuntimeMin        *int32
+	RuntimeMax        *int32
+	ScoreMin          *float64
+	ScoreMax          *float64
+	MinVoteCount      *int32
+}
+
+type FacetOption struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type Details struct {
@@ -79,6 +142,7 @@ type Details struct {
 	Facts            []Fact
 	Seasons          []Season
 	Cast             []Person
+	Crew             []Person
 	Recommendations  []SearchResult
 	Similar          []SearchResult
 }
@@ -114,9 +178,36 @@ type Episode struct {
 }
 
 type Person struct {
-	Name        string
-	Role        *string
-	ProfilePath *string
+	ExternalProvider *string
+	ExternalID       *string
+	Name             string
+	Role             *string
+	ProfilePath      *string
+}
+
+type PersonDetails struct {
+	ID           string
+	Name         string
+	Biography    *string
+	Birthday     *string
+	Deathday     *string
+	PlaceOfBirth *string
+	ProfilePath  *string
+	AlsoKnownAs  []string
+	Appearances  []PersonAppearance
+}
+
+type PersonAppearance struct {
+	Title            string
+	Type             string
+	Year             *int32
+	ExternalProvider string
+	ExternalID       string
+	Overview         *string
+	PosterPath       *string
+	BackdropPath     *string
+	Role             *string
+	ReleaseDate      *string
 }
 
 type TestResult struct {

@@ -9,10 +9,11 @@
 		MediaAdvancedSearchRequest,
 		MediaSearchGroup,
 		MediaSearchResult,
-		MediaType,
 		MetadataProvider
 	} from '$lib/settings/types';
 	import AdvancedSearchResults from './AdvancedSearchResults.svelte';
+
+	type SearchTarget = 'all' | 'movie' | 'series' | 'people';
 
 	interface Props {
 		initialQuery: string;
@@ -37,17 +38,22 @@
 	}: Props = $props();
 
 	let query = $state('');
-	let type = $state<MediaType | 'any'>('any');
+	let target = $state<SearchTarget>('all');
 	let year = $state('');
 	let selectedProviderIds = $state<string[]>([]);
 
-	const mediaTypeOptions: { value: MediaType | 'any'; label: string }[] = [
-		{ value: 'any', label: 'Any' },
-		{ value: 'movie', label: 'Movie' },
-		{ value: 'series', label: 'Series' }
+	const targetOptions: { value: SearchTarget; label: string }[] = [
+		{ value: 'all', label: 'All' },
+		{ value: 'movie', label: 'Movies' },
+		{ value: 'series', label: 'Series' },
+		{ value: 'people', label: 'People' }
 	];
 	const enabledProviders = $derived(metadataProviders.filter((provider) => provider.enabled));
-	const resultCount = $derived(groups.reduce((count, group) => count + group.results.length, 0));
+	const resultCount = $derived(
+		groups.reduce((count, group) => count + group.results.length + (group.people?.length ?? 0), 0)
+	);
+	const includeMedia = $derived(target !== 'people');
+	const includePeople = $derived(target === 'all' || target === 'people');
 
 	onMount(() => {
 		query = initialQuery;
@@ -72,8 +78,10 @@
 		const parsedYear = Number.parseInt(year, 10);
 		const request: MediaAdvancedSearchRequest = {
 			query: query.trim(),
-			type: type === 'any' ? undefined : type,
-			year: Number.isFinite(parsedYear) ? parsedYear : undefined,
+			type: target === 'movie' || target === 'series' ? target : undefined,
+			includeMedia,
+			includePeople,
+			year: includeMedia && Number.isFinite(parsedYear) ? parsedYear : undefined,
 			providerIds: selectedProviderIds.length > 0 ? selectedProviderIds : undefined,
 			limit: 30
 		};
@@ -82,7 +90,7 @@
 </script>
 
 <section class="advanced-search grid min-w-0 gap-[18px]" aria-labelledby="advanced-search-title">
-	<PageHeading eyebrow="Search" title="Advanced media search" titleId="advanced-search-title" />
+	<PageHeading eyebrow="Search" title="Advanced search" titleId="advanced-search-title" />
 
 	<form
 		class="grid gap-4 rounded-md border border-border bg-card p-5 md:grid-cols-[minmax(0,1fr)_180px_150px]"
@@ -90,19 +98,24 @@
 	>
 		<label class="grid gap-1.5 md:col-span-3">
 			<span class="text-sm font-bold text-muted-foreground">Title</span>
-			<Input bind:value={query} placeholder="Movie or series title" autocomplete="off" />
+			<Input bind:value={query} placeholder="Title or person name" autocomplete="off" />
 		</label>
 		<label class="grid gap-1.5">
-			<span class="text-sm font-bold text-muted-foreground">Type</span>
+			<span class="text-sm font-bold text-muted-foreground">Search</span>
 			<SettingsSelect
-				value={type}
-				options={mediaTypeOptions}
-				onValueChange={(value) => (type = value as MediaType | 'any')}
+				value={target}
+				options={targetOptions}
+				onValueChange={(value) => (target = value as SearchTarget)}
 			/>
 		</label>
 		<label class="grid gap-1.5">
 			<span class="text-sm font-bold text-muted-foreground">Year</span>
-			<Input bind:value={year} inputmode="numeric" placeholder="Optional" />
+			<Input
+				bind:value={year}
+				inputmode="numeric"
+				placeholder="Optional"
+				disabled={!includeMedia}
+			/>
 		</label>
 		<fieldset class="grid gap-2.5 rounded-md border border-border p-3 md:col-span-3">
 			<legend class="px-1 text-sm font-extrabold text-muted-foreground">Metadata providers</legend>

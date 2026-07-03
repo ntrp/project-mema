@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"media-manager/internal/storage"
+	"media-manager/internal/testdb"
 )
 
 func TestSCNActivity002ManualMovieImportLinksSanitizedTarget(t *testing.T) {
@@ -107,10 +108,7 @@ func TestSCNActivity002ManualSeriesImportRequiresEpisodeCoordinates(t *testing.T
 
 func importTestStore(t *testing.T) *storage.SettingsStore {
 	t.Helper()
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("DATABASE_URL is required for import integration test")
-	}
+	databaseURL := testdb.Create(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {

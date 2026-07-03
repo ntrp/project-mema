@@ -55,6 +55,29 @@ describe('rendered media detail area (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Next Movie');
 		expect(body).toContain('Add to library');
 	});
+
+	it('renders season file size for added series', () => {
+		const filePath = '/library/Scenario Series/Season 01/Scenario.Series.S01E01.mkv';
+		const { body } = renderDetail({
+			mediaType: 'series',
+			item: mediaItem({
+				title: 'Scenario Series',
+				type: 'series',
+				filePaths: [filePath],
+				files: [{ path: filePath, sizeBytes: 5 * 1024 * 1024 * 1024 }],
+				seasons: [
+					{
+						name: 'Season 1',
+						episodeCount: 1,
+						episodes: [{ episodeNumber: 1, name: 'Pilot', monitored: true }]
+					}
+				]
+			})
+		});
+
+		expect(body).toContain('Season 1');
+		expect(body).toContain('5.00 GiB');
+	});
 });
 
 type DetailProps = ComponentProps<typeof MediaDetail>;

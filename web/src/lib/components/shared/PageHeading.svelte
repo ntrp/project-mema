@@ -25,7 +25,7 @@
 
 <div
 	class={cn(
-		'mb-2 grid gap-1',
+		'relative mb-2 grid gap-1',
 		actions && 'grid-cols-[minmax(0,1fr)_auto] items-start gap-3',
 		className
 	)}
@@ -47,7 +47,7 @@
 		{/if}
 	</div>
 	{#if actions}
-		<div class="justify-self-end">
+		<div class="relative z-20 justify-self-end">
 			{@render actions()}
 		</div>
 	{/if}

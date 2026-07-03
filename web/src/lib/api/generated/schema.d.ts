@@ -106,6 +106,74 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/discover/movies/search': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Search provider-backed movie discovery with filters */
+		get: operations['searchDiscoverMovies'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/discover/movies/facets/{facet}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Autocomplete movie discovery filters */
+		get: operations['autocompleteDiscoverMovieFacet'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/discover/series/search': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Search provider-backed series discovery with filters */
+		get: operations['searchDiscoverSeries'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/discover/series/facets/{facet}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Autocomplete series discovery filters */
+		get: operations['autocompleteDiscoverSeriesFacet'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/discover/blacklist': {
 		parameters: {
 			query?: never;
@@ -205,6 +273,26 @@ export interface paths {
 		};
 		/** Get provider metadata details for a media candidate */
 		get: operations['getMediaMetadataDetails'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/people/{provider}/{personId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				provider: components['schemas']['MetadataProviderType'];
+				personId: string;
+			};
+			cookie?: never;
+		};
+		/** Get provider person details and appearances */
+		get: operations['getPersonDetails'];
 		put?: never;
 		post?: never;
 		delete?: never;
@@ -1627,6 +1715,8 @@ export interface components {
 		MediaAdvancedSearchRequest: {
 			query?: string;
 			type?: components['schemas']['MediaType'];
+			includeMedia?: boolean;
+			includePeople?: boolean;
 			/** Format: int32 */
 			year?: number;
 			providerIds?: string[];
@@ -1642,6 +1732,7 @@ export interface components {
 			/** Format: uuid */
 			providerId?: string;
 			results: components['schemas']['MediaSearchResult'][];
+			people?: components['schemas']['PersonSearchResult'][];
 		};
 		/** @enum {string} */
 		MediaSearchSourceType: 'library' | 'provider';
@@ -1658,8 +1749,42 @@ export interface components {
 			posterPath?: string;
 			/** Format: double */
 			popularity?: number;
+			/** Format: date */
+			releaseDate?: string;
+			/** Format: int32 */
+			runtimeMinutes?: number;
+			/** Format: double */
+			voteAverage?: number;
+			/** Format: int32 */
+			voteCount?: number;
+			originalLanguage?: string;
+			contentRating?: string;
+			genres?: string[];
+			keywords?: string[];
+			studios?: string[];
+			backdropPath?: string;
 			collectionId?: string;
 			collectionName?: string;
+		};
+		PersonSearchResult: {
+			name: string;
+			externalProvider: string;
+			externalId: string;
+			profilePath?: string;
+			/** Format: double */
+			popularity?: number;
+			knownFor?: string[];
+		};
+		DiscoverMovieSearchResponse: {
+			results: components['schemas']['MediaSearchResult'][];
+			hasMore: boolean;
+		};
+		DiscoverMovieFacetOption: {
+			id: string;
+			name: string;
+		};
+		DiscoverMovieFacetResponse: {
+			options: components['schemas']['DiscoverMovieFacetOption'][];
 		};
 		MediaMetadataDetails: {
 			title: string;
@@ -1693,6 +1818,7 @@ export interface components {
 			facts?: components['schemas']['MediaMetadataFact'][];
 			seasons?: components['schemas']['MediaMetadataSeason'][];
 			cast?: components['schemas']['MediaMetadataPerson'][];
+			crew?: components['schemas']['MediaMetadataPerson'][];
 			recommendations?: components['schemas']['MediaSearchResult'][];
 			similar?: components['schemas']['MediaSearchResult'][];
 		};
@@ -1728,9 +1854,36 @@ export interface components {
 			monitored?: boolean;
 		};
 		MediaMetadataPerson: {
+			externalProvider?: components['schemas']['MetadataProviderType'];
+			externalId?: string;
 			name: string;
 			role?: string;
 			profilePath?: string;
+		};
+		PersonDetails: {
+			id: string;
+			provider: components['schemas']['MetadataProviderType'];
+			name: string;
+			biography?: string;
+			birthday?: string;
+			deathday?: string;
+			placeOfBirth?: string;
+			profilePath?: string;
+			alsoKnownAs?: string[];
+			appearances: components['schemas']['PersonAppearance'][];
+		};
+		PersonAppearance: {
+			title: string;
+			type: components['schemas']['MediaType'];
+			/** Format: int32 */
+			year?: number;
+			externalProvider: components['schemas']['MetadataProviderType'];
+			externalId: string;
+			overview?: string;
+			posterPath?: string;
+			backdropPath?: string;
+			role?: string;
+			releaseDate?: string;
 		};
 		MediaItemListResponse: {
 			items: components['schemas']['MediaItem'][];
@@ -1759,6 +1912,7 @@ export interface components {
 			facts?: components['schemas']['MediaMetadataFact'][];
 			seasons?: components['schemas']['MediaMetadataSeason'][];
 			cast?: components['schemas']['MediaMetadataPerson'][];
+			crew?: components['schemas']['MediaMetadataPerson'][];
 			recommendations?: components['schemas']['MediaSearchResult'][];
 			similar?: components['schemas']['MediaSearchResult'][];
 			qualityProfileName?: string;
@@ -2920,6 +3074,133 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 		};
 	};
+	searchDiscoverMovies: {
+		parameters: {
+			query?: {
+				sort?: string;
+				page?: number;
+				releaseDateFrom?: string;
+				releaseDateTo?: string;
+				studios?: string[];
+				genres?: string[];
+				keywords?: string[];
+				withoutGenres?: string[];
+				withoutKeywords?: string[];
+				originalLanguages?: string[];
+				contentRatings?: string[];
+				runtimeMin?: number;
+				runtimeMax?: number;
+				scoreMin?: number;
+				scoreMax?: number;
+				minVoteCount?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Filtered movie discovery results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DiscoverMovieSearchResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	autocompleteDiscoverMovieFacet: {
+		parameters: {
+			query?: {
+				query?: string;
+			};
+			header?: never;
+			path: {
+				facet: 'genres' | 'studios' | 'keywords';
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Facet suggestions */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DiscoverMovieFacetResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	searchDiscoverSeries: {
+		parameters: {
+			query?: {
+				sort?: string;
+				page?: number;
+				releaseDateFrom?: string;
+				releaseDateTo?: string;
+				studios?: string[];
+				genres?: string[];
+				keywords?: string[];
+				withoutGenres?: string[];
+				withoutKeywords?: string[];
+				originalLanguages?: string[];
+				contentRatings?: string[];
+				status?: string[];
+				runtimeMin?: number;
+				runtimeMax?: number;
+				scoreMin?: number;
+				scoreMax?: number;
+				minVoteCount?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Filtered series discovery results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DiscoverMovieSearchResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	autocompleteDiscoverSeriesFacet: {
+		parameters: {
+			query?: {
+				query?: string;
+			};
+			header?: never;
+			path: {
+				facet: 'genres' | 'studios' | 'keywords';
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Facet suggestions */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DiscoverMovieFacetResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
 	listDiscoverBlacklist: {
 		parameters: {
 			query?: never;
@@ -3088,6 +3369,32 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['MediaMetadataDetails'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	getPersonDetails: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				provider: components['schemas']['MetadataProviderType'];
+				personId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Person details */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['PersonDetails'];
 				};
 			};
 			400: components['responses']['BadRequest'];

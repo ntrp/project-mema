@@ -6,6 +6,7 @@ export type PosterRowEdges = {
 type RowsByKey = Record<string, HTMLDivElement | undefined>;
 type EdgesByKey = Record<string, PosterRowEdges | undefined>;
 
+const dragThreshold = 4;
 const defaultEdges: PosterRowEdges = {
 	canScrollLeft: false,
 	canScrollRight: false
@@ -24,14 +25,84 @@ export function createPosterRowScroller() {
 		let frame = globalThis.requestAnimationFrame(() => updateEdges(key));
 		const resizeObserver = new globalThis.ResizeObserver(() => updateEdges(key));
 		const onScroll = () => updateEdges(key);
+		let dragPointerId: number | undefined;
+		let dragStartX = 0;
+		let dragScrollLeft = 0;
+		let didDrag = false;
+		let suppressClick = false;
+
+		const finishDrag = () => {
+			if (dragPointerId !== undefined && node.hasPointerCapture(dragPointerId)) {
+				node.releasePointerCapture(dragPointerId);
+			}
+			dragPointerId = undefined;
+			node.classList.remove('cursor-grabbing', 'select-none');
+			if (didDrag) {
+				suppressClick = true;
+				globalThis.setTimeout(() => {
+					suppressClick = false;
+				}, 0);
+			}
+			didDrag = false;
+		};
+
+		const onPointerDown = (event: PointerEvent) => {
+			if (event.button !== 0 || node.scrollWidth <= node.clientWidth) {
+				return;
+			}
+			dragPointerId = event.pointerId;
+			dragStartX = event.clientX;
+			dragScrollLeft = node.scrollLeft;
+			didDrag = false;
+			node.setPointerCapture(event.pointerId);
+		};
+
+		const onPointerMove = (event: PointerEvent) => {
+			if (event.pointerId !== dragPointerId) {
+				return;
+			}
+			const deltaX = event.clientX - dragStartX;
+			if (!didDrag && Math.abs(deltaX) < dragThreshold) {
+				return;
+			}
+			didDrag = true;
+			node.classList.add('cursor-grabbing', 'select-none');
+			node.scrollLeft = dragScrollLeft - deltaX;
+			updateEdges(key);
+			event.preventDefault();
+		};
+
+		const onPointerUp = (event: PointerEvent) => {
+			if (event.pointerId === dragPointerId) {
+				finishDrag();
+			}
+		};
+
+		const onClick = (event: MouseEvent) => {
+			if (!suppressClick) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+		};
 
 		node.addEventListener('scroll', onScroll, { passive: true });
+		node.addEventListener('pointerdown', onPointerDown);
+		node.addEventListener('pointermove', onPointerMove);
+		node.addEventListener('pointerup', onPointerUp);
+		node.addEventListener('pointercancel', onPointerUp);
+		node.addEventListener('click', onClick, true);
 		resizeObserver.observe(node);
 
 		return {
 			destroy() {
 				globalThis.cancelAnimationFrame(frame);
 				node.removeEventListener('scroll', onScroll);
+				node.removeEventListener('pointerdown', onPointerDown);
+				node.removeEventListener('pointermove', onPointerMove);
+				node.removeEventListener('pointerup', onPointerUp);
+				node.removeEventListener('pointercancel', onPointerUp);
+				node.removeEventListener('click', onClick, true);
 				resizeObserver.disconnect();
 				delete rows[key];
 				delete edges[key];

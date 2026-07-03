@@ -78,6 +78,25 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 		expect(gotoMock).toHaveBeenLastCalledWith('/discover/trending');
 		expect(loadDiscoverSection).toHaveBeenCalledTimes(1);
 	});
+
+	it('routes discover preset entries to filtered movie and series pages', () => {
+		const loadDiscoverSection = vi.fn();
+		const state = testState({ activePrimarySection: 'discover' });
+		const actions = createNavigationActions(state, { loadDiscoverSection });
+
+		actions.selectSubmenuSection('animated-movies');
+		expect(state.activeView).toBe('discover-movies');
+		expect(state.activeDiscoverSubmenuSection).toBe('animated-movies');
+		expect(gotoMock).toHaveBeenLastCalledWith(
+			'/discover/movies?genres=Animation&withoutKeywords=anime'
+		);
+
+		actions.selectSubmenuSection('anime-series');
+		expect(state.activeView).toBe('discover-series');
+		expect(state.activeDiscoverSubmenuSection).toBe('anime-series');
+		expect(gotoMock).toHaveBeenLastCalledWith('/discover/series?genres=Animation&keywords=anime');
+		expect(loadDiscoverSection).not.toHaveBeenCalled();
+	});
 });
 
 function testState(overrides: Partial<AppShellState> = {}): AppShellState {

@@ -52,8 +52,28 @@ function detail(overrides: Partial<MediaMetadataDetails> = {}): MediaMetadataDet
 			}
 		],
 		cast: [
-			{ name: 'Actor One', role: 'Lead', profilePath: '/actor-one.jpg' },
+			{
+				name: 'Actor One',
+				role: 'Lead',
+				profilePath: '/actor-one.jpg',
+				externalProvider: 'tmdb',
+				externalId: 'actor-1'
+			},
 			{ name: 'Actor Two', role: 'Support' }
+		],
+		crew: [
+			{
+				name: 'Ada Example',
+				role: 'Director',
+				externalProvider: 'tmdb',
+				externalId: 'director-1'
+			},
+			{
+				name: 'Grace Example',
+				role: 'Writer',
+				externalProvider: 'tmdb',
+				externalId: 'writer-1'
+			}
 		],
 		...overrides
 	} as MediaMetadataDetails;
@@ -93,10 +113,13 @@ describe('rendered metadata components (SCN-MEDIA-008)', () => {
 		expect(body).toContain('Crew');
 		expect(body).toContain('Ada Example');
 		expect(body).toContain('Grace Example');
+		expect(body).toContain('/people/tmdb/director-1');
+		expect(body).toContain('/people/tmdb/writer-1');
 		expect(body).toContain('scenario');
 		expect(body).toContain('coverage');
 		expect(body).toContain('Season 1');
 		expect(body).toContain('2 episodes');
+		expect(body).not.toContain('>-</span>');
 		expect(body).toContain('aria-expanded="false"');
 		expect(body).toContain('Actor One');
 		expect(body).toContain('Lead');

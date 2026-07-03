@@ -65,7 +65,7 @@
 							loading="lazy"
 						/>
 					{:else}
-						<PosterPlaceholder label={item.type} />
+						<PosterPlaceholder label={item.title} />
 					{/if}
 					<MediaBadge type={item.type} />
 					<div

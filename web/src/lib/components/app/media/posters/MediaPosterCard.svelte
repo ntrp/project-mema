@@ -8,6 +8,7 @@
 	import MediaAddButton from '$lib/components/app/media/shared/MediaAddButton.svelte';
 	import MediaBadge from '$lib/components/app/media/shared/MediaBadge.svelte';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
+	import { isUnreleasedMedia } from '$lib/components/app/media/shared/mediaRelease';
 
 	interface Props {
 		result: MediaSearchResult;
@@ -18,6 +19,7 @@
 		onBlacklist?: (_candidate: MediaSearchResult) => void;
 		blacklisting?: boolean;
 		showBlacklistAction?: boolean;
+		unreleased?: boolean;
 	}
 
 	let {
@@ -28,8 +30,11 @@
 		onAdd,
 		onBlacklist,
 		blacklisting = false,
-		showBlacklistAction = false
+		showBlacklistAction = false,
+		unreleased
 	}: Props = $props();
+
+	const isUnreleased = $derived(unreleased ?? isUnreleasedMedia(result));
 
 	function posterUrl(path?: string) {
 		if (!path) {
@@ -44,7 +49,7 @@
 
 <article class="group/poster min-w-0 snap-start">
 	<div
-		class="relative aspect-[2/3] overflow-hidden rounded-md border border-border bg-card transition-[transform,border-color,box-shadow] duration-150 group-hover/poster:z-[2] group-hover/poster:-translate-y-1.5 group-hover/poster:scale-105 group-hover/poster:border-primary/50 group-hover/poster:shadow-xl group-focus-within/poster:z-[2] group-focus-within/poster:-translate-y-1.5 group-focus-within/poster:scale-105 group-focus-within/poster:border-primary/50 group-focus-within/poster:shadow-xl"
+		class={`${isUnreleased ? 'border-yellow-400 group-hover/poster:border-yellow-300 group-focus-within/poster:border-yellow-300 ' : 'border-border group-hover/poster:border-primary/50 group-focus-within/poster:border-primary/50 '}relative aspect-[2/3] overflow-hidden rounded-md border bg-card transition-[transform,border-color,box-shadow] duration-150 group-hover/poster:z-[2] group-hover/poster:-translate-y-1.5 group-hover/poster:scale-105 group-hover/poster:shadow-xl group-focus-within/poster:z-[2] group-focus-within/poster:-translate-y-1.5 group-focus-within/poster:scale-105 group-focus-within/poster:shadow-xl`}
 	>
 		{#if posterUrl(result.posterPath)}
 			<img
@@ -54,7 +59,7 @@
 				loading="lazy"
 			/>
 		{:else}
-			<PosterPlaceholder label={result.type} />
+			<PosterPlaceholder label={result.title} />
 		{/if}
 		{#if result.externalProvider && result.externalId}
 			<a

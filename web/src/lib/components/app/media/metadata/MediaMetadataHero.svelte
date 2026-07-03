@@ -10,6 +10,7 @@
 	import MediaMonitorBookmark from '$lib/components/app/media/detail/MediaMonitorBookmark.svelte';
 	import MediaTrailerModal from '$lib/components/app/media/detail/MediaTrailerModal.svelte';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
+	import { isUnreleasedMedia } from '$lib/components/app/media/shared/mediaRelease';
 	import {
 		imageUrl,
 		mediaHeroTopInfo,
@@ -55,6 +56,8 @@
 	const certification = $derived(certificationText());
 	const duration = $derived(runtimeText(detail.runtimeMinutes));
 	const trailerTitle = $derived(`${detail.title} trailer`);
+	const interactiveChipClass =
+		'transition-[background-color,color,box-shadow] group-hover/chip:bg-primary group-hover/chip:text-primary-foreground group-focus-visible/chip:bg-primary group-focus-visible/chip:text-primary-foreground group-focus-visible/chip:ring-2 group-focus-visible/chip:ring-ring';
 
 	function hasSubtitle(details: MediaMetadataDetails) {
 		return Boolean(mediaStatus || certification || details.year || duration);
@@ -68,11 +71,13 @@
 <div
 	class="grid items-end gap-6.5 min-[641px]:grid-cols-[clamp(190px,18vw,270px)_minmax(0,1fr)] mb-6"
 >
-	<div class="aspect-2/3 overflow-hidden rounded-md border border-border bg-card max-sm:w-42.5">
+	<div
+		class={`${isUnreleasedMedia(detail) ? 'border-yellow-400 ' : 'border-border '}aspect-2/3 overflow-hidden rounded-md border bg-card max-sm:w-42.5`}
+	>
 		{#if imageUrl(detail.posterPath, 'w342')}
 			<img class="block size-full object-cover" src={imageUrl(detail.posterPath, 'w342')} alt="" />
 		{:else}
-			<PosterPlaceholder label={detail.type} class="h-full min-h-0" />
+			<PosterPlaceholder label={detail.title} class="h-full min-h-0" />
 		{/if}
 	</div>
 	<div class="grid gap-3">
@@ -125,9 +130,14 @@
 		{#if genres.length > 0}
 			<div class="flex flex-wrap gap-1.75" aria-label="Genres">
 				{#each genres as genre (genre)}
-					<StatusPill class="inline-flex items-center gap-1.5">
-						<TagIcon aria-hidden="true" />{genre}
-					</StatusPill>
+					<a
+						class="group/chip rounded-[3px] text-foreground no-underline outline-none"
+						href={`${resolve('/discover/movies')}?genres=${encodeURIComponent(genre)}`}
+					>
+						<StatusPill class={`inline-flex items-center gap-1.5 ${interactiveChipClass}`}>
+							<TagIcon aria-hidden="true" />{genre}
+						</StatusPill>
+					</a>
 				{/each}
 			</div>
 		{/if}

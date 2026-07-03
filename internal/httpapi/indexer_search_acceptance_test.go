@@ -11,8 +11,8 @@ import (
 )
 
 func TestScenarioSCNSettings020AdminInspectsAndClearsIndexerSearchCache(t *testing.T) {
-	client := newAcceptanceClient(t, "SCN-SETTINGS-020")
 	store := testSettingsStore(t)
+	client := newAcceptanceClientWithStore(t, "SCN-SETTINGS-020", store)
 	ctx := context.Background()
 	indexer, query := seedIndexerSearchState(t, ctx, store)
 

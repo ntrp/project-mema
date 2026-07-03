@@ -1,6 +1,7 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import {
+	discoverSectionHref,
 	settingsSectionHref,
 	systemSectionHref
 } from '$lib/components/app/navigation/appNavigation';
@@ -48,13 +49,30 @@ export function createNavigationActions(state: AppShellState, deps: NavigationDe
 			return;
 		}
 		if (state.activePrimarySection === 'discover') {
+			const href = discoverSectionHref(section);
 			if (section === 'discover') {
+				state.activeDiscoverSubmenuSection = undefined;
 				selectHomeSection('discover');
+				return;
+			}
+			if (href.startsWith('/discover/movies')) {
+				state.activeView = 'discover-movies';
+				state.activeHomeSection = 'discover';
+				state.activeDiscoverSubmenuSection = section;
+				void goto(resolve(href));
+				return;
+			}
+			if (href.startsWith('/discover/series')) {
+				state.activeView = 'discover-series';
+				state.activeHomeSection = 'discover';
+				state.activeDiscoverSubmenuSection = section;
+				void goto(resolve(href));
 				return;
 			}
 			state.activeView = 'discover-section';
 			state.activeHomeSection = 'discover';
 			state.activeDiscoverSectionId = section;
+			state.activeDiscoverSubmenuSection = undefined;
 			state.discoverSection = undefined;
 			state.discoverSectionPage = 1;
 			state.discoverSectionHasMore = true;

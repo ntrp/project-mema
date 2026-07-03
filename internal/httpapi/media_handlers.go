@@ -166,6 +166,8 @@ func (s *Server) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "invalid_query", "Search query is required")
 		return
 	}
+	includeMedia := boolDefault(body.IncludeMedia, true)
+	includePeople := boolDefault(body.IncludePeople, false)
 	mediaTypes := []string{"movie", "series"}
 	if body.Type != nil {
 		if !body.Type.Valid() {
@@ -173,6 +175,9 @@ func (s *Server) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		mediaTypes = []string{string(*body.Type)}
+	}
+	if !includeMedia {
+		mediaTypes = []string{}
 	}
 	limit := int32(20)
 	if body.Limit != nil {
@@ -193,8 +198,9 @@ func (s *Server) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
 		providerIDs:         providerIDs,
 		providerIDsProvided: body.ProviderIds != nil,
 		limit:               int(limit),
-		includeLibrary:      true,
+		includeLibrary:      includeMedia,
 		includeProviders:    true,
+		includePeople:       includePeople,
 		sortByPopularity:    true,
 	})
 	if err != nil {

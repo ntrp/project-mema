@@ -6,6 +6,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { MediaItem, MediaType } from '$lib/settings/types';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
+	import { isUnreleasedMedia } from '$lib/components/app/media/shared/mediaRelease';
 
 	interface Props {
 		mediaType: MediaType;
@@ -78,7 +79,7 @@
 	>
 		{#each items as item (item.id)}
 			<a
-				class="group/library relative block isolate overflow-hidden rounded-md border border-border bg-card text-foreground no-underline transition-[transform,border-color,box-shadow] duration-150 hover:z-[2] hover:-translate-y-1.5 hover:scale-[1.04] hover:border-primary/50 hover:shadow-xl focus-visible:z-[2] focus-visible:-translate-y-1.5 focus-visible:scale-[1.04] focus-visible:border-primary/50 focus-visible:shadow-xl focus-visible:outline-none max-sm:hover:-translate-y-0.5 max-sm:hover:scale-[1.02] max-sm:focus-visible:-translate-y-0.5 max-sm:focus-visible:scale-[1.02]"
+				class={`${isUnreleasedMedia(item) ? 'border-yellow-400 hover:border-yellow-300 focus-visible:border-yellow-300 ' : 'border-border hover:border-primary/50 focus-visible:border-primary/50 '}group/library relative block isolate overflow-hidden rounded-md border bg-card text-foreground no-underline transition-[transform,border-color,box-shadow] duration-150 hover:z-[2] hover:-translate-y-1.5 hover:scale-[1.04] hover:shadow-xl focus-visible:z-[2] focus-visible:-translate-y-1.5 focus-visible:scale-[1.04] focus-visible:shadow-xl focus-visible:outline-none max-sm:hover:-translate-y-0.5 max-sm:hover:scale-[1.02] max-sm:focus-visible:-translate-y-0.5 max-sm:focus-visible:scale-[1.02]`}
 				href={mediaType === 'movie'
 					? resolve('/movies/[id]', { id: item.id })
 					: resolve('/series/[id]', { id: item.id })}
@@ -93,7 +94,7 @@
 							loading="lazy"
 						/>
 					{:else}
-						<PosterPlaceholder label={typeLabel(mediaType)} class="h-full min-h-0" />
+						<PosterPlaceholder label={item.title} class="h-full min-h-0" />
 					{/if}
 				</div>
 				<div

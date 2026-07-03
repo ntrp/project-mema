@@ -134,6 +134,312 @@ paths:
                 $ref: "#/components/schemas/MediaDiscoverResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /media/discover/movies/search:
+    get:
+      operationId: searchDiscoverMovies
+      tags:
+        - Media
+      summary: Search provider-backed movie discovery with filters
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: popularity.desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 1
+        - name: releaseDateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: releaseDateTo
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: studios
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: genres
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: keywords
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: withoutGenres
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: withoutKeywords
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: originalLanguages
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: contentRatings
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: runtimeMin
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 400
+        - name: runtimeMax
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 400
+        - name: scoreMin
+          in: query
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 10
+        - name: scoreMax
+          in: query
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 10
+        - name: minVoteCount
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+      responses:
+        "200":
+          description: Filtered movie discovery results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoverMovieSearchResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/discover/movies/facets/{facet}:
+    get:
+      operationId: autocompleteDiscoverMovieFacet
+      tags:
+        - Media
+      summary: Autocomplete movie discovery filters
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: facet
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - genres
+              - studios
+              - keywords
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: Facet suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoverMovieFacetResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/discover/series/search:
+    get:
+      operationId: searchDiscoverSeries
+      tags:
+        - Media
+      summary: Search provider-backed series discovery with filters
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: popularity.desc
+        - name: page
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            default: 1
+        - name: releaseDateFrom
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: releaseDateTo
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: studios
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: genres
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: keywords
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: withoutGenres
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: withoutKeywords
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: originalLanguages
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: contentRatings
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: status
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: runtimeMin
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 400
+        - name: runtimeMax
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 400
+        - name: scoreMin
+          in: query
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 10
+        - name: scoreMax
+          in: query
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            maximum: 10
+        - name: minVoteCount
+          in: query
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            maximum: 1000
+      responses:
+        "200":
+          description: Filtered series discovery results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoverMovieSearchResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /media/discover/series/facets/{facet}:
+    get:
+      operationId: autocompleteDiscoverSeriesFacet
+      tags:
+        - Media
+      summary: Autocomplete series discovery filters
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: facet
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - genres
+              - studios
+              - keywords
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: Facet suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoverMovieFacetResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /media/discover/blacklist:
     get:
       operationId: listDiscoverBlacklist
@@ -336,6 +642,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MediaMetadataDetails"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /people/{provider}/{personId}:
+    parameters:
+      - name: provider
+        in: path
+        required: true
+        schema:
+          $ref: "#/components/schemas/MetadataProviderType"
+      - name: personId
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+    get:
+      operationId: getPersonDetails
+      tags:
+        - Media
+      summary: Get provider person details and appearances
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Person details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonDetails"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -3026,6 +3366,10 @@ components:
           maxLength: 500
         type:
           $ref: "#/components/schemas/MediaType"
+        includeMedia:
+          type: boolean
+        includePeople:
+          type: boolean
         year:
           type: integer
           format: int32
@@ -3071,6 +3415,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaSearchResult"
+        people:
+          type: array
+          items:
+            $ref: "#/components/schemas/PersonSearchResult"
     MediaSearchSourceType:
       type: string
       enum:
@@ -3104,10 +3452,97 @@ components:
         popularity:
           type: number
           format: double
+        releaseDate:
+          type: string
+          format: date
+        runtimeMinutes:
+          type: integer
+          format: int32
+        voteAverage:
+          type: number
+          format: double
+        voteCount:
+          type: integer
+          format: int32
+        originalLanguage:
+          type: string
+        contentRating:
+          type: string
+        genres:
+          type: array
+          items:
+            type: string
+        keywords:
+          type: array
+          items:
+            type: string
+        studios:
+          type: array
+          items:
+            type: string
+        backdropPath:
+          type: string
         collectionId:
           type: string
         collectionName:
           type: string
+    PersonSearchResult:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - externalProvider
+        - externalId
+      properties:
+        name:
+          type: string
+        externalProvider:
+          type: string
+        externalId:
+          type: string
+        profilePath:
+          type: string
+        popularity:
+          type: number
+          format: double
+        knownFor:
+          type: array
+          items:
+            type: string
+    DiscoverMovieSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - results
+        - hasMore
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchResult"
+        hasMore:
+          type: boolean
+    DiscoverMovieFacetOption:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    DiscoverMovieFacetResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - options
+      properties:
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscoverMovieFacetOption"
     MediaMetadataDetails:
       type: object
       additionalProperties: false
@@ -3181,6 +3616,10 @@ components:
           items:
             $ref: "#/components/schemas/MediaMetadataSeason"
         cast:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaMetadataPerson"
+        crew:
           type: array
           items:
             $ref: "#/components/schemas/MediaMetadataPerson"
@@ -3275,11 +3714,78 @@ components:
       required:
         - name
       properties:
+        externalProvider:
+          $ref: "#/components/schemas/MetadataProviderType"
+        externalId:
+          type: string
         name:
           type: string
         role:
           type: string
         profilePath:
+          type: string
+    PersonDetails:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - provider
+        - name
+        - appearances
+      properties:
+        id:
+          type: string
+        provider:
+          $ref: "#/components/schemas/MetadataProviderType"
+        name:
+          type: string
+        biography:
+          type: string
+        birthday:
+          type: string
+        deathday:
+          type: string
+        placeOfBirth:
+          type: string
+        profilePath:
+          type: string
+        alsoKnownAs:
+          type: array
+          items:
+            type: string
+        appearances:
+          type: array
+          items:
+            $ref: "#/components/schemas/PersonAppearance"
+    PersonAppearance:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - type
+        - externalProvider
+        - externalId
+      properties:
+        title:
+          type: string
+        type:
+          $ref: "#/components/schemas/MediaType"
+        year:
+          type: integer
+          format: int32
+        externalProvider:
+          $ref: "#/components/schemas/MetadataProviderType"
+        externalId:
+          type: string
+        overview:
+          type: string
+        posterPath:
+          type: string
+        backdropPath:
+          type: string
+        role:
+          type: string
+        releaseDate:
           type: string
     MediaItemListResponse:
       type: object
@@ -3352,6 +3858,10 @@ components:
               items:
                 $ref: "#/components/schemas/MediaMetadataSeason"
             cast:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaMetadataPerson"
+            crew:
               type: array
               items:
                 $ref: "#/components/schemas/MediaMetadataPerson"

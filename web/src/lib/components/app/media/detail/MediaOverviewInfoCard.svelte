@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import ClapperboardIcon from '@lucide/svelte/icons/clapperboard';
 	import DiscIcon from '@lucide/svelte/icons/disc-3';
 	import MonitorPlayIcon from '@lucide/svelte/icons/monitor-play';
@@ -126,6 +127,16 @@
 	function languageName(code?: string) {
 		return code ? displayLanguage(code) : undefined;
 	}
+
+	function discoverHref(label: string, value: string) {
+		if (label === 'Studios') {
+			return `${resolve('/discover/movies')}?studios=${encodeURIComponent(value)}`;
+		}
+		if (label === 'Original Language' && detail.originalLanguage) {
+			return `${resolve('/discover/movies')}?originalLanguages=${encodeURIComponent(detail.originalLanguage)}`;
+		}
+		return undefined;
+	}
 </script>
 
 <aside
@@ -167,11 +178,17 @@
 							{/each}
 						{:else}
 							{#each row.value as value (value)}
-								<span>{value}</span>
+								{@const href = discoverHref(row.label, value)}
+								{#if href}
+									<a class="text-muted-foreground hover:text-foreground" {href}>{value}</a>
+								{:else}
+									<span>{value}</span>
+								{/if}
 							{/each}
 						{/if}
 					</span>
 				{:else}
+					{@const href = discoverHref(row.label, row.value)}
 					<span
 						class="wrap-anywhere inline-flex items-center justify-end gap-1.5 text-right text-muted-foreground"
 					>
@@ -179,7 +196,11 @@
 							{@const Icon = seriesStatusIcon(row.value)}
 							<Icon aria-hidden="true" class="size-3.5 text-foreground" />
 						{/if}
-						<span>{row.value}</span>
+						{#if href}
+							<a class="text-muted-foreground hover:text-foreground" {href}>{row.value}</a>
+						{:else}
+							<span>{row.value}</span>
+						{/if}
 					</span>
 				{/if}
 			</div>

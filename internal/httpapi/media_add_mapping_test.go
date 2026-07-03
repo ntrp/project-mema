@@ -55,6 +55,13 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 			Role:        stringPointer("Lead"),
 			ProfilePath: stringPointer("/actor.jpg"),
 		}},
+		Crew: []metadata.Person{{
+			ExternalProvider: stringPointer("tmdb"),
+			ExternalID:       stringPointer("crew-1"),
+			Name:             "Director",
+			Role:             stringPointer("Director"),
+			ProfilePath:      stringPointer("/director.jpg"),
+		}},
 		Recommendations: []metadata.SearchResult{{
 			Title:            "Recommended",
 			Type:             "movie",
@@ -94,6 +101,9 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 	}
 	if len(input.Cast) != 1 || input.Cast[0].Name != "Actor" {
 		t.Fatalf("cast = %#v", input.Cast)
+	}
+	if len(input.Crew) != 1 || input.Crew[0].ExternalID == nil || *input.Crew[0].ExternalID != "crew-1" {
+		t.Fatalf("crew = %#v", input.Crew)
 	}
 	if len(input.Recommendations) != 1 || input.Recommendations[0].ExternalID != "rec-1" {
 		t.Fatalf("recommendations = %#v", input.Recommendations)

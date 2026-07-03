@@ -19,6 +19,7 @@ type MediaMetadataSnapshot struct {
 	Facts            []MediaFact
 	Seasons          []MediaSeason
 	Cast             []MediaPerson
+	Crew             []MediaPerson
 	Recommendations  []MediaRelatedItem
 	Similar          []MediaRelatedItem
 }
@@ -47,9 +48,11 @@ type MediaEpisode struct {
 }
 
 type MediaPerson struct {
-	Name        string  `json:"name"`
-	Role        *string `json:"role,omitempty"`
-	ProfilePath *string `json:"profilePath,omitempty"`
+	ExternalProvider *string `json:"externalProvider,omitempty"`
+	ExternalID       *string `json:"externalId,omitempty"`
+	Name             string  `json:"name"`
+	Role             *string `json:"role,omitempty"`
+	ProfilePath      *string `json:"profilePath,omitempty"`
 }
 
 type MediaRelatedItem struct {
@@ -68,6 +71,7 @@ type mediaMetadataPayloads struct {
 	facts           []byte
 	seasons         []byte
 	cast            []byte
+	crew            []byte
 	recommendations []byte
 	similar         []byte
 }
@@ -93,6 +97,10 @@ func marshalMediaMetadata(input MediaMetadataSnapshot) (mediaMetadataPayloads, e
 	if err != nil {
 		return mediaMetadataPayloads{}, err
 	}
+	crew, err := marshalJSONArray(input.Crew)
+	if err != nil {
+		return mediaMetadataPayloads{}, err
+	}
 	recommendations, err := marshalJSONArray(input.Recommendations)
 	if err != nil {
 		return mediaMetadataPayloads{}, err
@@ -107,6 +115,7 @@ func marshalMediaMetadata(input MediaMetadataSnapshot) (mediaMetadataPayloads, e
 		facts:           facts,
 		seasons:         seasons,
 		cast:            cast,
+		crew:            crew,
 		recommendations: recommendations,
 		similar:         similar,
 	}, nil
@@ -119,6 +128,7 @@ func scanMediaMetadata(
 	facts []byte,
 	seasons []byte,
 	cast []byte,
+	crew []byte,
 	recommendations []byte,
 	similar []byte,
 ) {
@@ -127,6 +137,7 @@ func scanMediaMetadata(
 	target.Facts = unmarshalJSONArray[MediaFact](facts)
 	target.Seasons = unmarshalJSONArray[MediaSeason](seasons)
 	target.Cast = unmarshalJSONArray[MediaPerson](cast)
+	target.Crew = unmarshalJSONArray[MediaPerson](crew)
 	target.Recommendations = unmarshalJSONArray[MediaRelatedItem](recommendations)
 	target.Similar = unmarshalJSONArray[MediaRelatedItem](similar)
 }

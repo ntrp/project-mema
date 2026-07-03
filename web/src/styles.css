@@ -100,6 +100,12 @@
 		scrollbar-width: thin;
 	}
 
+	a[href],
+	button:not(:disabled),
+	[role='button']:not([aria-disabled='true']) {
+		cursor: pointer;
+	}
+
 	* {
 		scrollbar-color: color-mix(in srgb, var(--muted-foreground) 58%, transparent)
 			color-mix(in srgb, var(--background) 82%, var(--muted));

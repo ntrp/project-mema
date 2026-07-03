@@ -15,6 +15,7 @@ describe('media detail projection (SCN-MEDIA-004)', () => {
 			posterPath: '/poster.jpg',
 			metadataStatus: 'available',
 			genres: ['Drama'],
+			crew: [{ name: 'Director', externalProvider: 'tmdb', externalId: 'crew-1' }],
 			recommendations: [{ title: 'Next' }]
 		} as MediaItem);
 
@@ -29,6 +30,7 @@ describe('media detail projection (SCN-MEDIA-004)', () => {
 			posterPath: '/poster.jpg',
 			status: 'available',
 			genres: ['Drama'],
+			crew: [{ name: 'Director', externalProvider: 'tmdb', externalId: 'crew-1' }],
 			recommendations: [{ title: 'Next' }]
 		});
 	});

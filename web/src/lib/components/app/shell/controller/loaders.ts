@@ -1,6 +1,7 @@
 import {
 	getMediaCollection as getMediaCollectionRequest,
 	getMediaMetadataDetails as getMediaMetadataDetailsRequest,
+	getPersonDetails as getPersonDetailsRequest,
 	listDownloadActivity as listDownloadActivityRequest,
 	listMediaItems as listMediaItemsRequest,
 	listMediaRequests as listMediaRequestsRequest,
@@ -74,6 +75,23 @@ export function createLoadActions(state: AppShellState) {
 		}
 	}
 
+	async function loadPersonDetail() {
+		if (!state.route.personProvider || !state.route.personId) {
+			return;
+		}
+		state.loadingPersonDetail = true;
+		try {
+			state.personDetail = await getPersonDetailsRequest(
+				state.route.personProvider as MetadataProviderType,
+				state.route.personId
+			);
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not load person details');
+		} finally {
+			state.loadingPersonDetail = false;
+		}
+	}
+
 	async function loadMediaItems() {
 		state.loadingMediaItems = true;
 		try {
@@ -108,6 +126,7 @@ export function createLoadActions(state: AppShellState) {
 		loadSettings,
 		loadLibrary,
 		loadMetadataDetail,
+		loadPersonDetail,
 		loadMediaCollection,
 		loadMediaItems,
 		loadMediaRequests,

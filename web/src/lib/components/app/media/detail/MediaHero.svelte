@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import type { MediaItem, MediaItemStatus, MediaType } from '$lib/settings/types';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
+	import { isUnreleasedMedia } from '$lib/components/app/media/shared/mediaRelease';
 	import { releaseSearchQuery } from '$lib/components/app/media/release-search/releaseSearchQuery';
 
 	interface Props {
@@ -60,15 +61,12 @@
 	aria-labelledby="home-title"
 >
 	<div
-		class="aspect-[2/3] overflow-hidden rounded-md border border-border bg-card max-sm:w-[170px]"
+		class={`${isUnreleasedMedia(item) ? 'border-yellow-400 ' : 'border-border '}aspect-[2/3] overflow-hidden rounded-md border bg-card max-sm:w-[170px]`}
 	>
 		{#if posterUrl(item.posterPath, 'w500')}
 			<img class="block size-full object-cover" src={posterUrl(item.posterPath, 'w500')} alt="" />
 		{:else}
-			<PosterPlaceholder
-				label={mediaType === 'movie' ? 'Movie' : 'Series'}
-				class="h-full min-h-0"
-			/>
+			<PosterPlaceholder label={item.title} class="h-full min-h-0" />
 		{/if}
 	</div>
 	<div class="grid gap-3">

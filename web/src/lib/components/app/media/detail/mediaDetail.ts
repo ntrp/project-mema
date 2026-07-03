@@ -33,6 +33,7 @@ export function mediaMetadataDetail(mediaItem: MediaItem): MediaMetadataDetails 
 		facts: mediaItem.facts,
 		seasons: mediaItem.seasons,
 		cast: mediaItem.cast,
+		crew: mediaItem.crew,
 		recommendations: mediaItem.recommendations,
 		similar: mediaItem.similar
 	};

@@ -6,7 +6,7 @@
 
 	interface Props {
 		summary: string;
-		size: string;
+		size?: string;
 		tone: 'success' | 'active' | 'missing' | 'neutral';
 		title: Snippet;
 		actions?: Snippet;
@@ -45,7 +45,7 @@
 		role="button"
 		tabindex="0"
 		aria-expanded={open}
-		class="grid min-h-12 cursor-pointer grid-cols-[minmax(0,1fr)_auto_minmax(88px,auto)] items-center gap-3 bg-muted/70 px-4 py-3 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+		class="grid min-h-12 cursor-pointer grid-cols-[minmax(0,1fr)_2rem_minmax(88px,auto)] items-center gap-3 bg-muted/70 px-4 py-3 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
 		onclick={toggle}
 		onkeydown={handleKeydown}
 	>
@@ -54,12 +54,19 @@
 			<span class={cn('rounded-md px-2 py-0.5 text-xs font-black', toneClass(tone))}>
 				{summary}
 			</span>
-			<span class="rounded-md bg-border px-2 py-0.5 text-xs font-black text-muted-foreground">
-				{size}
-			</span>
+			{#if size}
+				<span class="rounded-md bg-border px-2 py-0.5 text-xs font-black text-muted-foreground">
+					{size}
+				</span>
+			{/if}
 		</span>
-		<span class="grid place-items-center text-muted-foreground" aria-hidden="true">
-			<ChevronDownIcon class={open ? 'rotate-180 transition-transform' : 'transition-transform'} />
+		<span
+			class="grid size-8 place-items-center self-center justify-self-center text-muted-foreground"
+			aria-hidden="true"
+		>
+			<ChevronDownIcon
+				class={open ? 'size-5 rotate-180 transition-transform' : 'size-5 transition-transform'}
+			/>
 		</span>
 		<span class="flex min-w-0 items-center justify-end gap-2">
 			{@render actions?.()}

@@ -15,6 +15,9 @@ func NewProviderServer() *ProviderServer {
 	mux.HandleFunc("/torznab/api", handleTorznab)
 	mux.HandleFunc("/tmdb/3/search/movie", writeJSON(tmdbMovieSearch))
 	mux.HandleFunc("/tmdb/3/search/tv", writeJSON(tmdbSeriesSearch))
+	mux.HandleFunc("/tmdb/3/search/person", writeJSON(tmdbPersonSearch))
+	mux.HandleFunc("/tmdb/3/discover/movie", writeJSON(tmdbMovieSearch))
+	mux.HandleFunc("/tmdb/3/genre/movie/list", writeJSON(tmdbMovieGenres))
 	mux.HandleFunc("/tmdb/3/movie/936075", writeJSON(tmdbMovieDetails))
 	mux.HandleFunc("/tmdb/3/movie/popular", writeJSON(tmdbMovieSearch))
 	mux.HandleFunc("/tmdb/3/movie/upcoming", writeJSON(tmdbMovieSearch))
@@ -79,6 +82,13 @@ const tmdbMovieSearch = `{
   "total_results": 1
 }`
 
+const tmdbMovieGenres = `{
+  "genres": [
+    { "id": 18, "name": "Drama" },
+    { "id": 28, "name": "Action" }
+  ]
+}`
+
 const tmdbTrendingSearch = `{
   "page": 1,
   "results": [
@@ -108,11 +118,59 @@ const tmdbSeriesSearch = `{
   "total_results": 1
 }`
 
+const tmdbPersonSearch = `{
+  "page": 1,
+  "results": [
+    {
+      "id": 1001,
+      "name": "Example Actor",
+      "profile_path": "/actor.jpg",
+      "popularity": 12.5,
+      "known_for": [
+        {
+          "id": 936075,
+          "media_type": "movie",
+          "title": "Example Movie",
+          "release_date": "2026-02-14"
+        }
+      ]
+    }
+  ],
+  "total_pages": 1,
+  "total_results": 1
+}`
+
 const tmdbMovieDetails = `{
   "id": 936075,
   "title": "Example Movie",
   "release_date": "2026-02-14",
-  "overview": "A realistic local metadata detail response."
+  "overview": "A realistic local metadata detail response.",
+  "credits": {
+    "cast": [
+      {
+        "id": 1001,
+        "name": "Example Actor",
+        "character": "Lead",
+        "profile_path": "/actor.jpg"
+      }
+    ],
+    "crew": [
+      {
+        "id": 2001,
+        "name": "Example Director",
+        "job": "Director",
+        "department": "Directing",
+        "profile_path": "/director.jpg"
+      },
+      {
+        "id": 2002,
+        "name": "Example Writer",
+        "job": "Screenplay",
+        "department": "Writing",
+        "profile_path": "/writer.jpg"
+      }
+    ]
+  }
 }`
 
 const tmdbMovieCollection = `{

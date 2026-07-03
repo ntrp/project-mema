@@ -1,5 +1,8 @@
 import type { AppView, HomeSection, SettingsSection, SystemSection } from '$lib/settings/types';
 import type { PeopleSectionKind, RelatedSectionKind } from './types';
+import { discoverSubmenu } from './routeStateHelpers';
+
+export { appRouteKey } from './routeStateHelpers';
 
 interface QueryParams {
 	get: (_name: string) => string | null;
@@ -16,9 +19,12 @@ export interface AppRouteState {
 	metadataProvider?: string;
 	metadataType?: string;
 	metadataExternalId?: string;
+	personProvider?: string;
+	personId?: string;
 	collectionProvider?: string;
 	collectionId?: string;
 	discoverSectionId?: string;
+	discoverSubmenuSection?: string;
 	relatedSectionKind: RelatedSectionKind;
 	peopleSectionKind: PeopleSectionKind;
 }
@@ -75,6 +81,22 @@ export function routeStateFromPath(
 	if (path === '/discover') {
 		return route;
 	}
+	if (path === '/discover/movies') {
+		return {
+			...route,
+			view: 'discover-movies',
+			homeSection: 'discover',
+			discoverSubmenuSection: discoverSubmenu(searchParams, 'movies')
+		};
+	}
+	if (path === '/discover/series') {
+		return {
+			...route,
+			view: 'discover-series',
+			homeSection: 'discover',
+			discoverSubmenuSection: discoverSubmenu(searchParams, 'series')
+		};
+	}
 	if (segments[0] === 'discover' && params.sectionId) {
 		return {
 			...route,
@@ -106,6 +128,14 @@ export function routeStateFromPath(
 	if (segments[0] === 'media') {
 		return mediaMetadataRoute(route, params, segments[4]);
 	}
+	if (segments[0] === 'people' && params.provider && params.personId) {
+		return {
+			...route,
+			view: 'person-detail',
+			personProvider: params.provider,
+			personId: params.personId
+		};
+	}
 	if (segments[0] === 'movies' || segments[0] === 'series') {
 		return libraryRoute(route, segments[0], params.id, segments[2]);
 	}
@@ -122,26 +152,6 @@ export function routeStateFromPath(
 		return { ...route, homeSection: 'activity' };
 	}
 	return route;
-}
-
-export function appRouteKey(route: AppRouteState) {
-	return [
-		route.view,
-		route.homeSection,
-		route.settingsSection,
-		route.systemSection,
-		route.selectedMediaItemId ?? '',
-		route.selectedRequestId ?? '',
-		route.advancedQuery,
-		route.metadataProvider ?? '',
-		route.metadataType ?? '',
-		route.metadataExternalId ?? '',
-		route.collectionProvider ?? '',
-		route.collectionId ?? '',
-		route.discoverSectionId ?? '',
-		route.relatedSectionKind,
-		route.peopleSectionKind
-	].join('|');
 }
 
 function mediaMetadataRoute(

@@ -2,6 +2,7 @@
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import { resolve } from '$app/paths';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
+	import MediaCrewPreview from '$lib/components/app/media/metadata/MediaCrewPreview.svelte';
 	import MediaKeywordsSection from '$lib/components/app/media/metadata/MediaKeywordsSection.svelte';
 	import MediaOverviewInfoCard from '$lib/components/app/media/detail/MediaOverviewInfoCard.svelte';
 	import MediaEpisodeRow from '$lib/components/app/media/series/MediaEpisodeRow.svelte';
@@ -9,7 +10,7 @@
 	import MediaSeasonPanel from '$lib/components/app/media/series/MediaSeasonPanel.svelte';
 	import PosterRowControls from '$lib/components/app/media/posters/PosterRowControls.svelte';
 	import { createPosterRowScroller } from '$lib/components/app/media/posters/posterRowScroller.svelte';
-	import { crewRolePreviews } from '$lib/components/app/media/people/mediaPeople';
+	import { crewPersonGroups, mediaPersonHref } from '$lib/components/app/media/people/mediaPeople';
 	import type { Snippet } from 'svelte';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
@@ -25,7 +26,7 @@
 
 	const facts = $derived(detail.facts ?? []);
 	const keywords = $derived(detail.keywords ?? []);
-	const crewRoles = $derived(crewRolePreviews(facts));
+	const crewGroups = $derived(crewPersonGroups(detail.crew ?? [], facts));
 	const seasons = $derived(detail.seasons ?? []);
 	const cast = $derived(detail.cast ?? []);
 	const resolvedCastHref = $derived(castHref ?? resolvedPeopleHref(detail, 'cast'));
@@ -58,6 +59,8 @@
 	function scrollCast(direction: -1 | 1) {
 		castScroller.scrollRow(castRowKey, direction);
 	}
+
+	const personHref = mediaPersonHref;
 </script>
 
 <section
@@ -71,33 +74,7 @@
 		<p class="m-0 text-sm leading-6 text-muted-foreground">
 			{detail.overview ?? 'No overview available.'}
 		</p>
-		{#if crewRoles.length > 0}
-			<h3 class="mt-1 mb-0 text-xl text-foreground">
-				{#if resolvedCrewHref}
-					<!-- eslint-disable svelte/no-navigation-without-resolve -->
-					<a
-						class="inline-flex items-center gap-2 text-inherit no-underline hover:text-primary-hover focus-visible:text-primary-hover focus-visible:outline-none"
-						href={resolvedCrewHref}
-					>
-						<span>Crew</span>
-						<ArrowRightIcon aria-hidden="true" />
-					</a>
-					<!-- eslint-enable svelte/no-navigation-without-resolve -->
-				{:else}
-					Crew
-				{/if}
-			</h3>
-			<div class="grid items-start gap-x-7 gap-y-[18px] md:grid-cols-3" aria-label="Crew">
-				{#each crewRoles as role (role.role)}
-					<div class="grid min-w-0 content-start gap-1">
-						<strong class="[overflow-wrap:anywhere] text-foreground">{role.role}</strong>
-						<span class="[overflow-wrap:anywhere] text-muted-foreground">
-							{role.names.join(', ')}
-						</span>
-					</div>
-				{/each}
-			</div>
-		{/if}
+		<MediaCrewPreview groups={crewGroups} href={resolvedCrewHref} />
 		<MediaKeywordsSection {keywords} />
 	</div>
 	<MediaOverviewInfoCard {detail} {facts} />
@@ -112,7 +89,6 @@
 			{#each seasons as season (season.name)}
 				<MediaSeasonPanel
 					summary={season.episodeCount ? `${season.episodeCount} episodes` : 'Episodes unknown'}
-					size="-"
 					tone="neutral"
 				>
 					{#snippet title()}
@@ -159,7 +135,12 @@
 			use:trackCastRow
 		>
 			{#each cast as person (`${person.name}:${person.role ?? ''}`)}
-				<MediaPersonCard name={person.name} role={person.role} image={person.profilePath} />
+				<MediaPersonCard
+					name={person.name}
+					role={person.role}
+					image={person.profilePath}
+					href={personHref(person)}
+				/>
 			{/each}
 		</div>
 	</section>

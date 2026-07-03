@@ -169,6 +169,7 @@ type groupedMediaSearchRequest struct {
 	limit               int
 	includeLibrary      bool
 	includeProviders    bool
+	includePeople       bool
 	sortByPopularity    bool
 }
 
@@ -200,11 +201,20 @@ func (s *Server) groupedMediaSearch(ctx context.Context, request groupedMediaSea
 		return groups, nil
 	}
 
-	providerGroups, err := s.providerMediaSearchGroups(ctx, request, limit)
-	if err != nil {
-		return nil, err
+	if len(request.mediaTypes) > 0 {
+		providerGroups, err := s.providerMediaSearchGroups(ctx, request, limit)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, providerGroups...)
 	}
-	groups = append(groups, providerGroups...)
+	if request.includePeople {
+		peopleGroups, err := s.providerPersonSearchGroups(ctx, request, limit)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, peopleGroups...)
+	}
 	return groups, nil
 }
 
@@ -218,7 +228,36 @@ func metadataSearchResultResponse(result metadata.SearchResult) MediaSearchResul
 		Overview:         result.Overview,
 		PosterPath:       result.PosterPath,
 		Popularity:       result.Popularity,
+		ReleaseDate:      dateOnly(result.ReleaseDate),
+		RuntimeMinutes:   result.RuntimeMinutes,
+		VoteAverage:      result.VoteAverage,
+		VoteCount:        result.VoteCount,
+		OriginalLanguage: result.OriginalLanguage,
+		ContentRating:    result.ContentRating,
+		Genres:           optionalResponseStrings(result.Genres),
+		Keywords:         optionalResponseStrings(result.Keywords),
+		Studios:          optionalResponseStrings(result.Studios),
+		BackdropPath:     result.BackdropPath,
 	}
+}
+
+func dateOnly(value *string) *openapi_types.Date {
+	if value == nil {
+		return nil
+	}
+	date, err := time.Parse("2006-01-02", *value)
+	if err != nil {
+		return nil
+	}
+	return &openapi_types.Date{Time: date}
+}
+
+func optionalResponseStrings(values []string) *[]string {
+	if len(values) == 0 {
+		return nil
+	}
+	copy := append([]string(nil), values...)
+	return &copy
 }
 
 func popularityValue(result metadata.SearchResult) float64 {

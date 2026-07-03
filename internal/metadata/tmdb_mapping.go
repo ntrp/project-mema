@@ -31,6 +31,7 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 		Facts:            []Fact{},
 		Seasons:          []Season{},
 		Cast:             []Person{},
+		Crew:             []Person{},
 		Recommendations:  tmdbResults(item.Recommendations.Results, mediaType, 20),
 		Similar:          tmdbResults(item.Similar.Results, mediaType, 20),
 	}
@@ -97,6 +98,8 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 	if len(item.CreatedBy) > 0 {
 		details.Facts = append(details.Facts, Fact{Label: "Creator", Value: strings.Join(tmdbNames(item.CreatedBy), ", ")})
 	}
+	details.Crew = append(details.Crew, tmdbCreatorPeople(item.CreatedBy)...)
+	details.Crew = append(details.Crew, tmdbCrewPeople(item.Credits.Crew)...)
 	if len(item.Networks) > 0 {
 		details.Facts = append(details.Facts, Fact{Label: "Networks", Value: strings.Join(tmdbNames(item.Networks), "\n")})
 	}
@@ -107,9 +110,11 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 			continue
 		}
 		details.Cast = append(details.Cast, Person{
-			Name:        name,
-			Role:        optionalString(cast.Character),
-			ProfilePath: optionalString(cast.ProfilePath),
+			ExternalProvider: optionalString("tmdb"),
+			ExternalID:       optionalString(strconv.FormatInt(cast.ID, 10)),
+			Name:             name,
+			Role:             optionalString(cast.Character),
+			ProfilePath:      optionalString(cast.ProfilePath),
 		})
 		if len(details.Cast) >= 80 {
 			break
@@ -233,52 +238,4 @@ func tmdbKeywordNames(keywords tmdbKeywords) []string {
 		values = keywords.Results
 	}
 	return tmdbNames(values)
-}
-
-func tmdbCrewFacts(crew []tmdbCrewMember) []Fact {
-	mapped := map[string][]string{
-		"Director": {},
-		"Writer":   {},
-		"Editor":   {},
-		"Producer": {},
-	}
-	for _, member := range crew {
-		name := strings.TrimSpace(member.Name)
-		if name == "" {
-			continue
-		}
-		for _, label := range tmdbCrewLabels(member) {
-			mapped[label] = appendUniqueLimit(mapped[label], name, 12)
-		}
-	}
-	facts := []Fact{}
-	for _, label := range []string{"Director", "Writer", "Editor", "Producer"} {
-		if len(mapped[label]) > 0 {
-			facts = append(facts, Fact{Label: label, Value: strings.Join(mapped[label], ", ")})
-		}
-	}
-	return facts
-}
-
-func tmdbCrewLabels(member tmdbCrewMember) []string {
-	switch member.Job {
-	case "Director":
-		return []string{"Director"}
-	case "Writer", "Screenplay", "Story", "Teleplay":
-		return []string{"Writer"}
-	case "Editor":
-		return []string{"Editor"}
-	case "Producer", "Executive Producer":
-		return []string{"Producer"}
-	}
-	switch member.Department {
-	case "Writing":
-		return []string{"Writer"}
-	case "Editing":
-		return []string{"Editor"}
-	case "Production":
-		return []string{"Producer"}
-	default:
-		return nil
-	}
 }

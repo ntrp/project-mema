@@ -2,20 +2,17 @@ package storage
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"media-manager/internal/acceptance"
+	"media-manager/internal/testdb"
 )
 
 func testDBStore(t *testing.T) (context.Context, *SettingsStore) {
 	t.Helper()
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("DATABASE_URL is required for storage integration tests")
-	}
+	databaseURL := testdb.Create(t)
 	ctx := context.Background()
 	if err := EnsureSchema(ctx, databaseURL); err != nil {
 		t.Fatal(err)

@@ -16,6 +16,8 @@ import {
 import type {
 	CustomFormat,
 	CustomFormatForm,
+	DiscoverMovieFacetOption,
+	DiscoverMovieSearchResponse,
 	DiscoverBlacklistItem,
 	DiscoverBlacklistRequest,
 	DownloadClientForm,
@@ -509,6 +511,83 @@ export async function loadMediaDiscoverSection(sectionId: string, page = 1, limi
 	return data;
 }
 
+export interface DiscoverMovieSearchQuery {
+	sort?: string;
+	page?: number;
+	releaseDateFrom?: string;
+	releaseDateTo?: string;
+	studios?: string[];
+	genres?: string[];
+	keywords?: string[];
+	withoutGenres?: string[];
+	withoutKeywords?: string[];
+	originalLanguages?: string[];
+	contentRatings?: string[];
+	runtimeMin?: number;
+	runtimeMax?: number;
+	scoreMin?: number;
+	scoreMax?: number;
+	minVoteCount?: number;
+}
+
+export interface DiscoverSeriesSearchQuery extends DiscoverMovieSearchQuery {
+	status?: string[];
+}
+
+export async function searchDiscoverMovies(
+	query: DiscoverMovieSearchQuery
+): Promise<DiscoverMovieSearchResponse> {
+	const { data, error } = await client.GET('/media/discover/movies/search', {
+		params: { query }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? { results: [], hasMore: false };
+}
+
+export async function searchDiscoverSeries(
+	query: DiscoverSeriesSearchQuery
+): Promise<DiscoverMovieSearchResponse> {
+	const { data, error } = await client.GET('/media/discover/series/search', {
+		params: { query }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? { results: [], hasMore: false };
+}
+
+export async function autocompleteDiscoverMovieFacet(
+	facet: 'genres' | 'studios' | 'keywords',
+	query: string
+): Promise<DiscoverMovieFacetOption[]> {
+	const { data, error } = await client.GET('/media/discover/movies/facets/{facet}', {
+		params: { path: { facet }, query: { query } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.options ?? [];
+}
+
+export async function autocompleteDiscoverSeriesFacet(
+	facet: 'genres' | 'studios' | 'keywords',
+	query: string
+): Promise<DiscoverMovieFacetOption[]> {
+	const { data, error } = await client.GET('/media/discover/series/facets/{facet}', {
+		params: { path: { facet }, query: { query } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.options ?? [];
+}
+
 export async function listDiscoverBlacklist(): Promise<DiscoverBlacklistItem[]> {
 	const { data, error } = await client.GET('/media/discover/blacklist');
 
@@ -584,6 +663,20 @@ export async function getMediaMetadataDetails(
 	}
 	if (!data) {
 		throw new Error('Media details were not returned');
+	}
+	return data;
+}
+
+export async function getPersonDetails(provider: MetadataProviderType, personId: string) {
+	const { data, error } = await client.GET('/people/{provider}/{personId}', {
+		params: { path: { provider, personId } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Person details were not returned');
 	}
 	return data;
 }

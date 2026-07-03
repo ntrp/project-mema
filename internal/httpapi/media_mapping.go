@@ -38,6 +38,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 	facts := mediaFactResponses(item.Facts)
 	seasons := mediaSeasonResponses(item.Seasons)
 	cast := mediaPersonResponses(item.Cast)
+	crew := mediaPersonResponses(item.Crew)
 	recommendations := mediaRelatedResponses(item.Recommendations)
 	similar := mediaRelatedResponses(item.Similar)
 	return MediaItem{
@@ -67,6 +68,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		Facts:               &facts,
 		Seasons:             &seasons,
 		Cast:                &cast,
+		Crew:                &crew,
 		Recommendations:     &recommendations,
 		Similar:             &similar,
 		MonitorMode:         MediaMonitorMode(item.MonitorMode),
@@ -199,9 +201,11 @@ func mediaPersonResponses(values []storage.MediaPerson) []MediaMetadataPerson {
 	items := make([]MediaMetadataPerson, 0, len(values))
 	for _, value := range values {
 		items = append(items, MediaMetadataPerson{
-			Name:        value.Name,
-			Role:        value.Role,
-			ProfilePath: value.ProfilePath,
+			ExternalProvider: metadataProviderType(value.ExternalProvider),
+			ExternalId:       value.ExternalID,
+			Name:             value.Name,
+			Role:             value.Role,
+			ProfilePath:      value.ProfilePath,
 		})
 	}
 	return items

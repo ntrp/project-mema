@@ -276,6 +276,7 @@ create table if not exists app.media_items (
     facts jsonb not null default '[]'::jsonb check (jsonb_typeof(facts) = 'array'),
     seasons jsonb not null default '[]'::jsonb check (jsonb_typeof(seasons) = 'array'),
     cast_members jsonb not null default '[]'::jsonb check (jsonb_typeof(cast_members) = 'array'),
+    crew_members jsonb not null default '[]'::jsonb check (jsonb_typeof(crew_members) = 'array'),
     recommendations jsonb not null default '[]'::jsonb check (jsonb_typeof(recommendations) = 'array'),
     similar_media jsonb not null default '[]'::jsonb check (jsonb_typeof(similar_media) = 'array'),
     quality_profile_id text,
@@ -362,7 +363,7 @@ create index if not exists idx_metadata_providers_priority
 
 create table if not exists app.metadata_search_cache (
     provider_id uuid not null references app.metadata_providers(id) on delete cascade,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
+    media_type text not null check (media_type in ('movie', 'series', 'mixed', 'person')),
     query text not null,
     year integer not null default 0,
     results jsonb not null,
@@ -390,7 +391,7 @@ create table if not exists app.metadata_search_history (
     provider_id uuid references app.metadata_providers(id) on delete set null,
     provider_name text not null,
     provider_type text not null,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
+    media_type text not null check (media_type in ('movie', 'series', 'mixed', 'person')),
     query text not null,
     year integer not null default 0,
     cache_hit boolean not null,

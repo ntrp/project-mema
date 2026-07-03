@@ -37,8 +37,9 @@ func (s *SettingsStore) UpdateMediaItemMetadata(ctx context.Context, id uuid.UUI
 			facts = $22::jsonb,
 			seasons = $23::jsonb,
 			cast_members = $24::jsonb,
-			recommendations = $25::jsonb,
-			similar_media = $26::jsonb,
+			crew_members = $25::jsonb,
+			recommendations = $26::jsonb,
+			similar_media = $27::jsonb,
 			updated_at = now()
 		where id = $1
 	`, id, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID,
@@ -46,7 +47,7 @@ func (s *SettingsStore) UpdateMediaItemMetadata(ctx context.Context, id uuid.UUI
 		input.MetadataStatus, input.OriginalLanguage, input.ReleaseDate, input.FirstAirDate,
 		input.RuntimeMinutes, input.SeasonCount, input.EpisodeCount, input.VoteAverage,
 		metadataPayloads.genres, metadataPayloads.keywords, metadataPayloads.facts,
-		metadataPayloads.seasons, metadataPayloads.cast, metadataPayloads.recommendations,
+		metadataPayloads.seasons, metadataPayloads.cast, metadataPayloads.crew, metadataPayloads.recommendations,
 		metadataPayloads.similar)
 	if err != nil {
 		return MediaItem{}, err

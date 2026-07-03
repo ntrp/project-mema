@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { appRouteKey, defaultRouteState, routeStateFromPath } from './routeState';
 
 const noQuery = { get: () => null };
+const query = (values: Record<string, string>) => ({
+	get: (name: string) => values[name] ?? null
+});
 
 describe('route state parsing (SCN-MEDIA-004)', () => {
 	it('maps top-level routes to app views and sections', () => {
@@ -48,9 +51,35 @@ describe('route state parsing (SCN-MEDIA-004)', () => {
 			selectedMediaItemId: 'movie-1',
 			peopleSectionKind: 'cast'
 		});
+		expect(
+			routeStateFromPath('/people/tmdb/42', { provider: 'tmdb', personId: '42' }, noQuery)
+		).toMatchObject({
+			view: 'person-detail',
+			personProvider: 'tmdb',
+			personId: '42'
+		});
 		expect(routeStateFromPath('/requests/request-1', { id: 'request-1' }, noQuery)).toMatchObject({
 			homeSection: 'requests',
 			selectedRequestId: 'request-1'
+		});
+	});
+
+	it('maps discover preset query strings to submenu entries', () => {
+		expect(
+			routeStateFromPath(
+				'/discover/movies',
+				{},
+				query({ genres: 'Animation', withoutKeywords: 'anime' })
+			)
+		).toMatchObject({
+			view: 'discover-movies',
+			discoverSubmenuSection: 'animated-movies'
+		});
+		expect(
+			routeStateFromPath('/discover/series', {}, query({ genres: 'Animation', keywords: 'anime' }))
+		).toMatchObject({
+			view: 'discover-series',
+			discoverSubmenuSection: 'anime-series'
 		});
 	});
 

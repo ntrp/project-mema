@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"media-manager/internal/acceptance"
 	"media-manager/internal/config"
 	"media-manager/internal/storage"
+	"media-manager/internal/testdb"
 )
 
 func TestScenarioSCNAuth001AnonymousSessionIsUnauthenticated(t *testing.T) {
@@ -171,10 +171,7 @@ func testConfig() config.Config {
 
 func testSettingsStore(t *testing.T) *storage.SettingsStore {
 	t.Helper()
-	databaseURL := os.Getenv("DATABASE_URL")
-	if databaseURL == "" {
-		t.Skip("DATABASE_URL is required for API acceptance tests")
-	}
+	databaseURL := testdb.Create(t)
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
