@@ -750,7 +750,95 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	'/settings/indexers/{id}': {
+	'/settings/indexer-catalog': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List available indexer definitions */
+		get: operations['listIndexerCatalog'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-catalog/{definitionId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				definitionId: string;
+			};
+			cookie?: never;
+		};
+		/** Get an indexer definition */
+		get: operations['getIndexerCatalogDefinition'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexers/bulk': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		/** Bulk update indexers */
+		put: operations['bulkUpdateIndexers'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-app-profiles': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List indexer app profiles */
+		get: operations['listIndexerAppProfiles'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-proxies': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List indexer proxies */
+		get: operations['listIndexerProxies'];
+		put?: never;
+		/** Create an indexer proxy */
+		post: operations['createIndexerProxy'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-proxies/{id}': {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -760,6 +848,46 @@ export interface paths {
 			cookie?: never;
 		};
 		get?: never;
+		/** Update an indexer proxy */
+		put: operations['updateIndexerProxy'];
+		post?: never;
+		/** Delete an indexer proxy */
+		delete: operations['deleteIndexerProxy'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexer-proxies/{id}/test': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test an indexer proxy */
+		post: operations['testIndexerProxy'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/indexers/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Get a configured indexer */
+		get: operations['getIndexer'];
 		/** Update an indexer */
 		put: operations['updateIndexer'];
 		post?: never;
@@ -2307,7 +2435,7 @@ export interface components {
 			/** Format: uuid */
 			indexerId?: string;
 			indexerName: string;
-			indexerType: components['schemas']['IndexerType'];
+			indexerProtocol: components['schemas']['IndexerProtocol'];
 			title: string;
 			infoUrl?: string;
 			guid?: string;
@@ -2498,9 +2626,47 @@ export interface components {
 		IndexerListResponse: {
 			indexers: components['schemas']['Indexer'][];
 		};
+		IndexerCatalogResponse: {
+			entries: components['schemas']['IndexerCatalogEntry'][];
+			protocols: components['schemas']['IndexerProtocol'][];
+			languages: string[];
+			privacy: components['schemas']['IndexerPrivacy'][];
+			categories: components['schemas']['IndexerCategory'][];
+		};
+		IndexerCatalogEntry: {
+			definitionId: string;
+			name: string;
+			implementation: string;
+			implementationName: string;
+			description?: string;
+			language: string;
+			encoding?: string;
+			indexerUrls?: string[];
+			legacyUrls?: string[];
+			protocol: components['schemas']['IndexerProtocol'];
+			privacy: components['schemas']['IndexerPrivacy'];
+			supportsRss: boolean;
+			supportsSearch: boolean;
+			supportsRedirect: boolean;
+			supportsPagination: boolean;
+			capabilities: components['schemas']['IndexerCapabilities'];
+			fields: components['schemas']['IndexerField'][];
+		};
 		Indexer: components['schemas']['IndexerRequest'] & {
 			/** Format: uuid */
 			id: string;
+			protocol: components['schemas']['IndexerProtocol'];
+			privacy: components['schemas']['IndexerPrivacy'];
+			language: string;
+			encoding?: string;
+			description?: string;
+			indexerUrls?: string[];
+			legacyUrls?: string[];
+			supportsRss: boolean;
+			supportsSearch: boolean;
+			supportsRedirect: boolean;
+			supportsPagination: boolean;
+			capabilities: components['schemas']['IndexerCapabilities'];
 			healthStatus: components['schemas']['IndexerHealthStatus'];
 			/** Format: date-time */
 			lastQueryAt?: string;
@@ -2523,17 +2689,124 @@ export interface components {
 		/** @enum {string} */
 		IndexerHealthStatus: 'healthy' | 'temporary_disabled' | 'disabled';
 		IndexerRequest: {
+			definitionId: string;
 			name: string;
-			type: components['schemas']['IndexerType'];
+			implementation?: string;
+			implementationName?: string;
 			baseUrl: string;
 			apiKey?: string;
 			categories?: number[];
+			fields?: components['schemas']['IndexerFieldValue'][];
+			redirect?: boolean;
+			appProfileId?: string;
+			/** Format: int32 */
+			minimumSeeders?: number;
+			/** Format: double */
+			seedRatio?: number;
+			/** Format: int32 */
+			seedTime?: number;
+			/** Format: int32 */
+			packSeedTime?: number;
+			preferMagnetUrl?: boolean;
 			enabled: boolean;
 			/** Format: int32 */
 			priority: number;
 		};
+		IndexerBulkUpdateRequest: {
+			ids: string[];
+			enabled?: boolean;
+			appProfileId?: string;
+			/** Format: int32 */
+			priority?: number;
+			/** Format: int32 */
+			minimumSeeders?: number;
+			/** Format: double */
+			seedRatio?: number;
+			/** Format: int32 */
+			seedTime?: number;
+			/** Format: int32 */
+			packSeedTime?: number;
+			preferMagnetUrl?: boolean;
+		};
 		/** @enum {string} */
-		IndexerType: 'torznab' | 'newznab' | 'rss';
+		IndexerProtocol: 'torrent' | 'usenet';
+		/** @enum {string} */
+		IndexerPrivacy: 'public' | 'private' | 'semiPrivate';
+		IndexerCapabilities: {
+			/** Format: int32 */
+			limitsMax?: number;
+			/** Format: int32 */
+			limitsDefault?: number;
+			categories: components['schemas']['IndexerCategory'][];
+			supportsRawSearch: boolean;
+			searchParams: string[];
+			tvSearchParams: string[];
+			movieSearchParams: string[];
+		};
+		IndexerCategory: {
+			/** Format: int32 */
+			id: number;
+			name: string;
+			children: components['schemas']['IndexerCategory'][];
+		};
+		IndexerField: {
+			/** Format: int32 */
+			order?: number;
+			name: string;
+			label: string;
+			unit?: string;
+			helpText?: string;
+			helpTextWarning?: string;
+			helpLink?: string;
+			value?: unknown;
+			/** @enum {string} */
+			type: 'text' | 'password' | 'checkbox' | 'select' | 'info' | 'url' | 'number';
+			advanced: boolean;
+			selectOptions?: components['schemas']['IndexerFieldSelectOption'][];
+			section?: string;
+			placeholder?: string;
+			isFloat?: boolean;
+		};
+		IndexerFieldSelectOption: {
+			value: string;
+			name: string;
+		};
+		IndexerFieldValue: {
+			name: string;
+			value: unknown;
+		};
+		IndexerAppProfileListResponse: {
+			profiles: components['schemas']['IndexerAppProfile'][];
+		};
+		IndexerAppProfile: {
+			id: string;
+			name: string;
+			enableRss: boolean;
+			enableAutomaticSearch: boolean;
+			enableInteractiveSearch: boolean;
+		};
+		IndexerProxyListResponse: {
+			proxies: components['schemas']['IndexerProxy'][];
+		};
+		IndexerProxy: components['schemas']['IndexerProxyRequest'] & {
+			/** Format: uuid */
+			id: string;
+			supportsOnHealthIssue: boolean;
+			testCommand: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		IndexerProxyRequest: {
+			name: string;
+			implementation: string;
+			link: string;
+			enabled: boolean;
+			onHealthIssue: boolean;
+			includeHealthWarnings: boolean;
+			fields?: components['schemas']['IndexerFieldValue'][];
+		};
 		IndexerSearchResponse: {
 			settings: components['schemas']['IndexerSearchSettings'];
 			stats: components['schemas']['IndexerSearchCacheStats'];
@@ -2565,7 +2838,7 @@ export interface components {
 			/** Format: uuid */
 			indexerId: string;
 			indexerName: string;
-			indexerType: components['schemas']['IndexerType'];
+			indexerProtocol: components['schemas']['IndexerProtocol'];
 			mediaType: components['schemas']['MediaType'];
 			query: string;
 			/** Format: int32 */
@@ -2580,7 +2853,7 @@ export interface components {
 		};
 		IndexerSearchHistoryEntry: {
 			indexerName: string;
-			indexerType: components['schemas']['IndexerType'];
+			indexerProtocol: components['schemas']['IndexerProtocol'];
 			mediaType: components['schemas']['MediaType'];
 			query: string;
 			cacheHit: boolean;
@@ -4195,6 +4468,244 @@ export interface operations {
 			};
 			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
+		};
+	};
+	listIndexerCatalog: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer catalog */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerCatalogResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	getIndexerCatalogDefinition: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				definitionId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer definition */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerCatalogEntry'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	bulkUpdateIndexers: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IndexerBulkUpdateRequest'];
+			};
+		};
+		responses: {
+			/** @description Updated indexers */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerListResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listIndexerAppProfiles: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer app profiles */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerAppProfileListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listIndexerProxies: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer proxies */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerProxyListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createIndexerProxy: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IndexerProxyRequest'];
+			};
+		};
+		responses: {
+			/** @description Indexer proxy created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerProxy'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateIndexerProxy: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IndexerProxyRequest'];
+			};
+		};
+		responses: {
+			/** @description Indexer proxy updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IndexerProxy'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteIndexerProxy: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer proxy deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	testIndexerProxy: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Indexer proxy test result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IntegrationTestResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	getIndexer: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Configured indexer */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['Indexer'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	updateIndexer: {

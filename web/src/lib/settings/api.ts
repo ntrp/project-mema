@@ -23,6 +23,7 @@ import type {
 	DownloadClientForm,
 	FileNamingSettings,
 	FileNamingSettingsRequest,
+	IndexerBulkUpdateRequest,
 	IndexerForm,
 	IndexerSearchCacheEntry,
 	IndexerSearchResponse,
@@ -1014,6 +1015,47 @@ export async function saveIndexer(form: IndexerForm) {
 	if (result.error) {
 		throw new Error(result.error.message);
 	}
+}
+
+export async function listIndexerCatalog() {
+	const { data, error } = await client.GET('/settings/indexer-catalog');
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Indexer catalog did not return a result');
+	}
+	return data;
+}
+
+export async function listIndexerAppProfiles() {
+	const { data, error } = await client.GET('/settings/indexer-app-profiles');
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Indexer app profiles did not return a result');
+	}
+	return data.profiles;
+}
+
+export async function listIndexerProxies() {
+	const { data, error } = await client.GET('/settings/indexer-proxies');
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Indexer proxies did not return a result');
+	}
+	return data.proxies;
+}
+
+export async function bulkUpdateIndexers(body: IndexerBulkUpdateRequest) {
+	const { data, error } = await client.PUT('/settings/indexers/bulk', { body });
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.indexers ?? [];
 }
 
 export async function testIndexer(id: string) {

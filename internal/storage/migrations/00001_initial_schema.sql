@@ -49,11 +49,34 @@ create index if not exists idx_download_clients_priority
 
 create table if not exists app.indexers (
     id uuid primary key,
+    definition_id text not null default 'generic-torznab',
     name text not null,
-    type text not null check (type in ('torznab', 'newznab', 'rss')),
+    type text not null default 'torznab' check (type in ('torznab', 'newznab', 'rss')),
+    implementation text not null default 'Cardigann',
+    implementation_name text not null default '',
+    protocol text not null default 'torrent' check (protocol in ('torrent', 'usenet')),
+    privacy text not null default 'private' check (privacy in ('public', 'private', 'semiPrivate')),
+    language text not null default 'en-US',
+    encoding text,
+    description text,
+    indexer_urls text[] not null default '{}',
+    legacy_urls text[] not null default '{}',
     base_url text not null,
     api_key text,
     categories integer[] not null default '{}',
+    fields jsonb not null default '[]'::jsonb,
+    capabilities jsonb not null default '{"categories":[],"supportsRawSearch":true,"searchParams":["q"],"tvSearchParams":["q","season","ep"],"movieSearchParams":["q","imdbid"]}'::jsonb,
+    redirect boolean not null default true,
+    app_profile_id text not null default 'default',
+    minimum_seeders integer check (minimum_seeders is null or minimum_seeders >= 0),
+    seed_ratio numeric(10, 2) check (seed_ratio is null or seed_ratio >= 0),
+    seed_time integer check (seed_time is null or seed_time >= 0),
+    pack_seed_time integer check (pack_seed_time is null or pack_seed_time >= 0),
+    prefer_magnet_url boolean not null default false,
+    supports_rss boolean not null default true,
+    supports_search boolean not null default true,
+    supports_redirect boolean not null default true,
+    supports_pagination boolean not null default true,
     enabled boolean not null default true,
     priority integer not null default 100 check (priority >= 0 and priority <= 1000),
     health_status text not null default 'healthy' check (health_status in ('healthy', 'temporary_disabled', 'disabled')),
@@ -73,6 +96,24 @@ create index if not exists idx_indexers_priority
 
 create index if not exists idx_indexers_health
     on app.indexers (enabled, health_status, next_check_at);
+
+create table if not exists app.indexer_proxies (
+    id uuid primary key,
+    name text not null,
+    implementation text not null,
+    link text not null,
+    enabled boolean not null default true,
+    on_health_issue boolean not null default false,
+    supports_on_health_issue boolean not null default true,
+    include_health_warnings boolean not null default false,
+    test_command text not null default 'test',
+    fields jsonb not null default '[]'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_indexer_proxies_name
+    on app.indexer_proxies (name);
 
 create table if not exists app.indexer_search_settings (
     id boolean primary key default true check (id),
@@ -108,7 +149,8 @@ create table if not exists app.indexer_search_history (
     id uuid primary key,
     indexer_id uuid references app.indexers(id) on delete set null,
     indexer_name text not null,
-    indexer_type text not null,
+    indexer_type text not null default 'torznab',
+    indexer_protocol text not null default 'torrent',
     media_type text not null check (media_type in ('movie', 'series', 'mixed')),
     query text not null,
     cache_hit boolean not null,
@@ -593,7 +635,8 @@ create table if not exists app.media_release_candidates (
     media_item_id uuid not null references app.media_items(id) on delete cascade,
     indexer_id uuid,
     indexer_name text not null,
-    indexer_type text not null,
+    indexer_type text not null default 'torznab',
+    indexer_protocol text not null default 'torrent',
     title text not null,
     download_url text not null,
     info_url text,
@@ -618,6 +661,7 @@ create table if not exists app.release_blocklist (
     release_title text not null,
     indexer_name text not null,
     indexer_type text not null default '',
+    indexer_protocol text not null default 'torrent',
     download_url text,
     info_url text,
     guid text,

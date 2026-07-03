@@ -23,7 +23,7 @@ function release(overrides: Partial<ReleaseCandidate> = {}): ReleaseCandidate {
 		id: 'release-1',
 		title: 'Scenario.Movie.2026.1080p.WEBDL.German-GRP',
 		indexerName: 'Local Torznab',
-		indexerType: 'torznab',
+		indexerProtocol: 'torrent',
 		sizeBytes: 8 * 1024 ** 3,
 		seeders: 42,
 		peers: 7,

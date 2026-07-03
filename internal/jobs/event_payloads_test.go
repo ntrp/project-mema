@@ -20,16 +20,16 @@ func TestSCNSystem008IndexerSearchHistoryPublishesObservablePayload(t *testing.T
 	createdAt := time.Date(2026, 7, 3, 4, 5, 6, 0, time.UTC)
 
 	publishIndexerSearchHistoryCreated(broker, storage.IndexerSearchHistoryEntry{
-		IndexerName: "Local Torznab",
-		IndexerType: "torznab",
-		MediaType:   "movie",
-		Query:       "Scenario Movie 2026",
-		CacheHit:    false,
-		Success:     false,
-		ResultCount: 0,
-		Error:       &message,
-		Response:    `{"error":"rate limited"}`,
-		CreatedAt:   createdAt,
+		IndexerName:     "Local Torznab",
+		IndexerProtocol: "torrent",
+		MediaType:       "movie",
+		Query:           "Scenario Movie 2026",
+		CacheHit:        false,
+		Success:         false,
+		ResultCount:     0,
+		Error:           &message,
+		Response:        `{"error":"rate limited"}`,
+		CreatedAt:       createdAt,
 	})
 
 	event := readEvent(t, updates, "indexer.search.history.created")
@@ -48,16 +48,16 @@ func TestSCNSystem008IndexerSearchHistoryPublishesObservablePayload(t *testing.T
 func TestSCNSystem008IndexerSearchCachePayloadPreservesEntryState(t *testing.T) {
 	expiresAt := time.Date(2026, 7, 3, 5, 0, 0, 0, time.UTC)
 	entry := storage.IndexerSearchCacheEntry{
-		IndexerID:   uuid.New(),
-		IndexerName: "Local Torznab",
-		IndexerType: "torznab",
-		MediaType:   "series",
-		Query:       "Scenario Series S01",
-		ResultCount: 12,
-		ExpiresAt:   expiresAt,
-		CreatedAt:   expiresAt.Add(-time.Hour),
-		UpdatedAt:   expiresAt.Add(-time.Minute),
-		Expired:     true,
+		IndexerID:       uuid.New(),
+		IndexerName:     "Local Torznab",
+		IndexerProtocol: "torrent",
+		MediaType:       "series",
+		Query:           "Scenario Series S01",
+		ResultCount:     12,
+		ExpiresAt:       expiresAt,
+		CreatedAt:       expiresAt.Add(-time.Hour),
+		UpdatedAt:       expiresAt.Add(-time.Minute),
+		Expired:         true,
 	}
 
 	payload := indexerSearchCacheEntryPayload(entry)

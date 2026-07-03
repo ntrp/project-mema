@@ -123,12 +123,12 @@ func EvaluateReleaseMatchWithLanguageContext(
 		Languages: languages,
 	}
 	return evaluateParsedRelease(context, criteria, parsed, releaseMeta{
-		Title:       release.Title,
-		IndexerType: release.IndexerType,
-		SizeBytes:   release.SizeBytes,
-		Seeders:     release.Seeders,
-		Peers:       release.Peers,
-		PublishedAt: release.PublishedAt,
+		Title:           release.Title,
+		IndexerProtocol: release.IndexerProtocol,
+		SizeBytes:       release.SizeBytes,
+		Seeders:         release.Seeders,
+		Peers:           release.Peers,
+		PublishedAt:     release.PublishedAt,
 	})
 }
 
@@ -140,12 +140,12 @@ type ReleaseEvaluationContext struct {
 }
 
 type releaseMeta struct {
-	Title       string
-	IndexerType string
-	SizeBytes   int64
-	Seeders     *int32
-	Peers       *int32
-	PublishedAt any
+	Title           string
+	IndexerProtocol string
+	SizeBytes       int64
+	Seeders         *int32
+	Peers           *int32
+	PublishedAt     any
 }
 
 func evaluateParsedRelease(

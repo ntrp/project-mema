@@ -27,23 +27,23 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 	secondIndexerID := uuid.New()
 	if err := store.ReplaceReleaseSearchResults(ctx, item.ID, []ReleaseCandidateInput{
 		{
-			IndexerID:   &firstIndexerID,
-			IndexerName: "Low Seed Indexer",
-			IndexerType: "torznab",
-			Title:       "Release.Snapshot.2026.1080p.WEB-DL",
-			DownloadURL: "http://indexer.test/download/low-" + suffix,
-			InfoURL:     stringPtr("http://indexer.test/details/low-" + suffix),
-			GUID:        stringPtr("low-" + suffix),
-			SizeBytes:   7_000_000_000,
-			Seeders:     int32Ptr(12),
-			Peers:       int32Ptr(18),
-			PublishedAt: &published,
-			SearchKind:  "manual",
+			IndexerID:       &firstIndexerID,
+			IndexerName:     "Low Seed Indexer",
+			IndexerProtocol: "torrent",
+			Title:           "Release.Snapshot.2026.1080p.WEB-DL",
+			DownloadURL:     "http://indexer.test/download/low-" + suffix,
+			InfoURL:         stringPtr("http://indexer.test/details/low-" + suffix),
+			GUID:            stringPtr("low-" + suffix),
+			SizeBytes:       7_000_000_000,
+			Seeders:         int32Ptr(12),
+			Peers:           int32Ptr(18),
+			PublishedAt:     &published,
+			SearchKind:      "manual",
 		},
 		{
 			IndexerID:        &secondIndexerID,
 			IndexerName:      "High Seed Indexer",
-			IndexerType:      "newznab",
+			IndexerProtocol:  "usenet",
 			Title:            "Release.Snapshot.2026.2160p.WEB-DL",
 			DownloadURL:      "http://indexer.test/download/high-" + suffix,
 			GUID:             stringPtr("high-" + suffix),
@@ -77,12 +77,12 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 	}
 
 	if err := store.ReplaceReleaseSearchResults(ctx, item.ID, []ReleaseCandidateInput{{
-		IndexerName: "Replacement Indexer",
-		IndexerType: "torznab",
-		Title:       "Release.Snapshot.2026.720p.WEB-DL",
-		DownloadURL: "http://indexer.test/download/replacement-" + suffix,
-		SizeBytes:   4_000_000_000,
-		SearchKind:  "manual",
+		IndexerName:     "Replacement Indexer",
+		IndexerProtocol: "torrent",
+		Title:           "Release.Snapshot.2026.720p.WEB-DL",
+		DownloadURL:     "http://indexer.test/download/replacement-" + suffix,
+		SizeBytes:       4_000_000_000,
+		SearchKind:      "manual",
 	}}, nil); err != nil {
 		t.Fatalf("replace release search results again: %v", err)
 	}
@@ -112,14 +112,14 @@ func TestScenarioSCNMedia011ReleaseBlocklistMatchesAndExpires(t *testing.T) {
 	guid := "blocked-guid-" + uuid.NewString()
 	expiresAt := time.Now().Add(time.Hour).UTC().Truncate(time.Second)
 	release := ReleaseCandidateInput{
-		MediaItemID: item.ID,
-		IndexerName: "Scenario Indexer",
-		IndexerType: "newznab",
-		Title:       "Blocked.Release.2026.1080p",
-		DownloadURL: "https://indexer.test/download/blocked",
-		GUID:        &guid,
-		SizeBytes:   1,
-		SearchKind:  "manual",
+		MediaItemID:     item.ID,
+		IndexerName:     "Scenario Indexer",
+		IndexerProtocol: "usenet",
+		Title:           "Blocked.Release.2026.1080p",
+		DownloadURL:     "https://indexer.test/download/blocked",
+		GUID:            &guid,
+		SizeBytes:       1,
+		SearchKind:      "manual",
 	}
 	if _, err := store.BlockReleaseCandidate(ctx, release, "missing pieces", "download_failed", &expiresAt); err != nil {
 		t.Fatalf("block release: %v", err)
@@ -138,13 +138,13 @@ func TestScenarioSCNMedia011ReleaseBlocklistMatchesAndExpires(t *testing.T) {
 	}
 	expired := time.Now().Add(-time.Hour)
 	if _, err := store.BlockReleaseCandidate(ctx, ReleaseCandidateInput{
-		MediaItemID: item.ID,
-		IndexerName: "Scenario Indexer",
-		IndexerType: "newznab",
-		Title:       "Expired.Release.2026.1080p",
-		DownloadURL: "https://indexer.test/download/expired",
-		SizeBytes:   1,
-		SearchKind:  "manual",
+		MediaItemID:     item.ID,
+		IndexerName:     "Scenario Indexer",
+		IndexerProtocol: "usenet",
+		Title:           "Expired.Release.2026.1080p",
+		DownloadURL:     "https://indexer.test/download/expired",
+		SizeBytes:       1,
+		SearchKind:      "manual",
 	}, "server unavailable", "download_status_unavailable", &expired); err != nil {
 		t.Fatalf("block expired release: %v", err)
 	}

@@ -30,13 +30,11 @@ func (s *Service) Test(ctx context.Context, config Config) TestResult {
 }
 
 func (s *Service) test(ctx context.Context, config Config) TestResult {
-	switch config.Type {
-	case "torznab", "newznab":
+	switch config.Protocol {
+	case "torrent", "usenet":
 		return s.testCaps(ctx, config)
-	case "rss":
-		return s.testRSS(ctx, config)
 	default:
-		return failedResult("Unsupported indexer type", "type", config.Type)
+		return failedResult("Unsupported indexer protocol", "protocol", config.Protocol)
 	}
 }
 
@@ -45,13 +43,11 @@ func (s *Service) Search(ctx context.Context, config Config, query string, media
 	if query == "" {
 		return nil, fmt.Errorf("query is required")
 	}
-	switch config.Type {
-	case "torznab", "newznab":
+	switch config.Protocol {
+	case "torrent", "usenet":
 		return s.searchTorznab(ctx, config, query, mediaType)
-	case "rss":
-		return s.searchRSS(ctx, config, query)
 	default:
-		return nil, fmt.Errorf("unsupported indexer type %q", config.Type)
+		return nil, fmt.Errorf("unsupported indexer protocol %q", config.Protocol)
 	}
 }
 

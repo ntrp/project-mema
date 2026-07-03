@@ -15,7 +15,7 @@ func TestScenarioSCNSettings014StorageIndexerLifecycleAndHealth(t *testing.T) {
 	categories := []int32{2000, 2040}
 	indexer, err := store.CreateIndexer(ctx, IndexerInput{
 		Name:       "Indexer " + suffix,
-		Type:       "torznab",
+		Protocol:   "torrent",
 		BaseURL:    "http://indexer.test/" + suffix,
 		APIKey:     stringPtr("key"),
 		Categories: categories,
@@ -45,7 +45,7 @@ func TestScenarioSCNSettings014StorageIndexerLifecycleAndHealth(t *testing.T) {
 
 	updated, err := store.UpdateIndexer(ctx, indexer.ID, IndexerInput{
 		Name:       "Updated " + suffix,
-		Type:       "torznab",
+		Protocol:   "torrent",
 		BaseURL:    "http://indexer.test/updated/" + suffix,
 		Categories: []int32{5000},
 		Enabled:    false,

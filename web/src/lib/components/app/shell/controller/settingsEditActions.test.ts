@@ -32,7 +32,7 @@ describe('settings edit actions (SCN-SETTINGS-002)', () => {
 		actions.editIndexer({
 			id: 'indexer-1',
 			name: 'Torznab',
-			type: 'torznab',
+			definitionId: 'generic-torznab',
 			baseUrl: 'http://indexer.local',
 			apiKey: 'key',
 			categories: [2000, 2040],

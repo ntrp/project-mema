@@ -149,10 +149,11 @@ func indexerConfig(indexer storage.Indexer) indexers.Config {
 	return indexers.Config{
 		ID:         indexer.ID.String(),
 		Name:       indexer.Name,
-		Type:       indexer.Type,
+		Protocol:   indexer.Protocol,
 		BaseURL:    indexer.BaseURL,
 		APIKey:     indexer.APIKey,
 		Categories: indexer.Categories,
+		Redirect:   indexer.Redirect,
 	}
 }
 
@@ -169,7 +170,7 @@ func releaseCandidateInput(
 		MediaItemID:      mediaItemID,
 		IndexerID:        indexerID,
 		IndexerName:      release.IndexerName,
-		IndexerType:      release.IndexerType,
+		IndexerProtocol:  release.IndexerProtocol,
 		Title:            release.Title,
 		DownloadURL:      release.DownloadURL,
 		InfoURL:          optionalString(release.InfoURL),

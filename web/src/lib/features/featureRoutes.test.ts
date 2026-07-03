@@ -16,7 +16,7 @@ describe('feature route wrappers (SCN-SEARCH-001)', () => {
 			initialQuery: 'scenario title'
 		});
 
-		expect(body).toContain('Advanced media search');
+		expect(body).toContain('Advanced search');
 		expect(body).toContain('Metadata providers');
 		expect(body).toContain('Scenario Metadata');
 		expect(body).toContain('0 results');

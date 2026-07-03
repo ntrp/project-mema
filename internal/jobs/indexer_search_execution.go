@@ -80,16 +80,16 @@ func recordIndexerHistory(
 		response.Error = &text
 	}
 	entry, err := settings.RecordIndexerSearchHistory(ctx, storage.IndexerSearchHistoryInput{
-		IndexerID:   config.ID,
-		IndexerName: config.Name,
-		IndexerType: config.Type,
-		MediaType:   mediaType,
-		Query:       query,
-		CacheHit:    cacheHit,
-		Success:     searchErr == nil,
-		ResultCount: int32(len(releases)),
-		Error:       message,
-		Response:    response,
+		IndexerID:       config.ID,
+		IndexerName:     config.Name,
+		IndexerProtocol: config.Protocol,
+		MediaType:       mediaType,
+		Query:           query,
+		CacheHit:        cacheHit,
+		Success:         searchErr == nil,
+		ResultCount:     int32(len(releases)),
+		Error:           message,
+		Response:        response,
 	})
 	if err != nil {
 		slog.Error("indexer history write failed", "indexerName", config.Name, "query", query, "error", err)

@@ -1382,6 +1382,195 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-catalog:
+    get:
+      operationId: listIndexerCatalog
+      tags:
+        - Settings
+      summary: List available indexer definitions
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerCatalogResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-catalog/{definitionId}:
+    parameters:
+      - name: definitionId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getIndexerCatalogDefinition
+      tags:
+        - Settings
+      summary: Get an indexer definition
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer definition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerCatalogEntry"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/indexers/bulk:
+    put:
+      operationId: bulkUpdateIndexers
+      tags:
+        - Settings
+      summary: Bulk update indexers
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexerBulkUpdateRequest"
+      responses:
+        "200":
+          description: Updated indexers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-app-profiles:
+    get:
+      operationId: listIndexerAppProfiles
+      tags:
+        - Settings
+      summary: List indexer app profiles
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer app profiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerAppProfileListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-proxies:
+    get:
+      operationId: listIndexerProxies
+      tags:
+        - Settings
+      summary: List indexer proxies
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer proxies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerProxyListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createIndexerProxy
+      tags:
+        - Settings
+      summary: Create an indexer proxy
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexerProxyRequest"
+      responses:
+        "201":
+          description: Indexer proxy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerProxy"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/indexer-proxies/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateIndexerProxy
+      tags:
+        - Settings
+      summary: Update an indexer proxy
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexerProxyRequest"
+      responses:
+        "200":
+          description: Indexer proxy updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexerProxy"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteIndexerProxy
+      tags:
+        - Settings
+      summary: Delete an indexer proxy
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Indexer proxy deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/indexer-proxies/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: testIndexerProxy
+      tags:
+        - Settings
+      summary: Test an indexer proxy
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Indexer proxy test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/indexers/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -1407,6 +1596,24 @@ paths:
                 $ref: "#/components/schemas/Indexer"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    get:
+      operationId: getIndexer
+      tags:
+        - Settings
+      summary: Get a configured indexer
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Configured indexer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Indexer"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -4917,7 +5124,7 @@ components:
       required:
         - id
         - indexerName
-        - indexerType
+        - indexerProtocol
         - title
         - sizeBytes
         - match
@@ -4930,8 +5137,8 @@ components:
           format: uuid
         indexerName:
           type: string
-        indexerType:
-          $ref: "#/components/schemas/IndexerType"
+        indexerProtocol:
+          $ref: "#/components/schemas/IndexerProtocol"
         title:
           type: string
         infoUrl:
@@ -5425,6 +5632,94 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Indexer"
+    IndexerCatalogResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - entries
+        - protocols
+        - languages
+        - privacy
+        - categories
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerCatalogEntry"
+        protocols:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerProtocol"
+        languages:
+          type: array
+          items:
+            type: string
+        privacy:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerPrivacy"
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerCategory"
+    IndexerCatalogEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - definitionId
+        - name
+        - implementation
+        - implementationName
+        - protocol
+        - privacy
+        - language
+        - supportsRss
+        - supportsSearch
+        - supportsRedirect
+        - supportsPagination
+        - capabilities
+        - fields
+      properties:
+        definitionId:
+          type: string
+        name:
+          type: string
+        implementation:
+          type: string
+        implementationName:
+          type: string
+        description:
+          type: string
+        language:
+          type: string
+        encoding:
+          type: string
+        indexerUrls:
+          type: array
+          items:
+            type: string
+        legacyUrls:
+          type: array
+          items:
+            type: string
+        protocol:
+          $ref: "#/components/schemas/IndexerProtocol"
+        privacy:
+          $ref: "#/components/schemas/IndexerPrivacy"
+        supportsRss:
+          type: boolean
+        supportsSearch:
+          type: boolean
+        supportsRedirect:
+          type: boolean
+        supportsPagination:
+          type: boolean
+        capabilities:
+          $ref: "#/components/schemas/IndexerCapabilities"
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerField"
     Indexer:
       allOf:
         - $ref: "#/components/schemas/IndexerRequest"
@@ -5432,6 +5727,14 @@ components:
           additionalProperties: false
           required:
             - id
+            - protocol
+            - privacy
+            - language
+            - supportsRss
+            - supportsSearch
+            - supportsRedirect
+            - supportsPagination
+            - capabilities
             - healthStatus
             - failureCount
             - createdAt
@@ -5440,6 +5743,34 @@ components:
             id:
               type: string
               format: uuid
+            protocol:
+              $ref: "#/components/schemas/IndexerProtocol"
+            privacy:
+              $ref: "#/components/schemas/IndexerPrivacy"
+            language:
+              type: string
+            encoding:
+              type: string
+            description:
+              type: string
+            indexerUrls:
+              type: array
+              items:
+                type: string
+            legacyUrls:
+              type: array
+              items:
+                type: string
+            supportsRss:
+              type: boolean
+            supportsSearch:
+              type: boolean
+            supportsRedirect:
+              type: boolean
+            supportsPagination:
+              type: boolean
+            capabilities:
+              $ref: "#/components/schemas/IndexerCapabilities"
             healthStatus:
               $ref: "#/components/schemas/IndexerHealthStatus"
             lastQueryAt:
@@ -5479,18 +5810,24 @@ components:
       type: object
       additionalProperties: false
       required:
+        - definitionId
         - name
-        - type
         - baseUrl
         - enabled
         - priority
       properties:
+        definitionId:
+          type: string
+          minLength: 1
+          maxLength: 200
         name:
           type: string
           minLength: 1
           maxLength: 200
-        type:
-          $ref: "#/components/schemas/IndexerType"
+        implementation:
+          type: string
+        implementationName:
+          type: string
         baseUrl:
           type: string
           minLength: 1
@@ -5504,6 +5841,32 @@ components:
             type: integer
             format: int32
           maxItems: 100
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerFieldValue"
+        redirect:
+          type: boolean
+        appProfileId:
+          type: string
+        minimumSeeders:
+          type: integer
+          format: int32
+          minimum: 0
+        seedRatio:
+          type: number
+          format: double
+          minimum: 0
+        seedTime:
+          type: integer
+          format: int32
+          minimum: 0
+        packSeedTime:
+          type: integer
+          format: int32
+          minimum: 0
+        preferMagnetUrl:
+          type: boolean
         enabled:
           type: boolean
         priority:
@@ -5511,12 +5874,273 @@ components:
           format: int32
           minimum: 0
           maximum: 1000
-    IndexerType:
+    IndexerBulkUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+        enabled:
+          type: boolean
+        appProfileId:
+          type: string
+        priority:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+        minimumSeeders:
+          type: integer
+          format: int32
+          minimum: 0
+        seedRatio:
+          type: number
+          format: double
+          minimum: 0
+        seedTime:
+          type: integer
+          format: int32
+          minimum: 0
+        packSeedTime:
+          type: integer
+          format: int32
+          minimum: 0
+        preferMagnetUrl:
+          type: boolean
+    IndexerProtocol:
       type: string
       enum:
-        - torznab
-        - newznab
-        - rss
+        - torrent
+        - usenet
+    IndexerPrivacy:
+      type: string
+      enum:
+        - public
+        - private
+        - semiPrivate
+    IndexerCapabilities:
+      type: object
+      additionalProperties: false
+      required:
+        - categories
+        - supportsRawSearch
+        - searchParams
+        - tvSearchParams
+        - movieSearchParams
+      properties:
+        limitsMax:
+          type: integer
+          format: int32
+        limitsDefault:
+          type: integer
+          format: int32
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerCategory"
+        supportsRawSearch:
+          type: boolean
+        searchParams:
+          type: array
+          items:
+            type: string
+        tvSearchParams:
+          type: array
+          items:
+            type: string
+        movieSearchParams:
+          type: array
+          items:
+            type: string
+    IndexerCategory:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - children
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerCategory"
+    IndexerField:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - label
+        - type
+        - advanced
+      properties:
+        order:
+          type: integer
+          format: int32
+        name:
+          type: string
+        label:
+          type: string
+        unit:
+          type: string
+        helpText:
+          type: string
+        helpTextWarning:
+          type: string
+        helpLink:
+          type: string
+        value:
+          nullable: true
+        type:
+          type: string
+          enum:
+            - text
+            - password
+            - checkbox
+            - select
+            - info
+            - url
+            - number
+        advanced:
+          type: boolean
+        selectOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerFieldSelectOption"
+        section:
+          type: string
+        placeholder:
+          type: string
+        isFloat:
+          type: boolean
+    IndexerFieldSelectOption:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - name
+      properties:
+        value:
+          type: string
+        name:
+          type: string
+    IndexerFieldValue:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - value
+      properties:
+        name:
+          type: string
+        value:
+          nullable: true
+    IndexerAppProfileListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - profiles
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerAppProfile"
+    IndexerAppProfile:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - enableRss
+        - enableAutomaticSearch
+        - enableInteractiveSearch
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        enableRss:
+          type: boolean
+        enableAutomaticSearch:
+          type: boolean
+        enableInteractiveSearch:
+          type: boolean
+    IndexerProxyListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - proxies
+      properties:
+        proxies:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerProxy"
+    IndexerProxy:
+      allOf:
+        - $ref: "#/components/schemas/IndexerProxyRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - supportsOnHealthIssue
+            - testCommand
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            supportsOnHealthIssue:
+              type: boolean
+            testCommand:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    IndexerProxyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - implementation
+        - link
+        - enabled
+        - onHealthIssue
+        - includeHealthWarnings
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        implementation:
+          type: string
+        link:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        enabled:
+          type: boolean
+        onHealthIssue:
+          type: boolean
+        includeHealthWarnings:
+          type: boolean
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerFieldValue"
     IndexerSearchResponse:
       type: object
       additionalProperties: false
@@ -5595,7 +6219,7 @@ components:
       required:
         - indexerId
         - indexerName
-        - indexerType
+        - indexerProtocol
         - mediaType
         - query
         - resultCount
@@ -5609,8 +6233,8 @@ components:
           format: uuid
         indexerName:
           type: string
-        indexerType:
-          $ref: "#/components/schemas/IndexerType"
+        indexerProtocol:
+          $ref: "#/components/schemas/IndexerProtocol"
         mediaType:
           $ref: "#/components/schemas/MediaType"
         query:
@@ -5634,7 +6258,7 @@ components:
       additionalProperties: false
       required:
         - indexerName
-        - indexerType
+        - indexerProtocol
         - mediaType
         - query
         - cacheHit
@@ -5645,8 +6269,8 @@ components:
       properties:
         indexerName:
           type: string
-        indexerType:
-          $ref: "#/components/schemas/IndexerType"
+        indexerProtocol:
+          $ref: "#/components/schemas/IndexerProtocol"
         mediaType:
           $ref: "#/components/schemas/MediaType"
         query:

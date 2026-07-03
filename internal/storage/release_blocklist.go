@@ -27,30 +27,30 @@ func (s *SettingsStore) BlockRelease(ctx context.Context, input ReleaseBlocklist
 	downloadURL := optionalText(input.DownloadURL)
 	return scanReleaseBlocklistItem(s.pool.QueryRow(ctx, `
 		insert into app.release_blocklist (
-			id, media_item_id, release_title, indexer_name, indexer_type, download_url,
+			id, media_item_id, release_title, indexer_name, indexer_protocol, download_url,
 			info_url, guid, reason, source, temporary, expires_at
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		on conflict (id) do update set updated_at = now()
-		returning id, media_item_id, '', '', release_title, indexer_name, indexer_type,
+		returning id, media_item_id, '', '', release_title, indexer_name, indexer_protocol,
 			download_url, info_url, guid, reason, source, temporary, expires_at, created_at, updated_at
-	`, id, input.MediaItemID, title, strings.TrimSpace(input.IndexerName), strings.TrimSpace(input.IndexerType),
+	`, id, input.MediaItemID, title, strings.TrimSpace(input.IndexerName), strings.TrimSpace(input.IndexerProtocol),
 		downloadURL, input.InfoURL, input.GUID, reason, source, input.Temporary, input.ExpiresAt))
 }
 
 func (s *SettingsStore) BlockReleaseCandidate(ctx context.Context, release ReleaseCandidateInput, reason string, source string, expiresAt *time.Time) (ReleaseBlocklistItem, error) {
 	return s.BlockRelease(ctx, ReleaseBlocklistInput{
-		MediaItemID:  release.MediaItemID,
-		ReleaseTitle: release.Title,
-		IndexerName:  release.IndexerName,
-		IndexerType:  release.IndexerType,
-		DownloadURL:  release.DownloadURL,
-		InfoURL:      release.InfoURL,
-		GUID:         release.GUID,
-		Reason:       reason,
-		Source:       source,
-		Temporary:    expiresAt != nil,
-		ExpiresAt:    expiresAt,
+		MediaItemID:     release.MediaItemID,
+		ReleaseTitle:    release.Title,
+		IndexerName:     release.IndexerName,
+		IndexerProtocol: release.IndexerProtocol,
+		DownloadURL:     release.DownloadURL,
+		InfoURL:         release.InfoURL,
+		GUID:            release.GUID,
+		Reason:          reason,
+		Source:          source,
+		Temporary:       expiresAt != nil,
+		ExpiresAt:       expiresAt,
 	})
 }
 
@@ -94,7 +94,7 @@ func (s *SettingsStore) FindReleaseBlock(ctx context.Context, release ReleaseCan
 func (s *SettingsStore) ListReleaseBlocklist(ctx context.Context) ([]ReleaseBlocklistItem, error) {
 	rows, err := s.pool.Query(ctx, `
 		select b.id, b.media_item_id, m.title, m.media_type, b.release_title, b.indexer_name,
-			b.indexer_type, b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary,
+			b.indexer_protocol, b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary,
 			b.expires_at, b.created_at, b.updated_at
 		from app.release_blocklist b
 		join app.media_items m on m.id = b.media_item_id
@@ -129,7 +129,7 @@ func (s *SettingsStore) CleanupExpiredReleaseBlocks(ctx context.Context) (int32,
 
 func (s *SettingsStore) findReleaseBlock(ctx context.Context, mediaItemID uuid.UUID, release releaseIdentity) (ReleaseBlocklistItem, error) {
 	item, err := scanReleaseBlocklistItem(s.pool.QueryRow(ctx, `
-		select b.id, b.media_item_id, '', '', b.release_title, b.indexer_name, b.indexer_type,
+		select b.id, b.media_item_id, '', '', b.release_title, b.indexer_name, b.indexer_protocol,
 			b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary, b.expires_at,
 			b.created_at, b.updated_at
 		from app.release_blocklist b
@@ -159,7 +159,7 @@ func scanReleaseBlocklistItem(row pgx.Row) (ReleaseBlocklistItem, error) {
 		&item.MediaType,
 		&item.ReleaseTitle,
 		&item.IndexerName,
-		&item.IndexerType,
+		&item.IndexerProtocol,
 		&item.DownloadURL,
 		&item.InfoURL,
 		&item.GUID,

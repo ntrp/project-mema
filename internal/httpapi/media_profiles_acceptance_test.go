@@ -63,7 +63,7 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		UpgradeUntilCustomFormatScore:     50,
 		MinimumCustomFormatScoreIncrement: 1,
 		RemoveNonEnabledLanguages:         true,
-		PreferredProtocol:                 MediaProfileRequestPreferredProtocolUsenet,
+		PreferredProtocol:                 Usenet,
 		SeriesPackPreference:              MediaProfileRequestSeriesPackPreferencePreferPacks,
 		TargetLanguages:                   []string{"en"},
 		TargetLanguageScores: []MediaProfileLanguageScore{{

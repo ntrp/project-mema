@@ -22,9 +22,9 @@ describe('rendered advanced search area (SCN-MEDIA-008)', () => {
 			}
 		});
 
-		expect(body).toContain('Advanced media search');
+		expect(body).toContain('Advanced search');
 		expect(body).toContain('Title');
-		expect(body).toContain('Type');
+		expect(body).toContain('Search');
 		expect(body).toContain('Year');
 		expect(body).toContain('Metadata providers');
 		expect(body).toContain('TMDb');

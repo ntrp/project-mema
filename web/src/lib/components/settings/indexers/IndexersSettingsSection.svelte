@@ -5,10 +5,20 @@
 	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
+	import * as Card from '$lib/components/ui/card';
+	import { onMount } from 'svelte';
+	import {
+		listIndexerAppProfiles,
+		listIndexerCatalog,
+		listIndexerProxies
+	} from '$lib/settings/api';
 	import { emptyIndexerForm } from '$lib/settings/forms';
 	import type {
 		Indexer,
+		IndexerAppProfile,
+		IndexerCatalogEntry,
 		IndexerForm as IndexerFormValue,
+		IndexerProxy,
 		IndexerSearchResponse,
 		IndexerSearchSettings,
 		IntegrationTestResults
@@ -51,6 +61,25 @@
 	}: Props = $props();
 
 	let modalOpen = $state(false);
+	let catalog = $state<IndexerCatalogEntry[]>([]);
+	let appProfiles = $state<IndexerAppProfile[]>([]);
+	let proxies = $state<IndexerProxy[]>([]);
+	let catalogError = $state('');
+
+	onMount(async () => {
+		try {
+			const [catalogResponse, profilesResponse, proxiesResponse] = await Promise.all([
+				listIndexerCatalog(),
+				listIndexerAppProfiles(),
+				listIndexerProxies()
+			]);
+			catalog = catalogResponse.entries;
+			appProfiles = profilesResponse;
+			proxies = proxiesResponse;
+		} catch (error) {
+			catalogError = error instanceof Error ? error.message : 'Could not load indexer catalog';
+		}
+	});
 
 	function openModal() {
 		form = emptyIndexerForm();
@@ -88,9 +117,26 @@
 		onClearCache={onClearIndexerSearchCache}
 		onSaveSettings={onSaveIndexerSearchSettings}
 	/>
+	<Card.Root>
+		<Card.Header>
+			<Card.Title>Profiles and Proxies</Card.Title>
+			<Card.Description>
+				{appProfiles.length} app profile(s) · {proxies.length} proxy definition(s)
+			</Card.Description>
+		</Card.Header>
+		{#if catalogError}
+			<Card.Content>
+				<p class="m-0 text-sm text-destructive">{catalogError}</p>
+			</Card.Content>
+		{/if}
+	</Card.Root>
 	{#if modalOpen}
-		<SettingsFormModal title={form.id ? 'Edit indexer' : 'Add indexer'} onClose={closeModal}>
-			<IndexerForm bind:form {saving} onSave={save} onCancel={closeModal} />
+		<SettingsFormModal
+			title={form.id ? 'Edit indexer' : 'Add indexer'}
+			onClose={closeModal}
+			modalClass="w-[min(980px,calc(100vw-32px))]"
+		>
+			<IndexerForm bind:form {catalog} {saving} onSave={save} onCancel={closeModal} />
 		</SettingsFormModal>
 	{/if}
 </div>

@@ -42,17 +42,17 @@ func releaseCandidateResponseWithBlock(
 		match.Details = append([]string{"Release is blocklisted: " + block.Reason}, match.Details...)
 	}
 	return ReleaseCandidate{
-		Id:          openapi_types.UUID(release.ID),
-		IndexerId:   indexerID,
-		IndexerName: release.IndexerName,
-		IndexerType: IndexerType(release.IndexerType),
-		Title:       release.Title,
-		InfoUrl:     release.InfoURL,
-		Guid:        release.GUID,
-		SizeBytes:   release.SizeBytes,
-		Seeders:     release.Seeders,
-		Peers:       release.Peers,
-		PublishedAt: release.PublishedAt,
+		Id:              openapi_types.UUID(release.ID),
+		IndexerId:       indexerID,
+		IndexerName:     release.IndexerName,
+		IndexerProtocol: IndexerProtocol(release.IndexerProtocol),
+		Title:           release.Title,
+		InfoUrl:         release.InfoURL,
+		Guid:            release.GUID,
+		SizeBytes:       release.SizeBytes,
+		Seeders:         release.Seeders,
+		Peers:           release.Peers,
+		PublishedAt:     release.PublishedAt,
 		Match: ReleaseCandidateMatch{
 			Severity:          ReleaseCandidateMatchSeverity(match.Severity),
 			Details:           match.Details,

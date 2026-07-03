@@ -108,17 +108,17 @@ func (item releaseItem) toRelease(config Config) Release {
 		size = item.Enclosure.Length
 	}
 	return Release{
-		IndexerID:   config.ID,
-		IndexerName: config.Name,
-		IndexerType: config.Type,
-		Title:       strings.TrimSpace(item.Title),
-		DownloadURL: firstNonEmpty(item.Enclosure.URL, item.Link, httpGUID(item.GUID)),
-		InfoURL:     firstNonEmpty(item.Link, httpGUID(item.GUID)),
-		GUID:        strings.TrimSpace(item.GUID),
-		SizeBytes:   size,
-		Seeders:     item.int32Attr("seeders"),
-		Peers:       item.int32Attr("peers"),
-		PublishedAt: item.publishedAt(),
+		IndexerID:       config.ID,
+		IndexerName:     config.Name,
+		IndexerProtocol: config.Protocol,
+		Title:           strings.TrimSpace(item.Title),
+		DownloadURL:     firstNonEmpty(item.Enclosure.URL, item.Link, httpGUID(item.GUID)),
+		InfoURL:         firstNonEmpty(item.Link, httpGUID(item.GUID)),
+		GUID:            strings.TrimSpace(item.GUID),
+		SizeBytes:       size,
+		Seeders:         item.int32Attr("seeders"),
+		Peers:           item.int32Attr("peers"),
+		PublishedAt:     item.publishedAt(),
 	}
 }
 

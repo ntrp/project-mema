@@ -8,10 +8,11 @@ import (
 type Config struct {
 	ID         string
 	Name       string
-	Type       string
+	Protocol   string
 	BaseURL    string
 	APIKey     *string
 	Categories []int32
+	Redirect   bool
 }
 
 type TestResult struct {
@@ -22,17 +23,17 @@ type TestResult struct {
 }
 
 type Release struct {
-	IndexerID   string
-	IndexerName string
-	IndexerType string
-	Title       string
-	DownloadURL string
-	InfoURL     string
-	GUID        string
-	SizeBytes   int64
-	Seeders     *int32
-	Peers       *int32
-	PublishedAt *time.Time
+	IndexerID       string
+	IndexerName     string
+	IndexerProtocol string
+	Title           string
+	DownloadURL     string
+	InfoURL         string
+	GUID            string
+	SizeBytes       int64
+	Seeders         *int32
+	Peers           *int32
+	PublishedAt     *time.Time
 }
 
 type HTTPDoer interface {

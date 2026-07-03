@@ -133,7 +133,7 @@ function indexerHistory(
 		id: 'history-1',
 		indexerId: 'indexer-1',
 		indexerName: 'Scenario Indexer',
-		indexerType: 'torznab',
+		indexerProtocol: 'torrent',
 		mediaType: 'movie',
 		query: 'scenario',
 		cacheHit: false,
@@ -148,7 +148,7 @@ function indexerCache(overrides: Partial<IndexerSearchCacheEntry> = {}): Indexer
 	return {
 		indexerId: 'indexer-1',
 		indexerName: 'Scenario Indexer',
-		indexerType: 'torznab',
+		indexerProtocol: 'torrent',
 		mediaType: 'movie',
 		query: 'scenario',
 		resultCount: 1,

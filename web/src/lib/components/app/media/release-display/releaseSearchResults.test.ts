@@ -37,7 +37,7 @@ function release(
 	return {
 		title: 'Scenario.Movie.2026.1080p.WEB-DL',
 		indexerName: 'Indexer',
-		indexerType: 'torznab',
+		indexerProtocol: 'torrent',
 		sizeBytes: 8 * 1024 * 1024 * 1024,
 		seeders: 10,
 		peers: 12,
@@ -67,9 +67,9 @@ describe('release result filtering and sorting (SCN-MEDIA-002)', () => {
 		const visible = filteredSortedReleases(
 			item,
 			[
-				release({ title: 'Torrent Match', indexerType: 'torznab', sizeBytes: 5 * 1024 ** 3 }),
-				release({ title: 'NZB Match', indexerType: 'newznab', sizeBytes: 5 * 1024 ** 3 }),
-				release({ title: 'Too Large', indexerType: 'torznab', sizeBytes: 15 * 1024 ** 3 })
+				release({ title: 'Torrent Match', indexerProtocol: 'torrent', sizeBytes: 5 * 1024 ** 3 }),
+				release({ title: 'NZB Match', indexerProtocol: 'usenet', sizeBytes: 5 * 1024 ** 3 }),
+				release({ title: 'Too Large', indexerProtocol: 'torrent', sizeBytes: 15 * 1024 ** 3 })
 			],
 			{
 				source: 'torrent',
@@ -114,7 +114,7 @@ describe('release result filtering and sorting (SCN-MEDIA-002)', () => {
 			release({
 				title: 'Second',
 				indexerName: 'B Indexer',
-				indexerType: 'newznab',
+				indexerProtocol: 'usenet',
 				sizeBytes: 2 * 1024 ** 3,
 				peers: undefined,
 				seeders: 3,
@@ -124,7 +124,7 @@ describe('release result filtering and sorting (SCN-MEDIA-002)', () => {
 			release({
 				title: 'First',
 				indexerName: 'A Indexer',
-				indexerType: 'torznab',
+				indexerProtocol: 'torrent',
 				sizeBytes: 4 * 1024 ** 3,
 				peers: 8,
 				seeders: 1,

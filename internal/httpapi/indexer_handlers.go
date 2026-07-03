@@ -4,6 +4,9 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+
+	"media-manager/internal/indexers"
+	"media-manager/internal/storage"
 )
 
 func (s *Server) ListIndexers(w http.ResponseWriter, r *http.Request) {
@@ -22,6 +25,38 @@ func (s *Server) ListIndexers(w http.ResponseWriter, r *http.Request) {
 		response.Indexers = append(response.Indexers, indexerResponse(indexer))
 	}
 	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) GetIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	indexer, err := s.settings.GetIndexer(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find indexer")
+		return
+	}
+	writeJSON(w, http.StatusOK, indexerResponse(indexer))
+}
+
+func (s *Server) ListIndexerCatalog(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	writeJSON(w, http.StatusOK, indexerCatalogResponse(indexers.Catalog()))
+}
+
+func (s *Server) GetIndexerCatalogDefinition(w http.ResponseWriter, r *http.Request, definitionId string) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	entry, ok := indexers.CatalogEntryByID(definitionId)
+	if !ok {
+		writeError(w, http.StatusNotFound, "indexer_definition_not_found", "Indexer definition not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, catalogEntryResponse(entry))
 }
 
 func (s *Server) CreateIndexer(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +101,41 @@ func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id Resour
 		return
 	}
 	writeJSON(w, http.StatusOK, indexerResponse(indexer))
+}
+
+func (s *Server) BulkUpdateIndexers(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body IndexerBulkUpdateRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	ids := make([]uuid.UUID, 0, len(body.Ids))
+	for _, id := range body.Ids {
+		ids = append(ids, uuid.UUID(id))
+	}
+	updated, err := s.settings.BulkUpdateIndexers(r.Context(), storage.IndexerBulkUpdateInput{
+		IDs:             ids,
+		Enabled:         body.Enabled,
+		AppProfileID:    body.AppProfileId,
+		Priority:        body.Priority,
+		MinimumSeeders:  body.MinimumSeeders,
+		SeedRatio:       body.SeedRatio,
+		SeedTime:        body.SeedTime,
+		PackSeedTime:    body.PackSeedTime,
+		PreferMagnetURL: body.PreferMagnetUrl,
+	})
+	if err != nil {
+		writeSettingsError(w, err, "Could not update indexers")
+		return
+	}
+	response := IndexerListResponse{Indexers: make([]Indexer, 0, len(updated))}
+	for _, indexer := range updated {
+		response.Indexers = append(response.Indexers, indexerResponse(indexer))
+	}
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (s *Server) DeleteIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {

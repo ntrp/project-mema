@@ -42,12 +42,12 @@ func (s *SettingsStore) ReplaceReleaseSearchResults(ctx context.Context, mediaIt
 func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID uuid.UUID, release ReleaseCandidateInput) error {
 	_, err := q.Exec(ctx, `
 		insert into app.media_release_candidates (
-			id, media_item_id, indexer_id, indexer_name, indexer_type, title, download_url,
+			id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
 			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
 			requested_season, requested_episode
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-	`, uuid.New(), mediaItemID, release.IndexerID, release.IndexerName, release.IndexerType, release.Title,
+	`, uuid.New(), mediaItemID, release.IndexerID, release.IndexerName, release.IndexerProtocol, release.Title,
 		release.DownloadURL, release.InfoURL, release.GUID, release.SizeBytes, release.Seeders, release.Peers,
 		release.PublishedAt, release.SearchKind, release.RequestedSeason, release.RequestedEpisode)
 	return err
@@ -55,7 +55,7 @@ func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID
 
 func (s *SettingsStore) GetReleaseCandidate(ctx context.Context, id uuid.UUID, mediaItemID uuid.UUID) (ReleaseCandidate, error) {
 	release, err := scanReleaseCandidate(s.pool.QueryRow(ctx, `
-		select id, media_item_id, indexer_id, indexer_name, indexer_type, title, download_url,
+		select id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
 			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
 			requested_season, requested_episode, created_at, updated_at
 		from app.media_release_candidates
@@ -81,7 +81,7 @@ func (s *SettingsStore) ListReleaseSearchResults(ctx context.Context, mediaItemI
 
 func (s *SettingsStore) listReleaseCandidates(ctx context.Context, mediaItemID uuid.UUID) ([]ReleaseCandidate, error) {
 	rows, err := s.pool.Query(ctx, `
-		select id, media_item_id, indexer_id, indexer_name, indexer_type, title, download_url,
+		select id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
 			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
 			requested_season, requested_episode, created_at, updated_at
 		from app.media_release_candidates
@@ -134,7 +134,7 @@ func scanReleaseCandidate(row pgx.Row) (ReleaseCandidate, error) {
 		&release.MediaItemID,
 		&release.IndexerID,
 		&release.IndexerName,
-		&release.IndexerType,
+		&release.IndexerProtocol,
 		&release.Title,
 		&release.DownloadURL,
 		&release.InfoURL,

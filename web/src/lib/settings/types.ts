@@ -17,7 +17,14 @@ export type IndexerSearchSettings = components['schemas']['IndexerSearchSettings
 export type IndexerSearchCacheEntry = components['schemas']['IndexerSearchCacheEntry'];
 export type IndexerSearchCacheStats = components['schemas']['IndexerSearchCacheStats'];
 export type IndexerSearchHistoryEntry = components['schemas']['IndexerSearchHistoryEntry'];
-export type IndexerType = components['schemas']['IndexerType'];
+export type IndexerProtocol = components['schemas']['IndexerProtocol'];
+export type IndexerPrivacy = components['schemas']['IndexerPrivacy'];
+export type IndexerCatalogResponse = components['schemas']['IndexerCatalogResponse'];
+export type IndexerCatalogEntry = components['schemas']['IndexerCatalogEntry'];
+export type IndexerAppProfile = components['schemas']['IndexerAppProfile'];
+export type IndexerProxy = components['schemas']['IndexerProxy'];
+export type IndexerProxyRequest = components['schemas']['IndexerProxyRequest'];
+export type IndexerBulkUpdateRequest = components['schemas']['IndexerBulkUpdateRequest'];
 export type MetadataProvider = components['schemas']['MetadataProvider'];
 export type MetadataCacheClearResponse = components['schemas']['MetadataCacheClearResponse'];
 export type MetadataCacheEntry = components['schemas']['MetadataCacheEntry'];
@@ -118,6 +125,7 @@ export type IndexerForm = Omit<IndexerRequest, 'categories'> & {
 	id?: string;
 	categoriesText: string;
 };
+export type IndexerProxyForm = IndexerProxyRequest & { id?: string };
 export type MetadataProviderForm = MetadataProviderRequest & { id?: string };
 export type LibraryFolderForm = LibraryFolderRequest;
 export type PathMappingForm = PathMappingRequest;

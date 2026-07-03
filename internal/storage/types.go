@@ -100,7 +100,7 @@ type ReleaseCandidate struct {
 	MediaItemID      uuid.UUID
 	IndexerID        *uuid.UUID
 	IndexerName      string
-	IndexerType      string
+	IndexerProtocol  string
 	Title            string
 	DownloadURL      string
 	InfoURL          *string
@@ -120,7 +120,7 @@ type ReleaseCandidateInput struct {
 	MediaItemID      uuid.UUID
 	IndexerID        *uuid.UUID
 	IndexerName      string
-	IndexerType      string
+	IndexerProtocol  string
 	Title            string
 	DownloadURL      string
 	InfoURL          *string
@@ -135,36 +135,36 @@ type ReleaseCandidateInput struct {
 }
 
 type ReleaseBlocklistItem struct {
-	ID           uuid.UUID
-	MediaItemID  uuid.UUID
-	MediaTitle   string
-	MediaType    string
-	ReleaseTitle string
-	IndexerName  string
-	IndexerType  string
-	DownloadURL  *string
-	InfoURL      *string
-	GUID         *string
-	Reason       string
-	Source       string
-	Temporary    bool
-	ExpiresAt    *time.Time
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID              uuid.UUID
+	MediaItemID     uuid.UUID
+	MediaTitle      string
+	MediaType       string
+	ReleaseTitle    string
+	IndexerName     string
+	IndexerProtocol string
+	DownloadURL     *string
+	InfoURL         *string
+	GUID            *string
+	Reason          string
+	Source          string
+	Temporary       bool
+	ExpiresAt       *time.Time
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type ReleaseBlocklistInput struct {
-	MediaItemID  uuid.UUID
-	ReleaseTitle string
-	IndexerName  string
-	IndexerType  string
-	DownloadURL  string
-	InfoURL      *string
-	GUID         *string
-	Reason       string
-	Source       string
-	Temporary    bool
-	ExpiresAt    *time.Time
+	MediaItemID     uuid.UUID
+	ReleaseTitle    string
+	IndexerName     string
+	IndexerProtocol string
+	DownloadURL     string
+	InfoURL         *string
+	GUID            *string
+	Reason          string
+	Source          string
+	Temporary       bool
+	ExpiresAt       *time.Time
 }
 
 type ReleaseSearchSnapshot struct {
@@ -193,29 +193,29 @@ type QueryHistoryStats struct {
 }
 
 type IndexerSearchCacheEntry struct {
-	IndexerID   uuid.UUID
-	IndexerName string
-	IndexerType string
-	MediaType   string
-	Query       string
-	ResultCount int32
-	ExpiresAt   time.Time
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Expired     bool
+	IndexerID       uuid.UUID
+	IndexerName     string
+	IndexerProtocol string
+	MediaType       string
+	Query           string
+	ResultCount     int32
+	ExpiresAt       time.Time
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Expired         bool
 }
 
 type IndexerSearchHistoryEntry struct {
-	IndexerName string
-	IndexerType string
-	MediaType   string
-	Query       string
-	CacheHit    bool
-	Success     bool
-	ResultCount int32
-	Error       *string
-	Response    string
-	CreatedAt   time.Time
+	IndexerName     string
+	IndexerProtocol string
+	MediaType       string
+	Query           string
+	CacheHit        bool
+	Success         bool
+	ResultCount     int32
+	Error           *string
+	Response        string
+	CreatedAt       time.Time
 }
 
 type MetadataSearchHistoryInput struct {

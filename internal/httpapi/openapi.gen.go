@@ -151,6 +151,39 @@ func (e HealthStatus) Valid() bool {
 	}
 }
 
+// Defines values for IndexerFieldType.
+const (
+	IndexerFieldTypeCheckbox IndexerFieldType = "checkbox"
+	IndexerFieldTypeInfo     IndexerFieldType = "info"
+	IndexerFieldTypeNumber   IndexerFieldType = "number"
+	IndexerFieldTypePassword IndexerFieldType = "password"
+	IndexerFieldTypeSelect   IndexerFieldType = "select"
+	IndexerFieldTypeText     IndexerFieldType = "text"
+	IndexerFieldTypeUrl      IndexerFieldType = "url"
+)
+
+// Valid indicates whether the value is a known member of the IndexerFieldType enum.
+func (e IndexerFieldType) Valid() bool {
+	switch e {
+	case IndexerFieldTypeCheckbox:
+		return true
+	case IndexerFieldTypeInfo:
+		return true
+	case IndexerFieldTypeNumber:
+		return true
+	case IndexerFieldTypePassword:
+		return true
+	case IndexerFieldTypeSelect:
+		return true
+	case IndexerFieldTypeText:
+		return true
+	case IndexerFieldTypeUrl:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IndexerHealthStatus.
 const (
 	Disabled          IndexerHealthStatus = "disabled"
@@ -172,21 +205,39 @@ func (e IndexerHealthStatus) Valid() bool {
 	}
 }
 
-// Defines values for IndexerType.
+// Defines values for IndexerPrivacy.
 const (
-	Newznab IndexerType = "newznab"
-	Rss     IndexerType = "rss"
-	Torznab IndexerType = "torznab"
+	Private     IndexerPrivacy = "private"
+	Public      IndexerPrivacy = "public"
+	SemiPrivate IndexerPrivacy = "semiPrivate"
 )
 
-// Valid indicates whether the value is a known member of the IndexerType enum.
-func (e IndexerType) Valid() bool {
+// Valid indicates whether the value is a known member of the IndexerPrivacy enum.
+func (e IndexerPrivacy) Valid() bool {
 	switch e {
-	case Newznab:
+	case Private:
 		return true
-	case Rss:
+	case Public:
 		return true
-	case Torznab:
+	case SemiPrivate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for IndexerProtocol.
+const (
+	IndexerProtocolTorrent IndexerProtocol = "torrent"
+	IndexerProtocolUsenet  IndexerProtocol = "usenet"
+)
+
+// Valid indicates whether the value is a known member of the IndexerProtocol enum.
+func (e IndexerProtocol) Valid() bool {
+	switch e {
+	case IndexerProtocolTorrent:
+		return true
+	case IndexerProtocolUsenet:
 		return true
 	default:
 		return false
@@ -402,19 +453,19 @@ func (e MediaProfileSeriesPackPreference) Valid() bool {
 
 // Defines values for MediaProfileRequestPreferredProtocol.
 const (
-	MediaProfileRequestPreferredProtocolAny     MediaProfileRequestPreferredProtocol = "any"
-	MediaProfileRequestPreferredProtocolTorrent MediaProfileRequestPreferredProtocol = "torrent"
-	MediaProfileRequestPreferredProtocolUsenet  MediaProfileRequestPreferredProtocol = "usenet"
+	Any     MediaProfileRequestPreferredProtocol = "any"
+	Torrent MediaProfileRequestPreferredProtocol = "torrent"
+	Usenet  MediaProfileRequestPreferredProtocol = "usenet"
 )
 
 // Valid indicates whether the value is a known member of the MediaProfileRequestPreferredProtocol enum.
 func (e MediaProfileRequestPreferredProtocol) Valid() bool {
 	switch e {
-	case MediaProfileRequestPreferredProtocolAny:
+	case Any:
 		return true
-	case MediaProfileRequestPreferredProtocolTorrent:
+	case Torrent:
 		return true
-	case MediaProfileRequestPreferredProtocolUsenet:
+	case Usenet:
 		return true
 	default:
 		return false
@@ -642,22 +693,22 @@ func (e SystemEventSeverity) Valid() bool {
 
 // Defines values for SystemLogLevel.
 const (
-	Debug SystemLogLevel = "debug"
-	Error SystemLogLevel = "error"
-	Info  SystemLogLevel = "info"
-	Warn  SystemLogLevel = "warn"
+	SystemLogLevelDebug SystemLogLevel = "debug"
+	SystemLogLevelError SystemLogLevel = "error"
+	SystemLogLevelInfo  SystemLogLevel = "info"
+	SystemLogLevelWarn  SystemLogLevel = "warn"
 )
 
 // Valid indicates whether the value is a known member of the SystemLogLevel enum.
 func (e SystemLogLevel) Valid() bool {
 	switch e {
-	case Debug:
+	case SystemLogLevelDebug:
 		return true
-	case Error:
+	case SystemLogLevelError:
 		return true
-	case Info:
+	case SystemLogLevelInfo:
 		return true
-	case Warn:
+	case SystemLogLevelWarn:
 		return true
 	default:
 		return false
@@ -992,24 +1043,154 @@ type HealthStatus string
 
 // Indexer defines model for Indexer.
 type Indexer struct {
-	ApiKey         *string             `json:"apiKey,omitempty"`
-	BaseUrl        string              `json:"baseUrl"`
-	Categories     *[]int32            `json:"categories,omitempty"`
-	CreatedAt      time.Time           `json:"createdAt"`
-	Enabled        bool                `json:"enabled"`
-	FailureCount   int32               `json:"failureCount"`
-	HealthStatus   IndexerHealthStatus `json:"healthStatus"`
-	Id             openapi_types.UUID  `json:"id"`
-	LastError      *string             `json:"lastError,omitempty"`
-	LastFailureAt  *time.Time          `json:"lastFailureAt,omitempty"`
-	LastQueryAt    *time.Time          `json:"lastQueryAt,omitempty"`
-	LastStatusCode *int32              `json:"lastStatusCode,omitempty"`
-	LastSuccessAt  *time.Time          `json:"lastSuccessAt,omitempty"`
-	Name           string              `json:"name"`
-	NextCheckAt    *time.Time          `json:"nextCheckAt,omitempty"`
-	Priority       int32               `json:"priority"`
-	Type           IndexerType         `json:"type"`
-	UpdatedAt      time.Time           `json:"updatedAt"`
+	ApiKey             *string              `json:"apiKey,omitempty"`
+	AppProfileId       *string              `json:"appProfileId,omitempty"`
+	BaseUrl            string               `json:"baseUrl"`
+	Capabilities       IndexerCapabilities  `json:"capabilities"`
+	Categories         *[]int32             `json:"categories,omitempty"`
+	CreatedAt          time.Time            `json:"createdAt"`
+	DefinitionId       string               `json:"definitionId"`
+	Description        *string              `json:"description,omitempty"`
+	Enabled            bool                 `json:"enabled"`
+	Encoding           *string              `json:"encoding,omitempty"`
+	FailureCount       int32                `json:"failureCount"`
+	Fields             *[]IndexerFieldValue `json:"fields,omitempty"`
+	HealthStatus       IndexerHealthStatus  `json:"healthStatus"`
+	Id                 openapi_types.UUID   `json:"id"`
+	Implementation     *string              `json:"implementation,omitempty"`
+	ImplementationName *string              `json:"implementationName,omitempty"`
+	IndexerUrls        *[]string            `json:"indexerUrls,omitempty"`
+	Language           string               `json:"language"`
+	LastError          *string              `json:"lastError,omitempty"`
+	LastFailureAt      *time.Time           `json:"lastFailureAt,omitempty"`
+	LastQueryAt        *time.Time           `json:"lastQueryAt,omitempty"`
+	LastStatusCode     *int32               `json:"lastStatusCode,omitempty"`
+	LastSuccessAt      *time.Time           `json:"lastSuccessAt,omitempty"`
+	LegacyUrls         *[]string            `json:"legacyUrls,omitempty"`
+	MinimumSeeders     *int32               `json:"minimumSeeders,omitempty"`
+	Name               string               `json:"name"`
+	NextCheckAt        *time.Time           `json:"nextCheckAt,omitempty"`
+	PackSeedTime       *int32               `json:"packSeedTime,omitempty"`
+	PreferMagnetUrl    *bool                `json:"preferMagnetUrl,omitempty"`
+	Priority           int32                `json:"priority"`
+	Privacy            IndexerPrivacy       `json:"privacy"`
+	Protocol           IndexerProtocol      `json:"protocol"`
+	Redirect           *bool                `json:"redirect,omitempty"`
+	SeedRatio          *float64             `json:"seedRatio,omitempty"`
+	SeedTime           *int32               `json:"seedTime,omitempty"`
+	SupportsPagination bool                 `json:"supportsPagination"`
+	SupportsRedirect   bool                 `json:"supportsRedirect"`
+	SupportsRss        bool                 `json:"supportsRss"`
+	SupportsSearch     bool                 `json:"supportsSearch"`
+	UpdatedAt          time.Time            `json:"updatedAt"`
+}
+
+// IndexerAppProfile defines model for IndexerAppProfile.
+type IndexerAppProfile struct {
+	EnableAutomaticSearch   bool   `json:"enableAutomaticSearch"`
+	EnableInteractiveSearch bool   `json:"enableInteractiveSearch"`
+	EnableRss               bool   `json:"enableRss"`
+	Id                      string `json:"id"`
+	Name                    string `json:"name"`
+}
+
+// IndexerAppProfileListResponse defines model for IndexerAppProfileListResponse.
+type IndexerAppProfileListResponse struct {
+	Profiles []IndexerAppProfile `json:"profiles"`
+}
+
+// IndexerBulkUpdateRequest defines model for IndexerBulkUpdateRequest.
+type IndexerBulkUpdateRequest struct {
+	AppProfileId    *string              `json:"appProfileId,omitempty"`
+	Enabled         *bool                `json:"enabled,omitempty"`
+	Ids             []openapi_types.UUID `json:"ids"`
+	MinimumSeeders  *int32               `json:"minimumSeeders,omitempty"`
+	PackSeedTime    *int32               `json:"packSeedTime,omitempty"`
+	PreferMagnetUrl *bool                `json:"preferMagnetUrl,omitempty"`
+	Priority        *int32               `json:"priority,omitempty"`
+	SeedRatio       *float64             `json:"seedRatio,omitempty"`
+	SeedTime        *int32               `json:"seedTime,omitempty"`
+}
+
+// IndexerCapabilities defines model for IndexerCapabilities.
+type IndexerCapabilities struct {
+	Categories        []IndexerCategory `json:"categories"`
+	LimitsDefault     *int32            `json:"limitsDefault,omitempty"`
+	LimitsMax         *int32            `json:"limitsMax,omitempty"`
+	MovieSearchParams []string          `json:"movieSearchParams"`
+	SearchParams      []string          `json:"searchParams"`
+	SupportsRawSearch bool              `json:"supportsRawSearch"`
+	TvSearchParams    []string          `json:"tvSearchParams"`
+}
+
+// IndexerCatalogEntry defines model for IndexerCatalogEntry.
+type IndexerCatalogEntry struct {
+	Capabilities       IndexerCapabilities `json:"capabilities"`
+	DefinitionId       string              `json:"definitionId"`
+	Description        *string             `json:"description,omitempty"`
+	Encoding           *string             `json:"encoding,omitempty"`
+	Fields             []IndexerField      `json:"fields"`
+	Implementation     string              `json:"implementation"`
+	ImplementationName string              `json:"implementationName"`
+	IndexerUrls        *[]string           `json:"indexerUrls,omitempty"`
+	Language           string              `json:"language"`
+	LegacyUrls         *[]string           `json:"legacyUrls,omitempty"`
+	Name               string              `json:"name"`
+	Privacy            IndexerPrivacy      `json:"privacy"`
+	Protocol           IndexerProtocol     `json:"protocol"`
+	SupportsPagination bool                `json:"supportsPagination"`
+	SupportsRedirect   bool                `json:"supportsRedirect"`
+	SupportsRss        bool                `json:"supportsRss"`
+	SupportsSearch     bool                `json:"supportsSearch"`
+}
+
+// IndexerCatalogResponse defines model for IndexerCatalogResponse.
+type IndexerCatalogResponse struct {
+	Categories []IndexerCategory     `json:"categories"`
+	Entries    []IndexerCatalogEntry `json:"entries"`
+	Languages  []string              `json:"languages"`
+	Privacy    []IndexerPrivacy      `json:"privacy"`
+	Protocols  []IndexerProtocol     `json:"protocols"`
+}
+
+// IndexerCategory defines model for IndexerCategory.
+type IndexerCategory struct {
+	Children []IndexerCategory `json:"children"`
+	Id       int32             `json:"id"`
+	Name     string            `json:"name"`
+}
+
+// IndexerField defines model for IndexerField.
+type IndexerField struct {
+	Advanced        bool                        `json:"advanced"`
+	HelpLink        *string                     `json:"helpLink,omitempty"`
+	HelpText        *string                     `json:"helpText,omitempty"`
+	HelpTextWarning *string                     `json:"helpTextWarning,omitempty"`
+	IsFloat         *bool                       `json:"isFloat,omitempty"`
+	Label           string                      `json:"label"`
+	Name            string                      `json:"name"`
+	Order           *int32                      `json:"order,omitempty"`
+	Placeholder     *string                     `json:"placeholder,omitempty"`
+	Section         *string                     `json:"section,omitempty"`
+	SelectOptions   *[]IndexerFieldSelectOption `json:"selectOptions,omitempty"`
+	Type            IndexerFieldType            `json:"type"`
+	Unit            *string                     `json:"unit,omitempty"`
+	Value           interface{}                 `json:"value,omitempty"`
+}
+
+// IndexerFieldType defines model for IndexerField.Type.
+type IndexerFieldType string
+
+// IndexerFieldSelectOption defines model for IndexerFieldSelectOption.
+type IndexerFieldSelectOption struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+// IndexerFieldValue defines model for IndexerFieldValue.
+type IndexerFieldValue struct {
+	Name  string      `json:"name"`
+	Value interface{} `json:"value"`
 }
 
 // IndexerHealthStatus defines model for IndexerHealthStatus.
@@ -1020,29 +1201,77 @@ type IndexerListResponse struct {
 	Indexers []Indexer `json:"indexers"`
 }
 
+// IndexerPrivacy defines model for IndexerPrivacy.
+type IndexerPrivacy string
+
+// IndexerProtocol defines model for IndexerProtocol.
+type IndexerProtocol string
+
+// IndexerProxy defines model for IndexerProxy.
+type IndexerProxy struct {
+	CreatedAt             time.Time            `json:"createdAt"`
+	Enabled               bool                 `json:"enabled"`
+	Fields                *[]IndexerFieldValue `json:"fields,omitempty"`
+	Id                    openapi_types.UUID   `json:"id"`
+	Implementation        string               `json:"implementation"`
+	IncludeHealthWarnings bool                 `json:"includeHealthWarnings"`
+	Link                  string               `json:"link"`
+	Name                  string               `json:"name"`
+	OnHealthIssue         bool                 `json:"onHealthIssue"`
+	SupportsOnHealthIssue bool                 `json:"supportsOnHealthIssue"`
+	TestCommand           string               `json:"testCommand"`
+	UpdatedAt             time.Time            `json:"updatedAt"`
+}
+
+// IndexerProxyListResponse defines model for IndexerProxyListResponse.
+type IndexerProxyListResponse struct {
+	Proxies []IndexerProxy `json:"proxies"`
+}
+
+// IndexerProxyRequest defines model for IndexerProxyRequest.
+type IndexerProxyRequest struct {
+	Enabled               bool                 `json:"enabled"`
+	Fields                *[]IndexerFieldValue `json:"fields,omitempty"`
+	Implementation        string               `json:"implementation"`
+	IncludeHealthWarnings bool                 `json:"includeHealthWarnings"`
+	Link                  string               `json:"link"`
+	Name                  string               `json:"name"`
+	OnHealthIssue         bool                 `json:"onHealthIssue"`
+}
+
 // IndexerRequest defines model for IndexerRequest.
 type IndexerRequest struct {
-	ApiKey     *string     `json:"apiKey,omitempty"`
-	BaseUrl    string      `json:"baseUrl"`
-	Categories *[]int32    `json:"categories,omitempty"`
-	Enabled    bool        `json:"enabled"`
-	Name       string      `json:"name"`
-	Priority   int32       `json:"priority"`
-	Type       IndexerType `json:"type"`
+	ApiKey             *string              `json:"apiKey,omitempty"`
+	AppProfileId       *string              `json:"appProfileId,omitempty"`
+	BaseUrl            string               `json:"baseUrl"`
+	Categories         *[]int32             `json:"categories,omitempty"`
+	DefinitionId       string               `json:"definitionId"`
+	Enabled            bool                 `json:"enabled"`
+	Fields             *[]IndexerFieldValue `json:"fields,omitempty"`
+	Implementation     *string              `json:"implementation,omitempty"`
+	ImplementationName *string              `json:"implementationName,omitempty"`
+	MinimumSeeders     *int32               `json:"minimumSeeders,omitempty"`
+	Name               string               `json:"name"`
+	PackSeedTime       *int32               `json:"packSeedTime,omitempty"`
+	PreferMagnetUrl    *bool                `json:"preferMagnetUrl,omitempty"`
+	Priority           int32                `json:"priority"`
+	Redirect           *bool                `json:"redirect,omitempty"`
+	SeedRatio          *float64             `json:"seedRatio,omitempty"`
+	SeedTime           *int32               `json:"seedTime,omitempty"`
 }
 
 // IndexerSearchCacheEntry defines model for IndexerSearchCacheEntry.
 type IndexerSearchCacheEntry struct {
-	CreatedAt   time.Time          `json:"createdAt"`
-	Expired     bool               `json:"expired"`
-	ExpiresAt   time.Time          `json:"expiresAt"`
-	IndexerId   openapi_types.UUID `json:"indexerId"`
-	IndexerName string             `json:"indexerName"`
-	IndexerType IndexerType        `json:"indexerType"`
-	MediaType   MediaType          `json:"mediaType"`
-	Query       string             `json:"query"`
-	ResultCount int32              `json:"resultCount"`
-	UpdatedAt   time.Time          `json:"updatedAt"`
+	CreatedAt       time.Time          `json:"createdAt"`
+	Expired         bool               `json:"expired"`
+	ExpiresAt       time.Time          `json:"expiresAt"`
+	IndexerId       openapi_types.UUID `json:"indexerId"`
+	IndexerName     string             `json:"indexerName"`
+	IndexerProtocol IndexerProtocol    `json:"indexerProtocol"`
+	MediaType       MediaType          `json:"mediaType"`
+	Query           string             `json:"query"`
+	ResultCount     int32              `json:"resultCount"`
+	UpdatedAt       time.Time          `json:"updatedAt"`
 }
 
 // IndexerSearchCacheStats defines model for IndexerSearchCacheStats.
@@ -1055,16 +1284,16 @@ type IndexerSearchCacheStats struct {
 
 // IndexerSearchHistoryEntry defines model for IndexerSearchHistoryEntry.
 type IndexerSearchHistoryEntry struct {
-	CacheHit    bool        `json:"cacheHit"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	Error       *string     `json:"error,omitempty"`
-	IndexerName string      `json:"indexerName"`
-	IndexerType IndexerType `json:"indexerType"`
-	MediaType   MediaType   `json:"mediaType"`
-	Query       string      `json:"query"`
-	Response    string      `json:"response"`
-	ResultCount int32       `json:"resultCount"`
-	Success     bool        `json:"success"`
+	CacheHit        bool            `json:"cacheHit"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	Error           *string         `json:"error,omitempty"`
+	IndexerName     string          `json:"indexerName"`
+	IndexerProtocol IndexerProtocol `json:"indexerProtocol"`
+	MediaType       MediaType       `json:"mediaType"`
+	Query           string          `json:"query"`
+	Response        string          `json:"response"`
+	ResultCount     int32           `json:"resultCount"`
+	Success         bool            `json:"success"`
 }
 
 // IndexerSearchResponse defines model for IndexerSearchResponse.
@@ -1083,9 +1312,6 @@ type IndexerSearchSettings struct {
 	CacheDurationMinutes         int32 `json:"cacheDurationMinutes"`
 	HistoryRetentionDays         int32 `json:"historyRetentionDays"`
 }
-
-// IndexerType defines model for IndexerType.
-type IndexerType string
 
 // IntegrationTestResponse defines model for IntegrationTestResponse.
 type IntegrationTestResponse struct {
@@ -1971,18 +2197,18 @@ type ReleaseBlocklistListResponse struct {
 
 // ReleaseCandidate defines model for ReleaseCandidate.
 type ReleaseCandidate struct {
-	Guid        *string               `json:"guid,omitempty"`
-	Id          openapi_types.UUID    `json:"id"`
-	IndexerId   *openapi_types.UUID   `json:"indexerId,omitempty"`
-	IndexerName string                `json:"indexerName"`
-	IndexerType IndexerType           `json:"indexerType"`
-	InfoUrl     *string               `json:"infoUrl,omitempty"`
-	Match       ReleaseCandidateMatch `json:"match"`
-	Peers       *int32                `json:"peers,omitempty"`
-	PublishedAt *time.Time            `json:"publishedAt,omitempty"`
-	Seeders     *int32                `json:"seeders,omitempty"`
-	SizeBytes   int64                 `json:"sizeBytes"`
-	Title       string                `json:"title"`
+	Guid            *string               `json:"guid,omitempty"`
+	Id              openapi_types.UUID    `json:"id"`
+	IndexerId       *openapi_types.UUID   `json:"indexerId,omitempty"`
+	IndexerName     string                `json:"indexerName"`
+	IndexerProtocol IndexerProtocol       `json:"indexerProtocol"`
+	InfoUrl         *string               `json:"infoUrl,omitempty"`
+	Match           ReleaseCandidateMatch `json:"match"`
+	Peers           *int32                `json:"peers,omitempty"`
+	PublishedAt     *time.Time            `json:"publishedAt,omitempty"`
+	Seeders         *int32                `json:"seeders,omitempty"`
+	SizeBytes       int64                 `json:"sizeBytes"`
+	Title           string                `json:"title"`
 }
 
 // ReleaseCandidateMatch defines model for ReleaseCandidateMatch.
@@ -2419,6 +2645,12 @@ type UpdateDownloadClientJSONRequestBody = DownloadClientRequest
 // UpdateFileNamingSettingsJSONRequestBody defines body for UpdateFileNamingSettings for application/json ContentType.
 type UpdateFileNamingSettingsJSONRequestBody = FileNamingSettingsRequest
 
+// CreateIndexerProxyJSONRequestBody defines body for CreateIndexerProxy for application/json ContentType.
+type CreateIndexerProxyJSONRequestBody = IndexerProxyRequest
+
+// UpdateIndexerProxyJSONRequestBody defines body for UpdateIndexerProxy for application/json ContentType.
+type UpdateIndexerProxyJSONRequestBody = IndexerProxyRequest
+
 // UpdateIndexerSearchSettingsJSONRequestBody defines body for UpdateIndexerSearchSettings for application/json ContentType.
 type UpdateIndexerSearchSettingsJSONRequestBody = IndexerSearchSettings
 
@@ -2427,6 +2659,9 @@ type ClearIndexerSearchCacheByPatternJSONRequestBody = MetadataCacheClearRequest
 
 // CreateIndexerJSONRequestBody defines body for CreateIndexer for application/json ContentType.
 type CreateIndexerJSONRequestBody = IndexerRequest
+
+// BulkUpdateIndexersJSONRequestBody defines body for BulkUpdateIndexers for application/json ContentType.
+type BulkUpdateIndexersJSONRequestBody = IndexerBulkUpdateRequest
 
 // UpdateIndexerJSONRequestBody defines body for UpdateIndexer for application/json ContentType.
 type UpdateIndexerJSONRequestBody = IndexerRequest
@@ -2652,6 +2887,30 @@ type ServerInterface interface {
 	// Update file naming settings
 	// (PUT /settings/file-naming)
 	UpdateFileNamingSettings(w http.ResponseWriter, r *http.Request)
+	// List indexer app profiles
+	// (GET /settings/indexer-app-profiles)
+	ListIndexerAppProfiles(w http.ResponseWriter, r *http.Request)
+	// List available indexer definitions
+	// (GET /settings/indexer-catalog)
+	ListIndexerCatalog(w http.ResponseWriter, r *http.Request)
+	// Get an indexer definition
+	// (GET /settings/indexer-catalog/{definitionId})
+	GetIndexerCatalogDefinition(w http.ResponseWriter, r *http.Request, definitionId string)
+	// List indexer proxies
+	// (GET /settings/indexer-proxies)
+	ListIndexerProxies(w http.ResponseWriter, r *http.Request)
+	// Create an indexer proxy
+	// (POST /settings/indexer-proxies)
+	CreateIndexerProxy(w http.ResponseWriter, r *http.Request)
+	// Delete an indexer proxy
+	// (DELETE /settings/indexer-proxies/{id})
+	DeleteIndexerProxy(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update an indexer proxy
+	// (PUT /settings/indexer-proxies/{id})
+	UpdateIndexerProxy(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Test an indexer proxy
+	// (POST /settings/indexer-proxies/{id}/test)
+	TestIndexerProxy(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Inspect indexer search cache and query history
 	// (GET /settings/indexer-search)
 	GetIndexerSearch(w http.ResponseWriter, r *http.Request, params GetIndexerSearchParams)
@@ -2676,9 +2935,15 @@ type ServerInterface interface {
 	// Create an indexer
 	// (POST /settings/indexers)
 	CreateIndexer(w http.ResponseWriter, r *http.Request)
+	// Bulk update indexers
+	// (PUT /settings/indexers/bulk)
+	BulkUpdateIndexers(w http.ResponseWriter, r *http.Request)
 	// Delete an indexer
 	// (DELETE /settings/indexers/{id})
 	DeleteIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get a configured indexer
+	// (GET /settings/indexers/{id})
+	GetIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Update an indexer
 	// (PUT /settings/indexers/{id})
 	UpdateIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -3180,6 +3445,54 @@ func (_ Unimplemented) UpdateFileNamingSettings(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// List indexer app profiles
+// (GET /settings/indexer-app-profiles)
+func (_ Unimplemented) ListIndexerAppProfiles(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List available indexer definitions
+// (GET /settings/indexer-catalog)
+func (_ Unimplemented) ListIndexerCatalog(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get an indexer definition
+// (GET /settings/indexer-catalog/{definitionId})
+func (_ Unimplemented) GetIndexerCatalogDefinition(w http.ResponseWriter, r *http.Request, definitionId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List indexer proxies
+// (GET /settings/indexer-proxies)
+func (_ Unimplemented) ListIndexerProxies(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create an indexer proxy
+// (POST /settings/indexer-proxies)
+func (_ Unimplemented) CreateIndexerProxy(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete an indexer proxy
+// (DELETE /settings/indexer-proxies/{id})
+func (_ Unimplemented) DeleteIndexerProxy(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update an indexer proxy
+// (PUT /settings/indexer-proxies/{id})
+func (_ Unimplemented) UpdateIndexerProxy(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test an indexer proxy
+// (POST /settings/indexer-proxies/{id}/test)
+func (_ Unimplemented) TestIndexerProxy(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Inspect indexer search cache and query history
 // (GET /settings/indexer-search)
 func (_ Unimplemented) GetIndexerSearch(w http.ResponseWriter, r *http.Request, params GetIndexerSearchParams) {
@@ -3228,9 +3541,21 @@ func (_ Unimplemented) CreateIndexer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Bulk update indexers
+// (PUT /settings/indexers/bulk)
+func (_ Unimplemented) BulkUpdateIndexers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Delete an indexer
 // (DELETE /settings/indexers/{id})
 func (_ Unimplemented) DeleteIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a configured indexer
+// (GET /settings/indexers/{id})
+func (_ Unimplemented) GetIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5586,6 +5911,214 @@ func (siw *ServerInterfaceWrapper) UpdateFileNamingSettings(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// ListIndexerAppProfiles operation middleware
+func (siw *ServerInterfaceWrapper) ListIndexerAppProfiles(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIndexerAppProfiles(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIndexerCatalog operation middleware
+func (siw *ServerInterfaceWrapper) ListIndexerCatalog(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIndexerCatalog(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetIndexerCatalogDefinition operation middleware
+func (siw *ServerInterfaceWrapper) GetIndexerCatalogDefinition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "definitionId" -------------
+	var definitionId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "definitionId", chi.URLParam(r, "definitionId"), &definitionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "definitionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIndexerCatalogDefinition(w, r, definitionId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListIndexerProxies operation middleware
+func (siw *ServerInterfaceWrapper) ListIndexerProxies(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListIndexerProxies(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateIndexerProxy operation middleware
+func (siw *ServerInterfaceWrapper) CreateIndexerProxy(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateIndexerProxy(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteIndexerProxy operation middleware
+func (siw *ServerInterfaceWrapper) DeleteIndexerProxy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteIndexerProxy(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateIndexerProxy operation middleware
+func (siw *ServerInterfaceWrapper) UpdateIndexerProxy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateIndexerProxy(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestIndexerProxy operation middleware
+func (siw *ServerInterfaceWrapper) TestIndexerProxy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestIndexerProxy(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetIndexerSearch operation middleware
 func (siw *ServerInterfaceWrapper) GetIndexerSearch(w http.ResponseWriter, r *http.Request) {
 
@@ -5823,6 +6356,26 @@ func (siw *ServerInterfaceWrapper) CreateIndexer(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// BulkUpdateIndexers operation middleware
+func (siw *ServerInterfaceWrapper) BulkUpdateIndexers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.BulkUpdateIndexers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteIndexer operation middleware
 func (siw *ServerInterfaceWrapper) DeleteIndexer(w http.ResponseWriter, r *http.Request) {
 
@@ -5846,6 +6399,38 @@ func (siw *ServerInterfaceWrapper) DeleteIndexer(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteIndexer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetIndexer operation middleware
+func (siw *ServerInterfaceWrapper) GetIndexer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetIndexer(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7744,6 +8329,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/settings/file-naming", wrapper.UpdateFileNamingSettings)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/indexer-app-profiles", wrapper.ListIndexerAppProfiles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/indexer-catalog", wrapper.ListIndexerCatalog)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/indexer-catalog/{definitionId}", wrapper.GetIndexerCatalogDefinition)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/indexer-proxies", wrapper.ListIndexerProxies)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/indexer-proxies", wrapper.CreateIndexerProxy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/indexer-proxies/{id}", wrapper.DeleteIndexerProxy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/indexer-proxies/{id}", wrapper.UpdateIndexerProxy)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/indexer-proxies/{id}/test", wrapper.TestIndexerProxy)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/indexer-search", wrapper.GetIndexerSearch)
 	})
 	r.Group(func(r chi.Router) {
@@ -7768,7 +8377,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/settings/indexers", wrapper.CreateIndexer)
 	})
 	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/indexers/bulk", wrapper.BulkUpdateIndexers)
+	})
+	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/indexers/{id}", wrapper.DeleteIndexer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/indexers/{id}", wrapper.GetIndexer)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/indexers/{id}", wrapper.UpdateIndexer)

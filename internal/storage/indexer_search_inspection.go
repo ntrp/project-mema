@@ -24,7 +24,7 @@ func (s *SettingsStore) ListIndexerSearchCacheEntries(ctx context.Context, limit
 	rows, err := s.pool.Query(ctx, `
 		select i.id,
 			i.name,
-			i.type,
+			i.protocol,
 			c.media_type,
 			c.query,
 			c.result_count,
@@ -48,7 +48,7 @@ func (s *SettingsStore) ListIndexerSearchCacheEntries(ctx context.Context, limit
 		if err := rows.Scan(
 			&entry.IndexerID,
 			&entry.IndexerName,
-			&entry.IndexerType,
+			&entry.IndexerProtocol,
 			&entry.MediaType,
 			&entry.Query,
 			&entry.ResultCount,
@@ -74,7 +74,7 @@ func (s *SettingsStore) GetIndexerSearchCacheEntry(
 	err := s.pool.QueryRow(ctx, `
 		select i.id,
 			i.name,
-			i.type,
+			i.protocol,
 			c.media_type,
 			c.query,
 			c.result_count,
@@ -88,7 +88,7 @@ func (s *SettingsStore) GetIndexerSearchCacheEntry(
 	`, indexerID, mediaType, query).Scan(
 		&entry.IndexerID,
 		&entry.IndexerName,
-		&entry.IndexerType,
+		&entry.IndexerProtocol,
 		&entry.MediaType,
 		&entry.Query,
 		&entry.ResultCount,
@@ -103,7 +103,7 @@ func (s *SettingsStore) GetIndexerSearchCacheEntry(
 func (s *SettingsStore) ListIndexerSearchHistoryEntries(ctx context.Context, limit int32) ([]IndexerSearchHistoryEntry, error) {
 	limit = inspectionLimit(limit)
 	rows, err := s.pool.Query(ctx, `
-		select indexer_name, indexer_type, media_type, query, cache_hit, success,
+		select indexer_name, indexer_protocol, media_type, query, cache_hit, success,
 			result_count, error, response::text, created_at
 		from app.indexer_search_history
 		order by created_at desc
@@ -119,7 +119,7 @@ func (s *SettingsStore) ListIndexerSearchHistoryEntries(ctx context.Context, lim
 		var entry IndexerSearchHistoryEntry
 		if err := rows.Scan(
 			&entry.IndexerName,
-			&entry.IndexerType,
+			&entry.IndexerProtocol,
 			&entry.MediaType,
 			&entry.Query,
 			&entry.CacheHit,

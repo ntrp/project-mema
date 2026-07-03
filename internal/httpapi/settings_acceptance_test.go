@@ -97,25 +97,25 @@ func TestScenarioSCNSettings004AdminManagesIndexerConfiguration(t *testing.T) {
 
 	var created Indexer
 	client.doJSON(t, http.MethodPost, "/settings/indexers", IndexerRequest{
-		Name:       "Scenario Torznab",
-		Type:       "torznab",
-		BaseUrl:    provider.URL + "/torznab/api",
-		Enabled:    true,
-		Priority:   10,
-		Categories: &categories,
+		DefinitionId: "generic-torznab",
+		Name:         "Scenario Torznab",
+		BaseUrl:      provider.URL + "/torznab/api",
+		Enabled:      true,
+		Priority:     10,
+		Categories:   &categories,
 	}, http.StatusCreated, &created)
-	if created.Name != "Scenario Torznab" || created.Type != "torznab" || !created.Enabled {
+	if created.Name != "Scenario Torznab" || created.Protocol != IndexerProtocolTorrent || !created.Enabled {
 		t.Fatalf("created indexer = %#v", created)
 	}
 
 	var updated Indexer
 	client.doJSON(t, http.MethodPut, "/settings/indexers/"+created.Id.String(), IndexerRequest{
-		Name:       "Updated Torznab",
-		Type:       "torznab",
-		BaseUrl:    provider.URL + "/torznab/api",
-		Enabled:    false,
-		Priority:   20,
-		Categories: &categories,
+		DefinitionId: "generic-torznab",
+		Name:         "Updated Torznab",
+		BaseUrl:      provider.URL + "/torznab/api",
+		Enabled:      false,
+		Priority:     20,
+		Categories:   &categories,
 	}, http.StatusOK, &updated)
 	if updated.Name != "Updated Torznab" || updated.Enabled {
 		t.Fatalf("updated indexer = %#v", updated)

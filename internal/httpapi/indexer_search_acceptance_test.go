@@ -74,7 +74,7 @@ func seedIndexerSearchState(t *testing.T, ctx context.Context, store *storage.Se
 	t.Helper()
 	indexer, err := store.CreateIndexer(ctx, storage.IndexerInput{
 		Name:       "Scenario Search Indexer",
-		Type:       "torznab",
+		Protocol:   "torrent",
 		BaseURL:    "http://indexer.local",
 		Categories: []int32{2000},
 		Enabled:    true,
@@ -88,15 +88,15 @@ func seedIndexerSearchState(t *testing.T, ctx context.Context, store *storage.Se
 		t.Fatal(err)
 	}
 	if _, err := store.RecordIndexerSearchHistory(ctx, storage.IndexerSearchHistoryInput{
-		IndexerID:   indexer.ID,
-		IndexerName: indexer.Name,
-		IndexerType: indexer.Type,
-		MediaType:   "movie",
-		Query:       query,
-		CacheHit:    false,
-		Success:     true,
-		ResultCount: 1,
-		Response:    []map[string]string{{"title": "Result"}},
+		IndexerID:       indexer.ID,
+		IndexerName:     indexer.Name,
+		IndexerProtocol: indexer.Protocol,
+		MediaType:       "movie",
+		Query:           query,
+		CacheHit:        false,
+		Success:         true,
+		ResultCount:     1,
+		Response:        []map[string]string{{"title": "Result"}},
 	}); err != nil {
 		t.Fatal(err)
 	}

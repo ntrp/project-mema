@@ -36,7 +36,7 @@ func TestSCNIntegrations001TorznabSearchMapsReleaseFeed(t *testing.T) {
 	releases, err := NewService(client).Search(context.Background(), Config{
 		ID:         "idx-1",
 		Name:       "Local Torznab",
-		Type:       "torznab",
+		Protocol:   "torrent",
 		BaseURL:    "http://indexer.local/api",
 		APIKey:     stringPtr("secret"),
 		Categories: []int32{2000, 2010},
@@ -80,8 +80,8 @@ func TestSCNIntegrations001TorznabSearchReturnsStatusErrorWithRetryAfter(t *test
 	})
 
 	_, err := NewService(client).Search(context.Background(), Config{
-		Type:    "torznab",
-		BaseURL: "http://indexer.local/api",
+		Protocol: "torrent",
+		BaseURL:  "http://indexer.local/api",
 	}, "Scenario Movie", "movie")
 	if err == nil {
 		t.Fatal("expected status error")

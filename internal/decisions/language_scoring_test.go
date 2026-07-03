@@ -103,15 +103,15 @@ func TestSCNMedia002ProtocolPreferenceBreaksReleaseTie(t *testing.T) {
 		&profile,
 		nil,
 		[]storage.ReleaseCandidateInput{
-			{Title: "Scenario.Movie.2026.1080p.WEBDL", IndexerType: "torznab", SizeBytes: 10},
-			{Title: "Scenario.Movie.2026.1080p.WEBDL", IndexerType: "nzb", SizeBytes: 10},
+			{Title: "Scenario.Movie.2026.1080p.WEBDL", IndexerProtocol: "torrent", SizeBytes: 10},
+			{Title: "Scenario.Movie.2026.1080p.WEBDL", IndexerProtocol: "nzb", SizeBytes: 10},
 		},
 	)
 
 	if !ok {
 		t.Fatal("expected release decision")
 	}
-	if decision.Release.IndexerType != "nzb" {
+	if decision.Release.IndexerProtocol != "nzb" {
 		t.Fatalf("expected usenet release, got %#v", decision.Release)
 	}
 }

@@ -31,16 +31,19 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 
 	categories := []int32{2000, 2040}
 	indexer, ok := indexerInput(httptest.NewRecorder(), IndexerRequest{
-		Name:       " Indexer ",
-		Type:       Torznab,
-		BaseUrl:    " http://indexer.local ",
-		ApiKey:     &apiKey,
-		Categories: &categories,
-		Enabled:    true,
-		Priority:   10,
+		DefinitionId: "generic-torznab",
+		Name:         " Indexer ",
+		BaseUrl:      " http://indexer.local ",
+		ApiKey:       &apiKey,
+		Categories:   &categories,
+		Enabled:      true,
+		Priority:     10,
 	})
 	if !ok || indexer.Name != "Indexer" || len(indexer.Categories) != 2 {
 		t.Fatalf("indexer input = %#v, ok = %v", indexer, ok)
+	}
+	if indexer.IndexerURLs == nil || indexer.LegacyURLs == nil {
+		t.Fatalf("indexer URL arrays must be normalized to empty slices: %#v", indexer)
 	}
 
 	token := " access "
@@ -62,7 +65,7 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 		return ok
 	})
 	assertBadRequest(t, func(w http.ResponseWriter) bool {
-		_, ok := indexerInput(w, IndexerRequest{Name: "Bad", Type: IndexerType("bad"), BaseUrl: "http://x"})
+		_, ok := indexerInput(w, IndexerRequest{DefinitionId: "bad", Name: "Bad", BaseUrl: "http://x"})
 		return ok
 	})
 	assertBadRequest(t, func(w http.ResponseWriter) bool {

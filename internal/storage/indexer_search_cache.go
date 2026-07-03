@@ -11,16 +11,16 @@ import (
 )
 
 type IndexerSearchHistoryInput struct {
-	IndexerID   uuid.UUID
-	IndexerName string
-	IndexerType string
-	MediaType   string
-	Query       string
-	CacheHit    bool
-	Success     bool
-	ResultCount int32
-	Error       *string
-	Response    any
+	IndexerID       uuid.UUID
+	IndexerName     string
+	IndexerProtocol string
+	MediaType       string
+	Query           string
+	CacheHit        bool
+	Success         bool
+	ResultCount     int32
+	Error           *string
+	Response        any
 }
 
 func (s *SettingsStore) GetIndexerSearchSettings(ctx context.Context) (IndexerSearchSettings, error) {
@@ -113,16 +113,16 @@ func (s *SettingsStore) RecordIndexerSearchHistory(ctx context.Context, input In
 	var entry IndexerSearchHistoryEntry
 	err = s.pool.QueryRow(ctx, `
 		insert into app.indexer_search_history (
-			id, indexer_id, indexer_name, indexer_type, media_type, query, cache_hit,
+			id, indexer_id, indexer_name, indexer_protocol, media_type, query, cache_hit,
 			success, result_count, error, response
 		)
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		returning indexer_name, indexer_type, media_type, query, cache_hit, success,
+		returning indexer_name, indexer_protocol, media_type, query, cache_hit, success,
 			result_count, error, response::text, created_at
-	`, uuid.New(), input.IndexerID, input.IndexerName, input.IndexerType, input.MediaType, input.Query,
+	`, uuid.New(), input.IndexerID, input.IndexerName, input.IndexerProtocol, input.MediaType, input.Query,
 		input.CacheHit, input.Success, input.ResultCount, input.Error, raw).Scan(
 		&entry.IndexerName,
-		&entry.IndexerType,
+		&entry.IndexerProtocol,
 		&entry.MediaType,
 		&entry.Query,
 		&entry.CacheHit,

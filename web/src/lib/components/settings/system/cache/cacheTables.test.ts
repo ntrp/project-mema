@@ -100,7 +100,7 @@ describe('cache tables (SCN-SETTINGS-015)', () => {
 				{
 					indexerId: 'indexer-1',
 					indexerName: 'Torznab Local',
-					indexerType: 'torznab',
+					indexerProtocol: 'torrent',
 					mediaType: 'movie',
 					query: 'release snapshot 2160p',
 					resultCount: 12,

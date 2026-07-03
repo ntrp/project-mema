@@ -13,7 +13,7 @@ func TestScenarioSCNSettings015StorageIndexerSearchCacheAndHistory(t *testing.T)
 	suffix := uuid.NewString()
 	indexer, err := store.CreateIndexer(ctx, IndexerInput{
 		Name:       "Cache Indexer " + suffix,
-		Type:       "torznab",
+		Protocol:   "torrent",
 		BaseURL:    "http://indexer.cache/" + suffix,
 		Categories: []int32{},
 		Enabled:    true,
@@ -43,16 +43,16 @@ func TestScenarioSCNSettings015StorageIndexerSearchCacheAndHistory(t *testing.T)
 
 	errorText := "timeout"
 	if _, err := store.RecordIndexerSearchHistory(ctx, IndexerSearchHistoryInput{
-		IndexerID:   indexer.ID,
-		IndexerName: indexer.Name,
-		IndexerType: indexer.Type,
-		MediaType:   "movie",
-		Query:       query,
-		CacheHit:    true,
-		Success:     false,
-		ResultCount: 1,
-		Error:       &errorText,
-		Response:    map[string]any{"error": errorText},
+		IndexerID:       indexer.ID,
+		IndexerName:     indexer.Name,
+		IndexerProtocol: indexer.Protocol,
+		MediaType:       "movie",
+		Query:           query,
+		CacheHit:        true,
+		Success:         false,
+		ResultCount:     1,
+		Error:           &errorText,
+		Response:        map[string]any{"error": errorText},
 	}); err != nil {
 		t.Fatalf("record history: %v", err)
 	}

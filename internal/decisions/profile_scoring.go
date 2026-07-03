@@ -134,7 +134,7 @@ func rankContributors(
 		{Label: fmt.Sprintf("Quality rank: %s", parsed.Quality), Score: qualityScore},
 		{Label: "Custom formats", Score: customScore},
 		{Label: "Languages", Score: languageScore},
-		{Label: fmt.Sprintf("Protocol: %s", meta.IndexerType), Score: 0},
+		{Label: fmt.Sprintf("Protocol: %s", meta.IndexerProtocol), Score: 0},
 		{Label: "Size bytes", Score: int32(clampInt64(meta.SizeBytes))},
 	}
 	if meta.Seeders != nil {

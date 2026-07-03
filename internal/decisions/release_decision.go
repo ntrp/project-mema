@@ -106,8 +106,8 @@ func betterRelease(
 	if leftMatch.CustomFormatScore != rightMatch.CustomFormatScore {
 		return leftMatch.CustomFormatScore > rightMatch.CustomFormatScore
 	}
-	if leftProtocol := protocolRank(left.IndexerType, profile); leftProtocol != protocolRank(right.IndexerType, profile) {
-		return leftProtocol > protocolRank(right.IndexerType, profile)
+	if leftProtocol := protocolRank(left.IndexerProtocol, profile); leftProtocol != protocolRank(right.IndexerProtocol, profile) {
+		return leftProtocol > protocolRank(right.IndexerProtocol, profile)
 	}
 	if packRank := seasonPackRank(left.Title, profile) - seasonPackRank(right.Title, profile); packRank != 0 {
 		return packRank > 0
@@ -150,12 +150,12 @@ func seasonPackRank(title string, profile *storage.MediaProfile) int {
 	return 0
 }
 
-func protocolRank(indexerType string, profile *storage.MediaProfile) int {
+func protocolRank(indexerProtocol string, profile *storage.MediaProfile) int {
 	if profile == nil || profile.PreferredProtocol == "" || profile.PreferredProtocol == "any" {
 		return 0
 	}
 	protocol := "torrent"
-	if strings.EqualFold(indexerType, "nzb") || strings.EqualFold(indexerType, "usenet") {
+	if strings.EqualFold(indexerProtocol, "nzb") || strings.EqualFold(indexerProtocol, "usenet") {
 		protocol = "usenet"
 	}
 	if protocol == profile.PreferredProtocol {
@@ -210,7 +210,7 @@ func releaseCandidateFromInput(release storage.ReleaseCandidateInput) storage.Re
 		MediaItemID:      release.MediaItemID,
 		IndexerID:        release.IndexerID,
 		IndexerName:      release.IndexerName,
-		IndexerType:      release.IndexerType,
+		IndexerProtocol:  release.IndexerProtocol,
 		Title:            release.Title,
 		DownloadURL:      release.DownloadURL,
 		InfoURL:          release.InfoURL,

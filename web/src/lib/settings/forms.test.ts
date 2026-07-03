@@ -36,7 +36,7 @@ describe('settings form normalization', () => {
 		expect(
 			normalizeIndexerForm({
 				name: ' Torznab ',
-				type: 'torznab',
+				definitionId: 'generic-torznab',
 				baseUrl: ' http://indexer.local ',
 				apiKey: ' key ',
 				categoriesText: '2000, bad, 2040',

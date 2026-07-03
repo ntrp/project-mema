@@ -14,7 +14,7 @@ import type { ReleaseCandidate } from '$lib/settings/types';
 
 function release(overrides: Partial<ReleaseCandidate> = {}): ReleaseCandidate {
 	return {
-		indexerType: 'torznab',
+		indexerProtocol: 'torrent',
 		sizeBytes: 8 * 1024 ** 3,
 		seeders: 12,
 		peers: 20,
@@ -30,10 +30,10 @@ function release(overrides: Partial<ReleaseCandidate> = {}): ReleaseCandidate {
 
 describe('release candidate display labels (SCN-MEDIA-002)', () => {
 	it('labels release source and source badge by indexer type', () => {
-		expect(releaseSource(release({ indexerType: 'torznab' }))).toBe('torrent');
-		expect(releaseSource(release({ indexerType: 'newznab' }))).toBe('nzb');
-		expect(releaseSourceBadgeClass(release({ indexerType: 'torznab' }))).toContain('emerald');
-		expect(releaseSourceBadgeClass(release({ indexerType: 'newznab' }))).toContain('sky');
+		expect(releaseSource(release({ indexerProtocol: 'torrent' }))).toBe('torrent');
+		expect(releaseSource(release({ indexerProtocol: 'usenet' }))).toBe('nzb');
+		expect(releaseSourceBadgeClass(release({ indexerProtocol: 'torrent' }))).toContain('emerald');
+		expect(releaseSourceBadgeClass(release({ indexerProtocol: 'usenet' }))).toContain('sky');
 	});
 
 	it('formats age, size, peer, language, score, and quality labels', () => {

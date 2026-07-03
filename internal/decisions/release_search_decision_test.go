@@ -60,12 +60,12 @@ func TestSCNMedia002CandidateInputMatchPreservesMetadata(t *testing.T) {
 	match := EvaluateReleaseCandidateInputMatchWithContext(
 		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},
 		storage.ReleaseCandidateInput{
-			Title:       "Scenario.Movie.2026.1080p.WEBDL",
-			IndexerType: "torznab",
-			SizeBytes:   5,
-			Seeders:     &seeders,
-			Peers:       &peers,
-			PublishedAt: &publishedAt,
+			Title:           "Scenario.Movie.2026.1080p.WEBDL",
+			IndexerProtocol: "torrent",
+			SizeBytes:       5,
+			Seeders:         &seeders,
+			Peers:           &peers,
+			PublishedAt:     &publishedAt,
 		},
 		&storage.MediaProfile{QualityIDs: []string{"webdl-1080p"}},
 		nil,

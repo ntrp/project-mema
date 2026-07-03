@@ -23,7 +23,8 @@
 		<Table.Header>
 			<Table.Row>
 				<Table.Head>Name</Table.Head>
-				<Table.Head>Type</Table.Head>
+				<Table.Head>Protocol</Table.Head>
+				<Table.Head>Privacy</Table.Head>
 				<Table.Head>Base URL</Table.Head>
 				<Table.Head>Categories</Table.Head>
 				<Table.Head>Priority</Table.Head>
@@ -35,7 +36,8 @@
 			{#each indexers as item (item.id)}
 				<Table.Row>
 					<Table.Cell>{item.name}</Table.Cell>
-					<Table.Cell>{item.type}</Table.Cell>
+					<Table.Cell>{item.protocol}</Table.Cell>
+					<Table.Cell>{item.privacy} · {item.language}</Table.Cell>
 					<Table.Cell class="max-w-[320px] truncate">{item.baseUrl}</Table.Cell>
 					<Table.Cell>{(item.categories ?? []).join(', ') || '-'}</Table.Cell>
 					<Table.Cell>{item.priority}</Table.Cell>
@@ -73,7 +75,7 @@
 				</Table.Row>
 			{:else}
 				<Table.Row>
-					<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">
+					<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">
 						No indexers configured
 					</Table.Cell>
 				</Table.Row>

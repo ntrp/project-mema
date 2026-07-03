@@ -17,8 +17,8 @@ func TestTorznabCaps(t *testing.T) {
 	})
 
 	result := NewService(client).Test(context.Background(), Config{
-		Type:    "torznab",
-		BaseURL: "http://indexer.local/api",
+		Protocol: "torrent",
+		BaseURL:  "http://indexer.local/api",
 	})
 
 	if !result.Success {
@@ -37,8 +37,8 @@ func TestCapsDetectsWebUIHTML(t *testing.T) {
 	})
 
 	result := NewService(client).Test(context.Background(), Config{
-		Type:    "torznab",
-		BaseURL: "https://prowlarr.local/",
+		Protocol: "torrent",
+		BaseURL:  "https://prowlarr.local/",
 	})
 
 	if result.Success {
@@ -49,21 +49,18 @@ func TestCapsDetectsWebUIHTML(t *testing.T) {
 	}
 }
 
-func TestRSSFeed(t *testing.T) {
+func TestRSSProtocolIsNotAStandaloneIndexer(t *testing.T) {
 	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
 		return response(http.StatusOK, `<rss><channel><title>Feed</title><item><title>One</title></item></channel></rss>`), nil
 	})
 
 	result := NewService(client).Test(context.Background(), Config{
-		Type:    "rss",
-		BaseURL: "http://rss.local/feed",
+		Protocol: "rss",
+		BaseURL:  "http://rss.local/feed",
 	})
 
-	if !result.Success {
-		t.Fatalf("expected success, got %#v", result)
-	}
-	if got := result.Details["itemCount"]; got != 1 {
-		t.Fatalf("itemCount = %v", got)
+	if result.Success {
+		t.Fatalf("expected failure, got %#v", result)
 	}
 }
 

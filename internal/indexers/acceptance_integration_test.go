@@ -21,8 +21,8 @@ func TestScenarioSCNIntegrations001TorznabMockCapabilities(t *testing.T) {
 	t.Cleanup(mock.Close)
 
 	result := NewService(mock.Client()).Test(context.Background(), Config{
-		Type:    "torznab",
-		BaseURL: mock.URL + "/torznab/api",
+		Protocol: "torrent",
+		BaseURL:  mock.URL + "/torznab/api",
 	})
 
 	if !result.Success {
@@ -35,7 +35,7 @@ func TestScenarioSCNIntegrations001TorznabMockCapabilities(t *testing.T) {
 	releases, err := NewService(mock.Client()).Search(context.Background(), Config{
 		ID:         "scenario-indexer",
 		Name:       "Scenario Torznab",
-		Type:       "torznab",
+		Protocol:   "torrent",
 		BaseURL:    mock.URL + "/torznab/api",
 		Categories: []int32{2000, 2040},
 	}, "Example Movie", "movie")

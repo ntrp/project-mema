@@ -4,7 +4,7 @@ export type MatchSeverity = 'info' | 'warning' | 'error';
 export type MatchInfo = ReleaseCandidate['match'];
 
 export function releaseSource(release: ReleaseCandidate) {
-	return release.indexerType === 'torznab' ? 'torrent' : 'nzb';
+	return release.indexerProtocol === 'torrent' ? 'torrent' : 'nzb';
 }
 
 export function releaseSourceBadgeClass(release: ReleaseCandidate) {

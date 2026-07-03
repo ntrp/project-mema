@@ -62,17 +62,17 @@ func TestSCNMedia002ReleaseCandidateResponsePreservesIndexerAndMatchDetails(t *t
 	response := releaseCandidateResponse(
 		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},
 		storage.ReleaseCandidate{
-			ID:          releaseID,
-			IndexerID:   &indexerID,
-			IndexerName: "Local Torznab",
-			IndexerType: "torznab",
-			Title:       "Scenario.Movie.2026.1080p.WEBDL.German-GRP",
-			InfoURL:     &infoURL,
-			GUID:        &guid,
-			SizeBytes:   8 * 1024 * 1024 * 1024,
-			Seeders:     &seeders,
-			Peers:       &peers,
-			PublishedAt: &publishedAt,
+			ID:              releaseID,
+			IndexerID:       &indexerID,
+			IndexerName:     "Local Torznab",
+			IndexerProtocol: "torrent",
+			Title:           "Scenario.Movie.2026.1080p.WEBDL.German-GRP",
+			InfoURL:         &infoURL,
+			GUID:            &guid,
+			SizeBytes:       8 * 1024 * 1024 * 1024,
+			Seeders:         &seeders,
+			Peers:           &peers,
+			PublishedAt:     &publishedAt,
 		},
 		&storage.MediaProfile{QualityIDs: []string{"webdl-1080p"}, TargetLanguages: []string{"de"}},
 		nil,
@@ -82,7 +82,7 @@ func TestSCNMedia002ReleaseCandidateResponsePreservesIndexerAndMatchDetails(t *t
 	if response.Id != releaseID || response.IndexerId == nil || uuid.UUID(*response.IndexerId) != indexerID {
 		t.Fatalf("identity = id %s indexer %v", response.Id, response.IndexerId)
 	}
-	if response.IndexerName != "Local Torznab" || response.IndexerType != "torznab" {
+	if response.IndexerName != "Local Torznab" || response.IndexerProtocol != "torrent" {
 		t.Fatalf("indexer fields = %#v", response)
 	}
 	if response.InfoUrl == nil || *response.InfoUrl != infoURL || response.Guid == nil || *response.Guid != guid {
@@ -106,12 +106,12 @@ func TestSCNMedia002ReleaseCandidateResponseMarksBlocklistedRelease(t *testing.T
 	response := releaseCandidateResponseWithBlock(
 		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},
 		storage.ReleaseCandidate{
-			ID:          uuid.New(),
-			MediaItemID: uuid.New(),
-			IndexerName: "Local Indexer",
-			IndexerType: "newznab",
-			Title:       "Scenario.Movie.2026.1080p.WEBDL-GRP",
-			SizeBytes:   1,
+			ID:              uuid.New(),
+			MediaItemID:     uuid.New(),
+			IndexerName:     "Local Indexer",
+			IndexerProtocol: "usenet",
+			Title:           "Scenario.Movie.2026.1080p.WEBDL-GRP",
+			SizeBytes:       1,
 		},
 		nil,
 		nil,

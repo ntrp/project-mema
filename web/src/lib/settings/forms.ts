@@ -53,11 +53,15 @@ export function emptyDownloadClientForm(): DownloadClientForm {
 
 export function emptyIndexerForm(): IndexerForm {
 	return {
+		definitionId: 'generic-torznab',
 		name: '',
-		type: 'torznab',
 		baseUrl: '',
 		apiKey: '',
 		categoriesText: '',
+		fields: [],
+		redirect: true,
+		appProfileId: 'default',
+		preferMagnetUrl: false,
 		enabled: true,
 		priority: 100
 	};
@@ -107,11 +111,21 @@ export function downloadClientFormFromClient(client: DownloadClient): DownloadCl
 export function indexerFormFromIndexer(indexer: Indexer): IndexerForm {
 	return {
 		id: indexer.id,
+		definitionId: indexer.definitionId,
 		name: indexer.name,
-		type: indexer.type,
+		implementation: indexer.implementation,
+		implementationName: indexer.implementationName,
 		baseUrl: indexer.baseUrl,
 		apiKey: indexer.apiKey ?? '',
 		categoriesText: (indexer.categories ?? []).join(', '),
+		fields: indexer.fields ?? [],
+		redirect: indexer.redirect ?? true,
+		appProfileId: indexer.appProfileId ?? 'default',
+		minimumSeeders: indexer.minimumSeeders,
+		seedRatio: indexer.seedRatio,
+		seedTime: indexer.seedTime,
+		packSeedTime: indexer.packSeedTime,
+		preferMagnetUrl: indexer.preferMagnetUrl ?? false,
 		enabled: indexer.enabled,
 		priority: indexer.priority
 	};
@@ -147,11 +161,21 @@ export function normalizeDownloadClientForm(form: DownloadClientForm): DownloadC
 
 export function normalizeIndexerForm(form: IndexerForm): IndexerRequest {
 	return {
+		definitionId: form.definitionId,
 		name: form.name.trim(),
-		type: form.type,
+		implementation: form.implementation,
+		implementationName: form.implementationName,
 		baseUrl: form.baseUrl.trim(),
 		apiKey: optionalString(form.apiKey),
 		categories: parseCategories(form.categoriesText),
+		fields: form.fields ?? [],
+		redirect: form.redirect ?? true,
+		appProfileId: form.appProfileId ?? 'default',
+		minimumSeeders: form.minimumSeeders,
+		seedRatio: form.seedRatio,
+		seedTime: form.seedTime,
+		packSeedTime: form.packSeedTime,
+		preferMagnetUrl: form.preferMagnetUrl ?? false,
 		enabled: form.enabled,
 		priority: form.priority
 	};

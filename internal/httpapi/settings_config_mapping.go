@@ -50,10 +50,11 @@ func indexerConfig(indexer storage.Indexer) indexers.Config {
 	return indexers.Config{
 		ID:         indexer.ID.String(),
 		Name:       indexer.Name,
-		Type:       indexer.Type,
+		Protocol:   indexer.Protocol,
 		BaseURL:    indexer.BaseURL,
 		APIKey:     indexer.APIKey,
 		Categories: append([]int32(nil), indexer.Categories...),
+		Redirect:   indexer.Redirect,
 	}
 }
 
