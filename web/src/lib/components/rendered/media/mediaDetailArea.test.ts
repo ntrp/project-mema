@@ -2,7 +2,7 @@ import { render } from 'svelte/server';
 import type { Component, ComponentProps } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 
-import MediaDetail from '$lib/components/app/media/MediaDetail.svelte';
+import MediaDetail from '$lib/components/app/media/detail/MediaDetail.svelte';
 import RenderWithTooltip from '$lib/components/rendered/RenderWithTooltip.svelte';
 import type {
 	Language,

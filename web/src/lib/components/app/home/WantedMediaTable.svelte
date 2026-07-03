@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
-	import { releaseSearchQuery } from '$lib/components/app/media/releaseSearchQuery';
+	import { releaseSearchQuery } from '$lib/components/app/media/release-search/releaseSearchQuery';
 	import type { MediaItem } from '$lib/settings/types';
 
 	interface Props {

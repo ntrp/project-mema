@@ -10,9 +10,9 @@
 		MediaItem,
 		MediaSearchResult
 	} from '$lib/settings/types';
-	import MediaPosterCard from '../media/MediaPosterCard.svelte';
-	import PosterRowControls from '../media/PosterRowControls.svelte';
-	import { createPosterRowScroller } from '../media/posterRowScroller.svelte';
+	import MediaPosterCard from '$lib/components/app/media/posters/MediaPosterCard.svelte';
+	import PosterRowControls from '$lib/components/app/media/posters/PosterRowControls.svelte';
+	import { createPosterRowScroller } from '$lib/components/app/media/posters/posterRowScroller.svelte';
 
 	interface Props {
 		sections: MediaDiscoverSection[];

@@ -10,7 +10,7 @@ import {
 	rescanMediaItemFiles as rescanMediaItemFilesRequest,
 	updateMediaItem as updateMediaItemRequest
 } from '$lib/settings/api';
-import type { MediaActionSelection } from '$lib/components/app/media/mediaActionTypes';
+import type { MediaActionSelection } from '$lib/components/app/media/actions/mediaActionTypes';
 import type {
 	MediaItem,
 	MediaItemUpdateRequest,

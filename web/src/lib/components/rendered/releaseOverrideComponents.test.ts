@@ -1,12 +1,12 @@
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import ReleaseOverrideEpisodeSelect from '$lib/components/app/media/ReleaseOverrideEpisodeSelect.svelte';
-import ReleaseOverrideMovieField from '$lib/components/app/media/ReleaseOverrideMovieField.svelte';
-import ReleaseOverrideSeasonSelect from '$lib/components/app/media/ReleaseOverrideSeasonSelect.svelte';
-import ReleaseOverrideSeriesFields from '$lib/components/app/media/ReleaseOverrideSeriesFields.svelte';
-import type { SeasonOption } from '$lib/components/app/media/releaseOverrideSeriesOptions';
-import type { ReleaseOverrideDraft } from '$lib/components/app/media/releaseOverrideDetails';
+import ReleaseOverrideEpisodeSelect from '$lib/components/app/media/release-override/ReleaseOverrideEpisodeSelect.svelte';
+import ReleaseOverrideMovieField from '$lib/components/app/media/release-override/ReleaseOverrideMovieField.svelte';
+import ReleaseOverrideSeasonSelect from '$lib/components/app/media/release-override/ReleaseOverrideSeasonSelect.svelte';
+import ReleaseOverrideSeriesFields from '$lib/components/app/media/release-override/ReleaseOverrideSeriesFields.svelte';
+import type { SeasonOption } from '$lib/components/app/media/release-override/releaseOverrideSeriesOptions';
+import type { ReleaseOverrideDraft } from '$lib/components/app/media/release-override/releaseOverrideDetails';
 import type { MediaItem, MediaMetadataEpisode } from '$lib/settings/types';
 
 const seriesItem = {

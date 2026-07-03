@@ -3,7 +3,7 @@ import {
 	settingsPrimaryItem,
 	systemPrimaryItem
 } from '$lib/components/app/navigation/appNavigation';
-import { mediaMetadataDetail } from '$lib/components/app/media/mediaDetail';
+import { mediaMetadataDetail } from '$lib/components/app/media/detail/mediaDetail';
 import { emptyIndexerSearch, emptyMetadataCache } from '$lib/settings/api';
 import {
 	emptyCustomFormatForm,

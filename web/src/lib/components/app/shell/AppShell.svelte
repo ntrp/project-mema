@@ -5,9 +5,9 @@
 	import AppNav from '../navigation/AppNav.svelte';
 	import { routeStateFromPath } from '$lib/components/app/shell/controller/routeState';
 	import { createAppShellController } from '$lib/components/app/shell/controller/index.svelte';
-	import { imageUrl } from '../media/mediaDetail';
-	import MediaDeleteModal from '../media/MediaDeleteModal.svelte';
-	import MediaActionModal from '../media/MediaActionModal.svelte';
+	import { imageUrl } from '$lib/components/app/media/detail/mediaDetail';
+	import MediaDeleteModal from '$lib/components/app/media/actions/MediaDeleteModal.svelte';
+	import MediaActionModal from '$lib/components/app/media/actions/MediaActionModal.svelte';
 	import SidebarMenu from '../navigation/SidebarMenu.svelte';
 	import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';

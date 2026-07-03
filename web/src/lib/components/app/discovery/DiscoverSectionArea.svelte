@@ -9,7 +9,7 @@
 		MediaItem,
 		MediaSearchResult
 	} from '$lib/settings/types';
-	import MediaPosterCard from '../media/MediaPosterCard.svelte';
+	import MediaPosterCard from '$lib/components/app/media/posters/MediaPosterCard.svelte';
 
 	interface Props {
 		section?: MediaDiscoverSection;

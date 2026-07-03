@@ -5,7 +5,7 @@
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import type { MediaItem, MediaType } from '$lib/settings/types';
-	import PosterPlaceholder from '../media/PosterPlaceholder.svelte';
+	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
 
 	interface Props {
 		mediaType: MediaType;

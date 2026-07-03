@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import MediaFileDetailsAccordion from '$lib/components/app/media/MediaFileDetailsAccordion.svelte';
-import MediaFileSummary from '$lib/components/app/media/MediaFileSummary.svelte';
-import { missingRow, type MediaFileRow } from '$lib/components/app/media/mediaFiles';
+import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
+import MediaFileSummary from '$lib/components/app/media/files/MediaFileSummary.svelte';
+import { missingRow, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import { renderWithTooltip } from '$lib/components/rendered/renderHelpers';
 
 describe('rendered media file details (SCN-MEDIA-004)', () => {

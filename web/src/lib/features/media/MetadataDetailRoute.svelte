@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MetadataDetailArea from '$lib/components/app/media/MetadataDetailArea.svelte';
+	import MetadataDetailArea from '$lib/components/app/media/metadata/MetadataDetailArea.svelte';
 	import { getAppShellContext } from '$lib/features/app/appShellContext';
 
 	const app = getAppShellContext();

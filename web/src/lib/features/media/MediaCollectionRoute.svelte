@@ -1,5 +1,5 @@
 <script lang="ts">
-	import MediaCollectionArea from '$lib/components/app/media/MediaCollectionArea.svelte';
+	import MediaCollectionArea from '$lib/components/app/media/collection/MediaCollectionArea.svelte';
 	import { getAppShellContext } from '$lib/features/app/appShellContext';
 
 	const app = getAppShellContext();

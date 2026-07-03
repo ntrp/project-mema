@@ -1,7 +1,7 @@
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 
-import MediaEpisodeRow from '$lib/components/app/media/MediaEpisodeRow.svelte';
+import MediaEpisodeRow from '$lib/components/app/media/series/MediaEpisodeRow.svelte';
 import type { MediaMetadataEpisode } from '$lib/settings/types';
 
 describe('rendered media episode components (SCN-MEDIA-003)', () => {

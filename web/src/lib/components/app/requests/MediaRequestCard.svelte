@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import type { MediaRequest } from '$lib/settings/types';
-	import PosterPlaceholder from '../media/PosterPlaceholder.svelte';
+	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
 
 	interface Props {
 		request: MediaRequest;

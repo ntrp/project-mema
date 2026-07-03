@@ -6,8 +6,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { providerDisplayName, providerPageUrl } from '$lib/settings/providerLinks';
 	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
-	import MediaAddButton from '../media/MediaAddButton.svelte';
-	import PosterPlaceholder from '../media/PosterPlaceholder.svelte';
+	import MediaAddButton from '$lib/components/app/media/shared/MediaAddButton.svelte';
+	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
 
 	interface Props {
 		groups: MediaSearchGroup[];

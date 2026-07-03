@@ -1,8 +1,8 @@
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import MediaActionOptions from '$lib/components/app/media/MediaActionOptions.svelte';
-import MediaHero from '$lib/components/app/media/MediaHero.svelte';
+import MediaActionOptions from '$lib/components/app/media/actions/MediaActionOptions.svelte';
+import MediaHero from '$lib/components/app/media/detail/MediaHero.svelte';
 import type { LibraryFolder, MediaItem, QualityProfileOption } from '$lib/settings/types';
 
 describe('rendered media action surfaces (SCN-MEDIA-004)', () => {

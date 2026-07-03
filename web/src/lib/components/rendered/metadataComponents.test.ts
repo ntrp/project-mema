@@ -1,8 +1,8 @@
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import MediaMetadataCore from '$lib/components/app/media/MediaMetadataCore.svelte';
-import MediaMetadataHero from '$lib/components/app/media/MediaMetadataHero.svelte';
+import MediaMetadataCore from '$lib/components/app/media/metadata/MediaMetadataCore.svelte';
+import MediaMetadataHero from '$lib/components/app/media/metadata/MediaMetadataHero.svelte';
 import type { MediaMetadataDetails } from '$lib/settings/types';
 import { renderWithTooltip } from './renderHelpers';
 

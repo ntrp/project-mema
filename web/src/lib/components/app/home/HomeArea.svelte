@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ActivityList from '../activity/ActivityList.svelte';
 	import DiscoverBlacklistArea from '../discovery/DiscoverBlacklistArea.svelte';
-	import MediaDetail from '../media/MediaDetail.svelte';
+	import MediaDetail from '$lib/components/app/media/detail/MediaDetail.svelte';
 	import MediaItemList from './MediaItemList.svelte';
 	import MediaRequestArea from '../requests/MediaRequestArea.svelte';
 	import MediaSearchPanel from '../discovery/MediaSearchPanel.svelte';

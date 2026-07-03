@@ -1,8 +1,8 @@
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import MediaCollectionArea from '$lib/components/app/media/MediaCollectionArea.svelte';
-import MediaPeopleArea from '$lib/components/app/media/MediaPeopleArea.svelte';
+import MediaCollectionArea from '$lib/components/app/media/collection/MediaCollectionArea.svelte';
+import MediaPeopleArea from '$lib/components/app/media/people/MediaPeopleArea.svelte';
 import type {
 	MediaCollection,
 	MediaItem,

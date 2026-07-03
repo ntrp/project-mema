@@ -2,7 +2,7 @@ import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import MediaRequestCard from '$lib/components/app/requests/MediaRequestCard.svelte';
-import ReleaseMatchInfo from '$lib/components/app/media/ReleaseMatchInfo.svelte';
+import ReleaseMatchInfo from '$lib/components/app/media/release-display/ReleaseMatchInfo.svelte';
 import CustomFormatCard from '$lib/components/settings/custom-formats/CustomFormatCard.svelte';
 import MediaProfileTable from '$lib/components/settings/profiles/MediaProfileTable.svelte';
 import type {

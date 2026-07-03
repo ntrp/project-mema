@@ -8,7 +8,7 @@ vi.mock('$lib/components/settings/system/cache/rowPulse.svelte', () => ({
 	})
 }));
 
-import MediaOverviewInfoCard from '$lib/components/app/media/MediaOverviewInfoCard.svelte';
+import MediaOverviewInfoCard from '$lib/components/app/media/detail/MediaOverviewInfoCard.svelte';
 import SystemEventsControls from '$lib/components/settings/system/events/SystemEventsControls.svelte';
 import SystemEventsTable from '$lib/components/settings/system/events/SystemEventsTable.svelte';
 import SystemJobsTable from '$lib/components/settings/system/jobs/SystemJobsTable.svelte';

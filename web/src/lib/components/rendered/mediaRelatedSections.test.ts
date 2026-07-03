@@ -1,7 +1,7 @@
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import MediaRelatedSections from '$lib/components/app/media/MediaRelatedSections.svelte';
+import MediaRelatedSections from '$lib/components/app/media/posters/MediaRelatedSections.svelte';
 import type { MediaItem, MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 
 describe('rendered media related sections (SCN-MEDIA-008)', () => {

@@ -1,12 +1,12 @@
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import ReleaseSearchFilters from '$lib/components/app/media/ReleaseSearchFilters.svelte';
-import ReleaseSearchQueryInput from '$lib/components/app/media/ReleaseSearchQueryInput.svelte';
-import ReleaseSearchResultsTable from '$lib/components/app/media/ReleaseSearchResultsTable.svelte';
-import ReleaseSearchStatusLog from '$lib/components/app/media/ReleaseSearchStatusLog.svelte';
-import { defaultReleaseFilters } from '$lib/components/app/media/releaseSearchResults';
-import type { ReleaseSort } from '$lib/components/app/media/releaseSearchResults';
+import ReleaseSearchFilters from '$lib/components/app/media/release-search/ReleaseSearchFilters.svelte';
+import ReleaseSearchQueryInput from '$lib/components/app/media/release-search/ReleaseSearchQueryInput.svelte';
+import ReleaseSearchResultsTable from '$lib/components/app/media/release-search/ReleaseSearchResultsTable.svelte';
+import ReleaseSearchStatusLog from '$lib/components/app/media/release-search/ReleaseSearchStatusLog.svelte';
+import { defaultReleaseFilters } from '$lib/components/app/media/release-display/releaseSearchResults';
+import type { ReleaseSort } from '$lib/components/app/media/release-display/releaseSearchResults';
 import type { MediaItem, ReleaseCandidate } from '$lib/settings/types';
 import { renderWithTooltip } from './renderHelpers';
 

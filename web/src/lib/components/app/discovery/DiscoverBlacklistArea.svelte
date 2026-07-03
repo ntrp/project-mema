@@ -5,8 +5,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { DiscoverBlacklistItem } from '$lib/settings/types';
-	import MediaBadge from '../media/MediaBadge.svelte';
-	import PosterPlaceholder from '../media/PosterPlaceholder.svelte';
+	import MediaBadge from '$lib/components/app/media/shared/MediaBadge.svelte';
+	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
 
 	interface Props {
 		items: DiscoverBlacklistItem[];
