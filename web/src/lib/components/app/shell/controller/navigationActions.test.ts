@@ -97,6 +97,17 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 		expect(gotoMock).toHaveBeenLastCalledWith('/discover/series?genres=Animation&keywords=anime');
 		expect(loadDiscoverSection).not.toHaveBeenCalled();
 	});
+
+	it('routes activity submenu sections', () => {
+		const state = testState({ activePrimarySection: 'activity' });
+		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+
+		actions.selectSubmenuSection('history');
+		expect(state.activeView).toBe('home');
+		expect(state.activeHomeSection).toBe('activity');
+		expect(state.activeActivitySection).toBe('history');
+		expect(gotoMock).toHaveBeenLastCalledWith('/activity/history');
+	});
 });
 
 function testState(overrides: Partial<AppShellState> = {}): AppShellState {
@@ -105,6 +116,7 @@ function testState(overrides: Partial<AppShellState> = {}): AppShellState {
 		activeView: 'home',
 		activePrimarySection: 'library',
 		activeHomeSection: 'movies',
+		activeActivitySection: 'queue',
 		activeSettingsSection: 'general',
 		activeSystemSection: 'status',
 		discoverSectionPage: 1,

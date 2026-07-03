@@ -355,7 +355,8 @@ export function emptyIndexerSearch(): IndexerSearchResponse {
 	return {
 		settings: {
 			cacheDurationMinutes: 1440,
-			historyRetentionDays: 7
+			historyRetentionDays: 7,
+			automaticBlocklistExpiryDays: 7
 		},
 		stats: {
 			totalEntries: 0,

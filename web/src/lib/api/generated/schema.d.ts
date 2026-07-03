@@ -2506,6 +2506,8 @@ export interface components {
 		};
 		IndexerSearchSettings: {
 			/** Format: int32 */
+			automaticBlocklistExpiryDays: number;
+			/** Format: int32 */
 			cacheDurationMinutes: number;
 			/** Format: int32 */
 			historyRetentionDays: number;

@@ -14,20 +14,52 @@
 	}
 
 	let { search, clearing, saving, onClearCache, onSaveSettings }: Props = $props();
-	let cacheDurationMinutes = $state(0);
-	let historyRetentionDays = $state(7);
+	let cacheDurationMinutesDraft = $state<number | undefined>();
+	let historyRetentionDaysDraft = $state<number | undefined>();
+	let automaticBlocklistExpiryDaysDraft = $state<number | undefined>();
+	const cacheDurationMinutes = $derived(
+		cacheDurationMinutesDraft ?? search.settings.cacheDurationMinutes
+	);
+	const historyRetentionDays = $derived(
+		historyRetentionDaysDraft ?? search.settings.historyRetentionDays
+	);
+	const automaticBlocklistExpiryDays = $derived(
+		automaticBlocklistExpiryDaysDraft ?? search.settings.automaticBlocklistExpiryDays
+	);
 	const settingsChanged = $derived(
 		cacheDurationMinutes !== search.settings.cacheDurationMinutes ||
-			historyRetentionDays !== search.settings.historyRetentionDays
+			historyRetentionDays !== search.settings.historyRetentionDays ||
+			automaticBlocklistExpiryDays !== search.settings.automaticBlocklistExpiryDays
 	);
 
-	$effect(() => {
-		cacheDurationMinutes = search.settings.cacheDurationMinutes;
-		historyRetentionDays = search.settings.historyRetentionDays;
-	});
-
 	function saveSettings() {
-		void onSaveSettings({ cacheDurationMinutes, historyRetentionDays });
+		void Promise.resolve(
+			onSaveSettings({
+				cacheDurationMinutes,
+				historyRetentionDays,
+				automaticBlocklistExpiryDays
+			})
+		).then(() => {
+			cacheDurationMinutesDraft = undefined;
+			historyRetentionDaysDraft = undefined;
+			automaticBlocklistExpiryDaysDraft = undefined;
+		});
+	}
+
+	function numberFromInput(event: Event) {
+		return Number((event.currentTarget as HTMLInputElement).value);
+	}
+
+	function updateCacheDuration(event: Event) {
+		cacheDurationMinutesDraft = numberFromInput(event);
+	}
+
+	function updateHistoryRetention(event: Event) {
+		historyRetentionDaysDraft = numberFromInput(event);
+	}
+
+	function updateAutomaticBlocklistExpiry(event: Event) {
+		automaticBlocklistExpiryDaysDraft = numberFromInput(event);
 	}
 </script>
 
@@ -39,7 +71,7 @@
 		</div>
 	</Card.Header>
 	<Card.Content class="grid gap-4">
-		<div class="grid items-end gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+		<div class="grid items-end gap-3 md:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
 			<div class="grid gap-1.5">
 				<Label for="indexer-cache-duration">Cache duration minutes</Label>
 				<Input
@@ -47,7 +79,8 @@
 					type="number"
 					min="0"
 					max="43200"
-					bind:value={cacheDurationMinutes}
+					value={cacheDurationMinutes}
+					oninput={updateCacheDuration}
 				/>
 			</div>
 			<div class="grid gap-1.5">
@@ -57,7 +90,19 @@
 					type="number"
 					min="1"
 					max="365"
-					bind:value={historyRetentionDays}
+					value={historyRetentionDays}
+					oninput={updateHistoryRetention}
+				/>
+			</div>
+			<div class="grid gap-1.5">
+				<Label for="automatic-blocklist-expiry">Automatic blocklist expiry days</Label>
+				<Input
+					id="automatic-blocklist-expiry"
+					type="number"
+					min="1"
+					max="365"
+					value={automaticBlocklistExpiryDays}
+					oninput={updateAutomaticBlocklistExpiry}
 				/>
 			</div>
 			<div class="flex flex-wrap justify-end gap-2">

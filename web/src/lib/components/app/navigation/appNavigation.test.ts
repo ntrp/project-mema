@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	activityItems,
 	basePrimaryItems,
 	discoverItems,
 	libraryItems,
@@ -21,6 +22,11 @@ describe('app navigation helpers (SCN-MEDIA-003)', () => {
 		]);
 		expect(discoverItems[0]).toMatchObject({ value: 'discover', href: '/discover' });
 		expect(libraryItems.map((item) => item.href)).toEqual(['/movies', '/series', '/wanted']);
+		expect(activityItems.map((item) => item.href)).toEqual([
+			'/activity',
+			'/activity/history',
+			'/activity/blocklist'
+		]);
 		expect(settingsItems.at(-1)).toMatchObject({ value: 'users', href: '/settings/users' });
 		expect(systemItems.map((item) => item.value)).toContain('events');
 	});

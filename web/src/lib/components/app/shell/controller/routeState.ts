@@ -1,4 +1,10 @@
-import type { AppView, HomeSection, SettingsSection, SystemSection } from '$lib/settings/types';
+import type {
+	ActivitySection,
+	AppView,
+	HomeSection,
+	SettingsSection,
+	SystemSection
+} from '$lib/settings/types';
 import type { PeopleSectionKind, RelatedSectionKind } from './types';
 import { discoverSubmenu } from './routeStateHelpers';
 
@@ -11,6 +17,7 @@ interface QueryParams {
 export interface AppRouteState {
 	view: AppView;
 	homeSection: HomeSection;
+	activitySection: ActivitySection;
 	settingsSection: SettingsSection;
 	systemSection: SystemSection;
 	selectedMediaItemId?: string;
@@ -55,6 +62,7 @@ export function defaultRouteState(): AppRouteState {
 	return {
 		view: 'home',
 		homeSection: 'discover',
+		activitySection: 'queue',
 		settingsSection: 'general',
 		systemSection: 'status',
 		advancedQuery: '',
@@ -149,7 +157,12 @@ export function routeStateFromPath(
 		return { ...route, homeSection: 'wanted' };
 	}
 	if (segments[0] === 'activity') {
-		return { ...route, homeSection: 'activity' };
+		return {
+			...route,
+			homeSection: 'activity',
+			activitySection:
+				segments[1] === 'history' || segments[1] === 'blocklist' ? segments[1] : 'queue'
+		};
 	}
 	return route;
 }

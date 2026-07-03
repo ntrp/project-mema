@@ -140,8 +140,9 @@ type ReleaseSearchSnapshot struct {
 }
 
 type IndexerSearchSettings struct {
-	CacheDurationMinutes int32
-	HistoryRetentionDays int32
+	CacheDurationMinutes         int32
+	HistoryRetentionDays         int32
+	AutomaticBlocklistExpiryDays int32
 }
 
 type IndexerSearchCacheStats struct {

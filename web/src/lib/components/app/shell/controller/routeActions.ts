@@ -28,6 +28,7 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 
 		state.activeView = route.view;
 		state.activeHomeSection = route.homeSection;
+		state.activeActivitySection = route.activitySection;
 		state.activeSettingsSection = route.settingsSection;
 		state.activeSystemSection = route.systemSection;
 		state.activeDiscoverSectionId = route.discoverSectionId;

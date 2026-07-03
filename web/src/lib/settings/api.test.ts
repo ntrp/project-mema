@@ -64,6 +64,7 @@ describe('UI API helpers', () => {
 			params: { query: { query: 'matrix', includeLibrary: false, includeProviders: true } }
 		});
 		expect(emptyIndexerSearch().settings.cacheDurationMinutes).toBe(1440);
+		expect(emptyIndexerSearch().settings.automaticBlocklistExpiryDays).toBe(7);
 		expect(emptyMetadataCache().stats.providerCount).toBe(0);
 		expect(mediaTypeForLibraryKind('anime_series')).toBe('series');
 		expect(mediaTypeForLibraryKind('movie')).toBe('movie');

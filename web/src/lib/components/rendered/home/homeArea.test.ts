@@ -40,7 +40,7 @@ describe('rendered home area sections (SCN-MEDIA-004)', () => {
 		expect(wanted).not.toContain('Library Series');
 
 		const activity = renderHome('activity').body;
-		expect(activity).toContain('Downloads and imports');
+		expect(activity).toContain('Activity queue');
 		expect(activity).toContain('Scenario.Movie.2026.1080p.WEB-DL-GROUP');
 	});
 });
@@ -55,6 +55,7 @@ function renderHome(activeSection: HomeSection) {
 function baseProps(): HomeAreaProps {
 	return {
 		activeSection: 'discover',
+		activitySection: 'queue',
 		mediaItems: [
 			mediaItem(),
 			mediaItem({ id: 'series-1', title: 'Library Series', type: 'series', status: 'downloaded' })

@@ -29,10 +29,14 @@ func (s *SettingsStore) GetIndexerSearchSettings(ctx context.Context) (IndexerSe
 	}
 	var settings IndexerSearchSettings
 	err := s.pool.QueryRow(ctx, `
-		select cache_duration_minutes, history_retention_days
+		select cache_duration_minutes, history_retention_days, automatic_blocklist_expiry_days
 		from app.indexer_search_settings
 		where id = true
-	`).Scan(&settings.CacheDurationMinutes, &settings.HistoryRetentionDays)
+	`).Scan(
+		&settings.CacheDurationMinutes,
+		&settings.HistoryRetentionDays,
+		&settings.AutomaticBlocklistExpiryDays,
+	)
 	return settings, err
 }
 
@@ -43,14 +47,20 @@ func (s *SettingsStore) SaveIndexerSearchSettings(ctx context.Context, input Ind
 	if input.HistoryRetentionDays < 1 || input.HistoryRetentionDays > 365 {
 		return IndexerSearchSettings{}, ErrInvalidInput
 	}
+	if input.AutomaticBlocklistExpiryDays < 1 || input.AutomaticBlocklistExpiryDays > 365 {
+		return IndexerSearchSettings{}, ErrInvalidInput
+	}
 	_, err := s.pool.Exec(ctx, `
-		insert into app.indexer_search_settings (id, cache_duration_minutes, history_retention_days)
-		values (true, $1, $2)
+		insert into app.indexer_search_settings (
+			id, cache_duration_minutes, history_retention_days, automatic_blocklist_expiry_days
+		)
+		values (true, $1, $2, $3)
 		on conflict (id) do update
 		set cache_duration_minutes = excluded.cache_duration_minutes,
 			history_retention_days = excluded.history_retention_days,
+			automatic_blocklist_expiry_days = excluded.automatic_blocklist_expiry_days,
 			updated_at = now()
-	`, input.CacheDurationMinutes, input.HistoryRetentionDays)
+	`, input.CacheDurationMinutes, input.HistoryRetentionDays, input.AutomaticBlocklistExpiryDays)
 	if err != nil {
 		return IndexerSearchSettings{}, err
 	}
@@ -176,8 +186,10 @@ func (s *SettingsStore) DeleteIndexerSearchCacheEntry(ctx context.Context, index
 
 func (s *SettingsStore) ensureIndexerSearchSettings(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `
-		insert into app.indexer_search_settings (id, cache_duration_minutes, history_retention_days)
-		values (true, 1440, 7)
+		insert into app.indexer_search_settings (
+			id, cache_duration_minutes, history_retention_days, automatic_blocklist_expiry_days
+		)
+		values (true, 1440, 7, 7)
 		on conflict (id) do nothing
 	`)
 	return err

@@ -67,7 +67,11 @@ describe('UI API settings command helpers (SCN-SETTINGS-009)', () => {
 		await expect(getMetadataCache({ cacheLimit: 1 })).resolves.toEqual({});
 		await expect(getIndexerSearch({ historyLimit: 1 })).resolves.toEqual({});
 		await expect(
-			updateIndexerSearchSettings({ cacheDurationMinutes: 1, historyRetentionDays: 7 })
+			updateIndexerSearchSettings({
+				cacheDurationMinutes: 1,
+				historyRetentionDays: 7,
+				automaticBlocklistExpiryDays: 7
+			})
 		).resolves.toEqual({});
 		await expect(clearMetadataCache()).resolves.toBe(0);
 		await expect(clearMetadataCacheByPattern('matrix')).resolves.toBe(0);

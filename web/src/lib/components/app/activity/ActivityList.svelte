@@ -9,10 +9,12 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Table from '$lib/components/ui/table';
 	import { activityDisplay } from './activityDisplay';
+	import { activitySectionHeading, visibleInActivitySection } from './activitySections';
 	import { manualImportDownloadActivity } from '$lib/settings/api';
-	import type { DownloadActivity, ManualImportRequest } from '$lib/settings/types';
+	import type { ActivitySection, DownloadActivity, ManualImportRequest } from '$lib/settings/types';
 
 	interface Props {
+		section?: ActivitySection;
 		activities: DownloadActivity[];
 		loading: boolean;
 		canManage: boolean;
@@ -24,6 +26,7 @@
 	}
 
 	let {
+		section = 'queue',
 		activities,
 		loading,
 		canManage,
@@ -36,6 +39,10 @@
 	let manualImportActivity = $state<DownloadActivity | undefined>();
 	let importingId = $state<string | undefined>();
 	let importError = $state<string | undefined>();
+	const visibleActivities = $derived(
+		activities.filter((activity) => visibleInActivitySection(activity, section))
+	);
+	const heading = $derived(activitySectionHeading(section));
 
 	function openManualImport(activity: DownloadActivity) {
 		manualImportActivity = activity;
@@ -58,7 +65,7 @@
 	}
 </script>
 
-<PageHeading eyebrow="Activity" title="Downloads and imports" titleId="home-title">
+<PageHeading eyebrow="Activity" title={heading.title} titleId="home-title">
 	{#snippet actions()}
 		<Button type="button" variant="outline" disabled={loading} onclick={onRefresh}>
 			{loading ? 'Refreshing' : 'Refresh'}
@@ -66,7 +73,17 @@
 	{/snippet}
 </PageHeading>
 
-{#if activities.length > 0}
+{#if section === 'blocklist'}
+	<EmptyState
+		class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
+	>
+		<p class="m-0 text-lg font-black text-foreground">{heading.empty}</p>
+		<p class="m-0 max-w-2xl text-sm font-semibold text-muted-foreground">
+			Ignored releases will live here. Manual ignores and automatic blocks for broken download
+			candidates will expire according to the indexer search setting.
+		</p>
+	</EmptyState>
+{:else if visibleActivities.length > 0}
 	<Card class="overflow-hidden p-0">
 		<Table.Root class="[&_td]:whitespace-nowrap [&_th]:whitespace-nowrap">
 			<Table.Header>
@@ -83,7 +100,7 @@
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each activities as activity (activity.id)}
+				{#each visibleActivities as activity (activity.id)}
 					{@const display = activityDisplay(activity)}
 					<Table.Row>
 						<Table.Cell class="w-[42px]">
@@ -139,7 +156,7 @@
 	<EmptyState
 		class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
 	>
-		<p class="m-0 text-lg font-black text-foreground">No download activity yet</p>
+		<p class="m-0 text-lg font-black text-foreground">{heading.empty}</p>
 	</EmptyState>
 {/if}
 

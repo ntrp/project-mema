@@ -31,7 +31,9 @@ export type HomeHref =
 	| '/movies'
 	| '/series'
 	| '/wanted'
-	| '/activity';
+	| '/activity'
+	| '/activity/history'
+	| '/activity/blocklist';
 
 export type PrimaryItem = {
 	value: HomeSection | 'library' | 'settings' | 'system';
@@ -101,8 +103,18 @@ export const discoverItems = [
 	}
 ] satisfies PrimaryItem['children'];
 
+export const activityItems = [
+	{ value: 'queue', label: 'Queue', href: '/activity' },
+	{ value: 'history', label: 'History', href: '/activity/history' },
+	{ value: 'blocklist', label: 'Blocklist', href: '/activity/blocklist' }
+] satisfies PrimaryItem['children'];
+
 export function discoverSectionHref(section: string): HomeHref {
 	return discoverItems.find((item) => item.value === section)?.href ?? `/discover/${section}`;
+}
+
+export function activitySectionHref(section: string): HomeHref {
+	return activityItems.find((item) => item.value === section)?.href ?? '/activity';
 }
 
 export const basePrimaryItems = [
@@ -116,7 +128,13 @@ export const basePrimaryItems = [
 	{ value: 'blacklist', label: 'Blacklist', icon: 'visibility_off', href: '/blacklist' },
 	{ value: 'requests', label: 'Requests', icon: 'activity', href: '/requests' },
 	{ value: 'library', label: 'Library', icon: 'movies', href: '/movies', children: libraryItems },
-	{ value: 'activity', label: 'Activity', icon: 'activity', href: '/activity' }
+	{
+		value: 'activity',
+		label: 'Activity',
+		icon: 'activity',
+		href: '/activity',
+		children: activityItems
+	}
 ] satisfies PrimaryItem[];
 
 export const settingsPrimaryItem = {

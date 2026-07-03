@@ -163,6 +163,7 @@ export type HomeSection =
 	| 'series'
 	| 'wanted'
 	| 'activity';
+export type ActivitySection = 'queue' | 'history' | 'blocklist';
 export type SystemSection = 'status' | 'indexing' | 'metadata' | 'jobs' | 'logs' | 'events';
 export type SettingsSection =
 	| 'general'

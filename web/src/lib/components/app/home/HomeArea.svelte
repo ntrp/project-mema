@@ -10,6 +10,7 @@
 
 	let {
 		activeSection,
+		activitySection,
 		selectedMediaItemId,
 		selectedRequestId,
 		mediaItems,
@@ -135,6 +136,7 @@
 		<WantedMediaTable items={wanted} {searchingItemId} {canManage} {onFindReleases} />
 	{:else}
 		<ActivityList
+			section={activitySection}
 			{activities}
 			loading={loadingActivity}
 			{canManage}

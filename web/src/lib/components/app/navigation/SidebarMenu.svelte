@@ -26,6 +26,8 @@
 		| '/series'
 		| '/wanted'
 		| '/activity'
+		| '/activity/history'
+		| '/activity/blocklist'
 		| '/settings/general'
 		| '/settings/library'
 		| '/settings/download-clients'
@@ -93,6 +95,10 @@
 		return menuIcons[icon];
 	}
 
+	function resolveHref(href: MenuHref) {
+		return resolve(href as '/discover');
+	}
+
 	const navButtonClass =
 		'gap-4 text-[20px] font-semibold data-[active=true]:bg-primary data-[active=true]:text-primary-foreground [&_svg]:size-6';
 	const navSubButtonClass = 'text-[15px] font-semibold';
@@ -130,7 +136,7 @@
 								{#snippet child({ props })}
 									<a
 										{...props}
-										href={resolve(item.href)}
+										href={resolveHref(item.href)}
 										aria-current={pageActive ? 'page' : undefined}
 										onclick={() => selectItem(item.value)}
 									>
@@ -146,7 +152,7 @@
 									{@const childActive = activeSubmenu === child.value}
 									<Sidebar.MenuSubItem>
 										<Sidebar.MenuSubButton
-											href={resolve(child.href)}
+											href={resolveHref(child.href)}
 											isActive={childActive}
 											aria-current={childActive ? 'page' : undefined}
 											class={navSubButtonClass}

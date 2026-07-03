@@ -27,7 +27,11 @@ function indexerSearchResponse(
 	cacheEntries: IndexerSearchResponse['cacheEntries']
 ): IndexerSearchResponse {
 	return {
-		settings: { cacheDurationMinutes: 60, historyRetentionDays: 7 },
+		settings: {
+			cacheDurationMinutes: 60,
+			historyRetentionDays: 7,
+			automaticBlocklistExpiryDays: 7
+		},
 		stats: {
 			totalEntries: cacheEntries.length + 1,
 			activeEntries: cacheEntries.filter((entry) => !entry.expired).length,

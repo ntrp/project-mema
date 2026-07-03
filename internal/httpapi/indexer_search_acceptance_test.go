@@ -24,10 +24,13 @@ func TestScenarioSCNSettings020AdminInspectsAndClearsIndexerSearchCache(t *testi
 
 	var updated IndexerSearchResponse
 	client.doJSON(t, http.MethodPut, "/settings/indexer-search", IndexerSearchSettings{
-		CacheDurationMinutes: 60,
-		HistoryRetentionDays: 14,
+		CacheDurationMinutes:         60,
+		HistoryRetentionDays:         14,
+		AutomaticBlocklistExpiryDays: 3,
 	}, http.StatusOK, &updated)
-	if updated.Settings.CacheDurationMinutes != 60 || updated.Settings.HistoryRetentionDays != 14 {
+	if updated.Settings.CacheDurationMinutes != 60 ||
+		updated.Settings.HistoryRetentionDays != 14 ||
+		updated.Settings.AutomaticBlocklistExpiryDays != 3 {
 		t.Fatalf("updated indexer search settings = %#v", updated.Settings)
 	}
 

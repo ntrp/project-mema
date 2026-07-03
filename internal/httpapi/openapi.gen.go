@@ -1079,8 +1079,9 @@ type IndexerSearchResponse struct {
 
 // IndexerSearchSettings defines model for IndexerSearchSettings.
 type IndexerSearchSettings struct {
-	CacheDurationMinutes int32 `json:"cacheDurationMinutes"`
-	HistoryRetentionDays int32 `json:"historyRetentionDays"`
+	AutomaticBlocklistExpiryDays int32 `json:"automaticBlocklistExpiryDays"`
+	CacheDurationMinutes         int32 `json:"cacheDurationMinutes"`
+	HistoryRetentionDays         int32 `json:"historyRetentionDays"`
 }
 
 // IndexerType defines model for IndexerType.

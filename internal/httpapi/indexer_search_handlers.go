@@ -31,8 +31,9 @@ func (s *Server) UpdateIndexerSearchSettings(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	input := storage.IndexerSearchSettings{
-		CacheDurationMinutes: body.CacheDurationMinutes,
-		HistoryRetentionDays: body.HistoryRetentionDays,
+		CacheDurationMinutes:         body.CacheDurationMinutes,
+		HistoryRetentionDays:         body.HistoryRetentionDays,
+		AutomaticBlocklistExpiryDays: body.AutomaticBlocklistExpiryDays,
 	}
 	if _, err := s.settings.SaveIndexerSearchSettings(r.Context(), input); err != nil {
 		writeSettingsError(w, err, "Could not update indexer search settings")

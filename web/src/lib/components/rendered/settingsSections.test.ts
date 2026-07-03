@@ -80,7 +80,11 @@ describe('rendered general system settings sections (SCN-SYSTEM-006, SCN-SETTING
 
 function emptyIndexerSearch(): IndexerSearchResponse {
 	return {
-		settings: { cacheDurationMinutes: 60, historyRetentionDays: 14 },
+		settings: {
+			cacheDurationMinutes: 60,
+			historyRetentionDays: 14,
+			automaticBlocklistExpiryDays: 7
+		},
 		stats: { totalEntries: 0, activeEntries: 0, expiredEntries: 0, indexerCount: 0 },
 		cacheEntries: [],
 		historyEntries: [],

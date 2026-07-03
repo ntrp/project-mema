@@ -1,11 +1,17 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import {
+	activitySectionHref,
 	discoverSectionHref,
 	settingsSectionHref,
 	systemSectionHref
 } from '$lib/components/app/navigation/appNavigation';
-import type { HomeSection, SettingsSection, SystemSection } from '$lib/settings/types';
+import type {
+	ActivitySection,
+	HomeSection,
+	SettingsSection,
+	SystemSection
+} from '$lib/settings/types';
 import type { AppShellState } from './state.svelte';
 
 interface NavigationDeps {
@@ -78,6 +84,13 @@ export function createNavigationActions(state: AppShellState, deps: NavigationDe
 			state.discoverSectionHasMore = true;
 			void goto(resolve('/discover/[sectionId]', { sectionId: section }));
 			void loadDiscoverSection();
+			return;
+		}
+		if (state.activePrimarySection === 'activity') {
+			state.activeView = 'home';
+			state.activeHomeSection = 'activity';
+			state.activeActivitySection = section as ActivitySection;
+			void goto(resolve(activitySectionHref(section)));
 			return;
 		}
 		selectSettingsSection(section);

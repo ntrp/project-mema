@@ -8,6 +8,7 @@ export function appRouteKey(route: AppRouteState) {
 	return [
 		route.view,
 		route.homeSection,
+		route.activitySection,
 		route.settingsSection,
 		route.systemSection,
 		route.selectedMediaItemId ?? '',

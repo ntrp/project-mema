@@ -142,7 +142,7 @@ describe('UI API edge cases (SCN-SETTINGS-009)', () => {
 		clientMock.PUT.mockResolvedValue({ data: { cacheEntries: [] } });
 
 		await expect(getIndexerSearch()).resolves.toMatchObject({
-			settings: { cacheDurationMinutes: 1440 }
+			settings: { cacheDurationMinutes: 1440, automaticBlocklistExpiryDays: 7 }
 		});
 		await expect(
 			updateIndexerSearchSettings({ cacheDurationMinutes: 5 } as never)

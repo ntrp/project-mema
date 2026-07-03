@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import RootPage from './+page.svelte';
 import ActivityPage from './activity/+page.svelte';
+import ActivityBlocklistPage from './activity/blocklist/+page.svelte';
+import ActivityHistoryPage from './activity/history/+page.svelte';
 import BlacklistPage from './blacklist/+page.svelte';
 import DiscoverPage from './discover/+page.svelte';
 import MoviesPage from './movies/+page.svelte';
@@ -30,8 +32,16 @@ describe('top-level route pages (SCN-ROUTES-001)', () => {
 
 	it('renders activity, request, blacklist, and wanted fallbacks', () => {
 		const activity = renderPage(ActivityPage);
-		expect(activity.body).toContain('Downloads and imports');
-		expect(activity.body).toContain('No download activity yet');
+		expect(activity.body).toContain('Activity queue');
+		expect(activity.body).toContain('No queued activity');
+
+		const activityHistory = renderPage(ActivityHistoryPage);
+		expect(activityHistory.body).toContain('Activity history');
+		expect(activityHistory.body).toContain('No completed background activity yet');
+
+		const activityBlocklist = renderPage(ActivityBlocklistPage);
+		expect(activityBlocklist.body).toContain('Release blocklist');
+		expect(activityBlocklist.body).toContain('No blocked releases yet');
 
 		const requests = renderPage(RequestsPage);
 		expect(requests.body).toContain('Media requests');

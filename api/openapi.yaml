@@ -5477,9 +5477,15 @@ components:
       type: object
       additionalProperties: false
       required:
+        - automaticBlocklistExpiryDays
         - cacheDurationMinutes
         - historyRetentionDays
       properties:
+        automaticBlocklistExpiryDays:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 365
         cacheDurationMinutes:
           type: integer
           format: int32

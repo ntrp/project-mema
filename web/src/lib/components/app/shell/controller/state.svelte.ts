@@ -16,6 +16,7 @@ import {
 	emptyUserForm
 } from '$lib/settings/forms';
 import type {
+	ActivitySection,
 	AppView,
 	CustomFormat,
 	CustomFormatForm as CustomFormatFormValue,
@@ -158,6 +159,7 @@ export class AppShellState {
 	metadataProviderTests = $state<IntegrationTestResults>({});
 	activeView = $state<AppView>('home');
 	activeHomeSection = $state<HomeSection>('discover');
+	activeActivitySection = $state<ActivitySection>('queue');
 	activeSettingsSection = $state<SettingsSection>('general');
 	activeSystemSection = $state<SystemSection>('status');
 	activeDiscoverSectionId = $state<string | undefined>();
@@ -221,7 +223,9 @@ export class AppShellState {
 							? this.activeHomeSection
 							: this.activePrimarySection === 'discover'
 								? this.activeHomeSection
-								: this.activeSettingsSection
+								: this.activePrimarySection === 'activity'
+									? this.activeActivitySection
+									: this.activeSettingsSection
 	);
 	primaryItems = $derived(
 		this.isAdmin
@@ -233,6 +237,7 @@ export class AppShellState {
 		this.route = route;
 		this.activeView = route.view;
 		this.activeHomeSection = route.homeSection;
+		this.activeActivitySection = route.activitySection;
 		this.activeSettingsSection = route.settingsSection;
 		this.activeSystemSection = route.systemSection;
 		this.activeDiscoverSectionId = route.discoverSectionId;

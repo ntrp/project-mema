@@ -19,7 +19,16 @@ describe('route state parsing (SCN-MEDIA-004)', () => {
 			systemSection: 'events'
 		});
 		expect(routeStateFromPath('/activity', {}, noQuery)).toMatchObject({
-			homeSection: 'activity'
+			homeSection: 'activity',
+			activitySection: 'queue'
+		});
+		expect(routeStateFromPath('/activity/history', {}, noQuery)).toMatchObject({
+			homeSection: 'activity',
+			activitySection: 'history'
+		});
+		expect(routeStateFromPath('/activity/blocklist', {}, noQuery)).toMatchObject({
+			homeSection: 'activity',
+			activitySection: 'blocklist'
 		});
 	});
 

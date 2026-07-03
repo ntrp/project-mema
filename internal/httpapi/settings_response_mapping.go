@@ -69,8 +69,9 @@ func indexerSearchResponse(
 	}
 	return IndexerSearchResponse{
 		Settings: IndexerSearchSettings{
-			CacheDurationMinutes: settings.CacheDurationMinutes,
-			HistoryRetentionDays: settings.HistoryRetentionDays,
+			CacheDurationMinutes:         settings.CacheDurationMinutes,
+			HistoryRetentionDays:         settings.HistoryRetentionDays,
+			AutomaticBlocklistExpiryDays: settings.AutomaticBlocklistExpiryDays,
 		},
 		Stats: IndexerSearchCacheStats{
 			TotalEntries:   stats.TotalEntries,

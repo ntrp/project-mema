@@ -2,6 +2,7 @@ import type {
 	DownloadActivity,
 	DiscoverBlacklistItem,
 	HomeSection,
+	ActivitySection,
 	Language,
 	LibraryFolder,
 	MediaDiscoverSection,
@@ -16,6 +17,7 @@ import type {
 
 export interface HomeAreaProps {
 	activeSection: HomeSection;
+	activitySection: ActivitySection;
 	selectedMediaItemId?: string;
 	selectedRequestId?: string;
 	mediaItems: MediaItem[];
