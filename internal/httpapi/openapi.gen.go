@@ -2663,6 +2663,9 @@ type CreateIndexerJSONRequestBody = IndexerRequest
 // BulkUpdateIndexersJSONRequestBody defines body for BulkUpdateIndexers for application/json ContentType.
 type BulkUpdateIndexersJSONRequestBody = IndexerBulkUpdateRequest
 
+// TestIndexerConfigJSONRequestBody defines body for TestIndexerConfig for application/json ContentType.
+type TestIndexerConfigJSONRequestBody = IndexerRequest
+
 // UpdateIndexerJSONRequestBody defines body for UpdateIndexer for application/json ContentType.
 type UpdateIndexerJSONRequestBody = IndexerRequest
 
@@ -2938,6 +2941,9 @@ type ServerInterface interface {
 	// Bulk update indexers
 	// (PUT /settings/indexers/bulk)
 	BulkUpdateIndexers(w http.ResponseWriter, r *http.Request)
+	// Test an indexer configuration before saving
+	// (POST /settings/indexers/test)
+	TestIndexerConfig(w http.ResponseWriter, r *http.Request)
 	// Delete an indexer
 	// (DELETE /settings/indexers/{id})
 	DeleteIndexer(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -3544,6 +3550,12 @@ func (_ Unimplemented) CreateIndexer(w http.ResponseWriter, r *http.Request) {
 // Bulk update indexers
 // (PUT /settings/indexers/bulk)
 func (_ Unimplemented) BulkUpdateIndexers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test an indexer configuration before saving
+// (POST /settings/indexers/test)
+func (_ Unimplemented) TestIndexerConfig(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6376,6 +6388,26 @@ func (siw *ServerInterfaceWrapper) BulkUpdateIndexers(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// TestIndexerConfig operation middleware
+func (siw *ServerInterfaceWrapper) TestIndexerConfig(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestIndexerConfig(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteIndexer operation middleware
 func (siw *ServerInterfaceWrapper) DeleteIndexer(w http.ResponseWriter, r *http.Request) {
 
@@ -8378,6 +8410,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/indexers/bulk", wrapper.BulkUpdateIndexers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/indexers/test", wrapper.TestIndexerConfig)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/indexers/{id}", wrapper.DeleteIndexer)

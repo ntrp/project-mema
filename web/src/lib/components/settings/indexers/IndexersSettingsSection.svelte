@@ -21,6 +21,7 @@
 		IndexerProxy,
 		IndexerSearchResponse,
 		IndexerSearchSettings,
+		IntegrationTestResponse,
 		IntegrationTestResults
 	} from '$lib/settings/types';
 
@@ -38,6 +39,7 @@
 		onEdit: (_indexer: Indexer) => void;
 		onDelete: (_id: string) => void | Promise<void>;
 		onTest: (_id: string) => void | Promise<void>;
+		onTestConfig: (_form: IndexerFormValue) => Promise<IntegrationTestResponse>;
 		onClearIndexerSearchCache: () => void | Promise<void>;
 		onSaveIndexerSearchSettings: (_settings: IndexerSearchSettings) => void | Promise<void>;
 	}
@@ -56,6 +58,7 @@
 		onEdit,
 		onDelete,
 		onTest,
+		onTestConfig,
 		onClearIndexerSearchCache,
 		onSaveIndexerSearchSettings
 	}: Props = $props();
@@ -65,6 +68,8 @@
 	let appProfiles = $state<IndexerAppProfile[]>([]);
 	let proxies = $state<IndexerProxy[]>([]);
 	let catalogError = $state('');
+	let testingConfig = $state(false);
+	let testResult = $state<IntegrationTestResponse | undefined>();
 
 	onMount(async () => {
 		try {
@@ -83,24 +88,48 @@
 
 	function openModal() {
 		form = emptyIndexerForm();
+		testResult = undefined;
 		modalOpen = true;
 	}
 
 	function editIndexer(indexer: Indexer) {
 		onEdit(indexer);
+		testResult = undefined;
 		modalOpen = true;
 	}
 
 	function closeModal() {
 		onCancel();
 		modalOpen = false;
+		testResult = undefined;
 	}
 
 	async function save(event: SubmitEvent) {
+		event.preventDefault();
+		const passed = await testConfig();
+		if (!passed) {
+			return;
+		}
 		await onSave(event);
-		if (!form.id && form.name === '' && form.baseUrl === '' && form.apiKey === '') {
+		if (isEmptyForm(form)) {
 			modalOpen = false;
 		}
+	}
+
+	async function testConfig() {
+		testingConfig = true;
+		testResult = undefined;
+		try {
+			const result = await onTestConfig(form);
+			testResult = result;
+			return result.success;
+		} finally {
+			testingConfig = false;
+		}
+	}
+
+	function isEmptyForm(value: IndexerFormValue) {
+		return !value.id && value.name === '' && value.baseUrl === '' && value.apiKey === '';
 	}
 </script>
 
@@ -134,9 +163,18 @@
 		<SettingsFormModal
 			title={form.id ? 'Edit indexer' : 'Add indexer'}
 			onClose={closeModal}
-			modalClass="w-[min(980px,calc(100vw-32px))]"
+			modalClass="w-[min(1600px,calc(100vw-32px))]"
 		>
-			<IndexerForm bind:form {catalog} {saving} onSave={save} onCancel={closeModal} />
+			<IndexerForm
+				bind:form
+				{catalog}
+				{saving}
+				onSave={save}
+				onCancel={closeModal}
+				onTest={testConfig}
+				testing={testingConfig}
+				{testResult}
+			/>
 		</SettingsFormModal>
 	{/if}
 </div>

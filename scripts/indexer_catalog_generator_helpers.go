@@ -22,6 +22,8 @@ func fieldType(value string) string {
 		return "info"
 	case "number":
 		return "number"
+	case "url":
+		return "url"
 	default:
 		return "text"
 	}

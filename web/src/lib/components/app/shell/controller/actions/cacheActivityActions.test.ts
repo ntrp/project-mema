@@ -9,6 +9,7 @@ const apiMock = vi.hoisted(() => ({
 	getIndexerSearch: vi.fn(),
 	getMetadataCache: vi.fn(),
 	testDownloadClientConfig: vi.fn(),
+	testIndexerConfig: vi.fn(),
 	testIndexer: vi.fn(),
 	testMetadataProvider: vi.fn(),
 	updateIndexerSearchSettings: vi.fn()
@@ -96,12 +97,17 @@ describe('integration test and activity actions (SCN-ACTIVITY-002)', () => {
 		const shell = state();
 		const loadSettings = vi.fn();
 		apiMock.testDownloadClientConfig.mockResolvedValue({ success: true });
+		apiMock.testIndexerConfig.mockResolvedValue({ success: true, message: 'draft ok' });
 		apiMock.testIndexer.mockResolvedValue({ success: true, message: 'ok' });
 		apiMock.testMetadataProvider.mockResolvedValue({ success: false, message: 'missing token' });
 		const actions = createSettingsTestCacheActions(shell, { clearNotice: vi.fn(), loadSettings });
 
 		await expect(actions.testDownloadClientConfig({ name: 'Client' } as never)).resolves.toEqual({
 			success: true
+		});
+		await expect(actions.testIndexerConfig({ name: 'Indexer' } as never)).resolves.toEqual({
+			success: true,
+			message: 'draft ok'
 		});
 		await actions.testIndexer('indexer-1');
 		await actions.testMetadataProvider('metadata-1');

@@ -21,6 +21,7 @@
 		onEdit={app.editIndexer}
 		onDelete={app.deleteIndexer}
 		onTest={app.testIndexer}
+		onTestConfig={app.testIndexerConfig}
 		onClearIndexerSearchCache={app.clearIndexerSearchCache}
 		onSaveIndexerSearchSettings={app.saveIndexerSearchSettings}
 	/>

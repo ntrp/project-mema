@@ -43,6 +43,7 @@ describe('rendered integration settings sections (SCN-SETTINGS-018, SCN-SETTINGS
 				onEdit: vi.fn(),
 				onDelete: vi.fn(),
 				onTest: vi.fn(),
+				onTestConfig: vi.fn(),
 				onClearIndexerSearchCache: vi.fn(),
 				onSaveIndexerSearchSettings: vi.fn()
 			}

@@ -19,10 +19,16 @@ func (s *Server) ListIndexers(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list indexers")
 		return
 	}
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
+		return
+	}
+	languageCatalog := newCatalogLanguageMapper(languages)
 
 	response := IndexerListResponse{Indexers: make([]Indexer, 0, len(indexers))}
 	for _, indexer := range indexers {
-		response.Indexers = append(response.Indexers, indexerResponse(indexer))
+		response.Indexers = append(response.Indexers, indexerResponse(indexer, languageCatalog))
 	}
 	writeJSON(w, http.StatusOK, response)
 }
@@ -37,18 +43,33 @@ func (s *Server) GetIndexer(w http.ResponseWriter, r *http.Request, id ResourceI
 		writeSettingsError(w, err, "Could not find indexer")
 		return
 	}
-	writeJSON(w, http.StatusOK, indexerResponse(indexer))
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
+		return
+	}
+	writeJSON(w, http.StatusOK, indexerResponse(indexer, newCatalogLanguageMapper(languages)))
 }
 
 func (s *Server) ListIndexerCatalog(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, indexerCatalogResponse(indexers.Catalog()))
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
+		return
+	}
+	writeJSON(w, http.StatusOK, indexerCatalogResponse(indexers.Catalog(), languages))
 }
 
 func (s *Server) GetIndexerCatalogDefinition(w http.ResponseWriter, r *http.Request, definitionId string) {
 	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
 		return
 	}
 	entry, ok := indexers.CatalogEntryByID(definitionId)
@@ -56,7 +77,7 @@ func (s *Server) GetIndexerCatalogDefinition(w http.ResponseWriter, r *http.Requ
 		writeError(w, http.StatusNotFound, "indexer_definition_not_found", "Indexer definition not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, catalogEntryResponse(entry))
+	writeJSON(w, http.StatusOK, catalogEntryResponse(entry, newCatalogLanguageMapper(languages)))
 }
 
 func (s *Server) CreateIndexer(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +89,12 @@ func (s *Server) CreateIndexer(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	input, ok := indexerInput(w, body)
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
+		return
+	}
+	input, ok := indexerInput(w, body, languages)
 	if !ok {
 		return
 	}
@@ -78,7 +104,7 @@ func (s *Server) CreateIndexer(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "settings_create_failed", "Could not create indexer")
 		return
 	}
-	writeJSON(w, http.StatusCreated, indexerResponse(indexer))
+	writeJSON(w, http.StatusCreated, indexerResponse(indexer, newCatalogLanguageMapper(languages)))
 }
 
 func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -90,7 +116,12 @@ func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id Resour
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	input, ok := indexerInput(w, body)
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
+		return
+	}
+	input, ok := indexerInput(w, body, languages)
 	if !ok {
 		return
 	}
@@ -100,7 +131,7 @@ func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id Resour
 		writeSettingsError(w, err, "Could not update indexer")
 		return
 	}
-	writeJSON(w, http.StatusOK, indexerResponse(indexer))
+	writeJSON(w, http.StatusOK, indexerResponse(indexer, newCatalogLanguageMapper(languages)))
 }
 
 func (s *Server) BulkUpdateIndexers(w http.ResponseWriter, r *http.Request) {
@@ -131,9 +162,15 @@ func (s *Server) BulkUpdateIndexers(w http.ResponseWriter, r *http.Request) {
 		writeSettingsError(w, err, "Could not update indexers")
 		return
 	}
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
+		return
+	}
+	languageCatalog := newCatalogLanguageMapper(languages)
 	response := IndexerListResponse{Indexers: make([]Indexer, 0, len(updated))}
 	for _, indexer := range updated {
-		response.Indexers = append(response.Indexers, indexerResponse(indexer))
+		response.Indexers = append(response.Indexers, indexerResponse(indexer, languageCatalog))
 	}
 	writeJSON(w, http.StatusOK, response)
 }
@@ -163,5 +200,28 @@ func (s *Server) TestIndexer(w http.ResponseWriter, r *http.Request, id Resource
 
 	result := s.indexers.Test(r.Context(), indexerConfig(indexer))
 	s.recordIndexerTestResult(r.Context(), indexer, result)
+	writeJSON(w, http.StatusOK, indexerTestResponse(s.now(), result))
+}
+
+func (s *Server) TestIndexerConfig(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body IndexerRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	languages, err := s.settings.ListLanguages(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
+		return
+	}
+	input, ok := indexerInput(w, body, languages)
+	if !ok {
+		return
+	}
+
+	result := s.indexers.Test(r.Context(), indexerInputConfig(input))
 	writeJSON(w, http.StatusOK, indexerTestResponse(s.now(), result))
 }

@@ -917,6 +917,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/indexers/test': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test an indexer configuration before saving */
+		post: operations['testIndexerConfig'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/indexer-search': {
 		parameters: {
 			query?: never;
@@ -4781,6 +4798,32 @@ export interface operations {
 			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
+		};
+	};
+	testIndexerConfig: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['IndexerRequest'];
+			};
+		};
+		responses: {
+			/** @description Indexer test result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IntegrationTestResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
 		};
 	};
 	getIndexerSearch: {

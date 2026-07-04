@@ -1653,6 +1653,31 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/indexers/test:
+    post:
+      operationId: testIndexerConfig
+      tags:
+        - Settings
+      summary: Test an indexer configuration before saving
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IndexerRequest"
+      responses:
+        "200":
+          description: Indexer test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/indexer-search:
     get:
       operationId: getIndexerSearch

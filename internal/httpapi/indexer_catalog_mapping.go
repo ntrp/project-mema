@@ -2,29 +2,32 @@ package httpapi
 
 import (
 	"encoding/json"
+	"strings"
 
 	"media-manager/internal/indexers"
+	"media-manager/internal/storage"
 )
 
-func indexerCatalogResponse(entries []indexers.CatalogEntry) IndexerCatalogResponse {
+func indexerCatalogResponse(entries []indexers.CatalogEntry, languages []storage.Language) IndexerCatalogResponse {
+	languageCatalog := newCatalogLanguageMapper(languages)
 	return IndexerCatalogResponse{
-		Entries:    catalogEntryResponses(entries),
+		Entries:    catalogEntryResponses(entries, languageCatalog),
 		Protocols:  catalogProtocols(entries),
-		Languages:  catalogLanguages(entries),
+		Languages:  catalogLanguages(entries, languageCatalog),
 		Privacy:    catalogPrivacy(entries),
 		Categories: catalogCategories(entries),
 	}
 }
 
-func catalogEntryResponses(entries []indexers.CatalogEntry) []IndexerCatalogEntry {
+func catalogEntryResponses(entries []indexers.CatalogEntry, languages catalogLanguageMapper) []IndexerCatalogEntry {
 	responses := make([]IndexerCatalogEntry, 0, len(entries))
 	for _, entry := range entries {
-		responses = append(responses, catalogEntryResponse(entry))
+		responses = append(responses, catalogEntryResponse(entry, languages))
 	}
 	return responses
 }
 
-func catalogEntryResponse(entry indexers.CatalogEntry) IndexerCatalogEntry {
+func catalogEntryResponse(entry indexers.CatalogEntry, languages catalogLanguageMapper) IndexerCatalogEntry {
 	indexerURLs := append([]string(nil), entry.IndexerURLs...)
 	legacyURLs := append([]string(nil), entry.LegacyURLs...)
 	return IndexerCatalogEntry{
@@ -33,7 +36,7 @@ func catalogEntryResponse(entry indexers.CatalogEntry) IndexerCatalogEntry {
 		Implementation:     entry.Implementation,
 		ImplementationName: entry.ImplementationName,
 		Description:        optionalCatalogString(entry.Description),
-		Language:           entry.Language,
+		Language:           languages.code(entry.Language),
 		Encoding:           optionalCatalogString(entry.Encoding),
 		IndexerUrls:        &indexerURLs,
 		LegacyUrls:         &legacyURLs,
@@ -144,15 +147,16 @@ func catalogProtocols(entries []indexers.CatalogEntry) []IndexerProtocol {
 	return values
 }
 
-func catalogLanguages(entries []indexers.CatalogEntry) []string {
+func catalogLanguages(entries []indexers.CatalogEntry, languages catalogLanguageMapper) []string {
 	seen := map[string]bool{}
 	values := []string{}
 	for _, entry := range entries {
-		if seen[entry.Language] {
+		code := languages.code(entry.Language)
+		if seen[code] {
 			continue
 		}
-		seen[entry.Language] = true
-		values = append(values, entry.Language)
+		seen[code] = true
+		values = append(values, code)
 	}
 	return values
 }
@@ -172,6 +176,38 @@ func catalogPrivacy(entries []indexers.CatalogEntry) []IndexerPrivacy {
 		values = append(values, IndexerPrivacy(group))
 	}
 	return values
+}
+
+type catalogLanguageMapper map[string]string
+
+func newCatalogLanguageMapper(languages []storage.Language) catalogLanguageMapper {
+	mapper := catalogLanguageMapper{}
+	for _, language := range languages {
+		for _, value := range append([]string{language.Code, language.DisplayName}, language.Aliases...) {
+			mapper[normalizedCatalogLanguage(value)] = language.Code
+		}
+	}
+	return mapper
+}
+
+func (mapper catalogLanguageMapper) code(value string) string {
+	normalized := normalizedCatalogLanguage(value)
+	if code, ok := mapper[normalized]; ok {
+		return code
+	}
+	if prefix, _, ok := strings.Cut(normalized, "-"); ok {
+		if code, ok := mapper[prefix]; ok {
+			return code
+		}
+	}
+	if value == "" {
+		return "EN"
+	}
+	return strings.ToUpper(value)
+}
+
+func normalizedCatalogLanguage(value string) string {
+	return strings.ToLower(strings.TrimSpace(value))
 }
 
 func catalogCategories(entries []indexers.CatalogEntry) []IndexerCategory {

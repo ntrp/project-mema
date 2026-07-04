@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-//go:embed prowlarr_catalog.generated.json
-var prowlarrCatalogJSON []byte
+//go:embed indexer_catalog.generated.json
+var indexerCatalogJSON []byte
 
 type CatalogEntry struct {
 	DefinitionID       string
@@ -85,8 +85,8 @@ var catalogEntries = loadCatalogEntries()
 
 func loadCatalogEntries() []CatalogEntry {
 	entries := []CatalogEntry{}
-	if err := json.Unmarshal(prowlarrCatalogJSON, &entries); err != nil {
-		panic("load prowlarr indexer catalog: " + err.Error())
+	if err := json.Unmarshal(indexerCatalogJSON, &entries); err != nil {
+		panic("load indexer catalog: " + err.Error())
 	}
 	for index := range entries {
 		normalizeCatalogEntry(&entries[index])

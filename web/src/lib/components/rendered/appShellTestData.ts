@@ -67,6 +67,7 @@ export function createAppShell(overrides: Partial<AppShellController> = {}): App
 		editIndexer: vi.fn(),
 		deleteIndexer: vi.fn(),
 		testIndexer: vi.fn(),
+		testIndexerConfig: vi.fn(),
 		clearIndexerSearchCache: vi.fn(),
 		saveIndexerSearchSettings: vi.fn(),
 		metadataProviders: [metadataProvider()],

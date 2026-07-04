@@ -40,6 +40,7 @@ import {
 	savePathMapping,
 	saveUser,
 	scanLibraryFolder,
+	testIndexerConfig,
 	testIndexer,
 	testMetadataProvider,
 	updateIndexerSearchSettings
@@ -58,6 +59,7 @@ describe('UI API settings command helpers (SCN-SETTINGS-009)', () => {
 		await expect(cancelDownloadActivity('activity-1')).resolves.toEqual({});
 		await expect(deleteDownloadActivity('activity-1')).resolves.toBeUndefined();
 		await expect(manualImportDownloadActivity('activity-1', {} as never)).resolves.toEqual({});
+		await expect(testIndexerConfig(indexerForm())).resolves.toEqual({});
 		await expect(testIndexer('indexer-1')).resolves.toEqual({});
 		await expect(saveMetadataProvider(metadataProviderForm())).resolves.toBeUndefined();
 		await expect(saveUser(userForm())).resolves.toBeUndefined();
@@ -105,6 +107,20 @@ function cacheEntry(): IndexerSearchCacheEntry {
 		mediaType: 'movie',
 		query: 'scenario'
 	} as IndexerSearchCacheEntry;
+}
+
+function indexerForm() {
+	return {
+		name: 'Indexer',
+		definitionId: 'generic-torznab',
+		baseUrl: 'http://indexer.local',
+		apiKey: '',
+		categoriesText: '2000',
+		fields: [],
+		redirect: true,
+		enabled: true,
+		priority: 1
+	};
 }
 
 function metadataEntry(): MetadataCacheEntry {

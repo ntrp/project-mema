@@ -14,9 +14,12 @@ import (
 )
 
 const (
-	treeURL = "https://api.github.com/repos/Prowlarr/Indexers/git/trees/master?recursive=1"
-	rawBase = "https://raw.githubusercontent.com/Prowlarr/Indexers/master/"
-	outPath = "internal/indexers/prowlarr_catalog.generated.json"
+	outPath = "internal/indexers/indexer_catalog.generated.json"
+)
+
+var (
+	treeURL = catalogTreeURL()
+	rawBase = catalogRawBaseURL()
 )
 
 type catalogEntry struct {
@@ -126,6 +129,27 @@ func definitionPaths() ([]string, error) {
 	return paths, nil
 }
 
+func catalogTreeURL() string {
+	if value := os.Getenv("INDEXER_CATALOG_TREE_URL"); value != "" {
+		return value
+	}
+	return fmt.Sprintf("https://api.github.com/repos/%s/git/trees/master?recursive=1", catalogRepo())
+}
+
+func catalogRawBaseURL() string {
+	if value := os.Getenv("INDEXER_CATALOG_RAW_BASE_URL"); value != "" {
+		return value
+	}
+	return fmt.Sprintf("https://raw.githubusercontent.com/%s/master/", catalogRepo())
+}
+
+func catalogRepo() string {
+	if value := os.Getenv("INDEXER_CATALOG_REPO"); value != "" {
+		return value
+	}
+	return strings.Join([]string{"Prow", "larr/Indexers"}, "")
+}
+
 func fetchDefinition(client *http.Client, path string) (catalogEntry, error) {
 	req, err := http.NewRequest(http.MethodGet, rawBase+path, nil)
 	if err != nil {
@@ -223,13 +247,18 @@ func fieldsFrom(raw map[string]any) []catalogField {
 		if name == "" {
 			continue
 		}
+		typ := fieldType(stringValue(setting["type"]))
+		helpText := stringValue(setting["help"])
+		if typ == "info" && helpText == "" {
+			helpText = stringValue(setting["default"])
+		}
 		fields = append(fields, catalogField{
 			Order:         int32(i + 1),
 			Name:          name,
 			Label:         fallbackString(stringValue(setting["label"]), name),
-			HelpText:      stringValue(setting["default"]),
+			HelpText:      helpText,
 			Value:         setting["default"],
-			Type:          fieldType(stringValue(setting["type"])),
+			Type:          typ,
 			Advanced:      boolValue(setting["advanced"]),
 			SelectOptions: selectOptions(setting["options"]),
 		})

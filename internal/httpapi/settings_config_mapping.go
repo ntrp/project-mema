@@ -58,6 +58,17 @@ func indexerConfig(indexer storage.Indexer) indexers.Config {
 	}
 }
 
+func indexerInputConfig(input storage.IndexerInput) indexers.Config {
+	return indexers.Config{
+		Name:       input.Name,
+		Protocol:   input.Protocol,
+		BaseURL:    input.BaseURL,
+		APIKey:     input.APIKey,
+		Categories: append([]int32(nil), input.Categories...),
+		Redirect:   input.Redirect,
+	}
+}
+
 func metadataProviderConfig(provider storage.MetadataProvider) metadata.Config {
 	return metadata.Config{
 		ID:                    provider.ID,

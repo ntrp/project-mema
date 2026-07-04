@@ -50,6 +50,7 @@ import {
 	saveUser,
 	scanLibraryFolder,
 	testDownloadClient,
+	testIndexerConfig,
 	testIndexer,
 	testMetadataProvider,
 	updateFileNamingSettings,
@@ -116,6 +117,10 @@ describe('UI API edge cases (SCN-SETTINGS-009)', () => {
 				'Download activity was not returned'
 			],
 			[() => testDownloadClient('client-1'), 'Download client test did not return a result'],
+			[
+				() => testIndexerConfig(indexerForm()),
+				'Indexer test did not return a result'
+			],
 			[() => testIndexer('indexer-1'), 'Indexer test did not return a result'],
 			[() => testMetadataProvider('provider-1'), 'Metadata provider test did not return a result'],
 			[() => listLibraryFolderOptions('/media'), 'Folder options were not returned'],
@@ -197,6 +202,20 @@ describe('UI API edge cases (SCN-SETTINGS-009)', () => {
 		expect(clientMock.DELETE).toHaveBeenCalledTimes(10);
 	});
 });
+
+function indexerForm() {
+	return {
+		name: 'Indexer',
+		definitionId: 'generic-torznab',
+		baseUrl: 'http://indexer.local',
+		apiKey: '',
+		categoriesText: '2000',
+		fields: [],
+		redirect: true,
+		enabled: true,
+		priority: 1
+	};
+}
 
 function providerForm() {
 	return {

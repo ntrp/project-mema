@@ -33,7 +33,7 @@
 		{preventScroll}
 		showCloseButton={false}
 		class={cn(
-			'w-fit min-w-[min(420px,calc(100vw-32px))] max-w-[calc(100vw-32px)] gap-5 overflow-hidden overscroll-contain p-0 sm:max-w-[calc(100vw-32px)]',
+			'w-fit min-w-[min(420px,calc(100vw-32px))] max-w-[calc(100vw-32px)] max-h-[min(860px,calc(100vh-32px))] grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden overscroll-contain p-0 sm:max-w-[calc(100vw-32px)]',
 			modalClass
 		)}
 		aria-labelledby="settings-form-modal-title"
@@ -52,7 +52,7 @@
 				</Dialog.Close>
 			</div>
 		</Dialog.Header>
-		<div class="overflow-auto overscroll-contain px-6 py-5">
+		<div class="min-h-0 overflow-auto overscroll-contain px-6 py-5">
 			{@render children()}
 		</div>
 	</Dialog.Content>

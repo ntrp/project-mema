@@ -1,9 +1,13 @@
 import {
 	testDownloadClientConfig as testDownloadClientConfigRequest,
+	testIndexerConfig as testIndexerConfigRequest,
 	testIndexer as testIndexerRequest,
 	testMetadataProvider as testMetadataProviderRequest
 } from '$lib/settings/api';
-import type { DownloadClientForm as DownloadClientFormValue } from '$lib/settings/types';
+import type {
+	DownloadClientForm as DownloadClientFormValue,
+	IndexerForm as IndexerFormValue
+} from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import { createSearchCacheActions } from './searchCacheActions';
 import type { AppShellState } from './state.svelte';
@@ -43,6 +47,17 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		}
 	}
 
+	async function testIndexerConfig(form: IndexerFormValue) {
+		clearNotice();
+
+		try {
+			return await testIndexerConfigRequest(form);
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not test indexer');
+			throw error;
+		}
+	}
+
 	async function testMetadataProvider(id: string) {
 		clearNotice();
 		state.testingMetadataProviderId = id;
@@ -60,6 +75,7 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 	return {
 		testDownloadClientConfig,
 		testIndexer,
+		testIndexerConfig,
 		testMetadataProvider,
 		...cacheActions
 	};

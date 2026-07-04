@@ -34,6 +34,7 @@ import {
 	saveTag,
 	searchMediaReleases,
 	testDownloadClientConfig,
+	testIndexerConfig,
 	updateQualitySizeSettings
 } from './api';
 
@@ -141,6 +142,7 @@ describe('UI API helpers', () => {
 	it('SCN-SETTINGS-009 covers commands, deletes, fetch downloads, and fallback counts', async () => {
 		clientMock.POST.mockResolvedValueOnce({ data: { id: 2 } })
 			.mockResolvedValueOnce({ data: { success: false } })
+			.mockResolvedValueOnce({ data: { success: true } })
 			.mockResolvedValueOnce({ data: { deletedCount: 4 } });
 		clientMock.PUT.mockResolvedValueOnce({ data: { qualities: [] } });
 		clientMock.DELETE.mockResolvedValueOnce({})
@@ -166,6 +168,19 @@ describe('UI API helpers', () => {
 				priority: 1
 			})
 		).resolves.toEqual({ success: false });
+		await expect(
+			testIndexerConfig({
+				name: 'Indexer',
+				definitionId: 'generic-torznab',
+				baseUrl: 'http://indexer.local',
+				apiKey: '',
+				categoriesText: '2000',
+				fields: [],
+				redirect: true,
+				enabled: true,
+				priority: 1
+			})
+		).resolves.toEqual({ success: true });
 		await expect(updateQualitySizeSettings([])).resolves.toEqual({ qualities: [] });
 		await expect(deleteMediaItem('media-1', { keepFiles: true })).resolves.toBeUndefined();
 		await expect(deleteDownloadClient('client-1')).resolves.toBeUndefined();

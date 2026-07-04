@@ -25,7 +25,7 @@ func downloadClientResponse(client storage.DownloadClient) DownloadClient {
 	}
 }
 
-func indexerResponse(indexer storage.Indexer) Indexer {
+func indexerResponse(indexer storage.Indexer, languages catalogLanguageMapper) Indexer {
 	categories := append([]int32(nil), indexer.Categories...)
 	if categories == nil {
 		categories = []int32{}
@@ -38,7 +38,7 @@ func indexerResponse(indexer storage.Indexer) Indexer {
 		ImplementationName: &indexer.ImplementationName,
 		Protocol:           IndexerProtocol(indexer.Protocol),
 		Privacy:            IndexerPrivacy(indexer.Privacy),
-		Language:           indexer.Language,
+		Language:           languages.code(indexer.Language),
 		Encoding:           indexer.Encoding,
 		Description:        indexer.Description,
 		IndexerUrls:        &indexer.IndexerURLs,

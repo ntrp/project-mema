@@ -31,20 +31,20 @@ func TestTorznabCaps(t *testing.T) {
 
 func TestCapsDetectsWebUIHTML(t *testing.T) {
 	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
-		resp := response(http.StatusOK, `<!doctype html><html><body>Prowlarr</body></html>`)
+		resp := response(http.StatusOK, `<!doctype html><html><body>Indexer manager</body></html>`)
 		resp.Header.Set("Content-Type", "text/html; charset=utf-8")
 		return resp, nil
 	})
 
 	result := NewService(client).Test(context.Background(), Config{
 		Protocol: "torrent",
-		BaseURL:  "https://prowlarr.local/",
+		BaseURL:  "https://indexers.local/",
 	})
 
 	if result.Success {
 		t.Fatalf("expected failure, got %#v", result)
 	}
-	if !strings.Contains(result.Message, "not the Prowlarr web UI root") {
+	if !strings.Contains(result.Message, "not an indexer manager web UI root") {
 		t.Fatalf("unexpected message %q", result.Message)
 	}
 }

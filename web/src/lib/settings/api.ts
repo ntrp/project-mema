@@ -1072,6 +1072,20 @@ export async function testIndexer(id: string) {
 	return data;
 }
 
+export async function testIndexerConfig(form: IndexerForm) {
+	const { data, error } = await client.POST('/settings/indexers/test', {
+		body: normalizeIndexerForm(form)
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Indexer test did not return a result');
+	}
+	return data;
+}
+
 export async function saveMetadataProvider(form: MetadataProviderForm) {
 	const body = normalizeMetadataProviderForm(form);
 	const result = form.id

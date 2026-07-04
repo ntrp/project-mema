@@ -54,7 +54,7 @@ func (s *Service) testCaps(ctx context.Context, config Config) TestResult {
 	}
 	if looksLikeHTML(resp.Header.Get("Content-Type"), body) {
 		return failedResult(
-			"Indexer URL returned HTML, not Torznab/Newznab capabilities. Use the full Prowlarr Torznab/Newznab API URL for a specific indexer, not the Prowlarr web UI root.",
+			"Indexer URL returned HTML, not Torznab/Newznab capabilities. Use the full Torznab/Newznab API URL for a specific indexer, not an indexer manager web UI root.",
 			"contentType", resp.Header.Get("Content-Type"),
 			"endpoint", endpoint,
 		)

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"media-manager/internal/storage"
 )
 
 func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
@@ -38,7 +40,7 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 		Categories:   &categories,
 		Enabled:      true,
 		Priority:     10,
-	})
+	}, testLanguageCatalog())
 	if !ok || indexer.Name != "Indexer" || len(indexer.Categories) != 2 {
 		t.Fatalf("indexer input = %#v, ok = %v", indexer, ok)
 	}
@@ -65,13 +67,24 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 		return ok
 	})
 	assertBadRequest(t, func(w http.ResponseWriter) bool {
-		_, ok := indexerInput(w, IndexerRequest{DefinitionId: "bad", Name: "Bad", BaseUrl: "http://x"})
+		_, ok := indexerInput(
+			w,
+			IndexerRequest{DefinitionId: "bad", Name: "Bad", BaseUrl: "http://x"},
+			testLanguageCatalog(),
+		)
 		return ok
 	})
 	assertBadRequest(t, func(w http.ResponseWriter) bool {
 		_, ok := metadataProviderInput(w, MetadataProviderRequest{Name: "Bad", Type: Tmdb, BaseUrl: "http://x", Priority: 1001})
 		return ok
 	})
+}
+
+func testLanguageCatalog() []storage.Language {
+	return []storage.Language{
+		{Code: "EN", DisplayName: "English", Aliases: []string{"ENG"}},
+		{Code: "DE", DisplayName: "German", Aliases: []string{"Deutsch", "DEU"}},
+	}
 }
 
 func TestSCNSettings009UserTagLanguageAndQualityInputsValidateEdges(t *testing.T) {
