@@ -55,6 +55,7 @@
 		"vitest": "^4.1.9"
 	},
 	"dependencies": {
-		"openapi-fetch": "^0.17.0"
+		"openapi-fetch": "^0.17.0",
+		"video.js": "^8.23.9"
 	}
 }

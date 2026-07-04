@@ -153,6 +153,7 @@
 									{/snippet}
 									<MediaFileSummary
 										mediaItemId={item.id}
+										mediaTitle={item.title}
 										row={file.row}
 										activityStatus={file.activityStatus}
 										{canManage}

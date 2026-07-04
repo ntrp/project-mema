@@ -13,10 +13,11 @@ import (
 )
 
 func (s *Server) StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaItemFileParams) {
-	if _, ok := s.requireSession(w, r); !ok {
+	mediaID := uuid.UUID(id)
+	if !s.authorizeMediaFileStream(w, r, mediaID, params) {
 		return
 	}
-	target, err := s.settings.MediaItemFilePath(r.Context(), uuid.UUID(id), params.Path)
+	target, err := s.settings.MediaItemFilePath(r.Context(), mediaID, params.Path)
 	if err != nil {
 		writeSettingsError(w, err, "Could not find media file")
 		return
@@ -37,9 +38,20 @@ func (s *Server) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	name := filepath.Base(target)
+	expires := s.now().Add(streamTokenTTL).Unix()
+	token := s.newStreamToken(uuid.UUID(id), params.Path, expires)
 	w.Header().Set("Content-Type", "audio/x-mpegurl; charset=utf-8")
-	w.Header().Set("Content-Disposition", mime.FormatMediaType("inline", map[string]string{"filename": playlistFilename(name)}))
-	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", playlistTitle(name), streamURL(r, params.Path))
+	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": playlistFilename(name)}))
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", playlistTitle(name), streamURL(r, params.Path, expires, token))
+}
+
+func (s *Server) authorizeMediaFileStream(w http.ResponseWriter, r *http.Request, mediaID uuid.UUID, params StreamMediaItemFileParams) bool {
+	if s.validStreamToken(mediaID, params.Path, params.StreamExpires, params.StreamToken) {
+		return true
+	}
+	_, ok := s.requireSession(w, r)
+	return ok
 }
 
 func serveMediaFile(w http.ResponseWriter, r *http.Request, target string) {
@@ -108,8 +120,12 @@ func mediaContentType(path string) string {
 	}
 }
 
-func streamURL(r *http.Request, filePath string) string {
-	query := url.Values{"path": []string{filePath}}
+func streamURL(r *http.Request, filePath string, expires int64, token string) string {
+	query := url.Values{
+		"path":          []string{filePath},
+		"streamExpires": []string{fmt.Sprintf("%d", expires)},
+		"streamToken":   []string{token},
+	}
 	return (&url.URL{
 		Scheme:   requestScheme(r),
 		Host:     requestHost(r),

@@ -922,6 +922,24 @@ export async function listReleaseBlocklist(): Promise<ReleaseBlocklistItem[]> {
 	return data?.items ?? [];
 }
 
+export async function deleteReleaseBlocklistItem(id: string) {
+	const { error } = await client.DELETE('/activity/blocklist/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function clearReleaseBlocklist() {
+	const { error } = await client.DELETE('/activity/blocklist');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
 export async function cancelDownloadActivity(id: string) {
 	const { data, error } = await client.POST('/activity/downloads/{id}/cancel', {
 		params: { path: { id } }

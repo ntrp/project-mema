@@ -27,9 +27,13 @@
 		canManage: boolean;
 		cancellingId?: string;
 		deletingId?: string;
+		deletingBlocklistId?: string;
+		clearingReleaseBlocklist?: boolean;
 		onRefresh: () => void;
 		onCancel: (_activity: DownloadActivity) => void;
 		onDelete: (_activity: DownloadActivity) => void;
+		onDeleteReleaseBlocklistItem?: (_item: ReleaseBlocklistItem) => void;
+		onClearReleaseBlocklist?: () => void;
 	}
 
 	let {
@@ -40,9 +44,13 @@
 		canManage,
 		cancellingId,
 		deletingId,
+		deletingBlocklistId,
+		clearingReleaseBlocklist = false,
 		onRefresh,
 		onCancel,
-		onDelete
+		onDelete,
+		onDeleteReleaseBlocklistItem = () => {},
+		onClearReleaseBlocklist = () => {}
 	}: Props = $props();
 	let manualImportActivity = $state<DownloadActivity | undefined>();
 	let importingId = $state<string | undefined>();
@@ -83,7 +91,14 @@
 
 {#if section === 'blocklist'}
 	{#if releaseBlocklist.length > 0}
-		<ActivityBlocklistTable items={releaseBlocklist} />
+		<ActivityBlocklistTable
+			items={releaseBlocklist}
+			{canManage}
+			deletingId={deletingBlocklistId}
+			clearing={clearingReleaseBlocklist}
+			onDelete={onDeleteReleaseBlocklistItem}
+			onClear={onClearReleaseBlocklist}
+		/>
 	{:else}
 		<EmptyState
 			class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"

@@ -11,6 +11,11 @@ import (
 type ffprobeOutput struct {
 	Streams  []ffprobeStream  `json:"streams"`
 	Chapters []ffprobeChapter `json:"chapters"`
+	Format   ffprobeFormat    `json:"format"`
+}
+
+type ffprobeFormat struct {
+	Duration string `json:"duration"`
 }
 
 type ffprobeStream struct {
@@ -36,8 +41,9 @@ type ffprobeChapter struct {
 }
 
 type mediaFileProbeResult struct {
-	tracks   []MediaFileTrack
-	chapters []MediaFileChapter
+	tracks          []MediaFileTrack
+	chapters        []MediaFileChapter
+	durationSeconds *float64
 }
 
 func mediaFileProbe(path string) mediaFileProbeResult {
@@ -50,6 +56,7 @@ func mediaFileProbe(path string) mediaFileProbeResult {
 		"-v", "error",
 		"-show_streams",
 		"-show_chapters",
+		"-show_format",
 		"-of", "json",
 		path,
 	).Output()
@@ -61,8 +68,9 @@ func mediaFileProbe(path string) mediaFileProbeResult {
 		return mediaFileProbeResult{}
 	}
 	return mediaFileProbeResult{
-		tracks:   mediaFileTracks(payload.Streams),
-		chapters: mediaFileChapters(payload.Chapters),
+		tracks:          mediaFileTracks(payload.Streams),
+		chapters:        mediaFileChapters(payload.Chapters),
+		durationSeconds: optionalProbeDuration(payload.Format.Duration),
 	}
 }
 

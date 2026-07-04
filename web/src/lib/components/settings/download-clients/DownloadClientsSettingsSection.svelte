@@ -7,7 +7,7 @@
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { emptyDownloadClientForm } from '$lib/settings/forms';
+	import { downloadClientProtocolForType, emptyDownloadClientForm } from '$lib/settings/forms';
 	import type {
 		DownloadClient,
 		DownloadClientForm as DownloadClientFormValue,
@@ -64,7 +64,7 @@
 	}
 
 	function selectType(type: DownloadClientType) {
-		form = { ...emptyDownloadClientForm(), type };
+		form = { ...emptyDownloadClientForm(), type, protocol: downloadClientProtocolForType(type) };
 		typeSelected = true;
 		testResult = undefined;
 	}

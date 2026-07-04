@@ -4,7 +4,7 @@ export type MatchSeverity = 'info' | 'warning' | 'error';
 export type MatchInfo = ReleaseCandidate['match'];
 
 export function releaseSource(release: ReleaseCandidate) {
-	return release.indexerProtocol === 'torrent' ? 'torrent' : 'nzb';
+	return release.indexerProtocol === 'torrent' ? 'torrent' : 'usenet';
 }
 
 export function releaseSourceBadgeClass(release: ReleaseCandidate) {
@@ -35,6 +35,16 @@ export function sizeLabel(sizeBytes: number) {
 export function peerLabel(release: ReleaseCandidate) {
 	if (release.seeders === undefined && release.peers === undefined) return '-';
 	return `${release.peers ?? '-'} / ${release.seeders ?? '-'}`;
+}
+
+export function peerBadgeClass(release: ReleaseCandidate) {
+	if ((release.seeders ?? 0) > 0) {
+		return 'border-emerald-300 bg-emerald-100 text-emerald-800';
+	}
+	if ((release.peers ?? 0) > 5) {
+		return 'border-yellow-300 bg-yellow-100 text-yellow-800';
+	}
+	return 'border-red-300 bg-red-100 text-red-800';
 }
 
 export function languageLabels(release: ReleaseCandidate) {

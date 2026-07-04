@@ -476,6 +476,48 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/files/preview-info': {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Inspect the current browser preview stream plan */
+		get: operations['getMediaItemFilePreviewInfo'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/files/subtitle': {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Convert a media file subtitle stream to WebVTT */
+		get: operations['previewMediaItemFileSubtitle'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/vlc': {
 		parameters: {
 			query: {
@@ -622,7 +664,7 @@ export interface paths {
 		};
 		get?: never;
 		put?: never;
-		/** Enqueue a release grab with the highest-priority enabled download client */
+		/** Enqueue a release grab with a compatible enabled download client */
 		post: operations['grabMediaRelease'];
 		delete?: never;
 		options?: never;
@@ -658,7 +700,27 @@ export interface paths {
 		get: operations['listReleaseBlocklist'];
 		put?: never;
 		post?: never;
-		delete?: never;
+		/** Clear all blocked releases */
+		delete: operations['clearReleaseBlocklist'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/activity/blocklist/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete a blocked release */
+		delete: operations['deleteReleaseBlocklistItem'];
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -2224,6 +2286,19 @@ export interface components {
 			bitRate?: string;
 		};
 		/** @enum {string} */
+		MediaFilePreviewMode: 'direct' | 'remux' | 'transcode';
+		MediaFilePreviewInfo: {
+			streamingMode: components['schemas']['MediaFilePreviewMode'];
+			videoTrack?: components['schemas']['MediaFileTrack'];
+			audioTrack?: components['schemas']['MediaFileTrack'];
+			outputVideoCodec: string;
+			outputAudioCodec: string;
+			/** Format: double */
+			durationSeconds?: number;
+			sourceBitRate?: string;
+			liveBitRate?: string;
+		};
+		/** @enum {string} */
 		MediaItemStatus: 'missing' | 'downloading' | 'downloaded';
 		/** @enum {string} */
 		MediaMonitorMode:
@@ -2527,6 +2602,7 @@ export interface components {
 			peers?: number;
 			/** Format: date-time */
 			publishedAt?: string;
+			grabDisabledReason?: string;
 			match: components['schemas']['ReleaseCandidateMatch'];
 		};
 		ReleaseCandidateMatch: {
@@ -2559,6 +2635,8 @@ export interface components {
 			mediaType: components['schemas']['MediaType'];
 			releaseTitle: string;
 			indexerName: string;
+			indexerProtocol: components['schemas']['IndexerProtocol'];
+			downloadClientName: string;
 			reason: string;
 			source: string;
 			temporary: boolean;
@@ -2692,6 +2770,7 @@ export interface components {
 		DownloadClientRequest: {
 			name: string;
 			type: components['schemas']['DownloadClientType'];
+			protocol: components['schemas']['IndexerProtocol'];
 			baseUrl: string;
 			username?: string;
 			password?: string;
@@ -4055,6 +4134,8 @@ export interface operations {
 		parameters: {
 			query: {
 				path: components['parameters']['MediaFilePath'];
+				streamExpires?: number;
+				streamToken?: string;
 			};
 			header?: never;
 			path: {
@@ -4083,6 +4164,7 @@ export interface operations {
 			query: {
 				path: components['parameters']['MediaFilePath'];
 				audioTrackIndex?: number;
+				startTimeSeconds?: number;
 			};
 			header?: never;
 			path: {
@@ -4106,6 +4188,62 @@ export interface operations {
 			404: components['responses']['NotFound'];
 		};
 	};
+	getMediaItemFilePreviewInfo: {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+				audioTrackIndex?: number;
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Browser preview stream information */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaFilePreviewInfo'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	previewMediaItemFileSubtitle: {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+				subtitleTrackIndex: number;
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description WebVTT subtitle track */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'text/vtt': string;
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	playMediaItemFileInVlc: {
 		parameters: {
 			query: {
@@ -4119,7 +4257,7 @@ export interface operations {
 		};
 		requestBody?: never;
 		responses: {
-			/** @description Inline M3U playlist pointing at the remote stream */
+			/** @description M3U playlist pointing at the remote stream */
 			200: {
 				headers: {
 					[name: string]: unknown;
@@ -4359,6 +4497,47 @@ export interface operations {
 				};
 			};
 			401: components['responses']['Unauthorized'];
+		};
+	};
+	clearReleaseBlocklist: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Release blocklist cleared */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteReleaseBlocklistItem: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Release blocklist entry deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	deleteDownloadActivity: {

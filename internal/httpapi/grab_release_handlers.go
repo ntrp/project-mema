@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 
 	"media-manager/internal/decisions"
+	"media-manager/internal/downloadrouting"
 	"media-manager/internal/jobs"
 	"media-manager/internal/storage"
 )
@@ -52,7 +53,11 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 		return
 	}
 
-	client := clients[0]
+	client, ok := downloadrouting.ClientForProtocol(clients, release.IndexerProtocol)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "missing_download_client", downloadrouting.MissingClientMessage(release.IndexerProtocol))
+		return
+	}
 	activity, err := s.settings.CreateDownloadActivity(r.Context(), storage.DownloadActivityInput{
 		MediaItemID:        item.ID,
 		ReleaseTitle:       release.Title,
@@ -74,6 +79,7 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 		Title:       release.Title,
 		DownloadURL: release.DownloadURL,
 		IndexerName: release.IndexerName,
+		Protocol:    release.IndexerProtocol,
 	})
 	if err != nil {
 		enqueueError := "Could not enqueue download job"

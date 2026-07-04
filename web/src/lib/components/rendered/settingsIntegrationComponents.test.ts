@@ -5,12 +5,12 @@ import DownloadClientForm from '$lib/components/settings/download-clients/Downlo
 import DownloadClientTable from '$lib/components/settings/download-clients/DownloadClientTable.svelte';
 import IndexerHealthStatus from '$lib/components/settings/indexers/IndexerHealthStatus.svelte';
 import IndexerTable from '$lib/components/settings/indexers/IndexerTable.svelte';
-import type {
-	DownloadClient,
-	DownloadClientForm as DownloadClientFormValue,
-	Indexer,
-	IntegrationTestResponse
-} from '$lib/settings/types';
+import {
+	downloadClient,
+	downloadClientForm,
+	indexerRow,
+	integrationResult
+} from '$lib/components/rendered/settingsIntegrationTestValues';
 
 describe('rendered download client settings components (SCN-INTEGRATIONS-003)', () => {
 	it('renders download client rows and empty state', () => {
@@ -22,6 +22,7 @@ describe('rendered download client settings components (SCN-INTEGRATIONS-003)', 
 			}
 		});
 		expect(populated.body).toContain('Local SABnzbd');
+		expect(populated.body).toContain('usenet');
 		expect(populated.body).toContain('sabnzbd');
 		expect(populated.body).toContain('http://sabnzbd.local');
 		expect(populated.body).toContain('Delete Local SABnzbd');
@@ -45,6 +46,7 @@ describe('rendered download client settings components (SCN-INTEGRATIONS-003)', 
 		});
 		expect(transmission.body).toContain('Username');
 		expect(transmission.body).toContain('Password');
+		expect(transmission.body).toContain('TORRENT');
 		expect(transmission.body).not.toContain('API key');
 
 		const sabnzbd = render(DownloadClientForm, {
@@ -60,6 +62,7 @@ describe('rendered download client settings components (SCN-INTEGRATIONS-003)', 
 		});
 		expect(sabnzbd.body).toContain('Edit download client');
 		expect(sabnzbd.body).toContain('API key');
+		expect(sabnzbd.body).toContain('USENET');
 		expect(sabnzbd.body).toContain('Testing');
 
 		const tested = render(DownloadClientForm, {
@@ -91,9 +94,17 @@ describe('rendered indexer settings components (SCN-INTEGRATIONS-001)', () => {
 				onTest: vi.fn()
 			}
 		});
+		expect(populated.body.indexOf('Protocol')).toBeLessThan(populated.body.indexOf('Name'));
 		expect(populated.body).toContain('Local Torznab');
+		expect(populated.body).toContain('torrent');
+		expect(populated.body).toContain('private');
+		expect(populated.body).not.toContain('en-US');
+		expect(populated.body).toContain('text-emerald-700');
+		expect(populated.body).toContain('border-destructive/50');
 		expect(populated.body).toContain('5000, 2000');
 		expect(populated.body).toContain('Checking');
+		expect(populated.body).not.toContain('Base URL');
+		expect(populated.body).not.toContain('http://torznab.local');
 
 		const checked = render(IndexerTable, {
 			props: {
@@ -128,83 +139,15 @@ describe('rendered indexer settings components (SCN-INTEGRATIONS-001)', () => {
 				})
 			}
 		});
-		expect(backingOff.body).toContain('Backing off');
+		expect(backingOff.body).toContain('Temp blocked');
+		expect(backingOff.body).toContain('text-yellow-700');
 		expect(backingOff.body).toContain('Next check');
 		expect(backingOff.body).toContain('HTTP 429');
+
+		const permanentlyBlocked = render(IndexerHealthStatus, {
+			props: { indexer: indexerRow({ healthStatus: 'disabled' }) }
+		});
+		expect(permanentlyBlocked.body).toContain('Permanently blocked');
+		expect(permanentlyBlocked.body).toContain('text-destructive');
 	});
 });
-
-function downloadClient(overrides: Partial<DownloadClient> = {}): DownloadClient {
-	return {
-		id: 'client-1',
-		name: 'Local SABnzbd',
-		type: 'sabnzbd',
-		baseUrl: 'http://sabnzbd.local',
-		enabled: true,
-		priority: 50,
-		createdAt: '2026-07-03T00:00:00Z',
-		updatedAt: '2026-07-03T00:00:00Z',
-		...overrides
-	};
-}
-
-function downloadClientForm(
-	overrides: Partial<DownloadClientFormValue> = {}
-): DownloadClientFormValue {
-	return {
-		name: 'Local client',
-		type: 'sabnzbd',
-		baseUrl: 'http://client.local',
-		apiKey: 'secret',
-		username: 'admin',
-		password: 'password',
-		category: 'movies',
-		enabled: true,
-		priority: 50,
-		...overrides
-	};
-}
-
-function indexerRow(overrides: Partial<Indexer> = {}): Indexer {
-	return {
-		id: 'indexer-1',
-		name: 'Local Torznab',
-		definitionId: 'generic-torznab',
-		baseUrl: 'http://torznab.local',
-		categories: [5000, 2000],
-		protocol: 'torrent',
-		privacy: 'private',
-		language: 'en-US',
-		supportsRss: true,
-		supportsSearch: true,
-		supportsRedirect: true,
-		supportsPagination: true,
-		capabilities: {
-			categories: [],
-			supportsRawSearch: true,
-			searchParams: ['q'],
-			tvSearchParams: ['q'],
-			movieSearchParams: ['q']
-		},
-		enabled: true,
-		priority: 10,
-		healthStatus: 'healthy',
-		failureCount: 0,
-		createdAt: '2026-07-03T00:00:00Z',
-		updatedAt: '2026-07-03T00:00:00Z',
-		...overrides
-	};
-}
-
-function integrationResult(
-	overrides: Partial<IntegrationTestResponse> = {}
-): IntegrationTestResponse {
-	return {
-		success: true,
-		message: 'Connection ok',
-		latencyMs: 42,
-		checkedAt: '2026-07-03T00:00:00Z',
-		details: {},
-		...overrides
-	};
-}

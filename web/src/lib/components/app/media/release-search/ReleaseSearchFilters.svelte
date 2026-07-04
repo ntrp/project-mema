@@ -90,7 +90,7 @@
 				<Select.Trigger class="w-full">{protocolLabel(filters.source)}</Select.Trigger>
 				<Select.Content>
 					<Select.Item value="all" label="All" />
-					<Select.Item value="nzb" label="NZB" />
+					<Select.Item value="usenet" label="USENET" />
 					<Select.Item value="torrent" label="TORRENT" />
 				</Select.Content>
 			</Select.Root>

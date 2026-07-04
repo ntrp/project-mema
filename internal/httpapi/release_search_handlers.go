@@ -64,6 +64,11 @@ func (s *Server) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id 
 		Releases: make([]ReleaseCandidate, 0, len(snapshot.Releases)),
 		Errors:   snapshot.Errors,
 	}
+	grabProtocols, err := s.enabledDownloadClientProtocols(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "download_client_list_failed", "Could not list enabled download clients")
+		return
+	}
 	profile, formats, languages := s.releaseDecisionContext(r.Context(), item)
 	for _, release := range snapshot.Releases {
 		block, blocked, err := s.settings.FindReleaseBlock(r.Context(), release)
@@ -77,7 +82,15 @@ func (s *Server) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id 
 		}
 		response.Releases = append(
 			response.Releases,
-			releaseCandidateResponseWithBlock(item, release, profile, formats, languages, blockPtr),
+			releaseCandidateResponseWithBlockAndGrabReason(
+				item,
+				release,
+				profile,
+				formats,
+				languages,
+				blockPtr,
+				releaseGrabDisabledReason(release.IndexerProtocol, grabProtocols),
+			),
 		)
 	}
 	writeJSON(w, http.StatusOK, response)

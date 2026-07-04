@@ -94,6 +94,7 @@ describe('UI API helpers', () => {
 		await saveDownloadClient({
 			name: ' SAB ',
 			type: 'sabnzbd',
+			protocol: 'usenet',
 			baseUrl: ' http://sab.local ',
 			username: '',
 			password: ' secret ',
@@ -159,6 +160,7 @@ describe('UI API helpers', () => {
 			testDownloadClientConfig({
 				name: 'Client',
 				type: 'transmission',
+				protocol: 'torrent',
 				baseUrl: 'http://client.local',
 				username: '',
 				password: '',

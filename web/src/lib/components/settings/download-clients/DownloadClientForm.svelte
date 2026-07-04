@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import { Badge } from '$lib/components/ui/badge';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -11,6 +12,7 @@
 		DownloadClientType,
 		IntegrationTestResponse
 	} from '$lib/settings/types';
+	import { downloadClientProtocolForType } from '$lib/settings/forms';
 
 	interface Props {
 		form: DownloadClientForm;
@@ -37,6 +39,12 @@
 		{ value: 'transmission', label: 'transmission' },
 		{ value: 'sabnzbd', label: 'sabnzbd' }
 	];
+	const protocolLabel = $derived(downloadClientProtocolForType(form.type).toUpperCase());
+
+	function setDownloadClientType(value: string) {
+		form.type = value as DownloadClientType;
+		form.protocol = downloadClientProtocolForType(form.type);
+	}
 </script>
 
 <Card.Root aria-labelledby="download-client-form-title">
@@ -63,10 +71,16 @@
 					<SettingsSelect
 						value={form.type}
 						options={downloadClientTypes}
-						onValueChange={(value) => (form.type = value as DownloadClientType)}
+						onValueChange={setDownloadClientType}
 					/>
 				</div>
 			{/if}
+			<div class="space-y-2">
+				<Label>Protocol</Label>
+				<div class="flex h-9 items-center">
+					<Badge variant="outline" class="uppercase">{protocolLabel}</Badge>
+				</div>
+			</div>
 			<div class="space-y-2 sm:col-span-2">
 				<Label for="download-client-base-url">Base URL</Label>
 				<Input

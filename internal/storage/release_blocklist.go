@@ -25,17 +25,18 @@ func (s *SettingsStore) BlockRelease(ctx context.Context, input ReleaseBlocklist
 		input.ExpiresAt = nil
 	}
 	downloadURL := optionalText(input.DownloadURL)
+	downloadClientName := strings.TrimSpace(input.DownloadClientName)
 	return scanReleaseBlocklistItem(s.pool.QueryRow(ctx, `
 		insert into app.release_blocklist (
-			id, media_item_id, release_title, indexer_name, indexer_protocol, download_url,
+			id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name, download_url,
 			info_url, guid, reason, source, temporary, expires_at
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		on conflict (id) do update set updated_at = now()
-		returning id, media_item_id, '', '', release_title, indexer_name, indexer_protocol,
-			download_url, info_url, guid, reason, source, temporary, expires_at, created_at, updated_at
+		returning id, media_item_id, '', '', release_title, indexer_name, coalesce(nullif(indexer_protocol, ''), 'torrent'),
+			download_client_name, download_url, info_url, guid, reason, source, temporary, expires_at, created_at, updated_at
 	`, id, input.MediaItemID, title, strings.TrimSpace(input.IndexerName), strings.TrimSpace(input.IndexerProtocol),
-		downloadURL, input.InfoURL, input.GUID, reason, source, input.Temporary, input.ExpiresAt))
+		downloadClientName, downloadURL, input.InfoURL, input.GUID, reason, source, input.Temporary, input.ExpiresAt))
 }
 
 func (s *SettingsStore) BlockReleaseCandidate(ctx context.Context, release ReleaseCandidateInput, reason string, source string, expiresAt *time.Time) (ReleaseBlocklistItem, error) {
@@ -56,14 +57,15 @@ func (s *SettingsStore) BlockReleaseCandidate(ctx context.Context, release Relea
 
 func (s *SettingsStore) BlockReleaseActivity(ctx context.Context, activity DownloadActivity, reason string, source string, expiresAt *time.Time) (ReleaseBlocklistItem, error) {
 	return s.BlockRelease(ctx, ReleaseBlocklistInput{
-		MediaItemID:  activity.MediaItemID,
-		ReleaseTitle: activity.ReleaseTitle,
-		IndexerName:  activity.IndexerName,
-		DownloadURL:  activity.DownloadURL,
-		Reason:       reason,
-		Source:       source,
-		Temporary:    expiresAt != nil,
-		ExpiresAt:    expiresAt,
+		MediaItemID:        activity.MediaItemID,
+		ReleaseTitle:       activity.ReleaseTitle,
+		IndexerName:        activity.IndexerName,
+		DownloadClientName: activity.DownloadClientName,
+		DownloadURL:        activity.DownloadURL,
+		Reason:             reason,
+		Source:             source,
+		Temporary:          expiresAt != nil,
+		ExpiresAt:          expiresAt,
 	})
 }
 
@@ -94,10 +96,12 @@ func (s *SettingsStore) FindReleaseBlock(ctx context.Context, release ReleaseCan
 func (s *SettingsStore) ListReleaseBlocklist(ctx context.Context) ([]ReleaseBlocklistItem, error) {
 	rows, err := s.pool.Query(ctx, `
 		select b.id, b.media_item_id, m.title, m.media_type, b.release_title, b.indexer_name,
-			b.indexer_protocol, b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary,
-			b.expires_at, b.created_at, b.updated_at
+			coalesce(nullif(b.indexer_protocol, ''), i.protocol, 'torrent'), b.download_client_name,
+			b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary, b.expires_at,
+			b.created_at, b.updated_at
 		from app.release_blocklist b
 		join app.media_items m on m.id = b.media_item_id
+		left join app.indexers i on lower(i.name) = lower(b.indexer_name)
 		order by b.created_at desc
 		limit 200
 	`)
@@ -127,10 +131,32 @@ func (s *SettingsStore) CleanupExpiredReleaseBlocks(ctx context.Context) (int32,
 	return int32(tag.RowsAffected()), nil
 }
 
+func (s *SettingsStore) DeleteReleaseBlocklistItem(ctx context.Context, id uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx, `
+		delete from app.release_blocklist
+		where id = $1
+	`, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (s *SettingsStore) ClearReleaseBlocklist(ctx context.Context) (int32, error) {
+	tag, err := s.pool.Exec(ctx, `delete from app.release_blocklist`)
+	if err != nil {
+		return 0, err
+	}
+	return int32(tag.RowsAffected()), nil
+}
+
 func (s *SettingsStore) findReleaseBlock(ctx context.Context, mediaItemID uuid.UUID, release releaseIdentity) (ReleaseBlocklistItem, error) {
 	item, err := scanReleaseBlocklistItem(s.pool.QueryRow(ctx, `
-		select b.id, b.media_item_id, '', '', b.release_title, b.indexer_name, b.indexer_protocol,
-			b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary, b.expires_at,
+		select b.id, b.media_item_id, '', '', b.release_title, b.indexer_name, coalesce(nullif(b.indexer_protocol, ''), 'torrent'),
+			b.download_client_name, b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary, b.expires_at,
 			b.created_at, b.updated_at
 		from app.release_blocklist b
 		where b.media_item_id = $1
@@ -160,6 +186,7 @@ func scanReleaseBlocklistItem(row pgx.Row) (ReleaseBlocklistItem, error) {
 		&item.ReleaseTitle,
 		&item.IndexerName,
 		&item.IndexerProtocol,
+		&item.DownloadClientName,
 		&item.DownloadURL,
 		&item.InfoURL,
 		&item.GUID,

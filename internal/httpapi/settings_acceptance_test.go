@@ -144,6 +144,7 @@ func TestScenarioSCNSettings005AdminValidatesDownloadClientConfig(t *testing.T) 
 	client.doJSON(t, http.MethodPost, "/settings/download-clients/test", DownloadClientRequest{
 		Name:     "Scenario SABnzbd",
 		Type:     "sabnzbd",
+		Protocol: IndexerProtocolUsenet,
 		BaseUrl:  "http://127.0.0.1:1",
 		ApiKey:   &apiKey,
 		Enabled:  true,

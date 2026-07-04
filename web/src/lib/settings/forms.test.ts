@@ -13,6 +13,7 @@ describe('settings form normalization', () => {
 			normalizeDownloadClientForm({
 				name: ' SAB ',
 				type: 'sabnzbd',
+				protocol: 'torrent',
 				baseUrl: ' http://sab.local ',
 				username: ' ',
 				password: ' secret ',
@@ -24,6 +25,7 @@ describe('settings form normalization', () => {
 		).toEqual({
 			name: 'SAB',
 			type: 'sabnzbd',
+			protocol: 'usenet',
 			baseUrl: 'http://sab.local',
 			username: undefined,
 			password: 'secret',

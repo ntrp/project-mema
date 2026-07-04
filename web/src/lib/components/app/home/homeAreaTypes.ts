@@ -45,6 +45,8 @@ export interface HomeAreaProps {
 	deletingMediaItemId?: string;
 	cancellingActivityId?: string;
 	deletingActivityId?: string;
+	deletingReleaseBlocklistId?: string;
+	clearingReleaseBlocklist: boolean;
 	canManage: boolean;
 	loadingActivity: boolean;
 	onAddMedia: (_candidate: MediaSearchResult) => void;
@@ -67,4 +69,6 @@ export interface HomeAreaProps {
 	onRefreshReleaseBlocklist: () => void;
 	onCancelActivity: (_activity: DownloadActivity) => void;
 	onDeleteActivity: (_activity: DownloadActivity) => void;
+	onDeleteReleaseBlocklistItem: (_item: ReleaseBlocklistItem) => void;
+	onClearReleaseBlocklist: () => void;
 }

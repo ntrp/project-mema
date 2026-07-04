@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Card } from '$lib/components/ui/card';
+	import { Badge } from '$lib/components/ui/badge';
 	import * as Table from '$lib/components/ui/table';
 	import SettingsRowActionButton from '../shared/SettingsRowActionButton.svelte';
 	import type { DownloadClient } from '$lib/settings/types';
@@ -18,6 +19,7 @@
 		<Table.Header>
 			<Table.Row>
 				<Table.Head>Name</Table.Head>
+				<Table.Head>Protocol</Table.Head>
 				<Table.Head>Type</Table.Head>
 				<Table.Head>Base URL</Table.Head>
 				<Table.Head>Priority</Table.Head>
@@ -28,6 +30,9 @@
 			{#each clients as item (item.id)}
 				<Table.Row>
 					<Table.Cell>{item.name}</Table.Cell>
+					<Table.Cell>
+						<Badge variant="outline" class="uppercase">{item.protocol}</Badge>
+					</Table.Cell>
 					<Table.Cell>{item.type}</Table.Cell>
 					<Table.Cell class="max-w-[320px] truncate">{item.baseUrl}</Table.Cell>
 					<Table.Cell>{item.priority}</Table.Cell>
@@ -49,7 +54,7 @@
 				</Table.Row>
 			{:else}
 				<Table.Row>
-					<Table.Cell colspan={5} class="py-8 text-center text-muted-foreground">
+					<Table.Cell colspan={6} class="py-8 text-center text-muted-foreground">
 						No download clients configured
 					</Table.Cell>
 				</Table.Row>

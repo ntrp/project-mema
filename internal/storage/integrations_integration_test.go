@@ -73,6 +73,7 @@ func TestScenarioSCNSettings014StorageDownloadClientLifecycle(t *testing.T) {
 	client, err := store.CreateDownloadClient(ctx, DownloadClientInput{
 		Name:     "SAB " + suffix,
 		Type:     "sabnzbd",
+		Protocol: "usenet",
 		BaseURL:  "http://sab.test/" + suffix,
 		APIKey:   stringPtr("api-key"),
 		Category: stringPtr("movies"),
@@ -86,6 +87,7 @@ func TestScenarioSCNSettings014StorageDownloadClientLifecycle(t *testing.T) {
 	updated, err := store.UpdateDownloadClient(ctx, client.ID, DownloadClientInput{
 		Name:     "Transmission " + suffix,
 		Type:     "transmission",
+		Protocol: "torrent",
 		BaseURL:  "http://transmission.test/" + suffix,
 		Username: stringPtr("user"),
 		Password: stringPtr("pass"),
@@ -95,7 +97,7 @@ func TestScenarioSCNSettings014StorageDownloadClientLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("update download client: %v", err)
 	}
-	if updated.Enabled || updated.Type != "transmission" || updated.Username == nil {
+	if updated.Enabled || updated.Type != "transmission" || updated.Protocol != "torrent" || updated.Username == nil {
 		t.Fatalf("updated client = %#v", updated)
 	}
 

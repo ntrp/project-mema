@@ -25,6 +25,18 @@ func releaseCandidateResponseWithBlock(
 	languages []storage.Language,
 	block *storage.ReleaseBlocklistItem,
 ) ReleaseCandidate {
+	return releaseCandidateResponseWithBlockAndGrabReason(item, release, profile, formats, languages, block, nil)
+}
+
+func releaseCandidateResponseWithBlockAndGrabReason(
+	item storage.MediaItem,
+	release storage.ReleaseCandidate,
+	profile *storage.MediaProfile,
+	formats []storage.CustomFormat,
+	languages []storage.Language,
+	block *storage.ReleaseBlocklistItem,
+	grabDisabledReason *string,
+) ReleaseCandidate {
 	var indexerID *openapi_types.UUID
 	if release.IndexerID != nil {
 		value := openapi_types.UUID(*release.IndexerID)
@@ -42,17 +54,18 @@ func releaseCandidateResponseWithBlock(
 		match.Details = append([]string{"Release is blocklisted: " + block.Reason}, match.Details...)
 	}
 	return ReleaseCandidate{
-		Id:              openapi_types.UUID(release.ID),
-		IndexerId:       indexerID,
-		IndexerName:     release.IndexerName,
-		IndexerProtocol: IndexerProtocol(release.IndexerProtocol),
-		Title:           release.Title,
-		InfoUrl:         release.InfoURL,
-		Guid:            release.GUID,
-		SizeBytes:       release.SizeBytes,
-		Seeders:         release.Seeders,
-		Peers:           release.Peers,
-		PublishedAt:     release.PublishedAt,
+		Id:                 openapi_types.UUID(release.ID),
+		IndexerId:          indexerID,
+		IndexerName:        release.IndexerName,
+		IndexerProtocol:    IndexerProtocol(release.IndexerProtocol),
+		Title:              release.Title,
+		InfoUrl:            release.InfoURL,
+		Guid:               release.GUID,
+		SizeBytes:          release.SizeBytes,
+		Seeders:            release.Seeders,
+		Peers:              release.Peers,
+		PublishedAt:        release.PublishedAt,
+		GrabDisabledReason: grabDisabledReason,
 		Match: ReleaseCandidateMatch{
 			Severity:          ReleaseCandidateMatchSeverity(match.Severity),
 			Details:           match.Details,

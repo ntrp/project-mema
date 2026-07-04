@@ -60,6 +60,7 @@
 	const qualityOptions = $derived(releaseQualityOptions(releases));
 	const visibleReleases = $derived(filteredSortedReleases(item, releases, filters, sort));
 	const filterCount = $derived(activeFilterCount(filters));
+	const filterResetKey = $derived(Object.values(filters).join('\0'));
 	const showResultsTable = $derived(searching || releases.length > 0);
 
 	$effect(() => {
@@ -100,7 +101,11 @@
 		sort =
 			sort.key === key
 				? { key, direction: sort.direction === 'asc' ? 'desc' : 'asc' }
-				: { key, direction: 'asc' };
+				: { key, direction: defaultSortDirection(key) };
+	}
+
+	function defaultSortDirection(key: ReleaseSortKey): ReleaseSort['direction'] {
+		return ['score', 'quality', 'size', 'peers'].includes(key) ? 'desc' : 'asc';
 	}
 
 	function appendStatus(status: Parameters<typeof applyStatusToLog>[1]) {
@@ -166,6 +171,7 @@
 					releases={visibleReleases}
 					{searching}
 					{sort}
+					resetKey={filterResetKey}
 					{grabbingKey}
 					{canManage}
 					onSort={updateSort}

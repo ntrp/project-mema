@@ -88,6 +88,7 @@
 				{#each group.rows as row (row.key)}
 					<MediaFileSummary
 						mediaItemId={item.id}
+						mediaTitle={item.title}
 						{row}
 						{activityStatus}
 						{canManage}

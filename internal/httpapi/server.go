@@ -21,6 +21,7 @@ type Server struct {
 	jobs            *jobs.Client
 	events          *events.Broker
 	sessions        *sessionStore
+	streamSecret    []byte
 	now             func() time.Time
 }
 
@@ -37,6 +38,7 @@ func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClien
 		jobs:            jobs,
 		events:          eventBroker,
 		sessions:        newSessionStore(),
+		streamSecret:    newStreamTokenSecret(),
 		now:             time.Now,
 	}
 }

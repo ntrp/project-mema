@@ -10,6 +10,9 @@ importers:
       openapi-fetch:
         specifier: ^0.17.0
         version: 0.17.0
+      video.js:
+        specifier: ^8.23.9
+        version: 8.23.9
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
@@ -140,6 +143,13 @@ packages:
       }
     engines: { node: '>=6.0.0' }
     hasBin: true
+
+  '@babel/runtime@7.29.7':
+    resolution:
+      {
+        integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==
+      }
+    engines: { node: '>=6.9.0' }
 
   '@babel/types@7.29.7':
     resolution:
@@ -894,6 +904,28 @@ packages:
       }
     engines: { node: ^18.18.0 || ^20.9.0 || >=21.1.0 }
 
+  '@videojs/http-streaming@3.17.5':
+    resolution:
+      {
+        integrity: sha512-PRRQVu0hYW5h0XvRWpIyIpEatpMZzZtf7L1avV89Hnu+69f+0c7oLsSL9jwpg2nbvzGkdX5rQxQkz5Vc7tFR9w==
+      }
+    engines: { node: '>=8', npm: '>=5' }
+    peerDependencies:
+      video.js: ^8.19.0
+
+  '@videojs/vhs-utils@4.1.2':
+    resolution:
+      {
+        integrity: sha512-1Dsv5dtWOq0LP1G37O46FQFA2tKAZON5UMe6dFPxT7JvPhEx8QIXcFQxan8+hHI3fX6aomFRFrUBJNgRYQDSXA==
+      }
+    engines: { node: '>=8', npm: '>=5' }
+
+  '@videojs/xhr@2.7.0':
+    resolution:
+      {
+        integrity: sha512-giab+EVRanChIupZK7gXjHy90y3nncA2phIOyG3Ne5fvpiMJzvqYwiTOnEVW2S4CoYcuKJkomat7bMXA/UoUZQ==
+      }
+
   '@vitest/browser@4.1.9':
     resolution:
       {
@@ -964,6 +996,13 @@ packages:
         integrity: sha512-A51o8ymO5PpqlWNnBP9ZHPXDIpuMtTLlGSjN7la4US+LJzoUMyhwjA5QXlm39JexgwHKW4Xjs8Z2d3dLCXOeuA==
       }
 
+  '@xmldom/xmldom@0.8.13':
+    resolution:
+      {
+        integrity: sha512-KRYzxepc14G/CEpEGc3Yn+JKaAeT63smlDr+vjB8jRfgTBBI9wRj/nkQEO+ucV8p8I9bfKLWp37uHgFrbntPvw==
+      }
+    engines: { node: '>=10.0.0' }
+
   acorn-jsx@5.3.2:
     resolution:
       {
@@ -979,6 +1018,12 @@ packages:
       }
     engines: { node: '>=0.4.0' }
     hasBin: true
+
+  aes-decrypter@4.0.2:
+    resolution:
+      {
+        integrity: sha512-lc+/9s6iJvuaRe5qDlMTpCFjnwpkeOXp8qP3oiZ5jsj1MRg+SBVUmmICrhxHvc8OELSmc+fEyyxAuppY6hrWzw==
+      }
 
   agent-base@7.1.4:
     resolution:
@@ -1180,6 +1225,12 @@ packages:
     resolution:
       {
         integrity: sha512-4CXDYRBGqN+57wVJkuXBYmpAVUSg3L6JAQa/DFqm238G73E1wuyc/JhGQJzN7vUf/CMphYau2zXbfWzDR5aTEw==
+      }
+
+  dom-walk@0.1.2:
+    resolution:
+      {
+        integrity: sha512-6QvTW9mrGeIegrFXdtQi9pk7O/nSK6lSdXW2eqUspN5LWD7UTji2Fqw5V2YLjBpHEoU9Xl/eUWNpDeZvoyOv2w==
       }
 
   enhanced-resolve@5.21.6:
@@ -1415,6 +1466,12 @@ packages:
       }
     engines: { node: '>=10.13.0' }
 
+  global@4.4.0:
+    resolution:
+      {
+        integrity: sha512-wv/LAoHdRE3BeTGz53FAamhGlPLhlssK45usmGFThIi4XqnBmjKQ16u+RNbP7WvigRZDxUsM0J3gcQ5yicaL0w==
+      }
+
   globals@16.5.0:
     resolution:
       {
@@ -1488,6 +1545,12 @@ packages:
         integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==
       }
     engines: { node: '>=0.10.0' }
+
+  is-function@1.0.2:
+    resolution:
+      {
+        integrity: sha512-lw7DUp0aWXYg+CBCN+JKkcE0Q2RayZnSvnZBlwgxHBQhqt5pZNVy4Ri7H9GmmXkdu7LUthszM+Tor1u/2iBcpQ==
+      }
 
   is-glob@4.0.3:
     resolution:
@@ -1749,6 +1812,12 @@ packages:
       }
     hasBin: true
 
+  m3u8-parser@7.2.0:
+    resolution:
+      {
+        integrity: sha512-CRatFqpjVtMiMaKXxNvuI3I++vUumIXVVT/JpCpdU/FynV/ceVw1qpPyyBNindL+JlPMSesx+WX1QJaZEJSaMQ==
+      }
+
   magic-string@0.30.21:
     resolution:
       {
@@ -1768,6 +1837,12 @@ packages:
       }
     engines: { node: '>=10' }
 
+  min-document@2.19.2:
+    resolution:
+      {
+        integrity: sha512-8S5I8db/uZN8r9HSLFVWPdJCvYOejMcEC82VIzNUc6Zkklf/d1gg2psfE79/vyhWOj4+J8MtwmoOz3TmvaGu5A==
+      }
+
   minimatch@10.2.5:
     resolution:
       {
@@ -1781,6 +1856,13 @@ packages:
         integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==
       }
     engines: { node: '>=10' }
+
+  mpd-parser@1.4.0:
+    resolution:
+      {
+        integrity: sha512-blbA7XpAaOdC/PR0Tu8GiUxlx6CpBuRowQPYV7lhi9Yr9G9+dkPXIUjqjzc/NCn/uZZPopluaJlIYntIEI/VLw==
+      }
+    hasBin: true
 
   mri@1.2.0:
     resolution:
@@ -1801,6 +1883,14 @@ packages:
       {
         integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
       }
+
+  mux.js@7.1.0:
+    resolution:
+      {
+        integrity: sha512-NTxawK/BBELJrYsZThEulyUMDVlLizKdxyAsMuzoCD1eFj97BVaA8D/CvKsKu6FOLYkFojN5CbM9h++ZTZtknA==
+      }
+    engines: { node: '>=8', npm: '>=5' }
+    hasBin: true
 
   nanoid@3.3.15:
     resolution:
@@ -1911,6 +2001,13 @@ packages:
       }
     engines: { node: '>=12' }
 
+  pkcs7@1.0.4:
+    resolution:
+      {
+        integrity: sha512-afRERtHn54AlwaF2/+LFszyAANTCggGilmcmILUzEjvs3XgFZT+xE6+QWQcAGmu4xajy+Xtj7acLOPdx5/eXWQ==
+      }
+    hasBin: true
+
   playwright-core@1.61.1:
     resolution:
       {
@@ -2012,6 +2109,13 @@ packages:
       }
     engines: { node: '>=14' }
     hasBin: true
+
+  process@0.11.10:
+    resolution:
+      {
+        integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==
+      }
+    engines: { node: '>= 0.6.0' }
 
   punycode@2.3.1:
     resolution:
@@ -2328,6 +2432,33 @@ packages:
         integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
       }
 
+  video.js@8.23.9:
+    resolution:
+      {
+        integrity: sha512-3UCqyFW4wIusQu4TuhgRUxqtbzbj0WPT9hps0XIEXST43QBD11zb+bG7tBPrinrZztwVYdXCiOBo2pcGj9L05w==
+      }
+
+  videojs-contrib-quality-levels@4.1.0:
+    resolution:
+      {
+        integrity: sha512-TfrXJJg1Bv4t6TOCMEVMwF/CoS8iENYsWNKip8zfhB5kTcegiFYezEA0eHAJPU64ZC8NQbxQgOwAsYU8VXbOWA==
+      }
+    engines: { node: '>=16', npm: '>=8' }
+    peerDependencies:
+      video.js: ^8
+
+  videojs-font@4.2.0:
+    resolution:
+      {
+        integrity: sha512-YPq+wiKoGy2/M7ccjmlvwi58z2xsykkkfNMyIg4xb7EZQQNwB71hcSsB3o75CqQV7/y5lXkXhI/rsGAS7jfEmQ==
+      }
+
+  videojs-vtt.js@0.15.5:
+    resolution:
+      {
+        integrity: sha512-yZbBxvA7QMYn15Lr/ZfhhLPrNpI/RmCSCqgIff57GC2gIrV5YfyzLfLyZMj0NnZSAz8syB4N0nHXpZg9MyrMOQ==
+      }
+
   vite@8.1.0:
     resolution:
       {
@@ -2514,6 +2645,8 @@ snapshots:
   '@babel/parser@7.29.7':
     dependencies:
       '@babel/types': 7.29.7
+
+  '@babel/runtime@7.29.7': {}
 
   '@babel/types@7.29.7':
     dependencies:
@@ -2953,6 +3086,28 @@ snapshots:
       '@typescript-eslint/types': 8.62.0
       eslint-visitor-keys: 5.0.1
 
+  '@videojs/http-streaming@3.17.5(video.js@8.23.9)':
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@videojs/vhs-utils': 4.1.2
+      aes-decrypter: 4.0.2
+      global: 4.4.0
+      m3u8-parser: 7.2.0
+      mpd-parser: 1.4.0
+      mux.js: 7.1.0
+      video.js: 8.23.9
+
+  '@videojs/vhs-utils@4.1.2':
+    dependencies:
+      '@babel/runtime': 7.29.7
+      global: 4.4.0
+
+  '@videojs/xhr@2.7.0':
+    dependencies:
+      '@babel/runtime': 7.29.7
+      global: 4.4.0
+      is-function: 1.0.2
+
   '@vitest/browser@4.1.9(vite@8.1.0(@types/node@26.0.1)(jiti@2.7.0))(vitest@4.1.9)':
     dependencies:
       '@blazediff/core': 1.9.1
@@ -3027,11 +3182,20 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.0
 
+  '@xmldom/xmldom@0.8.13': {}
+
   acorn-jsx@5.3.2(acorn@8.17.0):
     dependencies:
       acorn: 8.17.0
 
   acorn@8.17.0: {}
+
+  aes-decrypter@4.0.2:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@videojs/vhs-utils': 4.1.2
+      global: 4.4.0
+      pkcs7: 1.0.4
 
   agent-base@7.1.4: {}
 
@@ -3124,6 +3288,8 @@ snapshots:
   detect-libc@2.1.2: {}
 
   devalue@5.8.1: {}
+
+  dom-walk@0.1.2: {}
 
   enhanced-resolve@5.21.6:
     dependencies:
@@ -3281,6 +3447,11 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
 
+  global@4.4.0:
+    dependencies:
+      min-document: 2.19.2
+      process: 0.11.10
+
   globals@16.5.0: {}
 
   graceful-fs@4.2.11: {}
@@ -3307,6 +3478,8 @@ snapshots:
   inline-style-parser@0.2.7: {}
 
   is-extglob@2.1.1: {}
+
+  is-function@1.0.2: {}
 
   is-glob@4.0.3:
     dependencies:
@@ -3423,6 +3596,12 @@ snapshots:
 
   lz-string@1.5.0: {}
 
+  m3u8-parser@7.2.0:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@videojs/vhs-utils': 4.1.2
+      global: 4.4.0
+
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -3437,6 +3616,10 @@ snapshots:
     dependencies:
       semver: 7.8.5
 
+  min-document@2.19.2:
+    dependencies:
+      dom-walk: 0.1.2
+
   minimatch@10.2.5:
     dependencies:
       brace-expansion: 5.0.6
@@ -3445,11 +3628,23 @@ snapshots:
     dependencies:
       brace-expansion: 2.1.1
 
+  mpd-parser@1.4.0:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@videojs/vhs-utils': 4.1.2
+      '@xmldom/xmldom': 0.8.13
+      global: 4.4.0
+
   mri@1.2.0: {}
 
   mrmime@2.0.1: {}
 
   ms@2.1.3: {}
+
+  mux.js@7.1.0:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      global: 4.4.0
 
   nanoid@3.3.15: {}
 
@@ -3508,6 +3703,10 @@ snapshots:
 
   picomatch@4.0.4: {}
 
+  pkcs7@1.0.4:
+    dependencies:
+      '@babel/runtime': 7.29.7
+
   playwright-core@1.61.1: {}
 
   playwright@1.61.1:
@@ -3554,6 +3753,8 @@ snapshots:
       svelte: 5.56.4(@typescript-eslint/types@8.62.0)
 
   prettier@3.8.5: {}
+
+  process@0.11.10: {}
 
   punycode@2.3.1: {}
 
@@ -3744,6 +3945,32 @@ snapshots:
       punycode: 2.3.1
 
   util-deprecate@1.0.2: {}
+
+  video.js@8.23.9:
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@videojs/http-streaming': 3.17.5(video.js@8.23.9)
+      '@videojs/vhs-utils': 4.1.2
+      '@videojs/xhr': 2.7.0
+      aes-decrypter: 4.0.2
+      global: 4.4.0
+      m3u8-parser: 7.2.0
+      mpd-parser: 1.4.0
+      mux.js: 7.1.0
+      videojs-contrib-quality-levels: 4.1.0(video.js@8.23.9)
+      videojs-font: 4.2.0
+      videojs-vtt.js: 0.15.5
+
+  videojs-contrib-quality-levels@4.1.0(video.js@8.23.9):
+    dependencies:
+      global: 4.4.0
+      video.js: 8.23.9
+
+  videojs-font@4.2.0: {}
+
+  videojs-vtt.js@0.15.5:
+    dependencies:
+      global: 4.4.0
 
   vite@8.1.0(@types/node@26.0.1)(jiti@2.7.0):
     dependencies:

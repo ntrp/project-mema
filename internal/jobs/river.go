@@ -15,6 +15,7 @@ import (
 
 	"media-manager/internal/decisions"
 	"media-manager/internal/downloadclients"
+	"media-manager/internal/downloadrouting"
 	"media-manager/internal/events"
 	"media-manager/internal/imports"
 	"media-manager/internal/indexers"
@@ -38,18 +39,6 @@ type ReleaseSearchArgs struct {
 
 func (ReleaseSearchArgs) Kind() string {
 	return "media.release_search"
-}
-
-type GrabReleaseArgs struct {
-	ActivityID  string `json:"activity_id" river:"unique"`
-	MediaItemID string `json:"media_item_id"`
-	Title       string `json:"title"`
-	DownloadURL string `json:"download_url"`
-	IndexerName string `json:"indexer_name"`
-}
-
-func (GrabReleaseArgs) Kind() string {
-	return "media.grab_release"
 }
 
 type ReleaseSearchWorker struct {
@@ -135,7 +124,10 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 		return w.markGrabFailed(ctx, activityID, "No enabled download client is configured")
 	}
 
-	client := clients[0]
+	client, ok := downloadrouting.NamedClientForProtocol(clients, activity.DownloadClientName, job.Args.Protocol)
+	if !ok {
+		return w.markGrabFailed(ctx, activityID, downloadrouting.MissingClientMessage(job.Args.Protocol))
+	}
 	result := w.downloadClients.Add(ctx, downloadClientConfig(client), downloadclients.AddRequest{
 		URL:      job.Args.DownloadURL,
 		Title:    job.Args.Title,

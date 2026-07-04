@@ -68,6 +68,7 @@ function baseProps(): HomeAreaProps {
 		qualityProfiles: [],
 		activities: [downloadActivity()],
 		releaseBlocklist: [],
+		clearingReleaseBlocklist: false,
 		loadingDiscover: false,
 		loadingBlacklist: false,
 		loadingMediaItems: false,
@@ -87,7 +88,9 @@ function baseProps(): HomeAreaProps {
 		onRefreshActivity: vi.fn(),
 		onRefreshReleaseBlocklist: vi.fn(),
 		onCancelActivity: vi.fn(),
-		onDeleteActivity: vi.fn()
+		onDeleteActivity: vi.fn(),
+		onDeleteReleaseBlocklistItem: vi.fn(),
+		onClearReleaseBlocklist: vi.fn()
 	};
 }
 

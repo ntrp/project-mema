@@ -13,6 +13,7 @@ type DownloadClient struct {
 	ID        uuid.UUID
 	Name      string
 	Type      string
+	Protocol  string
 	BaseURL   string
 	Username  *string
 	Password  *string
@@ -27,6 +28,7 @@ type DownloadClient struct {
 type DownloadClientInput struct {
 	Name     string
 	Type     string
+	Protocol string
 	BaseURL  string
 	Username *string
 	Password *string
@@ -38,7 +40,7 @@ type DownloadClientInput struct {
 
 func (s *SettingsStore) ListDownloadClients(ctx context.Context) ([]DownloadClient, error) {
 	rows, err := s.pool.Query(ctx, `
-		select id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
+		select id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
 		from app.download_clients
 		order by priority asc, name asc
 	`)
@@ -60,7 +62,7 @@ func (s *SettingsStore) ListDownloadClients(ctx context.Context) ([]DownloadClie
 
 func (s *SettingsStore) ListEnabledDownloadClients(ctx context.Context) ([]DownloadClient, error) {
 	rows, err := s.pool.Query(ctx, `
-		select id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
+		select id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
 		from app.download_clients
 		where enabled = true
 		order by priority asc, name asc
@@ -83,7 +85,7 @@ func (s *SettingsStore) ListEnabledDownloadClients(ctx context.Context) ([]Downl
 
 func (s *SettingsStore) GetDownloadClient(ctx context.Context, id uuid.UUID) (DownloadClient, error) {
 	return scanDownloadClientRow(s.pool.QueryRow(ctx, `
-		select id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
+		select id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
 		from app.download_clients
 		where id = $1
 	`, id))
@@ -93,12 +95,12 @@ func (s *SettingsStore) CreateDownloadClient(ctx context.Context, input Download
 	id := uuid.New()
 	return scanDownloadClientRow(s.pool.QueryRow(ctx, `
 		insert into app.download_clients (
-			id, name, type, base_url, username, password, api_key, category, enabled, priority
+			id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		returning id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		returning id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
 	`,
-		id, input.Name, input.Type, input.BaseURL, input.Username, input.Password, input.APIKey, input.Category, input.Enabled, input.Priority,
+		id, input.Name, input.Type, input.Protocol, input.BaseURL, input.Username, input.Password, input.APIKey, input.Category, input.Enabled, input.Priority,
 	))
 }
 
@@ -107,18 +109,19 @@ func (s *SettingsStore) UpdateDownloadClient(ctx context.Context, id uuid.UUID, 
 		update app.download_clients
 		set name = $2,
 			type = $3,
-			base_url = $4,
-			username = $5,
-			password = $6,
-			api_key = $7,
-			category = $8,
-			enabled = $9,
-			priority = $10,
+			protocol = $4,
+			base_url = $5,
+			username = $6,
+			password = $7,
+			api_key = $8,
+			category = $9,
+			enabled = $10,
+			priority = $11,
 			updated_at = now()
 		where id = $1
-		returning id, name, type, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
+		returning id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
 	`,
-		id, input.Name, input.Type, input.BaseURL, input.Username, input.Password, input.APIKey, input.Category, input.Enabled, input.Priority,
+		id, input.Name, input.Type, input.Protocol, input.BaseURL, input.Username, input.Password, input.APIKey, input.Category, input.Enabled, input.Priority,
 	))
 }
 
@@ -147,6 +150,7 @@ func scanDownloadClient(row pgx.Row) (DownloadClient, error) {
 		&client.ID,
 		&client.Name,
 		&client.Type,
+		&client.Protocol,
 		&client.BaseURL,
 		&client.Username,
 		&client.Password,

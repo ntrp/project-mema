@@ -3,8 +3,10 @@ package httpapi
 import (
 	"bytes"
 	"errors"
+	"math"
 	"net/http"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -23,6 +25,10 @@ func (s *Server) PreviewMediaItemFile(w http.ResponseWriter, r *http.Request, id
 	if _, ok := statMediaFile(w, target); !ok {
 		return
 	}
+	if mediaPreviewDirect(target, params.AudioTrackIndex) {
+		serveMediaFile(w, r, target)
+		return
+	}
 	if _, err := exec.LookPath("ffmpeg"); err != nil {
 		writeError(w, http.StatusInternalServerError, "ffmpeg_not_available", "ffmpeg is required for browser preview")
 		return
@@ -30,14 +36,14 @@ func (s *Server) PreviewMediaItemFile(w http.ResponseWriter, r *http.Request, id
 	w.Header().Set("Content-Type", "video/mp4")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Accel-Buffering", "no")
-	wrote, err := runMediaPreview(r, w, target, params.AudioTrackIndex)
+	wrote, err := runMediaPreview(r, w, target, params.AudioTrackIndex, params.StartTimeSeconds)
 	if err != nil && !wrote && r.Context().Err() == nil {
 		writeError(w, http.StatusInternalServerError, "media_preview_failed", "Could not start media preview")
 	}
 }
 
-func runMediaPreview(r *http.Request, w http.ResponseWriter, target string, audioTrackIndex *int32) (bool, error) {
-	args := mediaPreviewArgs(target, audioTrackIndex)
+func runMediaPreview(r *http.Request, w http.ResponseWriter, target string, audioTrackIndex *int32, startTime *float64) (bool, error) {
+	args := mediaPreviewArgs(target, audioTrackIndex, startTime)
 	cmd := exec.CommandContext(r.Context(), "ffmpeg", args...)
 	var stderr bytes.Buffer
 	writer := &flushWriter{w: w}
@@ -50,17 +56,25 @@ func runMediaPreview(r *http.Request, w http.ResponseWriter, target string, audi
 	return writer.wrote, err
 }
 
-func mediaPreviewArgs(target string, audioTrackIndex *int32) []string {
-	return mediaPreviewArgsWithPlan(target, audioTrackIndex, mediaPreviewPlan(target, audioTrackIndex))
+func mediaPreviewArgs(target string, audioTrackIndex *int32, startTime *float64) []string {
+	return mediaPreviewArgsWithPlan(target, audioTrackIndex, startTime, mediaPreviewPlan(target, audioTrackIndex))
 }
 
-func mediaPreviewArgsWithPlan(target string, audioTrackIndex *int32, plan mediaPreviewTranscodePlan) []string {
+func mediaPreviewArgsWithPlan(target string, audioTrackIndex *int32, startTime *float64, plan mediaPreviewTranscodePlan) []string {
+	if validPreviewStartTime(startTime) {
+		plan = mediaPreviewTranscodePlan{videoCodec: "libx264", audioCodec: "aac"}
+	}
 	args := []string{
 		"-hide_banner",
 		"-loglevel", "error",
+	}
+	if validPreviewStartTime(startTime) {
+		args = append(args, "-ss", formatPreviewStartTime(*startTime))
+	}
+	args = append(args,
 		"-i", target,
 		"-map", "0:v:0",
-	}
+	)
 	if audioTrackIndex != nil {
 		args = append(args, "-map", "0:"+strconv.FormatInt(int64(*audioTrackIndex), 10))
 	} else {
@@ -87,6 +101,14 @@ func mediaPreviewArgsWithPlan(target string, audioTrackIndex *int32, plan mediaP
 	)
 }
 
+func validPreviewStartTime(value *float64) bool {
+	return value != nil && *value > 0 && !math.IsInf(*value, 0) && !math.IsNaN(*value)
+}
+
+func formatPreviewStartTime(value float64) string {
+	return strconv.FormatFloat(value, 'f', 3, 64)
+}
+
 type mediaPreviewTranscodePlan struct {
 	videoCodec string
 	audioCodec string
@@ -95,6 +117,29 @@ type mediaPreviewTranscodePlan struct {
 func mediaPreviewPlan(target string, audioTrackIndex *int32) mediaPreviewTranscodePlan {
 	probe := mediaFileProbe(target)
 	return mediaPreviewPlanFromTracks(probe.tracks, audioTrackIndex)
+}
+
+func mediaPreviewDirect(target string, audioTrackIndex *int32) bool {
+	probe := mediaFileProbe(target)
+	return mediaPreviewDirectFromTracks(target, probe.tracks, audioTrackIndex)
+}
+
+func mediaPreviewDirectFromTracks(target string, tracks []MediaFileTrack, audioTrackIndex *int32) bool {
+	if !browserDirectPreviewContainer(target) || !browserCompatiblePreviewVideo(firstTrackByType(tracks, Video, nil)) {
+		return false
+	}
+	if audioTrackIndex != nil {
+		firstAudio := firstTrackByType(tracks, Audio, nil)
+		if firstAudio == nil || firstAudio.Index == nil || *firstAudio.Index != *audioTrackIndex {
+			return false
+		}
+	}
+	for i := range tracks {
+		if tracks[i].Type == Audio && !browserCompatiblePreviewAudio(&tracks[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 func mediaPreviewPlanFromTracks(tracks []MediaFileTrack, audioTrackIndex *int32) mediaPreviewTranscodePlan {
@@ -134,6 +179,15 @@ func browserCompatiblePreviewVideo(track *MediaFileTrack) bool {
 		pixelFormat = strings.ToLower(strings.TrimSpace(*track.PixelFormat))
 	}
 	return pixelFormat == "" || pixelFormat == "yuv420p" || pixelFormat == "yuvj420p"
+}
+
+func browserDirectPreviewContainer(target string) bool {
+	switch strings.ToLower(filepath.Ext(target)) {
+	case ".mp4", ".m4v":
+		return true
+	default:
+		return false
+	}
 }
 
 func browserCompatiblePreviewAudio(track *MediaFileTrack) bool {

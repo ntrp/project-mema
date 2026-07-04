@@ -57,6 +57,11 @@ func (s *Server) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request
 		return
 	}
 	response := ReleaseSearchResponse{Releases: make([]ReleaseCandidate, 0, len(snapshot.Releases)), Errors: snapshot.Errors}
+	grabProtocols, err := s.enabledDownloadClientProtocols(r.Context())
+	if err != nil {
+		writeSSE(w, flusher, "media.release_search.error", jobs.ReleaseSearchProgressEvent{Kind: "error", Message: "Could not list enabled download clients"})
+		return
+	}
 	profile, formats, languages := s.releaseDecisionContext(r.Context(), item)
 	for _, release := range snapshot.Releases {
 		block, blocked, err := s.settings.FindReleaseBlock(r.Context(), release)
@@ -70,7 +75,15 @@ func (s *Server) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.Request
 		}
 		response.Releases = append(
 			response.Releases,
-			releaseCandidateResponseWithBlock(item, release, profile, formats, languages, blockPtr),
+			releaseCandidateResponseWithBlockAndGrabReason(
+				item,
+				release,
+				profile,
+				formats,
+				languages,
+				blockPtr,
+				releaseGrabDisabledReason(release.IndexerProtocol, grabProtocols),
+			),
 		)
 	}
 	writeSSE(w, flusher, "media.release_search.result", response)

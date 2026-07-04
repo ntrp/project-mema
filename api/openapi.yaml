@@ -937,6 +937,18 @@ paths:
       summary: Stream one media file with HTTP range support
       security:
         - sessionCookie: []
+      parameters:
+        - name: streamExpires
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: streamToken
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: Media file stream
@@ -970,6 +982,13 @@ paths:
             type: integer
             format: int32
             minimum: 0
+        - name: startTimeSeconds
+          in: query
+          required: false
+          schema:
+            type: number
+            format: double
+            minimum: 0
       responses:
         "200":
           description: Browser-compatible MP4 preview stream
@@ -978,6 +997,70 @@ paths:
               schema:
                 type: string
                 format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/preview-info:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/MediaFilePath"
+    get:
+      operationId: getMediaItemFilePreviewInfo
+      tags:
+        - Media
+      summary: Inspect the current browser preview stream plan
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: audioTrackIndex
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      responses:
+        "200":
+          description: Browser preview stream information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFilePreviewInfo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/subtitle:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/MediaFilePath"
+    get:
+      operationId: previewMediaItemFileSubtitle
+      tags:
+        - Media
+      summary: Convert a media file subtitle stream to WebVTT
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: subtitleTrackIndex
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      responses:
+        "200":
+          description: WebVTT subtitle track
+          content:
+            text/vtt:
+              schema:
+                type: string
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -997,7 +1080,7 @@ paths:
         - sessionCookie: []
       responses:
         "200":
-          description: Inline M3U playlist pointing at the remote stream
+          description: M3U playlist pointing at the remote stream
           content:
             audio/x-mpegurl:
               schema:
@@ -1166,7 +1249,7 @@ paths:
       operationId: grabMediaRelease
       tags:
         - Media
-      summary: Enqueue a release grab with the highest-priority enabled download client
+      summary: Enqueue a release grab with a compatible enabled download client
       security:
         - sessionCookie: []
       requestBody:
@@ -1222,6 +1305,35 @@ paths:
                 $ref: "#/components/schemas/ReleaseBlocklistListResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    delete:
+      operationId: clearReleaseBlocklist
+      tags:
+        - Activity
+      summary: Clear all blocked releases
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Release blocklist cleared
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /activity/blocklist/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    delete:
+      operationId: deleteReleaseBlocklistItem
+      tags:
+        - Activity
+      summary: Delete a blocked release
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Release blocklist entry deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /activity/downloads/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4414,6 +4526,38 @@ components:
           type: string
         bitRate:
           type: string
+    MediaFilePreviewMode:
+      type: string
+      enum:
+        - direct
+        - remux
+        - transcode
+    MediaFilePreviewInfo:
+      type: object
+      additionalProperties: false
+      required:
+        - streamingMode
+        - outputVideoCodec
+        - outputAudioCodec
+      properties:
+        streamingMode:
+          $ref: "#/components/schemas/MediaFilePreviewMode"
+        videoTrack:
+          $ref: "#/components/schemas/MediaFileTrack"
+        audioTrack:
+          $ref: "#/components/schemas/MediaFileTrack"
+        outputVideoCodec:
+          type: string
+        outputAudioCodec:
+          type: string
+        durationSeconds:
+          type: number
+          format: double
+          minimum: 0
+        sourceBitRate:
+          type: string
+        liveBitRate:
+          type: string
     MediaItemStatus:
       type: string
       enum:
@@ -5272,6 +5416,8 @@ components:
         publishedAt:
           type: string
           format: date-time
+        grabDisabledReason:
+          type: string
         match:
           $ref: "#/components/schemas/ReleaseCandidateMatch"
     ReleaseCandidateMatch:
@@ -5356,6 +5502,8 @@ components:
         - mediaType
         - releaseTitle
         - indexerName
+        - indexerProtocol
+        - downloadClientName
         - reason
         - source
         - temporary
@@ -5375,6 +5523,10 @@ components:
         releaseTitle:
           type: string
         indexerName:
+          type: string
+        indexerProtocol:
+          $ref: "#/components/schemas/IndexerProtocol"
+        downloadClientName:
           type: string
         reason:
           type: string
@@ -5698,6 +5850,7 @@ components:
       required:
         - name
         - type
+        - protocol
         - baseUrl
         - enabled
         - priority
@@ -5708,6 +5861,8 @@ components:
           maxLength: 200
         type:
           $ref: "#/components/schemas/DownloadClientType"
+        protocol:
+          $ref: "#/components/schemas/IndexerProtocol"
         baseUrl:
           type: string
           minLength: 1

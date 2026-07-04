@@ -153,6 +153,8 @@ export class AppShellState {
 	deletingMediaItemId = $state<string | undefined>();
 	cancellingActivityId = $state<string | undefined>();
 	deletingActivityId = $state<string | undefined>();
+	deletingReleaseBlocklistId = $state<string | undefined>();
+	clearingReleaseBlocklist = $state(false);
 	loadingActivity = $state(false);
 	scanningLibraryFolderId = $state<string | undefined>();
 	libraryScansByFolder = $state<Record<string, LibraryScan>>({});

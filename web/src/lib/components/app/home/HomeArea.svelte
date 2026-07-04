@@ -36,6 +36,8 @@
 		deletingMediaItemId,
 		cancellingActivityId,
 		deletingActivityId,
+		deletingReleaseBlocklistId,
+		clearingReleaseBlocklist,
 		canManage,
 		loadingActivity,
 		onAddMedia,
@@ -52,7 +54,9 @@
 		onRefreshActivity,
 		onRefreshReleaseBlocklist,
 		onCancelActivity,
-		onDeleteActivity
+		onDeleteActivity,
+		onDeleteReleaseBlocklistItem,
+		onClearReleaseBlocklist
 	}: HomeAreaProps = $props();
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
@@ -153,9 +157,13 @@
 			{canManage}
 			cancellingId={cancellingActivityId}
 			deletingId={deletingActivityId}
+			deletingBlocklistId={deletingReleaseBlocklistId}
+			{clearingReleaseBlocklist}
 			onRefresh={activitySection === 'blocklist' ? onRefreshReleaseBlocklist : onRefreshActivity}
 			onCancel={onCancelActivity}
 			onDelete={onDeleteActivity}
+			{onDeleteReleaseBlocklistItem}
+			{onClearReleaseBlocklist}
 		/>
 	{/if}
 </section>

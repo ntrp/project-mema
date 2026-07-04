@@ -2,8 +2,10 @@ import type {
 	DownloadClient,
 	DownloadClientForm,
 	DownloadClientRequest,
+	DownloadClientType,
 	Indexer,
 	IndexerForm,
+	IndexerProtocol,
 	IndexerRequest,
 	MetadataProvider,
 	MetadataProviderForm,
@@ -41,6 +43,7 @@ export function emptyDownloadClientForm(): DownloadClientForm {
 	return {
 		name: '',
 		type: 'transmission',
+		protocol: 'torrent',
 		baseUrl: '',
 		username: '',
 		password: '',
@@ -98,6 +101,7 @@ export function downloadClientFormFromClient(client: DownloadClient): DownloadCl
 		id: client.id,
 		name: client.name,
 		type: client.type,
+		protocol: client.protocol,
 		baseUrl: client.baseUrl,
 		username: client.username ?? '',
 		password: client.password ?? '',
@@ -149,6 +153,7 @@ export function normalizeDownloadClientForm(form: DownloadClientForm): DownloadC
 	return {
 		name: form.name.trim(),
 		type: form.type,
+		protocol: downloadClientProtocolForType(form.type),
 		baseUrl: form.baseUrl.trim(),
 		username: optionalString(form.username),
 		password: optionalString(form.password),
@@ -157,6 +162,10 @@ export function normalizeDownloadClientForm(form: DownloadClientForm): DownloadC
 		enabled: form.enabled,
 		priority: form.priority
 	};
+}
+
+export function downloadClientProtocolForType(type: DownloadClientType): IndexerProtocol {
+	return type === 'sabnzbd' ? 'usenet' : 'torrent';
 }
 
 export function normalizeIndexerForm(form: IndexerForm): IndexerRequest {

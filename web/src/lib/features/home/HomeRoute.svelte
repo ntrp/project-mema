@@ -47,6 +47,8 @@
 	deletingMediaItemId={app.deletingMediaItemId}
 	cancellingActivityId={app.cancellingActivityId}
 	deletingActivityId={app.deletingActivityId}
+	deletingReleaseBlocklistId={app.deletingReleaseBlocklistId}
+	clearingReleaseBlocklist={app.clearingReleaseBlocklist}
 	loadingActivity={app.loadingActivity}
 	canManage={app.isAdmin}
 	onAddMedia={app.addMedia}
@@ -64,4 +66,6 @@
 	onRefreshReleaseBlocklist={app.loadReleaseBlocklist}
 	onCancelActivity={app.cancelActivity}
 	onDeleteActivity={app.deleteActivity}
+	onDeleteReleaseBlocklistItem={app.deleteReleaseBlocklistItem}
+	onClearReleaseBlocklist={app.clearReleaseBlocklist}
 />

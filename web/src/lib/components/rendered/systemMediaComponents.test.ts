@@ -1,4 +1,3 @@
-import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('$lib/components/settings/system/cache/rowPulse.svelte', () => ({
@@ -92,50 +91,48 @@ describe('rendered system components (SCN-SYSTEM-006)', () => {
 
 describe('rendered media components (SCN-MEDIA-003)', () => {
 	it('renders media overview facts for movie releases', () => {
-		const { body } = render(MediaOverviewInfoCard, {
-			props: {
-				detail: {
-					title: 'Scenario Movie',
-					type: 'movie',
-					externalProvider: 'tmdb',
-					externalId: 'movie-1',
-					status: 'Released',
-					releaseDate: '2026-07-03',
-					originalLanguage: 'en',
-					voteAverage: 8.2
-				},
-				facts: [
-					{ label: 'Revenue', value: '$100,000,000' },
-					{ label: 'Budget', value: '$40,000,000' },
-					{ label: 'Production Countries', value: 'United States, Germany' },
-					{ label: 'Studios', value: 'Scenario Pictures\nExample Studios' },
-					{ label: 'Digital Release Date', value: '2026-08-01' }
-				]
-			}
+		const { body } = renderWithTooltip(MediaOverviewInfoCard, {
+			detail: {
+				title: 'Scenario Movie',
+				type: 'movie' as const,
+				externalProvider: 'tmdb',
+				externalId: 'movie-1',
+				status: 'Released',
+				releaseDate: '2026-07-03',
+				originalLanguage: 'en',
+				voteAverage: 8.2
+			},
+			facts: [
+				{ label: 'Revenue', value: '$100,000,000' },
+				{ label: 'Budget', value: '$40,000,000' },
+				{ label: 'Production Countries', value: 'United States, Germany' },
+				{ label: 'Studios', value: 'Scenario Pictures\nExample Studios' },
+				{ label: 'Digital Release Date', value: '2026-08-01' }
+			]
 		});
 
 		expect(body).toContain('TMDb');
 		expect(body).toContain('82%');
 		expect(body).toContain('Released');
+		expect(body).toContain('Cinema release date');
+		expect(body).toContain('Digital release date');
 		expect(body).toContain('Aug 1, 2026');
 		expect(body).toContain('English');
 		expect(body).toContain('Scenario Pictures');
 	});
 
 	it('renders series status and first-aired facts', () => {
-		const { body } = render(MediaOverviewInfoCard, {
-			props: {
-				detail: {
-					title: 'Scenario Series',
-					type: 'series',
-					externalProvider: 'tmdb',
-					externalId: 'series-1',
-					status: 'Continuing',
-					firstAirDate: '2025-02-14',
-					originalLanguage: 'de'
-				},
-				facts: [{ label: 'Networks', value: 'Scenario Network' }]
-			}
+		const { body } = renderWithTooltip(MediaOverviewInfoCard, {
+			detail: {
+				title: 'Scenario Series',
+				type: 'series' as const,
+				externalProvider: 'tmdb',
+				externalId: 'series-1',
+				status: 'Continuing',
+				firstAirDate: '2025-02-14',
+				originalLanguage: 'de'
+			},
+			facts: [{ label: 'Networks', value: 'Scenario Network' }]
 		});
 
 		expect(body).toContain('Continuing');

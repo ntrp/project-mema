@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const apiMock = vi.hoisted(() => ({
 	cancelDownloadActivity: vi.fn(),
+	clearReleaseBlocklist: vi.fn(),
 	clearIndexerSearchCache: vi.fn(),
 	clearIndexerSearchCacheByPattern: vi.fn(),
 	clearMetadataCacheByPattern: vi.fn(),
 	deleteDownloadActivity: vi.fn(),
+	deleteReleaseBlocklistItem: vi.fn(),
 	getIndexerSearch: vi.fn(),
 	getMetadataCache: vi.fn(),
 	testDownloadClientConfig: vi.fn(),
@@ -31,6 +33,7 @@ function state(overrides: Record<string, unknown> = {}) {
 		indexerTests: {},
 		metadataProviderTests: {},
 		activities: [{ id: 'activity-1' }, { id: 'activity-2' }],
+		releaseBlocklist: [{ id: 'block-1' }, { id: 'block-2' }],
 		...overrides
 	} as unknown as AppShellState;
 }
@@ -139,5 +142,24 @@ describe('integration test and activity actions (SCN-ACTIVITY-002)', () => {
 		expect(apiMock.deleteDownloadActivity).toHaveBeenCalledWith('activity-2');
 		expect(shell.activities).toEqual([{ id: 'activity-1' }]);
 		expect(shell.message).toBe('Download activity deleted');
+	});
+
+	it('deletes and clears release blocklist entries', async () => {
+		const shell = state();
+		const actions = createActivityActions(shell, {
+			clearNotice: vi.fn(),
+			loadMediaItems: vi.fn(),
+			upsertActivity: vi.fn()
+		});
+
+		await actions.deleteReleaseBlocklistItem({ id: 'block-1' } as never);
+		expect(apiMock.deleteReleaseBlocklistItem).toHaveBeenCalledWith('block-1');
+		expect(shell.releaseBlocklist).toEqual([{ id: 'block-2' }]);
+		expect(shell.message).toBe('Release blocklist entry removed');
+
+		await actions.clearReleaseBlocklist();
+		expect(apiMock.clearReleaseBlocklist).toHaveBeenCalledOnce();
+		expect(shell.releaseBlocklist).toEqual([]);
+		expect(shell.message).toBe('Release blocklist cleared');
 	});
 });

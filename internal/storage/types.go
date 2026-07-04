@@ -135,36 +135,38 @@ type ReleaseCandidateInput struct {
 }
 
 type ReleaseBlocklistItem struct {
-	ID              uuid.UUID
-	MediaItemID     uuid.UUID
-	MediaTitle      string
-	MediaType       string
-	ReleaseTitle    string
-	IndexerName     string
-	IndexerProtocol string
-	DownloadURL     *string
-	InfoURL         *string
-	GUID            *string
-	Reason          string
-	Source          string
-	Temporary       bool
-	ExpiresAt       *time.Time
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID                 uuid.UUID
+	MediaItemID        uuid.UUID
+	MediaTitle         string
+	MediaType          string
+	ReleaseTitle       string
+	IndexerName        string
+	IndexerProtocol    string
+	DownloadClientName string
+	DownloadURL        *string
+	InfoURL            *string
+	GUID               *string
+	Reason             string
+	Source             string
+	Temporary          bool
+	ExpiresAt          *time.Time
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type ReleaseBlocklistInput struct {
-	MediaItemID     uuid.UUID
-	ReleaseTitle    string
-	IndexerName     string
-	IndexerProtocol string
-	DownloadURL     string
-	InfoURL         *string
-	GUID            *string
-	Reason          string
-	Source          string
-	Temporary       bool
-	ExpiresAt       *time.Time
+	MediaItemID        uuid.UUID
+	ReleaseTitle       string
+	IndexerName        string
+	IndexerProtocol    string
+	DownloadClientName string
+	DownloadURL        string
+	InfoURL            *string
+	GUID               *string
+	Reason             string
+	Source             string
+	Temporary          bool
+	ExpiresAt          *time.Time
 }
 
 type ReleaseSearchSnapshot struct {

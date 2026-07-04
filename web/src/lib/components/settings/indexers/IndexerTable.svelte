@@ -1,8 +1,14 @@
 <script lang="ts">
 	import IndexerHealthStatus from './IndexerHealthStatus.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
+	import {
+		privacyBadgeClass,
+		protocolBadgeClass
+	} from '$lib/components/settings/indexers/indexerCatalogPresentation';
+	import { privacyLabel } from '$lib/components/settings/indexers/indexerCatalogFilters';
 	import SettingsRowActionButton from '../shared/SettingsRowActionButton.svelte';
 	import type { Indexer, IntegrationTestResults } from '$lib/settings/types';
 
@@ -22,33 +28,39 @@
 	<Table.Root>
 		<Table.Header>
 			<Table.Row>
-				<Table.Head>Name</Table.Head>
-				<Table.Head>Protocol</Table.Head>
-				<Table.Head>Privacy</Table.Head>
-				<Table.Head>Base URL</Table.Head>
-				<Table.Head>Categories</Table.Head>
-				<Table.Head>Priority</Table.Head>
-				<Table.Head>Status</Table.Head>
-				<Table.Head class="text-right">Actions</Table.Head>
+				<Table.Head class="w-px">Protocol</Table.Head>
+				<Table.Head class="w-px">Name</Table.Head>
+				<Table.Head class="w-px">Privacy</Table.Head>
+				<Table.Head class="w-px">Categories</Table.Head>
+				<Table.Head class="w-px">Priority</Table.Head>
+				<Table.Head class="w-full">Status</Table.Head>
+				<Table.Head class="w-px text-right">Actions</Table.Head>
 			</Table.Row>
 		</Table.Header>
 		<Table.Body>
 			{#each indexers as item (item.id)}
 				<Table.Row>
-					<Table.Cell>{item.name}</Table.Cell>
-					<Table.Cell>{item.protocol}</Table.Cell>
-					<Table.Cell>{item.privacy} · {item.language}</Table.Cell>
-					<Table.Cell class="max-w-[320px] truncate">{item.baseUrl}</Table.Cell>
-					<Table.Cell>{(item.categories ?? []).join(', ') || '-'}</Table.Cell>
-					<Table.Cell>{item.priority}</Table.Cell>
-					<Table.Cell>
+					<Table.Cell class="w-px">
+						<Badge variant="outline" class={protocolBadgeClass(item.protocol)}>
+							{item.protocol}
+						</Badge>
+					</Table.Cell>
+					<Table.Cell class="w-px max-w-52 truncate">{item.name}</Table.Cell>
+					<Table.Cell class="w-px">
+						<Badge variant="outline" class={privacyBadgeClass(item.privacy)}>
+							{privacyLabel(item.privacy)}
+						</Badge>
+					</Table.Cell>
+					<Table.Cell class="w-px">{(item.categories ?? []).join(', ') || '-'}</Table.Cell>
+					<Table.Cell class="w-px">{item.priority}</Table.Cell>
+					<Table.Cell class="w-full min-w-0">
 						<IndexerHealthStatus
 							indexer={item}
 							result={testResults[item.id]}
 							checking={testingId === item.id}
 						/>
 					</Table.Cell>
-					<Table.Cell>
+					<Table.Cell class="w-px">
 						<div class="flex justify-end gap-2">
 							<Button
 								type="button"
@@ -75,7 +87,7 @@
 				</Table.Row>
 			{:else}
 				<Table.Row>
-					<Table.Cell colspan={8} class="py-8 text-center text-muted-foreground">
+					<Table.Cell colspan={7} class="py-8 text-center text-muted-foreground">
 						No indexers configured
 					</Table.Cell>
 				</Table.Row>

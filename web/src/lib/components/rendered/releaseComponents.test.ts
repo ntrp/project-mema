@@ -65,12 +65,32 @@ describe('rendered release components (SCN-MEDIA-002)', () => {
 		});
 
 		expect(body).toContain('Sort by Score');
+		expect(body).toContain('Sort by Peers');
+		expect(body).not.toContain('Sort by Match');
+		expect(body).toContain('Match');
 		expect(body).toContain('Local Torznab');
 		expect(body).toContain('Scenario.Movie.2026.1080p.WEBDL.German-GRP');
 		expect(body).toContain('8.0 GiB');
 		expect(body).toContain('WEBDL-1080p');
 		expect(body).toContain('+1200');
 		expect(body).toContain('Grab');
+	});
+
+	it('disables release grab actions when no compatible download client exists', () => {
+		const { body } = renderWithTooltip(ReleaseSearchResultsTable, {
+			item: mediaItem,
+			releases: [
+				release({ grabDisabledReason: 'No enabled torrent download client is configured' })
+			],
+			searching: false,
+			sort: scoreSort,
+			canManage: true,
+			onSort: vi.fn(),
+			onGrab: vi.fn()
+		});
+
+		expect(body).toContain('disabled');
+		expect(body).toContain('Grab release');
 	});
 
 	it('renders release searching state without empty table rows', () => {
@@ -93,7 +113,7 @@ describe('rendered release components (SCN-MEDIA-002)', () => {
 			props: {
 				filters: {
 					...defaultReleaseFilters(),
-					source: 'torrent',
+					source: 'usenet',
 					quality: 'WEBDL-1080p',
 					minSize: '4',
 					maxSize: '12',
@@ -106,7 +126,7 @@ describe('rendered release components (SCN-MEDIA-002)', () => {
 		});
 
 		expect(body).toContain('Protocol');
-		expect(body).toContain('TORRENT');
+		expect(body).toContain('USENET');
 		expect(body).toContain('Size GiB');
 		expect(body).toContain('WEBDL-1080p');
 		expect(body).toContain('Reset');

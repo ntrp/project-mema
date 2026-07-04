@@ -13,6 +13,7 @@ func downloadClientResponse(client storage.DownloadClient) DownloadClient {
 		Id:        openapi_types.UUID(client.ID),
 		Name:      client.Name,
 		Type:      DownloadClientType(client.Type),
+		Protocol:  IndexerProtocol(client.Protocol),
 		BaseUrl:   client.BaseURL,
 		Username:  client.Username,
 		Password:  client.Password,

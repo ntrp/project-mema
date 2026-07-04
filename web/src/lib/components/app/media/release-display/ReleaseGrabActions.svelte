@@ -21,16 +21,26 @@
 
 	const currentReleaseKey = $derived(`${item.id}:${release.id}`);
 	const grabbing = $derived(grabbingKey === currentReleaseKey);
+	const grabDisabledReason = $derived(release.grabDisabledReason?.trim());
+	const grabDisabled = $derived(grabbing || Boolean(grabDisabledReason));
 	const showGrab = $derived(release.match.severity !== 'error');
 
 	const grabTooltip = $derived.by(() => {
+		if (grabDisabledReason) {
+			return grabDisabledReason;
+		}
 		if (grabbing) {
 			return 'Queueing release';
 		}
 		return 'Grab release';
 	});
 
-	const overrideGrabTooltip = $derived(grabbing ? 'Queueing release' : 'Grab with override');
+	const overrideGrabTooltip = $derived.by(() => {
+		if (grabDisabledReason) {
+			return grabDisabledReason;
+		}
+		return grabbing ? 'Queueing release' : 'Grab with override';
+	});
 	let grabOpen = $state(false);
 	let overrideOpen = $state(false);
 </script>
@@ -40,17 +50,18 @@
 		<Tooltip.Root bind:open={grabOpen}>
 			<Tooltip.Trigger>
 				{#snippet child({ props })}
-					<Button
-						{...props}
-						type="button"
-						size="icon-sm"
-						class="bg-emerald-600 text-white hover:bg-emerald-700"
-						aria-label="Grab release"
-						disabled={grabbing}
-						onclick={() => onGrab(item, release)}
-					>
-						<DownloadIcon aria-hidden="true" />
-					</Button>
+					<span {...props} class="inline-flex">
+						<Button
+							type="button"
+							size="icon-sm"
+							class="bg-emerald-600 text-white hover:bg-emerald-700"
+							aria-label="Grab release"
+							disabled={grabDisabled}
+							onclick={() => onGrab(item, release)}
+						>
+							<DownloadIcon aria-hidden="true" />
+						</Button>
+					</span>
 				{/snippet}
 			</Tooltip.Trigger>
 			{#if grabOpen}
@@ -63,17 +74,18 @@
 	<Tooltip.Root bind:open={overrideOpen}>
 		<Tooltip.Trigger>
 			{#snippet child({ props })}
-				<Button
-					{...props}
-					type="button"
-					size="icon-sm"
-					class="bg-amber-400 text-amber-950 hover:bg-amber-500"
-					aria-label="Grab with override"
-					disabled={grabbing}
-					onclick={() => onGrab(item, release, true)}
-				>
-					<ReleaseOverrideIcon />
-				</Button>
+				<span {...props} class="inline-flex">
+					<Button
+						type="button"
+						size="icon-sm"
+						class="bg-amber-400 text-amber-950 hover:bg-amber-500"
+						aria-label="Grab with override"
+						disabled={grabDisabled}
+						onclick={() => onGrab(item, release, true)}
+					>
+						<ReleaseOverrideIcon />
+					</Button>
+				</span>
 			{/snippet}
 		</Tooltip.Trigger>
 		{#if overrideOpen}

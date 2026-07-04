@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -36,6 +37,41 @@ func TestScenarioSCNMedia009AdminManagesDownloadActivityLifecycle(t *testing.T) 
 	client.doJSON(t, http.MethodGet, "/activity/downloads", nil, http.StatusOK, &afterDelete)
 	if downloadActivityListHas(afterDelete.Activities, activity.ID.String(), DownloadActivityStatusCancelled) {
 		t.Fatalf("deleted download activity still listed: %#v", afterDelete.Activities)
+	}
+}
+
+func TestScenarioSCNMedia009AdminManagesReleaseBlocklist(t *testing.T) {
+	store := testSettingsStore(t)
+	client := newAcceptanceClientWithStore(t, "SCN-MEDIA-009", store)
+	activity := createScenarioDownloadActivity(t, store)
+	expiresAt := time.Now().Add(time.Hour).UTC().Truncate(time.Second)
+	block, err := store.BlockReleaseActivity(t.Context(), activity, "download rejected", "download_client_rejected", &expiresAt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var listed ReleaseBlocklistListResponse
+	client.doJSON(t, http.MethodGet, "/activity/blocklist", nil, http.StatusOK, &listed)
+	item, ok := releaseBlocklistListItem(listed.Items, block.ID.String())
+	if !ok || item.DownloadClientName != "Scenario Client" || item.IndexerProtocol != IndexerProtocolTorrent {
+		t.Fatalf("blocklist item = %#v, found=%v", item, ok)
+	}
+
+	client.doJSON(t, http.MethodDelete, "/activity/blocklist/"+block.ID.String(), nil, http.StatusNoContent, nil)
+	var afterDelete ReleaseBlocklistListResponse
+	client.doJSON(t, http.MethodGet, "/activity/blocklist", nil, http.StatusOK, &afterDelete)
+	if _, ok := releaseBlocklistListItem(afterDelete.Items, block.ID.String()); ok {
+		t.Fatalf("deleted blocklist item still listed: %#v", afterDelete.Items)
+	}
+
+	if _, err := store.BlockReleaseActivity(t.Context(), activity, "download rejected", "download_client_rejected", &expiresAt); err != nil {
+		t.Fatal(err)
+	}
+	client.doJSON(t, http.MethodDelete, "/activity/blocklist", nil, http.StatusNoContent, nil)
+	var afterClear ReleaseBlocklistListResponse
+	client.doJSON(t, http.MethodGet, "/activity/blocklist", nil, http.StatusOK, &afterClear)
+	if len(afterClear.Items) != 0 {
+		t.Fatalf("cleared blocklist still listed: %#v", afterClear.Items)
 	}
 }
 
@@ -104,4 +140,13 @@ func downloadActivityListHas(activities []DownloadActivity, id string, status Do
 		}
 	}
 	return false
+}
+
+func releaseBlocklistListItem(items []ReleaseBlocklistItem, id string) (ReleaseBlocklistItem, bool) {
+	for _, item := range items {
+		if item.Id.String() == id {
+			return item, true
+		}
+	}
+	return ReleaseBlocklistItem{}, false
 }

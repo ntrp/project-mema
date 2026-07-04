@@ -33,6 +33,7 @@ create table if not exists app.download_clients (
     id uuid primary key,
     name text not null,
     type text not null check (type in ('transmission', 'sabnzbd')),
+    protocol text not null default 'torrent' check (protocol in ('torrent', 'usenet')),
     base_url text not null,
     username text,
     password text,
@@ -43,6 +44,19 @@ create table if not exists app.download_clients (
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
+
+-- +goose StatementBegin
+do $$
+begin
+    alter table app.download_clients drop constraint if exists download_clients_type_protocol_check;
+    alter table app.download_clients
+        add constraint download_clients_type_protocol_check
+        check (
+            (type = 'transmission' and protocol = 'torrent')
+            or (type = 'sabnzbd' and protocol = 'usenet')
+        );
+end $$;
+-- +goose StatementEnd
 
 create index if not exists idx_download_clients_priority
     on app.download_clients (priority, name);
@@ -662,6 +676,7 @@ create table if not exists app.release_blocklist (
     indexer_name text not null,
     indexer_type text not null default '',
     indexer_protocol text not null default 'torrent',
+    download_client_name text not null default '',
     download_url text,
     info_url text,
     guid text,
@@ -675,6 +690,9 @@ create table if not exists app.release_blocklist (
         (temporary = false and expires_at is null) or (temporary = true and expires_at is not null)
     )
 );
+
+alter table app.release_blocklist
+    add column if not exists download_client_name text not null default '';
 
 create index if not exists idx_release_blocklist_media
     on app.release_blocklist (media_item_id, created_at desc);

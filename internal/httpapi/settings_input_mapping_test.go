@@ -16,6 +16,7 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 	download, ok := downloadClientInput(httptest.NewRecorder(), DownloadClientRequest{
 		Name:     " Client ",
 		Type:     Transmission,
+		Protocol: IndexerProtocolTorrent,
 		BaseUrl:  " http://client.local ",
 		Username: &username,
 		Password: &password,
@@ -24,7 +25,7 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 		Enabled:  true,
 		Priority: 5,
 	})
-	if !ok || download.Name != "Client" || download.BaseURL != "http://client.local" {
+	if !ok || download.Name != "Client" || download.Protocol != "torrent" || download.BaseURL != "http://client.local" {
 		t.Fatalf("download input = %#v, ok = %v", download, ok)
 	}
 	if download.APIKey == nil || *download.APIKey != "key" || download.Category == nil || *download.Category != "movies" {
@@ -64,6 +65,16 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 
 	assertBadRequest(t, func(w http.ResponseWriter) bool {
 		_, ok := downloadClientInput(w, DownloadClientRequest{Type: Transmission, BaseUrl: "http://x", Priority: 1})
+		return ok
+	})
+	assertBadRequest(t, func(w http.ResponseWriter) bool {
+		_, ok := downloadClientInput(w, DownloadClientRequest{
+			Name:     "Bad",
+			Type:     Sabnzbd,
+			Protocol: IndexerProtocolTorrent,
+			BaseUrl:  "http://x",
+			Priority: 1,
+		})
 		return ok
 	})
 	assertBadRequest(t, func(w http.ResponseWriter) bool {

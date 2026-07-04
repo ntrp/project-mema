@@ -1,6 +1,10 @@
 package httpapi
 
-import "strings"
+import (
+	"math"
+	"strconv"
+	"strings"
+)
 
 func optionalProbeString(value string) *string {
 	value = strings.TrimSpace(value)
@@ -22,6 +26,18 @@ func optionalProbeIndex(value int32) *int32 {
 		return nil
 	}
 	return &value
+}
+
+func optionalProbeDuration(value string) *float64 {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.EqualFold(value, "unknown") {
+		return nil
+	}
+	duration, err := strconv.ParseFloat(value, 64)
+	if err != nil || duration <= 0 || math.IsInf(duration, 0) || math.IsNaN(duration) {
+		return nil
+	}
+	return &duration
 }
 
 func languageTag(tags map[string]string) string {

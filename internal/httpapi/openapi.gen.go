@@ -331,6 +331,27 @@ func (e MediaDiscoverMediaType) Valid() bool {
 	}
 }
 
+// Defines values for MediaFilePreviewMode.
+const (
+	Direct    MediaFilePreviewMode = "direct"
+	Remux     MediaFilePreviewMode = "remux"
+	Transcode MediaFilePreviewMode = "transcode"
+)
+
+// Valid indicates whether the value is a known member of the MediaFilePreviewMode enum.
+func (e MediaFilePreviewMode) Valid() bool {
+	switch e {
+	case Direct:
+		return true
+	case Remux:
+		return true
+	case Transcode:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaFileTrackType.
 const (
 	Audio    MediaFileTrackType = "audio"
@@ -957,6 +978,7 @@ type DownloadClient struct {
 	Name      string             `json:"name"`
 	Password  *string            `json:"password,omitempty"`
 	Priority  int32              `json:"priority"`
+	Protocol  IndexerProtocol    `json:"protocol"`
 	Type      DownloadClientType `json:"type"`
 	UpdatedAt time.Time          `json:"updatedAt"`
 	Username  *string            `json:"username,omitempty"`
@@ -976,6 +998,7 @@ type DownloadClientRequest struct {
 	Name     string             `json:"name"`
 	Password *string            `json:"password,omitempty"`
 	Priority int32              `json:"priority"`
+	Protocol IndexerProtocol    `json:"protocol"`
 	Type     DownloadClientType `json:"type"`
 	Username *string            `json:"username,omitempty"`
 }
@@ -1549,6 +1572,21 @@ type MediaFileInfo struct {
 	SizeBytes *int64              `json:"sizeBytes,omitempty"`
 	Tracks    *[]MediaFileTrack   `json:"tracks,omitempty"`
 }
+
+// MediaFilePreviewInfo defines model for MediaFilePreviewInfo.
+type MediaFilePreviewInfo struct {
+	AudioTrack       *MediaFileTrack      `json:"audioTrack,omitempty"`
+	DurationSeconds  *float64             `json:"durationSeconds,omitempty"`
+	LiveBitRate      *string              `json:"liveBitRate,omitempty"`
+	OutputAudioCodec string               `json:"outputAudioCodec"`
+	OutputVideoCodec string               `json:"outputVideoCodec"`
+	SourceBitRate    *string              `json:"sourceBitRate,omitempty"`
+	StreamingMode    MediaFilePreviewMode `json:"streamingMode"`
+	VideoTrack       *MediaFileTrack      `json:"videoTrack,omitempty"`
+}
+
+// MediaFilePreviewMode defines model for MediaFilePreviewMode.
+type MediaFilePreviewMode string
 
 // MediaFileTrack defines model for MediaFileTrack.
 type MediaFileTrack struct {
@@ -2176,18 +2214,20 @@ type QueryHistoryStats struct {
 
 // ReleaseBlocklistItem defines model for ReleaseBlocklistItem.
 type ReleaseBlocklistItem struct {
-	CreatedAt    time.Time          `json:"createdAt"`
-	ExpiresAt    *time.Time         `json:"expiresAt,omitempty"`
-	Id           openapi_types.UUID `json:"id"`
-	IndexerName  string             `json:"indexerName"`
-	MediaItemId  openapi_types.UUID `json:"mediaItemId"`
-	MediaTitle   string             `json:"mediaTitle"`
-	MediaType    MediaType          `json:"mediaType"`
-	Reason       string             `json:"reason"`
-	ReleaseTitle string             `json:"releaseTitle"`
-	Source       string             `json:"source"`
-	Temporary    bool               `json:"temporary"`
-	UpdatedAt    time.Time          `json:"updatedAt"`
+	CreatedAt          time.Time          `json:"createdAt"`
+	DownloadClientName string             `json:"downloadClientName"`
+	ExpiresAt          *time.Time         `json:"expiresAt,omitempty"`
+	Id                 openapi_types.UUID `json:"id"`
+	IndexerName        string             `json:"indexerName"`
+	IndexerProtocol    IndexerProtocol    `json:"indexerProtocol"`
+	MediaItemId        openapi_types.UUID `json:"mediaItemId"`
+	MediaTitle         string             `json:"mediaTitle"`
+	MediaType          MediaType          `json:"mediaType"`
+	Reason             string             `json:"reason"`
+	ReleaseTitle       string             `json:"releaseTitle"`
+	Source             string             `json:"source"`
+	Temporary          bool               `json:"temporary"`
+	UpdatedAt          time.Time          `json:"updatedAt"`
 }
 
 // ReleaseBlocklistListResponse defines model for ReleaseBlocklistListResponse.
@@ -2197,18 +2237,19 @@ type ReleaseBlocklistListResponse struct {
 
 // ReleaseCandidate defines model for ReleaseCandidate.
 type ReleaseCandidate struct {
-	Guid            *string               `json:"guid,omitempty"`
-	Id              openapi_types.UUID    `json:"id"`
-	IndexerId       *openapi_types.UUID   `json:"indexerId,omitempty"`
-	IndexerName     string                `json:"indexerName"`
-	IndexerProtocol IndexerProtocol       `json:"indexerProtocol"`
-	InfoUrl         *string               `json:"infoUrl,omitempty"`
-	Match           ReleaseCandidateMatch `json:"match"`
-	Peers           *int32                `json:"peers,omitempty"`
-	PublishedAt     *time.Time            `json:"publishedAt,omitempty"`
-	Seeders         *int32                `json:"seeders,omitempty"`
-	SizeBytes       int64                 `json:"sizeBytes"`
-	Title           string                `json:"title"`
+	GrabDisabledReason *string               `json:"grabDisabledReason,omitempty"`
+	Guid               *string               `json:"guid,omitempty"`
+	Id                 openapi_types.UUID    `json:"id"`
+	IndexerId          *openapi_types.UUID   `json:"indexerId,omitempty"`
+	IndexerName        string                `json:"indexerName"`
+	IndexerProtocol    IndexerProtocol       `json:"indexerProtocol"`
+	InfoUrl            *string               `json:"infoUrl,omitempty"`
+	Match              ReleaseCandidateMatch `json:"match"`
+	Peers              *int32                `json:"peers,omitempty"`
+	PublishedAt        *time.Time            `json:"publishedAt,omitempty"`
+	Seeders            *int32                `json:"seeders,omitempty"`
+	SizeBytes          int64                 `json:"sizeBytes"`
+	Title              string                `json:"title"`
 }
 
 // ReleaseCandidateMatch defines model for ReleaseCandidateMatch.
@@ -2540,13 +2581,28 @@ type DeleteMediaItemParams struct {
 
 // PreviewMediaItemFileParams defines parameters for PreviewMediaItemFile.
 type PreviewMediaItemFileParams struct {
+	AudioTrackIndex  *int32        `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
+	StartTimeSeconds *float64      `form:"startTimeSeconds,omitempty" json:"startTimeSeconds,omitempty"`
+	Path             MediaFilePath `form:"path" json:"path"`
+}
+
+// GetMediaItemFilePreviewInfoParams defines parameters for GetMediaItemFilePreviewInfo.
+type GetMediaItemFilePreviewInfoParams struct {
 	AudioTrackIndex *int32        `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
 	Path            MediaFilePath `form:"path" json:"path"`
 }
 
 // StreamMediaItemFileParams defines parameters for StreamMediaItemFile.
 type StreamMediaItemFileParams struct {
-	Path MediaFilePath `form:"path" json:"path"`
+	StreamExpires *int64        `form:"streamExpires,omitempty" json:"streamExpires,omitempty"`
+	StreamToken   *string       `form:"streamToken,omitempty" json:"streamToken,omitempty"`
+	Path          MediaFilePath `form:"path" json:"path"`
+}
+
+// PreviewMediaItemFileSubtitleParams defines parameters for PreviewMediaItemFileSubtitle.
+type PreviewMediaItemFileSubtitleParams struct {
+	SubtitleTrackIndex int32         `form:"subtitleTrackIndex" json:"subtitleTrackIndex"`
+	Path               MediaFilePath `form:"path" json:"path"`
 }
 
 // PlayMediaItemFileInVlcParams defines parameters for PlayMediaItemFileInVlc.
@@ -2747,9 +2803,15 @@ type UpdateSystemLogLevelJSONRequestBody = SystemLogLevelRequest
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Clear all blocked releases
+	// (DELETE /activity/blocklist)
+	ClearReleaseBlocklist(w http.ResponseWriter, r *http.Request)
 	// List blocked releases
 	// (GET /activity/blocklist)
 	ListReleaseBlocklist(w http.ResponseWriter, r *http.Request)
+	// Delete a blocked release
+	// (DELETE /activity/blocklist/{id})
+	DeleteReleaseBlocklistItem(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// List recent download activity
 	// (GET /activity/downloads)
 	ListDownloadActivity(w http.ResponseWriter, r *http.Request)
@@ -2834,16 +2896,22 @@ type ServerInterface interface {
 	// Stream a browser-compatible media file preview
 	// (GET /media/items/{id}/files/preview)
 	PreviewMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileParams)
+	// Inspect the current browser preview stream plan
+	// (GET /media/items/{id}/files/preview-info)
+	GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Request, id ResourceId, params GetMediaItemFilePreviewInfoParams)
 	// Rescan a media item folder for media and metadata files
 	// (POST /media/items/{id}/files/rescan)
 	RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Stream one media file with HTTP range support
 	// (GET /media/items/{id}/files/stream)
 	StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaItemFileParams)
+	// Convert a media file subtitle stream to WebVTT
+	// (GET /media/items/{id}/files/subtitle)
+	PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileSubtitleParams)
 	// Open a VLC-compatible remote streaming playlist
 	// (GET /media/items/{id}/files/vlc)
 	PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, id ResourceId, params PlayMediaItemFileInVlcParams)
-	// Enqueue a release grab with the highest-priority enabled download client
+	// Enqueue a release grab with a compatible enabled download client
 	// (POST /media/items/{id}/grab)
 	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Refresh a monitored media item from its metadata provider
@@ -3155,9 +3223,21 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
+// Clear all blocked releases
+// (DELETE /activity/blocklist)
+func (_ Unimplemented) ClearReleaseBlocklist(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List blocked releases
 // (GET /activity/blocklist)
 func (_ Unimplemented) ListReleaseBlocklist(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a blocked release
+// (DELETE /activity/blocklist/{id})
+func (_ Unimplemented) DeleteReleaseBlocklistItem(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -3329,6 +3409,12 @@ func (_ Unimplemented) PreviewMediaItemFile(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Inspect the current browser preview stream plan
+// (GET /media/items/{id}/files/preview-info)
+func (_ Unimplemented) GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Request, id ResourceId, params GetMediaItemFilePreviewInfoParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Rescan a media item folder for media and metadata files
 // (POST /media/items/{id}/files/rescan)
 func (_ Unimplemented) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -3341,13 +3427,19 @@ func (_ Unimplemented) StreamMediaItemFile(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Convert a media file subtitle stream to WebVTT
+// (GET /media/items/{id}/files/subtitle)
+func (_ Unimplemented) PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileSubtitleParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Open a VLC-compatible remote streaming playlist
 // (GET /media/items/{id}/files/vlc)
 func (_ Unimplemented) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, id ResourceId, params PlayMediaItemFileInVlcParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Enqueue a release grab with the highest-priority enabled download client
+// Enqueue a release grab with a compatible enabled download client
 // (POST /media/items/{id}/grab)
 func (_ Unimplemented) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -3968,6 +4060,26 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+// ClearReleaseBlocklist operation middleware
+func (siw *ServerInterfaceWrapper) ClearReleaseBlocklist(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ClearReleaseBlocklist(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListReleaseBlocklist operation middleware
 func (siw *ServerInterfaceWrapper) ListReleaseBlocklist(w http.ResponseWriter, r *http.Request) {
 
@@ -3979,6 +4091,38 @@ func (siw *ServerInterfaceWrapper) ListReleaseBlocklist(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListReleaseBlocklist(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteReleaseBlocklistItem operation middleware
+func (siw *ServerInterfaceWrapper) DeleteReleaseBlocklistItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteReleaseBlocklistItem(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5263,6 +5407,19 @@ func (siw *ServerInterfaceWrapper) PreviewMediaItemFile(w http.ResponseWriter, r
 		return
 	}
 
+	// ------------- Optional query parameter "startTimeSeconds" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "startTimeSeconds", r.URL.Query(), &params.StartTimeSeconds, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "startTimeSeconds"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "startTimeSeconds", Err: err})
+		}
+		return
+	}
+
 	// ------------- Required query parameter "path" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
@@ -5278,6 +5435,67 @@ func (siw *ServerInterfaceWrapper) PreviewMediaItemFile(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PreviewMediaItemFile(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMediaItemFilePreviewInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetMediaItemFilePreviewInfoParams
+
+	// ------------- Optional query parameter "audioTrackIndex" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "audioTrackIndex", r.URL.Query(), &params.AudioTrackIndex, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "audioTrackIndex"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "audioTrackIndex", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMediaItemFilePreviewInfo(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5343,6 +5561,32 @@ func (siw *ServerInterfaceWrapper) StreamMediaItemFile(w http.ResponseWriter, r 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params StreamMediaItemFileParams
 
+	// ------------- Optional query parameter "streamExpires" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "streamExpires", r.URL.Query(), &params.StreamExpires, runtime.BindQueryParameterOptions{Type: "integer", Format: "int64"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "streamExpires"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "streamExpires", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "streamToken" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "streamToken", r.URL.Query(), &params.StreamToken, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "streamToken"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "streamToken", Err: err})
+		}
+		return
+	}
+
 	// ------------- Required query parameter "path" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
@@ -5358,6 +5602,67 @@ func (siw *ServerInterfaceWrapper) StreamMediaItemFile(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.StreamMediaItemFile(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewMediaItemFileSubtitle operation middleware
+func (siw *ServerInterfaceWrapper) PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PreviewMediaItemFileSubtitleParams
+
+	// ------------- Required query parameter "subtitleTrackIndex" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "subtitleTrackIndex", r.URL.Query(), &params.SubtitleTrackIndex, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "subtitleTrackIndex"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subtitleTrackIndex", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewMediaItemFileSubtitle(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8402,7 +8707,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/activity/blocklist", wrapper.ClearReleaseBlocklist)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/activity/blocklist", wrapper.ListReleaseBlocklist)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/activity/blocklist/{id}", wrapper.DeleteReleaseBlocklistItem)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/activity/downloads", wrapper.ListDownloadActivity)
@@ -8489,10 +8800,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/media/items/{id}/files/preview", wrapper.PreviewMediaItemFile)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/files/preview-info", wrapper.GetMediaItemFilePreviewInfo)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/files/rescan", wrapper.RescanMediaItemFiles)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/files/stream", wrapper.StreamMediaItemFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/files/subtitle", wrapper.PreviewMediaItemFileSubtitle)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/files/vlc", wrapper.PlayMediaItemFileInVlc)

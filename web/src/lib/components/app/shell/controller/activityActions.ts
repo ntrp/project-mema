@@ -1,8 +1,10 @@
 import {
 	cancelDownloadActivity as cancelDownloadActivityRequest,
+	clearReleaseBlocklist as clearReleaseBlocklistRequest,
+	deleteReleaseBlocklistItem as deleteReleaseBlocklistItemRequest,
 	deleteDownloadActivity as deleteDownloadActivityRequest
 } from '$lib/settings/api';
-import type { DownloadActivity } from '$lib/settings/types';
+import type { DownloadActivity, ReleaseBlocklistItem } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
@@ -47,5 +49,35 @@ export function createActivityActions(state: AppShellState, deps: ActivityDeps) 
 		}
 	}
 
-	return { cancelActivity, deleteActivity };
+	async function deleteReleaseBlocklistItem(item: ReleaseBlocklistItem) {
+		state.deletingReleaseBlocklistId = item.id;
+		clearNotice();
+
+		try {
+			await deleteReleaseBlocklistItemRequest(item.id);
+			state.releaseBlocklist = state.releaseBlocklist.filter((block) => block.id !== item.id);
+			state.message = 'Release blocklist entry removed';
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not remove release blocklist entry');
+		} finally {
+			state.deletingReleaseBlocklistId = undefined;
+		}
+	}
+
+	async function clearReleaseBlocklist() {
+		state.clearingReleaseBlocklist = true;
+		clearNotice();
+
+		try {
+			await clearReleaseBlocklistRequest();
+			state.releaseBlocklist = [];
+			state.message = 'Release blocklist cleared';
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not clear release blocklist');
+		} finally {
+			state.clearingReleaseBlocklist = false;
+		}
+	}
+
+	return { cancelActivity, deleteActivity, deleteReleaseBlocklistItem, clearReleaseBlocklist };
 }

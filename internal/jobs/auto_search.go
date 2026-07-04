@@ -11,6 +11,7 @@ import (
 
 	"media-manager/internal/decisions"
 	"media-manager/internal/downloadclients"
+	"media-manager/internal/downloadrouting"
 	"media-manager/internal/events"
 	"media-manager/internal/indexers"
 	"media-manager/internal/storage"
@@ -123,8 +124,8 @@ func autoSearchDownload(
 		return err
 	}
 	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
-	releases, err = unblockedReleaseCandidates(ctx, settings, releases)
-	if err != nil {
+	releases, clients, ok, err := autoSearchCandidatesWithDownloadClient(ctx, settings, eventBroker, item, releases, searchErrors)
+	if err != nil || !ok {
 		return err
 	}
 	profile, formats, languages := releaseDecisionContext(ctx, settings, item)
@@ -146,7 +147,7 @@ func autoSearchDownload(
 		})
 		return nil
 	}
-	if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, item, decision.Release); err != nil {
+	if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, clients, item, decision.Release); err != nil {
 		slog.Error("auto search grab failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title, "error", err)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search grab failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title, "error": err.Error()})
 		return err
@@ -195,21 +196,23 @@ func grabReleaseNow(
 	settings *storage.SettingsStore,
 	downloadClientService *downloadclients.Service,
 	eventBroker *events.Broker,
+	clients []storage.DownloadClient,
 	item storage.MediaItem,
 	release storage.ReleaseCandidateInput,
 ) error {
-	clients, err := settings.ListEnabledDownloadClients(ctx)
-	if err != nil {
-		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Automatic grab failed to list clients", map[string]any{"mediaItemId": item.ID.String(), "error": err.Error()})
-		return fmt.Errorf("list enabled download clients: %w", err)
-	}
 	if len(clients) == 0 {
 		slog.Debug("grab release skipped because no download clients are enabled", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", release.Title)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "downloads", "Automatic grab skipped because no download client is enabled", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": release.Title})
-		return settings.ReplaceReleaseSearchResults(ctx, item.ID, []storage.ReleaseCandidateInput{release}, []string{"No enabled download client is configured"})
+		return settings.ReplaceReleaseSearchResults(ctx, item.ID, []storage.ReleaseCandidateInput{release}, []string{downloadrouting.MissingClientMessage("")})
 	}
 
-	client := clients[0]
+	client, ok := downloadrouting.ClientForProtocol(clients, release.IndexerProtocol)
+	if !ok {
+		message := downloadrouting.MissingClientMessage(release.IndexerProtocol)
+		slog.Debug("grab release skipped because no compatible download client is enabled", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", release.Title, "protocol", release.IndexerProtocol)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "downloads", "Automatic grab skipped because no compatible download client is enabled", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": release.Title, "protocol": release.IndexerProtocol})
+		return settings.ReplaceReleaseSearchResults(ctx, item.ID, []storage.ReleaseCandidateInput{release}, []string{message})
+	}
 	activity, err := settings.CreateDownloadActivity(ctx, storage.DownloadActivityInput{
 		MediaItemID:        item.ID,
 		ReleaseTitle:       release.Title,

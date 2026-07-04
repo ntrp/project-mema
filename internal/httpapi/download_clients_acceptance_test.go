@@ -10,7 +10,7 @@ func TestScenarioSCNSettings018AdminManagesPersistedDownloadClients(t *testing.T
 
 	var created DownloadClient
 	client.doJSON(t, http.MethodPost, "/settings/download-clients", downloadClientRequest("Scenario Client"), http.StatusCreated, &created)
-	if created.Name != "Scenario Client" || created.Type != Transmission {
+	if created.Name != "Scenario Client" || created.Type != Transmission || created.Protocol != IndexerProtocolTorrent {
 		t.Fatalf("created download client = %#v", created)
 	}
 
@@ -42,6 +42,7 @@ func downloadClientRequest(name string) DownloadClientRequest {
 	return DownloadClientRequest{
 		Name:     name,
 		Type:     Transmission,
+		Protocol: IndexerProtocolTorrent,
 		BaseUrl:  "http://127.0.0.1:1",
 		Category: &category,
 		Enabled:  true,

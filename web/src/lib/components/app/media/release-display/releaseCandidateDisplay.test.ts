@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	ageLabel,
 	languageLabels,
+	peerBadgeClass,
 	peerLabel,
 	qualityMatch,
 	releaseSource,
@@ -31,7 +32,7 @@ function release(overrides: Partial<ReleaseCandidate> = {}): ReleaseCandidate {
 describe('release candidate display labels (SCN-MEDIA-002)', () => {
 	it('labels release source and source badge by indexer type', () => {
 		expect(releaseSource(release({ indexerProtocol: 'torrent' }))).toBe('torrent');
-		expect(releaseSource(release({ indexerProtocol: 'usenet' }))).toBe('nzb');
+		expect(releaseSource(release({ indexerProtocol: 'usenet' }))).toBe('usenet');
 		expect(releaseSourceBadgeClass(release({ indexerProtocol: 'torrent' }))).toContain('emerald');
 		expect(releaseSourceBadgeClass(release({ indexerProtocol: 'usenet' }))).toContain('sky');
 	});
@@ -44,6 +45,9 @@ describe('release candidate display labels (SCN-MEDIA-002)', () => {
 		expect(sizeLabel(8 * 1024 ** 3)).toBe('8.0 GiB');
 		expect(sizeLabel(15 * 1024 ** 3)).toBe('15 GiB');
 		expect(peerLabel(release())).toBe('20 / 12');
+		expect(peerBadgeClass(release({ seeders: 1, peers: 0 }))).toContain('emerald');
+		expect(peerBadgeClass(release({ seeders: 0, peers: 6 }))).toContain('yellow');
+		expect(peerBadgeClass(release({ seeders: 0, peers: 5 }))).toContain('red');
 		expect(languageLabels(release())).toEqual(['German', 'English']);
 		expect(signedScore(10)).toBe('+10');
 		expect(signedScore(0)).toBe('0');

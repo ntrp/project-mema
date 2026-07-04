@@ -68,7 +68,7 @@ describe('release result filtering and sorting (SCN-MEDIA-002)', () => {
 			item,
 			[
 				release({ title: 'Torrent Match', indexerProtocol: 'torrent', sizeBytes: 5 * 1024 ** 3 }),
-				release({ title: 'NZB Match', indexerProtocol: 'usenet', sizeBytes: 5 * 1024 ** 3 }),
+				release({ title: 'Usenet Match', indexerProtocol: 'usenet', sizeBytes: 5 * 1024 ** 3 }),
 				release({ title: 'Too Large', indexerProtocol: 'torrent', sizeBytes: 15 * 1024 ** 3 })
 			],
 			{
@@ -153,10 +153,98 @@ describe('release result filtering and sorting (SCN-MEDIA-002)', () => {
 				(value) => value.title
 			)
 		).toEqual(['First', 'Second']);
+	});
+
+	it('uses protocol, quality, score, and age as secondary sort keys', () => {
+		const releases = [
+			release({
+				title: 'Torrent High Score',
+				indexerProtocol: 'torrent',
+				publishedAt: '2026-07-01T00:00:00Z',
+				match: { severity: 'info', quality: 'WEBDL-720p', score: 300, languages: [] }
+			}),
+			release({
+				title: 'Usenet Lower Quality Newer',
+				indexerProtocol: 'usenet',
+				publishedAt: '2026-07-03T00:00:00Z',
+				match: { severity: 'info', quality: 'WEBDL-720p', score: 300, languages: [] }
+			}),
+			release({
+				title: 'Usenet Higher Quality',
+				indexerProtocol: 'usenet',
+				publishedAt: '2026-07-02T00:00:00Z',
+				match: { severity: 'info', quality: 'Bluray-1080p', score: 300, languages: [] }
+			}),
+			release({
+				title: 'Usenet Higher Score',
+				indexerProtocol: 'usenet',
+				publishedAt: '2026-07-01T00:00:00Z',
+				match: { severity: 'info', quality: 'Bluray-1080p', score: 400, languages: [] }
+			})
+		];
+
 		expect(
-			filteredSortedReleases(item, releases, filters, { key: 'match', direction: 'asc' }).map(
-				(value) => value.title
-			)
-		).toEqual(['Second', 'First']);
+			filteredSortedReleases(item, releases, defaultReleaseFilters(), {
+				key: 'score',
+				direction: 'desc'
+			}).map((value) => value.title)
+		).toEqual([
+			'Usenet Higher Score',
+			'Usenet Higher Quality',
+			'Usenet Lower Quality Newer',
+			'Torrent High Score'
+		]);
+		expect(
+			filteredSortedReleases(item, releases, defaultReleaseFilters(), {
+				key: 'quality',
+				direction: 'desc'
+			}).map((value) => value.title)
+		).toEqual([
+			'Usenet Higher Score',
+			'Usenet Higher Quality',
+			'Usenet Lower Quality Newer',
+			'Torrent High Score'
+		]);
+		expect(
+			filteredSortedReleases(item, releases, defaultReleaseFilters(), {
+				key: 'age',
+				direction: 'asc'
+			}).map((value) => value.title)
+		).toEqual([
+			'Usenet Lower Quality Newer',
+			'Usenet Higher Quality',
+			'Usenet Higher Score',
+			'Torrent High Score'
+		]);
+		expect(
+			filteredSortedReleases(item, releases, defaultReleaseFilters(), {
+				key: 'source',
+				direction: 'asc'
+			}).map((value) => value.title)
+		).toEqual([
+			'Usenet Higher Score',
+			'Usenet Higher Quality',
+			'Usenet Lower Quality Newer',
+			'Torrent High Score'
+		]);
+		expect(
+			filteredSortedReleases(item, releases, defaultReleaseFilters(), {
+				key: 'source',
+				direction: 'desc'
+			}).map((value) => value.title)
+		).toEqual([
+			'Torrent High Score',
+			'Usenet Higher Score',
+			'Usenet Higher Quality',
+			'Usenet Lower Quality Newer'
+		]);
+		expect(
+			filteredSortedReleases(
+				item,
+				releases,
+				{ ...defaultReleaseFilters(), source: 'usenet' },
+				{ key: 'score', direction: 'desc' }
+			).map((value) => value.title)
+		).toEqual(['Usenet Higher Score', 'Usenet Higher Quality', 'Usenet Lower Quality Newer']);
 	});
 });

@@ -8,6 +8,7 @@
 	import ReleaseTitleCell from '$lib/components/app/media/release-display/ReleaseTitleCell.svelte';
 	import {
 		ageLabel,
+		peerBadgeClass,
 		peerLabel,
 		qualityMatch,
 		releaseSource,
@@ -45,7 +46,7 @@
 			{source}
 			{#if source === 'torrent' && peers !== '-'}
 				<span
-					class="absolute -right-2 -bottom-2 rounded-[3px] border border-background bg-background px-1 text-[9px] leading-3 font-black text-foreground shadow-sm"
+					class={`absolute -right-2 -bottom-2 rounded-[3px] border px-1 text-[9px] leading-3 font-black shadow-sm ${peerBadgeClass(release)}`}
 				>
 					{peers}
 				</span>

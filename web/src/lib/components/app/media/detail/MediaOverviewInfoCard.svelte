@@ -1,11 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import ClapperboardIcon from '@lucide/svelte/icons/clapperboard';
-	import DiscIcon from '@lucide/svelte/icons/disc-3';
-	import MonitorPlayIcon from '@lucide/svelte/icons/monitor-play';
 	import PauseIcon from '@lucide/svelte/icons/pause';
 	import PlayIcon from '@lucide/svelte/icons/play';
 	import SquareIcon from '@lucide/svelte/icons/square';
+	import MediaReleaseDateValue from '$lib/components/app/media/detail/MediaReleaseDateValue.svelte';
 	import { formatDate } from '$lib/settings/dateFormat';
 	import { displayLanguage } from '$lib/settings/languageDisplay';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
@@ -83,17 +81,6 @@
 			.map((item) => ({ ...item, date: formatDate(item.date) }));
 	}
 
-	function releaseDateIcon(kind: ReleaseDateItem['kind']) {
-		switch (kind) {
-			case 'cinema':
-				return ClapperboardIcon;
-			case 'physical':
-				return DiscIcon;
-			default:
-				return MonitorPlayIcon;
-		}
-	}
-
 	function seriesStatusIcon(value: string) {
 		switch (value.trim().toLowerCase()) {
 			case 'continuing':
@@ -169,12 +156,7 @@
 					<span class="grid justify-items-end gap-1 text-right text-muted-foreground">
 						{#if isReleaseDateItems(row.value)}
 							{#each row.value as value (`${value.kind}:${value.date}`)}
-								{@const Icon = releaseDateIcon(value.kind)}
-								<span class="inline-flex items-center justify-end gap-1.5">
-									<Icon aria-hidden="true" class="size-3.5 text-foreground" />
-									<span class="sr-only">{value.label}</span>
-									<span>{value.date}</span>
-								</span>
+								<MediaReleaseDateValue {...value} />
 							{/each}
 						{:else}
 							{#each row.value as value (value)}

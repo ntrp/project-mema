@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import ActivityList from '$lib/components/app/activity/ActivityList.svelte';
 import MediaItemList from '$lib/components/app/home/MediaItemList.svelte';
 import WantedMediaTable from '$lib/components/app/home/WantedMediaTable.svelte';
-import type { DownloadActivity, MediaItem } from '$lib/settings/types';
+import type { DownloadActivity, MediaItem, ReleaseBlocklistItem } from '$lib/settings/types';
 import { renderWithTooltip } from './renderHelpers';
 
 describe('rendered activity components (SCN-ACTIVITY-001)', () => {
@@ -56,6 +56,32 @@ describe('rendered activity components (SCN-ACTIVITY-001)', () => {
 
 		expect(body).toContain('Refreshing');
 		expect(body).toContain('No queued activity');
+	});
+
+	it('renders blocklist rows with protocol, client, and management actions', () => {
+		const { body } = renderWithTooltip(ActivityList, {
+			section: 'blocklist' as const,
+			activities: [],
+			releaseBlocklist: [releaseBlocklistItem()],
+			loading: false,
+			canManage: true,
+			deletingBlocklistId: 'block-1',
+			clearingReleaseBlocklist: false,
+			onRefresh: vi.fn(),
+			onCancel: vi.fn(),
+			onDelete: vi.fn(),
+			onDeleteReleaseBlocklistItem: vi.fn(),
+			onClearReleaseBlocklist: vi.fn()
+		});
+
+		expect(body).toContain('Release blocklist');
+		expect(body).toContain('Protocol');
+		expect(body).toContain('Usenet');
+		expect(body).toContain('Scenario Indexer');
+		expect(body).toContain('Scenario Client');
+		expect(body).toContain('Clear all');
+		expect(body).toContain('Remove Scenario.Movie.2026.1080p from blocklist');
+		expect(body).not.toContain('download_client_rejected');
 	});
 });
 
@@ -149,6 +175,26 @@ function downloadActivity(overrides: Partial<DownloadActivity> = {}): DownloadAc
 		updatedAt: '2026-07-03T00:01:00Z',
 		...overrides
 	} as DownloadActivity;
+}
+
+function releaseBlocklistItem(overrides: Partial<ReleaseBlocklistItem> = {}): ReleaseBlocklistItem {
+	return {
+		id: 'block-1',
+		mediaItemId: 'media-1',
+		mediaTitle: 'Scenario Movie',
+		mediaType: 'movie',
+		releaseTitle: 'Scenario.Movie.2026.1080p',
+		indexerName: 'Scenario Indexer',
+		indexerProtocol: 'usenet',
+		downloadClientName: 'Scenario Client',
+		reason: 'Download client rejected release',
+		source: 'download_client_rejected',
+		temporary: true,
+		expiresAt: '2026-07-04T12:00:00Z',
+		createdAt: '2026-07-03T00:00:00Z',
+		updatedAt: '2026-07-03T00:01:00Z',
+		...overrides
+	} as ReleaseBlocklistItem;
 }
 
 function mediaItem(overrides: Partial<MediaItem> = {}): MediaItem {

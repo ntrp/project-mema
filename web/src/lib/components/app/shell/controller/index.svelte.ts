@@ -95,6 +95,33 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 			parseEventData: events.parseEventData
 		}
 	});
+	function cancelDownloadClient() {
+		state.downloadForm = emptyDownloadClientForm();
+	}
+
+	function cancelIndexer() {
+		state.indexerForm = emptyIndexerForm();
+	}
+
+	function cancelMediaProfile() {
+		state.mediaProfileForm = emptyMediaProfileForm();
+	}
+
+	function cancelCustomFormat() {
+		state.customFormatForm = emptyCustomFormatForm();
+	}
+
+	function cancelTag() {
+		state.tagForm = emptyTagForm();
+	}
+
+	function cancelLanguage() {
+		state.languageForm = emptyLanguageForm();
+	}
+
+	function cancelUser() {
+		state.userForm = emptyUserForm();
+	}
 
 	return Object.assign(
 		state,
@@ -114,13 +141,13 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		routeActions,
 		navigation,
 		{
-			cancelDownloadClient: () => (state.downloadForm = emptyDownloadClientForm()),
-			cancelIndexer: () => (state.indexerForm = emptyIndexerForm()),
-			cancelMediaProfile: () => (state.mediaProfileForm = emptyMediaProfileForm()),
-			cancelCustomFormat: () => (state.customFormatForm = emptyCustomFormatForm()),
-			cancelTag: () => (state.tagForm = emptyTagForm()),
-			cancelLanguage: () => (state.languageForm = emptyLanguageForm()),
-			cancelUser: () => (state.userForm = emptyUserForm())
+			cancelDownloadClient,
+			cancelIndexer,
+			cancelMediaProfile,
+			cancelCustomFormat,
+			cancelTag,
+			cancelLanguage,
+			cancelUser
 		}
 	);
 }

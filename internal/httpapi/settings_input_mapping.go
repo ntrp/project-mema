@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"media-manager/internal/downloadrouting"
 	"media-manager/internal/storage"
 )
 
@@ -19,6 +20,14 @@ func downloadClientInput(w http.ResponseWriter, request DownloadClientRequest) (
 		writeError(w, http.StatusBadRequest, "invalid_type", "Download client type is not supported")
 		return storage.DownloadClientInput{}, false
 	}
+	if !request.Protocol.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_protocol", "Download client protocol is not supported")
+		return storage.DownloadClientInput{}, false
+	}
+	if !downloadrouting.TypeSupportsProtocol(string(request.Type), string(request.Protocol)) {
+		writeError(w, http.StatusBadRequest, "invalid_protocol", "Download client type does not support selected protocol")
+		return storage.DownloadClientInput{}, false
+	}
 	if baseURL == "" {
 		writeError(w, http.StatusBadRequest, "invalid_base_url", "Base URL is required")
 		return storage.DownloadClientInput{}, false
@@ -31,6 +40,7 @@ func downloadClientInput(w http.ResponseWriter, request DownloadClientRequest) (
 	return storage.DownloadClientInput{
 		Name:     name,
 		Type:     string(request.Type),
+		Protocol: string(request.Protocol),
 		BaseURL:  baseURL,
 		Username: optionalTrimmedString(request.Username),
 		Password: optionalTrimmedString(request.Password),
