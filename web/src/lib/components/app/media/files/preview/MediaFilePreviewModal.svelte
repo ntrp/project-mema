@@ -54,6 +54,9 @@
 			? mediaFilePreviewUrl(mediaItemId, row.path, selectedAudio?.streamIndex, previewStartTime)
 			: ''
 	);
+	const previewPlayerKey = $derived(
+		`${previewUrl}|${restartOnSeek ? 'seek' : 'direct'}|${previewInfo?.durationSeconds ?? ''}`
+	);
 	const textTracks = $derived(mediaFileTextTracks(mediaItemId, row));
 
 	$effect(() => {
@@ -156,7 +159,7 @@
 		<div class="grid content-start gap-2">
 			<div class="relative aspect-video overflow-hidden rounded-md bg-black">
 				{#if previewUrl}
-					{#key previewUrl}
+					{#key previewPlayerKey}
 						<MediaFileVideoPlayer
 							src={previewUrl}
 							durationSeconds={previewInfo?.durationSeconds}

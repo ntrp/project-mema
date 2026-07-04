@@ -52,6 +52,10 @@
 		const source = src;
 		const currentAudioTracks = audioTracks;
 		const currentAudioTrackKey = activeAudioTrackKey;
+		const currentRestartOnSeek = restartOnSeek;
+		const currentSourceStartTime = sourceStartTime;
+		const currentDurationSeconds = durationSeconds;
+		const currentOnSeekRequest = onSeekRequest;
 		let disposed = false;
 		let instance: Player | undefined;
 		let removeAudioTrackListener: (() => void) | undefined;
@@ -67,6 +71,7 @@
 				controls: true,
 				fill: true,
 				inactivityTimeout: 0,
+				liveTracker: false,
 				preload: 'auto',
 				responsive: true,
 				sources: [{ src: source, type: 'video/mp4' }]
@@ -82,10 +87,10 @@
 			);
 			removeSeekHandler = addSourceTimeline(
 				currentInstance,
-				restartOnSeek,
-				sourceStartTime,
-				durationSeconds,
-				onSeekRequest
+				currentRestartOnSeek,
+				currentSourceStartTime,
+				currentDurationSeconds,
+				currentOnSeekRequest
 			);
 			removePlaybackStatsWatcher = watchPlaybackStats(
 				currentInstance,
