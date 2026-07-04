@@ -93,9 +93,23 @@ The cost is temporary dual readiness: contributors must understand the current
 handwritten pgx rules and the pilot constraints. That cost is bounded by keeping
 generated code isolated until the pilot is accepted.
 
+## Pilot Outcome
+
+#51 applies this ADR to quality-size settings as the first `sqlc` pilot. That
+area keeps domain validation and transaction ownership in handwritten storage
+code while moving list, ensure, and upsert SQL into
+`internal/storage/queries/quality_sizes.sql`. Generated code is committed under
+`internal/storage/generated` and refreshed with:
+
+```sh
+make storage-generate
+```
+
+Future generated storage areas should copy that wrapper shape instead of
+calling generated queries directly from HTTP handlers or jobs.
+
 ## Follow-Up
 
-- #51 will implement the bounded pilot or, if the pilot proves unsuitable while
-  scoped, codify the handwritten pgx rules in one real storage area.
-- If #51 adopts `sqlc`, add a generation target and check target before moving
-  additional storage areas.
+- Add a storage-generation drift check before moving additional storage areas.
+- Migrate another bounded storage area only after the quality-size pilot remains
+  stable through normal feature work.

@@ -217,6 +217,18 @@ Storage changes should follow
 keep existing pgx code stable, make transaction ownership explicit, and only add
 generated storage code inside the accepted pilot scope.
 
+Regenerate storage queries after editing files under `internal/storage/queries`:
+
+```sh
+make storage-generate
+```
+
+The current `sqlc` pilot covers quality-size settings. Copy that shape for the
+next generated storage area: keep SQL in a focused query file, commit generated
+code under `internal/storage/generated`, and wrap generated calls from
+handwritten storage methods that own validation, errors, transactions, and
+domain types.
+
 ## Quality Baseline
 
 - `gofmt` is the Go formatter.
