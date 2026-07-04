@@ -1,39 +1,43 @@
 package httpapi
 
 import (
+	"net/http/httptest"
 	"slices"
+	"strings"
 	"testing"
 )
 
-func TestSCNMedia012PreviewArgsSelectRequestedAudioStreamAndCopiesVideo(t *testing.T) {
+func TestSCNMedia012PreviewSegmentArgsSelectRequestedAudioStreamAndCopiesVideo(t *testing.T) {
 	track := int32(2)
-	args := mediaPreviewArgsWithPlan(
+	args := mediaPreviewHLSSegmentArgs(
 		"/media/movie.mkv",
 		&track,
-		nil,
-		mediaPreviewTranscodePlan{videoCodec: "copy", audioCodec: "aac"},
+		120,
+		6,
+		mediaPreviewDecision{plan: mediaPreviewTranscodePlan{videoCodec: "copy", audioCodec: "aac"}},
 	)
 
 	if !slices.Contains(args, "0:2") {
 		t.Fatalf("expected ffmpeg args to map requested audio stream, got %#v", args)
 	}
-	if !hasArgPair(args, "-c:v", "copy") {
-		t.Fatalf("expected ffmpeg args to copy compatible video, got %#v", args)
+	if !hasArgPair(args, "-c:v", "copy") || !hasArgPair(args, "-bsf:v", "h264_mp4toannexb") {
+		t.Fatalf("expected ffmpeg args to copy browser-compatible video into TS, got %#v", args)
 	}
-	if !slices.Contains(args, "aac") {
+	if !hasArgPair(args, "-c:a", "aac") || !slices.Contains(args, "-ac") {
 		t.Fatalf("expected ffmpeg args to encode browser-compatible audio, got %#v", args)
 	}
-	if !slices.Contains(args, "frag_keyframe+empty_moov+default_base_moof") {
-		t.Fatalf("expected fragmented MP4 flags, got %#v", args)
+	if !hasArgPair(args, "-f", "mpegts") {
+		t.Fatalf("expected MPEG-TS HLS segment output, got %#v", args)
 	}
 }
 
-func TestSCNMedia012PreviewArgsFallsBackToFirstAudioStream(t *testing.T) {
-	args := mediaPreviewArgsWithPlan(
+func TestSCNMedia012PreviewSegmentArgsFallsBackToFirstAudioStream(t *testing.T) {
+	args := mediaPreviewHLSSegmentArgs(
 		"/media/movie.mkv",
 		nil,
-		nil,
-		mediaPreviewTranscodePlan{videoCodec: "libx264", audioCodec: "aac"},
+		0,
+		6,
+		mediaPreviewDecision{plan: mediaPreviewTranscodePlan{videoCodec: "libx264", audioCodec: "aac"}},
 	)
 
 	if !slices.Contains(args, "0:a:0?") {
@@ -42,57 +46,111 @@ func TestSCNMedia012PreviewArgsFallsBackToFirstAudioStream(t *testing.T) {
 	if !hasArgPair(args, "-c:v", "libx264") {
 		t.Fatalf("expected ffmpeg args to transcode incompatible video, got %#v", args)
 	}
-	if !slices.Contains(args, "-preset") {
-		t.Fatalf("expected ffmpeg args to include encoder preset, got %#v", args)
+	if !slices.Contains(args, "-force_key_frames") {
+		t.Fatalf("expected ffmpeg args to force segment keyframes, got %#v", args)
 	}
 }
 
-func TestSCNMedia012PreviewArgsSeekFromRequestedStartTime(t *testing.T) {
-	startTime := 120.5
-	args := mediaPreviewArgsWithPlan(
-		"/media/movie.mkv",
-		nil,
-		&startTime,
-		mediaPreviewTranscodePlan{videoCodec: "copy", audioCodec: "copy"},
-	)
+func TestSCNMedia012PreviewHLSPlaylistBuildsSegmentUrls(t *testing.T) {
+	request := httptest.NewRequest("GET", "http://internal/api/media/items/abc/files/preview?path=%2Fmedia%2Fmovie.mkv", nil)
+	track := int32(2)
+	playlist := mediaPreviewHLSPlaylistText(request, "/media/movie.mkv", &track, Webkit, []mediaPreviewHLSSegment{
+		{start: 0, duration: 6},
+		{start: 6, duration: 6},
+		{start: 12, duration: 1},
+	})
 
-	if !hasArgPair(args, "-ss", "120.500") {
-		t.Fatalf("expected ffmpeg args to seek to requested start time, got %#v", args)
+	if !strings.Contains(playlist, "#EXT-X-PLAYLIST-TYPE:VOD") {
+		t.Fatalf("expected VOD HLS playlist, got %s", playlist)
 	}
-	if !argBefore(args, "-ss", "-i") {
-		t.Fatalf("expected ffmpeg seek arg before input, got %#v", args)
+	if strings.Count(playlist, "preview-segment?") != 3 {
+		t.Fatalf("expected 3 segment URLs, got %s", playlist)
 	}
-	if !hasArgPair(args, "-c:v", "libx264") || !hasArgPair(args, "-c:a", "aac") {
-		t.Fatalf("expected seeked preview to transcode streams for stable A/V sync, got %#v", args)
+	if !strings.Contains(playlist, "audioTrackIndex=2") ||
+		!strings.Contains(playlist, "clientProfile=webkit") ||
+		!strings.Contains(playlist, "segmentStartSeconds=12.000") {
+		t.Fatalf("expected selected audio, client profile, and final segment start in playlist, got %s", playlist)
 	}
 }
 
-func TestSCNMedia012PreviewPlanCopiesCompatibleStreams(t *testing.T) {
+func TestSCNMedia012PreviewHLSSegmentsUseKeyframeBoundaries(t *testing.T) {
+	segments := mediaPreviewHLSSegments(20, []float64{0, 5, 7, 14, 19})
+	want := []mediaPreviewHLSSegment{
+		{start: 0, duration: 7},
+		{start: 7, duration: 7},
+		{start: 14, duration: 6},
+	}
+
+	if !equalPreviewSegments(segments, want) {
+		t.Fatalf("segments = %#v, want %#v", segments, want)
+	}
+	if target := mediaPreviewHLSTargetDuration(segments); target != 7 {
+		t.Fatalf("target duration = %d, want 7", target)
+	}
+}
+
+func TestSCNMedia012PreviewKeyframesNormalizeProbeFrames(t *testing.T) {
+	keyframes := normalizedPreviewKeyframes([]ffprobeKeyframe{
+		{BestEffortTimestampTime: "7.000"},
+		{BestEffortTimestampTime: "0.000"},
+		{BestEffortTimestampTime: "7.020"},
+		{PktPtsTime: "14.500"},
+		{BestEffortTimestampTime: "invalid"},
+	})
+	want := []float64{0, 7, 14.5}
+
+	if !slices.Equal(keyframes, want) {
+		t.Fatalf("keyframes = %#v, want %#v", keyframes, want)
+	}
+}
+
+func TestSCNMedia012PreviewDecisionCopiesCompatibleStreams(t *testing.T) {
 	track := int32(1)
-	plan := mediaPreviewPlanFromTracks([]MediaFileTrack{
+	decision := mediaPreviewDecisionFromTracks("/media/movie.mkv", []MediaFileTrack{
 		{Type: Video, Codec: previewString("h264"), PixelFormat: previewString("yuv420p")},
 		{Type: Audio, Index: &track, Codec: previewString("aac")},
-	}, &track)
+	}, &track, Browser)
 
-	if plan.videoCodec != "copy" {
-		t.Fatalf("video codec = %q, want copy", plan.videoCodec)
+	if decision.mode != Remux || decision.deliveryProtocol != mediaPreviewDeliveryHLS {
+		t.Fatalf("decision = %#v, want HLS remux", decision)
 	}
-	if plan.audioCodec != "copy" {
-		t.Fatalf("audio codec = %q, want copy", plan.audioCodec)
+	if decision.plan.videoCodec != "copy" || decision.plan.audioCodec != "copy" {
+		t.Fatalf("plan = %#v, want stream copy", decision.plan)
 	}
 }
 
-func TestSCNMedia012PreviewPlanTranscodesIncompatibleStreams(t *testing.T) {
-	plan := mediaPreviewPlanFromTracks([]MediaFileTrack{
+func TestSCNMedia012PreviewDecisionTranscodesIncompatibleStreams(t *testing.T) {
+	decision := mediaPreviewDecisionFromTracks("/media/movie.mkv", []MediaFileTrack{
 		{Type: Video, Codec: previewString("hevc"), PixelFormat: previewString("yuv420p10le")},
 		{Type: Audio, Codec: previewString("dts")},
-	}, nil)
+	}, nil, Browser)
 
-	if plan.videoCodec != "libx264" {
-		t.Fatalf("video codec = %q, want libx264", plan.videoCodec)
+	if decision.mode != Transcode {
+		t.Fatalf("streaming mode = %q, want transcode", decision.mode)
 	}
-	if plan.audioCodec != "aac" {
-		t.Fatalf("audio codec = %q, want aac", plan.audioCodec)
+	if decision.plan.videoCodec != "libx264" || decision.plan.audioCodec != "aac" {
+		t.Fatalf("plan = %#v, want h264/aac transcode", decision.plan)
+	}
+	if !slices.Contains(decision.reasons, "video_codec_not_supported") || !slices.Contains(decision.reasons, "audio_codec_not_supported") {
+		t.Fatalf("reasons = %#v, want video and audio codec reasons", decision.reasons)
+	}
+}
+
+func TestSCNMedia012PreviewDecisionTranscodesVideoForWebKitHLS(t *testing.T) {
+	track := int32(1)
+	decision := mediaPreviewDecisionFromTracks("/media/movie.mkv", []MediaFileTrack{
+		{Type: Video, Codec: previewString("h264"), PixelFormat: previewString("yuv420p")},
+		{Type: Audio, Index: &track, Codec: previewString("aac")},
+	}, &track, Webkit)
+
+	if decision.mode != Transcode || decision.deliveryProtocol != mediaPreviewDeliveryHLS {
+		t.Fatalf("decision = %#v, want HLS transcode", decision)
+	}
+	if decision.plan.videoCodec != "libx264" || decision.plan.audioCodec != "copy" {
+		t.Fatalf("plan = %#v, want video transcode and audio copy", decision.plan)
+	}
+	if !slices.Contains(decision.reasons, mediaPreviewReasonWebKitHLS) {
+		t.Fatalf("reasons = %#v, want WebKit HLS reason", decision.reasons)
 	}
 }
 
@@ -106,10 +164,10 @@ func TestSCNMedia012PreviewInfoReportsDirectModeForCompatibleMp4(t *testing.T) {
 			BitRate:     previewString("4000000"),
 		},
 		{Type: Audio, Index: &track, Codec: previewString("aac"), BitRate: previewString("640000")},
-	}, &track)
+	}, &track, Browser)
 
-	if info.StreamingMode != Direct {
-		t.Fatalf("streaming mode = %q, want direct", info.StreamingMode)
+	if info.StreamingMode != Direct || info.DeliveryProtocol != mediaPreviewDeliveryFile {
+		t.Fatalf("preview info = %#v, want direct file playback", info)
 	}
 }
 
@@ -123,27 +181,16 @@ func TestSCNMedia012PreviewInfoReportsRemuxModeAndSelectedBitrate(t *testing.T) 
 			BitRate:     previewString("4000000"),
 		},
 		{Type: Audio, Index: &track, Codec: previewString("aac"), BitRate: previewString("640000")},
-	}, &track)
+	}, &track, Browser)
 
-	if info.StreamingMode != Remux {
-		t.Fatalf("streaming mode = %q, want remux", info.StreamingMode)
+	if info.StreamingMode != Remux || info.DeliveryProtocol != mediaPreviewDeliveryHLS {
+		t.Fatalf("preview info = %#v, want HLS remux", info)
 	}
 	if info.LiveBitRate == nil || *info.LiveBitRate != "4640000" {
 		t.Fatalf("live bit rate = %#v, want 4640000", info.LiveBitRate)
 	}
 	if info.VideoTrack == nil || info.AudioTrack == nil {
 		t.Fatalf("expected selected video and audio tracks, got %#v", info)
-	}
-}
-
-func TestSCNMedia012PreviewInfoReportsTranscodeMode(t *testing.T) {
-	info := mediaPreviewInfoFromTracks("/media/movie.mkv", []MediaFileTrack{
-		{Type: Video, Codec: previewString("hevc"), PixelFormat: previewString("yuv420p10le")},
-		{Type: Audio, Codec: previewString("dts")},
-	}, nil)
-
-	if info.StreamingMode != Transcode {
-		t.Fatalf("streaming mode = %q, want transcode", info.StreamingMode)
 	}
 }
 
@@ -159,6 +206,18 @@ func TestSCNMedia012ProbeDurationIgnoresInvalidValues(t *testing.T) {
 	}
 }
 
+func TestSCNMedia012ProbeContainerInfoReportsFormatFields(t *testing.T) {
+	container := mediaFileContainerInfo(ffprobeFormat{
+		BitRate:    "5500000",
+		Format:     "matroska,webm",
+		FormatName: "Matroska / WebM",
+	})
+
+	if *container.bitRate != "5500000" || *container.format != "matroska,webm" || *container.formatName != "Matroska / WebM" {
+		t.Fatalf("container = %#v", container)
+	}
+}
+
 func hasArgPair(args []string, key string, value string) bool {
 	for index := 0; index < len(args)-1; index += 1 {
 		if args[index] == key && args[index+1] == value {
@@ -168,12 +227,18 @@ func hasArgPair(args []string, key string, value string) bool {
 	return false
 }
 
-func argBefore(args []string, first string, second string) bool {
-	firstIndex := slices.Index(args, first)
-	secondIndex := slices.Index(args, second)
-	return firstIndex >= 0 && secondIndex >= 0 && firstIndex < secondIndex
-}
-
 func previewString(value string) *string {
 	return &value
+}
+
+func equalPreviewSegments(left []mediaPreviewHLSSegment, right []mediaPreviewHLSSegment) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }

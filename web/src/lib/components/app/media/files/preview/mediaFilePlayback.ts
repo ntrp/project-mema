@@ -1,8 +1,11 @@
 import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay';
+import type { components } from '$lib/api/generated/schema';
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import { mediaFileChapterTrack } from '$lib/components/app/media/files/preview/mediaFileChapters';
 
 type MediaFileTrack = MediaFileRow['tracks'][number];
+type MediaFilePreviewDeliveryProtocol = components['schemas']['MediaFilePreviewDeliveryProtocol'];
+type MediaFilePreviewClientProfile = components['schemas']['MediaFilePreviewClientProfile'];
 
 export interface AudioTrackOption {
 	key: string;
@@ -25,19 +28,44 @@ export function mediaFilePreviewUrl(
 	mediaItemId: string,
 	filePath: string,
 	audioTrackIndex?: number,
+	clientProfile?: MediaFilePreviewClientProfile,
 	startTimeSeconds?: number
 ) {
 	return mediaFileUrl(mediaItemId, filePath, 'preview', {
 		audioTrackIndex,
+		clientProfile,
 		startTimeSeconds: validStartTime(startTimeSeconds) ? startTimeSeconds.toFixed(3) : undefined
 	});
 }
 export function mediaFilePreviewInfoUrl(
 	mediaItemId: string,
 	filePath: string,
-	audioTrackIndex?: number
+	audioTrackIndex?: number,
+	clientProfile?: MediaFilePreviewClientProfile
 ) {
-	return mediaFileUrl(mediaItemId, filePath, 'preview-info', { audioTrackIndex });
+	return mediaFileUrl(mediaItemId, filePath, 'preview-info', { audioTrackIndex, clientProfile });
+}
+export function mediaFilePreviewSourceType(deliveryProtocol?: MediaFilePreviewDeliveryProtocol) {
+	return deliveryProtocol === 'hls' ? 'application/x-mpegURL' : 'video/mp4';
+}
+export function mediaFilePreviewClientProfile(
+	input: {
+		userAgent?: string;
+		platform?: string;
+		maxTouchPoints?: number;
+	} = {}
+): MediaFilePreviewClientProfile | undefined {
+	const navigator = globalThis.navigator;
+	const userAgent = (input.userAgent ?? navigator?.userAgent ?? '').toLowerCase();
+	const platform = (input.platform ?? navigator?.platform ?? '').toLowerCase();
+	const maxTouchPoints = input.maxTouchPoints ?? navigator?.maxTouchPoints ?? 0;
+	const iOS =
+		/(ipad|iphone|ipod)/.test(userAgent) || (platform === 'macintel' && maxTouchPoints > 1);
+	const safariWebKit =
+		userAgent.includes('applewebkit') &&
+		userAgent.includes('safari') &&
+		!/(chrome|chromium|crios|fxios|edg|opr|android)/.test(userAgent);
+	return iOS || safariWebKit ? 'webkit' : undefined;
 }
 export function mediaFileVlcUrl(mediaItemId: string, filePath: string) {
 	return mediaFileUrl(mediaItemId, filePath, 'vlc');

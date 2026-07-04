@@ -5,9 +5,12 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import MediaFileInfoPanel from '$lib/components/app/media/files/preview/MediaFileInfoPanel.svelte';
+	import MediaFilePlaybackError from '$lib/components/app/media/files/preview/MediaFilePlaybackError.svelte';
 	import MediaFileVideoPlayer from '$lib/components/app/media/files/preview/MediaFileVideoPlayer.svelte';
 	import {
+		mediaFilePreviewClientProfile,
 		mediaFilePreviewInfoUrl,
+		mediaFilePreviewSourceType,
 		mediaFilePreviewUrl,
 		mediaFileTextTracks,
 		mediaFileVlcUrl,
@@ -28,41 +31,37 @@
 	let { mediaItemId, mediaTitle, row, onClose }: Props = $props();
 	let open = $state(true);
 	let selectedAudioTrack = $state('');
-	let playbackError = $state(false);
+	let playbackError = $state('');
 	let infoOpen = $state(false);
 	let infoLoading = $state(false);
 	let infoError = $state('');
 	let previewInfo = $state<MediaFilePreviewInfo>();
-	let previewStartTime = $state(0);
 	let playbackStats = $state<MediaFilePlaybackStats>({
 		playing: false,
 		variableBitRate: false
 	});
 	const fileName = $derived(row.relativePath.split(/[\\/]/).filter(Boolean).pop() ?? 'media');
-	const vlcPlaylistName = $derived(playlistName(fileName));
+	const clientProfile = mediaFilePreviewClientProfile();
 	const vlcUrl = $derived(row.path ? mediaFileVlcUrl(mediaItemId, row.path) : '');
 	const metadataAudioTracks = $derived(metadataAudioTrackOptions(row));
 	const activeAudioTrackKey = $derived(selectedAudioTrack || metadataAudioTracks[0]?.key || '');
 	const selectedAudio = $derived(
 		metadataAudioTracks.find((track) => track.key === activeAudioTrackKey) ?? metadataAudioTracks[0]
 	);
-	const restartOnSeek = $derived(
-		previewInfo?.streamingMode === 'remux' || previewInfo?.streamingMode === 'transcode'
-	);
 	const previewUrl = $derived(
 		row.path
-			? mediaFilePreviewUrl(mediaItemId, row.path, selectedAudio?.streamIndex, previewStartTime)
+			? mediaFilePreviewUrl(mediaItemId, row.path, selectedAudio?.streamIndex, clientProfile)
 			: ''
 	);
+	const previewSourceType = $derived(mediaFilePreviewSourceType(previewInfo?.deliveryProtocol));
 	const previewPlayerKey = $derived(
-		`${previewUrl}|${restartOnSeek ? 'seek' : 'direct'}|${previewInfo?.durationSeconds ?? ''}`
+		`${previewUrl}|${previewSourceType}|${previewInfo?.durationSeconds ?? ''}`
 	);
 	const textTracks = $derived(mediaFileTextTracks(mediaItemId, row));
 
 	$effect(() => {
 		if (!row.path) {
 			previewInfo = undefined;
-			previewStartTime = 0;
 			return;
 		}
 		const audioTrackIndex = selectedAudio?.streamIndex;
@@ -70,7 +69,7 @@
 		infoLoading = true;
 		infoError = '';
 		void globalThis
-			.fetch(mediaFilePreviewInfoUrl(mediaItemId, row.path, audioTrackIndex), {
+			.fetch(mediaFilePreviewInfoUrl(mediaItemId, row.path, audioTrackIndex, clientProfile), {
 				headers: { Accept: 'application/json' },
 				signal: controller.signal
 			})
@@ -97,34 +96,15 @@
 
 	function selectAudioTrack(key: string) {
 		selectedAudioTrack = key;
-		previewStartTime = 0;
-		playbackError = false;
+		playbackError = '';
 	}
 
 	function resetPlaybackError() {
-		playbackError = false;
+		playbackError = '';
 	}
 
 	function updatePlaybackStats(stats: MediaFilePlaybackStats) {
 		playbackStats = stats;
-	}
-
-	function restartPreviewAt(timeSeconds: number) {
-		const target = boundedStartTime(timeSeconds, previewInfo?.durationSeconds);
-		if (Math.abs(target - previewStartTime) < 0.5) return;
-		previewStartTime = target;
-		playbackError = false;
-	}
-
-	function playlistName(name: string) {
-		const base = name.replace(/\.[^.]+$/, '').trim() || 'media-stream';
-		return `${base}.m3u`;
-	}
-
-	function boundedStartTime(value: number, duration?: number) {
-		if (!Number.isFinite(value) || value <= 0) return 0;
-		if (!duration || !Number.isFinite(duration)) return value;
-		return Math.max(0, Math.min(value, Math.max(0, duration - 1)));
 	}
 </script>
 
@@ -148,7 +128,7 @@
 						Media info
 					</Button>
 					{#if row.path}
-						<Button href={vlcUrl} download={vlcPlaylistName} variant="outline" size="sm">
+						<Button href={vlcUrl} variant="outline" size="sm">
 							<ExternalLinkIcon aria-hidden="true" />
 							Play in VLC
 						</Button>
@@ -158,21 +138,22 @@
 		</Dialog.Header>
 		<div class="grid content-start gap-2">
 			<div class="relative aspect-video overflow-hidden rounded-md bg-black">
-				{#if previewUrl}
+				{#if previewUrl && previewInfo}
 					{#key previewPlayerKey}
 						<MediaFileVideoPlayer
 							src={previewUrl}
+							sourceType={previewSourceType}
 							durationSeconds={previewInfo?.durationSeconds}
 							{textTracks}
 							audioTracks={metadataAudioTracks}
 							{activeAudioTrackKey}
-							{restartOnSeek}
-							sourceStartTime={previewStartTime}
+							restartOnSeek={false}
+							sourceStartTime={0}
 							onAudioTrackChange={selectAudioTrack}
-							onSeekRequest={restartPreviewAt}
+							onSeekRequest={() => undefined}
 							onPlaybackStatsChange={updatePlaybackStats}
 							onLoaded={resetPlaybackError}
-							onError={() => (playbackError = true)}
+							onError={(message) => (playbackError = message)}
 						/>
 					{/key}
 				{/if}
@@ -188,11 +169,7 @@
 				{/if}
 			</div>
 			{#if playbackError}
-				<p
-					class="m-0 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-				>
-					Preview could not start. Use VLC to stream the original file.
-				</p>
+				<MediaFilePlaybackError message={playbackError} />
 			{/if}
 		</div>
 	</Dialog.Content>

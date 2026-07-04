@@ -50,3 +50,11 @@ func TestSCNMedia011PlaylistFilenameKeepsVLCFriendlyExtension(t *testing.T) {
 		t.Fatalf("playlistFilename = %q", got)
 	}
 }
+
+func TestSCNMedia011PlaylistDispositionOpensInline(t *testing.T) {
+	got := playlistDisposition("Movie.Name.2026.mkv")
+	want := "inline; filename=Movie.Name.2026.m3u"
+	if got != want {
+		t.Fatalf("playlistDisposition = %q, want %q", got, want)
+	}
+}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 	import 'video.js/dist/video-js.css';
+	import './mediaFileVideoPlayer.css';
 	import type Player from 'video.js/dist/types/player';
 	import type {
 		AudioTrackOption,
@@ -12,10 +13,12 @@
 		emptyPlaybackStats,
 		watchPlaybackStats
 	} from '$lib/components/app/media/files/preview/mediaFilePlaybackStats';
+	import { mediaPlaybackErrorMessage } from '$lib/components/app/media/files/preview/mediaFilePlaybackErrors';
 	import type { MediaFilePlaybackStats } from '$lib/components/app/media/files/preview/mediaFilePreviewInfo';
 
 	interface Props {
 		src: string;
+		sourceType: string;
 		durationSeconds?: number;
 		textTracks: MediaFileTextTrack[];
 		audioTracks: AudioTrackOption[];
@@ -26,11 +29,12 @@
 		onSeekRequest: (_timeSeconds: number) => void;
 		onPlaybackStatsChange: (_stats: MediaFilePlaybackStats) => void;
 		onLoaded: () => void;
-		onError: () => void;
+		onError: (_message: string) => void;
 	}
 
 	let {
 		src,
+		sourceType,
 		durationSeconds,
 		textTracks,
 		audioTracks,
@@ -50,6 +54,7 @@
 	$effect(() => {
 		if (!videoElement || !src) return;
 		const source = src;
+		const currentSourceType = sourceType;
 		const currentAudioTracks = audioTracks;
 		const currentAudioTrackKey = activeAudioTrackKey;
 		const currentRestartOnSeek = restartOnSeek;
@@ -74,7 +79,7 @@
 				liveTracker: false,
 				preload: 'auto',
 				responsive: true,
-				sources: [{ src: source, type: 'video/mp4' }]
+				sources: [{ src: source, type: currentSourceType }]
 			});
 			instance = currentInstance;
 			player = currentInstance;
@@ -99,7 +104,7 @@
 				onPlaybackStatsChange
 			);
 			currentInstance.on('loadeddata', handleLoaded);
-			currentInstance.on('error', onError);
+			currentInstance.on('error', handleError);
 			currentInstance.on('canplay', hideStarting);
 			currentInstance.on('playing', hideStarting);
 			currentInstance.ready(() => startPlayback(currentInstance));
@@ -109,7 +114,7 @@
 			disposed = true;
 			if (instance) {
 				instance.off('loadeddata', handleLoaded);
-				instance.off('error', onError);
+				instance.off('error', handleError);
 				instance.off('canplay', hideStarting);
 				instance.off('playing', hideStarting);
 				removeAudioTrackListener?.();
@@ -153,12 +158,16 @@
 		onLoaded();
 	}
 
+	function handleError() {
+		onError(mediaPlaybackErrorMessage(videoElement));
+	}
+
 	function hideStarting() {
 		starting = false;
 	}
 </script>
 
-<div class="relative size-full">
+<div class="relative size-full" class:media-file-video-starting={starting}>
 	<video
 		bind:this={videoElement}
 		class="video-js vjs-big-play-centered size-full"
@@ -186,14 +195,3 @@
 		</div>
 	{/if}
 </div>
-
-<style>
-	:global(.video-js) {
-		width: 100%;
-		height: 100%;
-	}
-
-	:global(.video-js .vjs-menu-button-popup .vjs-menu .vjs-menu-content) {
-		max-height: 18rem;
-	}
-</style>

@@ -16,9 +16,15 @@ describe('media file preview info helpers', () => {
 		const sections = mediaFileInfoSections(
 			{
 				streamingMode: 'transcode',
+				deliveryProtocol: 'hls',
 				outputVideoCodec: 'libx264',
 				outputAudioCodec: 'aac',
+				containerFormat: 'matroska,webm',
+				containerFormatName: 'Matroska / WebM',
+				containerBitRate: '5500000',
+				durationSeconds: 5154,
 				liveBitRate: '4640000',
+				transcodeReasons: ['container_not_supported', 'audio_codec_not_supported'],
 				videoTrack: {
 					type: 'video',
 					codec: 'hevc',
@@ -41,15 +47,23 @@ describe('media file preview info helpers', () => {
 			}
 		);
 
-		expect(sections).toHaveLength(3);
-		expect(sections[0]).toMatchObject({ key: 'video', action: 'transcode' });
-		expect(sections[0].rows).toContainEqual({ label: 'Codec', value: 'hevc -> h264' });
-		expect(sections[0].rows).toContainEqual({ label: 'Resolution', value: '1920x1080' });
-		expect(sections[0].rows).toContainEqual({ label: 'Frame rate', value: '23.976 fps' });
-		expect(sections[0].rows).toContainEqual({ label: 'Bitrate', value: '5.50 Mbps' });
-		expect(sections[1]).toMatchObject({ key: 'audio', action: 'transcode' });
-		expect(sections[1].rows).toContainEqual({ label: 'Codec', value: 'dts -> aac' });
-		expect(sections[1].rows).toContainEqual({ label: 'Channels', value: '2' });
-		expect(sections[2].rows).toContainEqual({ label: 'Track', value: 'English / eng' });
+		expect(sections).toHaveLength(4);
+		expect(sections[0]).toMatchObject({ key: 'container' });
+		expect(sections[0].rows).toContainEqual({ label: 'Format', value: 'Matroska / WebM' });
+		expect(sections[0].rows).toContainEqual({ label: 'Delivery', value: 'HLS' });
+		expect(sections[0].rows).toContainEqual({
+			label: 'Reason',
+			value: 'Container Not Supported, Audio Codec Not Supported'
+		});
+		expect(sections[0].rows).toContainEqual({ label: 'Duration', value: '1:25:54' });
+		expect(sections[1]).toMatchObject({ key: 'video', action: 'transcode' });
+		expect(sections[1].rows).toContainEqual({ label: 'Codec', value: 'hevc -> h264' });
+		expect(sections[1].rows).toContainEqual({ label: 'Resolution', value: '1920x1080' });
+		expect(sections[1].rows).toContainEqual({ label: 'Frame rate', value: '23.976 fps' });
+		expect(sections[1].rows).toContainEqual({ label: 'Bitrate', value: '5.50 Mbps' });
+		expect(sections[2]).toMatchObject({ key: 'audio', action: 'transcode' });
+		expect(sections[2].rows).toContainEqual({ label: 'Codec', value: 'dts -> aac' });
+		expect(sections[2].rows).toContainEqual({ label: 'Channels', value: '2' });
+		expect(sections[3].rows).toContainEqual({ label: 'Track', value: 'English / eng' });
 	});
 });

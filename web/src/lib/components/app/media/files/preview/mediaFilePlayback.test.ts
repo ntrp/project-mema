@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import {
+	mediaFilePreviewClientProfile,
 	mediaFilePreviewInfoUrl,
+	mediaFilePreviewSourceType,
 	mediaFilePreviewUrl,
 	mediaFileTextTracks
 } from '$lib/components/app/media/files/preview/mediaFilePlayback';
-import { addSourceTimeline } from '$lib/components/app/media/files/preview/mediaFileVideoSeeking';
-import type Player from 'video.js/dist/types/player';
 
 describe('media file playback helpers', () => {
 	it('builds selected-audio preview URLs', () => {
@@ -18,12 +18,57 @@ describe('media file playback helpers', () => {
 		);
 	});
 
+	it('adds client profile to preview URLs when needed', () => {
+		const url = mediaFilePreviewUrl('media 1', '/library/Movie File.mkv', 2, 'webkit');
+
+		expect(url).toBe(
+			'/api/media/items/media%201/files/preview?path=%2Flibrary%2FMovie+File.mkv&audioTrackIndex=2&clientProfile=webkit'
+		);
+	});
+
 	it('builds selected-audio preview info URLs', () => {
 		const url = mediaFilePreviewInfoUrl('media 1', '/library/Movie File.mkv', 2);
 
 		expect(url).toBe(
 			'/api/media/items/media%201/files/preview-info?path=%2Flibrary%2FMovie+File.mkv&audioTrackIndex=2'
 		);
+	});
+
+	it('adds client profile to preview info URLs when needed', () => {
+		const url = mediaFilePreviewInfoUrl('media 1', '/library/Movie File.mkv', 2, 'webkit');
+
+		expect(url).toBe(
+			'/api/media/items/media%201/files/preview-info?path=%2Flibrary%2FMovie+File.mkv&audioTrackIndex=2&clientProfile=webkit'
+		);
+	});
+
+	it('selects the video.js source type from preview delivery', () => {
+		expect(mediaFilePreviewSourceType('hls')).toBe('application/x-mpegURL');
+		expect(mediaFilePreviewSourceType('file')).toBe('video/mp4');
+		expect(mediaFilePreviewSourceType()).toBe('video/mp4');
+	});
+
+	it('detects WebKit preview clients', () => {
+		expect(
+			mediaFilePreviewClientProfile({
+				userAgent:
+					'Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1'
+			})
+		).toBe('webkit');
+		expect(
+			mediaFilePreviewClientProfile({
+				userAgent:
+					'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.5 Safari/605.1.15',
+				platform: 'MacIntel',
+				maxTouchPoints: 5
+			})
+		).toBe('webkit');
+		expect(
+			mediaFilePreviewClientProfile({
+				userAgent:
+					'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36'
+			})
+		).toBeUndefined();
 	});
 
 	it('builds subtitle and chapter text tracks for Video.js', () => {
@@ -45,63 +90,6 @@ describe('media file playback helpers', () => {
 		expect(decodeURIComponent(tracks[1].src)).toContain(
 			'WEBVTT\n\n00:00:00.000 --> 00:05:00.000\nOpening'
 		);
-	});
-
-	it('maps restarted remux previews back onto the source timeline', () => {
-		const requestedSeeks: number[] = [];
-		const player = timelinePlayer(5, [[0, 20]]);
-
-		const removeTimeline = addSourceTimeline(player, true, 120, 600, (timeSeconds) => {
-			requestedSeeks.push(timeSeconds);
-		});
-
-		expect(player.duration()).toBe(600);
-		expect(player.currentTime()).toBe(125);
-		expect(player.buffered().start(0)).toBe(120);
-		expect(player.buffered().end(0)).toBe(140);
-		expect(player.seekable().start(0)).toBe(0);
-		expect(player.seekable().end(0)).toBe(600);
-
-		player.currentTime(130);
-		expect(player.currentTime()).toBe(130);
-		expect(requestedSeeks).toEqual([]);
-
-		player.currentTime(300);
-		expect(requestedSeeks).toEqual([300]);
-
-		removeTimeline?.();
-	});
-
-	it('keeps source time visible when a restarted preview reports local zero', () => {
-		const requestedSeeks: number[] = [];
-		const player = timelinePlayer(0, [[0, 10]]);
-
-		const removeTimeline = addSourceTimeline(player, true, 300, 600, (timeSeconds) => {
-			requestedSeeks.push(timeSeconds);
-		});
-
-		player.currentTime(0);
-
-		expect(player.currentTime()).toBe(300);
-		expect(requestedSeeks).toEqual([]);
-
-		removeTimeline?.();
-	});
-
-	it('restarts from the requested source time when seeking outside the active segment', () => {
-		const requestedSeeks: number[] = [];
-		const player = timelinePlayer(5, [[0, 10]]);
-
-		const removeTimeline = addSourceTimeline(player, true, 300, 600, (timeSeconds) => {
-			requestedSeeks.push(timeSeconds);
-		});
-
-		player.currentTime(120);
-		player.currentTime(0);
-
-		expect(requestedSeeks).toEqual([120, 0]);
-
-		removeTimeline?.();
 	});
 });
 
@@ -128,35 +116,5 @@ function playbackRow(): MediaFileRow {
 		expectedLanguages: [],
 		removeNonEnabledLanguages: false,
 		score: 0
-	};
-}
-
-function timelinePlayer(currentTime: number, bufferedRanges: [number, number][]) {
-	let localTime = currentTime;
-	let localDuration: number | undefined = 10;
-	const listeners = new Map<string, () => void>();
-	const player = {
-		currentTime: (seconds?: number | string) => {
-			if (seconds !== undefined) localTime = Number(seconds);
-			return localTime;
-		},
-		duration: (seconds?: number) => {
-			if (seconds !== undefined) localDuration = seconds;
-			return localDuration;
-		},
-		buffered: () => timeRanges(bufferedRanges),
-		seekable: () => timeRanges(bufferedRanges),
-		one: (event: string, callback: () => void) => listeners.set(event, callback),
-		off: (event: string) => listeners.delete(event),
-		trigger: (event: string) => listeners.get(event)?.()
-	};
-	return player as unknown as Player;
-}
-
-function timeRanges(ranges: [number, number][]) {
-	return {
-		length: ranges.length,
-		start: (index: number) => ranges[index][0],
-		end: (index: number) => ranges[index][1]
 	};
 }

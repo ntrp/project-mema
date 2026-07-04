@@ -476,6 +476,27 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/files/preview-segment': {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Stream one browser preview HLS segment */
+		get: operations['previewMediaItemFileSegment'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/preview-info': {
 		parameters: {
 			query: {
@@ -2287,16 +2308,25 @@ export interface components {
 		};
 		/** @enum {string} */
 		MediaFilePreviewMode: 'direct' | 'remux' | 'transcode';
+		/** @enum {string} */
+		MediaFilePreviewDeliveryProtocol: 'file' | 'hls';
+		/** @enum {string} */
+		MediaFilePreviewClientProfile: 'browser' | 'webkit';
 		MediaFilePreviewInfo: {
 			streamingMode: components['schemas']['MediaFilePreviewMode'];
+			deliveryProtocol: components['schemas']['MediaFilePreviewDeliveryProtocol'];
 			videoTrack?: components['schemas']['MediaFileTrack'];
 			audioTrack?: components['schemas']['MediaFileTrack'];
 			outputVideoCodec: string;
 			outputAudioCodec: string;
 			/** Format: double */
 			durationSeconds?: number;
+			containerFormat?: string;
+			containerFormatName?: string;
+			containerBitRate?: string;
 			sourceBitRate?: string;
 			liveBitRate?: string;
+			transcodeReasons?: string[];
 		};
 		/** @enum {string} */
 		MediaItemStatus: 'missing' | 'downloading' | 'downloaded';
@@ -4164,6 +4194,7 @@ export interface operations {
 			query: {
 				path: components['parameters']['MediaFilePath'];
 				audioTrackIndex?: number;
+				clientProfile?: components['schemas']['MediaFilePreviewClientProfile'];
 				startTimeSeconds?: number;
 			};
 			header?: never;
@@ -4174,13 +4205,45 @@ export interface operations {
 		};
 		requestBody?: never;
 		responses: {
-			/** @description Browser-compatible MP4 preview stream */
+			/** @description Browser-compatible preview stream */
 			200: {
 				headers: {
 					[name: string]: unknown;
 				};
 				content: {
 					'video/mp4': string;
+					'application/vnd.apple.mpegurl': string;
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	previewMediaItemFileSegment: {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+				audioTrackIndex?: number;
+				clientProfile?: components['schemas']['MediaFilePreviewClientProfile'];
+				segmentStartSeconds: number;
+				segmentDurationSeconds: number;
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Browser-compatible HLS segment */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'video/mp2t': string;
 				};
 			};
 			400: components['responses']['BadRequest'];
@@ -4193,6 +4256,7 @@ export interface operations {
 			query: {
 				path: components['parameters']['MediaFilePath'];
 				audioTrackIndex?: number;
+				clientProfile?: components['schemas']['MediaFilePreviewClientProfile'];
 			};
 			header?: never;
 			path: {

@@ -1,0 +1,13 @@
+.video-js {
+	width: 100%;
+	height: 100%;
+}
+
+.video-js .vjs-menu-button-popup .vjs-menu .vjs-menu-content {
+	max-height: 18rem;
+}
+
+.media-file-video-starting .vjs-big-play-button,
+.video-js.vjs-waiting .vjs-big-play-button {
+	display: none !important;
+}

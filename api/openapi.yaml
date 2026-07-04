@@ -982,6 +982,11 @@ paths:
             type: integer
             format: int32
             minimum: 0
+        - name: clientProfile
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/MediaFilePreviewClientProfile"
         - name: startTimeSeconds
           in: query
           required: false
@@ -991,9 +996,66 @@ paths:
             minimum: 0
       responses:
         "200":
-          description: Browser-compatible MP4 preview stream
+          description: Browser-compatible preview stream
           content:
             video/mp4:
+              schema:
+                type: string
+                format: binary
+            application/vnd.apple.mpegurl:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/preview-segment:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/MediaFilePath"
+    get:
+      operationId: previewMediaItemFileSegment
+      tags:
+        - Media
+      summary: Stream one browser preview HLS segment
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: audioTrackIndex
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+        - name: clientProfile
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/MediaFilePreviewClientProfile"
+        - name: segmentStartSeconds
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: 0
+        - name: segmentDurationSeconds
+          in: query
+          required: true
+          schema:
+            type: number
+            format: double
+            minimum: 0
+            exclusiveMinimum: true
+      responses:
+        "200":
+          description: Browser-compatible HLS segment
+          content:
+            video/mp2t:
               schema:
                 type: string
                 format: binary
@@ -1022,6 +1084,11 @@ paths:
             type: integer
             format: int32
             minimum: 0
+        - name: clientProfile
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/MediaFilePreviewClientProfile"
       responses:
         "200":
           description: Browser preview stream information
@@ -4532,16 +4599,29 @@ components:
         - direct
         - remux
         - transcode
+    MediaFilePreviewDeliveryProtocol:
+      type: string
+      enum:
+        - file
+        - hls
+    MediaFilePreviewClientProfile:
+      type: string
+      enum:
+        - browser
+        - webkit
     MediaFilePreviewInfo:
       type: object
       additionalProperties: false
       required:
         - streamingMode
+        - deliveryProtocol
         - outputVideoCodec
         - outputAudioCodec
       properties:
         streamingMode:
           $ref: "#/components/schemas/MediaFilePreviewMode"
+        deliveryProtocol:
+          $ref: "#/components/schemas/MediaFilePreviewDeliveryProtocol"
         videoTrack:
           $ref: "#/components/schemas/MediaFileTrack"
         audioTrack:
@@ -4554,10 +4634,20 @@ components:
           type: number
           format: double
           minimum: 0
+        containerFormat:
+          type: string
+        containerFormatName:
+          type: string
+        containerBitRate:
+          type: string
         sourceBitRate:
           type: string
         liveBitRate:
           type: string
+        transcodeReasons:
+          type: array
+          items:
+            type: string
     MediaItemStatus:
       type: string
       enum:

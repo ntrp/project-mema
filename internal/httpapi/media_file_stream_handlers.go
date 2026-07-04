@@ -41,7 +41,7 @@ func (s *Server) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, 
 	expires := s.now().Add(streamTokenTTL).Unix()
 	token := s.newStreamToken(uuid.UUID(id), params.Path, expires)
 	w.Header().Set("Content-Type", "audio/x-mpegurl; charset=utf-8")
-	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": playlistFilename(name)}))
+	w.Header().Set("Content-Disposition", playlistDisposition(name))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", playlistTitle(name), streamURL(r, params.Path, expires, token))
 }
@@ -165,6 +165,10 @@ func playlistFilename(name string) string {
 		base = "media-stream"
 	}
 	return base + ".m3u"
+}
+
+func playlistDisposition(name string) string {
+	return mime.FormatMediaType("inline", map[string]string{"filename": playlistFilename(name)})
 }
 
 func playlistTitle(name string) string {

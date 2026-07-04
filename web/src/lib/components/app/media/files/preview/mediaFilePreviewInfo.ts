@@ -28,6 +28,11 @@ export function mediaFileInfoSections(
 ): MediaFileInfoSection[] {
 	const sections: MediaFileInfoSection[] = [
 		{
+			key: 'container',
+			title: 'Container',
+			rows: containerRows(info)
+		},
+		{
 			key: 'video',
 			title: 'Video',
 			action: mediaTrackAction(info?.outputVideoCodec),
@@ -54,6 +59,18 @@ export function mediaFileInfoSections(
 		});
 	}
 	return sections;
+}
+
+function containerRows(info?: MediaFilePreviewInfo): MediaFileInfoRow[] {
+	return [
+		{ label: 'Format', value: formatValue(info?.containerFormatName ?? info?.containerFormat) },
+		{ label: 'Family', value: formatValue(info?.containerFormat) },
+		{ label: 'Mode', value: formatValue(info?.streamingMode) },
+		{ label: 'Delivery', value: formatDelivery(info?.deliveryProtocol) },
+		{ label: 'Reason', value: formatReasons(info?.transcodeReasons) },
+		{ label: 'Duration', value: formatDuration(info?.durationSeconds) },
+		{ label: 'Bitrate', value: formatBitRate(info?.containerBitRate ?? info?.sourceBitRate) }
+	];
 }
 
 function videoRows(info?: MediaFilePreviewInfo, playbackStats?: MediaFilePlaybackStats) {
@@ -117,6 +134,25 @@ function displayCodec(codec?: string) {
 	return value;
 }
 
+function formatDelivery(value?: string) {
+	if (value === 'hls') return 'HLS';
+	if (value === 'file') return 'File';
+	return '-';
+}
+
+function formatReasons(values?: string[]) {
+	if (!values?.length) return '-';
+	return values.map(formatReason).join(', ');
+}
+
+function formatReason(value: string) {
+	return value
+		.split('_')
+		.filter(Boolean)
+		.map((part) => part[0]?.toUpperCase() + part.slice(1))
+		.join(' ');
+}
+
 function videoResolution(track: MediaFileTrack) {
 	if (!track.width || !track.height) return undefined;
 	return `${track.width}x${track.height}`;
@@ -138,6 +174,16 @@ function formatFrameRate(value?: string) {
 	const fps = top / bottom;
 	const formatted = fps.toFixed(fps % 1 === 0 ? 0 : 3).replace(/\.?0+$/, '');
 	return `${formatted} fps`;
+}
+
+function formatDuration(value?: number) {
+	if (!value || !Number.isFinite(value)) return '-';
+	const total = Math.round(value);
+	const hours = Math.floor(total / 3600);
+	const minutes = Math.floor((total % 3600) / 60);
+	const seconds = total % 60;
+	const prefix = hours > 0 ? `${hours}:` : '';
+	return `${prefix}${String(minutes).padStart(hours > 0 ? 2 : 1, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 function audioChannels(track: MediaFileTrack) {

@@ -331,6 +331,42 @@ func (e MediaDiscoverMediaType) Valid() bool {
 	}
 }
 
+// Defines values for MediaFilePreviewClientProfile.
+const (
+	Browser MediaFilePreviewClientProfile = "browser"
+	Webkit  MediaFilePreviewClientProfile = "webkit"
+)
+
+// Valid indicates whether the value is a known member of the MediaFilePreviewClientProfile enum.
+func (e MediaFilePreviewClientProfile) Valid() bool {
+	switch e {
+	case Browser:
+		return true
+	case Webkit:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaFilePreviewDeliveryProtocol.
+const (
+	File MediaFilePreviewDeliveryProtocol = "file"
+	Hls  MediaFilePreviewDeliveryProtocol = "hls"
+)
+
+// Valid indicates whether the value is a known member of the MediaFilePreviewDeliveryProtocol enum.
+func (e MediaFilePreviewDeliveryProtocol) Valid() bool {
+	switch e {
+	case File:
+		return true
+	case Hls:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaFilePreviewMode.
 const (
 	Direct    MediaFilePreviewMode = "direct"
@@ -1573,16 +1609,27 @@ type MediaFileInfo struct {
 	Tracks    *[]MediaFileTrack   `json:"tracks,omitempty"`
 }
 
+// MediaFilePreviewClientProfile defines model for MediaFilePreviewClientProfile.
+type MediaFilePreviewClientProfile string
+
+// MediaFilePreviewDeliveryProtocol defines model for MediaFilePreviewDeliveryProtocol.
+type MediaFilePreviewDeliveryProtocol string
+
 // MediaFilePreviewInfo defines model for MediaFilePreviewInfo.
 type MediaFilePreviewInfo struct {
-	AudioTrack       *MediaFileTrack      `json:"audioTrack,omitempty"`
-	DurationSeconds  *float64             `json:"durationSeconds,omitempty"`
-	LiveBitRate      *string              `json:"liveBitRate,omitempty"`
-	OutputAudioCodec string               `json:"outputAudioCodec"`
-	OutputVideoCodec string               `json:"outputVideoCodec"`
-	SourceBitRate    *string              `json:"sourceBitRate,omitempty"`
-	StreamingMode    MediaFilePreviewMode `json:"streamingMode"`
-	VideoTrack       *MediaFileTrack      `json:"videoTrack,omitempty"`
+	AudioTrack          *MediaFileTrack                  `json:"audioTrack,omitempty"`
+	ContainerBitRate    *string                          `json:"containerBitRate,omitempty"`
+	ContainerFormat     *string                          `json:"containerFormat,omitempty"`
+	ContainerFormatName *string                          `json:"containerFormatName,omitempty"`
+	DeliveryProtocol    MediaFilePreviewDeliveryProtocol `json:"deliveryProtocol"`
+	DurationSeconds     *float64                         `json:"durationSeconds,omitempty"`
+	LiveBitRate         *string                          `json:"liveBitRate,omitempty"`
+	OutputAudioCodec    string                           `json:"outputAudioCodec"`
+	OutputVideoCodec    string                           `json:"outputVideoCodec"`
+	SourceBitRate       *string                          `json:"sourceBitRate,omitempty"`
+	StreamingMode       MediaFilePreviewMode             `json:"streamingMode"`
+	TranscodeReasons    *[]string                        `json:"transcodeReasons,omitempty"`
+	VideoTrack          *MediaFileTrack                  `json:"videoTrack,omitempty"`
 }
 
 // MediaFilePreviewMode defines model for MediaFilePreviewMode.
@@ -2581,15 +2628,26 @@ type DeleteMediaItemParams struct {
 
 // PreviewMediaItemFileParams defines parameters for PreviewMediaItemFile.
 type PreviewMediaItemFileParams struct {
-	AudioTrackIndex  *int32        `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
-	StartTimeSeconds *float64      `form:"startTimeSeconds,omitempty" json:"startTimeSeconds,omitempty"`
-	Path             MediaFilePath `form:"path" json:"path"`
+	AudioTrackIndex  *int32                         `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
+	ClientProfile    *MediaFilePreviewClientProfile `form:"clientProfile,omitempty" json:"clientProfile,omitempty"`
+	StartTimeSeconds *float64                       `form:"startTimeSeconds,omitempty" json:"startTimeSeconds,omitempty"`
+	Path             MediaFilePath                  `form:"path" json:"path"`
 }
 
 // GetMediaItemFilePreviewInfoParams defines parameters for GetMediaItemFilePreviewInfo.
 type GetMediaItemFilePreviewInfoParams struct {
-	AudioTrackIndex *int32        `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
-	Path            MediaFilePath `form:"path" json:"path"`
+	AudioTrackIndex *int32                         `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
+	ClientProfile   *MediaFilePreviewClientProfile `form:"clientProfile,omitempty" json:"clientProfile,omitempty"`
+	Path            MediaFilePath                  `form:"path" json:"path"`
+}
+
+// PreviewMediaItemFileSegmentParams defines parameters for PreviewMediaItemFileSegment.
+type PreviewMediaItemFileSegmentParams struct {
+	AudioTrackIndex        *int32                         `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
+	ClientProfile          *MediaFilePreviewClientProfile `form:"clientProfile,omitempty" json:"clientProfile,omitempty"`
+	SegmentStartSeconds    float64                        `form:"segmentStartSeconds" json:"segmentStartSeconds"`
+	SegmentDurationSeconds float64                        `form:"segmentDurationSeconds" json:"segmentDurationSeconds"`
+	Path                   MediaFilePath                  `form:"path" json:"path"`
 }
 
 // StreamMediaItemFileParams defines parameters for StreamMediaItemFile.
@@ -2899,6 +2957,9 @@ type ServerInterface interface {
 	// Inspect the current browser preview stream plan
 	// (GET /media/items/{id}/files/preview-info)
 	GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Request, id ResourceId, params GetMediaItemFilePreviewInfoParams)
+	// Stream one browser preview HLS segment
+	// (GET /media/items/{id}/files/preview-segment)
+	PreviewMediaItemFileSegment(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileSegmentParams)
 	// Rescan a media item folder for media and metadata files
 	// (POST /media/items/{id}/files/rescan)
 	RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -3412,6 +3473,12 @@ func (_ Unimplemented) PreviewMediaItemFile(w http.ResponseWriter, r *http.Reque
 // Inspect the current browser preview stream plan
 // (GET /media/items/{id}/files/preview-info)
 func (_ Unimplemented) GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Request, id ResourceId, params GetMediaItemFilePreviewInfoParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Stream one browser preview HLS segment
+// (GET /media/items/{id}/files/preview-segment)
+func (_ Unimplemented) PreviewMediaItemFileSegment(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileSegmentParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5407,6 +5474,19 @@ func (siw *ServerInterfaceWrapper) PreviewMediaItemFile(w http.ResponseWriter, r
 		return
 	}
 
+	// ------------- Optional query parameter "clientProfile" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "clientProfile", r.URL.Query(), &params.ClientProfile, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "clientProfile"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientProfile", Err: err})
+		}
+		return
+	}
+
 	// ------------- Optional query parameter "startTimeSeconds" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "startTimeSeconds", r.URL.Query(), &params.StartTimeSeconds, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
@@ -5481,6 +5561,19 @@ func (siw *ServerInterfaceWrapper) GetMediaItemFilePreviewInfo(w http.ResponseWr
 		return
 	}
 
+	// ------------- Optional query parameter "clientProfile" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "clientProfile", r.URL.Query(), &params.ClientProfile, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "clientProfile"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientProfile", Err: err})
+		}
+		return
+	}
+
 	// ------------- Required query parameter "path" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
@@ -5496,6 +5589,106 @@ func (siw *ServerInterfaceWrapper) GetMediaItemFilePreviewInfo(w http.ResponseWr
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMediaItemFilePreviewInfo(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewMediaItemFileSegment operation middleware
+func (siw *ServerInterfaceWrapper) PreviewMediaItemFileSegment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PreviewMediaItemFileSegmentParams
+
+	// ------------- Optional query parameter "audioTrackIndex" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "audioTrackIndex", r.URL.Query(), &params.AudioTrackIndex, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "audioTrackIndex"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "audioTrackIndex", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "clientProfile" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "clientProfile", r.URL.Query(), &params.ClientProfile, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "clientProfile"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientProfile", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "segmentStartSeconds" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "segmentStartSeconds", r.URL.Query(), &params.SegmentStartSeconds, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "segmentStartSeconds"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "segmentStartSeconds", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "segmentDurationSeconds" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "segmentDurationSeconds", r.URL.Query(), &params.SegmentDurationSeconds, runtime.BindQueryParameterOptions{Type: "number", Format: "double"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "segmentDurationSeconds"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "segmentDurationSeconds", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewMediaItemFileSegment(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8801,6 +8994,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/files/preview-info", wrapper.GetMediaItemFilePreviewInfo)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/files/preview-segment", wrapper.PreviewMediaItemFileSegment)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/files/rescan", wrapper.RescanMediaItemFiles)

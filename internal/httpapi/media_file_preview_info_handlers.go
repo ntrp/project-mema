@@ -19,27 +19,39 @@ func (s *Server) GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Requ
 	if _, ok := statMediaFile(w, target); !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, mediaPreviewInfo(target, params.AudioTrackIndex))
+	clientProfile := mediaPreviewClientProfile(params.ClientProfile, r.UserAgent())
+	writeJSON(w, http.StatusOK, mediaPreviewInfo(target, params.AudioTrackIndex, clientProfile))
 }
 
-func mediaPreviewInfo(target string, audioTrackIndex *int32) MediaFilePreviewInfo {
+func mediaPreviewInfo(target string, audioTrackIndex *int32, clientProfile MediaFilePreviewClientProfile) MediaFilePreviewInfo {
 	probe := mediaFileProbe(target)
-	info := mediaPreviewInfoFromTracks(target, probe.tracks, audioTrackIndex)
+	info := mediaPreviewInfoFromTracks(target, probe.tracks, audioTrackIndex, clientProfile)
+	info.ContainerBitRate = probe.container.bitRate
+	info.ContainerFormat = probe.container.format
+	info.ContainerFormatName = probe.container.formatName
 	info.DurationSeconds = probe.durationSeconds
 	return info
 }
 
-func mediaPreviewInfoFromTracks(target string, tracks []MediaFileTrack, audioTrackIndex *int32) MediaFilePreviewInfo {
+func mediaPreviewInfoFromTracks(
+	target string,
+	tracks []MediaFileTrack,
+	audioTrackIndex *int32,
+	clientProfile MediaFilePreviewClientProfile,
+) MediaFilePreviewInfo {
 	video := firstTrackByType(tracks, Video, nil)
 	audio := firstTrackByType(tracks, Audio, audioTrackIndex)
-	plan := mediaPreviewPlanFromTracks(tracks, audioTrackIndex)
+	decision := mediaPreviewDecisionFromTracks(target, tracks, audioTrackIndex, clientProfile)
+	reasons := append([]string{}, decision.reasons...)
 	sourceBitRate := selectedBitRate(video, audio)
 	info := MediaFilePreviewInfo{
-		StreamingMode:    mediaPreviewMode(target, tracks, audioTrackIndex, plan),
-		OutputVideoCodec: plan.videoCodec,
-		OutputAudioCodec: plan.audioCodec,
+		StreamingMode:    decision.mode,
+		DeliveryProtocol: decision.deliveryProtocol,
+		OutputVideoCodec: decision.plan.videoCodec,
+		OutputAudioCodec: decision.plan.audioCodec,
 		SourceBitRate:    sourceBitRate,
 		LiveBitRate:      sourceBitRate,
+		TranscodeReasons: &reasons,
 	}
 	if video != nil {
 		info.VideoTrack = video
@@ -48,16 +60,6 @@ func mediaPreviewInfoFromTracks(target string, tracks []MediaFileTrack, audioTra
 		info.AudioTrack = audio
 	}
 	return info
-}
-
-func mediaPreviewMode(target string, tracks []MediaFileTrack, audioTrackIndex *int32, plan mediaPreviewTranscodePlan) MediaFilePreviewMode {
-	if mediaPreviewDirectFromTracks(target, tracks, audioTrackIndex) {
-		return Direct
-	}
-	if plan.videoCodec == "copy" && plan.audioCodec == "copy" {
-		return Remux
-	}
-	return Transcode
 }
 
 func selectedBitRate(tracks ...*MediaFileTrack) *string {

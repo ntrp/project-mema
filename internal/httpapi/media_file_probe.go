@@ -15,7 +15,10 @@ type ffprobeOutput struct {
 }
 
 type ffprobeFormat struct {
-	Duration string `json:"duration"`
+	BitRate    string `json:"bit_rate"`
+	Duration   string `json:"duration"`
+	Format     string `json:"format_name"`
+	FormatName string `json:"format_long_name"`
 }
 
 type ffprobeStream struct {
@@ -41,9 +44,16 @@ type ffprobeChapter struct {
 }
 
 type mediaFileProbeResult struct {
+	container       mediaFileContainer
 	tracks          []MediaFileTrack
 	chapters        []MediaFileChapter
 	durationSeconds *float64
+}
+
+type mediaFileContainer struct {
+	bitRate    *string
+	format     *string
+	formatName *string
 }
 
 func mediaFileProbe(path string) mediaFileProbeResult {
@@ -68,9 +78,18 @@ func mediaFileProbe(path string) mediaFileProbeResult {
 		return mediaFileProbeResult{}
 	}
 	return mediaFileProbeResult{
+		container:       mediaFileContainerInfo(payload.Format),
 		tracks:          mediaFileTracks(payload.Streams),
 		chapters:        mediaFileChapters(payload.Chapters),
 		durationSeconds: optionalProbeDuration(payload.Format.Duration),
+	}
+}
+
+func mediaFileContainerInfo(format ffprobeFormat) mediaFileContainer {
+	return mediaFileContainer{
+		bitRate:    optionalProbeString(format.BitRate),
+		format:     optionalProbeString(format.Format),
+		formatName: optionalProbeString(format.FormatName),
 	}
 }
 
