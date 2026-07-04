@@ -54,6 +54,24 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 			SearchKind:       "season",
 			RequestedSeason:  int32Ptr(1),
 			RequestedEpisode: int32Ptr(2),
+			Sources: []ReleaseCandidateSource{
+				{
+					IndexerID:       &secondIndexerID,
+					IndexerName:     "High Seed Indexer",
+					IndexerProtocol: "usenet",
+					Title:           "Release.Snapshot.2026.2160p.WEB-DL",
+					DownloadURL:     "http://indexer.test/download/high-" + suffix,
+					GUID:            stringPtr("high-" + suffix),
+				},
+				{
+					IndexerID:       &firstIndexerID,
+					IndexerName:     "Mirror Indexer",
+					IndexerProtocol: "torrent",
+					Title:           "Release.Snapshot.2026.2160p.WEB-DL",
+					DownloadURL:     "http://mirror.test/download/high-" + suffix,
+					InfoURL:         stringPtr("http://mirror.test/details/high-" + suffix),
+				},
+			},
 		},
 	}, []string{"torznab timeout", "newznab rejected query"}); err != nil {
 		t.Fatalf("replace release search results: %v", err)
@@ -75,6 +93,9 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 	if release.RequestedSeason == nil || *release.RequestedSeason != 1 || release.SearchKind != "season" {
 		t.Fatalf("release candidate details = %#v", release)
 	}
+	if len(release.Sources) != 2 || release.Sources[0].IndexerName != "High Seed Indexer" || release.Sources[1].IndexerName != "Mirror Indexer" {
+		t.Fatalf("release candidate sources = %#v", release.Sources)
+	}
 
 	if err := store.ReplaceReleaseSearchResults(ctx, item.ID, []ReleaseCandidateInput{{
 		IndexerName:     "Replacement Indexer",
@@ -93,6 +114,9 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 	}
 	if len(snapshot.Releases) != 1 || snapshot.Releases[0].Title != "Release.Snapshot.2026.720p.WEB-DL" || len(snapshot.Errors) != 0 {
 		t.Fatalf("replacement snapshot = %#v", snapshot)
+	}
+	if len(snapshot.Releases[0].Sources) != 1 || snapshot.Releases[0].Sources[0].IndexerName != "Replacement Indexer" {
+		t.Fatalf("replacement sources = %#v", snapshot.Releases[0].Sources)
 	}
 	if _, err := store.GetReleaseCandidate(ctx, release.ID, item.ID); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("expected stale release lookup to be not found, got %v", err)

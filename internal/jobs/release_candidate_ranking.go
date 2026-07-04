@@ -23,14 +23,24 @@ func dedupeReleaseCandidates(
 	byKey := map[string]storage.ReleaseCandidateInput{}
 	matches := newReleaseMatchCache(item, profile, formats, languages)
 	for _, release := range releases {
+		release.Sources = storage.ReleaseCandidateSourcesForInput(release)
 		key := releaseDedupeKey(release)
 		if key == "" {
 			byKey[uuid.NewString()] = release
 			continue
 		}
-		if existing, ok := byKey[key]; !ok || betterCandidate(matches, release, existing) {
+		existing, ok := byKey[key]
+		if !ok {
 			byKey[key] = release
+			continue
 		}
+		if betterCandidate(matches, release, existing) {
+			release.Sources = appendUniqueReleaseSources(release.Sources, existing.Sources)
+			byKey[key] = release
+			continue
+		}
+		existing.Sources = appendUniqueReleaseSources(existing.Sources, release.Sources)
+		byKey[key] = existing
 	}
 	deduped := make([]storage.ReleaseCandidateInput, 0, len(byKey))
 	for _, release := range byKey {
@@ -201,12 +211,41 @@ func releaseDecisionContext(
 }
 
 func releaseDedupeKey(release storage.ReleaseCandidateInput) string {
-	for _, value := range []*string{release.GUID, release.InfoURL, &release.DownloadURL} {
-		if value != nil && strings.TrimSpace(*value) != "" {
-			return strings.ToLower(strings.TrimSpace(*value))
-		}
+	if release.GUID != nil && strings.TrimSpace(*release.GUID) != "" {
+		return "guid:" + strings.ToLower(strings.TrimSpace(*release.GUID))
+	}
+	if title := normalizedReleaseDedupeTitle(release.Title); title != "" && release.SizeBytes > 0 {
+		return strings.Join([]string{
+			"title-size",
+			title,
+			strconv.FormatInt(release.SizeBytes, 10),
+			strings.ToLower(strings.TrimSpace(release.IndexerProtocol)),
+		}, ":")
+	}
+	if release.InfoURL != nil && strings.TrimSpace(*release.InfoURL) != "" {
+		return "info:" + strings.ToLower(strings.TrimSpace(*release.InfoURL))
+	}
+	if strings.TrimSpace(release.DownloadURL) != "" {
+		return "download:" + strings.ToLower(strings.TrimSpace(release.DownloadURL))
 	}
 	return ""
+}
+
+func normalizedReleaseDedupeTitle(title string) string {
+	var builder strings.Builder
+	lastSeparator := false
+	for _, value := range strings.ToLower(title) {
+		if (value >= 'a' && value <= 'z') || (value >= '0' && value <= '9') {
+			builder.WriteRune(value)
+			lastSeparator = false
+			continue
+		}
+		if !lastSeparator {
+			builder.WriteByte(' ')
+			lastSeparator = true
+		}
+	}
+	return strings.Join(strings.Fields(builder.String()), " ")
 }
 
 func severityRank(severity string) int {

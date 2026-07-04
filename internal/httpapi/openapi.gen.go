@@ -2284,19 +2284,20 @@ type ReleaseBlocklistListResponse struct {
 
 // ReleaseCandidate defines model for ReleaseCandidate.
 type ReleaseCandidate struct {
-	GrabDisabledReason *string               `json:"grabDisabledReason,omitempty"`
-	Guid               *string               `json:"guid,omitempty"`
-	Id                 openapi_types.UUID    `json:"id"`
-	IndexerId          *openapi_types.UUID   `json:"indexerId,omitempty"`
-	IndexerName        string                `json:"indexerName"`
-	IndexerProtocol    IndexerProtocol       `json:"indexerProtocol"`
-	InfoUrl            *string               `json:"infoUrl,omitempty"`
-	Match              ReleaseCandidateMatch `json:"match"`
-	Peers              *int32                `json:"peers,omitempty"`
-	PublishedAt        *time.Time            `json:"publishedAt,omitempty"`
-	Seeders            *int32                `json:"seeders,omitempty"`
-	SizeBytes          int64                 `json:"sizeBytes"`
-	Title              string                `json:"title"`
+	GrabDisabledReason *string                  `json:"grabDisabledReason,omitempty"`
+	Guid               *string                  `json:"guid,omitempty"`
+	Id                 openapi_types.UUID       `json:"id"`
+	IndexerId          *openapi_types.UUID      `json:"indexerId,omitempty"`
+	IndexerName        string                   `json:"indexerName"`
+	IndexerProtocol    IndexerProtocol          `json:"indexerProtocol"`
+	InfoUrl            *string                  `json:"infoUrl,omitempty"`
+	Match              ReleaseCandidateMatch    `json:"match"`
+	Peers              *int32                   `json:"peers,omitempty"`
+	PublishedAt        *time.Time               `json:"publishedAt,omitempty"`
+	Seeders            *int32                   `json:"seeders,omitempty"`
+	SizeBytes          int64                    `json:"sizeBytes"`
+	Sources            []ReleaseCandidateSource `json:"sources"`
+	Title              string                   `json:"title"`
 }
 
 // ReleaseCandidateMatch defines model for ReleaseCandidateMatch.
@@ -2318,6 +2319,17 @@ type ReleaseCandidateMatch struct {
 
 // ReleaseCandidateMatchSeverity defines model for ReleaseCandidateMatch.Severity.
 type ReleaseCandidateMatchSeverity string
+
+// ReleaseCandidateSource defines model for ReleaseCandidateSource.
+type ReleaseCandidateSource struct {
+	DownloadUrl     string              `json:"downloadUrl"`
+	Guid            *string             `json:"guid,omitempty"`
+	IndexerId       *openapi_types.UUID `json:"indexerId,omitempty"`
+	IndexerName     string              `json:"indexerName"`
+	IndexerProtocol IndexerProtocol     `json:"indexerProtocol"`
+	InfoUrl         *string             `json:"infoUrl,omitempty"`
+	Title           string              `json:"title"`
+}
 
 // ReleaseOverrideDetails defines model for ReleaseOverrideDetails.
 type ReleaseOverrideDetails struct {

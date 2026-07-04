@@ -662,6 +662,7 @@ create table if not exists app.media_release_candidates (
     search_kind text not null default 'title',
     requested_season integer,
     requested_episode integer,
+    sources jsonb not null default '[]'::jsonb,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
