@@ -3,7 +3,7 @@ GOFLAGS ?=
 DATABASE_URL ?= postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable
 MEDIA_DATA_DIR ?= $(CURDIR)/.data/media
 
-.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate test test-api test-deps test-e2e web-install
+.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate test test-api test-deps test-e2e verify-generated web-install
 
 api-generate: api-generate-go api-generate-web
 
@@ -14,11 +14,14 @@ api-generate-go:
 api-generate-web:
 	cd web && pnpm run api:generate
 
+verify-generated:
+	sh scripts/verify-openapi-generated.sh
+
 build: api-generate
 	cd web && pnpm run build
 	GOCACHE=$(GOCACHE) go build $(GOFLAGS) -o bin/server ./cmd/server
 
-check: api-generate
+check: verify-generated
 	GOCACHE=$(GOCACHE) go test ./...
 	cd web && pnpm run check
 	cd web && pnpm run lint

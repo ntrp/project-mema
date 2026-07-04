@@ -125,6 +125,12 @@ Generate OpenAPI clients and server code:
 make api-generate
 ```
 
+Verify committed OpenAPI generated artifacts without rewriting them:
+
+```sh
+make verify-generated
+```
+
 Run backend tests, Svelte checks, linting, and formatting checks:
 
 ```sh
@@ -171,7 +177,9 @@ WEB_DIR=web/build ./bin/server
 3. Implement or refactor the Go backend to satisfy the generated server
    interface.
 4. Update the Svelte UI against the generated TypeScript API types.
-5. Run `make check` before continuing.
+5. Run `make check` before continuing. It includes `make verify-generated`, so
+   stale generated Go or TypeScript artifacts fail the check instead of being
+   rewritten silently.
 
 OpenAPI is currently pinned to 3.0.3 because the selected Go generator has
 better support for OpenAPI 3.0 than 3.1.
