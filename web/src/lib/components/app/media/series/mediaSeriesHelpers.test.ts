@@ -72,7 +72,7 @@ describe('series helper projections (SCN-MEDIA-004)', () => {
 					id: 'activity-1',
 					mediaItemId: 'media-1',
 					mediaTitle: 'Scenario Series',
-					mediaType: 'series',
+					mediaType: 'serie',
 					releaseTitle: 'Scenario.Series.S02E02.1080p.WEB-DL',
 					indexerName: 'Indexer',
 					downloadClientName: 'Client',
@@ -147,7 +147,7 @@ describe('media metadata previews (SCN-MEDIA-004)', () => {
 describe('release search query helpers (SCN-MEDIA-002)', () => {
 	it('builds movie, season, and episode query variants without duplicates', () => {
 		const movie = { type: 'movie', title: ' Scenario Movie ', year: 2026 } as MediaItem;
-		const series = { type: 'series', title: 'Scenario Series', year: 2026 } as MediaItem;
+		const series = { type: 'serie', title: 'Scenario Series', year: 2026 } as MediaItem;
 
 		expect(releaseSearchQuery(movie)).toBe('Scenario Movie 2026');
 		expect(releaseSearchQuery(series, { type: 'season', seasonNumber: 2 })).toBe(

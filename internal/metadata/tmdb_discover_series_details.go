@@ -23,7 +23,7 @@ func tmdbDiscoverSeriesResults(items []tmdbMedia, genres map[string]string) []Se
 func tmdbDiscoverSeriesResult(item tmdbMedia, genres map[string]string) SearchResult {
 	return SearchResult{
 		Title:            strings.TrimSpace(item.Name),
-		Type:             "series",
+		Type:             "serie",
 		Year:             yearFromDate(item.FirstAirDate),
 		ExternalProvider: "tmdb",
 		ExternalID:       strconv.FormatInt(item.ID, 10),

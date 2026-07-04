@@ -21,7 +21,7 @@ func (s *Service) searchTMDB(ctx context.Context, config Config, request SearchR
 	values := url.Values{}
 	values.Set("query", request.Query)
 	if request.Year != nil {
-		if request.MediaType == "series" {
+		if request.MediaType == "serie" {
 			values.Set("first_air_date_year", strconv.Itoa(int(*request.Year)))
 		} else {
 			values.Set("year", strconv.Itoa(int(*request.Year)))
@@ -116,7 +116,7 @@ func (s *Service) detailsTMDB(ctx context.Context, config Config, request Detail
 	if err := s.doJSON(ctx, config, http.MethodGet, endpoint, nil, &payload); err != nil {
 		return Details{}, err
 	}
-	if request.MediaType == "series" {
+	if request.MediaType == "serie" {
 		if err := s.loadTMDBSeasonEpisodes(ctx, config, mediaPath, externalID, &payload); err != nil {
 			return Details{}, err
 		}
@@ -180,7 +180,7 @@ func tmdbMediaPath(mediaType string) (string, bool) {
 	switch mediaType {
 	case "movie":
 		return "movie", true
-	case "series":
+	case "serie":
 		return "tv", true
 	default:
 		return "", false
@@ -191,7 +191,7 @@ func tmdbSectionValid(mediaType string, section string) bool {
 	switch mediaType {
 	case "movie":
 		return section == "popular" || section == "upcoming" || section == "top_rated"
-	case "series":
+	case "serie":
 		return section == "popular" || section == "on_the_air" || section == "top_rated"
 	default:
 		return false
@@ -207,7 +207,7 @@ func tmdbResults(items []tmdbMedia, mediaType string, limit int) []SearchResult 
 		if mediaType == "mixed" {
 			resultType = tmdbResultMediaType(item.MediaType)
 		}
-		if resultType == "series" {
+		if resultType == "serie" {
 			title = strings.TrimSpace(item.Name)
 			date = item.FirstAirDate
 		}
@@ -236,7 +236,7 @@ func tmdbResultMediaType(value string) string {
 	case "movie":
 		return "movie"
 	case "tv":
-		return "series"
+		return "serie"
 	default:
 		return ""
 	}

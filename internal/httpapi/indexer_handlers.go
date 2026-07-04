@@ -94,7 +94,12 @@ func (s *Server) CreateIndexer(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
 		return
 	}
-	input, ok := indexerInput(w, body, languages)
+	tags, err := s.settings.ListTags(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list tags")
+		return
+	}
+	input, ok := indexerInput(w, body, languages, tags)
 	if !ok {
 		return
 	}
@@ -121,7 +126,12 @@ func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id Resour
 		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
 		return
 	}
-	input, ok := indexerInput(w, body, languages)
+	tags, err := s.settings.ListTags(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list tags")
+		return
+	}
+	input, ok := indexerInput(w, body, languages, tags)
 	if !ok {
 		return
 	}
@@ -217,7 +227,12 @@ func (s *Server) TestIndexerConfig(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list languages")
 		return
 	}
-	input, ok := indexerInput(w, body, languages)
+	tags, err := s.settings.ListTags(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_list_failed", "Could not list tags")
+		return
+	}
+	input, ok := indexerInput(w, body, languages, tags)
 	if !ok {
 		return
 	}

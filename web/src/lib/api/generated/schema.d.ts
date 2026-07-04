@@ -2013,9 +2013,11 @@ export interface components {
 			role: components['schemas']['UserRole'];
 		};
 		/** @enum {string} */
-		MediaType: 'movie' | 'series';
+		MediaType: 'movie' | 'serie';
 		/** @enum {string} */
-		MediaDiscoverMediaType: 'movie' | 'series' | 'mixed';
+		MediaDiscoverMediaType: 'movie' | 'serie' | 'mixed';
+		/** @enum {string} */
+		IndexerMediaType: 'movie' | 'serie' | 'anime' | 'audio' | 'book';
 		MediaSearchRequest: {
 			query: string;
 			type: components['schemas']['MediaType'];
@@ -2874,6 +2876,7 @@ export interface components {
 			supportsPagination: boolean;
 			capabilities: components['schemas']['IndexerCapabilities'];
 			fields: components['schemas']['IndexerField'][];
+			mediaTypeScopes?: components['schemas']['IndexerMediaType'][];
 		};
 		Indexer: components['schemas']['IndexerRequest'] & {
 			/** Format: uuid */
@@ -2919,6 +2922,8 @@ export interface components {
 			baseUrl: string;
 			apiKey?: string;
 			categories?: number[];
+			mediaTypeScopes?: components['schemas']['IndexerMediaType'][];
+			tagScopes?: string[];
 			fields?: components['schemas']['IndexerFieldValue'][];
 			redirect?: boolean;
 			appProfileId?: string;

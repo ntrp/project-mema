@@ -66,7 +66,7 @@ func (s *SettingsStore) SaveDiscoverBlacklistItem(
 		return DiscoverBlacklistItem{}, err
 	}
 	input.Title = strings.Join(strings.Fields(input.Title), " ")
-	if input.Title == "" || (input.Type != "movie" && input.Type != "series") {
+	if input.Title == "" || (input.Type != "movie" && input.Type != "serie") {
 		return DiscoverBlacklistItem{}, ErrInvalidInput
 	}
 

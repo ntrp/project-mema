@@ -186,7 +186,7 @@ export class AppShellState {
 			(this.selectedMediaItemId
 				? this.mediaItems
 						.filter(
-							(item) => item.type === (this.activeHomeSection === 'movies' ? 'movie' : 'series')
+							(item) => item.type === (this.activeHomeSection === 'movies' ? 'movie' : 'serie')
 						)
 						.find((item) => item.id === this.selectedMediaItemId)
 				: undefined)

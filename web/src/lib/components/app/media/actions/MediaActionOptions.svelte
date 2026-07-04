@@ -47,7 +47,7 @@
 		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
 	]);
 	let monitorModeOptions = $derived([
-		...(mediaType === 'series'
+		...(mediaType === 'serie'
 			? [
 					{ value: 'all_episodes', label: 'All episodes' },
 					{ value: 'future_episodes', label: 'Future episodes' },
@@ -102,7 +102,7 @@
 		/>
 	</div>
 
-	{#if mediaType === 'series'}
+	{#if mediaType === 'serie'}
 		<div class="grid gap-2">
 			<Label>Series type</Label>
 			<SettingsSelect

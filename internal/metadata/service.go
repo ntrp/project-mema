@@ -23,7 +23,7 @@ func (e ProviderHTTPError) Error() string {
 func (s *Service) Search(ctx context.Context, config Config, request SearchRequest) ([]SearchResult, error) {
 	switch config.Type {
 	case "tmdb":
-		if request.MediaType != "movie" && request.MediaType != "series" {
+		if request.MediaType != "movie" && request.MediaType != "serie" {
 			return nil, nil
 		}
 		return s.searchTMDB(ctx, config, request)

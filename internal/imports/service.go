@@ -213,7 +213,7 @@ func manualTargetFileName(item storage.MediaItem, input ManualImportInput, sourc
 		title = item.Title
 	}
 	parts := []string{}
-	if item.Type == "series" {
+	if item.Type == "serie" {
 		if input.SeasonNumber == nil || input.EpisodeNumber == nil {
 			return "", fmt.Errorf("season and episode are required for series imports")
 		}

@@ -10,6 +10,7 @@
 	<IndexersSettingsSection
 		indexers={app.indexers}
 		indexerSearch={app.indexerSearch}
+		tags={app.tags}
 		bind:form={app.indexerForm}
 		saving={app.savingIndexer}
 		clearingIndexerSearchCache={app.clearingIndexerSearchCache}

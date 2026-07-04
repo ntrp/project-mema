@@ -35,12 +35,12 @@ export function releaseSearchQueryVariants(
 	};
 
 	addVariant(releaseSearchQuery(item, context));
-	if (item.type === 'series' && context.type === 'season') {
+	if (item.type === 'serie' && context.type === 'season') {
 		addVariant(`${title} s${context.seasonNumber}`);
 		addVariant(`${title} S${padded(context.seasonNumber, 2)}`);
 	}
 	if (
-		item.type === 'series' &&
+		item.type === 'serie' &&
 		context.type === 'episode' &&
 		context.seasonNumber !== undefined &&
 		context.episodeNumber !== undefined

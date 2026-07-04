@@ -59,7 +59,7 @@ func mediaRequestCreateRequest() MediaRequestCreateRequest {
 	tags := []string{"family", "uhd"}
 	overview := "A requested movie waiting for approval."
 	return MediaRequestCreateRequest{
-		Type:                Movie,
+		Type:                MediaTypeMovie,
 		Title:               "Requested Scenario Movie",
 		Year:                int32Ptr(2026),
 		Overview:            &overview,

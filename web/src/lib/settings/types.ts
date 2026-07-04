@@ -21,6 +21,7 @@ export type IndexerSearchCacheStats = components['schemas']['IndexerSearchCacheS
 export type IndexerSearchHistoryEntry = components['schemas']['IndexerSearchHistoryEntry'];
 export type IndexerProtocol = components['schemas']['IndexerProtocol'];
 export type IndexerPrivacy = components['schemas']['IndexerPrivacy'];
+export type IndexerMediaType = components['schemas']['IndexerMediaType'];
 export type IndexerCatalogResponse = components['schemas']['IndexerCatalogResponse'];
 export type IndexerCatalogEntry = components['schemas']['IndexerCatalogEntry'];
 export type IndexerAppProfile = components['schemas']['IndexerAppProfile'];

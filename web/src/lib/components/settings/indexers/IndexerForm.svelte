@@ -5,17 +5,20 @@
 	import { Switch } from '$lib/components/ui/switch';
 	import IndexerCatalogPicker from '$lib/components/settings/indexers/IndexerCatalogPicker.svelte';
 	import IndexerDynamicField from '$lib/components/settings/indexers/IndexerDynamicField.svelte';
+	import IndexerScopeFields from '$lib/components/settings/indexers/IndexerScopeFields.svelte';
 	import { flattenCategories } from '$lib/components/settings/indexers/indexerCatalogFilters';
 	import IntegrationTestStatus from '../shared/IntegrationTestStatus.svelte';
 	import type {
 		IndexerCatalogEntry,
 		IndexerForm,
-		IntegrationTestResponse
+		IntegrationTestResponse,
+		Tag
 	} from '$lib/settings/types';
 
 	interface Props {
 		form: IndexerForm;
 		catalog: IndexerCatalogEntry[];
+		tags: Tag[];
 		saving: boolean;
 		onSave: (_event: SubmitEvent) => void | Promise<void>;
 		onCancel: () => void;
@@ -27,6 +30,7 @@
 	let {
 		form = $bindable(),
 		catalog,
+		tags,
 		saving,
 		onSave,
 		onTest,
@@ -49,6 +53,8 @@
 		form.categoriesText = flattenCategories(entry.capabilities.categories)
 			.map((category) => category.id)
 			.join(', ');
+		form.mediaTypeScopes = entry.mediaTypeScopes ?? ['movie', 'serie', 'anime', 'audio', 'book'];
+		form.tagScopes = [];
 		form.redirect = entry.supportsRedirect;
 		configuring = true;
 	}
@@ -132,6 +138,7 @@
 				/>
 			{/if}
 		{/each}
+		<IndexerScopeFields bind:form {tags} />
 		<div class="flex items-center gap-3 py-2">
 			<Switch id="indexer-enabled" bind:checked={form.enabled} />
 			<Label for="indexer-enabled">Enabled</Label>

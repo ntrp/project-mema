@@ -7,7 +7,7 @@ import (
 )
 
 func TestShouldBlockReleaseMismatchHonorsOverride(t *testing.T) {
-	item := storage.MediaItem{Type: "series", Title: "Friends"}
+	item := storage.MediaItem{Type: "serie", Title: "Friends"}
 	release := storage.ReleaseCandidate{Title: "Graceful.Friends.S01E01.1080p.WEB-DL"}
 
 	if !shouldBlockReleaseMismatch(item, release, false) {

@@ -67,7 +67,7 @@ describe('UI API helpers', () => {
 		expect(emptyIndexerSearch().settings.cacheDurationMinutes).toBe(1440);
 		expect(emptyIndexerSearch().settings.automaticBlocklistExpiryDays).toBe(7);
 		expect(emptyMetadataCache().stats.providerCount).toBe(0);
-		expect(mediaTypeForLibraryKind('anime_series')).toBe('series');
+		expect(mediaTypeForLibraryKind('anime_series')).toBe('serie');
 		expect(mediaTypeForLibraryKind('movie')).toBe('movie');
 	});
 

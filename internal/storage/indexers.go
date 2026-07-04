@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -70,23 +71,23 @@ func (s *SettingsStore) CreateIndexer(ctx context.Context, input IndexerInput) (
 		insert into app.indexers (
 			id, definition_id, name, implementation, implementation_name, protocol, privacy,
 			language, encoding, description, indexer_urls, legacy_urls, base_url, api_key,
-			categories, fields, capabilities, redirect, app_profile_id, minimum_seeders,
+			categories, media_type_scopes, tag_scopes, fields, capabilities, redirect, app_profile_id, minimum_seeders,
 			seed_ratio, seed_time, pack_seed_time, prefer_magnet_url, supports_rss,
 			supports_search, supports_redirect, supports_pagination, enabled, priority
 		)
 		values (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
 			$16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
-			$29, $30
+			$29, $30, $31, $32
 		)
 		returning `+indexerColumns+`
 	`,
 		id, input.DefinitionID, input.Name, input.Implementation, input.ImplementationName, input.Protocol,
 		input.Privacy, input.Language, input.Encoding, input.Description, input.IndexerURLs, input.LegacyURLs,
-		input.BaseURL, input.APIKey, input.Categories, input.Fields, input.Capabilities, input.Redirect,
-		input.AppProfileID, input.MinimumSeeders, input.SeedRatio, input.SeedTime, input.PackSeedTime,
-		input.PreferMagnetURL, input.SupportsRSS, input.SupportsSearch, input.SupportsRedirect,
-		input.SupportsPagination, input.Enabled, input.Priority,
+		input.BaseURL, input.APIKey, input.Categories, input.MediaTypeScopes, input.TagScopes, input.Fields,
+		input.Capabilities, input.Redirect, input.AppProfileID, input.MinimumSeeders, input.SeedRatio,
+		input.SeedTime, input.PackSeedTime, input.PreferMagnetURL, input.SupportsRSS, input.SupportsSearch,
+		input.SupportsRedirect, input.SupportsPagination, input.Enabled, input.Priority,
 	))
 }
 
@@ -108,21 +109,23 @@ func (s *SettingsStore) UpdateIndexer(ctx context.Context, id uuid.UUID, input I
 			base_url = $13,
 			api_key = $14,
 			categories = $15,
-			fields = $16,
-			capabilities = $17,
-			redirect = $18,
-			app_profile_id = $19,
-			minimum_seeders = $20,
-			seed_ratio = $21,
-			seed_time = $22,
-			pack_seed_time = $23,
-			prefer_magnet_url = $24,
-			supports_rss = $25,
-			supports_search = $26,
-			supports_redirect = $27,
-			supports_pagination = $28,
-			enabled = $29,
-			priority = $30,
+			media_type_scopes = $16,
+			tag_scopes = $17,
+			fields = $18,
+			capabilities = $19,
+			redirect = $20,
+			app_profile_id = $21,
+			minimum_seeders = $22,
+			seed_ratio = $23,
+			seed_time = $24,
+			pack_seed_time = $25,
+			prefer_magnet_url = $26,
+			supports_rss = $27,
+			supports_search = $28,
+			supports_redirect = $29,
+			supports_pagination = $30,
+			enabled = $31,
+			priority = $32,
 			health_status = 'healthy',
 			last_query_at = null,
 			last_success_at = null,
@@ -137,10 +140,10 @@ func (s *SettingsStore) UpdateIndexer(ctx context.Context, id uuid.UUID, input I
 	`,
 		id, input.DefinitionID, input.Name, input.Implementation, input.ImplementationName, input.Protocol,
 		input.Privacy, input.Language, input.Encoding, input.Description, input.IndexerURLs, input.LegacyURLs,
-		input.BaseURL, input.APIKey, input.Categories, input.Fields, input.Capabilities, input.Redirect,
-		input.AppProfileID, input.MinimumSeeders, input.SeedRatio, input.SeedTime, input.PackSeedTime,
-		input.PreferMagnetURL, input.SupportsRSS, input.SupportsSearch, input.SupportsRedirect,
-		input.SupportsPagination, input.Enabled, input.Priority,
+		input.BaseURL, input.APIKey, input.Categories, input.MediaTypeScopes, input.TagScopes, input.Fields,
+		input.Capabilities, input.Redirect, input.AppProfileID, input.MinimumSeeders, input.SeedRatio,
+		input.SeedTime, input.PackSeedTime, input.PreferMagnetURL, input.SupportsRSS, input.SupportsSearch,
+		input.SupportsRedirect, input.SupportsPagination, input.Enabled, input.Priority,
 	))
 }
 
@@ -172,6 +175,8 @@ func normalizeIndexerInput(input IndexerInput) IndexerInput {
 	if input.Categories == nil {
 		input.Categories = []int32{}
 	}
+	input.MediaTypeScopes = normalizeIndexerMediaTypeScopes(input.MediaTypeScopes)
+	input.TagScopes = normalizeIndexerTagScopes(input.TagScopes)
 	if len(input.Fields) == 0 {
 		input.Fields = json.RawMessage("[]")
 	}
@@ -188,6 +193,35 @@ func normalizeIndexerInput(input IndexerInput) IndexerInput {
 		input.SupportsPagination = true
 	}
 	return input
+}
+
+func normalizeIndexerMediaTypeScopes(values []string) []string {
+	if len(values) == 0 {
+		return []string{"movie", "serie", "anime", "audio", "book"}
+	}
+	allowed := map[string]bool{"movie": true, "serie": true, "anime": true, "audio": true, "book": true}
+	scopes := []string{}
+	seen := map[string]bool{}
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if !allowed[value] || seen[value] {
+			continue
+		}
+		seen[value] = true
+		scopes = append(scopes, value)
+	}
+	if len(scopes) == 0 {
+		return []string{"movie", "serie", "anime", "audio", "book"}
+	}
+	return scopes
+}
+
+func normalizeIndexerTagScopes(values []string) []string {
+	tags := normalizeTagNames(values)
+	if tags == nil {
+		return []string{}
+	}
+	return tags
 }
 
 func (s *SettingsStore) RecordIndexerSuccess(ctx context.Context, id uuid.UUID) (Indexer, error) {

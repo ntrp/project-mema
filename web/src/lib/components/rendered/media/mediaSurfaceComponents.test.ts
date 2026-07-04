@@ -77,7 +77,7 @@ describe('rendered person detail area (SCN-MEDIA-008)', () => {
 		const { body } = render(PersonDetailArea, {
 			props: personRenderProps({
 				mediaItems: [mediaItem({ title: 'Scenario Movie', externalId: 'movie-1' })],
-				addingKey: 'series:tmdb:series-1'
+				addingKey: 'serie:tmdb:series-1'
 			})
 		});
 
@@ -222,7 +222,7 @@ function personDetail(): PersonDetails {
 			},
 			{
 				title: 'Scenario Series',
-				type: 'series',
+				type: 'serie',
 				year: 2026,
 				externalProvider: 'tmdb',
 				externalId: 'series-1',

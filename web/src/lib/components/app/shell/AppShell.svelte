@@ -70,7 +70,7 @@
 		return app.mediaItems.find(
 			(item: MediaItem) =>
 				item.id === app.selectedMediaItemId &&
-				item.type === (app.activeHomeSection === 'movies' ? 'movie' : 'series')
+				item.type === (app.activeHomeSection === 'movies' ? 'movie' : 'serie')
 		)?.backdropPath;
 	}
 </script>

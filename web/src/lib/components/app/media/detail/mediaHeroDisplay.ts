@@ -49,7 +49,7 @@ export function monitorStatus(details: MediaMetadataDetails) {
 }
 
 export function monitorHint(details: MediaMetadataDetails) {
-	if (details.type === 'series') {
+	if (details.type === 'serie') {
 		return details.monitored
 			? 'Click to stop monitoring future episodes'
 			: 'Click to monitor future episodes';

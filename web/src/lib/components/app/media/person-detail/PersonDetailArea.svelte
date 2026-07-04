@@ -27,7 +27,7 @@
 	const counts = $derived({
 		all: appearances.length,
 		movie: appearances.filter((appearance) => appearance.type === 'movie').length,
-		series: appearances.filter((appearance) => appearance.type === 'series').length
+		series: appearances.filter((appearance) => appearance.type === 'serie').length
 	});
 
 	const filterOptions: { value: PersonAppearanceFilter; label: string }[] = [

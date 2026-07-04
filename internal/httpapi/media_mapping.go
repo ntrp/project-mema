@@ -182,7 +182,7 @@ func mediaEpisodeResponses(values []storage.MediaEpisode) []MediaMetadataEpisode
 }
 
 func optionalSeriesType(mediaType MediaType, value *SeriesType) *string {
-	if mediaType != Series || value == nil {
+	if mediaType != MediaTypeSerie || value == nil {
 		return nil
 	}
 	seriesType := string(*value)

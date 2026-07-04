@@ -101,14 +101,14 @@ describe('search actions (SCN-SETTINGS-009)', () => {
 		expect(navigationMock.goto).toHaveBeenLastCalledWith('resolved:/movies/[id]');
 
 		actions.selectAutocompleteResult({
-			type: 'series',
+			type: 'serie',
 			title: 'Provider Series',
 			externalProvider: 'tmdb',
 			externalId: '123'
 		});
 		expect(navigationMock.resolve).toHaveBeenCalledWith('/media/[provider]/[type]/[externalId]', {
 			provider: 'tmdb',
-			type: 'series',
+			type: 'serie',
 			externalId: '123'
 		});
 

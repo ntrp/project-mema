@@ -18,11 +18,11 @@ export function parsedTooltipSections(info: MatchInfo, mediaType: MediaType): To
 			label: 'Parsed release',
 			fields: compactFields([
 				mediaType === 'movie' ? field('Movie', parsed.release.movieTitle) : undefined,
-				mediaType === 'series' ? field('Series', parsed.release.seriesTitle) : undefined,
+				mediaType === 'serie' ? field('Series', parsed.release.seriesTitle) : undefined,
 				field('Year', parsed.release.year),
 				field('Season', parsed.release.seasonNumber),
 				field('Episode', parsed.release.episodeNumber),
-				mediaType === 'series' ? field('Season pack', parsed.release.seasonPack) : undefined,
+				mediaType === 'serie' ? field('Season pack', parsed.release.seasonPack) : undefined,
 				field('Edition', parsed.release.edition),
 				field('Release group', parsed.release.releaseGroup),
 				field('Release hash', parsed.release.releaseHash)

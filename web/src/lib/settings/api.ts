@@ -1540,5 +1540,5 @@ export async function matchLibraryScanItem(
 }
 
 export function mediaTypeForLibraryKind(kind: LibraryMediaKind) {
-	return kind === 'series' || kind === 'anime_series' ? 'series' : 'movie';
+	return kind === 'series' || kind === 'anime_series' ? 'serie' : 'movie';
 }

@@ -53,7 +53,7 @@
 	}
 
 	function isContinuingSeries(item: MediaItem) {
-		return item.type === 'series' && item.metadataStatus?.trim().toLowerCase() === 'continuing';
+		return item.type === 'serie' && item.metadataStatus?.trim().toLowerCase() === 'continuing';
 	}
 </script>
 

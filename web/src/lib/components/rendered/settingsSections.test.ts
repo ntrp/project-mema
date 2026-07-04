@@ -33,6 +33,7 @@ describe('rendered integration settings sections (SCN-SETTINGS-018, SCN-SETTINGS
 			props: {
 				indexers: [],
 				indexerSearch: emptyIndexerSearch(),
+				tags: [],
 				form: emptyIndexerForm(),
 				saving: false,
 				clearingIndexerSearchCache: false,

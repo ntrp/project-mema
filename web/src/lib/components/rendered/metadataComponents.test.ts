@@ -9,7 +9,7 @@ import { renderWithTooltip } from './renderHelpers';
 function detail(overrides: Partial<MediaMetadataDetails> = {}): MediaMetadataDetails {
 	return {
 		title: 'Scenario Series',
-		type: 'series',
+		type: 'serie',
 		year: 2026,
 		externalProvider: 'tmdb',
 		externalId: 'series-1',

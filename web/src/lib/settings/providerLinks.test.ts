@@ -5,9 +5,9 @@ import { providerDisplayName, providerPageUrl } from './providerLinks';
 describe('provider links (SCN-SETTINGS-012)', () => {
 	it('builds provider page URLs for movies and series', () => {
 		expect(providerPageUrl('tmdb', 'movie', '123')).toBe('https://www.themoviedb.org/movie/123');
-		expect(providerPageUrl('tmdb', 'series', '456')).toBe('https://www.themoviedb.org/tv/456');
+		expect(providerPageUrl('tmdb', 'serie', '456')).toBe('https://www.themoviedb.org/tv/456');
 		expect(providerPageUrl('tvdb', 'movie', '789')).toBe('https://thetvdb.com/movies/789');
-		expect(providerPageUrl('tvdb', 'series', '101')).toBe('https://thetvdb.com/series/101');
+		expect(providerPageUrl('tvdb', 'serie', '101')).toBe('https://thetvdb.com/series/101');
 	});
 
 	it('falls back for missing or unknown providers', () => {

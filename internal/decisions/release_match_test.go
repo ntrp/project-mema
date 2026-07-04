@@ -23,7 +23,7 @@ func TestEvaluateReleaseMatchAcceptsRequestedEpisode(t *testing.T) {
 	season := int32(1)
 	episode := int32(2)
 	match := EvaluateReleaseMatch(
-		storage.MediaItem{Type: "series", Title: "The Show"},
+		storage.MediaItem{Type: "serie", Title: "The Show"},
 		storage.ReleaseCandidate{
 			Title:            "The.Show.S01E02.1080p.WEBDL",
 			SearchKind:       "episode",
@@ -40,7 +40,7 @@ func TestEvaluateReleaseMatchAcceptsExactSeriesTitle(t *testing.T) {
 	season := int32(1)
 	episode := int32(1)
 	match := EvaluateReleaseMatch(
-		storage.MediaItem{Type: "series", Title: "Friends"},
+		storage.MediaItem{Type: "serie", Title: "Friends"},
 		storage.ReleaseCandidate{
 			Title:            "Friends.S01E01.1080p.WEBDL",
 			SearchKind:       "episode",
@@ -56,7 +56,7 @@ func TestEvaluateReleaseMatchAcceptsExactSeriesTitle(t *testing.T) {
 func TestEvaluateReleaseMatchRejectsSeriesTitleContainingExpectedTitle(t *testing.T) {
 	season := int32(1)
 	episode := int32(1)
-	item := storage.MediaItem{Type: "series", Title: "Friends"}
+	item := storage.MediaItem{Type: "serie", Title: "Friends"}
 	releases := []string{
 		"Friends.Like.These.The.Murder.of.Skylar.Neese.S01E01.The.Disappearance.2160p.DSNP.WEB-DL.DD+5.1.DoVi.H.265-playWEB",
 		"Graceful.Friends.S01E01.1080p.LINETV.WEB-DL.AAC2.0.H.264-MWeb",
@@ -82,7 +82,7 @@ func TestEvaluateReleaseMatchWarnsSeasonPackForEpisodeSearch(t *testing.T) {
 	season := int32(1)
 	episode := int32(2)
 	match := EvaluateReleaseMatch(
-		storage.MediaItem{Type: "series", Title: "The Show"},
+		storage.MediaItem{Type: "serie", Title: "The Show"},
 		storage.ReleaseCandidate{
 			Title:            "The.Show.S01.1080p.WEBDL",
 			SearchKind:       "episode",
@@ -154,7 +154,7 @@ func TestEvaluateReleaseMatchScoresProfileCustomFormats(t *testing.T) {
 	}}
 
 	match := EvaluateReleaseMatchWithContext(
-		storage.MediaItem{Type: "series", Title: "Friends"},
+		storage.MediaItem{Type: "serie", Title: "Friends"},
 		storage.ReleaseCandidate{
 			Title:            "Friends.S01E01.NORDiC.2160p.MAX.WEB-DL.DV.HDR.H.265-NORViNE",
 			SearchKind:       "episode",
@@ -203,7 +203,7 @@ func TestEvaluateReleaseMatchScoresSeededHDRCustomFormat(t *testing.T) {
 	}}
 
 	match := EvaluateReleaseMatchWithContext(
-		storage.MediaItem{Type: "series", Title: "Friends"},
+		storage.MediaItem{Type: "serie", Title: "Friends"},
 		storage.ReleaseCandidate{
 			Title:            "Friends.S01E01.NORDiC.2160p.MAX.WEB-DL.DV.HDR.H.265-NORViNE",
 			SearchKind:       "episode",

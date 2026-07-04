@@ -59,7 +59,7 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 	it('groups series files by season and adds missing episode rows', () => {
 		const series = {
 			...movie,
-			type: 'series',
+			type: 'serie',
 			title: 'Scenario Series',
 			filePaths: ['/tv/Scenario/S01E01.720p.Dual.mkv'],
 			mediaFolderPath: '/tv/Scenario',

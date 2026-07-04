@@ -69,7 +69,7 @@ describe('cache tables (SCN-SETTINGS-015)', () => {
 					providerId: 'provider-tvdb',
 					providerName: 'TVDB Local',
 					providerType: 'tvdb',
-					mediaType: 'series',
+					mediaType: 'serie',
 					query: 'frieren',
 					cacheKind: 'details',
 					year: 2023,

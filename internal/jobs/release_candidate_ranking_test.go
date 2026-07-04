@@ -12,7 +12,7 @@ func TestSCNMedia002DedupeReleaseCandidatesKeepsBestDuplicate(t *testing.T) {
 	guid := "same-release"
 	season := int32(1)
 	episode := int32(2)
-	item := storage.MediaItem{Type: "series", Title: "Scenario Series"}
+	item := storage.MediaItem{Type: "serie", Title: "Scenario Series"}
 	releases := []storage.ReleaseCandidateInput{
 		{
 			Title:            "Scenario.Series.S01.1080p.WEBDL",

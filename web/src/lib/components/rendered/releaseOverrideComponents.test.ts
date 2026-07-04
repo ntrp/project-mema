@@ -11,7 +11,7 @@ import type { MediaItem, MediaMetadataEpisode } from '$lib/settings/types';
 
 const seriesItem = {
 	id: 'series-1',
-	type: 'series',
+	type: 'serie',
 	title: 'Scenario Series',
 	monitored: true,
 	monitorMode: 'all_episodes',

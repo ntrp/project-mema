@@ -44,7 +44,7 @@
 	</label>
 	<label class="grid gap-1.5">
 		<span class="text-sm font-bold text-muted-foreground">
-			{activity.mediaType === 'series' ? 'Series' : 'Movie'}
+			{activity.mediaType === 'serie' ? 'Series' : 'Movie'}
 		</span>
 		<Input bind:value={form.movieTitle} />
 	</label>
@@ -52,7 +52,7 @@
 		<span class="text-sm font-bold text-muted-foreground">Year</span>
 		<Input bind:value={form.year} min="0" type="number" />
 	</label>
-	{#if activity.mediaType === 'series'}
+	{#if activity.mediaType === 'serie'}
 		<label class="grid gap-1.5">
 			<span class="text-sm font-bold text-muted-foreground">Season</span>
 			<Input bind:value={form.seasonNumber} min="0" type="number" required />

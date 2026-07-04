@@ -145,7 +145,7 @@ describe('rendered media components (SCN-MEDIA-003)', () => {
 		const { body } = renderWithTooltip(MediaOverviewInfoCard, {
 			detail: {
 				title: 'Scenario Series',
-				type: 'series' as const,
+				type: 'serie' as const,
 				externalProvider: 'tmdb',
 				externalId: 'series-1',
 				status: 'Continuing',

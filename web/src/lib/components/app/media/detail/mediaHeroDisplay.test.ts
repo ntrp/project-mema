@@ -40,7 +40,7 @@ describe('media hero display helpers (SCN-MEDIA-003)', () => {
 	it('builds monitor labels and hints by media type', () => {
 		expect(monitorStatus({ monitored: true } as MediaMetadataDetails)).toBe('Monitored');
 		expect(monitorStatus({ monitored: false } as MediaMetadataDetails)).toBe('Not monitored');
-		expect(monitorHint({ type: 'series', monitored: true } as MediaMetadataDetails)).toContain(
+		expect(monitorHint({ type: 'serie', monitored: true } as MediaMetadataDetails)).toContain(
 			'future episodes'
 		);
 		expect(monitorHint({ type: 'movie', monitored: false } as MediaMetadataDetails)).toContain(

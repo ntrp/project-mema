@@ -36,14 +36,14 @@ func searchReleasesWithProgress(
 	manual bool,
 	progress ReleaseSearchProgress,
 ) ([]storage.ReleaseCandidateInput, []string, error) {
-	configs, err := settings.ListEnabledIndexers(ctx)
+	configs, err := settings.ListEligibleIndexers(ctx, item)
 	if err != nil {
-		return nil, nil, fmt.Errorf("list enabled indexers: %w", err)
+		return nil, nil, fmt.Errorf("list eligible indexers: %w", err)
 	}
 	if len(configs) == 0 {
-		slog.Debug("release search skipped because no indexers are enabled", "mediaItemId", item.ID, "title", item.Title)
-		publishReleaseSearchProgress(progress, "No enabled indexer is configured")
-		return nil, []string{"No enabled indexer is configured"}, nil
+		slog.Debug("release search skipped because no indexers are eligible", "mediaItemId", item.ID, "title", item.Title, "mediaType", item.Type, "tags", item.Tags)
+		publishReleaseSearchProgress(progress, "No eligible indexer is configured for %s", item.Type)
+		return nil, []string{"No eligible indexer is configured for this media item"}, nil
 	}
 
 	releases := []storage.ReleaseCandidateInput{}

@@ -4,7 +4,7 @@ import { mediaUpdateMessage, optimisticMediaItem } from './mediaOptimisticUpdate
 import type { MediaItem, MediaItemUpdateRequest } from '$lib/settings/types';
 
 const series = {
-	type: 'series',
+	type: 'serie',
 	title: 'Scenario Series',
 	monitored: true,
 	monitorMode: 'all_episodes',

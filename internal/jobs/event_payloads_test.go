@@ -51,7 +51,7 @@ func TestSCNSystem008IndexerSearchCachePayloadPreservesEntryState(t *testing.T) 
 		IndexerID:       uuid.New(),
 		IndexerName:     "Local Torznab",
 		IndexerProtocol: "torrent",
-		MediaType:       "series",
+		MediaType:       "serie",
 		Query:           "Scenario Series S01",
 		ResultCount:     12,
 		ExpiresAt:       expiresAt,

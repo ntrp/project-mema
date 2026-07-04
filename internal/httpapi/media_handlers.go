@@ -140,7 +140,7 @@ func (s *Server) AutocompleteMedia(w http.ResponseWriter, r *http.Request, param
 
 	groups, err := s.groupedMediaSearch(r.Context(), groupedMediaSearchRequest{
 		query:            query,
-		mediaTypes:       []string{"movie", "series"},
+		mediaTypes:       []string{"movie", "serie"},
 		limit:            5,
 		includeLibrary:   boolDefault(params.IncludeLibrary, true),
 		includeProviders: boolDefault(params.IncludeProviders, true),
@@ -168,7 +168,7 @@ func (s *Server) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	includeMedia := boolDefault(body.IncludeMedia, true)
 	includePeople := boolDefault(body.IncludePeople, false)
-	mediaTypes := []string{"movie", "series"}
+	mediaTypes := []string{"movie", "serie"}
 	if body.Type != nil {
 		if !body.Type.Valid() {
 			writeError(w, http.StatusBadRequest, "invalid_type", "Media type is not supported")

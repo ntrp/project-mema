@@ -32,6 +32,8 @@ func scanIndexer(row pgx.Row) (Indexer, error) {
 		&indexer.BaseURL,
 		&indexer.APIKey,
 		&indexer.Categories,
+		&indexer.MediaTypeScopes,
+		&indexer.TagScopes,
 		&indexer.Fields,
 		&indexer.Capabilities,
 		&indexer.Redirect,
@@ -64,7 +66,7 @@ func scanIndexer(row pgx.Row) (Indexer, error) {
 const indexerColumns = `
 	id, definition_id, name, implementation, implementation_name, protocol, privacy,
 	language, encoding, description, indexer_urls, legacy_urls, base_url, api_key,
-	categories, fields, capabilities, redirect, app_profile_id, minimum_seeders,
+	categories, media_type_scopes, tag_scopes, fields, capabilities, redirect, app_profile_id, minimum_seeders,
 	seed_ratio, seed_time, pack_seed_time, prefer_magnet_url, supports_rss,
 	supports_search, supports_redirect, supports_pagination, enabled, priority,
 	health_status, last_query_at, last_success_at, last_failure_at, next_check_at,

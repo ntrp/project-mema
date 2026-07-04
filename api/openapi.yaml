@@ -3841,13 +3841,21 @@ components:
       type: string
       enum:
         - movie
-        - series
+        - serie
     MediaDiscoverMediaType:
       type: string
       enum:
         - movie
-        - series
+        - serie
         - mixed
+    IndexerMediaType:
+      type: string
+      enum:
+        - movie
+        - serie
+        - anime
+        - audio
+        - book
     MediaSearchRequest:
       type: object
       additionalProperties: false
@@ -6162,6 +6170,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/IndexerField"
+        mediaTypeScopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerMediaType"
     Indexer:
       allOf:
         - $ref: "#/components/schemas/IndexerRequest"
@@ -6283,6 +6295,16 @@ components:
             type: integer
             format: int32
           maxItems: 100
+        mediaTypeScopes:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexerMediaType"
+          maxItems: 5
+        tagScopes:
+          type: array
+          items:
+            type: string
+          maxItems: 50
         fields:
           type: array
           items:

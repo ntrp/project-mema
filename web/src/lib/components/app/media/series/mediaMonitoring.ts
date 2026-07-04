@@ -22,7 +22,7 @@ export function monitorUpdate(
 }
 
 export function titleMonitorActive(item: MediaItem) {
-	return item.type === 'series' ? item.monitorMode === 'future_episodes' : item.monitored;
+	return item.type === 'serie' ? item.monitorMode === 'future_episodes' : item.monitored;
 }
 
 export function titleMonitorStatus(item: MediaItem) {
@@ -30,7 +30,7 @@ export function titleMonitorStatus(item: MediaItem) {
 }
 
 export function titleMonitorHint(item: MediaItem) {
-	if (item.type === 'series') {
+	if (item.type === 'serie') {
 		return titleMonitorActive(item)
 			? 'Click to stop monitoring future episodes'
 			: 'Click to monitor future episodes';
@@ -42,7 +42,7 @@ export function toggledMediaMonitor(
 	item: MediaItem
 ): Pick<MediaItemUpdateRequest, 'monitored' | 'monitorMode'> {
 	const nextMonitored = !titleMonitorActive(item);
-	const manualMonitored = item.type === 'series' && Boolean(item.seasons?.some(isSeasonMonitored));
+	const manualMonitored = item.type === 'serie' && Boolean(item.seasons?.some(isSeasonMonitored));
 	return {
 		monitored: nextMonitored || manualMonitored,
 		monitorMode: nextMonitorMode(item.type, nextMonitored)
@@ -99,7 +99,7 @@ function seriesMonitorUpdate(
 
 function nextMonitorMode(type: MediaItem['type'], monitored: boolean): MediaMonitorMode {
 	if (!monitored) return 'none';
-	return type === 'series' ? 'future_episodes' : 'only_media';
+	return type === 'serie' ? 'future_episodes' : 'only_media';
 }
 
 function isSeasonMonitored(season: MediaMetadataSeason) {

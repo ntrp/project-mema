@@ -49,7 +49,7 @@
 		untrack(() => overrideDraftFromRelease(item, release, languages))
 	);
 
-	const isSeries = $derived(item.type === 'series');
+	const isSeries = $derived(item.type === 'serie');
 	const qualities = $derived([...new Set([draft.quality, ...qualityOptions].filter(Boolean))]);
 
 	function submit(event: SubmitEvent) {

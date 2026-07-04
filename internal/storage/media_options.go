@@ -16,7 +16,7 @@ func normalizeMediaRequestOptions(input MediaRequestInput) MediaRequestInput {
 }
 
 func normalizeMonitorMode(mediaType string, value string) string {
-	if mediaType == "series" {
+	if mediaType == "serie" {
 		switch value {
 		case "none", "all_episodes", "future_episodes", "missing_episodes", "existing_episodes", "no_specials":
 			return value
@@ -33,7 +33,7 @@ func normalizeMonitorMode(mediaType string, value string) string {
 }
 
 func normalizeSeriesType(mediaType string, value *string) *string {
-	if mediaType != "series" || value == nil {
+	if mediaType != "serie" || value == nil {
 		return nil
 	}
 	switch *value {

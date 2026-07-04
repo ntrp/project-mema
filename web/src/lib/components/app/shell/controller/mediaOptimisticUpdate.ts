@@ -23,7 +23,7 @@ export function mediaUpdateMessage(
 	nextItem: MediaItem,
 	request: MediaItemUpdateRequest
 ) {
-	if (isSeasonPatch(request) && item.type === 'series') {
+	if (isSeasonPatch(request) && item.type === 'serie') {
 		return seriesSeasonMessage(item.seasons ?? [], nextItem.seasons ?? []);
 	}
 	if (request.libraryFolderId) {
@@ -70,8 +70,8 @@ function isSeasonPatch(request: MediaItemUpdateRequest) {
 }
 
 function titleMonitorMessage(item: MediaItem, nextItem: MediaItem) {
-	const monitored = item.type === 'series' ? nextItem.monitorMode !== 'none' : nextItem.monitored;
-	const label = item.type === 'series' ? 'Series' : 'Movie';
+	const monitored = item.type === 'serie' ? nextItem.monitorMode !== 'none' : nextItem.monitored;
+	const label = item.type === 'serie' ? 'Series' : 'Movie';
 	return `${label} is now ${monitored ? 'monitored' : 'not monitored'}`;
 }
 

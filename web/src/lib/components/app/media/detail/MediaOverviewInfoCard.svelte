@@ -59,7 +59,7 @@
 		details: MediaMetadataDetails,
 		lookup: Map<string, string>
 	): string[] | ReleaseDateItem[] {
-		if (details.type === 'series') {
+		if (details.type === 'serie') {
 			return details.firstAirDate ? [formatDate(details.firstAirDate)] : [];
 		}
 		return releaseDateItems([
@@ -174,7 +174,7 @@
 					<span
 						class="wrap-anywhere inline-flex items-center justify-end gap-1.5 text-right text-muted-foreground"
 					>
-						{#if row.label === 'Status' && detail.type === 'series' && seriesStatusIcon(row.value)}
+						{#if row.label === 'Status' && detail.type === 'serie' && seriesStatusIcon(row.value)}
 							{@const Icon = seriesStatusIcon(row.value)}
 							<Icon aria-hidden="true" class="size-3.5 text-foreground" />
 						{/if}

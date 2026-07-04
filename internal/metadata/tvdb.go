@@ -26,7 +26,7 @@ func (s *Service) searchTVDB(ctx context.Context, config Config, request SearchR
 	switch request.MediaType {
 	case "movie":
 		values.Set("type", "movie")
-	case "series":
+	case "serie":
 		values.Set("type", "series")
 	}
 	if request.Year != nil {
@@ -103,7 +103,7 @@ func tvdbMediaType(value string) string {
 	case "movie":
 		return "movie"
 	case "series":
-		return "series"
+		return "serie"
 	default:
 		return ""
 	}

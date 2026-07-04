@@ -49,7 +49,7 @@ function folderScore(candidate: MediaSearchResult, folder: LibraryFolder) {
 	const hasAnime = hasAny(path, ['anime']);
 	const hasMovie = hasAny(path, ['movie', 'movies', 'film', 'films']);
 	const hasSeries = hasAny(path, ['series', 'tv', 'show', 'shows']);
-	if (candidate.type === 'series') {
+	if (candidate.type === 'serie') {
 		return (
 			(hasSeries ? 100 : 0) +
 			(hasAnime && isAnimeCandidate(candidate) ? 20 : 0) -

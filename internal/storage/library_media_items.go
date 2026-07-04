@@ -119,7 +119,7 @@ func mediaKindToMediaType(kind string) (string, bool) {
 	case "movie", "anime_movie":
 		return "movie", true
 	case "series", "anime_series":
-		return "series", true
+		return "serie", true
 	default:
 		return "", false
 	}

@@ -83,7 +83,7 @@
 	}
 
 	function defaultMonitorMode(type: MediaSearchResult['type']): MediaMonitorMode {
-		return type === 'series' ? 'all_episodes' : 'only_media';
+		return type === 'serie' ? 'all_episodes' : 'only_media';
 	}
 </script>
 

@@ -10,7 +10,7 @@ const apiMock = vi.hoisted(() => ({
 	deleteUser: vi.fn(),
 	searchMedia: vi.fn(),
 	matchLibraryScanItem: vi.fn(),
-	mediaTypeForLibraryKind: vi.fn((kind: string) => (kind.includes('series') ? 'series' : 'movie')),
+	mediaTypeForLibraryKind: vi.fn((kind: string) => (kind.includes('series') ? 'serie' : 'movie')),
 	saveCustomFormat: vi.fn(),
 	saveDownloadClient: vi.fn(),
 	saveIndexer: vi.fn(),
@@ -61,7 +61,7 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 			if (typeof value === 'function' && 'mockReset' in value) value.mockReset();
 		}
 		apiMock.mediaTypeForLibraryKind.mockImplementation((kind: string) =>
-			kind.includes('series') ? 'series' : 'movie'
+			kind.includes('series') ? 'serie' : 'movie'
 		);
 	});
 
@@ -194,6 +194,6 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 		await expect(actions.searchLibraryMatch('anime_series', '  Scenario  ')).resolves.toEqual([
 			{ title: 'Scenario Series' }
 		]);
-		expect(apiMock.searchMedia).toHaveBeenCalledWith({ type: 'series', query: 'Scenario' });
+		expect(apiMock.searchMedia).toHaveBeenCalledWith({ type: 'serie', query: 'Scenario' });
 	});
 });

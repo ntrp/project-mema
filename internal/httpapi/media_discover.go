@@ -92,9 +92,9 @@ var discoverSections = []discoverSection{
 	{responseID: "movie-popular", title: "Popular Movies", mediaType: "movie", requests: []discoverSectionRequest{{mediaType: "movie", id: "popular"}}},
 	{responseID: "movie-upcoming", title: "Upcoming Movies", mediaType: "movie", requests: []discoverSectionRequest{{mediaType: "movie", id: "upcoming"}}},
 	{responseID: "movie-top-rated", title: "Top Rated Movies", mediaType: "movie", requests: []discoverSectionRequest{{mediaType: "movie", id: "top_rated"}}},
-	{responseID: "series-popular", title: "Popular Series", mediaType: "series", requests: []discoverSectionRequest{{mediaType: "series", id: "popular"}}},
-	{responseID: "series-on-the-air", title: "Airing Series", mediaType: "series", requests: []discoverSectionRequest{{mediaType: "series", id: "on_the_air"}}},
-	{responseID: "series-top-rated", title: "Top Rated Series", mediaType: "series", requests: []discoverSectionRequest{{mediaType: "series", id: "top_rated"}}},
+	{responseID: "series-popular", title: "Popular Series", mediaType: "serie", requests: []discoverSectionRequest{{mediaType: "serie", id: "popular"}}},
+	{responseID: "series-on-the-air", title: "Airing Series", mediaType: "serie", requests: []discoverSectionRequest{{mediaType: "serie", id: "on_the_air"}}},
+	{responseID: "series-top-rated", title: "Top Rated Series", mediaType: "serie", requests: []discoverSectionRequest{{mediaType: "serie", id: "top_rated"}}},
 }
 
 func discoverSectionByID(id string) (discoverSection, bool) {

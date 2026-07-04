@@ -89,17 +89,17 @@ describe('rendered home media components (SCN-MEDIA-003)', () => {
 	it('renders library cards with poster URLs, routes, and status labels', () => {
 		const { body } = render(MediaItemList, {
 			props: {
-				mediaType: 'series',
+				mediaType: 'serie',
 				items: [
 					mediaItem({
 						id: 'series-1',
 						title: 'Continuing Series',
-						type: 'series',
+						type: 'serie',
 						status: 'downloaded',
 						metadataStatus: 'continuing',
 						posterPath: '/poster.jpg'
 					}),
-					mediaItem({ id: 'series-2', title: 'Missing Series', type: 'series', status: 'missing' })
+					mediaItem({ id: 'series-2', title: 'Missing Series', type: 'serie', status: 'missing' })
 				]
 			}
 		});

@@ -59,7 +59,7 @@ func mediaItemCreateRequest(qualityProfileID string, libraryFolderID ResourceId)
 	tags := []string{"managed", "scenario"}
 	overview := "A movie managed directly by the admin."
 	return MediaItemCreateRequest{
-		Type:                Movie,
+		Type:                MediaTypeMovie,
 		Title:               "Managed Scenario Movie",
 		Year:                int32Ptr(2026),
 		Overview:            &overview,
