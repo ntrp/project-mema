@@ -434,6 +434,69 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/files/stream': {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Stream one media file with HTTP range support */
+		get: operations['streamMediaItemFile'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/files/preview': {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Stream a browser-compatible media file preview */
+		get: operations['previewMediaItemFile'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/files/vlc': {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** Download a VLC-compatible remote streaming playlist */
+		get: operations['downloadMediaItemFilePlaylist'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/metadata/refresh': {
 		parameters: {
 			query?: never;
@@ -3260,6 +3323,7 @@ export interface components {
 	};
 	parameters: {
 		ResourceId: string;
+		MediaFilePath: string;
 		ProfileId: string;
 	};
 	requestBodies: never;
@@ -3980,6 +4044,88 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	streamMediaItemFile: {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Media file stream */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/octet-stream': string;
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	previewMediaItemFile: {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+				audioTrackIndex?: number;
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Browser-compatible MP4 preview stream */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'video/mp4': string;
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	downloadMediaItemFilePlaylist: {
+		parameters: {
+			query: {
+				path: components['parameters']['MediaFilePath'];
+			};
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description M3U playlist pointing at the remote stream */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'audio/x-mpegurl': string;
 				};
 			};
 			400: components['responses']['BadRequest'];

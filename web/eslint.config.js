@@ -8,15 +8,22 @@ const browserGlobals = {
 	$state: 'readonly',
 	console: 'readonly',
 	document: 'readonly',
+	Element: 'readonly',
 	Event: 'readonly',
 	EventSource: 'readonly',
+	EventTarget: 'readonly',
 	HTMLDivElement: 'readonly',
 	HTMLElement: 'readonly',
+	HTMLInputElement: 'readonly',
 	HTMLSelectElement: 'readonly',
+	HTMLTableRowElement: 'readonly',
+	IntersectionObserver: 'readonly',
 	KeyboardEvent: 'readonly',
 	MessageEvent: 'readonly',
+	PointerEvent: 'readonly',
 	SubmitEvent: 'readonly',
 	URL: 'readonly',
+	URLSearchParams: 'readonly',
 	WheelEvent: 'readonly',
 	window: 'readonly'
 };
@@ -93,7 +100,8 @@ export default [
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{ argsIgnorePattern: '^_', varsIgnorePattern: '^_' }
-			]
+			],
+			'svelte/no-navigation-without-resolve': 'off'
 		}
 	}
 ];

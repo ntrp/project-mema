@@ -42,10 +42,6 @@
 		}
 	}
 
-	function typeLabel(type: MediaType) {
-		return type === 'movie' ? 'Movie' : 'Series';
-	}
-
 	function statusLineClass(item: MediaItem) {
 		if (item.status === 'downloaded') {
 			return isContinuingSeries(item) ? 'bg-sky-300' : 'bg-green-500';

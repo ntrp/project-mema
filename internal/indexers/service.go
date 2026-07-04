@@ -6,18 +6,26 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	cardigannengine "media-manager/internal/indexers/cardigann"
+	"media-manager/internal/indexers/custom"
 )
 
 type Service struct {
-	client HTTPDoer
-	loader *cardigannLoader
+	client    HTTPDoer
+	cardigann *cardigannengine.Engine
+	custom    *custom.Registry
 }
 
 func NewService(client HTTPDoer) *Service {
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
 	}
-	return &Service{client: client, loader: newCardigannLoader(client)}
+	return &Service{
+		client:    client,
+		cardigann: cardigannengine.New(client),
+		custom:    custom.NewRegistry(client),
+	}
 }
 
 func (s *Service) Test(ctx context.Context, config Config) TestResult {
@@ -31,15 +39,13 @@ func (s *Service) Test(ctx context.Context, config Config) TestResult {
 }
 
 func (s *Service) test(ctx context.Context, config Config) TestResult {
-	if config.usesCardigannDefinition() {
-		return s.testCardigann(ctx, config)
+	if usesCardigannDefinition(config) {
+		return s.cardigann.Test(ctx, config)
 	}
-	switch config.Protocol {
-	case "torrent", "usenet":
-		return s.testCaps(ctx, config)
-	default:
-		return failedResult("Unsupported indexer protocol", "protocol", config.Protocol)
+	if indexer, ok := s.custom.EngineFor(config); ok {
+		return indexer.Test(ctx, config)
 	}
+	return failedResult("Unsupported indexer protocol", "protocol", config.Protocol)
 }
 
 func (s *Service) Search(ctx context.Context, config Config, query string, mediaType string) ([]Release, error) {
@@ -47,18 +53,16 @@ func (s *Service) Search(ctx context.Context, config Config, query string, media
 	if query == "" {
 		return nil, fmt.Errorf("query is required")
 	}
-	if config.usesCardigannDefinition() {
-		return s.searchCardigann(ctx, config, query, mediaType)
+	if usesCardigannDefinition(config) {
+		return s.cardigann.Search(ctx, config, query, mediaType)
 	}
-	switch config.Protocol {
-	case "torrent", "usenet":
-		return s.searchTorznab(ctx, config, query, mediaType)
-	default:
-		return nil, fmt.Errorf("unsupported indexer protocol %q", config.Protocol)
+	if indexer, ok := s.custom.EngineFor(config); ok {
+		return indexer.Search(ctx, config, query, mediaType)
 	}
+	return nil, fmt.Errorf("unsupported indexer protocol %q", config.Protocol)
 }
 
-func (config Config) usesCardigannDefinition() bool {
+func usesCardigannDefinition(config Config) bool {
 	if config.DefinitionID == "" || strings.HasPrefix(config.DefinitionID, "generic-") {
 		return false
 	}

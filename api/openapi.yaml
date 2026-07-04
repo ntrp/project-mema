@@ -926,6 +926,88 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/stream:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/MediaFilePath"
+    get:
+      operationId: streamMediaItemFile
+      tags:
+        - Media
+      summary: Stream one media file with HTTP range support
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Media file stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/preview:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/MediaFilePath"
+    get:
+      operationId: previewMediaItemFile
+      tags:
+        - Media
+      summary: Stream a browser-compatible media file preview
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: audioTrackIndex
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+      responses:
+        "200":
+          description: Browser-compatible MP4 preview stream
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/vlc:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - $ref: "#/components/parameters/MediaFilePath"
+    get:
+      operationId: downloadMediaItemFilePlaylist
+      tags:
+        - Media
+      summary: Download a VLC-compatible remote streaming playlist
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: M3U playlist pointing at the remote stream
+          content:
+            audio/x-mpegurl:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/metadata/refresh:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -3291,6 +3373,13 @@ components:
       schema:
         type: string
         format: uuid
+    MediaFilePath:
+      name: path
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
     ProfileId:
       name: id
       in: path

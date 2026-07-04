@@ -47,12 +47,16 @@
 				<span class="text-sm text-muted-foreground">{checkedValue ? 'Enabled' : 'Disabled'}</span>
 			</div>
 		{:else if field.type === 'select'}
-			<SettingsSelect value={textValue} {options} onValueChange={onValueChange} />
+			<SettingsSelect value={textValue} {options} {onValueChange} />
 		{:else}
 			<Input
 				id={fieldId}
 				value={textValue}
-				type={field.type === 'password' ? 'password' : field.type === 'number' ? 'number' : field.type}
+				type={field.type === 'password'
+					? 'password'
+					: field.type === 'number'
+						? 'number'
+						: field.type}
 				step={field.type === 'number' && field.isFloat ? '0.01' : undefined}
 				placeholder={field.placeholder}
 				autocomplete={field.type === 'password' ? 'off' : undefined}
@@ -69,7 +73,12 @@
 			<p class="m-0 text-xs text-destructive">{field.helpTextWarning}</p>
 		{/if}
 		{#if field.helpLink}
-			<a class="text-xs font-bold text-primary underline" href={field.helpLink} target="_blank" rel="noreferrer">
+			<a
+				class="text-xs font-bold text-primary underline"
+				href={field.helpLink}
+				target="_blank"
+				rel="noreferrer"
+			>
 				Help
 			</a>
 		{/if}

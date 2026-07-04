@@ -87,6 +87,7 @@
 			<div class="grid" aria-label={group.title}>
 				{#each group.rows as row (row.key)}
 					<MediaFileSummary
+						mediaItemId={item.id}
 						{row}
 						{activityStatus}
 						{canManage}

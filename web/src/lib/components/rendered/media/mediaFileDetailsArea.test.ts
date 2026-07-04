@@ -8,6 +8,7 @@ import { renderWithTooltip } from '$lib/components/rendered/renderHelpers';
 describe('rendered media file details (SCN-MEDIA-004)', () => {
 	it('renders missing file search actions without delete affordance', () => {
 		const { body } = renderWithTooltip(MediaFileSummary, {
+			mediaItemId: 'media-1',
 			row: missingRow('movie-missing', 'Scenario Movie'),
 			canManage: true,
 			searching: false,

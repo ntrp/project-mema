@@ -15,7 +15,7 @@ import (
 
 const (
 	outPath            = "internal/indexers/indexer_catalog.generated.json"
-	definitionsOutPath = "internal/indexers/indexer_definitions.generated.json"
+	definitionsOutPath = "internal/indexers/cardigann/indexer_definitions.generated.json"
 )
 
 var (

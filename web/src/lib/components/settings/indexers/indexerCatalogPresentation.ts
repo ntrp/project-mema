@@ -16,7 +16,10 @@ export function privacyBadgeClass(privacy: string) {
 	return 'uppercase border-destructive/50 bg-destructive/10 text-destructive';
 }
 
-export function categoryBadges(entry: IndexerCatalogEntry, flatten: (categories: Category[]) => Category[]) {
+export function categoryBadges(
+	entry: IndexerCatalogEntry,
+	flatten: (categories: Category[]) => Category[]
+) {
 	return flatten(entry.capabilities.categories).slice(0, 4);
 }
 

@@ -4,11 +4,13 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { cn } from '$lib/utils';
 	import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
+	import MediaFilePreviewModal from '$lib/components/app/media/files/MediaFilePreviewModal.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import type { ActivityQueueStatus } from '$lib/components/app/activity/activityQueue';
 
 	interface Props {
+		mediaItemId: string;
 		row: MediaFileRow;
 		activityStatus?: ActivityQueueStatus;
 		canManage: boolean;
@@ -22,6 +24,7 @@
 	}
 
 	let {
+		mediaItemId,
 		row,
 		activityStatus,
 		canManage,
@@ -34,6 +37,7 @@
 		onDelete
 	}: Props = $props();
 	let detailsOpen = $state(false);
+	let previewOpen = $state(false);
 	const busy = $derived(
 		searching ||
 			activityStatus?.status === 'queued' ||
@@ -125,6 +129,7 @@
 			{showSearchActions}
 			{onAutoSearch}
 			{onManualSearch}
+			onPreview={() => (previewOpen = true)}
 			{onDelete}
 		/>
 		{#if row.exists}
@@ -141,3 +146,7 @@
 		<MediaFileDetailsAccordion {row} />
 	{/if}
 </div>
+
+{#if row.exists && row.path && previewOpen}
+	<MediaFilePreviewModal {mediaItemId} {row} onClose={() => (previewOpen = false)} />
+{/if}

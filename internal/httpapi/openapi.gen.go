@@ -2435,6 +2435,9 @@ type UserUpdateRequest struct {
 	Username string   `json:"username"`
 }
 
+// MediaFilePath defines model for MediaFilePath.
+type MediaFilePath = string
+
 // ProfileId defines model for ProfileId.
 type ProfileId = string
 
@@ -2533,6 +2536,22 @@ type GetMediaDiscoverSectionParams struct {
 type DeleteMediaItemParams struct {
 	// KeepFiles Remove the media item from the app without deleting its media folder.
 	KeepFiles *bool `form:"keepFiles,omitempty" json:"keepFiles,omitempty"`
+}
+
+// PreviewMediaItemFileParams defines parameters for PreviewMediaItemFile.
+type PreviewMediaItemFileParams struct {
+	AudioTrackIndex *int32        `form:"audioTrackIndex,omitempty" json:"audioTrackIndex,omitempty"`
+	Path            MediaFilePath `form:"path" json:"path"`
+}
+
+// StreamMediaItemFileParams defines parameters for StreamMediaItemFile.
+type StreamMediaItemFileParams struct {
+	Path MediaFilePath `form:"path" json:"path"`
+}
+
+// DownloadMediaItemFilePlaylistParams defines parameters for DownloadMediaItemFilePlaylist.
+type DownloadMediaItemFilePlaylistParams struct {
+	Path MediaFilePath `form:"path" json:"path"`
 }
 
 // StreamMediaReleaseSearchParams defines parameters for StreamMediaReleaseSearch.
@@ -2812,9 +2831,18 @@ type ServerInterface interface {
 	// Delete one media file and rescan the item folder
 	// (POST /media/items/{id}/files/delete)
 	DeleteMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Stream a browser-compatible media file preview
+	// (GET /media/items/{id}/files/preview)
+	PreviewMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileParams)
 	// Rescan a media item folder for media and metadata files
 	// (POST /media/items/{id}/files/rescan)
 	RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Stream one media file with HTTP range support
+	// (GET /media/items/{id}/files/stream)
+	StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaItemFileParams)
+	// Download a VLC-compatible remote streaming playlist
+	// (GET /media/items/{id}/files/vlc)
+	DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Request, id ResourceId, params DownloadMediaItemFilePlaylistParams)
 	// Enqueue a release grab with the highest-priority enabled download client
 	// (POST /media/items/{id}/grab)
 	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -3295,9 +3323,27 @@ func (_ Unimplemented) DeleteMediaItemFile(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Stream a browser-compatible media file preview
+// (GET /media/items/{id}/files/preview)
+func (_ Unimplemented) PreviewMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Rescan a media item folder for media and metadata files
 // (POST /media/items/{id}/files/rescan)
 func (_ Unimplemented) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Stream one media file with HTTP range support
+// (GET /media/items/{id}/files/stream)
+func (_ Unimplemented) StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaItemFileParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Download a VLC-compatible remote streaming playlist
+// (GET /media/items/{id}/files/vlc)
+func (_ Unimplemented) DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Request, id ResourceId, params DownloadMediaItemFilePlaylistParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5180,6 +5226,67 @@ func (siw *ServerInterfaceWrapper) DeleteMediaItemFile(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// PreviewMediaItemFile operation middleware
+func (siw *ServerInterfaceWrapper) PreviewMediaItemFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PreviewMediaItemFileParams
+
+	// ------------- Optional query parameter "audioTrackIndex" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "audioTrackIndex", r.URL.Query(), &params.AudioTrackIndex, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "audioTrackIndex"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "audioTrackIndex", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewMediaItemFile(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // RescanMediaItemFiles operation middleware
 func (siw *ServerInterfaceWrapper) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request) {
 
@@ -5203,6 +5310,102 @@ func (siw *ServerInterfaceWrapper) RescanMediaItemFiles(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RescanMediaItemFiles(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StreamMediaItemFile operation middleware
+func (siw *ServerInterfaceWrapper) StreamMediaItemFile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params StreamMediaItemFileParams
+
+	// ------------- Required query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StreamMediaItemFile(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadMediaItemFilePlaylist operation middleware
+func (siw *ServerInterfaceWrapper) DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DownloadMediaItemFilePlaylistParams
+
+	// ------------- Required query parameter "path" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadMediaItemFilePlaylist(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8283,7 +8486,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/media/items/{id}/files/delete", wrapper.DeleteMediaItemFile)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/files/preview", wrapper.PreviewMediaItemFile)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/files/rescan", wrapper.RescanMediaItemFiles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/files/stream", wrapper.StreamMediaItemFile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/files/vlc", wrapper.DownloadMediaItemFilePlaylist)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/grab", wrapper.GrabMediaRelease)

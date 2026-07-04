@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CirclePlayIcon from '@lucide/svelte/icons/circle-play';
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import UserIcon from '@lucide/svelte/icons/user';
@@ -13,6 +14,7 @@
 		showSearchActions?: boolean;
 		onAutoSearch: () => void;
 		onManualSearch: () => void;
+		onPreview: () => void;
 		onDelete: (_row: MediaFileRow) => void;
 	}
 
@@ -23,6 +25,7 @@
 		showSearchActions = true,
 		onAutoSearch,
 		onManualSearch,
+		onPreview,
 		onDelete
 	}: Props = $props();
 
@@ -80,6 +83,24 @@
 		</Tooltip.Root>
 	{/if}
 	{#if row.exists}
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				{#snippet child({ props })}
+					<Button
+						{...props}
+						type="button"
+						variant="outline"
+						size="icon-sm"
+						aria-label="Preview file"
+						disabled={!row.path}
+						onclick={onPreview}
+					>
+						<CirclePlayIcon aria-hidden="true" />
+					</Button>
+				{/snippet}
+			</Tooltip.Trigger>
+			<Tooltip.Content>Preview file</Tooltip.Content>
+		</Tooltip.Root>
 		<Tooltip.Root>
 			<Tooltip.Trigger>
 				{#snippet child({ props })}
