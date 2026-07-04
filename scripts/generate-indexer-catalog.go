@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	outPath = "internal/indexers/indexer_catalog.generated.json"
+	outPath            = "internal/indexers/indexer_catalog.generated.json"
+	definitionsOutPath = "internal/indexers/indexer_definitions.generated.json"
 )
 
 var (
@@ -88,13 +89,20 @@ func main() {
 	entries := make([]catalogEntry, 0, len(paths)+2)
 	entries = append(entries, genericTorznab(), genericNewznab())
 	client := &http.Client{Timeout: 20 * time.Second}
+	if newznab, err := fetchNewznabDefaults(client); err == nil {
+		entries = append(entries, newznab...)
+	} else {
+		fmt.Fprintf(os.Stderr, "skip newznab defaults: %v\n", err)
+	}
+	definitions := map[string]string{}
 	for _, path := range paths {
-		entry, err := fetchDefinition(client, path)
+		entry, body, err := fetchDefinition(client, path)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "skip %s: %v\n", path, err)
 			continue
 		}
 		entries = append(entries, entry)
+		definitions[entry.DefinitionID] = body
 	}
 	sort.Slice(entries, func(i, j int) bool {
 		return strings.ToLower(entries[i].Name) < strings.ToLower(entries[j].Name)
@@ -106,7 +114,10 @@ func main() {
 	if err := os.WriteFile(outPath, append(data, '\n'), 0o644); err != nil {
 		fatal(err)
 	}
-	fmt.Printf("wrote %d catalog entries to %s\n", len(entries), outPath)
+	if err := writeDefinitions(definitionsOutPath, definitions); err != nil {
+		fatal(err)
+	}
+	fmt.Printf("wrote %d catalog entries to %s and %d yaml definitions to %s\n", len(entries), outPath, len(definitions), definitionsOutPath)
 }
 
 func definitionPaths() ([]string, error) {
@@ -150,28 +161,28 @@ func catalogRepo() string {
 	return strings.Join([]string{"Prow", "larr/Indexers"}, "")
 }
 
-func fetchDefinition(client *http.Client, path string) (catalogEntry, error) {
+func fetchDefinition(client *http.Client, path string) (catalogEntry, string, error) {
 	req, err := http.NewRequest(http.MethodGet, rawBase+path, nil)
 	if err != nil {
-		return catalogEntry{}, err
+		return catalogEntry{}, "", err
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return catalogEntry{}, err
+		return catalogEntry{}, "", err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return catalogEntry{}, fmt.Errorf("github returned %s", resp.Status)
+		return catalogEntry{}, "", fmt.Errorf("github returned %s", resp.Status)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return catalogEntry{}, err
+		return catalogEntry{}, "", err
 	}
 	var raw map[string]any
-	if err := yaml.Unmarshal(body, &raw); err != nil {
-		return catalogEntry{}, err
+	if err := yaml.Unmarshal(cleanProwlarrYAML(body), &raw); err != nil {
+		return catalogEntry{}, "", err
 	}
-	return entryFromYAML(raw, path), nil
+	return entryFromYAML(raw, path), string(body), nil
 }
 
 func entryFromYAML(raw map[string]any, path string) catalogEntry {

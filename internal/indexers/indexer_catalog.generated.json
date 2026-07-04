@@ -1475,6 +1475,101 @@
     ]
   },
   {
+    "definitionId": "newznab-abnzb",
+    "name": "abNZB",
+    "implementation": "Newznab",
+    "implementationName": "abNZB",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "abNZB Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://abnzb.com/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
     "definitionId": "abtorrents",
     "name": "ABtorrents",
     "implementation": "Cardigann",
@@ -2360,6 +2455,91 @@
     ]
   },
   {
+    "definitionId": "newznab-althub",
+    "name": "altHUB",
+    "implementation": "Newznab",
+    "implementationName": "altHUB",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "altHUB Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://api.althub.co.za/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
     "definitionId": "amigosshare",
     "name": "Amigos Share Club",
     "implementation": "Cardigann",
@@ -2983,6 +3163,76 @@
         "helpText": "Inactive accounts under VIP and without parked are automatically deleted after about a year.",
         "value": "Inactive accounts under VIP and without parked are automatically deleted after about a year.",
         "type": "info",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-animetosho-usenet",
+    "name": "AnimeTosho (Usenet)",
+    "implementation": "Newznab",
+    "implementationName": "AnimeTosho (Usenet)",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "AnimeTosho (Usenet) Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://feed.animetosho.org/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
         "advanced": false
       }
     ]
@@ -3850,6 +4100,128 @@
         "value": "All inactive accounts will be deleted after 60 days of inactivity.",
         "type": "info",
         "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "arabtorrents",
+    "name": "ArabTorrents",
+    "implementation": "Cardigann",
+    "implementationName": "ArabTorrents",
+    "protocol": "torrent",
+    "privacy": "private",
+    "language": "ar-AE",
+    "encoding": "windows-1256",
+    "description": "ArabTorrents is an ARABIC Private Torrent Tracker for MOVIES / TV / GENERAL",
+    "indexerUrls": [
+      "https://arab-torrents.net/"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": false,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "username",
+        "label": "Username",
+        "type": "text",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "password",
+        "label": "Password",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "sort",
+        "label": "Sort requested from site",
+        "value": "added",
+        "type": "select",
+        "advanced": false,
+        "selectOptions": [
+          {
+            "value": "added",
+            "name": "created"
+          },
+          {
+            "value": "seeders",
+            "name": "seeders"
+          },
+          {
+            "value": "size",
+            "name": "size"
+          },
+          {
+            "value": "name",
+            "name": "title"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "name": "type",
+        "label": "Order requested from site",
+        "value": "desc",
+        "type": "select",
+        "advanced": false,
+        "selectOptions": [
+          {
+            "value": "asc",
+            "name": "asc"
+          },
+          {
+            "value": "desc",
+            "name": "desc"
+          }
+        ]
       }
     ]
   },
@@ -8447,6 +8819,161 @@
             "name": "title"
           }
         ]
+      }
+    ]
+  },
+  {
+    "definitionId": "btarg",
+    "name": "BTArg",
+    "implementation": "Cardigann",
+    "implementationName": "BTArg",
+    "protocol": "torrent",
+    "privacy": "private",
+    "language": "es-AR",
+    "encoding": "iso-8859-1",
+    "description": "BTArg is an ARGENTINIAN Private Torrent Tracker for MOVIES / TV / GENERAL",
+    "indexerUrls": [
+      "https://www.btarg.com.ar/"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": false,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep",
+        "imdbid"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "username",
+        "label": "Username",
+        "type": "text",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "password",
+        "label": "Password",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "freeleech",
+        "label": "Search freeleech only",
+        "value": false,
+        "type": "checkbox",
+        "advanced": false
+      },
+      {
+        "order": 4,
+        "name": "sort",
+        "label": "Sort requested from site",
+        "value": "added",
+        "type": "select",
+        "advanced": false,
+        "selectOptions": [
+          {
+            "value": "added",
+            "name": "created"
+          },
+          {
+            "value": "seeders",
+            "name": "seeders"
+          },
+          {
+            "value": "size",
+            "name": "size"
+          },
+          {
+            "value": "name",
+            "name": "title"
+          }
+        ]
+      },
+      {
+        "order": 5,
+        "name": "type",
+        "label": "Order requested from site",
+        "value": "DESC",
+        "type": "select",
+        "advanced": false,
+        "selectOptions": [
+          {
+            "value": "ASC",
+            "name": "asc"
+          },
+          {
+            "value": "DESC",
+            "name": "desc"
+          }
+        ]
+      },
+      {
+        "order": 6,
+        "name": "info_tpp",
+        "label": "Results Per Page",
+        "helpText": "For best results, change the \u003cb\u003ePor página Torrents:\u003c/b\u003e setting to \u003cb\u003e100\u003c/b\u003e on your account profile.",
+        "value": "For best results, change the \u003cb\u003ePor página Torrents:\u003c/b\u003e setting to \u003cb\u003e100\u003c/b\u003e on your account profile.",
+        "type": "info",
+        "advanced": false
+      },
+      {
+        "order": 7,
+        "name": "info_activity",
+        "label": "Account Inactivity",
+        "helpText": "Those new accounts that do not register a transfer or have any movement in the forum after 4 weeks will be disabled.",
+        "value": "Those new accounts that do not register a transfer or have any movement in the forum after 4 weeks will be disabled.",
+        "type": "info",
+        "advanced": false
       }
     ]
   },
@@ -14598,6 +15125,106 @@
     ]
   },
   {
+    "definitionId": "newznab-dognzb",
+    "name": "DOGnzb",
+    "implementation": "Newznab",
+    "implementationName": "DOGnzb",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "DOGnzb Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://api.dognzb.cr/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
     "definitionId": "dreamingtree",
     "name": "DreamingTree",
     "implementation": "Cardigann",
@@ -14875,6 +15502,101 @@
         "helpText": "You must log in to the Drugari web site with your browser once every 60 days to prevent your account from getting disabled.",
         "value": "You must log in to the Drugari web site with your browser once every 60 days to prevent your account from getting disabled.",
         "type": "info",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-drunkenslug",
+    "name": "DrunkenSlug",
+    "implementation": "Newznab",
+    "implementationName": "DrunkenSlug",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "DrunkenSlug Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://drunkenslug.com/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
         "advanced": false
       }
     ]
@@ -20101,17 +20823,16 @@
     ]
   },
   {
-    "definitionId": "gimmepeers",
-    "name": "GimmePeers",
-    "implementation": "Cardigann",
-    "implementationName": "GimmePeers",
-    "protocol": "torrent",
+    "definitionId": "newznab-gingadaddy",
+    "name": "GingaDADDY",
+    "implementation": "Newznab",
+    "implementationName": "GingaDADDY",
+    "protocol": "usenet",
     "privacy": "private",
     "language": "en-US",
-    "encoding": "iso-8859-1",
-    "description": "GimmePeers (formerly ILT) is a Private PAY2DL Torrent Tracker for MOVIES / TV / GENERAL",
+    "description": "GingaDADDY Usenet indexer via Newznab API",
     "indexerUrls": [
-      "https://www.gimmepeers.com/"
+      "https://www.gingadaddy.com/api"
     ],
     "legacyUrls": [],
     "supportsRss": true,
@@ -20163,71 +20884,41 @@
           "children": []
         }
       ],
-      "supportsRawSearch": false,
+      "supportsRawSearch": true,
       "searchParams": [
         "q"
       ],
       "tvSearchParams": [
         "q",
         "season",
-        "ep",
-        "tvmazeid",
-        "genre"
+        "ep"
       ],
       "movieSearchParams": [
         "q",
-        "imdbid",
-        "genre"
+        "imdbid"
       ]
     },
     "fields": [
       {
         "order": 1,
-        "name": "username",
-        "label": "Username",
-        "type": "text",
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
         "advanced": false
       },
       {
         "order": 2,
-        "name": "password",
-        "label": "Password",
+        "name": "apiKey",
+        "label": "API key",
         "type": "password",
         "advanced": false
       },
       {
         "order": 3,
-        "name": "freeleech",
-        "label": "Filter freeleech only",
-        "value": false,
-        "type": "checkbox",
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
         "advanced": false
-      },
-      {
-        "order": 4,
-        "name": "sort",
-        "label": "Sort requested from site",
-        "value": 4,
-        "type": "select",
-        "advanced": false
-      },
-      {
-        "order": 5,
-        "name": "type",
-        "label": "Order requested from site",
-        "value": "desc",
-        "type": "select",
-        "advanced": false,
-        "selectOptions": [
-          {
-            "value": "asc",
-            "name": "asc"
-          },
-          {
-            "value": "desc",
-            "name": "desc"
-          }
-        ]
       }
     ]
   },
@@ -33090,16 +33781,12 @@
     "indexerUrls": [
       "https://magnetcatcat.com/",
       "https://clmclm.com/",
-      "https://www.8800578.xyz/",
-      "https://www.8800582.xyz/",
-      "https://www.8800583.xyz/",
-      "https://www.8800584.xyz/"
+      "https://www.8800585.xyz/",
+      "https://www.8800586.xyz/",
+      "https://www.8800587.xyz/",
+      "https://www.8800588.xyz/"
     ],
     "legacyUrls": [
-      "https://www.8800566.xyz/",
-      "https://www.8800567.xyz/",
-      "https://www.8800568.xyz/",
-      "https://www.8800569.xyz/",
       "https://www.8800570.xyz/",
       "https://www.8800571.xyz/",
       "https://www.8800572.xyz/",
@@ -33110,7 +33797,11 @@
       "https://www.8800577.xyz/",
       "https://www.8800579.xyz/",
       "https://www.8800580.xyz/",
-      "https://www.8800581.xyz/"
+      "https://www.8800581.xyz/",
+      "https://www.8800578.xyz/",
+      "https://www.8800582.xyz/",
+      "https://www.8800583.xyz/",
+      "https://www.8800584.xyz/"
     ],
     "supportsRss": true,
     "supportsSearch": true,
@@ -34870,6 +35561,106 @@
             "name": "desc"
           }
         ]
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-miatrix",
+    "name": "Miatrix",
+    "implementation": "Newznab",
+    "implementationName": "Miatrix",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "Miatrix Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://www.miatrix.com/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
       }
     ]
   },
@@ -38405,17 +39196,16 @@
     ]
   },
   {
-    "definitionId": "nexum-api",
-    "name": "Nexum (API)",
-    "implementation": "Cardigann",
-    "implementationName": "Nexum (API)",
-    "protocol": "torrent",
+    "definitionId": "newznab-newz69",
+    "name": "Newz69",
+    "implementation": "Newznab",
+    "implementationName": "Newz69",
+    "protocol": "usenet",
     "privacy": "private",
-    "language": "fr-FR",
-    "encoding": "UTF-8",
-    "description": "Nexum is a FRENCH Private Torrent Tracker for MOVIES / TV",
+    "language": "en-US",
+    "description": "Newz69 Usenet indexer via Newznab API",
     "indexerUrls": [
-      "https://nexum-core.com/"
+      "https://newz69.keagaming.com/api"
     ],
     "legacyUrls": [],
     "supportsRss": true,
@@ -38426,6 +39216,11 @@
       "limitsMax": 100,
       "limitsDefault": 100,
       "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
         {
           "id": 2000,
           "name": "Movies",
@@ -38447,6 +39242,11 @@
           "children": []
         },
         {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
           "id": 7000,
           "name": "Books",
           "children": []
@@ -38457,7 +39257,7 @@
           "children": []
         }
       ],
-      "supportsRawSearch": false,
+      "supportsRawSearch": true,
       "searchParams": [
         "q"
       ],
@@ -38467,119 +39267,31 @@
         "ep"
       ],
       "movieSearchParams": [
-        "q"
+        "q",
+        "imdbid"
       ]
     },
     "fields": [
       {
         "order": 1,
-        "name": "apikey",
-        "label": "API key",
-        "type": "text",
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
         "advanced": false
       },
       {
         "order": 2,
-        "name": "info_apikey",
-        "label": "About your API key",
-        "helpText": "Find/Generate your API key on your \u003ca href=\"https://nexum-core.com/settings\" target=\"_blank\"\u003eNexum Paramètres\u003c/a\u003e at the \u003cb\u003eClé API \u003c/b\u003e section.",
-        "value": "Find/Generate your API key on your \u003ca href=\"https://nexum-core.com/settings\" target=\"_blank\"\u003eNexum Paramètres\u003c/a\u003e at the \u003cb\u003eClé API \u003c/b\u003e section.",
-        "type": "info",
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
         "advanced": false
       },
       {
         "order": 3,
-        "name": "multilang",
-        "label": "Replace MULTi by another language in release name",
-        "value": false,
-        "type": "checkbox",
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
         "advanced": false
-      },
-      {
-        "order": 4,
-        "name": "multilanguage",
-        "label": "Replace MULTi by this language",
-        "value": "FRENCH",
-        "type": "select",
-        "advanced": false,
-        "selectOptions": [
-          {
-            "value": "ENGLISH",
-            "name": "ENGLISH"
-          },
-          {
-            "value": "FRENCH",
-            "name": "FRENCH"
-          },
-          {
-            "value": "MULTi.ENGLISH",
-            "name": "MULTi.ENGLISH"
-          },
-          {
-            "value": "MULTi.FRENCH",
-            "name": "MULTi.FRENCH"
-          },
-          {
-            "value": "MULTi.VOSTFR",
-            "name": "MULTi.VOSTFR"
-          },
-          {
-            "value": "VOSTFR",
-            "name": "VOSTFR"
-          }
-        ]
-      },
-      {
-        "order": 5,
-        "name": "vostfr",
-        "label": "Replace VOSTFR and SUBFRENCH with ENGLISH",
-        "value": false,
-        "type": "checkbox",
-        "advanced": false
-      },
-      {
-        "order": 6,
-        "name": "sort",
-        "label": "Sort requested from site",
-        "value": "created_at",
-        "type": "select",
-        "advanced": false,
-        "selectOptions": [
-          {
-            "value": "created_at",
-            "name": "created"
-          },
-          {
-            "value": "seeders",
-            "name": "seeders"
-          },
-          {
-            "value": "size",
-            "name": "size"
-          },
-          {
-            "value": "name",
-            "name": "title"
-          }
-        ]
-      },
-      {
-        "order": 7,
-        "name": "type",
-        "label": "Order requested from site",
-        "value": "desc",
-        "type": "select",
-        "advanced": false,
-        "selectOptions": [
-          {
-            "value": "asc",
-            "name": "asc"
-          },
-          {
-            "value": "desc",
-            "name": "desc"
-          }
-        ]
       }
     ]
   },
@@ -38683,6 +39395,106 @@
         "helpText": "Account retention rules:\u003col\u003e\u003cli\u003eVeteran Users users and above will be retained forever\u003c/li\u003e\u003cli\u003eElite Users and above will not have their account deleted after parking (in the Control Panel)\u003c/li\u003e\u003cli\u003eUsers with a parked account will be deleted if they do not log in for 400 consecutive days\u003c/li\u003e\u003cli\u003eUsers with a non-parked account will be banned if they do not log in for 40 consecutive days\u003c/li\u003e\u003cli\u003eUsers with no traffic (ie, upload/download data are both 0) will be banned if they do not log in for 7 consecutive days.\u003c/li\u003e\u003c/ol\u003e",
         "value": "Account retention rules:\u003col\u003e\u003cli\u003eVeteran Users users and above will be retained forever\u003c/li\u003e\u003cli\u003eElite Users and above will not have their account deleted after parking (in the Control Panel)\u003c/li\u003e\u003cli\u003eUsers with a parked account will be deleted if they do not log in for 400 consecutive days\u003c/li\u003e\u003cli\u003eUsers with a non-parked account will be banned if they do not log in for 40 consecutive days\u003c/li\u003e\u003cli\u003eUsers with no traffic (ie, upload/download data are both 0) will be banned if they do not log in for 7 consecutive days.\u003c/li\u003e\u003c/ol\u003e",
         "type": "info",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-ninjacentral",
+    "name": "NinjaCentral",
+    "implementation": "Newznab",
+    "implementationName": "NinjaCentral",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NinjaCentral Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://ninjacentral.co.za/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
         "advanced": false
       }
     ]
@@ -40159,6 +40971,776 @@
             "name": "desc"
           }
         ]
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzb-life",
+    "name": "Nzb.life",
+    "implementation": "Newznab",
+    "implementationName": "Nzb.life",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "Nzb.life Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://api.nzb.life/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzbcat",
+    "name": "NZBCat",
+    "implementation": "Newznab",
+    "implementationName": "NZBCat",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NZBCat Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://nzb.cat/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzbfinder",
+    "name": "NZBFinder",
+    "implementation": "Newznab",
+    "implementationName": "NZBFinder",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NZBFinder Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://nzbfinder.ws/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzbgeek",
+    "name": "NZBgeek",
+    "implementation": "Newznab",
+    "implementationName": "NZBgeek",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NZBgeek Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://api.nzbgeek.info/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzbndx",
+    "name": "NZBNDX",
+    "implementation": "Newznab",
+    "implementationName": "NZBNDX",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NZBNDX Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://www.nzbndx.com/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzbnoob",
+    "name": "NzbNoob",
+    "implementation": "Newznab",
+    "implementationName": "NzbNoob",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NzbNoob Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://www.nzbnoob.com/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzbplanet",
+    "name": "NzbPlanet",
+    "implementation": "Newznab",
+    "implementationName": "NzbPlanet",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NzbPlanet Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://api.nzbplanet.net/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-nzbstars",
+    "name": "NZBStars",
+    "implementation": "Newznab",
+    "implementationName": "NZBStars",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "NZBStars Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://nzbstars.com/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
       }
     ]
   },
@@ -54395,6 +55977,196 @@
     ]
   },
   {
+    "definitionId": "swarmazon-api",
+    "name": "Swarmazon (API)",
+    "implementation": "Cardigann",
+    "implementationName": "Swarmazon (API)",
+    "protocol": "torrent",
+    "privacy": "private",
+    "language": "en-US",
+    "encoding": "UTF-8",
+    "description": "Swarmazon is a Private Torrent Tracker for MOVIES / TV / GENERAL",
+    "indexerUrls": [
+      "https://swarmazon.club/"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": false,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep",
+        "imdbid"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "apikey",
+        "label": "APIKey",
+        "type": "text",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "info_key",
+        "label": "About your API key",
+        "helpText": "Find or Generate a new API Token by accessing the \u003ca href=\"https://swarmazon.club/en/view/settings.php?section=token\" target=\"_blank\"\u003eToken Setting\u003c/a\u003e page.",
+        "value": "Find or Generate a new API Token by accessing the \u003ca href=\"https://swarmazon.club/en/view/settings.php?section=token\" target=\"_blank\"\u003eToken Setting\u003c/a\u003e page.",
+        "type": "info",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "freeleech",
+        "label": "Search freeleech only",
+        "value": false,
+        "type": "checkbox",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "newznab-tabula-rasa",
+    "name": "Tabula Rasa",
+    "implementation": "Newznab",
+    "implementationName": "Tabula Rasa",
+    "protocol": "usenet",
+    "privacy": "private",
+    "language": "en-US",
+    "description": "Tabula Rasa Usenet indexer via Newznab API",
+    "indexerUrls": [
+      "https://www.tabula-rasa.pw/api/v1/api"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 1000,
+          "name": "Console",
+          "children": []
+        },
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 6000,
+          "name": "XXX",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q",
+        "imdbid"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "baseUrl",
+        "label": "Base URL",
+        "type": "url",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "categories",
+        "label": "Categories",
+        "type": "text",
+        "advanced": false
+      }
+    ]
+  },
+  {
     "definitionId": "tangpt",
     "name": "TangPT (躺平)",
     "implementation": "Cardigann",
@@ -58716,6 +60488,138 @@
         "label": "Category",
         "value": 0,
         "type": "select",
+        "advanced": false
+      }
+    ]
+  },
+  {
+    "definitionId": "tormac",
+    "name": "Tormac",
+    "implementation": "Cardigann",
+    "implementationName": "Tormac",
+    "protocol": "torrent",
+    "privacy": "private",
+    "language": "ru-RU",
+    "encoding": "windows-1251",
+    "description": "Tormac is a RUSSIAN Private Torrent Tracker for MAC SOFTWARE",
+    "indexerUrls": [
+      "https://tormac.org/"
+    ],
+    "legacyUrls": [],
+    "supportsRss": true,
+    "supportsSearch": true,
+    "supportsRedirect": true,
+    "supportsPagination": true,
+    "capabilities": {
+      "limitsMax": 100,
+      "limitsDefault": 100,
+      "categories": [
+        {
+          "id": 2000,
+          "name": "Movies",
+          "children": []
+        },
+        {
+          "id": 3000,
+          "name": "Audio",
+          "children": []
+        },
+        {
+          "id": 4000,
+          "name": "PC",
+          "children": []
+        },
+        {
+          "id": 5000,
+          "name": "TV",
+          "children": []
+        },
+        {
+          "id": 7000,
+          "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
+          "children": []
+        }
+      ],
+      "supportsRawSearch": true,
+      "searchParams": [
+        "q"
+      ],
+      "tvSearchParams": [
+        "q",
+        "season",
+        "ep"
+      ],
+      "movieSearchParams": [
+        "q"
+      ]
+    },
+    "fields": [
+      {
+        "order": 1,
+        "name": "cookie",
+        "label": "Cookie",
+        "type": "text",
+        "advanced": false
+      },
+      {
+        "order": 2,
+        "name": "info_cookie",
+        "label": "info_cookie",
+        "type": "text",
+        "advanced": false
+      },
+      {
+        "order": 3,
+        "name": "stripcyrillic",
+        "label": "Strip Cyrillic Letters",
+        "value": false,
+        "type": "checkbox",
+        "advanced": false
+      },
+      {
+        "order": 4,
+        "name": "addrussiantotitle",
+        "label": "Add RUS to end of all titles to improve language detection by Sonarr and Radarr. Will cause English-only results to be misidentified.",
+        "value": false,
+        "type": "checkbox",
+        "advanced": false
+      },
+      {
+        "order": 5,
+        "name": "freeleech_50",
+        "label": "Search freeleech and 50% freeleech only",
+        "value": false,
+        "type": "checkbox",
+        "advanced": false
+      },
+      {
+        "order": 6,
+        "name": "sort",
+        "label": "Sort requested from site",
+        "value": 1,
+        "type": "select",
+        "advanced": false
+      },
+      {
+        "order": 7,
+        "name": "type",
+        "label": "Order requested from site",
+        "value": 2,
+        "type": "select",
+        "advanced": false
+      },
+      {
+        "order": 8,
+        "name": "info_activity",
+        "label": "Account Inactivity",
+        "helpText": "Inactive accounts are automatically deleted after 90 days from the moment the system first detects inactivity.\u003cbr\u003eA user is considered inactive if they meet one of the following conditions:\u003cul\u003e\u003cli\u003eWithin 30 days of registration, they have not downloaded at least 1 torrent, resulting in Total Downloaded in their profile being 0\u003c/li\u003e\u003cli\u003eTheir ratio is less than or equal to 0.3\u003c/li\u003e\u003cli\u003eThey have fewer than 10 time bonuses\u003c/li\u003e\u003c/ul\u003eImmunity from inactivity is automatically granted to users holding any title from the list or being a member of groups.",
+        "value": "Inactive accounts are automatically deleted after 90 days from the moment the system first detects inactivity.\u003cbr\u003eA user is considered inactive if they meet one of the following conditions:\u003cul\u003e\u003cli\u003eWithin 30 days of registration, they have not downloaded at least 1 torrent, resulting in Total Downloaded in their profile being 0\u003c/li\u003e\u003cli\u003eTheir ratio is less than or equal to 0.3\u003c/li\u003e\u003cli\u003eThey have fewer than 10 time bonuses\u003c/li\u003e\u003c/ul\u003eImmunity from inactivity is automatically granted to users holding any title from the list or being a member of groups.",
+        "type": "info",
         "advanced": false
       }
     ]
@@ -65396,6 +67300,11 @@
         {
           "id": 7000,
           "name": "Books",
+          "children": []
+        },
+        {
+          "id": 8000,
+          "name": "Other",
           "children": []
         }
       ],

@@ -48,24 +48,30 @@ func downloadClientInputConfig(input storage.DownloadClientInput) downloadclient
 
 func indexerConfig(indexer storage.Indexer) indexers.Config {
 	return indexers.Config{
-		ID:         indexer.ID.String(),
-		Name:       indexer.Name,
-		Protocol:   indexer.Protocol,
-		BaseURL:    indexer.BaseURL,
-		APIKey:     indexer.APIKey,
-		Categories: append([]int32(nil), indexer.Categories...),
-		Redirect:   indexer.Redirect,
+		ID:             indexer.ID.String(),
+		DefinitionID:   indexer.DefinitionID,
+		Name:           indexer.Name,
+		Implementation: indexer.Implementation,
+		Protocol:       indexer.Protocol,
+		BaseURL:        indexer.BaseURL,
+		APIKey:         indexer.APIKey,
+		Categories:     append([]int32(nil), indexer.Categories...),
+		Fields:         append([]byte(nil), indexer.Fields...),
+		Redirect:       indexer.Redirect,
 	}
 }
 
 func indexerInputConfig(input storage.IndexerInput) indexers.Config {
 	return indexers.Config{
-		Name:       input.Name,
-		Protocol:   input.Protocol,
-		BaseURL:    input.BaseURL,
-		APIKey:     input.APIKey,
-		Categories: append([]int32(nil), input.Categories...),
-		Redirect:   input.Redirect,
+		DefinitionID:   input.DefinitionID,
+		Name:           input.Name,
+		Implementation: input.Implementation,
+		Protocol:       input.Protocol,
+		BaseURL:        input.BaseURL,
+		APIKey:         input.APIKey,
+		Categories:     append([]int32(nil), input.Categories...),
+		Fields:         append([]byte(nil), input.Fields...),
+		Redirect:       input.Redirect,
 	}
 }
 

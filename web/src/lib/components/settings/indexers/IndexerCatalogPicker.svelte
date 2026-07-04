@@ -77,7 +77,9 @@
 		return facetMatches
 			.map((entry) => ({ entry, rank: textMatchRank(query, [entry.name]) }))
 			.filter(({ rank }) => rank >= 0)
-			.sort((left, right) => left.rank - right.rank || left.entry.name.localeCompare(right.entry.name))
+			.sort(
+				(left, right) => left.rank - right.rank || left.entry.name.localeCompare(right.entry.name)
+			)
 			.map(({ entry }) => entry);
 	}
 
@@ -98,10 +100,6 @@
 </script>
 
 <div class="grid gap-4">
-	<label class="grid gap-1 text-sm font-bold text-muted-foreground">
-		Filter
-		<Input bind:value={textFilter} placeholder="Search catalog by name" />
-	</label>
 	<div class="grid gap-3 sm:grid-cols-4">
 		<IndexerCatalogFilterMultiSelect
 			id="indexer-catalog-protocol-filter"
@@ -136,6 +134,11 @@
 			onChange={(values) => (categoryFilter = values)}
 		/>
 	</div>
+
+	<label class="grid gap-1 text-sm font-bold text-muted-foreground">
+		Filter
+		<Input bind:value={textFilter} placeholder="Search catalog by name" />
+	</label>
 
 	<IndexerCatalogTable
 		entries={visibleCatalog}

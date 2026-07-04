@@ -147,13 +147,16 @@ func recordIndexerSearchSuccess(ctx context.Context, settings *storage.SettingsS
 
 func indexerConfig(indexer storage.Indexer) indexers.Config {
 	return indexers.Config{
-		ID:         indexer.ID.String(),
-		Name:       indexer.Name,
-		Protocol:   indexer.Protocol,
-		BaseURL:    indexer.BaseURL,
-		APIKey:     indexer.APIKey,
-		Categories: indexer.Categories,
-		Redirect:   indexer.Redirect,
+		ID:             indexer.ID.String(),
+		DefinitionID:   indexer.DefinitionID,
+		Name:           indexer.Name,
+		Implementation: indexer.Implementation,
+		Protocol:       indexer.Protocol,
+		BaseURL:        indexer.BaseURL,
+		APIKey:         indexer.APIKey,
+		Categories:     indexer.Categories,
+		Fields:         append([]byte(nil), indexer.Fields...),
+		Redirect:       indexer.Redirect,
 	}
 }
 

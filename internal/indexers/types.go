@@ -1,18 +1,22 @@
 package indexers
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 )
 
 type Config struct {
-	ID         string
-	Name       string
-	Protocol   string
-	BaseURL    string
-	APIKey     *string
-	Categories []int32
-	Redirect   bool
+	ID             string
+	DefinitionID   string
+	Name           string
+	Implementation string
+	Protocol       string
+	BaseURL        string
+	APIKey         *string
+	Categories     []int32
+	Fields         json.RawMessage
+	Redirect       bool
 }
 
 type TestResult struct {

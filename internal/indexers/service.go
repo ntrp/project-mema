@@ -10,13 +10,14 @@ import (
 
 type Service struct {
 	client HTTPDoer
+	loader *cardigannLoader
 }
 
 func NewService(client HTTPDoer) *Service {
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
 	}
-	return &Service{client: client}
+	return &Service{client: client, loader: newCardigannLoader(client)}
 }
 
 func (s *Service) Test(ctx context.Context, config Config) TestResult {
@@ -30,6 +31,9 @@ func (s *Service) Test(ctx context.Context, config Config) TestResult {
 }
 
 func (s *Service) test(ctx context.Context, config Config) TestResult {
+	if config.usesCardigannDefinition() {
+		return s.testCardigann(ctx, config)
+	}
 	switch config.Protocol {
 	case "torrent", "usenet":
 		return s.testCaps(ctx, config)
@@ -43,12 +47,22 @@ func (s *Service) Search(ctx context.Context, config Config, query string, media
 	if query == "" {
 		return nil, fmt.Errorf("query is required")
 	}
+	if config.usesCardigannDefinition() {
+		return s.searchCardigann(ctx, config, query, mediaType)
+	}
 	switch config.Protocol {
 	case "torrent", "usenet":
 		return s.searchTorznab(ctx, config, query, mediaType)
 	default:
 		return nil, fmt.Errorf("unsupported indexer protocol %q", config.Protocol)
 	}
+}
+
+func (config Config) usesCardigannDefinition() bool {
+	if config.DefinitionID == "" || strings.HasPrefix(config.DefinitionID, "generic-") {
+		return false
+	}
+	return strings.EqualFold(config.Implementation, "Cardigann") || config.Implementation == ""
 }
 
 func failedResult(message string, pairs ...interface{}) TestResult {
