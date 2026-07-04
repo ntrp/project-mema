@@ -2549,8 +2549,8 @@ type StreamMediaItemFileParams struct {
 	Path MediaFilePath `form:"path" json:"path"`
 }
 
-// DownloadMediaItemFilePlaylistParams defines parameters for DownloadMediaItemFilePlaylist.
-type DownloadMediaItemFilePlaylistParams struct {
+// PlayMediaItemFileInVlcParams defines parameters for PlayMediaItemFileInVlc.
+type PlayMediaItemFileInVlcParams struct {
 	Path MediaFilePath `form:"path" json:"path"`
 }
 
@@ -2840,9 +2840,9 @@ type ServerInterface interface {
 	// Stream one media file with HTTP range support
 	// (GET /media/items/{id}/files/stream)
 	StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaItemFileParams)
-	// Download a VLC-compatible remote streaming playlist
+	// Open a VLC-compatible remote streaming playlist
 	// (GET /media/items/{id}/files/vlc)
-	DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Request, id ResourceId, params DownloadMediaItemFilePlaylistParams)
+	PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, id ResourceId, params PlayMediaItemFileInVlcParams)
 	// Enqueue a release grab with the highest-priority enabled download client
 	// (POST /media/items/{id}/grab)
 	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -3341,9 +3341,9 @@ func (_ Unimplemented) StreamMediaItemFile(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Download a VLC-compatible remote streaming playlist
+// Open a VLC-compatible remote streaming playlist
 // (GET /media/items/{id}/files/vlc)
-func (_ Unimplemented) DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Request, id ResourceId, params DownloadMediaItemFilePlaylistParams) {
+func (_ Unimplemented) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, id ResourceId, params PlayMediaItemFileInVlcParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5367,8 +5367,8 @@ func (siw *ServerInterfaceWrapper) StreamMediaItemFile(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
-// DownloadMediaItemFilePlaylist operation middleware
-func (siw *ServerInterfaceWrapper) DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Request) {
+// PlayMediaItemFileInVlc operation middleware
+func (siw *ServerInterfaceWrapper) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	_ = err
@@ -5389,7 +5389,7 @@ func (siw *ServerInterfaceWrapper) DownloadMediaItemFilePlaylist(w http.Response
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params DownloadMediaItemFilePlaylistParams
+	var params PlayMediaItemFileInVlcParams
 
 	// ------------- Required query parameter "path" -------------
 
@@ -5405,7 +5405,7 @@ func (siw *ServerInterfaceWrapper) DownloadMediaItemFilePlaylist(w http.Response
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DownloadMediaItemFilePlaylist(w, r, id, params)
+		siw.Handler.PlayMediaItemFileInVlc(w, r, id, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8495,7 +8495,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/media/items/{id}/files/stream", wrapper.StreamMediaItemFile)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/media/items/{id}/files/vlc", wrapper.DownloadMediaItemFilePlaylist)
+		r.Get(options.BaseURL+"/media/items/{id}/files/vlc", wrapper.PlayMediaItemFileInVlc)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/grab", wrapper.GrabMediaRelease)

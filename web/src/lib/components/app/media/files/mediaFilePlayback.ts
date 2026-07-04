@@ -10,10 +10,6 @@ export interface AudioTrackOption {
 	streamIndex?: number;
 }
 
-export function mediaFileStreamUrl(mediaItemId: string, filePath: string) {
-	return mediaFileUrl(mediaItemId, filePath, 'stream');
-}
-
 export function mediaFilePreviewUrl(
 	mediaItemId: string,
 	filePath: string,
@@ -56,15 +52,10 @@ export function formatPlaybackTime(seconds: number) {
 	return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}:${rest}` : `${minutes}:${rest}`;
 }
 
-export function playlistDownloadName(fileName: string) {
-	const base = fileName.trim().replace(/\.[^.]+$/, '') || 'media-stream';
-	return `${base}.m3u`;
-}
-
 function mediaFileUrl(
 	mediaItemId: string,
 	filePath: string,
-	action: 'preview' | 'stream' | 'vlc',
+	action: 'preview' | 'vlc',
 	audioTrackIndex?: number
 ) {
 	const query = new URLSearchParams({ path: filePath });

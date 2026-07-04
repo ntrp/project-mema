@@ -989,15 +989,15 @@ paths:
       - $ref: "#/components/parameters/ResourceId"
       - $ref: "#/components/parameters/MediaFilePath"
     get:
-      operationId: downloadMediaItemFilePlaylist
+      operationId: playMediaItemFileInVlc
       tags:
         - Media
-      summary: Download a VLC-compatible remote streaming playlist
+      summary: Open a VLC-compatible remote streaming playlist
       security:
         - sessionCookie: []
       responses:
         "200":
-          description: M3U playlist pointing at the remote stream
+          description: Inline M3U playlist pointing at the remote stream
           content:
             audio/x-mpegurl:
               schema:

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ClapperboardIcon from '@lucide/svelte/icons/clapperboard';
-	import DownloadIcon from '@lucide/svelte/icons/download';
+	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
 	import MusicIcon from '@lucide/svelte/icons/music';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
@@ -11,8 +11,7 @@
 		formatPlaybackTime,
 		mediaFilePreviewUrl,
 		mediaFileVlcUrl,
-		metadataAudioTrackOptions,
-		playlistDownloadName
+		metadataAudioTrackOptions
 	} from '$lib/components/app/media/files/mediaFilePlayback';
 
 	interface Props {
@@ -91,15 +90,9 @@
 					<Dialog.Description class="break-anywhere">{row.relativePath}</Dialog.Description>
 				</div>
 				{#if row.path}
-					<Button
-						href={vlcUrl}
-						download={playlistDownloadName(fileName)}
-						variant="outline"
-						size="sm"
-						class="shrink-0"
-					>
-						<DownloadIcon aria-hidden="true" />
-						VLC playlist
+					<Button href={vlcUrl} variant="outline" size="sm" class="shrink-0">
+						<ExternalLinkIcon aria-hidden="true" />
+						Play in VLC
 					</Button>
 				{/if}
 			</div>

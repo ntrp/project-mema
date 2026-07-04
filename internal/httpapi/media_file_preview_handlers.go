@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -50,6 +51,10 @@ func runMediaPreview(r *http.Request, w http.ResponseWriter, target string, audi
 }
 
 func mediaPreviewArgs(target string, audioTrackIndex *int32) []string {
+	return mediaPreviewArgsWithPlan(target, audioTrackIndex, mediaPreviewPlan(target, audioTrackIndex))
+}
+
+func mediaPreviewArgsWithPlan(target string, audioTrackIndex *int32, plan mediaPreviewTranscodePlan) []string {
 	args := []string{
 		"-hide_banner",
 		"-loglevel", "error",
@@ -61,17 +66,81 @@ func mediaPreviewArgs(target string, audioTrackIndex *int32) []string {
 	} else {
 		args = append(args, "-map", "0:a:0?")
 	}
-	return append(args,
+	args = append(args,
 		"-sn",
-		"-c:v", "libx264",
-		"-preset", "veryfast",
-		"-pix_fmt", "yuv420p",
-		"-c:a", "aac",
-		"-ac", "2",
+		"-c:v", plan.videoCodec,
+	)
+	if plan.videoCodec != "copy" {
+		args = append(args,
+			"-preset", "veryfast",
+			"-pix_fmt", "yuv420p",
+		)
+	}
+	args = append(args, "-c:a", plan.audioCodec)
+	if plan.audioCodec != "copy" {
+		args = append(args, "-ac", "2")
+	}
+	return append(args,
 		"-movflags", "frag_keyframe+empty_moov+default_base_moof",
 		"-f", "mp4",
 		"pipe:1",
 	)
+}
+
+type mediaPreviewTranscodePlan struct {
+	videoCodec string
+	audioCodec string
+}
+
+func mediaPreviewPlan(target string, audioTrackIndex *int32) mediaPreviewTranscodePlan {
+	probe := mediaFileProbe(target)
+	return mediaPreviewPlanFromTracks(probe.tracks, audioTrackIndex)
+}
+
+func mediaPreviewPlanFromTracks(tracks []MediaFileTrack, audioTrackIndex *int32) mediaPreviewTranscodePlan {
+	plan := mediaPreviewTranscodePlan{videoCodec: "libx264", audioCodec: "aac"}
+	if browserCompatiblePreviewVideo(firstTrackByType(tracks, Video, nil)) {
+		plan.videoCodec = "copy"
+	}
+	if browserCompatiblePreviewAudio(firstTrackByType(tracks, Audio, audioTrackIndex)) {
+		plan.audioCodec = "copy"
+	}
+	return plan
+}
+
+func firstTrackByType(tracks []MediaFileTrack, trackType MediaFileTrackType, index *int32) *MediaFileTrack {
+	for i := range tracks {
+		if tracks[i].Type != trackType {
+			continue
+		}
+		if index != nil && (tracks[i].Index == nil || *tracks[i].Index != *index) {
+			continue
+		}
+		return &tracks[i]
+	}
+	return nil
+}
+
+func browserCompatiblePreviewVideo(track *MediaFileTrack) bool {
+	if track == nil || track.Codec == nil {
+		return false
+	}
+	codec := strings.ToLower(strings.TrimSpace(*track.Codec))
+	if codec != "h264" && codec != "avc1" {
+		return false
+	}
+	pixelFormat := ""
+	if track.PixelFormat != nil {
+		pixelFormat = strings.ToLower(strings.TrimSpace(*track.PixelFormat))
+	}
+	return pixelFormat == "" || pixelFormat == "yuv420p" || pixelFormat == "yuvj420p"
+}
+
+func browserCompatiblePreviewAudio(track *MediaFileTrack) bool {
+	if track == nil || track.Codec == nil {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(*track.Codec), "aac")
 }
 
 type flushWriter struct {

@@ -24,7 +24,7 @@ func (s *Server) StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id 
 	serveMediaFile(w, r, target)
 }
 
-func (s *Server) DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Request, id ResourceId, params DownloadMediaItemFilePlaylistParams) {
+func (s *Server) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, id ResourceId, params PlayMediaItemFileInVlcParams) {
 	if _, ok := s.requireSession(w, r); !ok {
 		return
 	}
@@ -38,7 +38,7 @@ func (s *Server) DownloadMediaItemFilePlaylist(w http.ResponseWriter, r *http.Re
 	}
 	name := filepath.Base(target)
 	w.Header().Set("Content-Type", "audio/x-mpegurl; charset=utf-8")
-	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": playlistFilename(name)}))
+	w.Header().Set("Content-Disposition", mime.FormatMediaType("inline", map[string]string{"filename": playlistFilename(name)}))
 	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", playlistTitle(name), streamURL(r, params.Path))
 }
 

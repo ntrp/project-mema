@@ -487,8 +487,8 @@ export interface paths {
 			};
 			cookie?: never;
 		};
-		/** Download a VLC-compatible remote streaming playlist */
-		get: operations['downloadMediaItemFilePlaylist'];
+		/** Open a VLC-compatible remote streaming playlist */
+		get: operations['playMediaItemFileInVlc'];
 		put?: never;
 		post?: never;
 		delete?: never;
@@ -4106,7 +4106,7 @@ export interface operations {
 			404: components['responses']['NotFound'];
 		};
 	};
-	downloadMediaItemFilePlaylist: {
+	playMediaItemFileInVlc: {
 		parameters: {
 			query: {
 				path: components['parameters']['MediaFilePath'];
@@ -4119,7 +4119,7 @@ export interface operations {
 		};
 		requestBody?: never;
 		responses: {
-			/** @description M3U playlist pointing at the remote stream */
+			/** @description Inline M3U playlist pointing at the remote stream */
 			200: {
 				headers: {
 					[name: string]: unknown;
