@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/PuerkitoBio/goquery"
-	"github.com/tidwall/gjson"
 )
 
 func (s *Service) searchCardigann(ctx context.Context, config Config, query string, mediaType string) ([]Release, error) {
@@ -127,7 +124,7 @@ func (s *Service) parseCardigannJSON(
 	if err != nil {
 		return nil, err
 	}
-	rows := cardigannJSONRows(body, selector)
+	rows := cardigannJSONRows(body, selector, def.Search.Rows)
 	releases := make([]Release, 0, len(rows))
 	for _, row := range rows {
 		release, ok, err := s.releaseFromJSONRow(ctx, def, config, templateCtx, request.URL, row)
@@ -160,6 +157,3 @@ func isOptionalCardigannField(name string, selector cardigannSelector) bool {
 func cardigannFieldError(name string, err error) error {
 	return fmt.Errorf("parse field %s: %w", name, err)
 }
-
-type htmlRow = goquery.Selection
-type jsonRow = gjson.Result

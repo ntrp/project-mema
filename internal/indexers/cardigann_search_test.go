@@ -2,6 +2,7 @@ package indexers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
@@ -87,6 +88,44 @@ func TestCardigannJSONSearchUsesYAMLDefinition(t *testing.T) {
 	}
 	if release.PublishedAt == nil {
 		t.Fatal("published date was not parsed")
+	}
+}
+
+func TestCardigannYTSRowsUseTorrentAttributeAndMovieParent(t *testing.T) {
+	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Path != "/api/v2/list_movies.json" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		body := `{"data":{"movie_count":1,"movies":[{"year":2026,"title":"Example Movie","title_long":"Example Movie","url":"https://yts.gg/movies/example","large_cover_image":"https://yts.gg/cover.jpg","imdb_code":"tt1234567","torrents":[{"quality":"720p","audio_channels":"5.1","bit_depth":"10","type":"web","video_codec":"x264","url":"https://yts.gg/torrent/download/abc","hash":"abc123","date_uploaded_unix":1783036800,"size_bytes":2048,"seeds":11,"peers":2}]}]}}`
+		return response(http.StatusOK, body), nil
+	})
+	service := NewService(client)
+	service.loader.remote = ""
+	fields, _ := json.Marshal([]struct {
+		Name  string `json:"name"`
+		Value any    `json:"value"`
+	}{{Name: "apiurl", Value: "api.yts.test"}})
+
+	releases, err := service.Search(context.Background(), Config{
+		ID:             "idx-yts",
+		DefinitionID:   "yts",
+		Name:           "YTS",
+		Implementation: "Cardigann",
+		Protocol:       "torrent",
+		BaseURL:        "https://yts.gg/",
+		Fields:         fields,
+	}, "Example Movie", "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(releases) != 1 {
+		t.Fatalf("release count = %d", len(releases))
+	}
+	if !strings.Contains(releases[0].Title, "720p WEBRip 5.1 10Bit x264 -YTS") {
+		t.Fatalf("title = %q", releases[0].Title)
+	}
+	if releases[0].DownloadURL != "https://yts.gg/torrent/download/abc" {
+		t.Fatalf("download = %q", releases[0].DownloadURL)
 	}
 }
 
