@@ -1,10 +1,9 @@
 <script lang="ts">
 	import EyeIcon from '@lucide/svelte/icons/eye';
+	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import { Skeleton } from '$lib/components/ui/skeleton';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { DiscoverBlacklistItem } from '$lib/settings/types';
 	import MediaBadge from '$lib/components/app/media/shared/MediaBadge.svelte';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
@@ -81,25 +80,21 @@
 						<p class="line-clamp-4 m-0 text-[13px] leading-tight text-primary-foreground">
 							{item.overview ?? 'No overview available.'}
 						</p>
-						<Tooltip.Root>
-							<Tooltip.Trigger>
-								{#snippet child({ props })}
-									<Button
-										{...props}
-										type="button"
-										variant="outline"
-										size="icon-sm"
-										class="pointer-events-auto absolute top-2.5 right-2.5 size-[34px] min-h-[34px] min-w-[34px] border-border bg-card/80 p-0 text-foreground backdrop-blur-md hover:border-primary/50 hover:bg-muted hover:text-primary-foreground focus-visible:border-primary/50 focus-visible:bg-muted focus-visible:text-primary-foreground"
-										disabled={removingId === item.id}
-										aria-label={`Remove ${item.title} from blacklist`}
-										onclick={() => onRemove(item)}
-									>
-										<EyeIcon aria-hidden="true" />
-									</Button>
-								{/snippet}
-							</Tooltip.Trigger>
-							<Tooltip.Content>Remove from blacklist</Tooltip.Content>
-						</Tooltip.Root>
+						<ConfirmActionButton
+							label={`Remove ${item.title} from blacklist`}
+							title="Remove from blacklist"
+							description={`Remove "${item.title}" from the discovery blacklist?`}
+							confirmLabel="Remove"
+							confirmingLabel="Removing"
+							variant="outline"
+							size="icon-sm"
+							class="pointer-events-auto absolute top-2.5 right-2.5 size-[34px] min-h-[34px] min-w-[34px] border-border bg-card/80 p-0 text-foreground backdrop-blur-md hover:border-primary/50 hover:bg-muted hover:text-primary-foreground focus-visible:border-primary/50 focus-visible:bg-muted focus-visible:text-primary-foreground"
+							disabled={removingId === item.id}
+							tooltip="Remove from blacklist"
+							onConfirm={() => onRemove(item)}
+						>
+							<EyeIcon aria-hidden="true" />
+						</ConfirmActionButton>
 					</div>
 				</div>
 			</article>

@@ -1,14 +1,12 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 
-	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
-	import { Label } from '$lib/components/ui/label';
 	import { getSystemLogLevel, updateSystemLogLevel } from '$lib/settings/api';
 	import type { SystemLogEntry, SystemLogLevel } from '$lib/settings/types';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import SystemLogRow from './SystemLogRow.svelte';
+	import SystemLogsToolbar from './SystemLogsToolbar.svelte';
 
 	type StreamEnvelope<T> = {
 		data: T;
@@ -135,28 +133,16 @@
 <Card class="gap-4 p-5" aria-label="Logs">
 	<SectionHeading>
 		{#snippet actions()}
-			<div class="flex flex-wrap items-end gap-3">
-				<Button type="button" variant="outline" size="sm" onclick={clearLogs}>Clear logs</Button>
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					class={followLogs ? 'border-primary text-primary' : undefined}
-					aria-pressed={followLogs}
-					onclick={enableFollow}
-				>
-					Follow logs
-				</Button>
-				<div class="grid min-w-40 gap-2">
-					<Label>Verbosity</Label>
-					<SettingsSelect
-						value={level}
-						options={levelOptions}
-						disabled={loading || saving}
-						onValueChange={changeLevel}
-					/>
-				</div>
-			</div>
+			<SystemLogsToolbar
+				{level}
+				{levelOptions}
+				{loading}
+				{saving}
+				{followLogs}
+				onClearLogs={clearLogs}
+				onEnableFollow={enableFollow}
+				onLevelChange={changeLevel}
+			/>
 		{/snippet}
 	</SectionHeading>
 

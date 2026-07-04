@@ -14,6 +14,7 @@ import {
 	managedUser,
 	metadataProvider,
 	tag,
+	userProfile,
 	userForm,
 	userSummary
 } from './appShellTestValues';
@@ -22,6 +23,12 @@ export function createAppShell(overrides: Partial<AppShellController> = {}): App
 	return {
 		isAdmin: true,
 		currentUser: userSummary(),
+		profile: userProfile(),
+		loadingProfile: false,
+		savingProfile: false,
+		profileErrorMessage: '',
+		loadProfile: vi.fn(),
+		saveProfile: vi.fn(),
 		users: [managedUser()],
 		userForm: userForm(),
 		savingUser: false,

@@ -122,11 +122,17 @@ export function createNavigationActions(state: AppShellState, deps: NavigationDe
 		selectHomeSection(section as HomeSection);
 	}
 
+	function showProfile() {
+		state.activeView = 'profile';
+		void goto(resolve('/profile'));
+	}
+
 	return {
 		selectHomeSection,
 		selectSettingsSection,
 		selectSystemSection,
 		selectSubmenuSection,
-		selectPrimarySection
+		selectPrimarySection,
+		showProfile
 	};
 }

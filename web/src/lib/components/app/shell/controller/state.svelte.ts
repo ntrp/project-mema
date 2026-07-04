@@ -55,6 +55,7 @@ import type {
 	SystemSection,
 	Tag,
 	TagForm,
+	UserProfile,
 	UserForm as UserFormValue,
 	UserSummary
 } from '$lib/settings/types';
@@ -80,6 +81,9 @@ export class AppShellState {
 	savingLanguage = $state(false);
 	deletingLanguageCode = $state<string | undefined>();
 	savingUser = $state(false);
+	loadingProfile = $state(false);
+	savingProfile = $state(false);
+	profileErrorMessage = $state('');
 	message = $state('');
 	errorMessage = $state('');
 	username = $state('admin');
@@ -94,6 +98,7 @@ export class AppShellState {
 	mediaProfiles = $state<MediaProfile[]>([]);
 	customFormats = $state<CustomFormat[]>([]);
 	users = $state<ManagedUser[]>([]);
+	profile = $state<UserProfile | undefined>();
 	tags = $state<Tag[]>([]);
 	languages = $state<Language[]>([]);
 	currentUser = $state<UserSummary | undefined>();

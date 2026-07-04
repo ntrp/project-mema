@@ -52,6 +52,9 @@
 				icon="delete"
 				variant="destructive"
 				disabled={deleting}
+				confirmTitle="Delete custom format"
+				confirmDescription={`Delete custom format "${format.name}"?`}
+				confirmLabel="Delete format"
 				onclick={() => onDelete(format.id)}
 			/>
 		</div>

@@ -85,6 +85,9 @@
 								icon="delete"
 								variant="destructive"
 								disabled={deletingId === profile.id}
+								confirmTitle="Delete profile"
+								confirmDescription={`Delete media profile "${profile.name}"?`}
+								confirmLabel="Delete profile"
 								onclick={() => onDelete(profile.id)}
 							/>
 						</div>

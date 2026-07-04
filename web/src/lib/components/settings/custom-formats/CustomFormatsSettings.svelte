@@ -10,6 +10,8 @@
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { filterCustomFormats } from '$lib/settings/customFormatFilters';
 	import { emptyCustomFormatForm } from '$lib/settings/forms';
 	import type {
 		CustomFormat,
@@ -43,6 +45,8 @@
 	let modalOpen = $state(false);
 	let testParsingOpen = $state(false);
 	let importOpen = $state(false);
+	let quickFilter = $state('');
+	const visibleFormats = $derived(filterCustomFormats(formats, quickFilter));
 
 	function openModal() {
 		form = emptyCustomFormatForm();
@@ -78,7 +82,15 @@
 <Card class="gap-4 p-5" aria-label="Custom formats">
 	<SectionHeading>
 		{#snippet actions()}
-			<div class="flex flex-wrap justify-end gap-2.5">
+			<div class="flex flex-wrap items-center justify-end gap-2.5">
+				<Input
+					id="custom-format-quick-filter"
+					bind:value={quickFilter}
+					type="search"
+					aria-label="Filter custom formats by name"
+					placeholder="Filter by name"
+					class="w-44 sm:w-56"
+				/>
 				<Button type="button" variant="outline" onclick={openImport}>
 					<UploadIcon aria-hidden="true" />
 					Import
@@ -96,7 +108,7 @@
 	</SectionHeading>
 
 	<div class="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr))]">
-		{#each formats as format (format.id)}
+		{#each visibleFormats as format (format.id)}
 			<CustomFormatCard
 				{format}
 				deleting={deletingId === format.id}
@@ -105,7 +117,9 @@
 			/>
 		{:else}
 			<p class="col-span-full m-0 text-sm leading-6 text-muted-foreground">
-				No custom formats configured
+				{formats.length === 0
+					? 'No custom formats configured'
+					: 'No custom formats match the filter'}
 			</p>
 		{/each}
 	</div>

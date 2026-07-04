@@ -91,6 +91,9 @@
 								icon="delete"
 								variant="destructive"
 								disabled={deletingId === tag.id}
+								confirmTitle="Delete tag"
+								confirmDescription={`Delete tag "${tag.name}"?`}
+								confirmLabel="Delete tag"
 								onclick={() => onDelete(tag.id)}
 							/>
 						</div>

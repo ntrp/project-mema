@@ -44,6 +44,9 @@
 								label={`Delete ${folder.path}`}
 								icon="delete"
 								variant="destructive"
+								confirmTitle="Delete library folder"
+								confirmDescription={`Delete library folder "${folder.path}" from settings?`}
+								confirmLabel="Delete folder"
 								onclick={() => onDelete(folder.id)}
 							/>
 						</div>

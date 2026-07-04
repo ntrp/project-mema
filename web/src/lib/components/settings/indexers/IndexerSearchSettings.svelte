@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
@@ -109,14 +110,17 @@
 				<Button type="button" disabled={saving || !settingsChanged} onclick={saveSettings}>
 					{saving ? 'Saving' : 'Save settings'}
 				</Button>
-				<Button
-					type="button"
-					variant="destructive"
+				<ConfirmActionButton
+					label="Reset indexer search cache"
+					title="Reset indexer search cache"
+					description="Delete every cached indexer search result?"
+					confirmLabel="Reset cache"
+					confirmingLabel="Resetting"
 					disabled={clearing}
-					onclick={() => void onClearCache()}
+					onConfirm={onClearCache}
 				>
 					{clearing ? 'Resetting' : 'Reset cache'}
-				</Button>
+				</ConfirmActionButton>
 			</div>
 		</div>
 	</Card.Content>

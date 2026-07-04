@@ -1,8 +1,7 @@
 <script lang="ts">
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
-	import { Button } from '$lib/components/ui/button';
+	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
 	import * as Card from '$lib/components/ui/card';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { MetadataCacheEntry, MetadataCacheResponse } from '$lib/settings/types';
 	import MetadataCacheControls from './MetadataCacheControls.svelte';
 	import MetadataCacheTable from './MetadataCacheTable.svelte';
@@ -42,10 +41,8 @@
 	]);
 </script>
 
-<div
-	class="grid min-h-[50rem] grid-rows-[minmax(24rem,1fr)_minmax(24rem,1fr)] gap-4 lg:h-[calc(100vh-12rem)]"
->
-	<Card.Root class="min-h-0" aria-labelledby="metadata-cache-title">
+<div class="grid gap-4">
+	<Card.Root aria-labelledby="metadata-cache-title">
 		<Card.Header>
 			<div>
 				<Card.Description class="flex items-center gap-2">
@@ -60,28 +57,23 @@
 				<Card.Title id="metadata-cache-title">Metadata Cache</Card.Title>
 			</div>
 			<Card.Action>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								type="button"
-								variant="destructive"
-								size="icon-sm"
-								aria-label="Reset metadata cache"
-								disabled={clearing}
-								onclick={() => void onClearAll()}
-							>
-								<TrashIcon aria-hidden="true" />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content>Reset metadata cache</Tooltip.Content>
-				</Tooltip.Root>
+				<ConfirmActionButton
+					label="Reset metadata cache"
+					title="Reset metadata cache"
+					description="Delete every cached metadata result?"
+					confirmLabel="Reset cache"
+					confirmingLabel="Resetting"
+					size="icon-sm"
+					disabled={clearing}
+					tooltip="Reset metadata cache"
+					onConfirm={onClearAll}
+				>
+					<TrashIcon aria-hidden="true" />
+				</ConfirmActionButton>
 			</Card.Action>
 		</Card.Header>
 
-		<Card.Content class="grid min-h-0 flex-1 grid-rows-[auto_auto_minmax(0,1fr)] gap-4">
+		<Card.Content class="grid gap-4">
 			<dl class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Metadata cache stats">
 				{#each stats as stat (stat.label)}
 					<div class="grid gap-1 px-3 py-2.5">
@@ -109,7 +101,7 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root class="min-h-0" aria-labelledby="metadata-history-title">
+	<Card.Root aria-labelledby="metadata-history-title">
 		<Card.Header>
 			<div>
 				<Card.Description class="flex items-center gap-2">
@@ -124,27 +116,22 @@
 				<Card.Title id="metadata-history-title">Query History</Card.Title>
 			</div>
 			<Card.Action>
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Button
-								{...props}
-								type="button"
-								variant="destructive"
-								size="icon-sm"
-								aria-label="Clear metadata query history"
-								disabled={clearing || cache.historyEntries.length === 0}
-								onclick={() => void onClearHistory()}
-							>
-								<TrashIcon aria-hidden="true" />
-							</Button>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content>Clear metadata query history</Tooltip.Content>
-				</Tooltip.Root>
+				<ConfirmActionButton
+					label="Clear metadata query history"
+					title="Clear metadata query history"
+					description="Delete every recorded metadata query history entry?"
+					confirmLabel="Clear history"
+					confirmingLabel="Clearing"
+					size="icon-sm"
+					disabled={clearing || cache.historyEntries.length === 0}
+					tooltip="Clear metadata query history"
+					onConfirm={onClearHistory}
+				>
+					<TrashIcon aria-hidden="true" />
+				</ConfirmActionButton>
 			</Card.Action>
 		</Card.Header>
-		<Card.Content class="min-h-0 flex-1">
+		<Card.Content>
 			<MetadataSearchHistoryTable {cache} {loading} onLoadMore={onLoadMoreHistory} />
 		</Card.Content>
 	</Card.Root>

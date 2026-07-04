@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import IndexerSearchCacheTable from './IndexerSearchCacheTable.svelte';
+import IndexerSearchCacheSettings from './IndexerSearchCacheSettings.svelte';
 import MetadataCacheTable from './MetadataCacheTable.svelte';
+import MetadataCacheSettings from './MetadataCacheSettings.svelte';
 import { renderWithTooltip } from '$lib/components/rendered/renderHelpers';
 import type { IndexerSearchResponse, MetadataCacheResponse } from '$lib/settings/types';
 
@@ -92,6 +94,7 @@ describe('cache tables (SCN-SETTINGS-015)', () => {
 		expect(body).toContain('Expired');
 		expect(body).toContain('Scroll for more');
 		expect(body).toContain('Delete cache entry');
+		expect(body).toContain('max-h-[13rem]');
 	});
 
 	it('renders indexer cache rows and empty states', () => {
@@ -139,5 +142,41 @@ describe('cache tables (SCN-SETTINGS-015)', () => {
 
 		expect(emptyMetadata.body).toContain('No metadata cache entries yet.');
 		expect(emptyIndexer.body).toContain('No indexer cache entries yet.');
+	});
+
+	it('keeps system cache panels natural height with capped table rows', () => {
+		const commonHandlers = {
+			onClearAll: vi.fn(),
+			onClearPattern: vi.fn(),
+			onClearHistory: vi.fn(),
+			onLoadMoreCache: vi.fn(),
+			onLoadMoreHistory: vi.fn()
+		};
+
+		const indexer = renderWithTooltip(IndexerSearchCacheSettings, {
+			search: indexerSearchResponse([]),
+			pattern: '',
+			clearing: false,
+			loading: false,
+			onDeleteEntry: vi.fn(),
+			...commonHandlers
+		});
+		const metadata = renderWithTooltip(MetadataCacheSettings, {
+			cache: metadataCacheResponse([]),
+			pattern: '',
+			clearing: false,
+			loading: false,
+			onDeleteEntry: vi.fn(),
+			...commonHandlers
+		});
+
+		for (const body of [indexer.body, metadata.body]) {
+			expect(body).toContain('max-h-[13rem]');
+			expect(body).not.toContain('min-h-[13rem]');
+			expect(body).not.toContain('lg:h-[calc(100vh-12rem)]');
+			expect(body).not.toContain('grid-rows-[minmax(24rem,1fr)_minmax(24rem,1fr)]');
+			expect(body).not.toContain('grid-rows-[auto_auto_minmax(0,1fr)]');
+			expect(body).not.toContain('grid-rows-[auto_minmax(0,1fr)]');
+		}
 	});
 });

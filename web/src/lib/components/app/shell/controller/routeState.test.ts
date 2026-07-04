@@ -18,6 +18,9 @@ describe('route state parsing (SCN-MEDIA-004)', () => {
 			view: 'system',
 			systemSection: 'events'
 		});
+		expect(routeStateFromPath('/profile', {}, noQuery)).toMatchObject({
+			view: 'profile'
+		});
 		expect(routeStateFromPath('/activity', {}, noQuery)).toMatchObject({
 			homeSection: 'activity',
 			activitySection: 'queue'

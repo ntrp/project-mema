@@ -4,6 +4,7 @@ import type {
 	MediaProfile,
 	MetadataProvider,
 	Tag,
+	UserProfile,
 	UserForm as UserFormValue,
 	UserSummary
 } from '$lib/settings/types';
@@ -12,7 +13,21 @@ export function userSummary(): UserSummary {
 	return {
 		id: 'user-1',
 		username: 'scenario-admin',
+		displayName: 'Scenario Admin',
+		pictureUrl: '',
 		role: 'admin'
+	};
+}
+
+export function userProfile(overrides: Partial<UserProfile> = {}): UserProfile {
+	return {
+		id: 'user-1',
+		username: 'scenario-admin',
+		displayName: 'Scenario Admin',
+		pictureUrl: 'https://example.test/profile.png',
+		role: 'admin',
+		updatedAt: '2026-07-03T00:00:00Z',
+		...overrides
 	};
 }
 

@@ -28,6 +28,7 @@ interface SessionDeps {
 	loadPersonDetail: () => Promise<void>;
 	loadMediaCollection: () => Promise<void>;
 	loadDiscoverSection: () => Promise<void>;
+	loadProfile: () => Promise<void>;
 	events: EventConnectionDeps;
 }
 
@@ -41,6 +42,7 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 	const loadPersonDetail = deps.loadPersonDetail;
 	const loadMediaCollection = deps.loadMediaCollection;
 	const loadDiscoverSection = deps.loadDiscoverSection;
+	const loadProfile = deps.loadProfile;
 	const eventDeps = deps.events;
 	async function initialise() {
 		state.loading = true;
@@ -75,6 +77,8 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 				await loadPersonDetail();
 			} else if (state.activeView === 'discover-section') {
 				await loadDiscoverSection();
+			} else if (state.activeView === 'profile') {
+				await loadProfile();
 			}
 			connectEvents();
 		}
@@ -119,6 +123,8 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 				await loadPersonDetail();
 			} else if (state.activeView === 'discover-section') {
 				await loadDiscoverSection();
+			} else if (state.activeView === 'profile') {
+				await loadProfile();
 			}
 			connectEvents();
 		} catch (error) {
@@ -137,6 +143,8 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			disconnectEvents();
 			state.authenticated = false;
 			state.currentUser = undefined;
+			state.profile = undefined;
+			state.profileErrorMessage = '';
 			state.activeView = 'home';
 			state.activeHomeSection = 'discover';
 			state.downloadClients = [];

@@ -63,6 +63,7 @@ describe('settings route wrappers (SCN-SETTINGS-017)', () => {
 		const { body } = renderRoute(CustomFormatsSettingsRoute, createAppShell());
 
 		expect(body).toContain('Custom formats');
+		expect(body).toContain('Filter by name');
 		expect(body).toContain('No custom formats configured');
 		expect(body).toContain('Add custom format');
 	});

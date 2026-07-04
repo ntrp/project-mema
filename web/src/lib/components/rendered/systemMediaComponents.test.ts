@@ -8,6 +8,7 @@ vi.mock('$lib/components/settings/system/cache/rowPulse.svelte', () => ({
 }));
 
 import MediaOverviewInfoCard from '$lib/components/app/media/detail/MediaOverviewInfoCard.svelte';
+import SystemEventSeverityIcon from '$lib/components/settings/system/events/SystemEventSeverityIcon.svelte';
 import SystemEventsControls from '$lib/components/settings/system/events/SystemEventsControls.svelte';
 import SystemEventsTable from '$lib/components/settings/system/events/SystemEventsTable.svelte';
 import SystemJobsTable from '$lib/components/settings/system/jobs/SystemJobsTable.svelte';
@@ -29,6 +30,25 @@ describe('rendered system components (SCN-SYSTEM-006)', () => {
 		expect(body).toContain('Warning');
 		expect(body).toContain('Clearing events');
 		expect(body).toContain('disabled');
+		expect(body).toContain('data-size="sm"');
+	});
+
+	it('renders info event severity in blue', () => {
+		const { body } = renderWithTooltip(SystemEventSeverityIcon, {
+			severity: 'info' as const
+		});
+
+		expect(body).toContain('text-sky-600');
+		expect(body).toContain('dark:text-sky-300');
+	});
+
+	it('renders warning event severity in yellow', () => {
+		const { body } = renderWithTooltip(SystemEventSeverityIcon, {
+			severity: 'warning' as const
+		});
+
+		expect(body).toContain('text-yellow-600');
+		expect(body).toContain('dark:text-yellow-300');
 	});
 
 	it('renders event rows with severity, category, message, and error text', () => {

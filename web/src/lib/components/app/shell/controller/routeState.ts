@@ -86,6 +86,9 @@ export function routeStateFromPath(
 	if (path === '/search/advanced') {
 		return { ...route, view: 'advanced-search', advancedQuery: searchParams.get('q') ?? '' };
 	}
+	if (path === '/profile') {
+		return { ...route, view: 'profile' };
+	}
 	if (path === '/discover') {
 		return route;
 	}

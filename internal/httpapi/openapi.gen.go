@@ -2506,14 +2506,32 @@ type UserListResponse struct {
 	Users []ManagedUser `json:"users"`
 }
 
+// UserProfile defines model for UserProfile.
+type UserProfile struct {
+	DisplayName string             `json:"displayName"`
+	Id          openapi_types.UUID `json:"id"`
+	PictureUrl  string             `json:"pictureUrl"`
+	Role        UserRole           `json:"role"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+	Username    string             `json:"username"`
+}
+
+// UserProfileUpdateRequest defines model for UserProfileUpdateRequest.
+type UserProfileUpdateRequest struct {
+	DisplayName string `json:"displayName"`
+	PictureUrl  string `json:"pictureUrl"`
+}
+
 // UserRole defines model for UserRole.
 type UserRole string
 
 // UserSummary defines model for UserSummary.
 type UserSummary struct {
-	Id       openapi_types.UUID `json:"id"`
-	Role     UserRole           `json:"role"`
-	Username string             `json:"username"`
+	DisplayName *string            `json:"displayName,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	PictureUrl  *string            `json:"pictureUrl,omitempty"`
+	Role        UserRole           `json:"role"`
+	Username    string             `json:"username"`
 }
 
 // UserUpdateRequest defines model for UserUpdateRequest.
@@ -2756,6 +2774,9 @@ type ApproveMediaRequestJSONRequestBody = MediaRequestApproveRequest
 
 // SearchMediaJSONRequestBody defines body for SearchMedia for application/json ContentType.
 type SearchMediaJSONRequestBody = MediaSearchRequest
+
+// UpdateProfileJSONRequestBody defines body for UpdateProfile for application/json ContentType.
+type UpdateProfileJSONRequestBody = UserProfileUpdateRequest
 
 // CreateCustomFormatJSONRequestBody defines body for CreateCustomFormat for application/json ContentType.
 type CreateCustomFormatJSONRequestBody = CustomFormatRequest
@@ -3008,6 +3029,12 @@ type ServerInterface interface {
 	// Get provider person details and appearances
 	// (GET /people/{provider}/{personId})
 	GetPersonDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, personId string)
+	// Get current user profile
+	// (GET /profile)
+	GetProfile(w http.ResponseWriter, r *http.Request)
+	// Update current user profile
+	// (PUT /profile)
+	UpdateProfile(w http.ResponseWriter, r *http.Request)
 	// List custom formats
 	// (GET /settings/custom-formats)
 	ListCustomFormats(w http.ResponseWriter, r *http.Request)
@@ -3575,6 +3602,18 @@ func (_ Unimplemented) SearchMedia(w http.ResponseWriter, r *http.Request) {
 // Get provider person details and appearances
 // (GET /people/{provider}/{personId})
 func (_ Unimplemented) GetPersonDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, personId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get current user profile
+// (GET /profile)
+func (_ Unimplemented) GetProfile(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update current user profile
+// (PUT /profile)
+func (_ Unimplemented) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6295,6 +6334,46 @@ func (siw *ServerInterfaceWrapper) GetPersonDetails(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetPersonDetails(w, r, provider, personId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProfile operation middleware
+func (siw *ServerInterfaceWrapper) GetProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProfile(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateProfile operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateProfile(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9045,6 +9124,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/people/{provider}/{personId}", wrapper.GetPersonDetails)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/profile", wrapper.GetProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/profile", wrapper.UpdateProfile)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/custom-formats", wrapper.ListCustomFormats)

@@ -5,6 +5,8 @@ export type DownloadClientRequest = components['schemas']['DownloadClientRequest
 export type DownloadClientType = components['schemas']['DownloadClientType'];
 export type ManagedUser = components['schemas']['ManagedUser'];
 export type SessionResponse = components['schemas']['SessionResponse'];
+export type UserProfile = components['schemas']['UserProfile'];
+export type UserProfileUpdateRequest = components['schemas']['UserProfileUpdateRequest'];
 export type UserCreateRequest = components['schemas']['UserCreateRequest'];
 export type UserRole = components['schemas']['UserRole'];
 export type UserSummary = components['schemas']['UserSummary'];
@@ -155,6 +157,7 @@ export type AppView =
 	| 'home'
 	| 'settings'
 	| 'system'
+	| 'profile'
 	| 'advanced-search'
 	| 'metadata-detail'
 	| 'media-people'

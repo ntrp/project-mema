@@ -92,6 +92,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SessionResponse"
+  /profile:
+    get:
+      operationId: getProfile
+      tags:
+        - Users
+      summary: Get current user profile
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateProfile
+      tags:
+        - Users
+      summary: Update current user profile
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdateRequest"
+      responses:
+        "200":
+          description: Current user profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /media/search:
     post:
       operationId: searchMedia
@@ -3679,8 +3720,50 @@ components:
           format: uuid
         username:
           type: string
+        displayName:
+          type: string
+        pictureUrl:
+          type: string
         role:
           $ref: "#/components/schemas/UserRole"
+    UserProfile:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - username
+        - displayName
+        - pictureUrl
+        - role
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        displayName:
+          type: string
+        pictureUrl:
+          type: string
+        role:
+          $ref: "#/components/schemas/UserRole"
+        updatedAt:
+          type: string
+          format: date-time
+    UserProfileUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - displayName
+        - pictureUrl
+      properties:
+        displayName:
+          type: string
+          maxLength: 200
+        pictureUrl:
+          type: string
+          maxLength: 2000
     UserRole:
       type: string
       enum:

@@ -1,8 +1,7 @@
 <script lang="ts">
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
-	import { Button } from '$lib/components/ui/button';
+	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
 	import * as Table from '$lib/components/ui/table';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { formatDateTime } from '$lib/settings/dateFormat';
 	import type { IndexerSearchCacheEntry, IndexerSearchResponse } from '$lib/settings/types';
 	import InfiniteTableFrame from './InfiniteTableFrame.svelte';
@@ -57,24 +56,18 @@
 						</Table.Cell>
 						<Table.Cell class="w-px">{entry.resultCount}</Table.Cell>
 						<Table.Cell class="w-px text-right">
-							<Tooltip.Root>
-								<Tooltip.Trigger>
-									{#snippet child({ props })}
-										<Button
-											{...props}
-											type="button"
-											variant="destructive"
-											size="icon-sm"
-											aria-label="Delete cache entry"
-											disabled={clearing}
-											onclick={() => void onDeleteEntry(entry)}
-										>
-											<TrashIcon aria-hidden="true" />
-										</Button>
-									{/snippet}
-								</Tooltip.Trigger>
-								<Tooltip.Content>Delete cache entry</Tooltip.Content>
-							</Tooltip.Root>
+							<ConfirmActionButton
+								label="Delete cache entry"
+								title="Delete cache entry"
+								description={`Delete cached indexer results for "${entry.query}"?`}
+								confirmLabel="Delete entry"
+								disabled={clearing}
+								tooltip="Delete cache entry"
+								size="icon-sm"
+								onConfirm={() => onDeleteEntry(entry)}
+							>
+								<TrashIcon aria-hidden="true" />
+							</ConfirmActionButton>
 						</Table.Cell>
 					</Table.Row>
 				{/each}

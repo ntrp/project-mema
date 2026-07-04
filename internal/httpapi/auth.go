@@ -36,9 +36,11 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := UserSummary{
-		Id:       openapi_types.UUID(userRecord.ID),
-		Username: userRecord.Username,
-		Role:     UserRole(userRecord.Role),
+		Id:          openapi_types.UUID(userRecord.ID),
+		Username:    userRecord.Username,
+		DisplayName: optionalString(userRecord.DisplayName),
+		PictureUrl:  optionalString(userRecord.PictureURL),
+		Role:        UserRole(userRecord.Role),
 	}
 	s.sessions.put(sessionID, session{user: user, expiresAt: expiresAt})
 	http.SetCookie(w, s.sessionCookie(sessionID, expiresAt))
@@ -136,6 +138,10 @@ func (s *Server) expiredSessionCookie() *http.Cookie {
 type session struct {
 	user      UserSummary
 	expiresAt time.Time
+}
+
+func (s session) userID() openapi_types.UUID {
+	return s.user.Id
 }
 
 type sessionStore struct {

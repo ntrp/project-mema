@@ -110,6 +110,7 @@
 			<Sidebar.Inset>
 				<AppNav
 					bind:searchQuery={app.searchQuery}
+					currentUser={app.currentUser}
 					groups={app.autocompleteGroups}
 					loading={app.loadingAutocomplete}
 					onSearch={app.autocompleteMedia}

@@ -6,10 +6,5 @@ export function createNoticeActions(state: AppShellState) {
 		state.message = '';
 	}
 
-	function showProfile() {
-		clearNotice();
-		state.message = 'Profile settings are not implemented yet';
-	}
-
-	return { clearNotice, showProfile };
+	return { clearNotice };
 }

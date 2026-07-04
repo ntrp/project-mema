@@ -6,6 +6,7 @@ import AuthPanel from '$lib/components/settings/AuthPanel.svelte';
 import { createAppShell } from '$lib/components/rendered/appShellTestData';
 import { mediaProfile } from '$lib/components/rendered/appShellTestValues';
 import RenderWithAppShell from '$lib/components/rendered/RenderWithAppShell.svelte';
+import ProfileRoute from '$lib/features/profile/ProfileRoute.svelte';
 import EditMediaProfileRoute from '$lib/features/settings/routes/profiles/EditMediaProfileRoute.svelte';
 import NewMediaProfileRoute from '$lib/features/settings/routes/profiles/NewMediaProfileRoute.svelte';
 import type { MediaProfile } from '$lib/settings/types';
@@ -46,6 +47,15 @@ describe('rendered auth and profile routes (SCN-AUTH-001, SCN-SETTINGS-023)', ()
 		]);
 		expect(missing.body).toContain('Profile not found.');
 		expect(missing.body).toContain('Back');
+	});
+
+	it('renders the current user profile page', () => {
+		const { body } = renderProfileRoute(ProfileRoute);
+
+		expect(body).toContain('Profile');
+		expect(body).toContain('Scenario Admin');
+		expect(body).toContain('Picture URL');
+		expect(body).toContain('Save profile');
 	});
 });
 

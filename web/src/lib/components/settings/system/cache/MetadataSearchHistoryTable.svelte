@@ -31,7 +31,7 @@
 	}
 </script>
 
-<div class="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-4">
+<div class="grid gap-4">
 	<dl class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Metadata history stats">
 		{#each stats as stat (stat.label)}
 			<div class="grid gap-1 px-3 py-2.5">

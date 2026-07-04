@@ -29,7 +29,7 @@
 <div
 	bind:this={frame}
 	onscroll={handleScroll}
-	class="min-h-0 overflow-auto rounded-md border border-border"
+	class="max-h-[13rem] overflow-auto rounded-md border border-border"
 >
 	{@render children()}
 	{#if hasMore}

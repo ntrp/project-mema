@@ -13,8 +13,8 @@
 
 	const toneClasses: Record<SystemEventSeverity, string> = {
 		error: 'text-destructive',
-		warning: 'text-secondary-foreground',
-		info: 'text-primary'
+		warning: 'text-yellow-600 dark:text-yellow-300',
+		info: 'text-sky-600 dark:text-sky-300'
 	};
 	const Icon = $derived(
 		severity === 'error' ? CircleAlertIcon : severity === 'warning' ? TriangleAlertIcon : InfoIcon

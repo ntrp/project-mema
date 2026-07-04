@@ -30,6 +30,8 @@ type User struct {
 	ID           uuid.UUID
 	Username     string
 	PasswordHash string
+	DisplayName  string
+	PictureURL   string
 	Role         string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -62,7 +64,7 @@ func (s *SettingsStore) EnsureDefaultAdminUser(ctx context.Context, username str
 
 func (s *SettingsStore) ListUsers(ctx context.Context) ([]User, error) {
 	rows, err := s.pool.Query(ctx, `
-		select id, username, password_hash, role, created_at, updated_at
+		select id, username, password_hash, display_name, picture_url, role, created_at, updated_at
 		from app.users
 		order by username asc
 	`)
@@ -84,7 +86,7 @@ func (s *SettingsStore) ListUsers(ctx context.Context) ([]User, error) {
 
 func (s *SettingsStore) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	user, err := scanUser(s.pool.QueryRow(ctx, `
-		select id, username, password_hash, role, created_at, updated_at
+		select id, username, password_hash, display_name, picture_url, role, created_at, updated_at
 		from app.users
 		where id = $1
 	`, id))
@@ -96,7 +98,7 @@ func (s *SettingsStore) GetUser(ctx context.Context, id uuid.UUID) (User, error)
 
 func (s *SettingsStore) GetUserByUsername(ctx context.Context, username string) (User, error) {
 	user, err := scanUser(s.pool.QueryRow(ctx, `
-		select id, username, password_hash, role, created_at, updated_at
+		select id, username, password_hash, display_name, picture_url, role, created_at, updated_at
 		from app.users
 		where lower(username) = lower($1)
 	`, strings.TrimSpace(username)))
@@ -118,7 +120,7 @@ func (s *SettingsStore) CreateUser(ctx context.Context, input UserInput) (User, 
 	user, err := scanUser(s.pool.QueryRow(ctx, `
 		insert into app.users (id, username, password_hash, role)
 		values ($1, $2, $3, $4)
-		returning id, username, password_hash, role, created_at, updated_at
+		returning id, username, password_hash, display_name, picture_url, role, created_at, updated_at
 	`, id, input.Username, hash, input.Role))
 	if isUniqueViolation(err) {
 		return User{}, ErrDuplicateUser
@@ -149,7 +151,7 @@ func (s *SettingsStore) UpdateUser(ctx context.Context, id uuid.UUID, input User
 			role = $4,
 			updated_at = now()
 		where id = $1
-		returning id, username, password_hash, role, created_at, updated_at
+		returning id, username, password_hash, display_name, picture_url, role, created_at, updated_at
 	`, id, input.Username, hash, input.Role))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrNotFound
@@ -239,6 +241,8 @@ func scanUser(row pgx.Row) (User, error) {
 		&user.ID,
 		&user.Username,
 		&user.PasswordHash,
+		&user.DisplayName,
+		&user.PictureURL,
 		&user.Role,
 		&user.CreatedAt,
 		&user.UpdatedAt,

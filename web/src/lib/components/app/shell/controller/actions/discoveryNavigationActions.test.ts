@@ -163,7 +163,8 @@ describe('navigation and route actions (SCN-AUTH-003)', () => {
 			loadDiscoverSection: vi.fn(),
 			loadMediaCollection: vi.fn(),
 			loadMetadataDetail: vi.fn(),
-			loadPersonDetail: vi.fn()
+			loadPersonDetail: vi.fn(),
+			loadProfile: vi.fn()
 		};
 		const actions = createRouteActions(shell, deps);
 

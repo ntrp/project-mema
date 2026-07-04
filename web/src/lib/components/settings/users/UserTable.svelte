@@ -51,6 +51,9 @@
 								icon="delete"
 								variant="destructive"
 								disabled={user.id === currentUserId}
+								confirmTitle="Delete user"
+								confirmDescription={`Delete user "${user.username}"?`}
+								confirmLabel="Delete user"
 								onclick={() => onDelete(user.id)}
 							/>
 						</div>

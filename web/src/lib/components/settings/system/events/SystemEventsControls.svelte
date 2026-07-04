@@ -32,6 +32,7 @@
 	<SettingsSelect
 		value={severityFilter}
 		options={severitySelectOptions}
+		size="sm"
 		onValueChange={(value) => onSeverityChange(value as SeverityFilter)}
 	/>
 	<Tooltip.Root>

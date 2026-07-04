@@ -4,10 +4,11 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as Sidebar from '$lib/components/ui/sidebar';
-	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
+	import type { MediaSearchGroup, MediaSearchResult, UserSummary } from '$lib/settings/types';
 
 	interface Props {
 		searchQuery: string;
+		currentUser?: UserSummary;
 		groups: MediaSearchGroup[];
 		loading: boolean;
 		onSearch: (_query: string) => void | Promise<void>;
@@ -20,6 +21,7 @@
 
 	let {
 		searchQuery = $bindable(),
+		currentUser,
 		groups,
 		loading,
 		onSearch,
@@ -29,6 +31,9 @@
 		onLogout,
 		showNotifications = false
 	}: Props = $props();
+
+	const profileName = $derived(currentUser?.displayName || currentUser?.username || 'User');
+	const profileInitial = $derived(profileName.slice(0, 1).toUpperCase());
 </script>
 
 <header
@@ -45,7 +50,16 @@
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}
 					<Button variant="outline" size="icon" aria-label="User menu" {...props}>
-						<span aria-hidden="true">A</span>
+						{#if currentUser?.pictureUrl}
+							<img
+								class="size-full rounded-md object-cover"
+								src={currentUser.pictureUrl}
+								alt=""
+								aria-hidden="true"
+							/>
+						{:else}
+							<span aria-hidden="true">{profileInitial}</span>
+						{/if}
 					</Button>
 				{/snippet}
 			</DropdownMenu.Trigger>

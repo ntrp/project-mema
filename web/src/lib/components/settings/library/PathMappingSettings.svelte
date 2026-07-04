@@ -62,6 +62,9 @@
 									icon="delete"
 									variant="destructive"
 									disabled={deletingId === mapping.id}
+									confirmTitle="Delete path mapping"
+									confirmDescription={`Delete path mapping from "${mapping.clientPath}" to "${mapping.appPath}"?`}
+									confirmLabel="Delete mapping"
 									onclick={() => onDelete(mapping.id)}
 								/>
 							</div>

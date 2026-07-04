@@ -76,7 +76,7 @@ describe('app shell event actions (SCN-SYSTEM-008)', () => {
 });
 
 describe('app shell notice actions (SCN-MEDIA-004)', () => {
-	it('clears current messages before showing profile guidance', () => {
+	it('clears current messages', () => {
 		const state = testState();
 		const actions = createNoticeActions(state);
 
@@ -85,11 +85,6 @@ describe('app shell notice actions (SCN-MEDIA-004)', () => {
 		actions.clearNotice();
 		expect(state.errorMessage).toBe('');
 		expect(state.message).toBe('');
-
-		state.errorMessage = 'Previous error';
-		actions.showProfile();
-		expect(state.errorMessage).toBe('');
-		expect(state.message).toBe('Profile settings are not implemented yet');
 	});
 });
 

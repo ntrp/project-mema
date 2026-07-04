@@ -108,6 +108,16 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 		expect(state.activeActivitySection).toBe('history');
 		expect(gotoMock).toHaveBeenLastCalledWith('/activity/history');
 	});
+
+	it('opens the current user profile route', () => {
+		const state = testState();
+		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+
+		actions.showProfile();
+
+		expect(state.activeView).toBe('profile');
+		expect(gotoMock).toHaveBeenLastCalledWith('/profile');
+	});
 });
 
 function testState(overrides: Partial<AppShellState> = {}): AppShellState {

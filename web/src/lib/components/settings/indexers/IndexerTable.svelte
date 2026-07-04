@@ -80,6 +80,9 @@
 								label={`Delete ${item.name}`}
 								icon="delete"
 								variant="destructive"
+								confirmTitle="Delete indexer"
+								confirmDescription={`Delete indexer "${item.name}"?`}
+								confirmLabel="Delete indexer"
 								onclick={() => onDelete(item.id)}
 							/>
 						</div>

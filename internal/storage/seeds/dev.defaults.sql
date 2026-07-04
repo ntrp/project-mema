@@ -35,3 +35,12 @@ values
     ('low-quality-demo', 'e2315f990da2e2cbfc9fa5b7a6fcfe48', -10000),
     ('low-quality-demo', 'e1a997ddb54e3ecbfe06341ad323c458', -10000)
 on conflict (profile_id, custom_format_id) do nothing;
+
+insert into app.users (id, username, password_hash, role)
+values (
+    'f20c5f51-eeb2-4895-9537-46e1129a9757',
+    'guest',
+    'pbkdf2-sha256$210000$ZGV2LWd1ZXN0LXNlZWQhIQ$X2RpVhDzffETuSK0e7nwDc6J7ZZH7jVCTqB3or4lVwk',
+    'user'
+)
+on conflict (username) do nothing;

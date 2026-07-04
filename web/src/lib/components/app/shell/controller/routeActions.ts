@@ -8,6 +8,7 @@ interface RouteDeps {
 	loadMediaCollection: () => Promise<void>;
 	loadMetadataDetail: () => Promise<void>;
 	loadPersonDetail: () => Promise<void>;
+	loadProfile: () => Promise<void>;
 }
 
 export function createRouteActions(state: AppShellState, deps: RouteDeps) {
@@ -76,6 +77,8 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 			await deps.loadPersonDetail();
 		} else if (route.view === 'discover-section') {
 			await deps.loadDiscoverSection();
+		} else if (route.view === 'profile') {
+			await deps.loadProfile();
 		}
 	}
 

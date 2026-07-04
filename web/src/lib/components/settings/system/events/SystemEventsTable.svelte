@@ -87,6 +87,9 @@
 								icon="delete"
 								variant="destructive"
 								disabled={deletingId === event.id}
+								confirmTitle="Delete system event"
+								confirmDescription={`Delete system event "${event.message}"?`}
+								confirmLabel="Delete event"
 								onclick={() => onDelete(event.id)}
 							/>
 						</div>

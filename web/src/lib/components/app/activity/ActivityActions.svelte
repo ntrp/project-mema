@@ -3,6 +3,7 @@
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import UploadIcon from '@lucide/svelte/icons/upload';
 	import XIcon from '@lucide/svelte/icons/x';
+	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cancellable, deletable, manualImportable } from './activityDisplay';
@@ -66,26 +67,20 @@
 	</Tooltip.Root>
 {/if}
 {#if canManage && deletable(activity)}
-	<Tooltip.Root>
-		<Tooltip.Trigger>
-			{#snippet child({ props })}
-				<Button
-					{...props}
-					type="button"
-					variant="destructive"
-					size="icon-sm"
-					aria-label={`Delete ${activity.releaseTitle}`}
-					disabled={deletingId === activity.id}
-					onclick={() => onDelete(activity)}
-				>
-					{#if deletingId === activity.id}
-						<RefreshCwIcon aria-hidden="true" />
-					{:else}
-						<TrashIcon aria-hidden="true" />
-					{/if}
-				</Button>
-			{/snippet}
-		</Tooltip.Trigger>
-		<Tooltip.Content>Delete</Tooltip.Content>
-	</Tooltip.Root>
+	<ConfirmActionButton
+		label={`Delete ${activity.releaseTitle}`}
+		title="Delete activity"
+		description={`Delete download activity "${activity.releaseTitle}"?`}
+		confirmLabel="Delete activity"
+		size="icon-sm"
+		disabled={deletingId === activity.id}
+		tooltip="Delete"
+		onConfirm={() => onDelete(activity)}
+	>
+		{#if deletingId === activity.id}
+			<RefreshCwIcon aria-hidden="true" />
+		{:else}
+			<TrashIcon aria-hidden="true" />
+		{/if}
+	</ConfirmActionButton>
 {/if}

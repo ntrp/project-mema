@@ -47,6 +47,9 @@
 								label={`Delete ${item.name}`}
 								icon="delete"
 								variant="destructive"
+								confirmTitle="Delete download client"
+								confirmDescription={`Delete download client "${item.name}"?`}
+								confirmLabel="Delete client"
 								onclick={() => onDelete(item.id)}
 							/>
 						</div>

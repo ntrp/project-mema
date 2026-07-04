@@ -15,6 +15,7 @@ import { createMediaActions } from './mediaActions';
 import { createMediaMetadataActions } from './mediaMetadataActions';
 import { createNavigationActions } from './navigationActions';
 import { createNoticeActions } from './noticeActions';
+import { createProfileActions } from './profileActions';
 import { createReleaseActions } from './releaseActions';
 import { createRouteActions } from './routeActions';
 import { createSearchActions } from './searchActions';
@@ -32,6 +33,7 @@ export type { AppRouteState } from './routeState';
 export function createAppShellController(route: AppRouteState = defaultRouteState()) {
 	const state = new AppShellState(route);
 	const notices = createNoticeActions(state);
+	const profile = createProfileActions(state, notices);
 	const events = createEventActions(state);
 	const loads = createLoadActions(state);
 	const discovery = createDiscoveryActions(state);
@@ -69,7 +71,8 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		loadDiscoverSection: discovery.loadDiscoverSection,
 		loadMediaCollection: loads.loadMediaCollection,
 		loadMetadataDetail: loads.loadMetadataDetail,
-		loadPersonDetail: loads.loadPersonDetail
+		loadPersonDetail: loads.loadPersonDetail,
+		loadProfile: profile.loadProfile
 	});
 	const navigation = createNavigationActions(state, {
 		loadDiscoverSection: discovery.loadDiscoverSection
@@ -84,6 +87,7 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		loadPersonDetail: loads.loadPersonDetail,
 		loadMediaCollection: loads.loadMediaCollection,
 		loadDiscoverSection: discovery.loadDiscoverSection,
+		loadProfile: profile.loadProfile,
 		events: {
 			loadMediaItems: loads.loadMediaItems,
 			upsertActivity: events.upsertActivity,
@@ -126,6 +130,7 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 	return Object.assign(
 		state,
 		notices,
+		profile,
 		session,
 		discovery,
 		search,
