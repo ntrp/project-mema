@@ -116,6 +116,31 @@ func TestSCNMedia014RSSSyncExcludesNonRSSAndNonRSSProfileIndexers(t *testing.T) 
 	}
 }
 
+func TestSCNMedia014RSSSyncUsesRSSOnlyIndexer(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	indexer := rssSyncIndexerWithInput(t, ctx, store, rssSyncFeed("Wanted.RSSOnly.2026.1080p.WEB-DL", "https://indexer.test/download/rss-only"), storage.IndexerInput{
+		SupportsRSS:    true,
+		SupportsSearch: false,
+		Enabled:        true,
+		AppProfileID:   "default",
+	})
+	downloadClient := rssSyncSAB(t, true)
+	wanted := rssSyncMedia(t, ctx, store, "Wanted RSSOnly")
+	rssSyncDownloadClient(t, ctx, store, downloadClient)
+
+	if err := runRSSSyncWorker(ctx, nil, store, indexers.NewService(indexer.Client()), downloadclients.NewService(downloadClient.Client()), decisions.NewEngine(), nil); err != nil {
+		t.Fatalf("rss sync: %v", err)
+	}
+
+	activities, err := store.ListDownloadActivity(ctx)
+	if err != nil {
+		t.Fatalf("list download activity: %v", err)
+	}
+	if len(activities) != 1 || activities[0].MediaItemID != wanted.ID {
+		t.Fatalf("download activity = %#v", activities)
+	}
+}
+
 func TestSCNMedia014RSSSyncMarkerPreventsDuplicateProcessing(t *testing.T) {
 	ctx, store := jobsTestStore(t)
 	indexer := rssSyncIndexer(t, ctx, store, rssSyncFeed("Wanted.Marker.2026.1080p.WEB-DL", "https://indexer.test/download/marker"))
