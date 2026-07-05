@@ -99,6 +99,60 @@ func (q *Queries) CreateMediaFileRescanLibraryScan(ctx context.Context, arg Crea
 	return err
 }
 
+const createMediaFileRescanLibraryScanItem = `-- name: CreateMediaFileRescanLibraryScanItem :exec
+insert into app.library_scan_items (
+    id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
+    status, matched_title, matched_year, matched_media_kind, media_item_id, season_id, episode_id
+)
+values (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $5,
+    $6,
+    $7,
+    $9,
+    $10,
+    $11
+)
+`
+
+type CreateMediaFileRescanLibraryScanItemParams struct {
+	ID                uuid.UUID
+	ScanID            uuid.UUID
+	Path              string
+	FileName          string
+	DetectedTitle     string
+	DetectedYear      pgtype.Int4
+	DetectedMediaKind string
+	Status            string
+	MediaItemID       *uuid.UUID
+	SeasonID          *uuid.UUID
+	EpisodeID         *uuid.UUID
+}
+
+func (q *Queries) CreateMediaFileRescanLibraryScanItem(ctx context.Context, arg CreateMediaFileRescanLibraryScanItemParams) error {
+	_, err := q.db.Exec(ctx, createMediaFileRescanLibraryScanItem,
+		arg.ID,
+		arg.ScanID,
+		arg.Path,
+		arg.FileName,
+		arg.DetectedTitle,
+		arg.DetectedYear,
+		arg.DetectedMediaKind,
+		arg.Status,
+		arg.MediaItemID,
+		arg.SeasonID,
+		arg.EpisodeID,
+	)
+	return err
+}
+
 const deleteLibraryScanItemsForMediaItem = `-- name: DeleteLibraryScanItemsForMediaItem :exec
 delete from app.library_scan_items
 where media_item_id = $1
@@ -151,4 +205,80 @@ func (q *Queries) ImportedMediaFileExists(ctx context.Context, arg ImportedMedia
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const listMediaFileRecordsForItem = `-- name: ListMediaFileRecordsForItem :many
+select id,
+    scan_id,
+    path,
+    file_name,
+    detected_title,
+    detected_year,
+    detected_media_kind,
+    status,
+    matched_title,
+    matched_year,
+    matched_media_kind,
+    media_item_id,
+    season_id,
+    episode_id,
+    created_at,
+    updated_at
+from app.library_scan_items
+where media_item_id = $1
+order by updated_at desc
+`
+
+func (q *Queries) ListMediaFileRecordsForItem(ctx context.Context, mediaItemID *uuid.UUID) ([]AppLibraryScanItem, error) {
+	rows, err := q.db.Query(ctx, listMediaFileRecordsForItem, mediaItemID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AppLibraryScanItem
+	for rows.Next() {
+		var i AppLibraryScanItem
+		if err := rows.Scan(
+			&i.ID,
+			&i.ScanID,
+			&i.Path,
+			&i.FileName,
+			&i.DetectedTitle,
+			&i.DetectedYear,
+			&i.DetectedMediaKind,
+			&i.Status,
+			&i.MatchedTitle,
+			&i.MatchedYear,
+			&i.MatchedMediaKind,
+			&i.MediaItemID,
+			&i.SeasonID,
+			&i.EpisodeID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateLibraryScanItemStatus = `-- name: UpdateLibraryScanItemStatus :exec
+update app.library_scan_items
+set status = $2,
+    updated_at = now()
+where id = $1
+`
+
+type UpdateLibraryScanItemStatusParams struct {
+	ID     uuid.UUID
+	Status string
+}
+
+func (q *Queries) UpdateLibraryScanItemStatus(ctx context.Context, arg UpdateLibraryScanItemStatusParams) error {
+	_, err := q.db.Exec(ctx, updateLibraryScanItemStatus, arg.ID, arg.Status)
+	return err
 }

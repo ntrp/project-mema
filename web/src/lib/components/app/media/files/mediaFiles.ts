@@ -5,6 +5,11 @@ import {
 	type MediaFileProfileOption
 } from '$lib/components/app/media/file-data/mediaFileProfiles';
 import { mediaFileInfo, mediaFileSize } from '$lib/components/app/media/file-data/mediaFileSize';
+import {
+	audioInfo,
+	matchToken,
+	qualityInfo
+} from '$lib/components/app/media/files/mediaFileParsing';
 import type { MediaItem } from '$lib/settings/types';
 type MediaFileTrack = NonNullable<NonNullable<MediaItem['files']>[number]['tracks']>[number];
 type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['chapters']>[number];
@@ -112,11 +117,12 @@ export function fileRow(
 	const info = mediaFileInfo(item, path);
 	const sizeBytes = info?.sizeBytes;
 	const profile = fileProfileSettings(item, qualityProfiles);
+	const exists = info?.status !== 'missing';
 	return {
 		key: path,
 		path,
 		relativePath: relativePath(item.mediaFolderPath, path),
-		exists: true,
+		exists,
 		...episodeParts(path),
 		videoCodec: matchToken(name, ['x265', 'h265', 'hevc', 'x264', 'h264', 'avc']),
 		audioInfo: audioInfo(name),
@@ -194,19 +200,4 @@ export function seasonNumberFromName(name: string) {
 	}
 	const match = /(\d+)/.exec(name);
 	return match ? Number(match[1]) : undefined;
-}
-
-function qualityInfo(value: string) {
-	return matchToken(value, ['2160p', '1080p', '720p', '576p', '480p']);
-}
-
-function audioInfo(value: string) {
-	const tokens = ['TrueHD', 'Atmos', 'DTS-HD', 'DTS', 'DDP', 'DD+', 'EAC3', 'AC3', 'AAC']
-		.map((token) => matchToken(value, [token]))
-		.filter((token) => token !== '-');
-	return tokens.join(' ') || '-';
-}
-
-function matchToken(value: string, tokens: string[]) {
-	return tokens.find((token) => new RegExp(token, 'i').test(value)) ?? '-';
 }

@@ -4788,9 +4788,15 @@ components:
       additionalProperties: false
       required:
         - path
+        - status
       properties:
         path:
           type: string
+        status:
+          type: string
+          enum:
+            - available
+            - missing
         sizeBytes:
           type: integer
           format: int64
@@ -4874,6 +4880,8 @@ components:
             - moved
             - replaced
             - deleted
+            - missing
+            - moved_candidate
             - restored
             - superseded
         status:
@@ -7633,6 +7641,9 @@ components:
         - pending
         - auto_added
         - manually_added
+        - missing
+        - moved_candidate
+        - restored
     LibraryScan:
       type: object
       additionalProperties: false

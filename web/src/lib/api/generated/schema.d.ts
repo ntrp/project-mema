@@ -2424,6 +2424,8 @@ export interface components {
 		};
 		MediaFileInfo: {
 			path: string;
+			/** @enum {string} */
+			status: 'available' | 'missing';
 			/** Format: int64 */
 			sizeBytes?: number;
 			tracks?: components['schemas']['MediaFileTrack'][];
@@ -2455,6 +2457,8 @@ export interface components {
 				| 'moved'
 				| 'replaced'
 				| 'deleted'
+				| 'missing'
+				| 'moved_candidate'
 				| 'restored'
 				| 'superseded';
 			/** @enum {string} */
@@ -3467,7 +3471,13 @@ export interface components {
 		/** @enum {string} */
 		LibraryMediaKind: 'movie' | 'series' | 'anime_movie' | 'anime_series' | 'unknown';
 		/** @enum {string} */
-		LibraryScanItemStatus: 'pending' | 'auto_added' | 'manually_added';
+		LibraryScanItemStatus:
+			| 'pending'
+			| 'auto_added'
+			| 'manually_added'
+			| 'missing'
+			| 'moved_candidate'
+			| 'restored';
 		LibraryScan: {
 			/** Format: uuid */
 			id: string;

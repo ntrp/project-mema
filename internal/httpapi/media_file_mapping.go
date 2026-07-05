@@ -15,8 +15,9 @@ func mediaFileInfoResponses(
 ) *[]MediaFileInfo {
 	files := make([]MediaFileInfo, 0, len(paths))
 	for _, path := range paths {
-		file := MediaFileInfo{Path: path}
+		file := MediaFileInfo{Path: path, Status: MediaFileInfoStatusMissing}
 		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
+			file.Status = MediaFileInfoStatusAvailable
 			size := stat.Size()
 			file.SizeBytes = &size
 			probe := mediaFileProbe(path)

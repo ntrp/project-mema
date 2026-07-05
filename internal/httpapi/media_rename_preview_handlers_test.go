@@ -16,7 +16,7 @@ func TestMediaRenamePreviewResponseMapsRows(t *testing.T) {
 		}},
 	})
 
-	if len(response.Rows) != 1 || response.Rows[0].Status != Safe {
+	if len(response.Rows) != 1 || response.Rows[0].Status != MediaRenamePreviewRowStatusSafe {
 		t.Fatalf("response = %#v", response)
 	}
 	if response.Rows[0].Messages[0] != "Ready." {

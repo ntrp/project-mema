@@ -64,7 +64,7 @@ describe('rendered media detail area (SCN-MEDIA-004)', () => {
 				title: 'Scenario Series',
 				type: 'serie',
 				filePaths: [filePath],
-				files: [{ path: filePath, sizeBytes: 5 * 1024 * 1024 * 1024 }],
+				files: [{ path: filePath, status: 'available', sizeBytes: 5 * 1024 * 1024 * 1024 }],
 				seasons: [
 					{
 						name: 'Season 1',
@@ -141,7 +141,7 @@ function mediaItem(overrides: Partial<MediaItem> = {}): MediaItem {
 		libraryFolderPath: '/library',
 		mediaFolderPath: '/library/Scenario Movie',
 		filePaths: [filePath],
-		files: [{ path: filePath, sizeBytes: 5 * 1024 * 1024 * 1024 }],
+		files: [{ path: filePath, status: 'available', sizeBytes: 5 * 1024 * 1024 * 1024 }],
 		metadataFilePaths: [],
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:01:00Z',

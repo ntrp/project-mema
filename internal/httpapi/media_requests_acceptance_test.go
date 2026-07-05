@@ -12,7 +12,7 @@ func TestScenarioSCNMedia006SignedInUsersCreateAndInspectMediaRequests(t *testin
 
 	var created MediaRequest
 	client.doJSON(t, http.MethodPost, "/media/requests", mediaRequestCreateRequest(), http.StatusCreated, &created)
-	if created.Title != "Requested Scenario Movie" || created.Status != MediaRequestStatusPending {
+	if created.Title != "Requested Scenario Movie" || created.Status != Pending {
 		t.Fatalf("created media request = %#v", created)
 	}
 
@@ -47,7 +47,7 @@ func TestScenarioSCNMedia006SignedInUsersCreateAndInspectMediaRequests(t *testin
 		QualityProfileId: profiles.Profiles[0].Id,
 		LibraryFolderId:  folder.Folder.Id,
 	}, http.StatusOK, &approved)
-	if approved.Request.Status != MediaRequestStatusApproved {
+	if approved.Request.Status != Approved {
 		t.Fatalf("approved request = %#v", approved.Request)
 	}
 	if approved.MediaItem.Title != created.Title || !approved.MediaItem.Monitored {

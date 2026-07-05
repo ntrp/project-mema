@@ -74,10 +74,10 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 	if files == nil || len(*files) != 2 {
 		t.Fatalf("files = %#v", files)
 	}
-	if (*files)[0].Path != filePath || (*files)[0].SizeBytes == nil || *(*files)[0].SizeBytes != 8 {
+	if (*files)[0].Path != filePath || (*files)[0].Status != MediaFileInfoStatusAvailable || (*files)[0].SizeBytes == nil || *(*files)[0].SizeBytes != 8 {
 		t.Fatalf("existing file response = %#v", (*files)[0])
 	}
-	if (*files)[1].Path != missingPath || (*files)[1].SizeBytes != nil {
+	if (*files)[1].Path != missingPath || (*files)[1].Status != MediaFileInfoStatusMissing || (*files)[1].SizeBytes != nil {
 		t.Fatalf("missing file response = %#v", (*files)[1])
 	}
 }

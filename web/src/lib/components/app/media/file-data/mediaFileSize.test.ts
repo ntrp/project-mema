@@ -18,7 +18,7 @@ describe('media file size helpers (SCN-MEDIA-001)', () => {
 
 	it('looks up file info by path', () => {
 		const item = {
-			files: [{ path: '/movie.mkv', sizeBytes: 1024 }]
+			files: [{ path: '/movie.mkv', status: 'available', sizeBytes: 1024 }]
 		} as MediaItem;
 
 		expect(mediaFileInfo(item, '/movie.mkv')?.sizeBytes).toBe(1024);

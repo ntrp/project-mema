@@ -17,6 +17,7 @@ const movie = {
 	files: [
 		{
 			path: '/library/Scenario Movie/Scenario.Movie.2026.1080p.WEB-DL.DDP5.1.EN.mkv',
+			status: 'available',
 			sizeBytes: 5 * 1024 * 1024 * 1024,
 			tracks: [{ type: 'video', codec: 'h264' }],
 			chapters: [{ title: 'Intro' }]

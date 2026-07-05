@@ -53,7 +53,8 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 
 	queries := storagegen.New(s.pool).WithTx(tx)
 	mediaItemID := item.ID
-	if err := queries.DeleteLibraryScanItemsForMediaItem(ctx, &mediaItemID); err != nil {
+	existing, err := queries.ListMediaFileRecordsForItem(ctx, &mediaItemID)
+	if err != nil {
 		return MediaItem{}, err
 	}
 	scanID := uuid.New()
@@ -64,8 +65,43 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 	}); err != nil {
 		return MediaItem{}, err
 	}
+	currentPaths := mediaFilePathSet(files)
+	knownPaths := map[string]struct{}{}
+	usedMovedSources := map[uuid.UUID]struct{}{}
+	for _, record := range existing {
+		if _, ok := currentPaths[record.Path]; ok {
+			knownPaths[record.Path] = struct{}{}
+			if missingMediaFileStatus(record.Status) {
+				if err := updateMediaFileRecordStatus(ctx, queries, record, "restored"); err != nil {
+					return MediaItem{}, err
+				}
+				if err := recordMediaFileReconciliation(ctx, tx, mediaItemID, record.Path, "restored", "succeeded", nil, nil); err != nil {
+					return MediaItem{}, err
+				}
+			}
+			continue
+		}
+		if activeMediaFileStatus(record.Status) {
+			if err := updateMediaFileRecordStatus(ctx, queries, record, "missing"); err != nil {
+				return MediaItem{}, err
+			}
+			if err := recordMediaFileReconciliation(ctx, tx, mediaItemID, record.Path, "missing", "succeeded", nil, nil); err != nil {
+				return MediaItem{}, err
+			}
+		}
+	}
 	for _, path := range files {
-		if err := queries.CreateImportedFileLibraryScanItem(ctx, storagegen.CreateImportedFileLibraryScanItemParams{
+		if _, ok := knownPaths[path]; ok {
+			continue
+		}
+		status := "auto_added"
+		var sourcePath *string
+		if source := movedSourceCandidate(existing, path, usedMovedSources); source != nil {
+			status = "moved_candidate"
+			sourcePath = &source.Path
+			usedMovedSources[source.ID] = struct{}{}
+		}
+		if err := queries.CreateMediaFileRescanLibraryScanItem(ctx, storagegen.CreateMediaFileRescanLibraryScanItemParams{
 			ID:                uuid.New(),
 			ScanID:            scanID,
 			Path:              path,
@@ -73,9 +109,17 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 			DetectedTitle:     item.Title,
 			DetectedYear:      int4Value(item.Year),
 			DetectedMediaKind: kind,
+			Status:            status,
 			MediaItemID:       &mediaItemID,
+			SeasonID:          nil,
+			EpisodeID:         nil,
 		}); err != nil {
 			return MediaItem{}, err
+		}
+		if status == "moved_candidate" {
+			if err := recordMediaFileReconciliation(ctx, tx, mediaItemID, path, "moved_candidate", "skipped", sourcePath, &path); err != nil {
+				return MediaItem{}, err
+			}
 		}
 	}
 	if err := queries.TouchMediaItem(ctx, item.ID); err != nil {
@@ -85,6 +129,66 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 		return MediaItem{}, err
 	}
 	return s.GetMediaItem(ctx, id)
+}
+
+func mediaFilePathSet(paths []string) map[string]struct{} {
+	set := make(map[string]struct{}, len(paths))
+	for _, path := range paths {
+		set[path] = struct{}{}
+	}
+	return set
+}
+
+func activeMediaFileStatus(status string) bool {
+	return status == "auto_added" || status == "manually_added" || status == "restored"
+}
+
+func missingMediaFileStatus(status string) bool {
+	return status == "missing" || status == "moved_candidate"
+}
+
+func updateMediaFileRecordStatus(ctx context.Context, q *storagegen.Queries, record storagegen.AppLibraryScanItem, status string) error {
+	return q.UpdateLibraryScanItemStatus(ctx, storagegen.UpdateLibraryScanItemStatusParams{
+		ID:     record.ID,
+		Status: status,
+	})
+}
+
+func movedSourceCandidate(records []storagegen.AppLibraryScanItem, path string, used map[uuid.UUID]struct{}) *storagegen.AppLibraryScanItem {
+	name := filepath.Base(path)
+	for index := range records {
+		record := &records[index]
+		if record.Status != "missing" || record.FileName != name {
+			continue
+		}
+		if _, ok := used[record.ID]; ok {
+			continue
+		}
+		return record
+	}
+	return nil
+}
+
+func recordMediaFileReconciliation(
+	ctx context.Context,
+	q storagegen.DBTX,
+	mediaItemID uuid.UUID,
+	filePath string,
+	operation string,
+	status string,
+	sourcePath *string,
+	destinationPath *string,
+) error {
+	_, err := createMediaFileHistory(ctx, q, MediaFileHistoryInput{
+		MediaItemID:     &mediaItemID,
+		FilePath:        filePath,
+		SourcePath:      sourcePath,
+		DestinationPath: destinationPath,
+		Operation:       operation,
+		Status:          status,
+		ActorType:       "system",
+	})
+	return err
 }
 
 func mediaFilesInRoot(root string) ([]string, error) {

@@ -339,9 +339,12 @@ func (e LibraryScanStatus) Valid() bool {
 
 // Defines values for LibraryScanItemStatus.
 const (
-	LibraryScanItemStatusAutoAdded     LibraryScanItemStatus = "auto_added"
-	LibraryScanItemStatusManuallyAdded LibraryScanItemStatus = "manually_added"
-	LibraryScanItemStatusPending       LibraryScanItemStatus = "pending"
+	LibraryScanItemStatusAutoAdded      LibraryScanItemStatus = "auto_added"
+	LibraryScanItemStatusManuallyAdded  LibraryScanItemStatus = "manually_added"
+	LibraryScanItemStatusMissing        LibraryScanItemStatus = "missing"
+	LibraryScanItemStatusMovedCandidate LibraryScanItemStatus = "moved_candidate"
+	LibraryScanItemStatusPending        LibraryScanItemStatus = "pending"
+	LibraryScanItemStatusRestored       LibraryScanItemStatus = "restored"
 )
 
 // Valid indicates whether the value is a known member of the LibraryScanItemStatus enum.
@@ -351,7 +354,13 @@ func (e LibraryScanItemStatus) Valid() bool {
 		return true
 	case LibraryScanItemStatusManuallyAdded:
 		return true
+	case LibraryScanItemStatusMissing:
+		return true
+	case LibraryScanItemStatusMovedCandidate:
+		return true
 	case LibraryScanItemStatusPending:
+		return true
+	case LibraryScanItemStatusRestored:
 		return true
 	default:
 		return false
@@ -402,31 +411,37 @@ func (e MediaFileHistoryEntryActorType) Valid() bool {
 
 // Defines values for MediaFileHistoryEntryOperation.
 const (
-	Deleted    MediaFileHistoryEntryOperation = "deleted"
-	Imported   MediaFileHistoryEntryOperation = "imported"
-	Moved      MediaFileHistoryEntryOperation = "moved"
-	Renamed    MediaFileHistoryEntryOperation = "renamed"
-	Replaced   MediaFileHistoryEntryOperation = "replaced"
-	Restored   MediaFileHistoryEntryOperation = "restored"
-	Superseded MediaFileHistoryEntryOperation = "superseded"
+	MediaFileHistoryEntryOperationDeleted        MediaFileHistoryEntryOperation = "deleted"
+	MediaFileHistoryEntryOperationImported       MediaFileHistoryEntryOperation = "imported"
+	MediaFileHistoryEntryOperationMissing        MediaFileHistoryEntryOperation = "missing"
+	MediaFileHistoryEntryOperationMoved          MediaFileHistoryEntryOperation = "moved"
+	MediaFileHistoryEntryOperationMovedCandidate MediaFileHistoryEntryOperation = "moved_candidate"
+	MediaFileHistoryEntryOperationRenamed        MediaFileHistoryEntryOperation = "renamed"
+	MediaFileHistoryEntryOperationReplaced       MediaFileHistoryEntryOperation = "replaced"
+	MediaFileHistoryEntryOperationRestored       MediaFileHistoryEntryOperation = "restored"
+	MediaFileHistoryEntryOperationSuperseded     MediaFileHistoryEntryOperation = "superseded"
 )
 
 // Valid indicates whether the value is a known member of the MediaFileHistoryEntryOperation enum.
 func (e MediaFileHistoryEntryOperation) Valid() bool {
 	switch e {
-	case Deleted:
+	case MediaFileHistoryEntryOperationDeleted:
 		return true
-	case Imported:
+	case MediaFileHistoryEntryOperationImported:
 		return true
-	case Moved:
+	case MediaFileHistoryEntryOperationMissing:
 		return true
-	case Renamed:
+	case MediaFileHistoryEntryOperationMoved:
 		return true
-	case Replaced:
+	case MediaFileHistoryEntryOperationMovedCandidate:
 		return true
-	case Restored:
+	case MediaFileHistoryEntryOperationRenamed:
 		return true
-	case Superseded:
+	case MediaFileHistoryEntryOperationReplaced:
+		return true
+	case MediaFileHistoryEntryOperationRestored:
+		return true
+	case MediaFileHistoryEntryOperationSuperseded:
 		return true
 	default:
 		return false
@@ -448,6 +463,24 @@ func (e MediaFileHistoryEntryStatus) Valid() bool {
 	case Skipped:
 		return true
 	case Succeeded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaFileInfoStatus.
+const (
+	MediaFileInfoStatusAvailable MediaFileInfoStatus = "available"
+	MediaFileInfoStatusMissing   MediaFileInfoStatus = "missing"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileInfoStatus enum.
+func (e MediaFileInfoStatus) Valid() bool {
+	switch e {
+	case MediaFileInfoStatusAvailable:
+		return true
+	case MediaFileInfoStatusMissing:
 		return true
 	default:
 		return false
@@ -717,25 +750,25 @@ func (e MediaProfileSubtitleLanguageSubtitleType) Valid() bool {
 
 // Defines values for MediaRenamePreviewRowStatus.
 const (
-	Blocked   MediaRenamePreviewRowStatus = "blocked"
-	Conflict  MediaRenamePreviewRowStatus = "conflict"
-	Missing   MediaRenamePreviewRowStatus = "missing"
-	Safe      MediaRenamePreviewRowStatus = "safe"
-	Unchanged MediaRenamePreviewRowStatus = "unchanged"
+	MediaRenamePreviewRowStatusBlocked   MediaRenamePreviewRowStatus = "blocked"
+	MediaRenamePreviewRowStatusConflict  MediaRenamePreviewRowStatus = "conflict"
+	MediaRenamePreviewRowStatusMissing   MediaRenamePreviewRowStatus = "missing"
+	MediaRenamePreviewRowStatusSafe      MediaRenamePreviewRowStatus = "safe"
+	MediaRenamePreviewRowStatusUnchanged MediaRenamePreviewRowStatus = "unchanged"
 )
 
 // Valid indicates whether the value is a known member of the MediaRenamePreviewRowStatus enum.
 func (e MediaRenamePreviewRowStatus) Valid() bool {
 	switch e {
-	case Blocked:
+	case MediaRenamePreviewRowStatusBlocked:
 		return true
-	case Conflict:
+	case MediaRenamePreviewRowStatusConflict:
 		return true
-	case Missing:
+	case MediaRenamePreviewRowStatusMissing:
 		return true
-	case Safe:
+	case MediaRenamePreviewRowStatusSafe:
 		return true
-	case Unchanged:
+	case MediaRenamePreviewRowStatusUnchanged:
 		return true
 	default:
 		return false
@@ -744,16 +777,16 @@ func (e MediaRenamePreviewRowStatus) Valid() bool {
 
 // Defines values for MediaRequestStatus.
 const (
-	MediaRequestStatusApproved MediaRequestStatus = "approved"
-	MediaRequestStatusPending  MediaRequestStatus = "pending"
+	Approved MediaRequestStatus = "approved"
+	Pending  MediaRequestStatus = "pending"
 )
 
 // Valid indicates whether the value is a known member of the MediaRequestStatus enum.
 func (e MediaRequestStatus) Valid() bool {
 	switch e {
-	case MediaRequestStatusApproved:
+	case Approved:
 		return true
-	case MediaRequestStatusPending:
+	case Pending:
 		return true
 	default:
 		return false
@@ -1856,9 +1889,13 @@ type MediaFileInfo struct {
 	Chapters             *[]MediaFileChapter            `json:"chapters,omitempty"`
 	Path                 string                         `json:"path"`
 	SizeBytes            *int64                         `json:"sizeBytes,omitempty"`
+	Status               MediaFileInfoStatus            `json:"status"`
 	SubtitleSatisfaction *MediaFileSubtitleSatisfaction `json:"subtitleSatisfaction,omitempty"`
 	Tracks               *[]MediaFileTrack              `json:"tracks,omitempty"`
 }
+
+// MediaFileInfoStatus defines model for MediaFileInfo.Status.
+type MediaFileInfoStatus string
 
 // MediaFilePreviewClientProfile defines model for MediaFilePreviewClientProfile.
 type MediaFilePreviewClientProfile string
