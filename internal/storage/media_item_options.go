@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 )
 
@@ -24,23 +26,21 @@ func (s *SettingsStore) UpdateMediaItemOptions(ctx context.Context, id uuid.UUID
 	if err != nil {
 		return MediaItem{}, err
 	}
-	tag, err := s.pool.Exec(ctx, `
-		update app.media_items
-		set quality_profile_id = coalesce($2, quality_profile_id),
-			minimum_availability = coalesce($3, minimum_availability),
-			monitored = coalesce($4, monitored),
-			monitor_mode = coalesce($5, monitor_mode),
-			seasons = case when $6 then $7::jsonb else seasons end,
-			library_folder_id = coalesce($8, library_folder_id),
-			media_folder_path = coalesce($9, media_folder_path),
-			updated_at = now()
-		where id = $1
-	`, id, qualityProfileID, minimumAvailability, input.Monitored, monitorMode, updateSeasons, seasonsPayload,
-		input.LibraryFolderID, mediaFolderPath)
+	rows, err := storagegen.New(s.pool).UpdateMediaItemOptionsRecord(ctx, storagegen.UpdateMediaItemOptionsRecordParams{
+		QualityProfileID:    textValue(qualityProfileID),
+		MinimumAvailability: textValue(minimumAvailability),
+		Monitored:           boolValue(input.Monitored),
+		MonitorMode:         textValue(monitorMode),
+		UpdateSeasons:       updateSeasons,
+		Seasons:             seasonsPayload,
+		LibraryFolderID:     input.LibraryFolderID,
+		MediaFolderPath:     textValue(mediaFolderPath),
+		ID:                  id,
+	})
 	if err != nil {
 		return MediaItem{}, err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return MediaItem{}, ErrNotFound
 	}
 	if input.LibraryFolderID != nil {

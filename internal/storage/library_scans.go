@@ -1,46 +1,45 @@
 package storage
 
-import "github.com/jackc/pgx/v5"
+import storagegen "media-manager/internal/storage/generated"
 
-func scanLibraryFolder(row pgx.Row) (LibraryFolder, error) {
-	var folder LibraryFolder
-	err := row.Scan(&folder.ID, &folder.Path, &folder.CreatedAt, &folder.UpdatedAt)
-	return folder, err
+func libraryFolderFromRow(row storagegen.AppLibraryFolder) LibraryFolder {
+	return LibraryFolder{
+		ID:        row.ID,
+		Path:      row.Path,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+	}
 }
 
-func scanLibraryScan(row pgx.Row) (LibraryScan, error) {
-	var scan LibraryScan
-	err := row.Scan(
-		&scan.ID,
-		&scan.FolderID,
-		&scan.FolderPath,
-		&scan.Status,
-		&scan.TotalFiles,
-		&scan.AutoMatchedCount,
-		&scan.ManualCount,
-		&scan.CreatedAt,
-		&scan.CompletedAt,
-	)
-	return scan, err
+func libraryScanFromRow(row storagegen.GetLibraryScanRow) LibraryScan {
+	return LibraryScan{
+		ID:               row.ID,
+		FolderID:         row.LibraryFolderID,
+		FolderPath:       row.FolderPath,
+		Status:           row.Status,
+		TotalFiles:       row.TotalFiles,
+		AutoMatchedCount: row.AutoMatchedCount,
+		ManualCount:      row.ManualCount,
+		CreatedAt:        row.CreatedAt,
+		CompletedAt:      row.CompletedAt,
+	}
 }
 
-func scanLibraryScanItem(row pgx.Row) (LibraryScanItem, error) {
-	var item LibraryScanItem
-	err := row.Scan(
-		&item.ID,
-		&item.ScanID,
-		&item.Path,
-		&item.FileName,
-		&item.DetectedTitle,
-		&item.DetectedYear,
-		&item.DetectedMediaKind,
-		&item.Status,
-		&item.MatchedTitle,
-		&item.MatchedYear,
-		&item.MatchedMediaKind,
-		&item.MediaItemID,
-		&item.CreatedAt,
-		&item.UpdatedAt,
-	)
-	return item, err
+func libraryScanItemFromRow(row storagegen.AppLibraryScanItem) LibraryScanItem {
+	return LibraryScanItem{
+		ID:                row.ID,
+		ScanID:            row.ScanID,
+		Path:              row.Path,
+		FileName:          row.FileName,
+		DetectedTitle:     row.DetectedTitle,
+		DetectedYear:      int4Ptr(row.DetectedYear),
+		DetectedMediaKind: row.DetectedMediaKind,
+		Status:            row.Status,
+		MatchedTitle:      textPtr(row.MatchedTitle),
+		MatchedYear:       int4Ptr(row.MatchedYear),
+		MatchedMediaKind:  textPtr(row.MatchedMediaKind),
+		MediaItemID:       row.MediaItemID,
+		CreatedAt:         row.CreatedAt,
+		UpdatedAt:         row.UpdatedAt,
+	}
 }

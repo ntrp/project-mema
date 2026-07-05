@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 const DefaultSystemEventRetentionDays = 7
@@ -51,11 +53,17 @@ func (s *SettingsStore) CreateSystemEvent(ctx context.Context, input SystemEvent
 	if err != nil {
 		return SystemEvent{}, err
 	}
-	return scanSystemEvent(s.pool.QueryRow(ctx, `
-		insert into app.system_events (id, severity, category, message, data)
-		values ($1, $2, $3, $4, $5)
-		returning id, severity, category, message, data, created_at
-	`, uuid.New(), input.Severity, input.Category, input.Message, payload))
+	row, err := storagegen.New(s.pool).CreateSystemEvent(ctx, storagegen.CreateSystemEventParams{
+		ID:       uuid.New(),
+		Severity: input.Severity,
+		Category: input.Category,
+		Message:  input.Message,
+		Data:     payload,
+	})
+	if err != nil {
+		return SystemEvent{}, err
+	}
+	return systemEventFromRow(row)
 }
 
 func (s *SettingsStore) ListSystemEvents(ctx context.Context, limit int, before *time.Time) ([]SystemEvent, error) {
@@ -65,51 +73,45 @@ func (s *SettingsStore) ListSystemEvents(ctx context.Context, limit int, before 
 	if err := s.PruneSystemEvents(ctx); err != nil {
 		return nil, err
 	}
-	rows, err := s.pool.Query(ctx, `
-		select id, severity, category, message, data, created_at
-		from app.system_events
-		where ($2::timestamptz is null or created_at < $2)
-		order by created_at desc
-		limit $1
-	`, limit, before)
+	rows, err := storagegen.New(s.pool).ListSystemEvents(ctx, storagegen.ListSystemEventsParams{
+		Limit:  int32(limit),
+		Before: before,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	events := []SystemEvent{}
-	for rows.Next() {
-		event, err := scanSystemEvent(rows)
+	events := make([]SystemEvent, 0, len(rows))
+	for _, row := range rows {
+		event, err := systemEventFromRow(row)
 		if err != nil {
 			return nil, err
 		}
 		events = append(events, event)
 	}
-	return events, rows.Err()
+	return events, nil
 }
 
 func (s *SettingsStore) DeleteSystemEvent(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.system_events where id = $1`, id)
+	rowsAffected, err := storagegen.New(s.pool).DeleteSystemEvent(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rowsAffected == 0 {
 		return ErrNotFound
 	}
 	return nil
 }
 
 func (s *SettingsStore) ClearSystemEvents(ctx context.Context) error {
-	_, err := s.pool.Exec(ctx, `delete from app.system_events`)
-	return err
+	return storagegen.New(s.pool).ClearSystemEvents(ctx)
 }
 
 func (s *SettingsStore) GetSystemEventSettings(ctx context.Context) (SystemEventSettings, error) {
-	return scanSystemEventSettings(s.pool.QueryRow(ctx, `
-		insert into app.system_event_settings (id, retention_days)
-		values (true, $1)
-		on conflict (id) do update set id = excluded.id
-		returning retention_days, created_at, updated_at
-	`, DefaultSystemEventRetentionDays))
+	row, err := storagegen.New(s.pool).GetSystemEventSettings(ctx, DefaultSystemEventRetentionDays)
+	if err != nil {
+		return SystemEventSettings{}, err
+	}
+	return systemEventSettingsFromGetRow(row), nil
 }
 
 func (s *SettingsStore) UpdateSystemEventSettings(
@@ -122,17 +124,11 @@ func (s *SettingsStore) UpdateSystemEventSettings(
 	if input.RetentionDays < 1 || input.RetentionDays > 365 {
 		return SystemEventSettings{}, ErrInvalidInput
 	}
-	settings, err := scanSystemEventSettings(s.pool.QueryRow(ctx, `
-		insert into app.system_event_settings (id, retention_days)
-		values (true, $1)
-		on conflict (id) do update
-		set retention_days = excluded.retention_days,
-			updated_at = now()
-		returning retention_days, created_at, updated_at
-	`, input.RetentionDays))
+	row, err := storagegen.New(s.pool).UpdateSystemEventSettings(ctx, input.RetentionDays)
 	if err != nil {
 		return SystemEventSettings{}, err
 	}
+	settings := systemEventSettingsFromUpdateRow(row)
 	return settings, s.PruneSystemEvents(ctx)
 }
 
@@ -141,24 +137,19 @@ func (s *SettingsStore) PruneSystemEvents(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.pool.Exec(ctx, `
-		delete from app.system_events
-		where created_at < now() - ($1::int * interval '1 day')
-	`, settings.RetentionDays)
-	return err
+	return storagegen.New(s.pool).PruneSystemEvents(ctx, settings.RetentionDays)
 }
 
-func scanSystemEvent(row interface {
-	Scan(dest ...any) error
-}) (SystemEvent, error) {
-	var event SystemEvent
-	var payload []byte
-	err := row.Scan(&event.ID, &event.Severity, &event.Category, &event.Message, &payload, &event.CreatedAt)
-	if err != nil {
-		return SystemEvent{}, err
+func systemEventFromRow(row storagegen.AppSystemEvent) (SystemEvent, error) {
+	event := SystemEvent{
+		ID:        row.ID,
+		Severity:  row.Severity,
+		Category:  row.Category,
+		Message:   row.Message,
+		CreatedAt: row.CreatedAt,
 	}
-	if len(payload) > 0 {
-		_ = json.Unmarshal(payload, &event.Data)
+	if len(row.Data) > 0 {
+		_ = json.Unmarshal(row.Data, &event.Data)
 	}
 	if event.Data == nil {
 		event.Data = map[string]any{}
@@ -166,10 +157,18 @@ func scanSystemEvent(row interface {
 	return event, nil
 }
 
-func scanSystemEventSettings(row interface {
-	Scan(dest ...any) error
-}) (SystemEventSettings, error) {
-	var settings SystemEventSettings
-	err := row.Scan(&settings.RetentionDays, &settings.CreatedAt, &settings.UpdatedAt)
-	return settings, err
+func systemEventSettingsFromGetRow(row storagegen.GetSystemEventSettingsRow) SystemEventSettings {
+	return SystemEventSettings{
+		RetentionDays: row.RetentionDays,
+		CreatedAt:     row.CreatedAt,
+		UpdatedAt:     row.UpdatedAt,
+	}
+}
+
+func systemEventSettingsFromUpdateRow(row storagegen.UpdateSystemEventSettingsRow) SystemEventSettings {
+	return SystemEventSettings{
+		RetentionDays: row.RetentionDays,
+		CreatedAt:     row.CreatedAt,
+		UpdatedAt:     row.UpdatedAt,
+	}
 }

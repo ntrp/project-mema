@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -34,67 +36,29 @@ type DiscoverBlacklistInput struct {
 }
 
 func (s *SettingsStore) ListDiscoverBlacklist(ctx context.Context) ([]DiscoverBlacklistItem, error) {
-	if err := s.ensureDiscoverBlacklistSchema(ctx); err != nil {
-		return nil, err
-	}
-	rows, err := s.pool.Query(ctx, `
-		select id, media_type, title, year, external_provider, external_id, overview, poster_path, created_at
-		from app.discover_blacklist
-		order by created_at desc, lower(title)
-	`)
+	rows, err := storagegen.New(s.pool).ListDiscoverBlacklist(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	items := []DiscoverBlacklistItem{}
-	for rows.Next() {
-		item, err := scanDiscoverBlacklistItem(rows)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, item)
+	items := make([]DiscoverBlacklistItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, discoverBlacklistItemFromRow(row))
 	}
-	return items, rows.Err()
+	return items, nil
 }
 
 func (s *SettingsStore) SaveDiscoverBlacklistItem(
 	ctx context.Context,
 	input DiscoverBlacklistInput,
 ) (DiscoverBlacklistItem, error) {
-	if err := s.ensureDiscoverBlacklistSchema(ctx); err != nil {
-		return DiscoverBlacklistItem{}, err
-	}
 	input.Title = strings.Join(strings.Fields(input.Title), " ")
 	if input.Title == "" || (input.Type != "movie" && input.Type != "serie") {
 		return DiscoverBlacklistItem{}, ErrInvalidInput
 	}
 
-	item, err := scanDiscoverBlacklistItem(s.pool.QueryRow(ctx, `
-		insert into app.discover_blacklist (
-			id, media_type, title, year, external_provider, external_id, overview, poster_path
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8)
-		on conflict (media_type, external_provider, external_id)
-			where external_provider is not null and external_id is not null
-		do update
-		set title = excluded.title,
-			year = excluded.year,
-			overview = excluded.overview,
-			poster_path = excluded.poster_path
-		returning id, media_type, title, year, external_provider, external_id, overview, poster_path, created_at
-	`,
-		uuid.New(),
-		input.Type,
-		input.Title,
-		input.Year,
-		normalizedOptionalString(input.ExternalProvider),
-		normalizedOptionalString(input.ExternalID),
-		normalizedOptionalString(input.Overview),
-		normalizedOptionalString(input.PosterPath),
-	))
+	item, err := storagegen.New(s.pool).SaveDiscoverBlacklistByExternalID(ctx, discoverBlacklistExternalParams(input))
 	if err == nil {
-		return item, nil
+		return discoverBlacklistItemFromRow(item), nil
 	}
 	if !isDiscoverBlacklistFallbackConflict(err) {
 		return DiscoverBlacklistItem{}, normalizeDiscoverBlacklistWriteError(err)
@@ -103,14 +67,11 @@ func (s *SettingsStore) SaveDiscoverBlacklistItem(
 }
 
 func (s *SettingsStore) DeleteDiscoverBlacklistItem(ctx context.Context, id uuid.UUID) error {
-	if err := s.ensureDiscoverBlacklistSchema(ctx); err != nil {
-		return err
-	}
-	tag, err := s.pool.Exec(ctx, `delete from app.discover_blacklist where id = $1`, id)
+	rows, err := storagegen.New(s.pool).DeleteDiscoverBlacklistItem(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil
@@ -120,75 +81,46 @@ func (s *SettingsStore) saveDiscoverBlacklistTitleFallback(
 	ctx context.Context,
 	input DiscoverBlacklistInput,
 ) (DiscoverBlacklistItem, error) {
-	item, err := scanDiscoverBlacklistItem(s.pool.QueryRow(ctx, `
-		insert into app.discover_blacklist (
-			id, media_type, title, year, external_provider, external_id, overview, poster_path
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8)
-		on conflict (media_type, lower(title), coalesce(year, 0))
-			where external_provider is null or external_id is null
-		do update
-		set overview = excluded.overview,
-			poster_path = excluded.poster_path
-		returning id, media_type, title, year, external_provider, external_id, overview, poster_path, created_at
-	`,
-		uuid.New(),
-		input.Type,
-		input.Title,
-		input.Year,
-		nil,
-		nil,
-		normalizedOptionalString(input.Overview),
-		normalizedOptionalString(input.PosterPath),
-	))
-	return item, normalizeDiscoverBlacklistWriteError(err)
+	item, err := storagegen.New(s.pool).SaveDiscoverBlacklistByTitle(ctx, discoverBlacklistTitleParams(input))
+	return discoverBlacklistItemFromRow(item), normalizeDiscoverBlacklistWriteError(err)
 }
 
-func (s *SettingsStore) ensureDiscoverBlacklistSchema(ctx context.Context) error {
-	if _, err := s.pool.Exec(ctx, `
-		create table if not exists app.discover_blacklist (
-			id uuid primary key,
-			media_type text not null check (media_type in ('movie', 'series')),
-			title text not null,
-			year integer,
-			external_provider text,
-			external_id text,
-			overview text,
-			poster_path text,
-			created_at timestamptz not null default now()
-		)
-	`); err != nil {
-		return err
+func discoverBlacklistExternalParams(input DiscoverBlacklistInput) storagegen.SaveDiscoverBlacklistByExternalIDParams {
+	return storagegen.SaveDiscoverBlacklistByExternalIDParams{
+		ID:               uuid.New(),
+		MediaType:        input.Type,
+		Title:            input.Title,
+		Year:             int4Value(input.Year),
+		ExternalProvider: textValue(normalizedOptionalString(input.ExternalProvider)),
+		ExternalID:       textValue(normalizedOptionalString(input.ExternalID)),
+		Overview:         textValue(normalizedOptionalString(input.Overview)),
+		PosterPath:       textValue(normalizedOptionalString(input.PosterPath)),
 	}
-	if _, err := s.pool.Exec(ctx, `
-		create unique index if not exists idx_discover_blacklist_external
-			on app.discover_blacklist (media_type, external_provider, external_id)
-			where external_provider is not null and external_id is not null
-	`); err != nil {
-		return err
-	}
-	_, err := s.pool.Exec(ctx, `
-		create unique index if not exists idx_discover_blacklist_title
-			on app.discover_blacklist (media_type, lower(title), coalesce(year, 0))
-			where external_provider is null or external_id is null
-	`)
-	return err
 }
 
-func scanDiscoverBlacklistItem(row pgx.Row) (DiscoverBlacklistItem, error) {
-	var item DiscoverBlacklistItem
-	err := row.Scan(
-		&item.ID,
-		&item.Type,
-		&item.Title,
-		&item.Year,
-		&item.ExternalProvider,
-		&item.ExternalID,
-		&item.Overview,
-		&item.PosterPath,
-		&item.CreatedAt,
-	)
-	return item, err
+func discoverBlacklistTitleParams(input DiscoverBlacklistInput) storagegen.SaveDiscoverBlacklistByTitleParams {
+	return storagegen.SaveDiscoverBlacklistByTitleParams{
+		ID:         uuid.New(),
+		MediaType:  input.Type,
+		Title:      input.Title,
+		Year:       int4Value(input.Year),
+		Overview:   textValue(normalizedOptionalString(input.Overview)),
+		PosterPath: textValue(normalizedOptionalString(input.PosterPath)),
+	}
+}
+
+func discoverBlacklistItemFromRow(row storagegen.AppDiscoverBlacklist) DiscoverBlacklistItem {
+	return DiscoverBlacklistItem{
+		ID:               row.ID,
+		Type:             row.MediaType,
+		Title:            row.Title,
+		Year:             int4Ptr(row.Year),
+		ExternalProvider: textPtr(row.ExternalProvider),
+		ExternalID:       textPtr(row.ExternalID),
+		Overview:         textPtr(row.Overview),
+		PosterPath:       textPtr(row.PosterPath),
+		CreatedAt:        row.CreatedAt,
+	}
 }
 
 func normalizedOptionalString(value *string) *string {

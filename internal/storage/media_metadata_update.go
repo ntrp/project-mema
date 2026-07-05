@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 )
 
@@ -11,46 +13,44 @@ func (s *SettingsStore) UpdateMediaItemMetadata(ctx context.Context, id uuid.UUI
 	if err != nil {
 		return MediaItem{}, err
 	}
-	_, err = s.pool.Exec(ctx, `
-		update app.media_items
-		set
-			media_type = $2,
-			title = $3,
-			year = $4,
-			external_provider = $5,
-			external_id = $6,
-			overview = $7,
-			poster_path = $8,
-			collection_id = $9,
-			collection_name = $10,
-			backdrop_path = $11,
-			metadata_status = $12,
-			original_language = $13,
-			release_date = $14,
-			first_air_date = $15,
-			runtime_minutes = $16,
-			season_count = $17,
-			episode_count = $18,
-			vote_average = $19,
-			genres = $20::jsonb,
-			keywords = $21::jsonb,
-			facts = $22::jsonb,
-			seasons = $23::jsonb,
-			cast_members = $24::jsonb,
-			crew_members = $25::jsonb,
-			recommendations = $26::jsonb,
-			similar_media = $27::jsonb,
-			updated_at = now()
-		where id = $1
-	`, id, input.Type, input.Title, input.Year, input.ExternalProvider, input.ExternalID,
-		input.Overview, input.PosterPath, input.CollectionID, input.CollectionName, input.BackdropPath,
-		input.MetadataStatus, input.OriginalLanguage, input.ReleaseDate, input.FirstAirDate,
-		input.RuntimeMinutes, input.SeasonCount, input.EpisodeCount, input.VoteAverage,
-		metadataPayloads.genres, metadataPayloads.keywords, metadataPayloads.facts,
-		metadataPayloads.seasons, metadataPayloads.cast, metadataPayloads.crew, metadataPayloads.recommendations,
-		metadataPayloads.similar)
-	if err != nil {
+	if err := storagegen.New(s.pool).UpdateMediaItemMetadataRecord(ctx, mediaItemMetadataParams(id, input, metadataPayloads)); err != nil {
 		return MediaItem{}, err
 	}
 	return s.GetMediaItem(ctx, id)
+}
+
+func mediaItemMetadataParams(
+	id uuid.UUID,
+	input MediaItemInput,
+	payloads mediaMetadataPayloads,
+) storagegen.UpdateMediaItemMetadataRecordParams {
+	return storagegen.UpdateMediaItemMetadataRecordParams{
+		MediaType:        input.Type,
+		Title:            input.Title,
+		Year:             int4Value(input.Year),
+		ExternalProvider: textValue(input.ExternalProvider),
+		ExternalID:       textValue(input.ExternalID),
+		Overview:         textValue(input.Overview),
+		PosterPath:       textValue(input.PosterPath),
+		CollectionID:     textValue(input.CollectionID),
+		CollectionName:   textValue(input.CollectionName),
+		BackdropPath:     textValue(input.BackdropPath),
+		MetadataStatus:   textValue(input.MetadataStatus),
+		OriginalLanguage: textValue(input.OriginalLanguage),
+		ReleaseDate:      textValue(input.ReleaseDate),
+		FirstAirDate:     textValue(input.FirstAirDate),
+		RuntimeMinutes:   int4Value(input.RuntimeMinutes),
+		SeasonCount:      int4Value(input.SeasonCount),
+		EpisodeCount:     int4Value(input.EpisodeCount),
+		VoteAverage:      float8Value(input.VoteAverage),
+		Genres:           payloads.genres,
+		Keywords:         payloads.keywords,
+		Facts:            payloads.facts,
+		Seasons:          payloads.seasons,
+		CastMembers:      payloads.cast,
+		CrewMembers:      payloads.crew,
+		Recommendations:  payloads.recommendations,
+		SimilarMedia:     payloads.similar,
+		ID:               id,
+	}
 }

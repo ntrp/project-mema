@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -18,10 +20,11 @@ func (s *SettingsStore) ReplaceReleaseSearchResults(ctx context.Context, mediaIt
 		_ = tx.Rollback(ctx)
 	}()
 
-	if _, err := tx.Exec(ctx, `delete from app.media_release_candidates where media_item_id = $1`, mediaItemID); err != nil {
+	q := storagegen.New(tx)
+	if err := q.ClearReleaseCandidatesForMedia(ctx, mediaItemID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `delete from app.media_release_search_errors where media_item_id = $1`, mediaItemID); err != nil {
+	if err := q.ClearReleaseSearchErrorsForMedia(ctx, mediaItemID); err != nil {
 		return err
 	}
 	for _, release := range releases {
@@ -30,10 +33,11 @@ func (s *SettingsStore) ReplaceReleaseSearchResults(ctx context.Context, mediaIt
 		}
 	}
 	for _, message := range searchErrors {
-		if _, err := tx.Exec(ctx, `
-			insert into app.media_release_search_errors (id, media_item_id, message)
-			values ($1, $2, $3)
-		`, uuid.New(), mediaItemID, message); err != nil {
+		if err := q.AddReleaseSearchError(ctx, storagegen.AddReleaseSearchErrorParams{
+			ID:          uuid.New(),
+			MediaItemID: mediaItemID,
+			Message:     message,
+		}); err != nil {
 			return err
 		}
 	}
@@ -45,31 +49,39 @@ func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID
 	if err != nil {
 		return err
 	}
-	_, err = q.Exec(ctx, `
-		insert into app.media_release_candidates (
-			id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
-			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
-			requested_season, requested_episode, sources
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-	`, uuid.New(), mediaItemID, release.IndexerID, release.IndexerName, release.IndexerProtocol, release.Title,
-		release.DownloadURL, release.InfoURL, release.GUID, release.SizeBytes, release.Seeders, release.Peers,
-		release.PublishedAt, release.SearchKind, release.RequestedSeason, release.RequestedEpisode, sources)
-	return err
+	return storagegen.New(q).AddReleaseCandidate(ctx, storagegen.AddReleaseCandidateParams{
+		ID:               uuid.New(),
+		MediaItemID:      mediaItemID,
+		IndexerID:        release.IndexerID,
+		IndexerName:      release.IndexerName,
+		IndexerProtocol:  release.IndexerProtocol,
+		Title:            release.Title,
+		DownloadUrl:      release.DownloadURL,
+		InfoUrl:          textValue(release.InfoURL),
+		Guid:             textValue(release.GUID),
+		SizeBytes:        release.SizeBytes,
+		Seeders:          int4Value(release.Seeders),
+		Peers:            int4Value(release.Peers),
+		PublishedAt:      release.PublishedAt,
+		SearchKind:       release.SearchKind,
+		RequestedSeason:  int4Value(release.RequestedSeason),
+		RequestedEpisode: int4Value(release.RequestedEpisode),
+		Sources:          sources,
+	})
 }
 
 func (s *SettingsStore) GetReleaseCandidate(ctx context.Context, id uuid.UUID, mediaItemID uuid.UUID) (ReleaseCandidate, error) {
-	release, err := scanReleaseCandidate(s.pool.QueryRow(ctx, `
-		select id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
-			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
-			requested_season, requested_episode, sources, created_at, updated_at
-		from app.media_release_candidates
-		where id = $1 and media_item_id = $2
-	`, id, mediaItemID))
+	row, err := storagegen.New(s.pool).GetReleaseCandidate(ctx, storagegen.GetReleaseCandidateParams{
+		ID:          id,
+		MediaItemID: mediaItemID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ReleaseCandidate{}, ErrNotFound
 	}
-	return release, err
+	if err != nil {
+		return ReleaseCandidate{}, err
+	}
+	return releaseCandidateFromRow(row)
 }
 
 func (s *SettingsStore) ListReleaseSearchResults(ctx context.Context, mediaItemID uuid.UUID) (ReleaseSearchSnapshot, error) {
@@ -85,82 +97,51 @@ func (s *SettingsStore) ListReleaseSearchResults(ctx context.Context, mediaItemI
 }
 
 func (s *SettingsStore) listReleaseCandidates(ctx context.Context, mediaItemID uuid.UUID) ([]ReleaseCandidate, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
-			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
-			requested_season, requested_episode, sources, created_at, updated_at
-		from app.media_release_candidates
-		where media_item_id = $1
-		order by coalesce(seeders, -1) desc, size_bytes desc, created_at desc
-	`, mediaItemID)
+	rows, err := storagegen.New(s.pool).ListReleaseCandidates(ctx, mediaItemID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	releases := []ReleaseCandidate{}
-	for rows.Next() {
-		release, err := scanReleaseCandidate(rows)
+	releases := make([]ReleaseCandidate, 0, len(rows))
+	for _, row := range rows {
+		release, err := releaseCandidateFromRow(row)
 		if err != nil {
 			return nil, err
 		}
 		releases = append(releases, release)
 	}
-	return releases, rows.Err()
+	return releases, nil
 }
 
 func (s *SettingsStore) listReleaseSearchErrors(ctx context.Context, mediaItemID uuid.UUID) ([]string, error) {
-	rows, err := s.pool.Query(ctx, `
-		select message
-		from app.media_release_search_errors
-		where media_item_id = $1
-		order by created_at asc
-	`, mediaItemID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	messages := []string{}
-	for rows.Next() {
-		var message string
-		if err := rows.Scan(&message); err != nil {
-			return nil, err
-		}
-		messages = append(messages, message)
-	}
-	return messages, rows.Err()
+	return storagegen.New(s.pool).ListReleaseSearchErrors(ctx, mediaItemID)
 }
 
-func scanReleaseCandidate(row pgx.Row) (ReleaseCandidate, error) {
-	var release ReleaseCandidate
-	var sources []byte
-	err := row.Scan(
-		&release.ID,
-		&release.MediaItemID,
-		&release.IndexerID,
-		&release.IndexerName,
-		&release.IndexerProtocol,
-		&release.Title,
-		&release.DownloadURL,
-		&release.InfoURL,
-		&release.GUID,
-		&release.SizeBytes,
-		&release.Seeders,
-		&release.Peers,
-		&release.PublishedAt,
-		&release.SearchKind,
-		&release.RequestedSeason,
-		&release.RequestedEpisode,
-		&sources,
-		&release.CreatedAt,
-		&release.UpdatedAt,
-	)
-	if err != nil {
-		return release, err
+func releaseCandidateFromRow(row storagegen.AppMediaReleaseCandidate) (ReleaseCandidate, error) {
+	release := ReleaseCandidate{
+		ID:               row.ID,
+		MediaItemID:      row.MediaItemID,
+		IndexerID:        row.IndexerID,
+		IndexerName:      row.IndexerName,
+		IndexerProtocol:  row.IndexerProtocol,
+		Title:            row.Title,
+		DownloadURL:      row.DownloadUrl,
+		InfoURL:          textPtr(row.InfoUrl),
+		GUID:             textPtr(row.Guid),
+		SizeBytes:        row.SizeBytes,
+		Seeders:          int4Ptr(row.Seeders),
+		Peers:            int4Ptr(row.Peers),
+		PublishedAt:      row.PublishedAt,
+		SearchKind:       row.SearchKind,
+		RequestedSeason:  int4Ptr(row.RequestedSeason),
+		RequestedEpisode: int4Ptr(row.RequestedEpisode),
+		CreatedAt:        row.CreatedAt,
+		UpdatedAt:        row.UpdatedAt,
 	}
-	if len(sources) > 0 {
-		err = json.Unmarshal(sources, &release.Sources)
+	if len(row.Sources) > 0 {
+		if err := json.Unmarshal(row.Sources, &release.Sources); err != nil {
+			return ReleaseCandidate{}, err
+		}
 	}
-	return release, err
+	return release, nil
 }

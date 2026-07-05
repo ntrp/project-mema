@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -39,104 +41,84 @@ type IndexerProxyInput struct {
 }
 
 func (s *SettingsStore) ListIndexerProxies(ctx context.Context) ([]IndexerProxy, error) {
-	rows, err := s.pool.Query(ctx, `select `+indexerProxyColumns+` from app.indexer_proxies order by name asc`)
+	rows, err := storagegen.New(s.pool).ListIndexerProxies(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	proxies := []IndexerProxy{}
-	for rows.Next() {
-		proxy, err := scanIndexerProxy(rows)
-		if err != nil {
-			return nil, err
-		}
-		proxies = append(proxies, proxy)
+	proxies := make([]IndexerProxy, 0, len(rows))
+	for _, row := range rows {
+		proxies = append(proxies, indexerProxyFromRow(row))
 	}
-	return proxies, rows.Err()
+	return proxies, nil
 }
 
 func (s *SettingsStore) CreateIndexerProxy(ctx context.Context, input IndexerProxyInput) (IndexerProxy, error) {
 	if strings.TrimSpace(input.Name) == "" || strings.TrimSpace(input.Link) == "" {
 		return IndexerProxy{}, ErrInvalidInput
 	}
-	return scanIndexerProxyRow(s.pool.QueryRow(ctx, `
-		insert into app.indexer_proxies (
-			id, name, implementation, link, enabled, on_health_issue, supports_on_health_issue,
-			include_health_warnings, test_command, fields
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		returning `+indexerProxyColumns+`
-	`, uuid.New(), strings.TrimSpace(input.Name), input.Implementation, strings.TrimSpace(input.Link),
-		input.Enabled, input.OnHealthIssue, input.SupportsOnHealthIssue, input.IncludeHealthWarnings,
-		input.TestCommand, input.Fields))
+	row, err := storagegen.New(s.pool).CreateIndexerProxy(ctx, indexerProxyParams(uuid.New(), input))
+	return indexerProxyFromRow(row), err
 }
 
 func (s *SettingsStore) UpdateIndexerProxy(ctx context.Context, id uuid.UUID, input IndexerProxyInput) (IndexerProxy, error) {
 	if strings.TrimSpace(input.Name) == "" || strings.TrimSpace(input.Link) == "" {
 		return IndexerProxy{}, ErrInvalidInput
 	}
-	return scanIndexerProxyRow(s.pool.QueryRow(ctx, `
-		update app.indexer_proxies
-		set name = $2,
-			implementation = $3,
-			link = $4,
-			enabled = $5,
-			on_health_issue = $6,
-			supports_on_health_issue = $7,
-			include_health_warnings = $8,
-			test_command = $9,
-			fields = $10,
-			updated_at = now()
-		where id = $1
-		returning `+indexerProxyColumns+`
-	`, id, strings.TrimSpace(input.Name), input.Implementation, strings.TrimSpace(input.Link),
-		input.Enabled, input.OnHealthIssue, input.SupportsOnHealthIssue, input.IncludeHealthWarnings,
-		input.TestCommand, input.Fields))
+	row, err := storagegen.New(s.pool).UpdateIndexerProxy(ctx, storagegen.UpdateIndexerProxyParams(indexerProxyParams(id, input)))
+	return indexerProxyResult(row, err)
 }
 
 func (s *SettingsStore) GetIndexerProxy(ctx context.Context, id uuid.UUID) (IndexerProxy, error) {
-	return scanIndexerProxyRow(s.pool.QueryRow(ctx, `select `+indexerProxyColumns+` from app.indexer_proxies where id = $1`, id))
+	row, err := storagegen.New(s.pool).GetIndexerProxy(ctx, id)
+	return indexerProxyResult(row, err)
 }
 
 func (s *SettingsStore) DeleteIndexerProxy(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.indexer_proxies where id = $1`, id)
+	rows, err := storagegen.New(s.pool).DeleteIndexerProxy(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil
 }
 
-func scanIndexerProxyRow(row pgx.Row) (IndexerProxy, error) {
-	proxy, err := scanIndexerProxy(row)
+func indexerProxyResult(row storagegen.AppIndexerProxy, err error) (IndexerProxy, error) {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return IndexerProxy{}, ErrNotFound
 	}
-	return proxy, err
+	return indexerProxyFromRow(row), err
 }
 
-func scanIndexerProxy(row pgx.Row) (IndexerProxy, error) {
-	var proxy IndexerProxy
-	err := row.Scan(
-		&proxy.ID,
-		&proxy.Name,
-		&proxy.Implementation,
-		&proxy.Link,
-		&proxy.Enabled,
-		&proxy.OnHealthIssue,
-		&proxy.SupportsOnHealthIssue,
-		&proxy.IncludeHealthWarnings,
-		&proxy.TestCommand,
-		&proxy.Fields,
-		&proxy.CreatedAt,
-		&proxy.UpdatedAt,
-	)
-	return proxy, err
+func indexerProxyParams(id uuid.UUID, input IndexerProxyInput) storagegen.CreateIndexerProxyParams {
+	return storagegen.CreateIndexerProxyParams{
+		ID:                    id,
+		Name:                  strings.TrimSpace(input.Name),
+		Implementation:        input.Implementation,
+		Link:                  strings.TrimSpace(input.Link),
+		Enabled:               input.Enabled,
+		OnHealthIssue:         input.OnHealthIssue,
+		SupportsOnHealthIssue: input.SupportsOnHealthIssue,
+		IncludeHealthWarnings: input.IncludeHealthWarnings,
+		TestCommand:           input.TestCommand,
+		Fields:                input.Fields,
+	}
 }
 
-const indexerProxyColumns = `
-	id, name, implementation, link, enabled, on_health_issue, supports_on_health_issue,
-	include_health_warnings, test_command, fields, created_at, updated_at
-`
+func indexerProxyFromRow(row storagegen.AppIndexerProxy) IndexerProxy {
+	return IndexerProxy{
+		ID:                    row.ID,
+		Name:                  row.Name,
+		Implementation:        row.Implementation,
+		Link:                  row.Link,
+		Enabled:               row.Enabled,
+		OnHealthIssue:         row.OnHealthIssue,
+		SupportsOnHealthIssue: row.SupportsOnHealthIssue,
+		IncludeHealthWarnings: row.IncludeHealthWarnings,
+		TestCommand:           row.TestCommand,
+		Fields:                json.RawMessage(row.Fields),
+		CreatedAt:             row.CreatedAt,
+		UpdatedAt:             row.UpdatedAt,
+	}
+}

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -98,152 +100,109 @@ func (s *SettingsStore) EnsureDefaultMetadataProviders(ctx context.Context) erro
 }
 
 func (s *SettingsStore) ensureMetadataProvider(ctx context.Context, input MetadataProviderInput) error {
-	id := uuid.New()
-	_, err := s.pool.Exec(ctx, `
-		insert into app.metadata_providers (
-			id, name, type, base_url, enabled, priority
-		)
-		select $1, $2, $3, $4, $5, $6
-		where not exists (
-			select 1 from app.metadata_providers where type = $3
-		)
-	`, id, input.Name, input.Type, input.BaseURL, input.Enabled, input.Priority)
-	return err
+	return storagegen.New(s.pool).EnsureMetadataProvider(ctx, storagegen.EnsureMetadataProviderParams{
+		ID:       uuid.New(),
+		Name:     input.Name,
+		Type:     input.Type,
+		BaseUrl:  input.BaseURL,
+		Enabled:  input.Enabled,
+		Priority: input.Priority,
+	})
 }
 
 func (s *SettingsStore) ListMetadataProviders(ctx context.Context) ([]MetadataProvider, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, name, type, base_url, api_key, pin, access_token, session_token,
-			session_token_expires_at, enabled, priority, created_at, updated_at
-		from app.metadata_providers
-		order by priority asc, name asc
-	`)
+	rows, err := storagegen.New(s.pool).ListMetadataProviders(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	providers := []MetadataProvider{}
-	for rows.Next() {
-		provider, err := scanMetadataProvider(rows)
-		if err != nil {
-			return nil, err
-		}
-		providers = append(providers, provider)
+	providers := make([]MetadataProvider, 0, len(rows))
+	for _, row := range rows {
+		providers = append(providers, metadataProviderFromRow(row))
 	}
-	return providers, rows.Err()
+	return providers, nil
 }
 
 func (s *SettingsStore) ListEnabledMetadataProviders(ctx context.Context, mediaType string) ([]MetadataProvider, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, name, type, base_url, api_key, pin, access_token, session_token,
-			session_token_expires_at, enabled, priority, created_at, updated_at
-		from app.metadata_providers
-		where enabled = true
-			and (($1 = 'movie' and type in ('tmdb', 'tvdb')) or ($1 = 'series' and type in ('tmdb', 'tvdb')))
-		order by priority asc, name asc
-	`, mediaType)
+	rows, err := storagegen.New(s.pool).ListEnabledMetadataProviders(ctx, mediaType)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	providers := []MetadataProvider{}
-	for rows.Next() {
-		provider, err := scanMetadataProvider(rows)
-		if err != nil {
-			return nil, err
-		}
-		providers = append(providers, provider)
+	providers := make([]MetadataProvider, 0, len(rows))
+	for _, row := range rows {
+		providers = append(providers, metadataProviderFromRow(row))
 	}
-	return providers, rows.Err()
+	return providers, nil
 }
 
 func (s *SettingsStore) GetMetadataProvider(ctx context.Context, id uuid.UUID) (MetadataProvider, error) {
-	provider, err := scanMetadataProvider(s.pool.QueryRow(ctx, `
-		select id, name, type, base_url, api_key, pin, access_token, session_token,
-			session_token_expires_at, enabled, priority, created_at, updated_at
-		from app.metadata_providers
-		where id = $1
-	`, id))
-	if errors.Is(err, pgx.ErrNoRows) {
-		return MetadataProvider{}, ErrNotFound
-	}
-	return provider, err
+	row, err := storagegen.New(s.pool).GetMetadataProvider(ctx, id)
+	return metadataProviderResult(row, err)
 }
 
 func (s *SettingsStore) CreateMetadataProvider(ctx context.Context, input MetadataProviderInput) (MetadataProvider, error) {
-	id := uuid.New()
-	return scanMetadataProvider(s.pool.QueryRow(ctx, `
-		insert into app.metadata_providers (
-			id, name, type, base_url, api_key, pin, access_token, enabled, priority
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		returning id, name, type, base_url, api_key, pin, access_token, session_token,
-			session_token_expires_at, enabled, priority, created_at, updated_at
-	`, id, input.Name, input.Type, input.BaseURL, input.APIKey, input.PIN, input.AccessToken, input.Enabled, input.Priority))
+	row, err := storagegen.New(s.pool).CreateMetadataProvider(ctx, metadataProviderCreateParams(uuid.New(), input))
+	return metadataProviderResult(row, err)
 }
 
 func (s *SettingsStore) UpdateMetadataProvider(ctx context.Context, id uuid.UUID, input MetadataProviderInput) (MetadataProvider, error) {
-	provider, err := scanMetadataProvider(s.pool.QueryRow(ctx, `
-		update app.metadata_providers
-		set name = $2,
-			type = $3,
-			base_url = $4,
-			api_key = $5,
-			pin = $6,
-			access_token = $7,
-			session_token = null,
-			session_token_expires_at = null,
-			enabled = $8,
-			priority = $9,
-			updated_at = now()
-		where id = $1
-		returning id, name, type, base_url, api_key, pin, access_token, session_token,
-			session_token_expires_at, enabled, priority, created_at, updated_at
-	`, id, input.Name, input.Type, input.BaseURL, input.APIKey, input.PIN, input.AccessToken, input.Enabled, input.Priority))
-	if errors.Is(err, pgx.ErrNoRows) {
-		return MetadataProvider{}, ErrNotFound
-	}
-	return provider, err
+	row, err := storagegen.New(s.pool).UpdateMetadataProvider(ctx, storagegen.UpdateMetadataProviderParams(metadataProviderCreateParams(id, input)))
+	return metadataProviderResult(row, err)
 }
 
 func (s *SettingsStore) DeleteMetadataProvider(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.metadata_providers where id = $1`, id)
+	rows, err := storagegen.New(s.pool).DeleteMetadataProvider(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil
 }
 
 func (s *SettingsStore) UpdateMetadataProviderSessionToken(ctx context.Context, id uuid.UUID, token string, expiresAt time.Time) error {
-	_, err := s.pool.Exec(ctx, `
-		update app.metadata_providers
-		set session_token = $2, session_token_expires_at = $3, updated_at = now()
-		where id = $1
-	`, id, token, expiresAt)
-	return err
+	return storagegen.New(s.pool).UpdateMetadataProviderSessionToken(ctx, storagegen.UpdateMetadataProviderSessionTokenParams{
+		ID:                    id,
+		SessionToken:          textValue(&token),
+		SessionTokenExpiresAt: &expiresAt,
+	})
 }
 
-func scanMetadataProvider(row pgx.Row) (MetadataProvider, error) {
-	var provider MetadataProvider
-	err := row.Scan(
-		&provider.ID,
-		&provider.Name,
-		&provider.Type,
-		&provider.BaseURL,
-		&provider.APIKey,
-		&provider.PIN,
-		&provider.AccessToken,
-		&provider.SessionToken,
-		&provider.SessionTokenExpiresAt,
-		&provider.Enabled,
-		&provider.Priority,
-		&provider.CreatedAt,
-		&provider.UpdatedAt,
-	)
-	return provider, err
+func metadataProviderResult(row storagegen.AppMetadataProvider, err error) (MetadataProvider, error) {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return MetadataProvider{}, ErrNotFound
+	}
+	return metadataProviderFromRow(row), err
+}
+
+func metadataProviderCreateParams(id uuid.UUID, input MetadataProviderInput) storagegen.CreateMetadataProviderParams {
+	return storagegen.CreateMetadataProviderParams{
+		ID:          id,
+		Name:        input.Name,
+		Type:        input.Type,
+		BaseUrl:     input.BaseURL,
+		ApiKey:      textValue(input.APIKey),
+		Pin:         textValue(input.PIN),
+		AccessToken: textValue(input.AccessToken),
+		Enabled:     input.Enabled,
+		Priority:    input.Priority,
+	}
+}
+
+func metadataProviderFromRow(row storagegen.AppMetadataProvider) MetadataProvider {
+	return MetadataProvider{
+		ID:                    row.ID,
+		Name:                  row.Name,
+		Type:                  row.Type,
+		BaseURL:               row.BaseUrl,
+		APIKey:                textPtr(row.ApiKey),
+		PIN:                   textPtr(row.Pin),
+		AccessToken:           textPtr(row.AccessToken),
+		SessionToken:          textPtr(row.SessionToken),
+		SessionTokenExpiresAt: row.SessionTokenExpiresAt,
+		Enabled:               row.Enabled,
+		Priority:              row.Priority,
+		CreatedAt:             row.CreatedAt,
+		UpdatedAt:             row.UpdatedAt,
+	}
 }

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -26,17 +28,22 @@ func (s *SettingsStore) BlockRelease(ctx context.Context, input ReleaseBlocklist
 	}
 	downloadURL := optionalText(input.DownloadURL)
 	downloadClientName := strings.TrimSpace(input.DownloadClientName)
-	return scanReleaseBlocklistItem(s.pool.QueryRow(ctx, `
-		insert into app.release_blocklist (
-			id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name, download_url,
-			info_url, guid, reason, source, temporary, expires_at
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-		on conflict (id) do update set updated_at = now()
-		returning id, media_item_id, '', '', release_title, indexer_name, coalesce(nullif(indexer_protocol, ''), 'torrent'),
-			download_client_name, download_url, info_url, guid, reason, source, temporary, expires_at, created_at, updated_at
-	`, id, input.MediaItemID, title, strings.TrimSpace(input.IndexerName), strings.TrimSpace(input.IndexerProtocol),
-		downloadClientName, downloadURL, input.InfoURL, input.GUID, reason, source, input.Temporary, input.ExpiresAt))
+	row, err := storagegen.New(s.pool).BlockRelease(ctx, storagegen.BlockReleaseParams{
+		ID:                 id,
+		MediaItemID:        input.MediaItemID,
+		ReleaseTitle:       title,
+		IndexerName:        strings.TrimSpace(input.IndexerName),
+		IndexerProtocol:    strings.TrimSpace(input.IndexerProtocol),
+		DownloadClientName: downloadClientName,
+		DownloadUrl:        textValue(downloadURL),
+		InfoUrl:            textValue(input.InfoURL),
+		Guid:               textValue(input.GUID),
+		Reason:             reason,
+		Source:             source,
+		Temporary:          input.Temporary,
+		ExpiresAt:          input.ExpiresAt,
+	})
+	return releaseBlocklistItemFromBlockRow(row), err
 }
 
 func (s *SettingsStore) BlockReleaseCandidate(ctx context.Context, release ReleaseCandidateInput, reason string, source string, expiresAt *time.Time) (ReleaseBlocklistItem, error) {
@@ -94,110 +101,56 @@ func (s *SettingsStore) FindReleaseBlock(ctx context.Context, release ReleaseCan
 }
 
 func (s *SettingsStore) ListReleaseBlocklist(ctx context.Context) ([]ReleaseBlocklistItem, error) {
-	rows, err := s.pool.Query(ctx, `
-		select b.id, b.media_item_id, m.title, m.media_type, b.release_title, b.indexer_name,
-			coalesce(nullif(b.indexer_protocol, ''), i.protocol, 'torrent'), b.download_client_name,
-			b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary, b.expires_at,
-			b.created_at, b.updated_at
-		from app.release_blocklist b
-		join app.media_items m on m.id = b.media_item_id
-		left join app.indexers i on lower(i.name) = lower(b.indexer_name)
-		order by b.created_at desc
-		limit 200
-	`)
+	rows, err := storagegen.New(s.pool).ListReleaseBlocklist(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	items := []ReleaseBlocklistItem{}
-	for rows.Next() {
-		item, err := scanReleaseBlocklistItem(rows)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, item)
+	items := make([]ReleaseBlocklistItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, releaseBlocklistItemFromListRow(row))
 	}
-	return items, rows.Err()
+	return items, nil
 }
 
 func (s *SettingsStore) CleanupExpiredReleaseBlocks(ctx context.Context) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `
-		delete from app.release_blocklist
-		where temporary = true and expires_at <= now()
-	`)
+	rows, err := storagegen.New(s.pool).CleanupExpiredReleaseBlocks(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) DeleteReleaseBlocklistItem(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `
-		delete from app.release_blocklist
-		where id = $1
-	`, id)
+	rows, err := storagegen.New(s.pool).DeleteReleaseBlocklistItem(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil
 }
 
 func (s *SettingsStore) ClearReleaseBlocklist(ctx context.Context) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `delete from app.release_blocklist`)
+	rows, err := storagegen.New(s.pool).ClearReleaseBlocklist(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) findReleaseBlock(ctx context.Context, mediaItemID uuid.UUID, release releaseIdentity) (ReleaseBlocklistItem, error) {
-	item, err := scanReleaseBlocklistItem(s.pool.QueryRow(ctx, `
-		select b.id, b.media_item_id, '', '', b.release_title, b.indexer_name, coalesce(nullif(b.indexer_protocol, ''), 'torrent'),
-			b.download_client_name, b.download_url, b.info_url, b.guid, b.reason, b.source, b.temporary, b.expires_at,
-			b.created_at, b.updated_at
-		from app.release_blocklist b
-		where b.media_item_id = $1
-			and (b.temporary = false or b.expires_at > now())
-			and (
-				($2::text is not null and b.guid = $2)
-				or ($3::text is not null and b.info_url = $3)
-				or ($4::text is not null and b.download_url = $4)
-				or lower(b.release_title) = lower($5)
-			)
-		order by b.created_at desc
-		limit 1
-	`, mediaItemID, release.GUID, release.InfoURL, release.DownloadURL, release.Title))
+	row, err := storagegen.New(s.pool).FindReleaseBlock(ctx, storagegen.FindReleaseBlockParams{
+		MediaItemID: mediaItemID,
+		Guid:        textValue(release.GUID),
+		InfoUrl:     textValue(release.InfoURL),
+		DownloadUrl: textValue(release.DownloadURL),
+		Title:       release.Title,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ReleaseBlocklistItem{}, ErrNotFound
 	}
-	return item, err
-}
-
-func scanReleaseBlocklistItem(row pgx.Row) (ReleaseBlocklistItem, error) {
-	var item ReleaseBlocklistItem
-	err := row.Scan(
-		&item.ID,
-		&item.MediaItemID,
-		&item.MediaTitle,
-		&item.MediaType,
-		&item.ReleaseTitle,
-		&item.IndexerName,
-		&item.IndexerProtocol,
-		&item.DownloadClientName,
-		&item.DownloadURL,
-		&item.InfoURL,
-		&item.GUID,
-		&item.Reason,
-		&item.Source,
-		&item.Temporary,
-		&item.ExpiresAt,
-		&item.CreatedAt,
-		&item.UpdatedAt,
-	)
-	return item, err
+	return releaseBlocklistItemFromFindRow(row), err
 }
 
 type releaseIdentity struct {
@@ -205,6 +158,72 @@ type releaseIdentity struct {
 	DownloadURL *string
 	InfoURL     *string
 	GUID        *string
+}
+
+func releaseBlocklistItemFromBlockRow(row storagegen.BlockReleaseRow) ReleaseBlocklistItem {
+	return ReleaseBlocklistItem{
+		ID:                 row.ID,
+		MediaItemID:        row.MediaItemID,
+		MediaTitle:         row.MediaTitle,
+		MediaType:          row.MediaType,
+		ReleaseTitle:       row.ReleaseTitle,
+		IndexerName:        row.IndexerName,
+		IndexerProtocol:    row.IndexerProtocol,
+		DownloadClientName: row.DownloadClientName,
+		DownloadURL:        textPtr(row.DownloadUrl),
+		InfoURL:            textPtr(row.InfoUrl),
+		GUID:               textPtr(row.Guid),
+		Reason:             row.Reason,
+		Source:             row.Source,
+		Temporary:          row.Temporary,
+		ExpiresAt:          row.ExpiresAt,
+		CreatedAt:          row.CreatedAt,
+		UpdatedAt:          row.UpdatedAt,
+	}
+}
+
+func releaseBlocklistItemFromListRow(row storagegen.ListReleaseBlocklistRow) ReleaseBlocklistItem {
+	return ReleaseBlocklistItem{
+		ID:                 row.ID,
+		MediaItemID:        row.MediaItemID,
+		MediaTitle:         row.MediaTitle,
+		MediaType:          row.MediaType,
+		ReleaseTitle:       row.ReleaseTitle,
+		IndexerName:        row.IndexerName,
+		IndexerProtocol:    row.IndexerProtocol,
+		DownloadClientName: row.DownloadClientName,
+		DownloadURL:        textPtr(row.DownloadUrl),
+		InfoURL:            textPtr(row.InfoUrl),
+		GUID:               textPtr(row.Guid),
+		Reason:             row.Reason,
+		Source:             row.Source,
+		Temporary:          row.Temporary,
+		ExpiresAt:          row.ExpiresAt,
+		CreatedAt:          row.CreatedAt,
+		UpdatedAt:          row.UpdatedAt,
+	}
+}
+
+func releaseBlocklistItemFromFindRow(row storagegen.FindReleaseBlockRow) ReleaseBlocklistItem {
+	return ReleaseBlocklistItem{
+		ID:                 row.ID,
+		MediaItemID:        row.MediaItemID,
+		MediaTitle:         row.MediaTitle,
+		MediaType:          row.MediaType,
+		ReleaseTitle:       row.ReleaseTitle,
+		IndexerName:        row.IndexerName,
+		IndexerProtocol:    row.IndexerProtocol,
+		DownloadClientName: row.DownloadClientName,
+		DownloadURL:        textPtr(row.DownloadUrl),
+		InfoURL:            textPtr(row.InfoUrl),
+		GUID:               textPtr(row.Guid),
+		Reason:             row.Reason,
+		Source:             row.Source,
+		Temporary:          row.Temporary,
+		ExpiresAt:          row.ExpiresAt,
+		CreatedAt:          row.CreatedAt,
+		UpdatedAt:          row.UpdatedAt,
+	}
 }
 
 func releaseIdentityFromCandidate(release ReleaseCandidate) releaseIdentity {

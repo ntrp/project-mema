@@ -24,6 +24,7 @@ const (
 	languageSeedPath   = "seeds/languages.sql"
 	devDefaultSeedPath = "seeds/dev.defaults.sql"
 	devSeedPath        = "internal/storage/seeds/dev.local.sql"
+	devLocalOptional   = "DEV_LOCAL_SEED_OPTIONAL"
 )
 
 //go:embed migrations/*.sql seeds/defaults.sql seeds/languages.sql seeds/dev.defaults.sql
@@ -113,7 +114,12 @@ func applyDevDefaultSeed(ctx context.Context, db *sql.DB) error {
 }
 
 func applyDevSeed(ctx context.Context, db *sql.DB) error {
-	return applySeed(ctx, db, devSeedPath, os.ReadFile)
+	err := applySeed(ctx, db, devSeedPath, os.ReadFile)
+	if err == nil || os.Getenv(devLocalOptional) != "true" {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "warning: skipped optional %s: %v\n", devSeedPath, err)
+	return nil
 }
 
 func applySeed(
@@ -132,8 +138,16 @@ func applySeed(
 	if strings.TrimSpace(string(seedSQL)) == "" {
 		return nil
 	}
-	if _, err := db.ExecContext(ctx, string(seedSQL)); err != nil {
-		return fmt.Errorf("seed apply failed: %w", err)
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("seed transaction failed for %s: %w", path, err)
+	}
+	if _, err := tx.ExecContext(ctx, string(seedSQL)); err != nil {
+		_ = tx.Rollback()
+		return fmt.Errorf("seed apply failed for %s: %w", path, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("seed commit failed for %s: %w", path, err)
 	}
 	return nil
 }

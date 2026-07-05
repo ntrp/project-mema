@@ -5,8 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 type QualitySizeDefinition struct {
@@ -39,31 +40,15 @@ func (s *SettingsStore) ListQualitySizeSettings(ctx context.Context) ([]QualityS
 		return nil, err
 	}
 
-	rows, err := s.pool.Query(ctx, `
-		select
-			quality_id,
-			minimum_size_mb_per_minute::float8,
-			preferred_size_mb_per_minute::float8,
-			maximum_size_mb_per_minute::float8,
-			created_at,
-			updated_at
-		from app.quality_size_settings
-	`)
+	rows, err := storagegen.New(s.pool).ListQualitySizeSettings(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	settingsByID := map[string]QualitySizeSetting{}
-	for rows.Next() {
-		setting, err := scanQualitySizeSetting(rows)
-		if err != nil {
-			return nil, err
-		}
+	for _, row := range rows {
+		setting := qualitySizeSettingFromRow(row)
 		settingsByID[setting.ID] = setting
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
 	definitions := QualitySizeDefinitions()
@@ -106,21 +91,14 @@ func (s *SettingsStore) SaveQualitySizeSettings(
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck
 
+	queries := storagegen.New(s.pool).WithTx(tx)
 	for _, input := range inputs {
-		if _, err := tx.Exec(ctx, `
-			insert into app.quality_size_settings (
-				quality_id,
-				minimum_size_mb_per_minute,
-				preferred_size_mb_per_minute,
-				maximum_size_mb_per_minute
-			)
-			values ($1, $2, $3, $4)
-			on conflict (quality_id) do update
-			set minimum_size_mb_per_minute = excluded.minimum_size_mb_per_minute,
-				preferred_size_mb_per_minute = excluded.preferred_size_mb_per_minute,
-				maximum_size_mb_per_minute = excluded.maximum_size_mb_per_minute,
-				updated_at = now()
-		`, input.QualityID, input.MinimumSizeMBPerMinute, input.PreferredSizeMBPerMinute, input.MaximumSizeMBPerMinute); err != nil {
+		if err := queries.UpsertQualitySizeSetting(ctx, storagegen.UpsertQualitySizeSettingParams{
+			QualityID:                input.QualityID,
+			MinimumSizeMbPerMinute:   input.MinimumSizeMBPerMinute,
+			PreferredSizeMbPerMinute: input.PreferredSizeMBPerMinute,
+			MaximumSizeMbPerMinute:   input.MaximumSizeMBPerMinute,
+		}); err != nil {
 			return nil, normalizeQualitySizeWriteError(err)
 		}
 	}
@@ -178,47 +156,34 @@ func QualitySizeDefinitionMap() map[string]QualitySizeDefinition {
 }
 
 func (s *SettingsStore) ensureQualitySizeSettings(ctx context.Context) error {
+	queries := storagegen.New(s.pool)
 	for _, definition := range QualitySizeDefinitions() {
-		if _, err := s.pool.Exec(ctx, `
-			insert into app.quality_size_settings (
-				quality_id,
-				minimum_size_mb_per_minute,
-				preferred_size_mb_per_minute,
-				maximum_size_mb_per_minute
-			)
-			values ($1, $2, $3, $4)
-			on conflict do nothing
-		`,
-			definition.ID,
-			definition.DefaultMinimumSizeMBPerMinute,
-			definition.DefaultPreferredSizeMBPerMinute,
-			definition.DefaultMaximumSizeMBPerMinute,
-		); err != nil {
+		if err := queries.EnsureQualitySizeSetting(ctx, storagegen.EnsureQualitySizeSettingParams{
+			QualityID:                definition.ID,
+			MinimumSizeMbPerMinute:   definition.DefaultMinimumSizeMBPerMinute,
+			PreferredSizeMbPerMinute: definition.DefaultPreferredSizeMBPerMinute,
+			MaximumSizeMbPerMinute:   definition.DefaultMaximumSizeMBPerMinute,
+		}); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func scanQualitySizeSetting(row pgx.Row) (QualitySizeSetting, error) {
-	var setting QualitySizeSetting
-	err := row.Scan(
-		&setting.ID,
-		&setting.MinimumSizeMBPerMinute,
-		&setting.PreferredSizeMBPerMinute,
-		&setting.MaximumSizeMBPerMinute,
-		&setting.CreatedAt,
-		&setting.UpdatedAt,
-	)
-	return setting, err
+func qualitySizeSettingFromRow(row storagegen.AppQualitySizeSetting) QualitySizeSetting {
+	return QualitySizeSetting{
+		QualitySizeDefinition:    QualitySizeDefinition{ID: row.QualityID},
+		MinimumSizeMBPerMinute:   row.MinimumSizeMbPerMinute,
+		PreferredSizeMBPerMinute: row.PreferredSizeMbPerMinute,
+		MaximumSizeMBPerMinute:   row.MaximumSizeMbPerMinute,
+		CreatedAt:                row.CreatedAt,
+		UpdatedAt:                row.UpdatedAt,
+	}
 }
 
 func normalizeQualitySizeWriteError(err error) error {
 	if err == nil {
 		return nil
-	}
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrNotFound
 	}
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23514" {

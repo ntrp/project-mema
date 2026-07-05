@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 type CustomFormat struct {
@@ -37,25 +39,20 @@ type CustomFormatInput struct {
 }
 
 func (s *SettingsStore) ListCustomFormats(ctx context.Context) ([]CustomFormat, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, name, include_in_rename_template, include_specs, exclude_specs, created_at, updated_at
-		from app.custom_formats
-		order by lower(name)
-	`)
+	rows, err := storagegen.New(s.pool).ListCustomFormats(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	formats := []CustomFormat{}
-	for rows.Next() {
-		format, err := scanCustomFormat(rows)
+	formats := make([]CustomFormat, 0, len(rows))
+	for _, row := range rows {
+		format, err := customFormatFromRow(row)
 		if err != nil {
 			return nil, err
 		}
 		formats = append(formats, format)
 	}
-	return formats, rows.Err()
+	return formats, nil
 }
 
 func (s *SettingsStore) CreateCustomFormat(ctx context.Context, input CustomFormatInput) (CustomFormat, error) {
@@ -67,11 +64,17 @@ func (s *SettingsStore) CreateCustomFormat(ctx context.Context, input CustomForm
 	if err != nil {
 		return CustomFormat{}, err
 	}
-	return scanCustomFormatRow(s.pool.QueryRow(ctx, `
-		insert into app.custom_formats (id, name, include_in_rename_template, include_specs, exclude_specs)
-		values ($1, $2, $3, $4::jsonb, $5::jsonb)
-		returning id, name, include_in_rename_template, include_specs, exclude_specs, created_at, updated_at
-	`, id, input.Name, input.IncludeInRenameTemplate, includeSpecs, excludeSpecs))
+	row, err := storagegen.New(s.pool).CreateCustomFormat(ctx, storagegen.CreateCustomFormatParams{
+		ID:                      id,
+		Name:                    input.Name,
+		IncludeInRenameTemplate: input.IncludeInRenameTemplate,
+		IncludeSpecs:            includeSpecs,
+		ExcludeSpecs:            excludeSpecs,
+	})
+	if err != nil {
+		return CustomFormat{}, err
+	}
+	return customFormatFromRow(row)
 }
 
 func (s *SettingsStore) UpdateCustomFormat(ctx context.Context, id uuid.UUID, input CustomFormatInput) (CustomFormat, error) {
@@ -79,20 +82,25 @@ func (s *SettingsStore) UpdateCustomFormat(ctx context.Context, id uuid.UUID, in
 	if err != nil {
 		return CustomFormat{}, err
 	}
-	return scanCustomFormatRow(s.pool.QueryRow(ctx, `
-		update app.custom_formats
-		set name = $2, include_in_rename_template = $3, include_specs = $4::jsonb, exclude_specs = $5::jsonb, updated_at = now()
-		where id = $1
-		returning id, name, include_in_rename_template, include_specs, exclude_specs, created_at, updated_at
-	`, id, input.Name, input.IncludeInRenameTemplate, includeSpecs, excludeSpecs))
+	row, err := storagegen.New(s.pool).UpdateCustomFormat(ctx, storagegen.UpdateCustomFormatParams{
+		ID:                      id,
+		Name:                    input.Name,
+		IncludeInRenameTemplate: input.IncludeInRenameTemplate,
+		IncludeSpecs:            includeSpecs,
+		ExcludeSpecs:            excludeSpecs,
+	})
+	if err != nil {
+		return CustomFormat{}, normalizeCustomFormatWriteError(err)
+	}
+	return customFormatFromRow(row)
 }
 
 func (s *SettingsStore) DeleteCustomFormat(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.custom_formats where id = $1`, id)
+	rowsAffected, err := storagegen.New(s.pool).DeleteCustomFormat(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rowsAffected == 0 {
 		return ErrNotFound
 	}
 	return nil
@@ -110,34 +118,25 @@ func marshalCustomFormatSpecs(input CustomFormatInput) ([]byte, []byte, error) {
 	return includeSpecs, excludeSpecs, nil
 }
 
-func scanCustomFormatRow(row pgx.Row) (CustomFormat, error) {
-	format, err := scanCustomFormat(row)
+func normalizeCustomFormatWriteError(err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
-		return CustomFormat{}, ErrNotFound
+		return ErrNotFound
 	}
-	return format, err
+	return err
 }
 
-func scanCustomFormat(row pgx.Row) (CustomFormat, error) {
-	var format CustomFormat
-	var includeSpecs []byte
-	var excludeSpecs []byte
-	err := row.Scan(
-		&format.ID,
-		&format.Name,
-		&format.IncludeInRenameTemplate,
-		&includeSpecs,
-		&excludeSpecs,
-		&format.CreatedAt,
-		&format.UpdatedAt,
-	)
-	if err != nil {
+func customFormatFromRow(row storagegen.AppCustomFormat) (CustomFormat, error) {
+	format := CustomFormat{
+		ID:                      row.ID,
+		Name:                    row.Name,
+		IncludeInRenameTemplate: row.IncludeInRenameTemplate,
+		CreatedAt:               row.CreatedAt,
+		UpdatedAt:               row.UpdatedAt,
+	}
+	if err := json.Unmarshal(row.IncludeSpecs, &format.IncludeSpecs); err != nil {
 		return CustomFormat{}, err
 	}
-	if err := json.Unmarshal(includeSpecs, &format.IncludeSpecs); err != nil {
-		return CustomFormat{}, err
-	}
-	if err := json.Unmarshal(excludeSpecs, &format.ExcludeSpecs); err != nil {
+	if err := json.Unmarshal(row.ExcludeSpecs, &format.ExcludeSpecs); err != nil {
 		return CustomFormat{}, err
 	}
 	return format, nil

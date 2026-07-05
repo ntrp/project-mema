@@ -3,65 +3,27 @@ package storage
 import (
 	"context"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 )
 
 func (s *SettingsStore) IndexerSearchCacheStats(ctx context.Context) (IndexerSearchCacheStats, error) {
-	var stats IndexerSearchCacheStats
-	err := s.pool.QueryRow(ctx, `
-		select
-			count(*)::int,
-			count(*) filter (where expires_at > now())::int,
-			count(*) filter (where expires_at <= now())::int,
-			count(distinct indexer_id)::int
-		from app.indexer_search_cache
-	`).Scan(&stats.TotalEntries, &stats.ActiveEntries, &stats.ExpiredEntries, &stats.IndexerCount)
-	return stats, err
+	row, err := storagegen.New(s.pool).IndexerSearchCacheStats(ctx)
+	return indexerSearchCacheStatsFromRow(row), err
 }
 
 func (s *SettingsStore) ListIndexerSearchCacheEntries(ctx context.Context, limit int32) ([]IndexerSearchCacheEntry, error) {
 	limit = inspectionLimit(limit)
-	rows, err := s.pool.Query(ctx, `
-		select i.id,
-			i.name,
-			i.protocol,
-			c.media_type,
-			c.query,
-			c.result_count,
-			c.expires_at,
-			c.created_at,
-			c.updated_at,
-			c.expires_at <= now()
-		from app.indexer_search_cache c
-		join app.indexers i on i.id = c.indexer_id
-		order by c.updated_at desc
-		limit $1
-	`, limit)
+	rows, err := storagegen.New(s.pool).ListIndexerSearchCacheEntries(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	entries := []IndexerSearchCacheEntry{}
-	for rows.Next() {
-		var entry IndexerSearchCacheEntry
-		if err := rows.Scan(
-			&entry.IndexerID,
-			&entry.IndexerName,
-			&entry.IndexerProtocol,
-			&entry.MediaType,
-			&entry.Query,
-			&entry.ResultCount,
-			&entry.ExpiresAt,
-			&entry.CreatedAt,
-			&entry.UpdatedAt,
-			&entry.Expired,
-		); err != nil {
-			return nil, err
-		}
-		entries = append(entries, entry)
+	entries := make([]IndexerSearchCacheEntry, 0, len(rows))
+	for _, row := range rows {
+		entries = append(entries, indexerSearchCacheEntryFromListRow(row))
 	}
-	return entries, rows.Err()
+	return entries, nil
 }
 
 func (s *SettingsStore) GetIndexerSearchCacheEntry(
@@ -70,89 +32,34 @@ func (s *SettingsStore) GetIndexerSearchCacheEntry(
 	mediaType string,
 	query string,
 ) (IndexerSearchCacheEntry, error) {
-	var entry IndexerSearchCacheEntry
-	err := s.pool.QueryRow(ctx, `
-		select i.id,
-			i.name,
-			i.protocol,
-			c.media_type,
-			c.query,
-			c.result_count,
-			c.expires_at,
-			c.created_at,
-			c.updated_at,
-			c.expires_at <= now()
-		from app.indexer_search_cache c
-		join app.indexers i on i.id = c.indexer_id
-		where c.indexer_id = $1 and c.media_type = $2 and c.query = $3
-	`, indexerID, mediaType, query).Scan(
-		&entry.IndexerID,
-		&entry.IndexerName,
-		&entry.IndexerProtocol,
-		&entry.MediaType,
-		&entry.Query,
-		&entry.ResultCount,
-		&entry.ExpiresAt,
-		&entry.CreatedAt,
-		&entry.UpdatedAt,
-		&entry.Expired,
-	)
-	return entry, err
+	row, err := storagegen.New(s.pool).GetIndexerSearchCacheEntry(ctx, storagegen.GetIndexerSearchCacheEntryParams{
+		IndexerID: indexerID,
+		MediaType: mediaType,
+		Query:     query,
+	})
+	return indexerSearchCacheEntryFromGetRow(row), err
 }
 
 func (s *SettingsStore) ListIndexerSearchHistoryEntries(ctx context.Context, limit int32) ([]IndexerSearchHistoryEntry, error) {
 	limit = inspectionLimit(limit)
-	rows, err := s.pool.Query(ctx, `
-		select indexer_name, indexer_protocol, media_type, query, cache_hit, success,
-			result_count, error, response::text, created_at
-		from app.indexer_search_history
-		order by created_at desc
-		limit $1
-	`, limit)
+	rows, err := storagegen.New(s.pool).ListIndexerSearchHistoryEntries(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	entries := []IndexerSearchHistoryEntry{}
-	for rows.Next() {
-		var entry IndexerSearchHistoryEntry
-		if err := rows.Scan(
-			&entry.IndexerName,
-			&entry.IndexerProtocol,
-			&entry.MediaType,
-			&entry.Query,
-			&entry.CacheHit,
-			&entry.Success,
-			&entry.ResultCount,
-			&entry.Error,
-			&entry.Response,
-			&entry.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		entries = append(entries, entry)
+	entries := make([]IndexerSearchHistoryEntry, 0, len(rows))
+	for _, row := range rows {
+		entries = append(entries, indexerSearchHistoryEntryFromListRow(row))
 	}
-	return entries, rows.Err()
+	return entries, nil
 }
 
 func (s *SettingsStore) IndexerSearchHistoryCount(ctx context.Context) (int32, error) {
-	var count int32
-	err := s.pool.QueryRow(ctx, `select count(*)::int from app.indexer_search_history`).Scan(&count)
-	return count, err
+	return storagegen.New(s.pool).IndexerSearchHistoryCount(ctx)
 }
 
 func (s *SettingsStore) IndexerSearchHistoryStats(ctx context.Context) (QueryHistoryStats, error) {
-	var stats QueryHistoryStats
-	err := s.pool.QueryRow(ctx, `
-		select
-			count(*)::int,
-			count(*) filter (where cache_hit)::int,
-			count(*) filter (where not cache_hit)::int,
-			count(*) filter (where not success)::int
-		from app.indexer_search_history
-	`).Scan(&stats.TotalEntries, &stats.CacheHits, &stats.CacheMisses, &stats.Failures)
-	return stats, err
+	row, err := storagegen.New(s.pool).IndexerSearchHistoryStats(ctx)
+	return indexerSearchHistoryStatsFromRow(row), err
 }
 
 func inspectionLimit(limit int32) int32 {
@@ -163,4 +70,67 @@ func inspectionLimit(limit int32) int32 {
 		return 500
 	}
 	return limit
+}
+
+func indexerSearchCacheStatsFromRow(row storagegen.IndexerSearchCacheStatsRow) IndexerSearchCacheStats {
+	return IndexerSearchCacheStats{
+		TotalEntries:   row.TotalEntries,
+		ActiveEntries:  row.ActiveEntries,
+		ExpiredEntries: row.ExpiredEntries,
+		IndexerCount:   row.IndexerCount,
+	}
+}
+
+func indexerSearchCacheEntryFromListRow(row storagegen.ListIndexerSearchCacheEntriesRow) IndexerSearchCacheEntry {
+	return IndexerSearchCacheEntry{
+		IndexerID:       row.IndexerID,
+		IndexerName:     row.IndexerName,
+		IndexerProtocol: row.IndexerProtocol,
+		MediaType:       row.MediaType,
+		Query:           row.Query,
+		ResultCount:     row.ResultCount,
+		ExpiresAt:       row.ExpiresAt,
+		CreatedAt:       row.CreatedAt,
+		UpdatedAt:       row.UpdatedAt,
+		Expired:         row.Expired,
+	}
+}
+
+func indexerSearchCacheEntryFromGetRow(row storagegen.GetIndexerSearchCacheEntryRow) IndexerSearchCacheEntry {
+	return IndexerSearchCacheEntry{
+		IndexerID:       row.IndexerID,
+		IndexerName:     row.IndexerName,
+		IndexerProtocol: row.IndexerProtocol,
+		MediaType:       row.MediaType,
+		Query:           row.Query,
+		ResultCount:     row.ResultCount,
+		ExpiresAt:       row.ExpiresAt,
+		CreatedAt:       row.CreatedAt,
+		UpdatedAt:       row.UpdatedAt,
+		Expired:         row.Expired,
+	}
+}
+
+func indexerSearchHistoryEntryFromListRow(row storagegen.ListIndexerSearchHistoryEntriesRow) IndexerSearchHistoryEntry {
+	return IndexerSearchHistoryEntry{
+		IndexerName:     row.IndexerName,
+		IndexerProtocol: row.IndexerProtocol,
+		MediaType:       row.MediaType,
+		Query:           row.Query,
+		CacheHit:        row.CacheHit,
+		Success:         row.Success,
+		ResultCount:     row.ResultCount,
+		Error:           textPtr(row.Error),
+		Response:        row.Response,
+		CreatedAt:       row.CreatedAt,
+	}
+}
+
+func indexerSearchHistoryStatsFromRow(row storagegen.IndexerSearchHistoryStatsRow) QueryHistoryStats {
+	return QueryHistoryStats{
+		TotalEntries: row.TotalEntries,
+		CacheHits:    row.CacheHits,
+		CacheMisses:  row.CacheMisses,
+		Failures:     row.Failures,
+	}
 }

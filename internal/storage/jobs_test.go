@@ -3,36 +3,33 @@ package storage
 import (
 	"testing"
 	"time"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
-func TestSCNSystem006ScanSystemJobPreservesRiverFields(t *testing.T) {
+func TestSCNSystem006SystemJobMapperPreservesRiverFields(t *testing.T) {
 	scheduledAt := time.Date(2026, time.July, 3, 5, 0, 0, 0, time.UTC)
 	createdAt := scheduledAt.Add(-time.Minute)
 	attemptedAt := scheduledAt.Add(time.Minute)
 	finalizedAt := scheduledAt.Add(2 * time.Minute)
 
-	job, err := scanSystemJob(fakeSystemJobRow{
-		values: []any{
-			int64(42),
-			"running",
-			"media.release_search",
-			"media_search",
-			int32(2),
-			int32(5),
-			int32(3),
-			`{"media_item_id":"movie-1"}`,
-			`{"source":"test"}`,
-			`[{"error":"timeout"}]`,
-			"timeout",
-			scheduledAt,
-			createdAt,
-			&attemptedAt,
-			&finalizedAt,
-		},
+	job := systemJobFromGetRow(storagegen.GetSystemJobRow{
+		ID:          42,
+		State:       "running",
+		Kind:        "media.release_search",
+		Queue:       "media_search",
+		Attempt:     2,
+		MaxAttempts: 5,
+		Priority:    3,
+		Args:        `{"media_item_id":"movie-1"}`,
+		Metadata:    `{"source":"test"}`,
+		Errors:      `[{"error":"timeout"}]`,
+		InfoMessage: "timeout",
+		ScheduledAt: scheduledAt,
+		CreatedAt:   createdAt,
+		AttemptedAt: &attemptedAt,
+		FinalizedAt: &finalizedAt,
 	})
-	if err != nil {
-		t.Fatalf("scanSystemJob returned error: %v", err)
-	}
 
 	if job.ID != 42 || job.State != "running" || job.Kind != "media.release_search" {
 		t.Fatalf("identity/status = %#v", job)
@@ -66,26 +63,4 @@ func TestSCNSystem006SystemJobLimitUsesSafeBounds(t *testing.T) {
 			}
 		})
 	}
-}
-
-type fakeSystemJobRow struct {
-	values []any
-}
-
-func (r fakeSystemJobRow) Scan(dest ...any) error {
-	for index, value := range r.values {
-		switch target := dest[index].(type) {
-		case *int64:
-			*target = value.(int64)
-		case *int32:
-			*target = value.(int32)
-		case *string:
-			*target = value.(string)
-		case *time.Time:
-			*target = value.(time.Time)
-		case **time.Time:
-			*target = value.(*time.Time)
-		}
-	}
-	return nil
 }

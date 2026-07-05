@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 type Tag struct {
@@ -19,25 +21,16 @@ type Tag struct {
 }
 
 func (s *SettingsStore) ListTags(ctx context.Context) ([]Tag, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, name, created_at, updated_at
-		from app.tags
-		order by lower(name)
-	`)
+	rows, err := storagegen.New(s.pool).ListTags(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	tags := []Tag{}
-	for rows.Next() {
-		tag, err := scanTag(rows)
-		if err != nil {
-			return nil, err
-		}
-		tags = append(tags, tag)
+	tags := make([]Tag, 0, len(rows))
+	for _, row := range rows {
+		tags = append(tags, tagFromRow(row))
 	}
-	return tags, rows.Err()
+	return tags, nil
 }
 
 func (s *SettingsStore) SaveTag(ctx context.Context, id *uuid.UUID, name string) (Tag, error) {
@@ -46,49 +39,50 @@ func (s *SettingsStore) SaveTag(ctx context.Context, id *uuid.UUID, name string)
 		return Tag{}, ErrInvalidInput
 	}
 	if id == nil {
-		tag, err := scanTag(s.pool.QueryRow(ctx, `
-			insert into app.tags (id, name)
-			values ($1, $2)
-			on conflict (lower(name)) do update
-			set name = excluded.name, updated_at = now()
-			returning id, name, created_at, updated_at
-		`, uuid.New(), cleanName))
-		return tag, normalizeTagWriteError(err)
+		row, err := storagegen.New(s.pool).UpsertTagByName(ctx, storagegen.UpsertTagByNameParams{
+			ID:   uuid.New(),
+			Name: cleanName,
+		})
+		if err != nil {
+			return Tag{}, normalizeTagWriteError(err)
+		}
+		return tagFromRow(row), nil
 	}
-	tag, err := scanTag(s.pool.QueryRow(ctx, `
-		update app.tags
-		set name = $2, updated_at = now()
-		where id = $1
-		returning id, name, created_at, updated_at
-	`, *id, cleanName))
-	return tag, normalizeTagWriteError(err)
+	row, err := storagegen.New(s.pool).UpdateTag(ctx, storagegen.UpdateTagParams{
+		ID:   *id,
+		Name: cleanName,
+	})
+	if err != nil {
+		return Tag{}, normalizeTagWriteError(err)
+	}
+	return tagFromRow(row), nil
 }
 
 func (s *SettingsStore) DeleteTag(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.tags where id = $1`, id)
+	rowsAffected, err := storagegen.New(s.pool).DeleteTag(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rowsAffected == 0 {
 		return ErrNotFound
 	}
 	return nil
 }
 
 func assignMediaItemTags(ctx context.Context, q mediaItemQuerier, mediaItemID uuid.UUID, tagNames []string) error {
-	if _, err := q.Exec(ctx, `delete from app.media_item_tags where media_item_id = $1`, mediaItemID); err != nil {
+	queries := storagegen.New(q)
+	if err := queries.DeleteMediaItemTags(ctx, mediaItemID); err != nil {
 		return err
 	}
 	for _, name := range normalizeTagNames(tagNames) {
-		tagID, err := ensureTag(ctx, q, name)
+		tagID, err := ensureTag(ctx, queries, name)
 		if err != nil {
 			return err
 		}
-		if _, err := q.Exec(ctx, `
-			insert into app.media_item_tags (media_item_id, tag_id)
-			values ($1, $2)
-			on conflict do nothing
-		`, mediaItemID, tagID); err != nil {
+		if err := queries.AddMediaItemTag(ctx, storagegen.AddMediaItemTagParams{
+			MediaItemID: mediaItemID,
+			TagID:       tagID,
+		}); err != nil {
 			return err
 		}
 	}
@@ -96,35 +90,30 @@ func assignMediaItemTags(ctx context.Context, q mediaItemQuerier, mediaItemID uu
 }
 
 func assignMediaRequestTags(ctx context.Context, q mediaItemQuerier, requestID uuid.UUID, tagNames []string) error {
-	if _, err := q.Exec(ctx, `delete from app.media_request_tags where media_request_id = $1`, requestID); err != nil {
+	queries := storagegen.New(q)
+	if err := queries.DeleteMediaRequestTags(ctx, requestID); err != nil {
 		return err
 	}
 	for _, name := range normalizeTagNames(tagNames) {
-		tagID, err := ensureTag(ctx, q, name)
+		tagID, err := ensureTag(ctx, queries, name)
 		if err != nil {
 			return err
 		}
-		if _, err := q.Exec(ctx, `
-			insert into app.media_request_tags (media_request_id, tag_id)
-			values ($1, $2)
-			on conflict do nothing
-		`, requestID, tagID); err != nil {
+		if err := queries.AddMediaRequestTag(ctx, storagegen.AddMediaRequestTagParams{
+			MediaRequestID: requestID,
+			TagID:          tagID,
+		}); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func ensureTag(ctx context.Context, q mediaItemQuerier, name string) (uuid.UUID, error) {
-	var id uuid.UUID
-	err := q.QueryRow(ctx, `
-		insert into app.tags (id, name)
-		values ($1, $2)
-		on conflict (lower(name)) do update
-		set name = excluded.name, updated_at = now()
-		returning id
-	`, uuid.New(), name).Scan(&id)
-	return id, err
+func ensureTag(ctx context.Context, queries *storagegen.Queries, name string) (uuid.UUID, error) {
+	return queries.EnsureTag(ctx, storagegen.EnsureTagParams{
+		ID:   uuid.New(),
+		Name: name,
+	})
 }
 
 func normalizeTagNames(values []string) []string {
@@ -149,10 +138,13 @@ func normalizeTagName(value string) string {
 	return strings.Join(strings.Fields(value), " ")
 }
 
-func scanTag(row pgx.Row) (Tag, error) {
-	var tag Tag
-	err := row.Scan(&tag.ID, &tag.Name, &tag.CreatedAt, &tag.UpdatedAt)
-	return tag, err
+func tagFromRow(row storagegen.AppTag) Tag {
+	return Tag{
+		ID:        row.ID,
+		Name:      row.Name,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+	}
 }
 
 func normalizeTagWriteError(err error) error {

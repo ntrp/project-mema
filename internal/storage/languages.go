@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 type Language struct {
@@ -29,25 +30,20 @@ type LanguageInput struct {
 var languageCodePattern = regexp.MustCompile(`^[A-Z0-9-]{2,8}$`)
 
 func (s *SettingsStore) ListLanguages(ctx context.Context) ([]Language, error) {
-	rows, err := s.pool.Query(ctx, `
-		select code, display_name, aliases, created_at, updated_at
-		from app.languages
-		order by lower(display_name), code
-	`)
+	rows, err := storagegen.New(s.pool).ListLanguages(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	languages := []Language{}
-	for rows.Next() {
-		language, err := scanLanguage(rows)
+	languages := make([]Language, 0, len(rows))
+	for _, row := range rows {
+		language, err := languageFromRow(row)
 		if err != nil {
 			return nil, err
 		}
 		languages = append(languages, language)
 	}
-	return languages, rows.Err()
+	return languages, nil
 }
 
 func (s *SettingsStore) SaveLanguage(ctx context.Context, code string, input LanguageInput) (Language, error) {
@@ -65,24 +61,24 @@ func (s *SettingsStore) SaveLanguage(ctx context.Context, code string, input Lan
 	if err != nil {
 		return Language{}, err
 	}
-	language, err := scanLanguage(s.pool.QueryRow(ctx, `
-		insert into app.languages (code, display_name, aliases)
-		values ($1, $2, $3)
-		on conflict (code) do update
-		set display_name = excluded.display_name,
-			aliases = excluded.aliases,
-			updated_at = now()
-		returning code, display_name, aliases, created_at, updated_at
-	`, next.Code, next.DisplayName, aliases))
+	row, err := storagegen.New(s.pool).UpsertLanguage(ctx, storagegen.UpsertLanguageParams{
+		Code:        next.Code,
+		DisplayName: next.DisplayName,
+		Aliases:     aliases,
+	})
+	if err != nil {
+		return Language{}, normalizeLanguageWriteError(err)
+	}
+	language, err := languageFromRow(row)
 	return language, normalizeLanguageWriteError(err)
 }
 
 func (s *SettingsStore) DeleteLanguage(ctx context.Context, code string) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.languages where code = $1`, normalizeLanguageCode(code))
+	rowsAffected, err := storagegen.New(s.pool).DeleteLanguage(ctx, normalizeLanguageCode(code))
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rowsAffected == 0 {
 		return ErrNotFound
 	}
 	return nil
@@ -126,21 +122,15 @@ func normalizeLanguageAliases(values []string, code string, displayName string) 
 	return aliases
 }
 
-func scanLanguage(row pgx.Row) (Language, error) {
-	var language Language
-	var aliases []byte
-	err := row.Scan(
-		&language.Code,
-		&language.DisplayName,
-		&aliases,
-		&language.CreatedAt,
-		&language.UpdatedAt,
-	)
-	if err != nil {
-		return Language{}, err
+func languageFromRow(row storagegen.AppLanguage) (Language, error) {
+	language := Language{
+		Code:        row.Code,
+		DisplayName: row.DisplayName,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
 	}
-	if len(aliases) > 0 {
-		if err := json.Unmarshal(aliases, &language.Aliases); err != nil {
+	if len(row.Aliases) > 0 {
+		if err := json.Unmarshal(row.Aliases, &language.Aliases); err != nil {
 			return Language{}, err
 		}
 	}
@@ -154,11 +144,8 @@ func normalizeLanguageWriteError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrNotFound
-	}
 	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if errors.As(err, &pgErr) && (pgErr.Code == "23505" || pgErr.Code == "23514") {
 		return ErrInvalidInput
 	}
 	return err

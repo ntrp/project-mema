@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 )
 
@@ -49,30 +51,34 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 		_ = tx.Rollback(ctx)
 	}()
 
-	if _, err := tx.Exec(ctx, `delete from app.library_scan_items where media_item_id = $1`, item.ID); err != nil {
+	queries := storagegen.New(s.pool).WithTx(tx)
+	mediaItemID := item.ID
+	if err := queries.DeleteLibraryScanItemsForMediaItem(ctx, &mediaItemID); err != nil {
 		return MediaItem{}, err
 	}
 	scanID := uuid.New()
-	if _, err := tx.Exec(ctx, `
-		insert into app.library_scans (
-			id, library_folder_id, status, total_files, auto_matched_count, manual_count, completed_at
-		)
-		values ($1, $2, 'completed', $3, $3, 0, now())
-	`, scanID, *item.LibraryFolderID, int32(len(files))); err != nil {
+	if err := queries.CreateMediaFileRescanLibraryScan(ctx, storagegen.CreateMediaFileRescanLibraryScanParams{
+		ID:              scanID,
+		LibraryFolderID: *item.LibraryFolderID,
+		TotalFiles:      int32(len(files)),
+	}); err != nil {
 		return MediaItem{}, err
 	}
 	for _, path := range files {
-		if _, err := tx.Exec(ctx, `
-			insert into app.library_scan_items (
-				id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
-				status, matched_title, matched_year, matched_media_kind, media_item_id
-			)
-			values ($1, $2, $3, $4, $5, $6, $7, 'auto_added', $5, $6, $7, $8)
-		`, uuid.New(), scanID, path, filepath.Base(path), item.Title, item.Year, kind, item.ID); err != nil {
+		if err := queries.CreateImportedFileLibraryScanItem(ctx, storagegen.CreateImportedFileLibraryScanItemParams{
+			ID:                uuid.New(),
+			ScanID:            scanID,
+			Path:              path,
+			FileName:          filepath.Base(path),
+			DetectedTitle:     item.Title,
+			DetectedYear:      int4Value(item.Year),
+			DetectedMediaKind: kind,
+			MediaItemID:       &mediaItemID,
+		}); err != nil {
 			return MediaItem{}, err
 		}
 	}
-	if _, err := tx.Exec(ctx, `update app.media_items set updated_at = now() where id = $1`, item.ID); err != nil {
+	if err := queries.TouchMediaItem(ctx, item.ID); err != nil {
 		return MediaItem{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {

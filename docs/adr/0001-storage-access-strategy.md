@@ -9,9 +9,8 @@ Accepted
 The application uses PostgreSQL through `pgxpool` and a single
 `storage.SettingsStore` facade. Most storage methods are handwritten SQL in
 small files under `internal/storage`, with row scanners kept near the queries
-that use them. The repository also has a `sqlc.yaml` placeholder that points at
-`internal/storage/queries` and `internal/storage/generated`, but there are no
-real query files or generated storage packages yet.
+that use them. The repository also has a `sqlc.yaml` configuration that points
+at `internal/storage/queries` and `internal/storage/generated`.
 
 The current code has a broad handwritten surface: dozens of storage files,
 integration tests for important flows, and transaction-heavy methods for media,
@@ -25,19 +24,18 @@ API contracts harder to keep consistent as the storage layer expands.
 
 ## Decision
 
-Use a staged storage strategy:
+Use an incremental `sqlc` conversion strategy:
 
-1. Keep existing handwritten pgx code in place unless a bounded refactor is
-   already needed for the feature being changed.
-2. Use the next storage implementation issue (#51) to pilot `sqlc` in one small,
-   representative storage area before adopting it more broadly.
-3. Treat the pilot as the decision point for wider adoption. If it improves
-   maintainability without forcing awkward transaction or JSON handling, future
-   storage areas may move to `sqlc` incrementally. If it adds more friction than
-   value, keep handwritten pgx and codify that pattern instead.
+1. Keep storage entrypoints on `SettingsStore` so application code does not
+   couple directly to generated query structs.
+2. Convert bounded storage areas to `sqlc` behind wrappers, preserving existing
+   validation, transaction ownership, and public error behavior.
+3. Prefer simple read/write resources first, then move to transaction-heavy
+   workflows only when their generated query shape is covered by focused tests.
 
-This is not a blanket migration. New work should not introduce generated
-storage code outside the pilot area until the pilot has proven the convention.
+This is not a request to bypass transaction boundaries or wrappers. Generated
+queries should replace handwritten SQL while the storage package continues to
+own application behavior.
 
 ## Rules For New Storage Code
 
@@ -67,21 +65,18 @@ storage code outside the pilot area until the pilot has proven the convention.
 - Keep River job transactions separate from application storage transactions
   unless a workflow explicitly requires one atomic boundary.
 
-## `sqlc` Pilot Rules
+## `sqlc` Conversion Rules
 
-The pilot in #51 should:
-
-- use one bounded storage area with representative reads, writes, and tests;
-- place source queries under `internal/storage/queries/<area>.sql`;
-- place generated code under `internal/storage/generated`;
-- keep generated files out of handwritten application logic;
-- expose a small wrapper from handwritten storage code when application errors,
-  validation, or transaction orchestration are needed;
-- document the exact generation command and whether generated code is committed.
-
-The pilot should avoid media item or indexer-wide rewrites. Good candidates are
-small settings-style resources with clear CRUD and limited JSON payload
-handling.
+- Use one query file per bounded storage area under
+  `internal/storage/queries/<area>.sql`.
+- Commit generated code under `internal/storage/generated`.
+- Keep generated files out of handwritten application logic outside
+  `internal/storage`.
+- Expose small wrappers from handwritten storage code when application errors,
+  validation, JSON mapping, or transaction orchestration are needed.
+- Add focused storage coverage for each converted write path.
+- Run `make sqlc-generate` after editing query files or schema.
+- Run `make verify-sqlc-generated` to check committed generated artifacts.
 
 ## Consequences
 
@@ -93,9 +88,46 @@ The cost is temporary dual readiness: contributors must understand the current
 handwritten pgx rules and the pilot constraints. That cost is bounded by keeping
 generated code isolated until the pilot is accepted.
 
+## Current Converted Areas
+
+Converted query files:
+
+- `internal/storage/queries/custom_formats.sql`
+- `internal/storage/queries/database_status.sql`
+- `internal/storage/queries/discover_blacklist.sql`
+- `internal/storage/queries/download_activity.sql`
+- `internal/storage/queries/download_clients.sql`
+- `internal/storage/queries/file_naming.sql`
+- `internal/storage/queries/imported_files.sql`
+- `internal/storage/queries/indexer_bulk.sql`
+- `internal/storage/queries/indexer_proxies.sql`
+- `internal/storage/queries/indexer_search.sql`
+- `internal/storage/queries/indexers.sql`
+- `internal/storage/queries/languages.sql`
+- `internal/storage/queries/library_folders.sql`
+- `internal/storage/queries/library_scans.sql`
+- `internal/storage/queries/log_file_settings.sql`
+- `internal/storage/queries/media_items.sql`
+- `internal/storage/queries/media_items_mutations.sql`
+- `internal/storage/queries/media_profiles.sql`
+- `internal/storage/queries/media_requests.sql`
+- `internal/storage/queries/metadata_cache.sql`
+- `internal/storage/queries/metadata_providers.sql`
+- `internal/storage/queries/path_mappings.sql`
+- `internal/storage/queries/quality_sizes.sql`
+- `internal/storage/queries/release_blocklist.sql`
+- `internal/storage/queries/release_candidates.sql`
+- `internal/storage/queries/system_jobs.sql`
+- `internal/storage/queries/system_events.sql`
+- `internal/storage/queries/tags.sql`
+- `internal/storage/queries/user_profile.sql`
+- `internal/storage/queries/users.sql`
+
+`SettingsStore` remains the application-facing wrapper for validation,
+transaction ownership, JSON mapping, and error normalization.
+
 ## Follow-Up
 
-- #51 will implement the bounded pilot or, if the pilot proves unsuitable while
-  scoped, codify the handwritten pgx rules in one real storage area.
-- If #51 adopts `sqlc`, add a generation target and check target before moving
-  additional storage areas.
+- Continue converting handwritten storage SQL to `sqlc` query files.
+- Move broad media, indexer, or transaction-heavy workflows only with focused
+  query files and matching tests for transaction behavior.

@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 	"time"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 const (
@@ -26,16 +28,14 @@ type LogFileSettingsInput struct {
 }
 
 func (s *SettingsStore) GetLogFileSettings(ctx context.Context) (LogFileSettings, error) {
-	settings, err := scanLogFileSettings(s.pool.QueryRow(ctx, `
-		insert into app.log_file_settings (id, enabled, directory, retention_days)
-		values (true, false, $1, $2)
-		on conflict (id) do update set id = excluded.id
-		returning enabled, directory, retention_days, created_at, updated_at
-	`, DefaultLogFileDirectory, DefaultLogRetentionDays))
+	row, err := storagegen.New(s.pool).GetLogFileSettings(ctx, storagegen.GetLogFileSettingsParams{
+		Directory:     DefaultLogFileDirectory,
+		RetentionDays: DefaultLogRetentionDays,
+	})
 	if err != nil {
 		return LogFileSettings{}, err
 	}
-	return settings, nil
+	return logFileSettingsFromRow(row), nil
 }
 
 func (s *SettingsStore) UpdateLogFileSettings(
@@ -46,16 +46,15 @@ func (s *SettingsStore) UpdateLogFileSettings(
 	if input.Directory == "" || input.RetentionDays < 1 || input.RetentionDays > 365 {
 		return LogFileSettings{}, ErrInvalidInput
 	}
-	return scanLogFileSettings(s.pool.QueryRow(ctx, `
-		insert into app.log_file_settings (id, enabled, directory, retention_days)
-		values (true, $1, $2, $3)
-		on conflict (id) do update
-		set enabled = excluded.enabled,
-			directory = excluded.directory,
-			retention_days = excluded.retention_days,
-			updated_at = now()
-		returning enabled, directory, retention_days, created_at, updated_at
-	`, input.Enabled, input.Directory, input.RetentionDays))
+	row, err := storagegen.New(s.pool).UpdateLogFileSettings(ctx, storagegen.UpdateLogFileSettingsParams{
+		Enabled:       input.Enabled,
+		Directory:     input.Directory,
+		RetentionDays: input.RetentionDays,
+	})
+	if err != nil {
+		return LogFileSettings{}, err
+	}
+	return logFileSettingsFromUpdateRow(row), nil
 }
 
 func normalizeLogFileSettings(input LogFileSettingsInput) LogFileSettingsInput {
@@ -69,16 +68,22 @@ func normalizeLogFileSettings(input LogFileSettingsInput) LogFileSettingsInput {
 	return input
 }
 
-func scanLogFileSettings(row interface {
-	Scan(dest ...any) error
-}) (LogFileSettings, error) {
-	var settings LogFileSettings
-	err := row.Scan(
-		&settings.Enabled,
-		&settings.Directory,
-		&settings.RetentionDays,
-		&settings.CreatedAt,
-		&settings.UpdatedAt,
-	)
-	return settings, err
+func logFileSettingsFromRow(row storagegen.GetLogFileSettingsRow) LogFileSettings {
+	return LogFileSettings{
+		Enabled:       row.Enabled,
+		Directory:     row.Directory,
+		RetentionDays: row.RetentionDays,
+		CreatedAt:     row.CreatedAt,
+		UpdatedAt:     row.UpdatedAt,
+	}
+}
+
+func logFileSettingsFromUpdateRow(row storagegen.UpdateLogFileSettingsRow) LogFileSettings {
+	return LogFileSettings{
+		Enabled:       row.Enabled,
+		Directory:     row.Directory,
+		RetentionDays: row.RetentionDays,
+		CreatedAt:     row.CreatedAt,
+		UpdatedAt:     row.UpdatedAt,
+	}
 }

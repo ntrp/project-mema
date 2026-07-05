@@ -14,6 +14,8 @@ import (
 
 	"crypto/pbkdf2"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -54,58 +56,39 @@ func (s *SettingsStore) EnsureDefaultAdminUser(ctx context.Context, username str
 		return err
 	}
 	id := uuid.New()
-	_, err = s.pool.Exec(ctx, `
-		insert into app.users (id, username, password_hash, role)
-		select $1, $2, $3, 'admin'
-		where not exists (select 1 from app.users where username = $2)
-	`, id, username, hash)
-	return err
+	return storagegen.New(s.pool).EnsureDefaultAdminUser(ctx, storagegen.EnsureDefaultAdminUserParams{
+		ID:           id,
+		Username:     username,
+		PasswordHash: hash,
+	})
 }
 
 func (s *SettingsStore) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, username, password_hash, display_name, picture_url, role, created_at, updated_at
-		from app.users
-		order by username asc
-	`)
+	rows, err := storagegen.New(s.pool).ListUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	users := []User{}
-	for rows.Next() {
-		user, err := scanUser(rows)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, user)
+	users := make([]User, 0, len(rows))
+	for _, row := range rows {
+		users = append(users, userFromRow(row))
 	}
-	return users, rows.Err()
+	return users, nil
 }
 
 func (s *SettingsStore) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
-	user, err := scanUser(s.pool.QueryRow(ctx, `
-		select id, username, password_hash, display_name, picture_url, role, created_at, updated_at
-		from app.users
-		where id = $1
-	`, id))
+	row, err := storagegen.New(s.pool).GetUser(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrNotFound
 	}
-	return user, err
+	return userFromRow(row), err
 }
 
 func (s *SettingsStore) GetUserByUsername(ctx context.Context, username string) (User, error) {
-	user, err := scanUser(s.pool.QueryRow(ctx, `
-		select id, username, password_hash, display_name, picture_url, role, created_at, updated_at
-		from app.users
-		where lower(username) = lower($1)
-	`, strings.TrimSpace(username)))
+	row, err := storagegen.New(s.pool).GetUserByUsername(ctx, strings.TrimSpace(username))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrNotFound
 	}
-	return user, err
+	return userFromRow(row), err
 }
 
 func (s *SettingsStore) CreateUser(ctx context.Context, input UserInput) (User, error) {
@@ -117,15 +100,16 @@ func (s *SettingsStore) CreateUser(ctx context.Context, input UserInput) (User, 
 		return User{}, err
 	}
 	id := uuid.New()
-	user, err := scanUser(s.pool.QueryRow(ctx, `
-		insert into app.users (id, username, password_hash, role)
-		values ($1, $2, $3, $4)
-		returning id, username, password_hash, display_name, picture_url, role, created_at, updated_at
-	`, id, input.Username, hash, input.Role))
+	row, err := storagegen.New(s.pool).CreateUser(ctx, storagegen.CreateUserParams{
+		ID:           id,
+		Username:     input.Username,
+		PasswordHash: hash,
+		Role:         input.Role,
+	})
 	if isUniqueViolation(err) {
 		return User{}, ErrDuplicateUser
 	}
-	return user, err
+	return userFromRow(row), err
 }
 
 func (s *SettingsStore) UpdateUser(ctx context.Context, id uuid.UUID, input UserInput) (User, error) {
@@ -144,33 +128,41 @@ func (s *SettingsStore) UpdateUser(ctx context.Context, id uuid.UUID, input User
 		hash = &value
 	}
 
-	user, err := scanUser(s.pool.QueryRow(ctx, `
-		update app.users
-		set username = $2,
-			password_hash = coalesce($3, password_hash),
-			role = $4,
-			updated_at = now()
-		where id = $1
-		returning id, username, password_hash, display_name, picture_url, role, created_at, updated_at
-	`, id, input.Username, hash, input.Role))
+	queries := storagegen.New(s.pool)
+	var row storagegen.AppUser
+	var err error
+	if hash == nil {
+		row, err = queries.UpdateUser(ctx, storagegen.UpdateUserParams{
+			ID:       id,
+			Username: input.Username,
+			Role:     input.Role,
+		})
+	} else {
+		row, err = queries.UpdateUserWithPassword(ctx, storagegen.UpdateUserWithPasswordParams{
+			ID:           id,
+			Username:     input.Username,
+			PasswordHash: *hash,
+			Role:         input.Role,
+		})
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return User{}, ErrNotFound
 	}
 	if isUniqueViolation(err) {
 		return User{}, ErrDuplicateUser
 	}
-	return user, err
+	return userFromRow(row), err
 }
 
 func (s *SettingsStore) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	if err := s.ensureAdminCanChange(ctx, id); err != nil {
 		return err
 	}
-	tag, err := s.pool.Exec(ctx, `delete from app.users where id = $1`, id)
+	rows, err := storagegen.New(s.pool).DeleteUser(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil
@@ -184,8 +176,8 @@ func (s *SettingsStore) ensureAdminCanChange(ctx context.Context, id uuid.UUID) 
 	if user.Role != "admin" {
 		return nil
 	}
-	var count int
-	if err := s.pool.QueryRow(ctx, `select count(*) from app.users where role = 'admin'`).Scan(&count); err != nil {
+	count, err := storagegen.New(s.pool).CountAdminUsers(ctx)
+	if err != nil {
 		return err
 	}
 	if count <= 1 {
@@ -235,19 +227,17 @@ func VerifyPassword(password string, encoded string) bool {
 	return subtle.ConstantTimeCompare(key, expected) == 1
 }
 
-func scanUser(row pgx.Row) (User, error) {
-	var user User
-	err := row.Scan(
-		&user.ID,
-		&user.Username,
-		&user.PasswordHash,
-		&user.DisplayName,
-		&user.PictureURL,
-		&user.Role,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	)
-	return user, err
+func userFromRow(row storagegen.AppUser) User {
+	return User{
+		ID:           row.ID,
+		Username:     row.Username,
+		PasswordHash: row.PasswordHash,
+		DisplayName:  row.DisplayName,
+		PictureURL:   row.PictureUrl,
+		Role:         row.Role,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
+	}
 }
 
 func isUniqueViolation(err error) bool {

@@ -7,6 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 type LibraryFolder struct {
@@ -70,54 +72,42 @@ type LibraryMatchInput struct {
 }
 
 func (s *SettingsStore) ListLibraryFolders(ctx context.Context) ([]LibraryFolder, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, path, created_at, updated_at
-		from app.library_folders
-		order by path asc
-	`)
+	rows, err := storagegen.New(s.pool).ListLibraryFolders(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	folders := []LibraryFolder{}
-	for rows.Next() {
-		folder, err := scanLibraryFolder(rows)
-		if err != nil {
-			return nil, err
-		}
-		folders = append(folders, folder)
+	folders := make([]LibraryFolder, 0, len(rows))
+	for _, row := range rows {
+		folders = append(folders, libraryFolderFromRow(row))
 	}
-	return folders, rows.Err()
+	return folders, nil
 }
 
 func (s *SettingsStore) CreateLibraryFolder(ctx context.Context, path string) (LibraryFolder, error) {
-	id := uuid.New()
-	return scanLibraryFolder(s.pool.QueryRow(ctx, `
-		insert into app.library_folders (id, path)
-		values ($1, $2)
-		on conflict (path) do update set updated_at = now()
-		returning id, path, created_at, updated_at
-	`, id, path))
+	row, err := storagegen.New(s.pool).UpsertLibraryFolder(ctx, storagegen.UpsertLibraryFolderParams{
+		ID:   uuid.New(),
+		Path: path,
+	})
+	if err != nil {
+		return LibraryFolder{}, err
+	}
+	return libraryFolderFromRow(row), nil
 }
 
 func (s *SettingsStore) DeleteLibraryFolder(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.library_folders where id = $1`, id)
+	rowsAffected, err := storagegen.New(s.pool).DeleteLibraryFolder(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rowsAffected == 0 {
 		return ErrNotFound
 	}
 	return nil
 }
 
 func (s *SettingsStore) LibraryFolderExists(ctx context.Context, id uuid.UUID) (bool, error) {
-	var exists bool
-	if err := s.pool.QueryRow(ctx, `select exists(select 1 from app.library_folders where id = $1)`, id).Scan(&exists); err != nil {
-		return false, err
-	}
-	return exists, nil
+	return storagegen.New(s.pool).LibraryFolderExists(ctx, id)
 }
 
 func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFolder, inputs []LibraryScanItemInput) (LibraryScan, error) {
@@ -131,34 +121,36 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 
 	scanID := uuid.New()
 	manualCount := int32(0)
-	if _, err := tx.Exec(ctx, `
-		insert into app.library_scans (
-			id, library_folder_id, status, total_files, auto_matched_count, manual_count, completed_at
-		)
-		values ($1, $2, 'completed', $3, 0, 0, now())
-	`, scanID, folder.ID, int32(len(inputs))); err != nil {
+	q := storagegen.New(tx)
+	if err := q.CreateLibraryScan(ctx, storagegen.CreateLibraryScanParams{
+		ID:              scanID,
+		LibraryFolderID: folder.ID,
+		TotalFiles:      int32(len(inputs)),
+	}); err != nil {
 		return LibraryScan{}, err
 	}
 
 	for _, input := range inputs {
 		manualCount++
-		if _, err := tx.Exec(ctx, `
-			insert into app.library_scan_items (
-				id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
-				status, matched_title, matched_year, matched_media_kind, media_item_id
-			)
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		`, uuid.New(), scanID, input.Path, input.FileName, input.DetectedTitle, input.DetectedYear,
-			input.DetectedMediaKind, "pending", nil, nil, nil, nil); err != nil {
+		if err := q.AddLibraryScanItem(ctx, storagegen.AddLibraryScanItemParams{
+			ID:                uuid.New(),
+			ScanID:            scanID,
+			Path:              input.Path,
+			FileName:          input.FileName,
+			DetectedTitle:     input.DetectedTitle,
+			DetectedYear:      int4Value(input.DetectedYear),
+			DetectedMediaKind: input.DetectedMediaKind,
+			Status:            "pending",
+		}); err != nil {
 			return LibraryScan{}, err
 		}
 	}
 
-	if _, err := tx.Exec(ctx, `
-		update app.library_scans
-		set auto_matched_count = $2, manual_count = $3
-		where id = $1
-	`, scanID, int32(0), manualCount); err != nil {
+	if err := q.UpdateLibraryScanCounts(ctx, storagegen.UpdateLibraryScanCountsParams{
+		AutoMatchedCount: 0,
+		ManualCount:      manualCount,
+		ID:               scanID,
+	}); err != nil {
 		return LibraryScan{}, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -168,19 +160,14 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 }
 
 func (s *SettingsStore) GetLibraryScan(ctx context.Context, id uuid.UUID) (LibraryScan, error) {
-	scan, err := scanLibraryScan(s.pool.QueryRow(ctx, `
-		select s.id, s.library_folder_id, f.path, s.status, s.total_files, s.auto_matched_count,
-			s.manual_count, s.created_at, s.completed_at
-		from app.library_scans s
-		join app.library_folders f on f.id = s.library_folder_id
-		where s.id = $1
-	`, id))
+	row, err := storagegen.New(s.pool).GetLibraryScan(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return LibraryScan{}, ErrNotFound
 	}
 	if err != nil {
 		return LibraryScan{}, err
 	}
+	scan := libraryScanFromRow(row)
 	items, err := s.listLibraryScanItems(ctx, id)
 	if err != nil {
 		return LibraryScan{}, err
@@ -202,12 +189,8 @@ func (s *SettingsStore) MatchLibraryScanItem(ctx context.Context, scanID uuid.UU
 	if !ok {
 		return LibraryScanItem{}, MediaItem{}, ErrNotFound
 	}
-	var folderID uuid.UUID
-	if err := tx.QueryRow(ctx, `
-		select library_folder_id
-		from app.library_scans
-		where id = $1
-	`, scanID).Scan(&folderID); err != nil {
+	folderID, err := storagegen.New(tx).GetLibraryScanFolderID(ctx, scanID)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return LibraryScanItem{}, MediaItem{}, ErrNotFound
 		}
@@ -230,33 +213,22 @@ func (s *SettingsStore) MatchLibraryScanItem(ctx context.Context, scanID uuid.UU
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
-	updated, err := scanLibraryScanItem(tx.QueryRow(ctx, `
-		update app.library_scan_items
-		set status = 'manually_added',
-			matched_title = $3,
-			matched_year = $4,
-			matched_media_kind = $5,
-			media_item_id = $6,
-			updated_at = now()
-		where scan_id = $1 and id = $2 and status = 'pending'
-		returning id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
-			status, matched_title, matched_year, matched_media_kind, media_item_id, created_at, updated_at
-	`, scanID, itemID, input.Title, input.Year, input.MediaKind, item.ID))
+	row, err := storagegen.New(tx).MatchLibraryScanItem(ctx, storagegen.MatchLibraryScanItemParams{
+		MatchedTitle:     textValue(&input.Title),
+		MatchedYear:      int4Value(input.Year),
+		MatchedMediaKind: textValue(&input.MediaKind),
+		MediaItemID:      &item.ID,
+		ScanID:           scanID,
+		ID:               itemID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return LibraryScanItem{}, MediaItem{}, ErrNotFound
 	}
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
-	if _, err := tx.Exec(ctx, `
-		update app.library_scans
-		set manual_count = (
-			select count(*)::integer
-			from app.library_scan_items
-			where scan_id = $1 and status = 'pending'
-		)
-		where id = $1
-	`, scanID); err != nil {
+	updated := libraryScanItemFromRow(row)
+	if err := storagegen.New(tx).RefreshLibraryScanManualCount(ctx, scanID); err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
 	item, err = getMediaItem(ctx, tx, item.ID)
@@ -270,25 +242,14 @@ func (s *SettingsStore) MatchLibraryScanItem(ctx context.Context, scanID uuid.UU
 }
 
 func (s *SettingsStore) listLibraryScanItems(ctx context.Context, scanID uuid.UUID) ([]LibraryScanItem, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
-			status, matched_title, matched_year, matched_media_kind, media_item_id, created_at, updated_at
-		from app.library_scan_items
-		where scan_id = $1
-		order by status desc, path asc
-	`, scanID)
+	rows, err := storagegen.New(s.pool).ListLibraryScanItems(ctx, scanID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	items := []LibraryScanItem{}
-	for rows.Next() {
-		item, err := scanLibraryScanItem(rows)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, item)
+	items := make([]LibraryScanItem, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, libraryScanItemFromRow(row))
 	}
-	return items, rows.Err()
+	return items, nil
 }

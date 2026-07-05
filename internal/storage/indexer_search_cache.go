@@ -6,6 +6,8 @@ import (
 	"errors"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -27,17 +29,8 @@ func (s *SettingsStore) GetIndexerSearchSettings(ctx context.Context) (IndexerSe
 	if err := s.ensureIndexerSearchSettings(ctx); err != nil {
 		return IndexerSearchSettings{}, err
 	}
-	var settings IndexerSearchSettings
-	err := s.pool.QueryRow(ctx, `
-		select cache_duration_minutes, history_retention_days, automatic_blocklist_expiry_days
-		from app.indexer_search_settings
-		where id = true
-	`).Scan(
-		&settings.CacheDurationMinutes,
-		&settings.HistoryRetentionDays,
-		&settings.AutomaticBlocklistExpiryDays,
-	)
-	return settings, err
+	row, err := storagegen.New(s.pool).GetIndexerSearchSettings(ctx)
+	return indexerSearchSettingsFromRow(row), err
 }
 
 func (s *SettingsStore) SaveIndexerSearchSettings(ctx context.Context, input IndexerSearchSettings) (IndexerSearchSettings, error) {
@@ -50,17 +43,11 @@ func (s *SettingsStore) SaveIndexerSearchSettings(ctx context.Context, input Ind
 	if input.AutomaticBlocklistExpiryDays < 1 || input.AutomaticBlocklistExpiryDays > 365 {
 		return IndexerSearchSettings{}, ErrInvalidInput
 	}
-	_, err := s.pool.Exec(ctx, `
-		insert into app.indexer_search_settings (
-			id, cache_duration_minutes, history_retention_days, automatic_blocklist_expiry_days
-		)
-		values (true, $1, $2, $3)
-		on conflict (id) do update
-		set cache_duration_minutes = excluded.cache_duration_minutes,
-			history_retention_days = excluded.history_retention_days,
-			automatic_blocklist_expiry_days = excluded.automatic_blocklist_expiry_days,
-			updated_at = now()
-	`, input.CacheDurationMinutes, input.HistoryRetentionDays, input.AutomaticBlocklistExpiryDays)
+	err := storagegen.New(s.pool).SaveIndexerSearchSettings(ctx, storagegen.SaveIndexerSearchSettingsParams{
+		CacheDurationMinutes:         input.CacheDurationMinutes,
+		HistoryRetentionDays:         input.HistoryRetentionDays,
+		AutomaticBlocklistExpiryDays: input.AutomaticBlocklistExpiryDays,
+	})
 	if err != nil {
 		return IndexerSearchSettings{}, err
 	}
@@ -68,12 +55,11 @@ func (s *SettingsStore) SaveIndexerSearchSettings(ctx context.Context, input Ind
 }
 
 func (s *SettingsStore) GetIndexerSearchCache(ctx context.Context, indexerID uuid.UUID, mediaType string, query string, target any) (bool, error) {
-	var raw []byte
-	err := s.pool.QueryRow(ctx, `
-		select response
-		from app.indexer_search_cache
-		where indexer_id = $1 and media_type = $2 and query = $3 and expires_at > now()
-	`, indexerID, mediaType, query).Scan(&raw)
+	raw, err := storagegen.New(s.pool).GetIndexerSearchCacheResponse(ctx, storagegen.GetIndexerSearchCacheResponseParams{
+		IndexerID: indexerID,
+		MediaType: mediaType,
+		Query:     query,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
@@ -88,17 +74,14 @@ func (s *SettingsStore) SetIndexerSearchCache(ctx context.Context, indexerID uui
 	if err != nil {
 		return IndexerSearchCacheEntry{}, err
 	}
-	_, err = s.pool.Exec(ctx, `
-		insert into app.indexer_search_cache (
-			indexer_id, media_type, query, response, result_count, expires_at
-		)
-		values ($1, $2, $3, $4, $5, $6)
-		on conflict (indexer_id, media_type, query) do update
-		set response = excluded.response,
-			result_count = excluded.result_count,
-			expires_at = excluded.expires_at,
-			updated_at = now()
-	`, indexerID, mediaType, query, raw, resultCount, expiresAt)
+	err = storagegen.New(s.pool).SetIndexerSearchCache(ctx, storagegen.SetIndexerSearchCacheParams{
+		IndexerID:   indexerID,
+		MediaType:   mediaType,
+		Query:       query,
+		Response:    raw,
+		ResultCount: resultCount,
+		ExpiresAt:   expiresAt,
+	})
 	if err != nil {
 		return IndexerSearchCacheEntry{}, err
 	}
@@ -110,87 +93,90 @@ func (s *SettingsStore) RecordIndexerSearchHistory(ctx context.Context, input In
 	if err != nil {
 		return IndexerSearchHistoryEntry{}, err
 	}
-	var entry IndexerSearchHistoryEntry
-	err = s.pool.QueryRow(ctx, `
-		insert into app.indexer_search_history (
-			id, indexer_id, indexer_name, indexer_protocol, media_type, query, cache_hit,
-			success, result_count, error, response
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		returning indexer_name, indexer_protocol, media_type, query, cache_hit, success,
-			result_count, error, response::text, created_at
-	`, uuid.New(), input.IndexerID, input.IndexerName, input.IndexerProtocol, input.MediaType, input.Query,
-		input.CacheHit, input.Success, input.ResultCount, input.Error, raw).Scan(
-		&entry.IndexerName,
-		&entry.IndexerProtocol,
-		&entry.MediaType,
-		&entry.Query,
-		&entry.CacheHit,
-		&entry.Success,
-		&entry.ResultCount,
-		&entry.Error,
-		&entry.Response,
-		&entry.CreatedAt,
-	)
-	return entry, err
+	indexerID := input.IndexerID
+	row, err := storagegen.New(s.pool).RecordIndexerSearchHistory(ctx, storagegen.RecordIndexerSearchHistoryParams{
+		ID:              uuid.New(),
+		IndexerID:       &indexerID,
+		IndexerName:     input.IndexerName,
+		IndexerProtocol: input.IndexerProtocol,
+		MediaType:       input.MediaType,
+		Query:           input.Query,
+		CacheHit:        input.CacheHit,
+		Success:         input.Success,
+		ResultCount:     input.ResultCount,
+		Error:           textValue(input.Error),
+		Response:        raw,
+	})
+	return indexerSearchHistoryEntryFromRecordRow(row), err
 }
 
 func (s *SettingsStore) CleanupIndexerSearchHistory(ctx context.Context, retentionDays int32) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `
-		delete from app.indexer_search_history
-		where created_at < now() - make_interval(days => $1::int)
-	`, retentionDays)
+	rows, err := storagegen.New(s.pool).CleanupIndexerSearchHistory(ctx, retentionDays)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) ClearIndexerSearchHistory(ctx context.Context) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `delete from app.indexer_search_history`)
+	rows, err := storagegen.New(s.pool).ClearIndexerSearchHistory(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) ClearIndexerSearchCache(ctx context.Context) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `delete from app.indexer_search_cache`)
+	rows, err := storagegen.New(s.pool).ClearIndexerSearchCache(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) ClearIndexerSearchCacheByPattern(ctx context.Context, pattern string) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `
-		delete from app.indexer_search_cache
-		where query ~* $1
-	`, pattern)
+	rows, err := storagegen.New(s.pool).ClearIndexerSearchCacheByPattern(ctx, pattern)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) DeleteIndexerSearchCacheEntry(ctx context.Context, indexerID uuid.UUID, mediaType string, query string) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `
-		delete from app.indexer_search_cache
-		where indexer_id = $1 and media_type = $2 and query = $3
-	`, indexerID, mediaType, query)
+	rows, err := storagegen.New(s.pool).DeleteIndexerSearchCacheEntry(ctx, storagegen.DeleteIndexerSearchCacheEntryParams{
+		IndexerID: indexerID,
+		MediaType: mediaType,
+		Query:     query,
+	})
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) ensureIndexerSearchSettings(ctx context.Context) error {
-	_, err := s.pool.Exec(ctx, `
-		insert into app.indexer_search_settings (
-			id, cache_duration_minutes, history_retention_days, automatic_blocklist_expiry_days
-		)
-		values (true, 1440, 7, 7)
-		on conflict (id) do nothing
-	`)
-	return err
+	return storagegen.New(s.pool).EnsureIndexerSearchSettings(ctx)
+}
+
+func indexerSearchSettingsFromRow(row storagegen.GetIndexerSearchSettingsRow) IndexerSearchSettings {
+	return IndexerSearchSettings{
+		CacheDurationMinutes:         row.CacheDurationMinutes,
+		HistoryRetentionDays:         row.HistoryRetentionDays,
+		AutomaticBlocklistExpiryDays: row.AutomaticBlocklistExpiryDays,
+	}
+}
+
+func indexerSearchHistoryEntryFromRecordRow(row storagegen.RecordIndexerSearchHistoryRow) IndexerSearchHistoryEntry {
+	return IndexerSearchHistoryEntry{
+		IndexerName:     row.IndexerName,
+		IndexerProtocol: row.IndexerProtocol,
+		MediaType:       row.MediaType,
+		Query:           row.Query,
+		CacheHit:        row.CacheHit,
+		Success:         row.Success,
+		ResultCount:     row.ResultCount,
+		Error:           textPtr(row.Error),
+		Response:        row.Response,
+		CreatedAt:       row.CreatedAt,
+	}
 }

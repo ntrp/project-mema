@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/jackc/pgx/v5"
 )
 
@@ -54,55 +56,18 @@ func DefaultFileNamingSettings() FileNamingSettings {
 
 func (s *SettingsStore) EnsureDefaultFileNamingSettings(ctx context.Context) error {
 	defaults := DefaultFileNamingSettings()
-	_, err := s.pool.Exec(ctx, `
-		insert into app.file_naming_settings (
-			id,
-			movie_file_format,
-			movie_folder_format,
-			series_episode_format,
-			daily_episode_format,
-			anime_episode_format,
-			series_folder_format,
-			season_folder_format,
-			specials_folder_format
-		)
-		values (1, $1, $2, $3, $4, $5, $6, $7, $8)
-		on conflict do nothing
-	`,
-		defaults.MovieFileFormat,
-		defaults.MovieFolderFormat,
-		defaults.SeriesEpisodeFormat,
-		defaults.DailyEpisodeFormat,
-		defaults.AnimeEpisodeFormat,
-		defaults.SeriesFolderFormat,
-		defaults.SeasonFolderFormat,
-		defaults.SpecialsFolderFormat,
-	)
-	return err
+	return storagegen.New(s.pool).EnsureDefaultFileNamingSettings(ctx, fileNamingDefaultsParams(defaults))
 }
 
 func (s *SettingsStore) GetFileNamingSettings(ctx context.Context) (FileNamingSettings, error) {
 	if err := s.EnsureDefaultFileNamingSettings(ctx); err != nil {
 		return FileNamingSettings{}, err
 	}
-	settings, err := scanFileNamingSettings(s.pool.QueryRow(ctx, `
-		select movie_file_format,
-			movie_folder_format,
-			series_episode_format,
-			daily_episode_format,
-			anime_episode_format,
-			series_folder_format,
-			season_folder_format,
-			specials_folder_format,
-			created_at,
-			updated_at
-		from app.file_naming_settings
-		where id = 1
-	`))
+	row, err := storagegen.New(s.pool).GetFileNamingSettings(ctx)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return FileNamingSettings{}, ErrNotFound
 	}
-	return settings, err
+	return fileNamingSettingsFromGetRow(row), err
 }
 
 func (s *SettingsStore) SaveFileNamingSettings(
@@ -116,38 +81,8 @@ func (s *SettingsStore) SaveFileNamingSettings(
 	if err := s.EnsureDefaultFileNamingSettings(ctx); err != nil {
 		return FileNamingSettings{}, err
 	}
-	return scanFileNamingSettings(s.pool.QueryRow(ctx, `
-		update app.file_naming_settings
-		set movie_file_format = $1,
-			movie_folder_format = $2,
-			series_episode_format = $3,
-			daily_episode_format = $4,
-			anime_episode_format = $5,
-			series_folder_format = $6,
-			season_folder_format = $7,
-			specials_folder_format = $8,
-			updated_at = now()
-		where id = 1
-		returning movie_file_format,
-			movie_folder_format,
-			series_episode_format,
-			daily_episode_format,
-			anime_episode_format,
-			series_folder_format,
-			season_folder_format,
-			specials_folder_format,
-			created_at,
-			updated_at
-	`,
-		normalized.MovieFileFormat,
-		normalized.MovieFolderFormat,
-		normalized.SeriesEpisodeFormat,
-		normalized.DailyEpisodeFormat,
-		normalized.AnimeEpisodeFormat,
-		normalized.SeriesFolderFormat,
-		normalized.SeasonFolderFormat,
-		normalized.SpecialsFolderFormat,
-	))
+	row, err := storagegen.New(s.pool).UpdateFileNamingSettings(ctx, fileNamingInputParams(normalized))
+	return fileNamingSettingsFromUpdateRow(row), err
 }
 
 func normalizeFileNamingSettings(input FileNamingSettingsInput) (FileNamingSettingsInput, error) {
@@ -177,23 +112,6 @@ func normalizeFileNamingSettings(input FileNamingSettingsInput) (FileNamingSetti
 func normalizeTemplate(value string) string {
 	normalized := strings.Join(strings.Fields(strings.TrimSpace(value)), " ")
 	return normalizeTemplateTokens(normalized)
-}
-
-func scanFileNamingSettings(row pgx.Row) (FileNamingSettings, error) {
-	var settings FileNamingSettings
-	err := row.Scan(
-		&settings.MovieFileFormat,
-		&settings.MovieFolderFormat,
-		&settings.SeriesEpisodeFormat,
-		&settings.DailyEpisodeFormat,
-		&settings.AnimeEpisodeFormat,
-		&settings.SeriesFolderFormat,
-		&settings.SeasonFolderFormat,
-		&settings.SpecialsFolderFormat,
-		&settings.CreatedAt,
-		&settings.UpdatedAt,
-	)
-	return settings, err
 }
 
 func mediaMainFolderPath(root string, settings FileNamingSettings, input MediaItemInput) string {
@@ -251,12 +169,8 @@ func ensureMediaMainFolder(ctx context.Context, q mediaItemQuerier, input MediaI
 	if input.LibraryFolderID == nil {
 		return nil, nil
 	}
-	var root string
-	if err := q.QueryRow(ctx, `
-		select path
-		from app.library_folders
-		where id = $1
-	`, input.LibraryFolderID).Scan(&root); err != nil {
+	folder, err := storagegen.New(q).GetLibraryFolder(ctx, *input.LibraryFolderID)
+	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
@@ -266,7 +180,7 @@ func ensureMediaMainFolder(ctx context.Context, q mediaItemQuerier, input MediaI
 	if err != nil {
 		return nil, err
 	}
-	path := mediaMainFolderPath(root, settings, input)
+	path := mediaMainFolderPath(folder.Path, settings, input)
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		return nil, err
 	}
@@ -274,27 +188,70 @@ func ensureMediaMainFolder(ctx context.Context, q mediaItemQuerier, input MediaI
 }
 
 func getFileNamingSettings(ctx context.Context, q mediaItemQuerier) (FileNamingSettings, error) {
-	settings, err := scanFileNamingSettings(q.QueryRow(ctx, `
-		select movie_file_format,
-			movie_folder_format,
-			series_episode_format,
-			daily_episode_format,
-			anime_episode_format,
-			series_folder_format,
-			season_folder_format,
-			specials_folder_format,
-			created_at,
-			updated_at
-		from app.file_naming_settings
-		where id = 1
-	`))
+	row, err := storagegen.New(q).GetFileNamingSettings(ctx)
 	if errors.Is(err, pgx.ErrNoRows) {
 		defaults := DefaultFileNamingSettings()
 		return defaults, nil
 	}
-	return settings, err
+	return fileNamingSettingsFromGetRow(row), err
 }
 
 func formatInt32(value int32) string {
 	return strconv.FormatInt(int64(value), 10)
+}
+
+func fileNamingDefaultsParams(settings FileNamingSettings) storagegen.EnsureDefaultFileNamingSettingsParams {
+	return storagegen.EnsureDefaultFileNamingSettingsParams{
+		MovieFileFormat:      settings.MovieFileFormat,
+		MovieFolderFormat:    settings.MovieFolderFormat,
+		SeriesEpisodeFormat:  settings.SeriesEpisodeFormat,
+		DailyEpisodeFormat:   settings.DailyEpisodeFormat,
+		AnimeEpisodeFormat:   settings.AnimeEpisodeFormat,
+		SeriesFolderFormat:   settings.SeriesFolderFormat,
+		SeasonFolderFormat:   settings.SeasonFolderFormat,
+		SpecialsFolderFormat: settings.SpecialsFolderFormat,
+	}
+}
+
+func fileNamingInputParams(input FileNamingSettingsInput) storagegen.UpdateFileNamingSettingsParams {
+	return storagegen.UpdateFileNamingSettingsParams{
+		MovieFileFormat:      input.MovieFileFormat,
+		MovieFolderFormat:    input.MovieFolderFormat,
+		SeriesEpisodeFormat:  input.SeriesEpisodeFormat,
+		DailyEpisodeFormat:   input.DailyEpisodeFormat,
+		AnimeEpisodeFormat:   input.AnimeEpisodeFormat,
+		SeriesFolderFormat:   input.SeriesFolderFormat,
+		SeasonFolderFormat:   input.SeasonFolderFormat,
+		SpecialsFolderFormat: input.SpecialsFolderFormat,
+	}
+}
+
+func fileNamingSettingsFromGetRow(row storagegen.GetFileNamingSettingsRow) FileNamingSettings {
+	return FileNamingSettings{
+		MovieFileFormat:      row.MovieFileFormat,
+		MovieFolderFormat:    row.MovieFolderFormat,
+		SeriesEpisodeFormat:  row.SeriesEpisodeFormat,
+		DailyEpisodeFormat:   row.DailyEpisodeFormat,
+		AnimeEpisodeFormat:   row.AnimeEpisodeFormat,
+		SeriesFolderFormat:   row.SeriesFolderFormat,
+		SeasonFolderFormat:   row.SeasonFolderFormat,
+		SpecialsFolderFormat: row.SpecialsFolderFormat,
+		CreatedAt:            row.CreatedAt,
+		UpdatedAt:            row.UpdatedAt,
+	}
+}
+
+func fileNamingSettingsFromUpdateRow(row storagegen.UpdateFileNamingSettingsRow) FileNamingSettings {
+	return FileNamingSettings{
+		MovieFileFormat:      row.MovieFileFormat,
+		MovieFolderFormat:    row.MovieFolderFormat,
+		SeriesEpisodeFormat:  row.SeriesEpisodeFormat,
+		DailyEpisodeFormat:   row.DailyEpisodeFormat,
+		AnimeEpisodeFormat:   row.AnimeEpisodeFormat,
+		SeriesFolderFormat:   row.SeriesFolderFormat,
+		SeasonFolderFormat:   row.SeasonFolderFormat,
+		SpecialsFolderFormat: row.SpecialsFolderFormat,
+		CreatedAt:            row.CreatedAt,
+		UpdatedAt:            row.UpdatedAt,
+	}
 }

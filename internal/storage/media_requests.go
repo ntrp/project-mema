@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -55,88 +57,39 @@ type MediaRequestApprovalInput struct {
 }
 
 func (s *SettingsStore) ListMediaRequests(ctx context.Context, userID uuid.UUID, includeAll bool) ([]MediaRequest, error) {
-	rows, err := s.pool.Query(ctx, `
-		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
-			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.series_type, r.minimum_availability,
-			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
-			coalesce(array(
-				select t.name
-				from app.media_request_tags mrt
-				join app.tags t on t.id = mrt.tag_id
-				where mrt.media_request_id = r.id
-				order by lower(t.name)
-			), '{}') as tags,
-			r.created_at, r.updated_at
-		from app.media_requests r
-		join app.users u on u.id = r.requested_by_user_id
-		where $2::boolean = true or r.requested_by_user_id = $1
-		order by
-			case r.status when 'pending' then 0 else 1 end,
-			r.created_at desc
-	`, userID, includeAll)
+	rows, err := storagegen.New(s.pool).ListMediaRequests(ctx, storagegen.ListMediaRequestsParams{
+		IncludeAll: includeAll,
+		UserID:     userID,
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	requests := []MediaRequest{}
-	for rows.Next() {
-		request, err := scanMediaRequest(rows)
-		if err != nil {
-			return nil, err
-		}
-		requests = append(requests, request)
+	requests := make([]MediaRequest, 0, len(rows))
+	for _, row := range rows {
+		requests = append(requests, mediaRequestFromListRow(row))
 	}
-	return requests, rows.Err()
+	return requests, nil
 }
 
 func (s *SettingsStore) GetMediaRequest(ctx context.Context, id uuid.UUID, userID uuid.UUID, includeAll bool) (MediaRequest, error) {
-	request, err := scanMediaRequest(s.pool.QueryRow(ctx, `
-		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
-			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.series_type, r.minimum_availability,
-			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
-			coalesce(array(
-				select t.name
-				from app.media_request_tags mrt
-				join app.tags t on t.id = mrt.tag_id
-				where mrt.media_request_id = r.id
-				order by lower(t.name)
-			), '{}') as tags,
-			r.created_at, r.updated_at
-		from app.media_requests r
-		join app.users u on u.id = r.requested_by_user_id
-		where r.id = $1 and ($3::boolean = true or r.requested_by_user_id = $2)
-	`, id, userID, includeAll))
+	row, err := storagegen.New(s.pool).GetMediaRequestForUser(ctx, storagegen.GetMediaRequestForUserParams{
+		ID:         id,
+		IncludeAll: includeAll,
+		UserID:     userID,
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return MediaRequest{}, ErrNotFound
 	}
-	return request, err
+	return mediaRequestFromGetForUserRow(row), err
 }
 
 func getMediaRequest(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (MediaRequest, error) {
-	request, err := scanMediaRequest(q.QueryRow(ctx, `
-		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
-			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.series_type, r.minimum_availability,
-			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
-			coalesce(array(
-				select t.name
-				from app.media_request_tags mrt
-				join app.tags t on t.id = mrt.tag_id
-				where mrt.media_request_id = r.id
-				order by lower(t.name)
-			), '{}') as tags,
-			r.created_at, r.updated_at
-		from app.media_requests r
-		join app.users u on u.id = r.requested_by_user_id
-		where r.id = $1
-	`, id))
+	row, err := storagegen.New(q).GetMediaRequest(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return MediaRequest{}, ErrNotFound
 	}
-	return request, err
+	return mediaRequestFromGetRow(row), err
 }
 
 func (s *SettingsStore) CreateMediaRequest(ctx context.Context, input MediaRequestInput) (MediaRequest, error) {
@@ -149,16 +102,8 @@ func (s *SettingsStore) CreateMediaRequest(ctx context.Context, input MediaReque
 		_ = tx.Rollback(ctx)
 	}()
 	id := uuid.New()
-	var requestID uuid.UUID
-	if err := tx.QueryRow(ctx, `
-		insert into app.media_requests (
-			id, requested_by_user_id, media_type, title, year, external_provider, external_id, overview, poster_path, monitor_mode, series_type, minimum_availability
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		returning id
-	`, id, input.RequestedByUserID, input.Type, input.Title, input.Year, input.ExternalProvider,
-		input.ExternalID, input.Overview, input.PosterPath, input.MonitorMode, input.SeriesType,
-		input.MinimumAvailability).Scan(&requestID); err != nil {
+	requestID, err := storagegen.New(tx).CreateMediaRequest(ctx, mediaRequestCreateParams(id, input))
+	if err != nil {
 		return MediaRequest{}, err
 	}
 	if err := assignMediaRequestTags(ctx, tx, requestID, input.Tags); err != nil {
@@ -183,38 +128,21 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		_ = tx.Rollback(ctx)
 	}()
 
-	var folderExists bool
-	if err := tx.QueryRow(ctx, `select exists(select 1 from app.library_folders where id = $1)`, input.LibraryFolderID).Scan(&folderExists); err != nil {
+	if _, err := storagegen.New(tx).GetLibraryFolder(ctx, input.LibraryFolderID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return MediaRequest{}, MediaItem{}, ErrNotFound
+		}
 		return MediaRequest{}, MediaItem{}, err
 	}
-	if !folderExists {
-		return MediaRequest{}, MediaItem{}, ErrNotFound
-	}
 
-	request, err := scanMediaRequest(tx.QueryRow(ctx, `
-		select r.id, r.requested_by_user_id, u.username, r.media_type, r.title, r.year,
-			r.external_provider, r.external_id, r.overview, r.poster_path, r.status,
-			r.monitor_mode, r.series_type, r.minimum_availability,
-			r.quality_profile_id, r.library_folder_id, r.media_item_id, r.decided_at,
-			coalesce(array(
-				select t.name
-				from app.media_request_tags mrt
-				join app.tags t on t.id = mrt.tag_id
-				where mrt.media_request_id = r.id
-				order by lower(t.name)
-			), '{}') as tags,
-			r.created_at, r.updated_at
-		from app.media_requests r
-		join app.users u on u.id = r.requested_by_user_id
-		where r.id = $1
-		for update
-	`, id))
+	row, err := storagegen.New(tx).GetMediaRequestForUpdate(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return MediaRequest{}, MediaItem{}, ErrNotFound
 	}
 	if err != nil {
 		return MediaRequest{}, MediaItem{}, err
 	}
+	request := mediaRequestFromUpdateRow(row)
 	if request.Status != "pending" {
 		return MediaRequest{}, MediaItem{}, ErrRequestClosed
 	}
@@ -249,33 +177,77 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		return MediaRequest{}, MediaItem{}, err
 	}
 
-	updated, err := scanMediaRequest(tx.QueryRow(ctx, `
-		update app.media_requests
-		set status = 'approved',
-			quality_profile_id = $2,
-			library_folder_id = $3,
-			media_item_id = $4,
-			decided_at = now(),
-			updated_at = now()
-		where id = $1
-		returning id, requested_by_user_id, (
-				select username from app.users where id = requested_by_user_id
-			), media_type, title, year, external_provider, external_id, overview, poster_path,
-			status, monitor_mode, series_type, minimum_availability, quality_profile_id, library_folder_id, media_item_id, decided_at,
-			coalesce(array(
-				select t.name
-				from app.media_request_tags mrt
-				join app.tags t on t.id = mrt.tag_id
-				where mrt.media_request_id = $1
-				order by lower(t.name)
-			), '{}') as tags,
-			created_at, updated_at
-	`, id, input.QualityProfileID, input.LibraryFolderID, item.ID))
+	updatedRow, err := storagegen.New(tx).ApproveMediaRequest(ctx, storagegen.ApproveMediaRequestParams{
+		QualityProfileID: textValue(&input.QualityProfileID),
+		LibraryFolderID:  &input.LibraryFolderID,
+		MediaItemID:      &item.ID,
+		ID:               id,
+	})
 	if err != nil {
 		return MediaRequest{}, MediaItem{}, err
 	}
+	updated := mediaRequestFromApproveRow(updatedRow)
 	if err := tx.Commit(ctx); err != nil {
 		return MediaRequest{}, MediaItem{}, err
 	}
 	return updated, item, nil
+}
+
+func mediaRequestCreateParams(id uuid.UUID, input MediaRequestInput) storagegen.CreateMediaRequestParams {
+	return storagegen.CreateMediaRequestParams{
+		ID:                  id,
+		RequestedByUserID:   input.RequestedByUserID,
+		MediaType:           input.Type,
+		Title:               input.Title,
+		Year:                int4Value(input.Year),
+		ExternalProvider:    textValue(input.ExternalProvider),
+		ExternalID:          textValue(input.ExternalID),
+		Overview:            textValue(input.Overview),
+		PosterPath:          textValue(input.PosterPath),
+		MonitorMode:         input.MonitorMode,
+		SeriesType:          textValue(input.SeriesType),
+		MinimumAvailability: input.MinimumAvailability,
+	}
+}
+
+func mediaRequestFromListRow(row storagegen.ListMediaRequestsRow) MediaRequest {
+	return mediaRequestFromGetRow(storagegen.GetMediaRequestRow(row))
+}
+
+func mediaRequestFromGetForUserRow(row storagegen.GetMediaRequestForUserRow) MediaRequest {
+	return mediaRequestFromGetRow(storagegen.GetMediaRequestRow(row))
+}
+
+func mediaRequestFromGetRow(row storagegen.GetMediaRequestRow) MediaRequest {
+	return MediaRequest{
+		ID:                  row.ID,
+		RequestedByUserID:   row.RequestedByUserID,
+		RequestedByUsername: row.RequestedByUsername,
+		Type:                row.MediaType,
+		Title:               row.Title,
+		Year:                int4Ptr(row.Year),
+		ExternalProvider:    textPtr(row.ExternalProvider),
+		ExternalID:          textPtr(row.ExternalID),
+		Overview:            textPtr(row.Overview),
+		PosterPath:          textPtr(row.PosterPath),
+		Status:              row.Status,
+		MonitorMode:         row.MonitorMode,
+		SeriesType:          textPtr(row.SeriesType),
+		MinimumAvailability: row.MinimumAvailability,
+		QualityProfileID:    textPtr(row.QualityProfileID),
+		LibraryFolderID:     row.LibraryFolderID,
+		MediaItemID:         row.MediaItemID,
+		DecidedAt:           row.DecidedAt,
+		Tags:                row.Tags,
+		CreatedAt:           row.CreatedAt,
+		UpdatedAt:           row.UpdatedAt,
+	}
+}
+
+func mediaRequestFromUpdateRow(row storagegen.GetMediaRequestForUpdateRow) MediaRequest {
+	return mediaRequestFromGetRow(storagegen.GetMediaRequestRow(row))
+}
+
+func mediaRequestFromApproveRow(row storagegen.ApproveMediaRequestRow) MediaRequest {
+	return mediaRequestFromGetRow(storagegen.GetMediaRequestRow(row))
 }

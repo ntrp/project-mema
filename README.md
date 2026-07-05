@@ -208,7 +208,11 @@ The project starts with a simple protected reset path instead of migrations.
 - `ALLOW_DEV_RESET=true`
 
 This is intentionally destructive and should only be used before the project is
-live. River schema changes are handled separately through:
+live. Tracked reset seeds are strict. The gitignored
+`internal/storage/seeds/dev.local.sql` is optional for `make db-reset`: if it is
+missing or invalid, the reset still completes and prints a warning.
+
+River schema changes are handled separately through:
 
 ```sh
 make river-migrate
@@ -216,14 +220,27 @@ make river-migrate
 
 ## Storage Access
 
-Application storage currently uses handwritten pgx through
-`internal/storage.SettingsStore`. `sqlc.yaml` is present for a staged pilot, but
-`sqlc` is not yet the default storage pattern.
+Application storage is being converted from handwritten pgx to `sqlc` behind
+the `internal/storage.SettingsStore` facade. Converted query files live under
+`internal/storage/queries`, with generated code committed under
+`internal/storage/generated`.
 
 Storage changes should follow
 [`docs/adr/0001-storage-access-strategy.md`](docs/adr/0001-storage-access-strategy.md):
 keep existing pgx code stable, make transaction ownership explicit, and only add
-generated storage code inside the accepted pilot scope.
+generated storage code behind storage wrappers.
+
+Regenerate sqlc storage artifacts after editing schema or storage queries:
+
+```sh
+make sqlc-generate
+```
+
+Verify committed sqlc artifacts without rewriting them:
+
+```sh
+make verify-sqlc-generated
+```
 
 ## Quality Baseline
 

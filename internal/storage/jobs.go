@@ -2,9 +2,9 @@ package storage
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
+
+	storagegen "media-manager/internal/storage/generated"
 )
 
 type SystemJobFilters struct {
@@ -34,89 +34,51 @@ type SystemJob struct {
 }
 
 func (s *SettingsStore) ListSystemJobs(ctx context.Context, filters SystemJobFilters) ([]SystemJob, error) {
-	clauses := []string{"true"}
-	args := []any{}
-	if len(filters.States) > 0 {
-		args = append(args, filters.States)
-		clauses = append(clauses, fmt.Sprintf("state::text = any($%d)", len(args)))
-	}
-	if filters.Queue != "" {
-		args = append(args, filters.Queue)
-		clauses = append(clauses, fmt.Sprintf("queue = $%d", len(args)))
-	}
-	if filters.Kind != "" {
-		args = append(args, filters.Kind)
-		clauses = append(clauses, fmt.Sprintf("kind = $%d", len(args)))
-	}
-	if filters.Query != "" {
-		args = append(args, "%"+filters.Query+"%")
-		index := len(args)
-		clauses = append(clauses, fmt.Sprintf("(kind ilike $%d or queue ilike $%d or args::text ilike $%d or errors::text ilike $%d)", index, index, index, index))
-	}
-	args = append(args, systemJobLimit(filters.Limit))
-	query := fmt.Sprintf(`
-		select id, state::text, kind, queue, attempt::int, max_attempts::int, priority::int,
-			args::text, metadata::text, coalesce(array_to_json(errors), '[]'::json)::text,
-			coalesce(errors[array_length(errors, 1)]->>'error', errors[array_length(errors, 1)]->>'message', state::text),
-			scheduled_at, created_at, attempted_at, finalized_at
-		from river_job
-		where %s
-		order by coalesce(finalized_at, attempted_at, scheduled_at, created_at) desc, id desc
-		limit $%d
-	`, strings.Join(clauses, " and "), len(args))
-
-	rows, err := s.pool.Query(ctx, query, args...)
+	rows, err := storagegen.New(s.pool).ListSystemJobs(ctx, storagegen.ListSystemJobsParams{
+		States:      filters.States,
+		Queue:       filters.Queue,
+		Kind:        filters.Kind,
+		SearchQuery: filters.Query,
+		RowLimit:    systemJobLimit(filters.Limit),
+	})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	jobs := []SystemJob{}
-	for rows.Next() {
-		job, err := scanSystemJob(rows)
-		if err != nil {
-			return nil, err
-		}
-		jobs = append(jobs, job)
+	jobs := make([]SystemJob, 0, len(rows))
+	for _, row := range rows {
+		jobs = append(jobs, systemJobFromListRow(row))
 	}
-	return jobs, rows.Err()
+	return jobs, nil
 }
 
 func (s *SettingsStore) GetSystemJob(ctx context.Context, id int64) (SystemJob, error) {
-	return scanSystemJob(s.pool.QueryRow(ctx, `
-		select id, state::text, kind, queue, attempt::int, max_attempts::int, priority::int,
-			args::text, metadata::text, coalesce(array_to_json(errors), '[]'::json)::text,
-			coalesce(errors[array_length(errors, 1)]->>'error', errors[array_length(errors, 1)]->>'message', state::text),
-			scheduled_at, created_at, attempted_at, finalized_at
-		from river_job
-		where id = $1
-	`, id))
+	row, err := storagegen.New(s.pool).GetSystemJob(ctx, id)
+	return systemJobFromGetRow(row), err
 }
 
-type systemJobScanner interface {
-	Scan(dest ...any) error
+func systemJobFromListRow(row storagegen.ListSystemJobsRow) SystemJob {
+	return systemJobFromGetRow(storagegen.GetSystemJobRow(row))
 }
 
-func scanSystemJob(row systemJobScanner) (SystemJob, error) {
-	var job SystemJob
-	err := row.Scan(
-		&job.ID,
-		&job.State,
-		&job.Kind,
-		&job.Queue,
-		&job.Attempt,
-		&job.MaxAttempts,
-		&job.Priority,
-		&job.Args,
-		&job.Metadata,
-		&job.Errors,
-		&job.InfoMessage,
-		&job.ScheduledAt,
-		&job.CreatedAt,
-		&job.AttemptedAt,
-		&job.FinalizedAt,
-	)
-	return job, err
+func systemJobFromGetRow(row storagegen.GetSystemJobRow) SystemJob {
+	return SystemJob{
+		ID:          row.ID,
+		State:       row.State,
+		Kind:        row.Kind,
+		Queue:       row.Queue,
+		Attempt:     row.Attempt,
+		MaxAttempts: row.MaxAttempts,
+		Priority:    row.Priority,
+		Args:        row.Args,
+		Metadata:    row.Metadata,
+		Errors:      row.Errors,
+		InfoMessage: row.InfoMessage,
+		ScheduledAt: row.ScheduledAt,
+		CreatedAt:   row.CreatedAt,
+		AttemptedAt: row.AttemptedAt,
+		FinalizedAt: row.FinalizedAt,
+	}
 }
 
 func systemJobLimit(limit int32) int32 {

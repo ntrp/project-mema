@@ -3,7 +3,7 @@ GOFLAGS ?=
 DATABASE_URL ?= postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable
 MEDIA_DATA_DIR ?= $(CURDIR)/.data/media
 
-.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate test test-api test-deps test-e2e verify-generated web-install
+.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate sqlc-generate test test-api test-deps test-e2e verify-generated verify-sqlc-generated web-install
 
 api-generate: api-generate-go api-generate-web
 
@@ -14,14 +14,20 @@ api-generate-go:
 api-generate-web:
 	cd web && pnpm run api:generate
 
+sqlc-generate:
+	GOCACHE=$(GOCACHE) go run github.com/sqlc-dev/sqlc/cmd/sqlc generate
+
 verify-generated:
 	sh scripts/verify-openapi-generated.sh
+
+verify-sqlc-generated:
+	sh scripts/verify-sqlc-generated.sh
 
 build: api-generate
 	cd web && pnpm run build
 	GOCACHE=$(GOCACHE) go build $(GOFLAGS) -o bin/server ./cmd/server
 
-check: verify-generated
+check: verify-generated verify-sqlc-generated
 	GOCACHE=$(GOCACHE) go test ./...
 	cd web && pnpm run check
 	cd web && pnpm run lint
@@ -40,7 +46,7 @@ coverage-web:
 	cd web && pnpm run test:coverage
 
 db-reset:
-	APP_ENV=development ALLOW_DEV_RESET=true GOCACHE=$(GOCACHE) go run ./cmd/server reset-dev
+	APP_ENV=development ALLOW_DEV_RESET=true DEV_LOCAL_SEED_OPTIONAL=true GOCACHE=$(GOCACHE) go run ./cmd/server reset-dev
 
 river-migrate:
 	GOCACHE=$(GOCACHE) go run github.com/riverqueue/river/cmd/river migrate-up --database-url "$(DATABASE_URL)"

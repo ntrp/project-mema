@@ -48,3 +48,55 @@ func TestNormalizeLanguageInputForUpdateUsesPathCode(t *testing.T) {
 	}
 	expectStrings(t, input.Aliases, []string{"Path Code Language"})
 }
+
+func TestLanguagesUseGeneratedQueries(t *testing.T) {
+	ctx, store := testDBStore(t)
+
+	created, err := store.SaveLanguage(ctx, "", LanguageInput{
+		Code:        "zz",
+		DisplayName: " Scenario Language ",
+		Aliases:     []string{" scenario ", "ZZ"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Code != "ZZ" || created.DisplayName != "Scenario Language" {
+		t.Fatalf("created language = %#v", created)
+	}
+	expectStrings(t, created.Aliases, []string{"ZZ", "Scenario Language", "scenario"})
+
+	updated, err := store.SaveLanguage(ctx, "zz", LanguageInput{
+		DisplayName: " Updated Scenario Language ",
+		Aliases:     []string{" updated scenario "},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.Code != "ZZ" || updated.DisplayName != "Updated Scenario Language" {
+		t.Fatalf("updated language = %#v", updated)
+	}
+
+	listed, err := store.ListLanguages(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !languageListHasCode(listed, "ZZ") {
+		t.Fatalf("created language missing from list: %#v", listed)
+	}
+
+	if err := store.DeleteLanguage(ctx, "zz"); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeleteLanguage(ctx, "zz"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("delete missing language error = %v, want %v", err, ErrNotFound)
+	}
+}
+
+func languageListHasCode(languages []Language, code string) bool {
+	for _, language := range languages {
+		if language.Code == code {
+			return true
+		}
+	}
+	return false
+}

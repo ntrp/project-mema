@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 )
 
@@ -21,11 +23,11 @@ func (s *SettingsStore) DeleteMediaItem(ctx context.Context, id uuid.UUID, keepF
 	if err != nil {
 		return err
 	}
-	tag, err := s.pool.Exec(ctx, `delete from app.media_items where id = $1`, id)
+	rows, err := storagegen.New(s.pool).DeleteMediaItemRecord(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil

@@ -2,8 +2,13 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"strings"
+
+	storagegen "media-manager/internal/storage/generated"
+
+	"github.com/jackc/pgx/v5"
 )
 
 func (s *SettingsStore) FindMonitoredMediaMatch(ctx context.Context, title string, year string) (MediaItem, error) {
@@ -15,20 +20,14 @@ func (s *SettingsStore) FindMonitoredMediaMatch(ctx context.Context, title strin
 	if err != nil {
 		return MediaItem{}, ErrNotFound
 	}
-	return scanMediaItemRow(s.pool.QueryRow(ctx, `
-		select `+mediaItemSelectFields+`
-		from app.media_items m
-		`+mediaItemJoins+`
-		where m.monitored = true
-			and m.quality_profile_id is not null
-			and lower(trim(regexp_replace(m.title, '[^[:alnum:]]+', ' ', 'g'))) =
-				lower(trim(regexp_replace($1, '[^[:alnum:]]+', ' ', 'g')))
-			and ($2::integer is null or m.year = $2)
-		order by
-			case when m.year = $2 then 0 when m.year is null then 1 else 2 end,
-			m.updated_at desc
-		limit 1
-	`, title, yearValue))
+	row, err := storagegen.New(s.pool).FindMonitoredMediaMatch(ctx, storagegen.FindMonitoredMediaMatchParams{
+		Title: title,
+		Year:  int4Value(yearValue),
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return MediaItem{}, ErrNotFound
+	}
+	return mediaItemFromMatchRow(row), err
 }
 
 func parsedMediaYear(year string) (*int32, error) {

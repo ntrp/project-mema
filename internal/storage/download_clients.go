@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -39,127 +41,92 @@ type DownloadClientInput struct {
 }
 
 func (s *SettingsStore) ListDownloadClients(ctx context.Context) ([]DownloadClient, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
-		from app.download_clients
-		order by priority asc, name asc
-	`)
+	rows, err := storagegen.New(s.pool).ListDownloadClients(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	clients := []DownloadClient{}
-	for rows.Next() {
-		client, err := scanDownloadClient(rows)
-		if err != nil {
-			return nil, err
-		}
-		clients = append(clients, client)
+	clients := make([]DownloadClient, 0, len(rows))
+	for _, row := range rows {
+		clients = append(clients, downloadClientFromRow(row))
 	}
-	return clients, rows.Err()
+	return clients, nil
 }
 
 func (s *SettingsStore) ListEnabledDownloadClients(ctx context.Context) ([]DownloadClient, error) {
-	rows, err := s.pool.Query(ctx, `
-		select id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
-		from app.download_clients
-		where enabled = true
-		order by priority asc, name asc
-	`)
+	rows, err := storagegen.New(s.pool).ListEnabledDownloadClients(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	clients := []DownloadClient{}
-	for rows.Next() {
-		client, err := scanDownloadClient(rows)
-		if err != nil {
-			return nil, err
-		}
-		clients = append(clients, client)
+	clients := make([]DownloadClient, 0, len(rows))
+	for _, row := range rows {
+		clients = append(clients, downloadClientFromRow(row))
 	}
-	return clients, rows.Err()
+	return clients, nil
 }
 
 func (s *SettingsStore) GetDownloadClient(ctx context.Context, id uuid.UUID) (DownloadClient, error) {
-	return scanDownloadClientRow(s.pool.QueryRow(ctx, `
-		select id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
-		from app.download_clients
-		where id = $1
-	`, id))
+	row, err := storagegen.New(s.pool).GetDownloadClient(ctx, id)
+	return downloadClientResult(row, err)
 }
 
 func (s *SettingsStore) CreateDownloadClient(ctx context.Context, input DownloadClientInput) (DownloadClient, error) {
-	id := uuid.New()
-	return scanDownloadClientRow(s.pool.QueryRow(ctx, `
-		insert into app.download_clients (
-			id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		returning id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
-	`,
-		id, input.Name, input.Type, input.Protocol, input.BaseURL, input.Username, input.Password, input.APIKey, input.Category, input.Enabled, input.Priority,
-	))
+	row, err := storagegen.New(s.pool).CreateDownloadClient(ctx, downloadClientCreateParams(uuid.New(), input))
+	return downloadClientResult(row, err)
 }
 
 func (s *SettingsStore) UpdateDownloadClient(ctx context.Context, id uuid.UUID, input DownloadClientInput) (DownloadClient, error) {
-	return scanDownloadClientRow(s.pool.QueryRow(ctx, `
-		update app.download_clients
-		set name = $2,
-			type = $3,
-			protocol = $4,
-			base_url = $5,
-			username = $6,
-			password = $7,
-			api_key = $8,
-			category = $9,
-			enabled = $10,
-			priority = $11,
-			updated_at = now()
-		where id = $1
-		returning id, name, type, protocol, base_url, username, password, api_key, category, enabled, priority, created_at, updated_at
-	`,
-		id, input.Name, input.Type, input.Protocol, input.BaseURL, input.Username, input.Password, input.APIKey, input.Category, input.Enabled, input.Priority,
-	))
+	row, err := storagegen.New(s.pool).UpdateDownloadClient(ctx, storagegen.UpdateDownloadClientParams(downloadClientCreateParams(id, input)))
+	return downloadClientResult(row, err)
 }
 
 func (s *SettingsStore) DeleteDownloadClient(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.download_clients where id = $1`, id)
+	rows, err := storagegen.New(s.pool).DeleteDownloadClient(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil
 }
 
-func scanDownloadClientRow(row pgx.Row) (DownloadClient, error) {
-	client, err := scanDownloadClient(row)
+func downloadClientResult(row storagegen.AppDownloadClient, err error) (DownloadClient, error) {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return DownloadClient{}, ErrNotFound
 	}
-	return client, err
+	return downloadClientFromRow(row), err
 }
 
-func scanDownloadClient(row pgx.Row) (DownloadClient, error) {
-	var client DownloadClient
-	err := row.Scan(
-		&client.ID,
-		&client.Name,
-		&client.Type,
-		&client.Protocol,
-		&client.BaseURL,
-		&client.Username,
-		&client.Password,
-		&client.APIKey,
-		&client.Category,
-		&client.Enabled,
-		&client.Priority,
-		&client.CreatedAt,
-		&client.UpdatedAt,
-	)
-	return client, err
+func downloadClientCreateParams(id uuid.UUID, input DownloadClientInput) storagegen.CreateDownloadClientParams {
+	return storagegen.CreateDownloadClientParams{
+		ID:       id,
+		Name:     input.Name,
+		Type:     input.Type,
+		Protocol: input.Protocol,
+		BaseUrl:  input.BaseURL,
+		Username: textValue(input.Username),
+		Password: textValue(input.Password),
+		ApiKey:   textValue(input.APIKey),
+		Category: textValue(input.Category),
+		Enabled:  input.Enabled,
+		Priority: input.Priority,
+	}
+}
+
+func downloadClientFromRow(row storagegen.AppDownloadClient) DownloadClient {
+	return DownloadClient{
+		ID:        row.ID,
+		Name:      row.Name,
+		Type:      row.Type,
+		Protocol:  row.Protocol,
+		BaseURL:   row.BaseUrl,
+		Username:  textPtr(row.Username),
+		Password:  textPtr(row.Password),
+		APIKey:    textPtr(row.ApiKey),
+		Category:  textPtr(row.Category),
+		Enabled:   row.Enabled,
+		Priority:  row.Priority,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+	}
 }

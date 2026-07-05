@@ -3,148 +3,63 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func (s *SettingsStore) ListIndexers(ctx context.Context) ([]Indexer, error) {
-	rows, err := s.pool.Query(ctx, `
-		select `+indexerColumns+`
-		from app.indexers
-		order by priority asc, name asc
-	`)
+	rows, err := storagegen.New(s.pool).ListIndexers(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	indexers := []Indexer{}
-	for rows.Next() {
-		indexer, err := scanIndexer(rows)
-		if err != nil {
-			return nil, err
-		}
-		indexers = append(indexers, indexer)
+	indexers := make([]Indexer, 0, len(rows))
+	for _, row := range rows {
+		indexers = append(indexers, indexerFromRow(row))
 	}
-	return indexers, rows.Err()
+	return indexers, nil
 }
 
 func (s *SettingsStore) ListEnabledIndexers(ctx context.Context) ([]Indexer, error) {
-	rows, err := s.pool.Query(ctx, `
-		select `+indexerColumns+`
-		from app.indexers
-		where enabled = true
-			and health_status <> 'disabled'
-			and (next_check_at is null or next_check_at <= now())
-		order by priority asc, name asc
-	`)
+	rows, err := storagegen.New(s.pool).ListEnabledIndexers(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	indexers := []Indexer{}
-	for rows.Next() {
-		indexer, err := scanIndexer(rows)
-		if err != nil {
-			return nil, err
-		}
-		indexers = append(indexers, indexer)
+	indexers := make([]Indexer, 0, len(rows))
+	for _, row := range rows {
+		indexers = append(indexers, indexerFromRow(row))
 	}
-	return indexers, rows.Err()
+	return indexers, nil
 }
 
 func (s *SettingsStore) GetIndexer(ctx context.Context, id uuid.UUID) (Indexer, error) {
-	return scanIndexerRow(s.pool.QueryRow(ctx, `
-		select `+indexerColumns+`
-		from app.indexers
-		where id = $1
-	`, id))
+	row, err := storagegen.New(s.pool).GetIndexer(ctx, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Indexer{}, ErrNotFound
+	}
+	return indexerFromRow(row), err
 }
 
 func (s *SettingsStore) CreateIndexer(ctx context.Context, input IndexerInput) (Indexer, error) {
 	input = normalizeIndexerInput(input)
-	id := uuid.New()
-	return scanIndexerRow(s.pool.QueryRow(ctx, `
-		insert into app.indexers (
-			id, definition_id, name, implementation, implementation_name, protocol, privacy,
-			language, encoding, description, indexer_urls, legacy_urls, base_url, api_key,
-			categories, media_type_scopes, tag_scopes, fields, capabilities, redirect, app_profile_id, minimum_seeders,
-			seed_ratio, seed_time, pack_seed_time, prefer_magnet_url, supports_rss,
-			supports_search, supports_redirect, supports_pagination, enabled, priority
-		)
-		values (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-			$16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28,
-			$29, $30, $31, $32
-		)
-		returning `+indexerColumns+`
-	`,
-		id, input.DefinitionID, input.Name, input.Implementation, input.ImplementationName, input.Protocol,
-		input.Privacy, input.Language, input.Encoding, input.Description, input.IndexerURLs, input.LegacyURLs,
-		input.BaseURL, input.APIKey, input.Categories, input.MediaTypeScopes, input.TagScopes, input.Fields,
-		input.Capabilities, input.Redirect, input.AppProfileID, input.MinimumSeeders, input.SeedRatio,
-		input.SeedTime, input.PackSeedTime, input.PreferMagnetURL, input.SupportsRSS, input.SupportsSearch,
-		input.SupportsRedirect, input.SupportsPagination, input.Enabled, input.Priority,
-	))
+	row, err := storagegen.New(s.pool).CreateIndexer(ctx, indexerCreateParams(uuid.New(), input))
+	return indexerFromRow(row), err
 }
 
 func (s *SettingsStore) UpdateIndexer(ctx context.Context, id uuid.UUID, input IndexerInput) (Indexer, error) {
 	input = normalizeIndexerInput(input)
-	return scanIndexerRow(s.pool.QueryRow(ctx, `
-		update app.indexers
-		set definition_id = $2,
-			name = $3,
-			implementation = $4,
-			implementation_name = $5,
-			protocol = $6,
-			privacy = $7,
-			language = $8,
-			encoding = $9,
-			description = $10,
-			indexer_urls = $11,
-			legacy_urls = $12,
-			base_url = $13,
-			api_key = $14,
-			categories = $15,
-			media_type_scopes = $16,
-			tag_scopes = $17,
-			fields = $18,
-			capabilities = $19,
-			redirect = $20,
-			app_profile_id = $21,
-			minimum_seeders = $22,
-			seed_ratio = $23,
-			seed_time = $24,
-			pack_seed_time = $25,
-			prefer_magnet_url = $26,
-			supports_rss = $27,
-			supports_search = $28,
-			supports_redirect = $29,
-			supports_pagination = $30,
-			enabled = $31,
-			priority = $32,
-			health_status = 'healthy',
-			last_query_at = null,
-			last_success_at = null,
-			last_failure_at = null,
-			next_check_at = null,
-			last_status_code = null,
-			last_error = null,
-			failure_count = 0,
-			updated_at = now()
-		where id = $1
-		returning `+indexerColumns+`
-	`,
-		id, input.DefinitionID, input.Name, input.Implementation, input.ImplementationName, input.Protocol,
-		input.Privacy, input.Language, input.Encoding, input.Description, input.IndexerURLs, input.LegacyURLs,
-		input.BaseURL, input.APIKey, input.Categories, input.MediaTypeScopes, input.TagScopes, input.Fields,
-		input.Capabilities, input.Redirect, input.AppProfileID, input.MinimumSeeders, input.SeedRatio,
-		input.SeedTime, input.PackSeedTime, input.PreferMagnetURL, input.SupportsRSS, input.SupportsSearch,
-		input.SupportsRedirect, input.SupportsPagination, input.Enabled, input.Priority,
-	))
+	row, err := storagegen.New(s.pool).UpdateIndexer(ctx, indexerUpdateParams(id, input))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Indexer{}, ErrNotFound
+	}
+	return indexerFromRow(row), err
 }
 
 func normalizeIndexerInput(input IndexerInput) IndexerInput {
@@ -225,20 +140,11 @@ func normalizeIndexerTagScopes(values []string) []string {
 }
 
 func (s *SettingsStore) RecordIndexerSuccess(ctx context.Context, id uuid.UUID) (Indexer, error) {
-	return scanIndexerRow(s.pool.QueryRow(ctx, `
-		update app.indexers
-		set health_status = 'healthy',
-			last_query_at = now(),
-			last_success_at = now(),
-			last_failure_at = null,
-			next_check_at = null,
-			last_status_code = null,
-			last_error = null,
-			failure_count = 0,
-			updated_at = now()
-		where id = $1
-		returning `+indexerColumns+`
-	`, id))
+	row, err := storagegen.New(s.pool).RecordIndexerSuccess(ctx, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Indexer{}, ErrNotFound
+	}
+	return indexerFromRow(row), err
 }
 
 func (s *SettingsStore) RecordIndexerFailure(
@@ -249,41 +155,25 @@ func (s *SettingsStore) RecordIndexerFailure(
 	permanent bool,
 	retryUntil *time.Time,
 ) (Indexer, error) {
-	return scanIndexerRow(s.pool.QueryRow(ctx, `
-		update app.indexers
-		set health_status = case
-				when $4 then 'disabled'
-				when failure_count >= 5 then 'disabled'
-				else 'temporary_disabled'
-			end,
-			last_query_at = now(),
-			last_failure_at = now(),
-			last_status_code = $2,
-			last_error = $3,
-			failure_count = failure_count + 1,
-			next_check_at = case
-				when $4 then null
-				when failure_count >= 5 then null
-				when $5::timestamptz is not null then $5
-				when failure_count = 0 then now() + interval '1 minute'
-				when failure_count = 1 then now() + interval '5 minutes'
-				when failure_count = 2 then now() + interval '15 minutes'
-				when failure_count = 3 then now() + interval '30 minutes'
-				when failure_count = 4 then now() + interval '1 hour'
-				else null
-			end,
-			updated_at = now()
-		where id = $1
-		returning `+indexerColumns+`
-	`, id, statusCode, message, permanent, retryUntil))
+	row, err := storagegen.New(s.pool).RecordIndexerFailure(ctx, storagegen.RecordIndexerFailureParams{
+		Permanent:  permanent,
+		StatusCode: int4Value(statusCode),
+		Message:    message,
+		RetryUntil: retryUntil,
+		ID:         id,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Indexer{}, ErrNotFound
+	}
+	return indexerFromRow(row), err
 }
 
 func (s *SettingsStore) DeleteIndexer(ctx context.Context, id uuid.UUID) error {
-	tag, err := s.pool.Exec(ctx, `delete from app.indexers where id = $1`, id)
+	rows, err := storagegen.New(s.pool).DeleteIndexer(ctx, id)
 	if err != nil {
 		return err
 	}
-	if tag.RowsAffected() == 0 {
+	if rows == 0 {
 		return ErrNotFound
 	}
 	return nil

@@ -6,17 +6,19 @@ import (
 	"errors"
 	"time"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
 func (s *SettingsStore) GetMetadataSearchCache(ctx context.Context, providerID uuid.UUID, mediaType string, query string, year *int32, target any) (bool, error) {
-	var raw []byte
-	err := s.pool.QueryRow(ctx, `
-		select results
-		from app.metadata_search_cache
-		where provider_id = $1 and media_type = $2 and query = $3 and year = $4 and expires_at > now()
-	`, providerID, mediaType, query, cacheYear(year)).Scan(&raw)
+	raw, err := storagegen.New(s.pool).GetMetadataSearchCacheResults(ctx, storagegen.GetMetadataSearchCacheResultsParams{
+		ProviderID: providerID,
+		MediaType:  mediaType,
+		Query:      query,
+		Year:       cacheYear(year),
+	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
@@ -34,15 +36,14 @@ func (s *SettingsStore) SetMetadataSearchCache(ctx context.Context, providerID u
 	if err != nil {
 		return err
 	}
-	_, err = s.pool.Exec(ctx, `
-		insert into app.metadata_search_cache (
-			provider_id, media_type, query, year, results, expires_at
-		)
-		values ($1, $2, $3, $4, $5, $6)
-		on conflict (provider_id, media_type, query, year) do update
-		set results = excluded.results, expires_at = excluded.expires_at, updated_at = now()
-	`, providerID, mediaType, query, cacheYear(year), raw, expiresAt)
-	return err
+	return storagegen.New(s.pool).SetMetadataSearchCache(ctx, storagegen.SetMetadataSearchCacheParams{
+		ProviderID: providerID,
+		MediaType:  mediaType,
+		Query:      query,
+		Year:       cacheYear(year),
+		Results:    raw,
+		ExpiresAt:  expiresAt,
+	})
 }
 
 func (s *SettingsStore) RecordMetadataSearchHistory(ctx context.Context, input MetadataSearchHistoryInput) (MetadataSearchHistoryEntry, error) {
@@ -50,192 +51,102 @@ func (s *SettingsStore) RecordMetadataSearchHistory(ctx context.Context, input M
 	if err != nil {
 		return MetadataSearchHistoryEntry{}, err
 	}
-	var entry MetadataSearchHistoryEntry
-	err = s.pool.QueryRow(ctx, `
-		insert into app.metadata_search_history (
-			id, provider_id, provider_name, provider_type, media_type, query, year,
-			cache_hit, success, item_count, error, response
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		returning provider_name, provider_type, media_type, query, year, cache_hit,
-			success, item_count, error, response::text, created_at
-	`, uuid.New(), input.ProviderID, input.ProviderName, input.ProviderType, input.MediaType, input.Query,
-		cacheYear(input.Year), input.CacheHit, input.Success, input.ItemCount, input.Error, raw).Scan(
-		&entry.ProviderName,
-		&entry.ProviderType,
-		&entry.MediaType,
-		&entry.Query,
-		&entry.Year,
-		&entry.CacheHit,
-		&entry.Success,
-		&entry.ItemCount,
-		&entry.Error,
-		&entry.Response,
-		&entry.CreatedAt,
-	)
+	providerID := input.ProviderID
+	row, err := storagegen.New(s.pool).RecordMetadataSearchHistory(ctx, storagegen.RecordMetadataSearchHistoryParams{
+		ID:           uuid.New(),
+		ProviderID:   &providerID,
+		ProviderName: input.ProviderName,
+		ProviderType: input.ProviderType,
+		MediaType:    input.MediaType,
+		Query:        input.Query,
+		Year:         cacheYear(input.Year),
+		CacheHit:     input.CacheHit,
+		Success:      input.Success,
+		ItemCount:    input.ItemCount,
+		Error:        textValue(input.Error),
+		Response:     raw,
+	})
 	if err != nil {
 		return MetadataSearchHistoryEntry{}, err
 	}
-	entry.CacheKind = metadataCacheKind(entry.Query)
-	return entry, nil
+	return metadataSearchHistoryEntryFromRecordRow(row), nil
 }
 
 func (s *SettingsStore) MetadataCacheStats(ctx context.Context) (MetadataCacheStats, error) {
-	var stats MetadataCacheStats
-	err := s.pool.QueryRow(ctx, `
-		select
-			count(*)::int,
-			count(*) filter (where expires_at > now())::int,
-			count(*) filter (where expires_at <= now())::int,
-			count(distinct provider_id)::int
-		from app.metadata_search_cache
-	`).Scan(&stats.TotalEntries, &stats.ActiveEntries, &stats.ExpiredEntries, &stats.ProviderCount)
-	return stats, err
+	row, err := storagegen.New(s.pool).MetadataCacheStats(ctx)
+	return metadataCacheStatsFromRow(row), err
 }
 
 func (s *SettingsStore) ListMetadataSearchHistoryEntries(ctx context.Context, limit int32) ([]MetadataSearchHistoryEntry, error) {
 	limit = inspectionLimit(limit)
-	rows, err := s.pool.Query(ctx, `
-		select provider_name, provider_type, media_type, query, year, cache_hit, success,
-			item_count, error, response::text, created_at
-		from app.metadata_search_history
-		order by created_at desc
-		limit $1
-	`, limit)
+	rows, err := storagegen.New(s.pool).ListMetadataSearchHistoryEntries(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	entries := []MetadataSearchHistoryEntry{}
-	for rows.Next() {
-		var entry MetadataSearchHistoryEntry
-		if err := rows.Scan(
-			&entry.ProviderName,
-			&entry.ProviderType,
-			&entry.MediaType,
-			&entry.Query,
-			&entry.Year,
-			&entry.CacheHit,
-			&entry.Success,
-			&entry.ItemCount,
-			&entry.Error,
-			&entry.Response,
-			&entry.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		entry.CacheKind = metadataCacheKind(entry.Query)
-		entries = append(entries, entry)
+	entries := make([]MetadataSearchHistoryEntry, 0, len(rows))
+	for _, row := range rows {
+		entries = append(entries, metadataSearchHistoryEntryFromListRow(row))
 	}
-	return entries, rows.Err()
+	return entries, nil
 }
 
 func (s *SettingsStore) ListMetadataCacheEntries(ctx context.Context, limit int32) ([]MetadataCacheEntry, error) {
 	limit = inspectionLimit(limit)
-	rows, err := s.pool.Query(ctx, `
-		select p.id,
-			p.name,
-			p.type,
-			c.media_type,
-			c.query,
-			c.year,
-			case
-				when jsonb_typeof(c.results) = 'array' then jsonb_array_length(c.results)
-				else 1
-			end::int,
-			c.expires_at,
-			c.created_at,
-			c.updated_at,
-			c.expires_at <= now()
-		from app.metadata_search_cache c
-		join app.metadata_providers p on p.id = c.provider_id
-		order by c.updated_at desc
-		limit $1
-	`, limit)
+	rows, err := storagegen.New(s.pool).ListMetadataCacheEntries(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	entries := []MetadataCacheEntry{}
-	for rows.Next() {
-		var entry MetadataCacheEntry
-		if err := rows.Scan(
-			&entry.ProviderID,
-			&entry.ProviderName,
-			&entry.ProviderType,
-			&entry.MediaType,
-			&entry.Query,
-			&entry.Year,
-			&entry.ItemCount,
-			&entry.ExpiresAt,
-			&entry.CreatedAt,
-			&entry.UpdatedAt,
-			&entry.Expired,
-		); err != nil {
-			return nil, err
-		}
-		entries = append(entries, entry)
+	entries := make([]MetadataCacheEntry, 0, len(rows))
+	for _, row := range rows {
+		entries = append(entries, metadataCacheEntryFromListRow(row))
 	}
-	return entries, rows.Err()
+	return entries, nil
 }
 
 func (s *SettingsStore) MetadataSearchHistoryCount(ctx context.Context) (int32, error) {
-	var count int32
-	err := s.pool.QueryRow(ctx, `select count(*)::int from app.metadata_search_history`).Scan(&count)
-	return count, err
+	return storagegen.New(s.pool).MetadataSearchHistoryCount(ctx)
 }
 
 func (s *SettingsStore) MetadataSearchHistoryStats(ctx context.Context) (QueryHistoryStats, error) {
-	var stats QueryHistoryStats
-	err := s.pool.QueryRow(ctx, `
-		select
-			count(*)::int,
-			count(*) filter (where cache_hit)::int,
-			count(*) filter (where not cache_hit)::int,
-			count(*) filter (where not success)::int
-		from app.metadata_search_history
-	`).Scan(&stats.TotalEntries, &stats.CacheHits, &stats.CacheMisses, &stats.Failures)
-	return stats, err
+	row, err := storagegen.New(s.pool).MetadataSearchHistoryStats(ctx)
+	return metadataSearchHistoryStatsFromRow(row), err
 }
 
 func (s *SettingsStore) ClearMetadataCache(ctx context.Context) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `delete from app.metadata_search_cache`)
+	rows, err := storagegen.New(s.pool).ClearMetadataCache(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) ClearMetadataCacheByPattern(ctx context.Context, pattern string) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `
-		delete from app.metadata_search_cache
-		where query ~* $1
-	`, pattern)
+	rows, err := storagegen.New(s.pool).ClearMetadataCacheByPattern(ctx, pattern)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) DeleteMetadataCacheEntry(ctx context.Context, providerID uuid.UUID, mediaType string, query string, year int32) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `
-		delete from app.metadata_search_cache
-		where provider_id = $1 and media_type = $2 and query = $3 and year = $4
-	`, providerID, mediaType, query, year)
+	rows, err := storagegen.New(s.pool).DeleteMetadataCacheEntry(ctx, storagegen.DeleteMetadataCacheEntryParams{
+		ProviderID: providerID,
+		MediaType:  mediaType,
+		Query:      query,
+		Year:       year,
+	})
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func (s *SettingsStore) ClearMetadataSearchHistory(ctx context.Context) (int32, error) {
-	tag, err := s.pool.Exec(ctx, `delete from app.metadata_search_history`)
+	rows, err := storagegen.New(s.pool).ClearMetadataSearchHistory(ctx)
 	if err != nil {
 		return 0, err
 	}
-	return int32(tag.RowsAffected()), nil
+	return int32(rows), nil
 }
 
 func cacheYear(year *int32) int32 {
@@ -253,5 +164,75 @@ func metadataCacheKind(query string) string {
 		return "details"
 	default:
 		return "search"
+	}
+}
+
+func metadataSearchHistoryEntryFromRecordRow(row storagegen.RecordMetadataSearchHistoryRow) MetadataSearchHistoryEntry {
+	entry := MetadataSearchHistoryEntry{
+		ProviderName: row.ProviderName,
+		ProviderType: row.ProviderType,
+		MediaType:    row.MediaType,
+		Query:        row.Query,
+		Year:         row.Year,
+		CacheHit:     row.CacheHit,
+		Success:      row.Success,
+		ItemCount:    row.ItemCount,
+		Error:        textPtr(row.Error),
+		Response:     row.Response,
+		CreatedAt:    row.CreatedAt,
+	}
+	entry.CacheKind = metadataCacheKind(entry.Query)
+	return entry
+}
+
+func metadataCacheStatsFromRow(row storagegen.MetadataCacheStatsRow) MetadataCacheStats {
+	return MetadataCacheStats{
+		TotalEntries:   row.TotalEntries,
+		ActiveEntries:  row.ActiveEntries,
+		ExpiredEntries: row.ExpiredEntries,
+		ProviderCount:  row.ProviderCount,
+	}
+}
+
+func metadataSearchHistoryEntryFromListRow(row storagegen.ListMetadataSearchHistoryEntriesRow) MetadataSearchHistoryEntry {
+	entry := MetadataSearchHistoryEntry{
+		ProviderName: row.ProviderName,
+		ProviderType: row.ProviderType,
+		MediaType:    row.MediaType,
+		Query:        row.Query,
+		Year:         row.Year,
+		CacheHit:     row.CacheHit,
+		Success:      row.Success,
+		ItemCount:    row.ItemCount,
+		Error:        textPtr(row.Error),
+		Response:     row.Response,
+		CreatedAt:    row.CreatedAt,
+	}
+	entry.CacheKind = metadataCacheKind(entry.Query)
+	return entry
+}
+
+func metadataCacheEntryFromListRow(row storagegen.ListMetadataCacheEntriesRow) MetadataCacheEntry {
+	return MetadataCacheEntry{
+		ProviderID:   row.ProviderID,
+		ProviderName: row.ProviderName,
+		ProviderType: row.ProviderType,
+		MediaType:    row.MediaType,
+		Query:        row.Query,
+		Year:         row.Year,
+		ItemCount:    row.ItemCount,
+		ExpiresAt:    row.ExpiresAt,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
+		Expired:      row.Expired,
+	}
+}
+
+func metadataSearchHistoryStatsFromRow(row storagegen.MetadataSearchHistoryStatsRow) QueryHistoryStats {
+	return QueryHistoryStats{
+		TotalEntries: row.TotalEntries,
+		CacheHits:    row.CacheHits,
+		CacheMisses:  row.CacheMisses,
+		Failures:     row.Failures,
 	}
 }

@@ -3,13 +3,10 @@ package storage
 import (
 	"context"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-)
+	storagegen "media-manager/internal/storage/generated"
 
-type mediaProfileQueryer interface {
-	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
-}
+	"github.com/google/uuid"
+)
 
 func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *MediaProfile) error {
 	qualities, err := loadMediaProfileQualities(ctx, s.pool, profile.ID)
@@ -33,84 +30,49 @@ func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *Media
 
 func loadMediaProfileQualities(
 	ctx context.Context,
-	q mediaProfileQueryer,
+	q storagegen.DBTX,
 	profileID string,
 ) ([]string, error) {
-	rows, err := q.Query(ctx, `
-		select quality_id
-		from app.media_profile_qualities
-		where profile_id = $1
-		order by sort_order, quality_id
-	`, profileID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	qualityIDs := []string{}
-	for rows.Next() {
-		var qualityID string
-		if err := rows.Scan(&qualityID); err != nil {
-			return nil, err
-		}
-		qualityIDs = append(qualityIDs, qualityID)
-	}
-	return qualityIDs, rows.Err()
+	return storagegen.New(q).ListMediaProfileQualities(ctx, profileID)
 }
 
 func loadMediaProfileLanguages(
 	ctx context.Context,
-	q mediaProfileQueryer,
+	q storagegen.DBTX,
 	profileID string,
 ) ([]MediaProfileLanguageScore, error) {
-	rows, err := q.Query(ctx, `
-		select language_id, score, required
-		from app.media_profile_languages
-		where profile_id = $1
-		order by language_id
-	`, profileID)
+	rows, err := storagegen.New(q).ListMediaProfileLanguages(ctx, profileID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	scores := []MediaProfileLanguageScore{}
-	for rows.Next() {
-		var score MediaProfileLanguageScore
-		if err := rows.Scan(&score.LanguageID, &score.Score, &score.Required); err != nil {
-			return nil, err
-		}
-		scores = append(scores, score)
+	scores := make([]MediaProfileLanguageScore, 0, len(rows))
+	for _, row := range rows {
+		scores = append(scores, MediaProfileLanguageScore{
+			LanguageID: row.LanguageID,
+			Score:      row.Score,
+			Required:   row.Required,
+		})
 	}
-	return scores, rows.Err()
+	return scores, nil
 }
 
 func loadMediaProfileCustomFormats(
 	ctx context.Context,
-	q mediaProfileQueryer,
+	q storagegen.DBTX,
 	profileID string,
 ) ([]MediaProfileCustomFormatScore, error) {
-	rows, err := q.Query(ctx, `
-		select pcf.custom_format_id, pcf.score
-		from app.media_profile_custom_formats pcf
-		join app.custom_formats cf on cf.id = pcf.custom_format_id
-		where pcf.profile_id = $1
-		order by lower(cf.name), pcf.custom_format_id
-	`, profileID)
+	rows, err := storagegen.New(q).ListMediaProfileCustomFormats(ctx, profileID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	scores := []MediaProfileCustomFormatScore{}
-	for rows.Next() {
-		var score MediaProfileCustomFormatScore
-		if err := rows.Scan(&score.CustomFormatID, &score.Score); err != nil {
-			return nil, err
-		}
-		scores = append(scores, score)
+	scores := make([]MediaProfileCustomFormatScore, 0, len(rows))
+	for _, row := range rows {
+		scores = append(scores, MediaProfileCustomFormatScore{
+			CustomFormatID: row.CustomFormatID,
+			Score:          row.Score,
+		})
 	}
-	return scores, rows.Err()
+	return scores, nil
 }
 
 func replaceMediaProfileCustomFormats(
@@ -119,14 +81,16 @@ func replaceMediaProfileCustomFormats(
 	profileID string,
 	scores []MediaProfileCustomFormatScore,
 ) error {
-	if _, err := q.Exec(ctx, `delete from app.media_profile_custom_formats where profile_id = $1`, profileID); err != nil {
+	queries := storagegen.New(q)
+	if err := queries.ClearMediaProfileCustomFormats(ctx, profileID); err != nil {
 		return err
 	}
 	for _, score := range scores {
-		if _, err := q.Exec(ctx, `
-			insert into app.media_profile_custom_formats (profile_id, custom_format_id, score)
-			values ($1, $2, $3)
-		`, profileID, score.CustomFormatID, score.Score); err != nil {
+		if err := queries.AddMediaProfileCustomFormat(ctx, storagegen.AddMediaProfileCustomFormatParams{
+			ProfileID:      profileID,
+			CustomFormatID: score.CustomFormatID,
+			Score:          score.Score,
+		}); err != nil {
 			return normalizeMediaProfileWriteError(err)
 		}
 	}
@@ -139,14 +103,17 @@ func replaceMediaProfileLanguages(
 	profileID string,
 	scores []MediaProfileLanguageScore,
 ) error {
-	if _, err := q.Exec(ctx, `delete from app.media_profile_languages where profile_id = $1`, profileID); err != nil {
+	queries := storagegen.New(q)
+	if err := queries.ClearMediaProfileLanguages(ctx, profileID); err != nil {
 		return err
 	}
 	for _, score := range scores {
-		if _, err := q.Exec(ctx, `
-			insert into app.media_profile_languages (profile_id, language_id, score, required)
-			values ($1, $2, $3, $4)
-		`, profileID, score.LanguageID, score.Score, score.Required); err != nil {
+		if err := queries.AddMediaProfileLanguage(ctx, storagegen.AddMediaProfileLanguageParams{
+			ProfileID:  profileID,
+			LanguageID: score.LanguageID,
+			Score:      score.Score,
+			Required:   score.Required,
+		}); err != nil {
 			return normalizeMediaProfileWriteError(err)
 		}
 	}

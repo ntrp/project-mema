@@ -1,6 +1,12 @@
 package storage
 
-import "context"
+import (
+	"context"
+
+	storagegen "media-manager/internal/storage/generated"
+
+	"github.com/google/uuid"
+)
 
 func (s *SettingsStore) BulkUpdateIndexers(ctx context.Context, input IndexerBulkUpdateInput) ([]Indexer, error) {
 	if len(input.IDs) == 0 {
@@ -11,21 +17,9 @@ func (s *SettingsStore) BulkUpdateIndexers(ctx context.Context, input IndexerBul
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	queries := storagegen.New(s.pool).WithTx(tx)
 	for _, id := range input.IDs {
-		if _, err := tx.Exec(ctx, `
-			update app.indexers
-			set enabled = coalesce($2, enabled),
-				app_profile_id = coalesce($3, app_profile_id),
-				priority = coalesce($4, priority),
-				minimum_seeders = coalesce($5, minimum_seeders),
-				seed_ratio = coalesce($6, seed_ratio),
-				seed_time = coalesce($7, seed_time),
-				pack_seed_time = coalesce($8, pack_seed_time),
-				prefer_magnet_url = coalesce($9, prefer_magnet_url),
-				updated_at = now()
-			where id = $1
-		`, id, input.Enabled, input.AppProfileID, input.Priority, input.MinimumSeeders, input.SeedRatio,
-			input.SeedTime, input.PackSeedTime, input.PreferMagnetURL); err != nil {
+		if err := queries.BulkUpdateIndexer(ctx, bulkUpdateIndexerParams(id, input)); err != nil {
 			return nil, err
 		}
 	}
@@ -33,4 +27,18 @@ func (s *SettingsStore) BulkUpdateIndexers(ctx context.Context, input IndexerBul
 		return nil, err
 	}
 	return s.ListIndexers(ctx)
+}
+
+func bulkUpdateIndexerParams(id uuid.UUID, input IndexerBulkUpdateInput) storagegen.BulkUpdateIndexerParams {
+	return storagegen.BulkUpdateIndexerParams{
+		ID:              id,
+		Enabled:         boolValue(input.Enabled),
+		AppProfileID:    textValue(input.AppProfileID),
+		Priority:        int4Value(input.Priority),
+		MinimumSeeders:  int4Value(input.MinimumSeeders),
+		SeedRatio:       input.SeedRatio,
+		SeedTime:        int4Value(input.SeedTime),
+		PackSeedTime:    int4Value(input.PackSeedTime),
+		PreferMagnetUrl: boolValue(input.PreferMagnetURL),
+	}
 }

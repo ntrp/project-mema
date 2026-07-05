@@ -5,6 +5,8 @@ import (
 	"errors"
 	"path/filepath"
 
+	storagegen "media-manager/internal/storage/generated"
+
 	"github.com/google/uuid"
 )
 
@@ -20,14 +22,13 @@ func (s *SettingsStore) RecordImportedMediaFile(ctx context.Context, item MediaI
 		_ = tx.Rollback(ctx)
 	}()
 
-	var exists bool
-	if err := tx.QueryRow(ctx, `
-		select exists(
-			select 1
-			from app.library_scan_items
-			where media_item_id = $1 and path = $2
-		)
-	`, item.ID, filePath).Scan(&exists); err != nil {
+	queries := storagegen.New(s.pool).WithTx(tx)
+	mediaItemID := item.ID
+	exists, err := queries.ImportedMediaFileExists(ctx, storagegen.ImportedMediaFileExistsParams{
+		MediaItemID: &mediaItemID,
+		Path:        filePath,
+	})
+	if err != nil {
 		return err
 	}
 	if exists {
@@ -35,12 +36,10 @@ func (s *SettingsStore) RecordImportedMediaFile(ctx context.Context, item MediaI
 	}
 
 	scanID := uuid.New()
-	if _, err := tx.Exec(ctx, `
-		insert into app.library_scans (
-			id, library_folder_id, status, total_files, auto_matched_count, manual_count, completed_at
-		)
-		values ($1, $2, 'completed', 1, 1, 0, now())
-	`, scanID, *item.LibraryFolderID); err != nil {
+	if err := queries.CreateImportedFileLibraryScan(ctx, storagegen.CreateImportedFileLibraryScanParams{
+		ID:              scanID,
+		LibraryFolderID: *item.LibraryFolderID,
+	}); err != nil {
 		return err
 	}
 
@@ -48,14 +47,16 @@ func (s *SettingsStore) RecordImportedMediaFile(ctx context.Context, item MediaI
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `
-		insert into app.library_scan_items (
-			id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
-			status, matched_title, matched_year, matched_media_kind, media_item_id
-		)
-		values ($1, $2, $3, $4, $5, $6, $7, 'auto_added', $5, $6, $7, $8)
-	`, uuid.New(), scanID, filePath, filepath.Base(filePath), item.Title, item.Year, kind, item.ID)
-	if err != nil {
+	if err := queries.CreateImportedFileLibraryScanItem(ctx, storagegen.CreateImportedFileLibraryScanItemParams{
+		ID:                uuid.New(),
+		ScanID:            scanID,
+		Path:              filePath,
+		FileName:          filepath.Base(filePath),
+		DetectedTitle:     item.Title,
+		DetectedYear:      int4Value(item.Year),
+		DetectedMediaKind: kind,
+		MediaItemID:       &mediaItemID,
+	}); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
