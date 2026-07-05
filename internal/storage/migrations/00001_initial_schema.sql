@@ -105,6 +105,9 @@ create table if not exists app.indexers (
     last_status_code integer,
     last_error text,
     failure_count integer not null default 0 check (failure_count >= 0),
+    rss_marker_published_at timestamptz,
+    rss_marker_guid text,
+    rss_marker_download_url text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     constraint indexers_media_type_scopes_check check (media_type_scopes <@ array['movie', 'serie', 'anime', 'audio', 'book']::text[])
@@ -115,6 +118,9 @@ create index if not exists idx_indexers_priority
 
 create index if not exists idx_indexers_health
     on app.indexers (enabled, health_status, next_check_at);
+
+create index if not exists idx_indexers_rss_enabled
+    on app.indexers (enabled, supports_rss, health_status, next_check_at);
 
 create table if not exists app.indexer_proxies (
     id uuid primary key,

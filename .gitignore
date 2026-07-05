@@ -26,4 +26,3 @@ output/playwright/
 !.env.example
 .data/secrets/
 internal/storage/seeds/dev.local.sql
-

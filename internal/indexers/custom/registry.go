@@ -1,6 +1,8 @@
 package custom
 
 import (
+	"context"
+	"fmt"
 	"strings"
 
 	"media-manager/internal/indexers/custom/alpharatio"
@@ -48,6 +50,11 @@ type Registry struct {
 	engines map[string]engine.Engine
 }
 
+type searchEngine interface {
+	Test(ctx context.Context, config engine.Config) engine.TestResult
+	Search(ctx context.Context, config engine.Config, query string, mediaType string) ([]engine.Release, error)
+}
+
 func NewRegistry(client engine.HTTPDoer) *Registry {
 	registry := &Registry{engines: map[string]engine.Engine{}}
 	registry.Register("Newznab", newznab.New(client))
@@ -92,11 +99,24 @@ func NewRegistry(client engine.HTTPDoer) *Registry {
 	return registry
 }
 
-func (r *Registry) Register(name string, indexer engine.Engine) {
+func (r *Registry) Register(name string, indexer searchEngine) {
 	if name == "" || indexer == nil {
 		return
 	}
-	r.engines[engineKey(name)] = indexer
+	if recent, ok := indexer.(engine.Engine); ok {
+		r.engines[engineKey(name)] = recent
+		return
+	}
+	r.engines[engineKey(name)] = recentUnsupportedEngine{name: name, searchEngine: indexer}
+}
+
+type recentUnsupportedEngine struct {
+	name string
+	searchEngine
+}
+
+func (e recentUnsupportedEngine) Recent(ctx context.Context, config engine.Config) ([]engine.Release, error) {
+	return nil, fmt.Errorf("indexer %q does not support recent RSS fetches", e.name)
 }
 
 func (r *Registry) EngineFor(config engine.Config) (engine.Engine, bool) {

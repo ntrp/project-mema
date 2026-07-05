@@ -52,6 +52,18 @@ func (e *Engine) search(ctx context.Context, config engine.Config, query string,
 		"q":      query,
 		"apikey": engine.StringValue(config.APIKey),
 	}
+	return e.fetch(ctx, config, values)
+}
+
+func (e *Engine) recent(ctx context.Context, config engine.Config) ([]engine.Release, error) {
+	values := map[string]string{
+		"t":      "search",
+		"apikey": engine.StringValue(config.APIKey),
+	}
+	return e.fetch(ctx, config, values)
+}
+
+func (e *Engine) fetch(ctx context.Context, config engine.Config, values map[string]string) ([]engine.Release, error) {
 	if len(config.Categories) > 0 {
 		values["cat"] = categoryQuery(config.Categories)
 	}

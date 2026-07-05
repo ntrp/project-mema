@@ -57,6 +57,9 @@ func scanIndexer(row pgx.Row) (Indexer, error) {
 		&indexer.LastStatusCode,
 		&indexer.LastError,
 		&indexer.FailureCount,
+		&indexer.RSSMarkerPublishedAt,
+		&indexer.RSSMarkerGUID,
+		&indexer.RSSMarkerDownloadURL,
 		&indexer.CreatedAt,
 		&indexer.UpdatedAt,
 	)
@@ -70,5 +73,6 @@ const indexerColumns = `
 	seed_ratio, seed_time, pack_seed_time, prefer_magnet_url, supports_rss,
 	supports_search, supports_redirect, supports_pagination, enabled, priority,
 	health_status, last_query_at, last_success_at, last_failure_at, next_check_at,
-	last_status_code, last_error, failure_count, created_at, updated_at
+	last_status_code, last_error, failure_count, rss_marker_published_at,
+	rss_marker_guid, rss_marker_download_url, created_at, updated_at
 `

@@ -123,6 +123,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 `
@@ -240,6 +243,9 @@ func (q *Queries) CreateIndexer(ctx context.Context, arg CreateIndexerParams) (A
 		&i.LastStatusCode,
 		&i.LastError,
 		&i.FailureCount,
+		&i.RssMarkerPublishedAt,
+		&i.RssMarkerGuid,
+		&i.RssMarkerDownloadUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -301,6 +307,9 @@ select id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 from app.indexers
@@ -352,6 +361,9 @@ func (q *Queries) GetIndexer(ctx context.Context, id uuid.UUID) (AppIndexer, err
 		&i.LastStatusCode,
 		&i.LastError,
 		&i.FailureCount,
+		&i.RssMarkerPublishedAt,
+		&i.RssMarkerGuid,
+		&i.RssMarkerDownloadUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -400,6 +412,9 @@ select id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 from app.indexers
@@ -460,6 +475,9 @@ func (q *Queries) ListEnabledIndexers(ctx context.Context) ([]AppIndexer, error)
 			&i.LastStatusCode,
 			&i.LastError,
 			&i.FailureCount,
+			&i.RssMarkerPublishedAt,
+			&i.RssMarkerGuid,
+			&i.RssMarkerDownloadUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -515,6 +533,9 @@ select id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 from app.indexers
@@ -572,6 +593,9 @@ func (q *Queries) ListIndexers(ctx context.Context) ([]AppIndexer, error) {
 			&i.LastStatusCode,
 			&i.LastError,
 			&i.FailureCount,
+			&i.RssMarkerPublishedAt,
+			&i.RssMarkerGuid,
+			&i.RssMarkerDownloadUrl,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -651,6 +675,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 `
@@ -714,6 +741,9 @@ func (q *Queries) RecordIndexerFailure(ctx context.Context, arg RecordIndexerFai
 		&i.LastStatusCode,
 		&i.LastError,
 		&i.FailureCount,
+		&i.RssMarkerPublishedAt,
+		&i.RssMarkerGuid,
+		&i.RssMarkerDownloadUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -773,6 +803,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 `
@@ -822,6 +855,9 @@ func (q *Queries) RecordIndexerSuccess(ctx context.Context, id uuid.UUID) (AppIn
 		&i.LastStatusCode,
 		&i.LastError,
 		&i.FailureCount,
+		&i.RssMarkerPublishedAt,
+		&i.RssMarkerGuid,
+		&i.RssMarkerDownloadUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -912,6 +948,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 `
@@ -1029,6 +1068,9 @@ func (q *Queries) UpdateIndexer(ctx context.Context, arg UpdateIndexerParams) (A
 		&i.LastStatusCode,
 		&i.LastError,
 		&i.FailureCount,
+		&i.RssMarkerPublishedAt,
+		&i.RssMarkerGuid,
+		&i.RssMarkerDownloadUrl,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

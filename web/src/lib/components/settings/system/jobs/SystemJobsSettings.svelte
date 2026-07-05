@@ -15,7 +15,7 @@
 	const knownKinds = [
 		'media.release_search',
 		'media.auto_search_download',
-		'media.missing_media_retry',
+		'media.rss_sync',
 		'media.grab_release',
 		'download.activity_sync'
 	];

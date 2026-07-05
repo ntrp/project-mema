@@ -40,6 +40,9 @@ select id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 from app.indexers
@@ -87,6 +90,9 @@ select id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 from app.indexers
@@ -137,6 +143,9 @@ select id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at
 from app.indexers
@@ -252,6 +261,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at;
 
@@ -339,6 +351,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at;
 
@@ -395,6 +410,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at;
 
@@ -464,6 +482,9 @@ returning id,
     last_status_code,
     last_error,
     failure_count,
+    rss_marker_published_at,
+    rss_marker_guid,
+    rss_marker_download_url,
     created_at,
     updated_at;
 

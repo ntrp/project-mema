@@ -177,69 +177,23 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 	if eventBroker == nil {
 		eventBroker = events.NewBroker()
 	}
-	river.AddWorker(workers, &ReleaseSearchWorker{settings: settings, indexers: indexerService, events: eventBroker})
-	river.AddWorker(workers, &AutoSearchDownloadWorker{
-		settings:        settings,
-		indexers:        indexerService,
-		downloadClients: downloadClientService,
-		decisions:       decisionEngine,
-		events:          eventBroker,
-	})
-	river.AddWorker(workers, &MissingMediaRetryWorker{
-		settings:        settings,
-		indexers:        indexerService,
-		downloadClients: downloadClientService,
-		decisions:       decisionEngine,
-		events:          eventBroker,
-	})
-	river.AddWorker(workers, &GrabReleaseWorker{settings: settings, downloadClients: downloadClientService, events: eventBroker})
-	river.AddWorker(workers, &DownloadActivitySyncWorker{
+	addWorkers(workers, workerDependencies{
 		settings:        settings,
 		indexers:        indexerService,
 		downloadClients: downloadClientService,
 		decisions:       decisionEngine,
 		imports:         importService,
+		subtitles:       subtitleService,
 		events:          eventBroker,
 	})
-	river.AddWorker(workers, &ReleaseBlocklistCleanupWorker{settings: settings, events: eventBroker})
-	river.AddWorker(workers, &SubtitleSearchWorker{settings: settings, subtitles: subtitleService, events: eventBroker})
-	river.AddWorker(workers, &SubtitleRetryWorker{settings: settings, subtitles: subtitleService, events: eventBroker})
+	cleanupLegacyJobs(context.Background(), pool)
 
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			queueMediaSearch: {MaxWorkers: 2},
 			queueDownloads:   {MaxWorkers: 2},
 		},
-		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(
-				river.PeriodicInterval(6*time.Hour),
-				func() (river.JobArgs, *river.InsertOpts) {
-					return MissingMediaRetryArgs{}, &river.InsertOpts{Queue: queueMediaSearch}
-				},
-				&river.PeriodicJobOpts{ID: "missing_media_retry"},
-			),
-			river.NewPeriodicJob(
-				river.PeriodicInterval(10*time.Second),
-				func() (river.JobArgs, *river.InsertOpts) {
-					return DownloadActivitySyncArgs{}, &river.InsertOpts{Queue: queueDownloads}
-				},
-				&river.PeriodicJobOpts{ID: "download_activity_sync"},
-			),
-			river.NewPeriodicJob(
-				river.PeriodicInterval(1*time.Hour),
-				func() (river.JobArgs, *river.InsertOpts) {
-					return ReleaseBlocklistCleanupArgs{}, &river.InsertOpts{Queue: queueDownloads}
-				},
-				&river.PeriodicJobOpts{ID: "release_blocklist_cleanup"},
-			),
-			river.NewPeriodicJob(
-				river.PeriodicInterval(6*time.Hour),
-				func() (river.JobArgs, *river.InsertOpts) {
-					return SubtitleRetryArgs{}, &river.InsertOpts{Queue: queueMediaSearch}
-				},
-				&river.PeriodicJobOpts{ID: "subtitle_retry"},
-			),
-		},
+		PeriodicJobs:    periodicJobs(),
 		SoftStopTimeout: 10 * time.Second,
 		Workers:         workers,
 	})

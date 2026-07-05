@@ -48,4 +48,5 @@ type HTTPDoer interface {
 type Engine interface {
 	Test(ctx context.Context, config Config) TestResult
 	Search(ctx context.Context, config Config, query string, mediaType string) ([]Release, error)
+	Recent(ctx context.Context, config Config) ([]Release, error)
 }
