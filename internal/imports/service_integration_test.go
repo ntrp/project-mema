@@ -43,6 +43,10 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	if err := os.WriteFile(sourcePath, []byte("video"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	extraPath := filepath.Join(appPath, "complete", "Toy.Story.5.2026.sample.mkv")
+	if err := os.WriteFile(extraPath, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	folder, err := store.CreateLibraryFolder(ctx, libraryPath)
 	if err != nil {
@@ -86,6 +90,10 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 			Path:     clientPath + "/complete/Toy.Story.5.2026.1080p.mkv",
 			Complete: true,
 		},
+		{
+			Path:     clientPath + "/complete/Toy.Story.5.2026.sample.mkv",
+			Complete: true,
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -114,5 +122,8 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	}
 	if !os.SameFile(sourceInfo, targetInfo) {
 		t.Fatalf("imported file is not linked to source")
+	}
+	if _, err := os.Stat(filepath.Join(libraryPath, filepath.Base(extraPath))); !os.IsNotExist(err) {
+		t.Fatalf("extra target stat err = %v, want missing", err)
 	}
 }

@@ -52,12 +52,12 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 		slog.Error("import completed download path mapping load failed", "activityId", activity.ID, "error", err)
 		return fmt.Errorf("load path mappings: %w", err)
 	}
-	sources, err := completedVideoSources(files, mappings)
+	selection, err := selectCompletedDownloadCandidates(files, mappings)
 	if err != nil {
 		slog.Error("import completed download source discovery failed", "activityId", activity.ID, "error", err)
 		return err
 	}
-	if len(sources) == 0 {
+	if len(selection.SelectedSources) == 0 {
 		slog.Error("import completed download had no completed video files", "activityId", activity.ID, "reportedFileCount", len(files))
 		return fmt.Errorf("download client did not report completed video files")
 	}
@@ -66,7 +66,7 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 		slog.Error("import completed download media folder create failed", "activityId", activity.ID, "mediaFolderPath", *item.MediaFolderPath, "error", err)
 		return fmt.Errorf("create media folder: %w", err)
 	}
-	for _, source := range sources {
+	for _, source := range selection.SelectedSources {
 		target := filepath.Join(*item.MediaFolderPath, filepath.Base(source))
 		slog.Debug("linking completed download file", "activityId", activity.ID, "source", source, "target", target)
 		if err := importFile(source, target, ImportModeHardlink); err != nil {
@@ -78,7 +78,7 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 			return fmt.Errorf("record imported file: %w", err)
 		}
 	}
-	slog.Debug("import completed download finished", "activityId", activity.ID, "mediaItemId", item.ID, "linkedFileCount", len(sources))
+	slog.Debug("import completed download finished", "activityId", activity.ID, "mediaItemId", item.ID, "linkedFileCount", len(selection.SelectedSources), "rejectedFileCount", len(selection.RejectedCandidates))
 	return nil
 }
 
@@ -122,38 +122,9 @@ func (s *Service) ImportManualDownload(ctx context.Context, activity storage.Dow
 	return nil
 }
 
-func completedVideoSources(files []downloadclients.StatusFile, mappings []storage.PathMapping) ([]string, error) {
-	sources := []string{}
-	for _, file := range files {
-		if !file.Complete {
-			continue
-		}
-		mapped := mapPath(file.Path, mappings)
-		info, err := os.Stat(mapped)
-		if err != nil {
-			return nil, fmt.Errorf("download file is not visible to the app: %s", mapped)
-		}
-		if info.IsDir() {
-			found, err := videoFilesInDir(mapped)
-			if err != nil {
-				return nil, err
-			}
-			sources = append(sources, found...)
-			continue
-		}
-		if isVideoFile(mapped) {
-			sources = append(sources, mapped)
-		}
-	}
-	sort.Strings(sources)
-	return sources, nil
-}
-
 func mapPath(source string, mappings []storage.PathMapping) string {
 	source = filepath.Clean(source)
-	sort.SliceStable(mappings, func(i, j int) bool {
-		return len(mappings[i].ClientPath) > len(mappings[j].ClientPath)
-	})
+	sortPathMappings(mappings)
 	for _, mapping := range mappings {
 		clientPath := filepath.Clean(mapping.ClientPath)
 		if source == clientPath || strings.HasPrefix(source, clientPath+string(os.PathSeparator)) {
@@ -165,21 +136,10 @@ func mapPath(source string, mappings []storage.PathMapping) string {
 	return source
 }
 
-func videoFilesInDir(root string) ([]string, error) {
-	files := []string{}
-	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if entry.IsDir() {
-			return nil
-		}
-		if isVideoFile(path) {
-			files = append(files, path)
-		}
-		return nil
+func sortPathMappings(mappings []storage.PathMapping) {
+	sort.SliceStable(mappings, func(i, j int) bool {
+		return len(mappings[i].ClientPath) > len(mappings[j].ClientPath)
 	})
-	return files, err
 }
 
 func manualTargetFileName(item storage.MediaItem, input ManualImportInput, source string) (string, error) {
