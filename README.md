@@ -10,7 +10,7 @@ quality profiles, and MKV track sourcing/assembly.
 
 ## Current Stack
 
-- Backend: Go, chi, pgx, sqlc, River, contract-first OpenAPI.
+- Backend: Go, chi, pgx, River, contract-first OpenAPI.
 - Frontend: SvelteKit/Svelte 5 as a browser-only SPA.
 - Database: PostgreSQL.
 - Production serving: Go serves the built SvelteKit static files.
@@ -205,6 +205,17 @@ live. River schema changes are handled separately through:
 ```sh
 make river-migrate
 ```
+
+## Storage Access
+
+Application storage currently uses handwritten pgx through
+`internal/storage.SettingsStore`. `sqlc.yaml` is present for a staged pilot, but
+`sqlc` is not yet the default storage pattern.
+
+Storage changes should follow
+[`docs/adr/0001-storage-access-strategy.md`](docs/adr/0001-storage-access-strategy.md):
+keep existing pgx code stable, make transaction ownership explicit, and only add
+generated storage code inside the accepted pilot scope.
 
 ## Quality Baseline
 
