@@ -228,6 +228,25 @@ type AppLogFileSetting struct {
 	UpdatedAt     time.Time
 }
 
+type AppMediaEpisode struct {
+	ID               uuid.UUID
+	SeasonID         uuid.UUID
+	MediaItemID      uuid.UUID
+	ExternalProvider pgtype.Text
+	ExternalID       pgtype.Text
+	SeasonNumber     int32
+	EpisodeNumber    int32
+	Name             string
+	Overview         pgtype.Text
+	AirDate          pgtype.Text
+	StillPath        pgtype.Text
+	RuntimeMinutes   pgtype.Int4
+	Monitored        bool
+	Source           []byte
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
 type AppMediaItem struct {
 	ID                  uuid.UUID
 	MediaType           string
@@ -361,6 +380,23 @@ type AppMediaRequest struct {
 type AppMediaRequestTag struct {
 	MediaRequestID uuid.UUID
 	TagID          uuid.UUID
+}
+
+type AppMediaSeason struct {
+	ID               uuid.UUID
+	MediaItemID      uuid.UUID
+	ExternalProvider pgtype.Text
+	ExternalID       pgtype.Text
+	SeasonNumber     int32
+	Name             string
+	Overview         pgtype.Text
+	AirDate          pgtype.Text
+	PosterPath       pgtype.Text
+	EpisodeCount     pgtype.Int4
+	Monitored        bool
+	Source           []byte
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type AppMetadataProvider struct {

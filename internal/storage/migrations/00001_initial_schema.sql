@@ -354,6 +354,53 @@ create table if not exists app.media_items (
 create index if not exists idx_media_items_type_title
     on app.media_items (media_type, title);
 
+create table if not exists app.media_seasons (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    external_provider text,
+    external_id text,
+    season_number integer not null check (season_number >= 0),
+    name text not null default '',
+    overview text,
+    air_date text,
+    poster_path text,
+    episode_count integer,
+    monitored boolean not null default true,
+    source jsonb not null default '{}'::jsonb check (jsonb_typeof(source) = 'object'),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (media_item_id, season_number)
+);
+
+create index if not exists idx_media_seasons_media_item_id
+    on app.media_seasons (media_item_id, season_number);
+
+create table if not exists app.media_episodes (
+    id uuid primary key,
+    season_id uuid not null references app.media_seasons(id) on delete cascade,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    external_provider text,
+    external_id text,
+    season_number integer not null check (season_number >= 0),
+    episode_number integer not null check (episode_number >= 0),
+    name text not null default '',
+    overview text,
+    air_date text,
+    still_path text,
+    runtime_minutes integer,
+    monitored boolean not null default true,
+    source jsonb not null default '{}'::jsonb check (jsonb_typeof(source) = 'object'),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (media_item_id, season_number, episode_number)
+);
+
+create index if not exists idx_media_episodes_media_item_id
+    on app.media_episodes (media_item_id, season_number, episode_number);
+
+create index if not exists idx_media_episodes_season_id
+    on app.media_episodes (season_id, episode_number);
+
 create table if not exists app.tags (
     id uuid primary key,
     name text not null,
