@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -42,7 +41,11 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		PictureUrl:  optionalString(userRecord.PictureURL),
 		Role:        UserRole(userRecord.Role),
 	}
-	s.sessions.put(sessionID, session{user: user, expiresAt: expiresAt})
+	if err := s.settings.CreateSession(r.Context(), sessionID, userRecord.ID, expiresAt); err != nil {
+		writeError(w, http.StatusInternalServerError, "session_create_failed", "Could not create session")
+		return
+	}
+	_ = s.settings.DeleteExpiredSessions(r.Context(), s.now())
 	http.SetCookie(w, s.sessionCookie(sessionID, expiresAt))
 
 	writeJSON(w, http.StatusOK, SessionResponse{
@@ -55,7 +58,7 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 func (s *Server) Logout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(sessionCookieName)
 	if err == nil {
-		s.sessions.delete(cookie.Value)
+		_ = s.settings.DeleteSession(r.Context(), cookie.Value)
 	}
 
 	http.SetCookie(w, s.expiredSessionCookie())
@@ -69,7 +72,7 @@ func (s *Server) GetSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session, ok := s.sessions.get(cookie.Value, s.now())
+	session, ok := s.sessionFromCookie(r, cookie.Value)
 	if !ok {
 		http.SetCookie(w, s.expiredSessionCookie())
 		writeJSON(w, http.StatusOK, SessionResponse{Authenticated: false})
@@ -89,7 +92,7 @@ func (s *Server) requireSession(w http.ResponseWriter, r *http.Request) (session
 		return session{}, false
 	}
 
-	currentSession, ok := s.sessions.get(cookie.Value, s.now())
+	currentSession, ok := s.sessionFromCookie(r, cookie.Value)
 	if !ok {
 		writeError(w, http.StatusUnauthorized, "unauthorized", "Session expired or invalid")
 		return session{}, false
@@ -144,46 +147,31 @@ func (s session) userID() openapi_types.UUID {
 	return s.user.Id
 }
 
-type sessionStore struct {
-	mu       sync.Mutex
-	sessions map[string]session
-}
-
-func newSessionStore() *sessionStore {
-	return &sessionStore{sessions: map[string]session{}}
-}
-
-func (s *sessionStore) put(id string, session session) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.sessions[id] = session
-}
-
-func (s *sessionStore) get(id string, now time.Time) (session, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	session, ok := s.sessions[id]
-	if !ok {
-		return session, false
-	}
-	if !session.expiresAt.After(now) {
-		delete(s.sessions, id)
-		return session, false
-	}
-	return session, true
-}
-
-func (s *sessionStore) delete(id string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	delete(s.sessions, id)
-}
-
 func newSessionID() (string, error) {
 	var bytes [32]byte
 	if _, err := rand.Read(bytes[:]); err != nil {
 		return "", err
 	}
 	return base64.RawURLEncoding.EncodeToString(bytes[:]), nil
+}
+
+func (s *Server) sessionFromCookie(r *http.Request, id string) (session, bool) {
+	if s.settings == nil {
+		return session{}, false
+	}
+	stored, err := s.settings.GetSession(r.Context(), id, s.now())
+	if err != nil {
+		_ = s.settings.DeleteExpiredSessions(r.Context(), s.now())
+		return session{}, false
+	}
+	return session{
+		user: UserSummary{
+			Id:          openapi_types.UUID(stored.UserID),
+			Username:    stored.Username,
+			DisplayName: optionalString(stored.DisplayName),
+			PictureUrl:  optionalString(stored.PictureURL),
+			Role:        UserRole(stored.Role),
+		},
+		expiresAt: stored.ExpiresAt,
+	}, true
 }

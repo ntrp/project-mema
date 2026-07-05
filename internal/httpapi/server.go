@@ -22,7 +22,6 @@ type Server struct {
 	subtitles       *subtitles.Service
 	jobs            *jobs.Client
 	events          *events.Broker
-	sessions        *sessionStore
 	streamSecret    []byte
 	now             func() time.Time
 }
@@ -40,7 +39,6 @@ func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClien
 		subtitles:       subtitles.NewService(nil),
 		jobs:            jobs,
 		events:          eventBroker,
-		sessions:        newSessionStore(),
 		streamSecret:    newStreamTokenSecret(),
 		now:             time.Now,
 	}

@@ -101,6 +101,38 @@ func TestScenarioSCNAuth002AdminCanSignOut(t *testing.T) {
 	}
 }
 
+func TestScenarioSCNAuth002SessionSurvivesServerReconstruction(t *testing.T) {
+	requireAcceptanceScenario(t, "SCN-AUTH-002", "api")
+	store := testSettingsStore(t)
+	first := authRouterForStore(store)
+
+	login := httptest.NewRecorder()
+	first.ServeHTTP(login, loginRequest("admin", "admin"))
+	if login.Code != http.StatusOK {
+		t.Fatalf("login status = %d, body = %q", login.Code, login.Body.String())
+	}
+	cookies := login.Result().Cookies()
+	if len(cookies) == 0 {
+		t.Fatal("login response did not include a session cookie")
+	}
+
+	second := authRouterForStore(store)
+	sessionRequest := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
+	sessionRequest.AddCookie(cookies[0])
+	sessionResponse := httptest.NewRecorder()
+	second.ServeHTTP(sessionResponse, sessionRequest)
+	if sessionResponse.Code != http.StatusOK {
+		t.Fatalf("session status = %d, body = %q", sessionResponse.Code, sessionResponse.Body.String())
+	}
+	var body SessionResponse
+	if err := json.Unmarshal(sessionResponse.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if !body.Authenticated || body.User == nil || body.User.Username != "admin" {
+		t.Fatalf("session after server reconstruction = %#v", body)
+	}
+}
+
 func TestScenarioSCNAuth003InvalidCredentialsAreRejected(t *testing.T) {
 	requireAcceptanceScenario(t, "SCN-AUTH-003", "api")
 	router := authRouter(t)
@@ -119,12 +151,16 @@ func TestScenarioSCNAuth003InvalidCredentialsAreRejected(t *testing.T) {
 func TestScenarioSCNAuth001ExpiredSessionIsCleared(t *testing.T) {
 	requireAcceptanceScenario(t, "SCN-AUTH-001", "api")
 	router := chi.NewRouter()
-	server := NewServer(config.Config{AppEnv: "development", SessionTTL: time.Hour}, nil, nil, nil, nil, nil, nil)
+	store := testSettingsStore(t)
+	server := NewServer(config.Config{AppEnv: "development", SessionTTL: time.Hour}, store, nil, nil, nil, nil, nil)
 	expiredID := "expired-session"
-	server.sessions.put(expiredID, session{
-		user:      UserSummary{Username: "admin", Role: UserRoleAdmin},
-		expiresAt: time.Now().Add(-time.Hour),
-	})
+	user, err := store.GetUserByUsername(context.Background(), "admin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateSession(context.Background(), expiredID, user.ID, time.Now().Add(-time.Hour)); err != nil {
+		t.Fatal(err)
+	}
 	HandlerFromMux(server, router)
 
 	request := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
@@ -160,8 +196,12 @@ func requireAcceptanceScenario(t *testing.T, id string, tag string) {
 
 func authRouter(t *testing.T) http.Handler {
 	t.Helper()
+	return authRouterForStore(testSettingsStore(t))
+}
+
+func authRouterForStore(store *storage.SettingsStore) http.Handler {
 	router := chi.NewRouter()
-	HandlerFromMux(NewServer(testConfig(), testSettingsStore(t), nil, nil, nil, nil, nil), router)
+	HandlerFromMux(NewServer(testConfig(), store, nil, nil, nil, nil, nil), router)
 	return router
 }
 

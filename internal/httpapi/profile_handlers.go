@@ -3,7 +3,6 @@ package httpapi
 import (
 	"net/http"
 	"strings"
-	"time"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
@@ -43,7 +42,6 @@ func (s *Server) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		writeUserError(w, err, "Could not update profile")
 		return
 	}
-	s.refreshSessionUser(r, userSummaryFromProfile(profile), currentSession.expiresAt)
 	writeJSON(w, http.StatusOK, userProfileResponse(profile))
 }
 
@@ -62,14 +60,6 @@ func userProfileInput(
 		return storage.UserProfileInput{}, false
 	}
 	return storage.UserProfileInput{DisplayName: displayName, PictureURL: pictureURL}, true
-}
-
-func (s *Server) refreshSessionUser(r *http.Request, user UserSummary, expiresAt time.Time) {
-	cookie, err := r.Cookie(sessionCookieName)
-	if err != nil {
-		return
-	}
-	s.sessions.put(cookie.Value, session{user: user, expiresAt: expiresAt})
 }
 
 func userProfileResponse(profile storage.UserProfile) UserProfile {
