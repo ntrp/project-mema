@@ -50,6 +50,7 @@
 	const statusLabel = $derived(activityStatus?.label ?? '-');
 	const subtitleState = $derived(row.subtitleSatisfaction?.state ?? 'ignored');
 	const subtitleLabel = $derived(subtitleSatisfactionLabel(row));
+	const upgradeVariant = $derived(row.upgrade.state === 'upgradeable' ? 'secondary' : 'outline');
 
 	function toggleDetails() {
 		if (row.exists) {
@@ -150,7 +151,14 @@
 					{statusLabel}
 				</Badge>
 			{:else}
-				<span class="text-sm">-</span>
+				<Badge
+					variant={upgradeVariant}
+					class="justify-self-start"
+					aria-label={row.upgrade.reasons.join(' ')}
+				>
+					{row.upgrade.label}
+				</Badge>
+				<span class="text-xs text-muted-foreground">{row.upgrade.reasons[0]}</span>
 			{/if}
 		</span>
 		<MediaFileSummaryActions

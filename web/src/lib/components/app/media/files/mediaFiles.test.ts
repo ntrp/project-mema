@@ -29,7 +29,14 @@ const movie = {
 describe('media file display models (SCN-MEDIA-001)', () => {
 	it('builds movie rows with relative paths, parsed quality, languages, and profile settings', () => {
 		const row = fileRow(movie, movie.filePaths[0], [
-			{ id: 'profile-1', targetLanguages: ['english'], removeNonEnabledLanguages: true }
+			{
+				id: 'profile-1',
+				qualityIds: ['webdl-720p', 'webdl-1080p', 'bluray-1080p'],
+				upgradesAllowed: true,
+				upgradeUntilQualityId: 'bluray-1080p',
+				targetLanguages: ['english'],
+				removeNonEnabledLanguages: true
+			}
 		]);
 
 		expect(row).toMatchObject({
@@ -42,6 +49,11 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 			languages: 'English',
 			quality: '1080p',
 			formats: ['WEB-DL'],
+			upgrade: {
+				state: 'upgradeable',
+				label: 'Upgradeable',
+				reasons: ['Upgrade target is bluray-1080p']
+			},
 			expectedLanguages: ['english'],
 			removeNonEnabledLanguages: true
 		});

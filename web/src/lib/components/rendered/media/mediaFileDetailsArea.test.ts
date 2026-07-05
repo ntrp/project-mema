@@ -88,6 +88,7 @@ function detailedFileRow(): MediaFileRow {
 		languages: 'English',
 		quality: '1080p',
 		formats: ['WEB-DL'],
+		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
 		expectedLanguages: ['english', 'german'],
 		removeNonEnabledLanguages: true,
 		score: 120,

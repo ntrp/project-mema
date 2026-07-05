@@ -6,10 +6,19 @@ import {
 } from '$lib/components/app/media/file-data/mediaFileProfiles';
 import { mediaFileInfo, mediaFileSize } from '$lib/components/app/media/file-data/mediaFileSize';
 import {
+	episodeParts,
+	fileName,
+	relativePath
+} from '$lib/components/app/media/files/mediaFilePath';
+import {
 	audioInfo,
 	matchToken,
 	qualityInfo
 } from '$lib/components/app/media/files/mediaFileParsing';
+import {
+	mediaFileUpgradeInfo,
+	type MediaFileUpgradeInfo
+} from '$lib/components/app/media/files/mediaFileUpgradeState';
 import type { MediaItem } from '$lib/settings/types';
 type MediaFileTrack = NonNullable<NonNullable<MediaItem['files']>[number]['tracks']>[number];
 type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['chapters']>[number];
@@ -34,6 +43,7 @@ export interface MediaFileRow {
 	tracks: MediaFileTrack[];
 	chapters: MediaFileChapter[];
 	subtitleSatisfaction?: MediaFileSubtitleSatisfaction;
+	upgrade: MediaFileUpgradeInfo;
 	expectedLanguages: string[];
 	removeNonEnabledLanguages: boolean;
 	score: number;
@@ -118,6 +128,8 @@ export function fileRow(
 	const sizeBytes = info?.sizeBytes;
 	const profile = fileProfileSettings(item, qualityProfiles);
 	const exists = info?.status !== 'missing';
+	const quality = qualityInfo(name);
+	const upgrade = mediaFileUpgradeInfo(exists, quality, formats, profile.profile);
 	return {
 		key: path,
 		path,
@@ -129,11 +141,12 @@ export function fileRow(
 		size: mediaFileSize(item, path),
 		sizeBytes,
 		languages: mediaFileLanguageInfo(name),
-		quality: qualityInfo(name),
+		quality,
 		formats,
 		tracks: info?.tracks ?? [],
 		chapters: info?.chapters ?? [],
 		subtitleSatisfaction: info?.subtitleSatisfaction,
+		upgrade,
 		expectedLanguages: profile.expectedLanguages,
 		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
 		score: 0
@@ -167,29 +180,12 @@ export function missingRow(
 			matchedLanguages: [],
 			missingLanguages: []
 		},
+		upgrade: { state: 'missing', label: 'Missing', reasons: ['File is missing'] },
 		expectedLanguages: [],
 		removeNonEnabledLanguages: false,
 		score: 0
 	};
 }
-function fileName(path: string) {
-	return path.replaceAll('\\', '/').split('/').filter(Boolean).pop() ?? path;
-}
-function relativePath(root: string | undefined, path: string) {
-	if (!root) return fileName(path);
-	const normalizedRoot = root.replaceAll('\\', '/').replace(/\/+$/, '');
-	const normalizedPath = path.replaceAll('\\', '/');
-	return normalizedPath.startsWith(`${normalizedRoot}/`)
-		? normalizedPath.slice(normalizedRoot.length + 1)
-		: fileName(path);
-}
-
-function episodeParts(path: string) {
-	const match = /s(\d{1,2})e(\d{1,3})/i.exec(path);
-	if (!match) return {};
-	return { seasonNumber: Number(match[1]), episodeNumber: Number(match[2]) };
-}
-
 export function episodeKey(season?: number, episode?: number) {
 	return `${season ?? 0}:${episode ?? 0}`;
 }
