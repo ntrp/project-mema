@@ -41,6 +41,22 @@ func (e *Engine) Test(ctx context.Context, config engine.Config) engine.TestResu
 }
 
 func (e *Engine) Search(ctx context.Context, config engine.Config, query string, mediaType string) ([]engine.Release, error) {
+	releases, err := e.Recent(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+	query = strings.ToLower(strings.TrimSpace(query))
+	filtered := releases[:0]
+	for _, release := range releases {
+		if query != "" && !strings.Contains(strings.ToLower(release.Title), query) {
+			continue
+		}
+		filtered = append(filtered, release)
+	}
+	return filtered, nil
+}
+
+func (e *Engine) Recent(ctx context.Context, config engine.Config) ([]engine.Release, error) {
 	req, err := engine.Get(ctx, config.BaseURL)
 	if err != nil {
 		return nil, err
@@ -61,14 +77,10 @@ func (e *Engine) Search(ctx context.Context, config engine.Config, query string,
 	if err != nil {
 		return nil, err
 	}
-	query = strings.ToLower(strings.TrimSpace(query))
 	releases := make([]engine.Release, 0, len(items))
 	for _, item := range items {
 		release := item.toRelease(config)
 		if release.DownloadURL == "" || release.Title == "" {
-			continue
-		}
-		if query != "" && !strings.Contains(strings.ToLower(release.Title), query) {
 			continue
 		}
 		releases = append(releases, release)

@@ -62,6 +62,16 @@ func (s *Service) Search(ctx context.Context, config Config, query string, media
 	return nil, fmt.Errorf("unsupported indexer protocol %q", config.Protocol)
 }
 
+func (s *Service) Recent(ctx context.Context, config Config) ([]Release, error) {
+	if usesCardigannDefinition(config) {
+		return s.cardigann.Recent(ctx, config)
+	}
+	if indexer, ok := s.custom.EngineFor(config); ok {
+		return indexer.Recent(ctx, config)
+	}
+	return nil, fmt.Errorf("unsupported indexer protocol %q", config.Protocol)
+}
+
 func usesCardigannDefinition(config Config) bool {
 	if config.DefinitionID == "" || strings.HasPrefix(config.DefinitionID, "generic-") {
 		return false

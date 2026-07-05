@@ -22,3 +22,7 @@ func (e *Engine) Test(ctx context.Context, config engine.Config) engine.TestResu
 func (e *Engine) Search(ctx context.Context, config engine.Config, query string, mediaType string) ([]engine.Release, error) {
 	return e.search(ctx, config, query, mediaType)
 }
+
+func (e *Engine) Recent(ctx context.Context, config engine.Config) ([]engine.Release, error) {
+	return e.recent(ctx, config)
+}

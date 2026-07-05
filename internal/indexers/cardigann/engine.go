@@ -27,6 +27,10 @@ func (e *Engine) Search(ctx context.Context, config engine.Config, query string,
 	return e.searchCardigann(ctx, config, query, mediaType)
 }
 
+func (e *Engine) Recent(ctx context.Context, config engine.Config) ([]engine.Release, error) {
+	return e.searchCardigann(ctx, config, "", "")
+}
+
 func (e *Engine) Test(ctx context.Context, config engine.Config) engine.TestResult {
 	return e.testCardigann(ctx, config)
 }

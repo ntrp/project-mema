@@ -72,6 +72,41 @@ func TestSCNIntegrations001TorznabSearchMapsReleaseFeed(t *testing.T) {
 	}
 }
 
+func TestSCNIntegrations001TorznabRecentUsesRSSRequestWithoutQuery(t *testing.T) {
+	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
+		if got := r.URL.Query().Get("t"); got != "search" {
+			t.Fatalf("recent type = %q, want search", got)
+		}
+		if got := r.URL.Query().Get("q"); got != "" {
+			t.Fatalf("recent query = %q, want empty", got)
+		}
+		if got := r.URL.Query().Get("cat"); got != "2000,2010" {
+			t.Fatalf("categories = %q", got)
+		}
+		body := `<rss><channel><item>
+			<title>Scenario.Movie.2026.1080p.WEBDL</title>
+			<link>https://indexer.local/download/1</link>
+			<guid>rss-guid-1</guid>
+		</item></channel></rss>`
+		return response(http.StatusOK, body), nil
+	})
+
+	releases, err := NewService(client).Recent(context.Background(), Config{
+		ID:         "idx-1",
+		Name:       "Local Torznab",
+		Protocol:   "torrent",
+		BaseURL:    "http://indexer.local/api",
+		APIKey:     stringPtr("secret"),
+		Categories: []int32{2000, 2010},
+	})
+	if err != nil {
+		t.Fatalf("recent failed: %v", err)
+	}
+	if len(releases) != 1 || releases[0].GUID != "rss-guid-1" {
+		t.Fatalf("releases = %#v", releases)
+	}
+}
+
 func TestSCNIntegrations001TorznabSearchReturnsStatusErrorWithRetryAfter(t *testing.T) {
 	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
 		resp := response(http.StatusTooManyRequests, "rate limited")

@@ -18,6 +18,7 @@ web/playwright-report/
 # Local verification artifacts
 .playwright-cli/
 output/playwright/
+.research/
 
 # Local config
 .env

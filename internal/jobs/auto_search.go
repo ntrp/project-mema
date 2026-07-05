@@ -25,16 +25,10 @@ func (AutoSearchDownloadArgs) Kind() string {
 	return "media.auto_search_download"
 }
 
-type MissingMediaRetryArgs struct{}
+type RSSSyncArgs struct{}
 
-func (MissingMediaRetryArgs) Kind() string {
-	return "media.missing_media_retry"
-}
-
-type WantedRSSSyncArgs struct{}
-
-func (WantedRSSSyncArgs) Kind() string {
-	return "media.wanted_rss_sync"
+func (RSSSyncArgs) Kind() string {
+	return "media.rss_sync"
 }
 
 type AutoSearchDownloadWorker struct {

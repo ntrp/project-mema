@@ -83,14 +83,11 @@ func TestSCNSystem008JobArgumentKindsAreStable(t *testing.T) {
 	if (AutoSearchDownloadArgs{}).Kind() != "media.auto_search_download" {
 		t.Fatalf("auto search kind = %q", (AutoSearchDownloadArgs{}).Kind())
 	}
-	if (WantedRSSSyncArgs{}).Kind() != "media.wanted_rss_sync" {
-		t.Fatalf("wanted rss sync kind = %q", (WantedRSSSyncArgs{}).Kind())
+	if (RSSSyncArgs{}).Kind() != "media.rss_sync" {
+		t.Fatalf("rss sync kind = %q", (RSSSyncArgs{}).Kind())
 	}
 	if (GrabReleaseArgs{}).Kind() != "media.grab_release" {
 		t.Fatalf("grab release kind = %q", (GrabReleaseArgs{}).Kind())
-	}
-	if (MissingMediaRetryArgs{}).Kind() != "media.missing_media_retry" {
-		t.Fatalf("missing retry kind = %q", (MissingMediaRetryArgs{}).Kind())
 	}
 	if (DownloadActivitySyncArgs{}).Kind() != "download.activity_sync" {
 		t.Fatalf("activity sync kind = %q", (DownloadActivitySyncArgs{}).Kind())
