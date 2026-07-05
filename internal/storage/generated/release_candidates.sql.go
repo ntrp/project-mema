@@ -17,6 +17,8 @@ const addReleaseCandidate = `-- name: AddReleaseCandidate :exec
 insert into app.media_release_candidates (
     id,
     media_item_id,
+    season_id,
+    episode_id,
     indexer_id,
     indexer_name,
     indexer_protocol,
@@ -50,13 +52,17 @@ values (
     $14,
     $15,
     $16,
-    $17
+    $17,
+    $18,
+    $19
 )
 `
 
 type AddReleaseCandidateParams struct {
 	ID               uuid.UUID
 	MediaItemID      uuid.UUID
+	SeasonID         *uuid.UUID
+	EpisodeID        *uuid.UUID
 	IndexerID        *uuid.UUID
 	IndexerName      string
 	IndexerProtocol  string
@@ -78,6 +84,8 @@ func (q *Queries) AddReleaseCandidate(ctx context.Context, arg AddReleaseCandida
 	_, err := q.db.Exec(ctx, addReleaseCandidate,
 		arg.ID,
 		arg.MediaItemID,
+		arg.SeasonID,
+		arg.EpisodeID,
 		arg.IndexerID,
 		arg.IndexerName,
 		arg.IndexerProtocol,
@@ -136,6 +144,8 @@ func (q *Queries) ClearReleaseSearchErrorsForMedia(ctx context.Context, mediaIte
 const getReleaseCandidate = `-- name: GetReleaseCandidate :one
 select id,
     media_item_id,
+    season_id,
+    episode_id,
     indexer_id,
     indexer_name,
     indexer_type,
@@ -170,6 +180,8 @@ func (q *Queries) GetReleaseCandidate(ctx context.Context, arg GetReleaseCandida
 	err := row.Scan(
 		&i.ID,
 		&i.MediaItemID,
+		&i.SeasonID,
+		&i.EpisodeID,
 		&i.IndexerID,
 		&i.IndexerName,
 		&i.IndexerType,
@@ -195,6 +207,8 @@ func (q *Queries) GetReleaseCandidate(ctx context.Context, arg GetReleaseCandida
 const listReleaseCandidates = `-- name: ListReleaseCandidates :many
 select id,
     media_item_id,
+    season_id,
+    episode_id,
     indexer_id,
     indexer_name,
     indexer_type,
@@ -230,6 +244,8 @@ func (q *Queries) ListReleaseCandidates(ctx context.Context, mediaItemID uuid.UU
 		if err := rows.Scan(
 			&i.ID,
 			&i.MediaItemID,
+			&i.SeasonID,
+			&i.EpisodeID,
 			&i.IndexerID,
 			&i.IndexerName,
 			&i.IndexerType,

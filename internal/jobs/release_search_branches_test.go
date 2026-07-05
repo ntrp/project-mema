@@ -3,6 +3,8 @@ package jobs
 import (
 	"testing"
 
+	"github.com/google/uuid"
+
 	"media-manager/internal/decisions"
 	"media-manager/internal/storage"
 )
@@ -24,6 +26,37 @@ func TestReleaseSearchBranchesExpandsMonitoredSeasons(t *testing.T) {
 	}
 	if branches[0].criteria.Kind != "season" || *branches[0].criteria.SeasonNumber != 1 {
 		t.Fatalf("branch criteria = %#v, want season 1", branches[0].criteria)
+	}
+}
+
+func TestReleaseSearchBranchesCarriesPersistedSeasonAndEpisodeIDs(t *testing.T) {
+	seasonID := uuid.New()
+	episodeID := uuid.New()
+	item := storage.MediaItem{
+		Type:  "serie",
+		Title: "The Show",
+		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
+			Seasons: []storage.MediaSeason{{
+				ID:           &seasonID,
+				Name:         "Season 1",
+				SeasonNumber: 1,
+				Monitored:    false,
+				Episodes: []storage.MediaEpisode{{
+					ID:            &episodeID,
+					Name:          "Pilot",
+					EpisodeNumber: 1,
+					Monitored:     true,
+				}},
+			}},
+		},
+	}
+	branches := releaseSearchBranches(item, decisions.SearchCriteriaForQuery(item, ""), "")
+	if len(branches) != 1 {
+		t.Fatalf("len(branches) = %d, want 1", len(branches))
+	}
+	criteria := branches[0].criteria
+	if criteria.SeasonID == nil || *criteria.SeasonID != seasonID || criteria.EpisodeID == nil || *criteria.EpisodeID != episodeID {
+		t.Fatalf("expected persisted ids in criteria, got %#v", criteria)
 	}
 }
 

@@ -1,6 +1,10 @@
 package storage
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/google/uuid"
+)
 
 type MediaMetadataSnapshot struct {
 	CollectionID     *string
@@ -30,6 +34,7 @@ type MediaFact struct {
 }
 
 type MediaSeason struct {
+	ID           *uuid.UUID     `json:"id,omitempty"`
 	Name         string         `json:"name"`
 	SeasonNumber int32          `json:"seasonNumber,omitempty"`
 	EpisodeCount *int32         `json:"episodeCount,omitempty"`
@@ -40,12 +45,13 @@ type MediaSeason struct {
 }
 
 type MediaEpisode struct {
-	Name          string  `json:"name"`
-	EpisodeNumber int32   `json:"episodeNumber"`
-	Overview      *string `json:"overview,omitempty"`
-	AirDate       *string `json:"airDate,omitempty"`
-	StillPath     *string `json:"stillPath,omitempty"`
-	Monitored     bool    `json:"monitored"`
+	ID            *uuid.UUID `json:"id,omitempty"`
+	Name          string     `json:"name"`
+	EpisodeNumber int32      `json:"episodeNumber"`
+	Overview      *string    `json:"overview,omitempty"`
+	AirDate       *string    `json:"airDate,omitempty"`
+	StillPath     *string    `json:"stillPath,omitempty"`
+	Monitored     bool       `json:"monitored"`
 }
 
 type MediaPerson struct {

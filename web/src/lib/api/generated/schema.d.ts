@@ -2693,6 +2693,10 @@ export interface components {
 			scoreContributors: components['schemas']['ReleaseScoreContributor'][];
 			languages: string[];
 			matchedMedia: string;
+			/** Format: uuid */
+			matchedSeasonId?: string;
+			/** Format: uuid */
+			matchedEpisodeId?: string;
 			/** Format: int32 */
 			customFormatScore: number;
 			customFormatContributors: components['schemas']['ReleaseScoreContributor'][];

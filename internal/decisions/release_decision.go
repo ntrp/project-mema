@@ -208,6 +208,8 @@ func EvaluateReleaseCandidateInputMatchWithLanguageContext(
 func releaseCandidateFromInput(release storage.ReleaseCandidateInput) storage.ReleaseCandidate {
 	return storage.ReleaseCandidate{
 		MediaItemID:      release.MediaItemID,
+		SeasonID:         release.SeasonID,
+		EpisodeID:        release.EpisodeID,
 		IndexerID:        release.IndexerID,
 		IndexerName:      release.IndexerName,
 		IndexerProtocol:  release.IndexerProtocol,

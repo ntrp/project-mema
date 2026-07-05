@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"media-manager/internal/storage"
 )
 
@@ -22,6 +24,8 @@ type ReleaseMatch struct {
 	CustomFormatContributors []ReleaseScoreContributor
 	LanguageContributors     []ReleaseScoreContributor
 	RankContributors         []ReleaseScoreContributor
+	MatchedSeasonID          *uuid.UUID
+	MatchedEpisodeID         *uuid.UUID
 }
 
 type ReleaseScoreContributor struct {
@@ -33,6 +37,8 @@ type ReleaseSearchCriteria struct {
 	Kind          string
 	Title         string
 	Year          *int32
+	SeasonID      *uuid.UUID
+	EpisodeID     *uuid.UUID
 	SeasonNumber  *int32
 	EpisodeNumber *int32
 }
@@ -122,7 +128,7 @@ func EvaluateReleaseMatchWithLanguageContext(
 		Formats:   formats,
 		Languages: languages,
 	}
-	return evaluateParsedRelease(context, criteria, parsed, releaseMeta{
+	match := evaluateParsedRelease(context, criteria, parsed, releaseMeta{
 		Title:           release.Title,
 		IndexerProtocol: release.IndexerProtocol,
 		SizeBytes:       release.SizeBytes,
@@ -130,6 +136,11 @@ func EvaluateReleaseMatchWithLanguageContext(
 		Peers:           release.Peers,
 		PublishedAt:     release.PublishedAt,
 	})
+	if match.Severity != "error" {
+		match.MatchedSeasonID = criteria.SeasonID
+		match.MatchedEpisodeID = criteria.EpisodeID
+	}
+	return match
 }
 
 type ReleaseEvaluationContext struct {

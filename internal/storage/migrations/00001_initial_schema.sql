@@ -699,6 +699,8 @@ create index if not exists idx_download_activity_created
 create table if not exists app.media_release_candidates (
     id uuid primary key,
     media_item_id uuid not null references app.media_items(id) on delete cascade,
+    season_id uuid references app.media_seasons(id) on delete set null,
+    episode_id uuid references app.media_episodes(id) on delete set null,
     indexer_id uuid,
     indexer_name text not null,
     indexer_type text not null default 'torznab',
@@ -721,6 +723,10 @@ create table if not exists app.media_release_candidates (
 
 create index if not exists idx_media_release_candidates_media_item
     on app.media_release_candidates (media_item_id, created_at desc);
+
+create index if not exists idx_media_release_candidates_episode
+    on app.media_release_candidates (episode_id)
+    where episode_id is not null;
 
 create table if not exists app.release_blocklist (
     id uuid primary key,

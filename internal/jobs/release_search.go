@@ -171,6 +171,8 @@ func releaseCandidateInput(
 	}
 	return storage.ReleaseCandidateInput{
 		MediaItemID:      mediaItemID,
+		SeasonID:         criteria.SeasonID,
+		EpisodeID:        criteria.EpisodeID,
 		IndexerID:        indexerID,
 		IndexerName:      release.IndexerName,
 		IndexerProtocol:  release.IndexerProtocol,

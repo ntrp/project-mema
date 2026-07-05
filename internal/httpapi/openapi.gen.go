@@ -2367,7 +2367,9 @@ type ReleaseCandidateMatch struct {
 	Details                  []string                      `json:"details"`
 	LanguageContributors     []ReleaseScoreContributor     `json:"languageContributors"`
 	Languages                []string                      `json:"languages"`
+	MatchedEpisodeId         *openapi_types.UUID           `json:"matchedEpisodeId,omitempty"`
 	MatchedMedia             string                        `json:"matchedMedia"`
+	MatchedSeasonId          *openapi_types.UUID           `json:"matchedSeasonId,omitempty"`
 	Parsed                   ParsedReleaseMetadata         `json:"parsed"`
 	Quality                  string                        `json:"quality"`
 	QualityId                string                        `json:"qualityId"`

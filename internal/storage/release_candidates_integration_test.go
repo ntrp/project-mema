@@ -123,6 +123,58 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 	}
 }
 
+func TestReleaseCandidateStoresPersistedEpisodeReference(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:      "serie",
+		Title:     "Episode Link " + uuid.NewString(),
+		Monitored: true,
+		MediaMetadataSnapshot: MediaMetadataSnapshot{
+			Seasons: []MediaSeason{{
+				Name:         "Season 1",
+				SeasonNumber: 1,
+				Monitored:    false,
+				Episodes: []MediaEpisode{{
+					Name:          "Pilot",
+					EpisodeNumber: 1,
+					Monitored:     true,
+				}},
+			}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seasons, err := store.ListMediaSeriesSeasons(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	seasonID := seasons[0].ID
+	episodeID := seasons[0].Episodes[0].ID
+	if err := store.ReplaceReleaseSearchResults(ctx, item.ID, []ReleaseCandidateInput{{
+		SeasonID:         &seasonID,
+		EpisodeID:        &episodeID,
+		IndexerName:      "Episode Indexer",
+		IndexerProtocol:  "torrent",
+		Title:            "Episode.Link.S01E01.1080p.WEB-DL",
+		DownloadURL:      "http://indexer.test/download/episode-link",
+		SizeBytes:        4_000_000_000,
+		SearchKind:       "episode",
+		RequestedSeason:  int32Ptr(1),
+		RequestedEpisode: int32Ptr(1),
+	}}, nil); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := store.ListReleaseSearchResults(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	release := snapshot.Releases[0]
+	if release.SeasonID == nil || *release.SeasonID != seasonID || release.EpisodeID == nil || *release.EpisodeID != episodeID {
+		t.Fatalf("expected persisted episode reference, got %#v", release)
+	}
+}
+
 func TestScenarioSCNMedia011ReleaseBlocklistMatchesAndExpires(t *testing.T) {
 	ctx, store := testDBStore(t)
 	item, err := store.CreateMediaItem(ctx, MediaItemInput{

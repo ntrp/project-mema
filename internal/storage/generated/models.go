@@ -328,6 +328,8 @@ type AppMediaProfileQuality struct {
 type AppMediaReleaseCandidate struct {
 	ID               uuid.UUID
 	MediaItemID      uuid.UUID
+	SeasonID         *uuid.UUID
+	EpisodeID        *uuid.UUID
 	IndexerID        *uuid.UUID
 	IndexerName      string
 	IndexerType      string

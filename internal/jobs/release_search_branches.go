@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"media-manager/internal/decisions"
 	"media-manager/internal/storage"
@@ -29,10 +32,11 @@ func releaseSearchBranches(
 	if len(seasons) > 0 {
 		branches := make([]releaseSearchBranch, 0, len(seasons))
 		for _, season := range seasons {
-			seasonNumber := season
+			seasonNumber := season.number
 			seasonCriteria := decisions.ReleaseSearchCriteria{
 				Kind:         "season",
 				Title:        item.Title,
+				SeasonID:     season.id,
 				SeasonNumber: &seasonNumber,
 			}
 			branches = append(branches, releaseSearchBranch{
@@ -53,6 +57,8 @@ func releaseSearchBranches(
 		episodeCriteria := decisions.ReleaseSearchCriteria{
 			Kind:          "episode",
 			Title:         item.Title,
+			SeasonID:      episode.seasonID,
+			EpisodeID:     episode.episodeID,
 			SeasonNumber:  &seasonNumber,
 			EpisodeNumber: &episodeNumber,
 		}
@@ -65,22 +71,29 @@ func releaseSearchBranches(
 	return branches
 }
 
-func monitoredSeasons(seasons []storage.MediaSeason) []int32 {
-	values := []int32{}
+type monitoredSeason struct {
+	id     *uuid.UUID
+	number int32
+}
+
+func monitoredSeasons(seasons []storage.MediaSeason) []monitoredSeason {
+	values := []monitoredSeason{}
 	for _, season := range seasons {
 		number, ok := seasonNumber(season)
 		if !ok || !season.Monitored {
 			continue
 		}
-		values = append(values, number)
+		values = append(values, monitoredSeason{id: season.ID, number: number})
 	}
 	return values
 }
 
 type monitoredEpisode struct {
-	season  int32
-	episode int32
-	title   string
+	seasonID  *uuid.UUID
+	episodeID *uuid.UUID
+	season    int32
+	episode   int32
+	title     string
 }
 
 func monitoredAiredEpisodes(seasons []storage.MediaSeason) []monitoredEpisode {
@@ -95,9 +108,11 @@ func monitoredAiredEpisodes(seasons []storage.MediaSeason) []monitoredEpisode {
 				continue
 			}
 			values = append(values, monitoredEpisode{
-				season:  number,
-				episode: episode.EpisodeNumber,
-				title:   episode.Name,
+				seasonID:  season.ID,
+				episodeID: episode.ID,
+				season:    number,
+				episode:   episode.EpisodeNumber,
+				title:     episode.Name,
 			})
 		}
 	}
@@ -105,6 +120,12 @@ func monitoredAiredEpisodes(seasons []storage.MediaSeason) []monitoredEpisode {
 }
 
 func seasonNumber(season storage.MediaSeason) (int32, bool) {
+	if season.SeasonNumber != 0 {
+		return season.SeasonNumber, true
+	}
+	if strings.EqualFold(strings.TrimSpace(season.Name), "specials") {
+		return 0, true
+	}
 	match := seasonNumberPattern.FindString(season.Name)
 	if match == "" {
 		return 0, false

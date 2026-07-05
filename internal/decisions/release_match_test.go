@@ -22,10 +22,14 @@ func TestEvaluateReleaseMatchRejectsWrongMovieYear(t *testing.T) {
 func TestEvaluateReleaseMatchAcceptsRequestedEpisode(t *testing.T) {
 	season := int32(1)
 	episode := int32(2)
+	seasonID := uuid.New()
+	episodeID := uuid.New()
 	match := EvaluateReleaseMatch(
 		storage.MediaItem{Type: "serie", Title: "The Show"},
 		storage.ReleaseCandidate{
 			Title:            "The.Show.S01E02.1080p.WEBDL",
+			SeasonID:         &seasonID,
+			EpisodeID:        &episodeID,
 			SearchKind:       "episode",
 			RequestedSeason:  &season,
 			RequestedEpisode: &episode,
@@ -33,6 +37,9 @@ func TestEvaluateReleaseMatchAcceptsRequestedEpisode(t *testing.T) {
 	)
 	if match.Severity != "info" {
 		t.Fatalf("expected info, got %q: %v", match.Severity, match.Details)
+	}
+	if match.MatchedSeasonID == nil || *match.MatchedSeasonID != seasonID || match.MatchedEpisodeID == nil || *match.MatchedEpisodeID != episodeID {
+		t.Fatalf("expected matched persisted ids, got %#v", match)
 	}
 }
 

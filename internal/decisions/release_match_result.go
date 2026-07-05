@@ -11,6 +11,8 @@ func releaseCriteria(item storage.MediaItem, release storage.ReleaseCandidate) R
 	if release.SearchKind != "" {
 		criteria.Kind = release.SearchKind
 	}
+	criteria.SeasonID = release.SeasonID
+	criteria.EpisodeID = release.EpisodeID
 	criteria.SeasonNumber = release.RequestedSeason
 	criteria.EpisodeNumber = release.RequestedEpisode
 	return criteria

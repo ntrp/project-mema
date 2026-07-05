@@ -76,6 +76,8 @@ func releaseCandidateResponseWithBlockAndGrabReason(
 			ScoreContributors: releaseScoreContributorResponses(match.ScoreContributors),
 			Languages:         match.Languages,
 			MatchedMedia:      match.MatchedMedia,
+			MatchedSeasonId:   optionalOpenAPIUUID(match.MatchedSeasonID),
+			MatchedEpisodeId:  optionalOpenAPIUUID(match.MatchedEpisodeID),
 			CustomFormatScore: match.CustomFormatScore,
 			CustomFormatContributors: releaseScoreContributorResponses(
 				match.CustomFormatContributors,

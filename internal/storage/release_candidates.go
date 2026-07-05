@@ -52,6 +52,8 @@ func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID
 	return storagegen.New(q).AddReleaseCandidate(ctx, storagegen.AddReleaseCandidateParams{
 		ID:               uuid.New(),
 		MediaItemID:      mediaItemID,
+		SeasonID:         release.SeasonID,
+		EpisodeID:        release.EpisodeID,
 		IndexerID:        release.IndexerID,
 		IndexerName:      release.IndexerName,
 		IndexerProtocol:  release.IndexerProtocol,
@@ -121,6 +123,8 @@ func releaseCandidateFromRow(row storagegen.AppMediaReleaseCandidate) (ReleaseCa
 	release := ReleaseCandidate{
 		ID:               row.ID,
 		MediaItemID:      row.MediaItemID,
+		SeasonID:         row.SeasonID,
+		EpisodeID:        row.EpisodeID,
 		IndexerID:        row.IndexerID,
 		IndexerName:      row.IndexerName,
 		IndexerProtocol:  row.IndexerProtocol,

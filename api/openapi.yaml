@@ -5675,6 +5675,12 @@ components:
             type: string
         matchedMedia:
           type: string
+        matchedSeasonId:
+          type: string
+          format: uuid
+        matchedEpisodeId:
+          type: string
+          format: uuid
         customFormatScore:
           type: integer
           format: int32

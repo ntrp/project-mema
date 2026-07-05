@@ -10,6 +10,8 @@ where media_item_id = $1;
 insert into app.media_release_candidates (
     id,
     media_item_id,
+    season_id,
+    episode_id,
     indexer_id,
     indexer_name,
     indexer_protocol,
@@ -29,6 +31,8 @@ insert into app.media_release_candidates (
 values (
     sqlc.arg(id),
     sqlc.arg(media_item_id),
+    sqlc.narg(season_id),
+    sqlc.narg(episode_id),
     sqlc.narg(indexer_id),
     sqlc.arg(indexer_name),
     sqlc.arg(indexer_protocol),
@@ -53,6 +57,8 @@ values (sqlc.arg(id), sqlc.arg(media_item_id), sqlc.arg(message));
 -- name: GetReleaseCandidate :one
 select id,
     media_item_id,
+    season_id,
+    episode_id,
     indexer_id,
     indexer_name,
     indexer_type,
@@ -78,6 +84,8 @@ where id = sqlc.arg(id)
 -- name: ListReleaseCandidates :many
 select id,
     media_item_id,
+    season_id,
+    episode_id,
     indexer_id,
     indexer_name,
     indexer_type,

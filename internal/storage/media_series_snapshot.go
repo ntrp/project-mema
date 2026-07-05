@@ -215,6 +215,7 @@ func mediaSeasonsFromSeriesRows(seasons []MediaSeriesSeason) []MediaSeason {
 	items := make([]MediaSeason, 0, len(seasons))
 	for _, season := range seasons {
 		items = append(items, MediaSeason{
+			ID:           &season.ID,
 			Name:         season.Name,
 			SeasonNumber: season.SeasonNumber,
 			EpisodeCount: season.EpisodeCount,
@@ -231,6 +232,7 @@ func mediaEpisodesFromSeriesRows(episodes []MediaSeriesEpisode) []MediaEpisode {
 	items := make([]MediaEpisode, 0, len(episodes))
 	for _, episode := range episodes {
 		items = append(items, MediaEpisode{
+			ID:            &episode.ID,
 			Name:          episode.Name,
 			EpisodeNumber: episode.EpisodeNumber,
 			Overview:      episode.Overview,
