@@ -28,6 +28,7 @@ type MediaItem struct {
 	MediaFolderPath     *string
 	FilePaths           []string
 	MetadataFilePaths   []string
+	SubtitleLanguages   []MediaProfileSubtitleLanguage
 	Tags                []string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time

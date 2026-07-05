@@ -45,7 +45,8 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 			preferredProtocol: 'usenet' as const,
 			seriesPackPreference: 'preferPacks' as const,
 			removeNonEnabledLanguages: true,
-			targetLanguageScores: [{ languageId: 'japanese', score: 100, required: true }]
+			targetLanguageScores: [{ languageId: 'japanese', score: 100, required: true }],
+			subtitleLanguages: [{ languageId: 'english', required: false, subtitleType: 'any' as const }]
 		};
 		const { body } = render(MediaProfileRules, {
 			props: {
@@ -61,6 +62,7 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 		expect(body).toContain('Prefer Usenet');
 		expect(body).toContain('Prefer season packs');
 		expect(body).toContain('Target languages');
+		expect(body).toContain('Subtitle languages');
 		expect(body).toContain('Japanese');
 		expect(body).toContain('Remove audio tracks that are not wanted');
 	});

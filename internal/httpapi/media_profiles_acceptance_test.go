@@ -20,6 +20,9 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 	if created.Name != "Scenario Profile" || len(created.QualityIds) != len(qualityIDs) {
 		t.Fatalf("created media profile = %#v", created)
 	}
+	if len(created.SubtitleLanguages) != 1 || created.SubtitleLanguages[0].SubtitleType != MediaProfileSubtitleLanguageSubtitleTypeAny {
+		t.Fatalf("created media profile subtitles = %#v", created.SubtitleLanguages)
+	}
 
 	var updated MediaProfile
 	client.doJSON(t, http.MethodPut, "/settings/profiles/"+created.Id, mediaProfileRequest("Updated Scenario Profile", qualityIDs), http.StatusOK, &updated)
@@ -63,13 +66,18 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		UpgradeUntilCustomFormatScore:     50,
 		MinimumCustomFormatScoreIncrement: 1,
 		RemoveNonEnabledLanguages:         true,
-		PreferredProtocol:                 Usenet,
+		PreferredProtocol:                 MediaProfileRequestPreferredProtocolUsenet,
 		SeriesPackPreference:              MediaProfileRequestSeriesPackPreferencePreferPacks,
 		TargetLanguages:                   []string{"en"},
 		TargetLanguageScores: []MediaProfileLanguageScore{{
 			LanguageId: "en",
 			Score:      100,
 			Required:   true,
+		}},
+		SubtitleLanguages: []MediaProfileSubtitleLanguage{{
+			LanguageId:   "en",
+			Required:     true,
+			SubtitleType: MediaProfileSubtitleLanguageSubtitleTypeAny,
 		}},
 		CustomFormatScores: []MediaProfileCustomFormatScore{},
 	}

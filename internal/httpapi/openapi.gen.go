@@ -436,6 +436,27 @@ func (e MediaFilePreviewMode) Valid() bool {
 	}
 }
 
+// Defines values for MediaFileSubtitleSatisfactionState.
+const (
+	MediaFileSubtitleSatisfactionStateIgnored   MediaFileSubtitleSatisfactionState = "ignored"
+	MediaFileSubtitleSatisfactionStateMissing   MediaFileSubtitleSatisfactionState = "missing"
+	MediaFileSubtitleSatisfactionStateSatisfied MediaFileSubtitleSatisfactionState = "satisfied"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileSubtitleSatisfactionState enum.
+func (e MediaFileSubtitleSatisfactionState) Valid() bool {
+	switch e {
+	case MediaFileSubtitleSatisfactionStateIgnored:
+		return true
+	case MediaFileSubtitleSatisfactionStateMissing:
+		return true
+	case MediaFileSubtitleSatisfactionStateSatisfied:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaFileTrackType.
 const (
 	Audio    MediaFileTrackType = "audio"
@@ -459,19 +480,19 @@ func (e MediaFileTrackType) Valid() bool {
 
 // Defines values for MediaItemStatus.
 const (
-	Downloaded  MediaItemStatus = "downloaded"
-	Downloading MediaItemStatus = "downloading"
-	Missing     MediaItemStatus = "missing"
+	MediaItemStatusDownloaded  MediaItemStatus = "downloaded"
+	MediaItemStatusDownloading MediaItemStatus = "downloading"
+	MediaItemStatusMissing     MediaItemStatus = "missing"
 )
 
 // Valid indicates whether the value is a known member of the MediaItemStatus enum.
 func (e MediaItemStatus) Valid() bool {
 	switch e {
-	case Downloaded:
+	case MediaItemStatusDownloaded:
 		return true
-	case Downloading:
+	case MediaItemStatusDownloading:
 		return true
-	case Missing:
+	case MediaItemStatusMissing:
 		return true
 	default:
 		return false
@@ -558,19 +579,19 @@ func (e MediaProfileSeriesPackPreference) Valid() bool {
 
 // Defines values for MediaProfileRequestPreferredProtocol.
 const (
-	Any     MediaProfileRequestPreferredProtocol = "any"
-	Torrent MediaProfileRequestPreferredProtocol = "torrent"
-	Usenet  MediaProfileRequestPreferredProtocol = "usenet"
+	MediaProfileRequestPreferredProtocolAny     MediaProfileRequestPreferredProtocol = "any"
+	MediaProfileRequestPreferredProtocolTorrent MediaProfileRequestPreferredProtocol = "torrent"
+	MediaProfileRequestPreferredProtocolUsenet  MediaProfileRequestPreferredProtocol = "usenet"
 )
 
 // Valid indicates whether the value is a known member of the MediaProfileRequestPreferredProtocol enum.
 func (e MediaProfileRequestPreferredProtocol) Valid() bool {
 	switch e {
-	case Any:
+	case MediaProfileRequestPreferredProtocolAny:
 		return true
-	case Torrent:
+	case MediaProfileRequestPreferredProtocolTorrent:
 		return true
-	case Usenet:
+	case MediaProfileRequestPreferredProtocolUsenet:
 		return true
 	default:
 		return false
@@ -592,6 +613,27 @@ func (e MediaProfileRequestSeriesPackPreference) Valid() bool {
 	case MediaProfileRequestSeriesPackPreferencePreferEpisodes:
 		return true
 	case MediaProfileRequestSeriesPackPreferencePreferPacks:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaProfileSubtitleLanguageSubtitleType.
+const (
+	MediaProfileSubtitleLanguageSubtitleTypeAny      MediaProfileSubtitleLanguageSubtitleType = "any"
+	MediaProfileSubtitleLanguageSubtitleTypeEmbedded MediaProfileSubtitleLanguageSubtitleType = "embedded"
+	MediaProfileSubtitleLanguageSubtitleTypeExternal MediaProfileSubtitleLanguageSubtitleType = "external"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileSubtitleLanguageSubtitleType enum.
+func (e MediaProfileSubtitleLanguageSubtitleType) Valid() bool {
+	switch e {
+	case MediaProfileSubtitleLanguageSubtitleTypeAny:
+		return true
+	case MediaProfileSubtitleLanguageSubtitleTypeEmbedded:
+		return true
+	case MediaProfileSubtitleLanguageSubtitleTypeExternal:
 		return true
 	default:
 		return false
@@ -1678,10 +1720,11 @@ type MediaFileDeleteRequest struct {
 
 // MediaFileInfo defines model for MediaFileInfo.
 type MediaFileInfo struct {
-	Chapters  *[]MediaFileChapter `json:"chapters,omitempty"`
-	Path      string              `json:"path"`
-	SizeBytes *int64              `json:"sizeBytes,omitempty"`
-	Tracks    *[]MediaFileTrack   `json:"tracks,omitempty"`
+	Chapters             *[]MediaFileChapter            `json:"chapters,omitempty"`
+	Path                 string                         `json:"path"`
+	SizeBytes            *int64                         `json:"sizeBytes,omitempty"`
+	SubtitleSatisfaction *MediaFileSubtitleSatisfaction `json:"subtitleSatisfaction,omitempty"`
+	Tracks               *[]MediaFileTrack              `json:"tracks,omitempty"`
 }
 
 // MediaFilePreviewClientProfile defines model for MediaFilePreviewClientProfile.
@@ -1709,6 +1752,17 @@ type MediaFilePreviewInfo struct {
 
 // MediaFilePreviewMode defines model for MediaFilePreviewMode.
 type MediaFilePreviewMode string
+
+// MediaFileSubtitleSatisfaction defines model for MediaFileSubtitleSatisfaction.
+type MediaFileSubtitleSatisfaction struct {
+	MatchedLanguages []string                           `json:"matchedLanguages"`
+	MissingLanguages []string                           `json:"missingLanguages"`
+	State            MediaFileSubtitleSatisfactionState `json:"state"`
+	WantedLanguages  []string                           `json:"wantedLanguages"`
+}
+
+// MediaFileSubtitleSatisfactionState defines model for MediaFileSubtitleSatisfaction.State.
+type MediaFileSubtitleSatisfactionState string
 
 // MediaFileTrack defines model for MediaFileTrack.
 type MediaFileTrack struct {
@@ -1924,6 +1978,7 @@ type MediaProfile struct {
 	QualityIds                        []string                         `json:"qualityIds"`
 	RemoveNonEnabledLanguages         bool                             `json:"removeNonEnabledLanguages"`
 	SeriesPackPreference              MediaProfileSeriesPackPreference `json:"seriesPackPreference"`
+	SubtitleLanguages                 []MediaProfileSubtitleLanguage   `json:"subtitleLanguages"`
 	TargetLanguageScores              []MediaProfileLanguageScore      `json:"targetLanguageScores"`
 	TargetLanguages                   []string                         `json:"targetLanguages"`
 	UpdatedAt                         time.Time                        `json:"updatedAt"`
@@ -1966,6 +2021,7 @@ type MediaProfileRequest struct {
 	QualityIds                        []string                                `json:"qualityIds"`
 	RemoveNonEnabledLanguages         bool                                    `json:"removeNonEnabledLanguages"`
 	SeriesPackPreference              MediaProfileRequestSeriesPackPreference `json:"seriesPackPreference"`
+	SubtitleLanguages                 []MediaProfileSubtitleLanguage          `json:"subtitleLanguages"`
 	TargetLanguageScores              []MediaProfileLanguageScore             `json:"targetLanguageScores"`
 	TargetLanguages                   []string                                `json:"targetLanguages"`
 	UpgradeUntilCustomFormatScore     int32                                   `json:"upgradeUntilCustomFormatScore"`
@@ -1978,6 +2034,16 @@ type MediaProfileRequestPreferredProtocol string
 
 // MediaProfileRequestSeriesPackPreference defines model for MediaProfileRequest.SeriesPackPreference.
 type MediaProfileRequestSeriesPackPreference string
+
+// MediaProfileSubtitleLanguage defines model for MediaProfileSubtitleLanguage.
+type MediaProfileSubtitleLanguage struct {
+	LanguageId   string                                   `json:"languageId"`
+	Required     bool                                     `json:"required"`
+	SubtitleType MediaProfileSubtitleLanguageSubtitleType `json:"subtitleType"`
+}
+
+// MediaProfileSubtitleLanguageSubtitleType defines model for MediaProfileSubtitleLanguage.SubtitleType.
+type MediaProfileSubtitleLanguageSubtitleType string
 
 // MediaRequest defines model for MediaRequest.
 type MediaRequest struct {

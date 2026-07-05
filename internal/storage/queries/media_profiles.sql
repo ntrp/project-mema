@@ -89,6 +89,12 @@ from app.media_profile_languages
 where profile_id = $1
 order by language_id;
 
+-- name: ListMediaProfileSubtitleLanguages :many
+select language_id, required, subtitle_type
+from app.media_profile_subtitle_languages
+where profile_id = $1
+order by language_id;
+
 -- name: ListMediaProfileCustomFormats :many
 select pcf.custom_format_id, pcf.score
 from app.media_profile_custom_formats pcf
@@ -111,6 +117,14 @@ where profile_id = $1;
 -- name: AddMediaProfileLanguage :exec
 insert into app.media_profile_languages (profile_id, language_id, score, required)
 values (sqlc.arg(profile_id), sqlc.arg(language_id), sqlc.arg(score), sqlc.arg(required));
+
+-- name: ClearMediaProfileSubtitleLanguages :exec
+delete from app.media_profile_subtitle_languages
+where profile_id = $1;
+
+-- name: AddMediaProfileSubtitleLanguage :exec
+insert into app.media_profile_subtitle_languages (profile_id, language_id, required, subtitle_type)
+values (sqlc.arg(profile_id), sqlc.arg(language_id), sqlc.arg(required), sqlc.arg(subtitle_type));
 
 -- name: ClearMediaProfileCustomFormats :exec
 delete from app.media_profile_custom_formats

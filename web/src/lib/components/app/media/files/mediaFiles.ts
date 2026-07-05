@@ -8,6 +8,9 @@ import { mediaFileInfo, mediaFileSize } from '$lib/components/app/media/file-dat
 import type { MediaItem } from '$lib/settings/types';
 type MediaFileTrack = NonNullable<NonNullable<MediaItem['files']>[number]['tracks']>[number];
 type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['chapters']>[number];
+type MediaFileSubtitleSatisfaction = NonNullable<
+	NonNullable<MediaItem['files']>[number]['subtitleSatisfaction']
+>;
 export interface MediaFileRow {
 	key: string;
 	path?: string;
@@ -25,6 +28,7 @@ export interface MediaFileRow {
 	formats: string[];
 	tracks: MediaFileTrack[];
 	chapters: MediaFileChapter[];
+	subtitleSatisfaction?: MediaFileSubtitleSatisfaction;
 	expectedLanguages: string[];
 	removeNonEnabledLanguages: boolean;
 	score: number;
@@ -123,6 +127,7 @@ export function fileRow(
 		formats,
 		tracks: info?.tracks ?? [],
 		chapters: info?.chapters ?? [],
+		subtitleSatisfaction: info?.subtitleSatisfaction,
 		expectedLanguages: profile.expectedLanguages,
 		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
 		score: 0
@@ -150,6 +155,12 @@ export function missingRow(
 		formats: [],
 		tracks: [],
 		chapters: [],
+		subtitleSatisfaction: {
+			state: 'missing',
+			wantedLanguages: [],
+			matchedLanguages: [],
+			missingLanguages: []
+		},
 		expectedLanguages: [],
 		removeNonEnabledLanguages: false,
 		score: 0

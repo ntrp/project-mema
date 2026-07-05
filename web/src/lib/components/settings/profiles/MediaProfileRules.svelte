@@ -7,6 +7,7 @@
 	import type { Language, MediaProfileForm, QualitySizeSetting } from '$lib/settings/types';
 	import MediaProfileDecisionSettings from './MediaProfileDecisionSettings.svelte';
 	import MediaProfileLanguageSelector from './MediaProfileLanguageSelector.svelte';
+	import MediaProfileSubtitleSelector from './MediaProfileSubtitleSelector.svelte';
 
 	interface Props {
 		form: MediaProfileForm;
@@ -109,3 +110,4 @@
 </Card.Root>
 
 <MediaProfileLanguageSelector {form} {languages} {onChange} />
+<MediaProfileSubtitleSelector {form} {languages} {onChange} />

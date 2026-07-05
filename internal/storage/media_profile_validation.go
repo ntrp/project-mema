@@ -56,6 +56,7 @@ func normalizeMediaProfileInput(
 	normalized.QualityIDs = qualityIDs
 	normalized.TargetLanguageScores = normalizeTargetLanguageScores(input)
 	normalized.TargetLanguages = languageIDsFromScores(normalized.TargetLanguageScores)
+	normalized.SubtitleLanguages = normalizeSubtitleLanguages(input.SubtitleLanguages)
 	normalized.CustomFormatScores = normalizeCustomFormatScores(input.CustomFormatScores)
 	return normalized, nil
 }
@@ -116,6 +117,36 @@ func languageIDsFromScores(scores []MediaProfileLanguageScore) []string {
 		languages = append(languages, score.LanguageID)
 	}
 	return languages
+}
+
+func normalizeSubtitleLanguages(values []MediaProfileSubtitleLanguage) []MediaProfileSubtitleLanguage {
+	seen := map[string]struct{}{}
+	languages := []MediaProfileSubtitleLanguage{}
+	for _, value := range values {
+		language := strings.ToLower(strings.Join(strings.Fields(value.LanguageID), "-"))
+		if language == "" {
+			continue
+		}
+		if _, ok := seen[language]; ok {
+			continue
+		}
+		seen[language] = struct{}{}
+		languages = append(languages, MediaProfileSubtitleLanguage{
+			LanguageID:   language,
+			Required:     value.Required,
+			SubtitleType: normalizeSubtitleType(value.SubtitleType),
+		})
+	}
+	return languages
+}
+
+func normalizeSubtitleType(value string) string {
+	switch strings.TrimSpace(value) {
+	case "embedded", "external":
+		return strings.TrimSpace(value)
+	default:
+		return "any"
+	}
 }
 
 func normalizeMediaProfileName(value string) string {

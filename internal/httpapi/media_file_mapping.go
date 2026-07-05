@@ -1,8 +1,16 @@
 package httpapi
 
-import "os"
+import (
+	"os"
+	"strings"
 
-func mediaFileInfoResponses(paths []string) *[]MediaFileInfo {
+	"media-manager/internal/storage"
+)
+
+func mediaFileInfoResponses(
+	paths []string,
+	subtitleTargets []storage.MediaProfileSubtitleLanguage,
+) *[]MediaFileInfo {
 	files := make([]MediaFileInfo, 0, len(paths))
 	for _, path := range paths {
 		file := MediaFileInfo{Path: path}
@@ -16,8 +24,118 @@ func mediaFileInfoResponses(paths []string) *[]MediaFileInfo {
 			if len(probe.chapters) > 0 {
 				file.Chapters = &probe.chapters
 			}
+			file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(probe.tracks, subtitleTargets, nil)
 		}
 		files = append(files, file)
 	}
 	return &files
+}
+
+func mediaFileSubtitleSatisfaction(
+	tracks []MediaFileTrack,
+	targets []storage.MediaProfileSubtitleLanguage,
+	externalLanguages []string,
+) *MediaFileSubtitleSatisfaction {
+	if len(targets) == 0 {
+		return &MediaFileSubtitleSatisfaction{
+			State:            MediaFileSubtitleSatisfactionStateIgnored,
+			WantedLanguages:  []string{},
+			MatchedLanguages: []string{},
+			MissingLanguages: []string{},
+		}
+	}
+	embedded := mediaFileSubtitleLanguageSet(tracks)
+	external := languageSet(externalLanguages)
+	wanted := make([]string, 0, len(targets))
+	matched := []string{}
+	missing := []string{}
+	for _, target := range targets {
+		wanted = append(wanted, target.LanguageID)
+		if subtitleTargetSatisfied(target, embedded, external) {
+			matched = append(matched, target.LanguageID)
+			continue
+		}
+		missing = append(missing, target.LanguageID)
+	}
+	state := MediaFileSubtitleSatisfactionStateSatisfied
+	if len(missing) > 0 {
+		state = MediaFileSubtitleSatisfactionStateMissing
+	}
+	return &MediaFileSubtitleSatisfaction{
+		State:            state,
+		WantedLanguages:  wanted,
+		MatchedLanguages: matched,
+		MissingLanguages: missing,
+	}
+}
+
+func subtitleTargetSatisfied(
+	target storage.MediaProfileSubtitleLanguage,
+	embedded map[string]struct{},
+	external map[string]struct{},
+) bool {
+	language := languageMatchKey(target.LanguageID)
+	switch target.SubtitleType {
+	case "embedded":
+		_, ok := embedded[language]
+		return ok
+	case "external":
+		_, ok := external[language]
+		return ok
+	default:
+		_, embeddedOK := embedded[language]
+		_, externalOK := external[language]
+		return embeddedOK || externalOK
+	}
+}
+
+func mediaFileSubtitleLanguageSet(tracks []MediaFileTrack) map[string]struct{} {
+	languages := map[string]struct{}{}
+	for _, track := range tracks {
+		if track.Type != Subtitle {
+			continue
+		}
+		language := languageMatchKey(optionalStringValue(track.Language))
+		if language != "" {
+			languages[language] = struct{}{}
+		}
+	}
+	return languages
+}
+
+func languageSet(values []string) map[string]struct{} {
+	languages := map[string]struct{}{}
+	for _, value := range values {
+		language := languageMatchKey(value)
+		if language != "" {
+			languages[language] = struct{}{}
+		}
+	}
+	return languages
+}
+
+func languageMatchKey(value string) string {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	normalized = strings.TrimSuffix(normalized, " language")
+	switch normalized {
+	case "en", "eng", "english":
+		return "english"
+	case "de", "deu", "ger", "german":
+		return "german"
+	case "fr", "fra", "fre", "french":
+		return "french"
+	case "es", "spa", "spanish":
+		return "spanish"
+	case "ja", "jpn", "japanese":
+		return "japanese"
+	default:
+		return strings.ReplaceAll(normalized, " ", "-")
+	}
+}
+
+func optionalStringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }

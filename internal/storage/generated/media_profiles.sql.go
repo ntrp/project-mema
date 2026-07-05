@@ -66,6 +66,28 @@ func (q *Queries) AddMediaProfileQuality(ctx context.Context, arg AddMediaProfil
 	return err
 }
 
+const addMediaProfileSubtitleLanguage = `-- name: AddMediaProfileSubtitleLanguage :exec
+insert into app.media_profile_subtitle_languages (profile_id, language_id, required, subtitle_type)
+values ($1, $2, $3, $4)
+`
+
+type AddMediaProfileSubtitleLanguageParams struct {
+	ProfileID    string
+	LanguageID   string
+	Required     bool
+	SubtitleType string
+}
+
+func (q *Queries) AddMediaProfileSubtitleLanguage(ctx context.Context, arg AddMediaProfileSubtitleLanguageParams) error {
+	_, err := q.db.Exec(ctx, addMediaProfileSubtitleLanguage,
+		arg.ProfileID,
+		arg.LanguageID,
+		arg.Required,
+		arg.SubtitleType,
+	)
+	return err
+}
+
 const clearMediaProfileCustomFormats = `-- name: ClearMediaProfileCustomFormats :exec
 delete from app.media_profile_custom_formats
 where profile_id = $1
@@ -93,6 +115,16 @@ where profile_id = $1
 
 func (q *Queries) ClearMediaProfileQualities(ctx context.Context, profileID string) error {
 	_, err := q.db.Exec(ctx, clearMediaProfileQualities, profileID)
+	return err
+}
+
+const clearMediaProfileSubtitleLanguages = `-- name: ClearMediaProfileSubtitleLanguages :exec
+delete from app.media_profile_subtitle_languages
+where profile_id = $1
+`
+
+func (q *Queries) ClearMediaProfileSubtitleLanguages(ctx context.Context, profileID string) error {
+	_, err := q.db.Exec(ctx, clearMediaProfileSubtitleLanguages, profileID)
 	return err
 }
 
@@ -288,6 +320,39 @@ func (q *Queries) ListMediaProfileQualities(ctx context.Context, profileID strin
 			return nil, err
 		}
 		items = append(items, quality_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMediaProfileSubtitleLanguages = `-- name: ListMediaProfileSubtitleLanguages :many
+select language_id, required, subtitle_type
+from app.media_profile_subtitle_languages
+where profile_id = $1
+order by language_id
+`
+
+type ListMediaProfileSubtitleLanguagesRow struct {
+	LanguageID   string
+	Required     bool
+	SubtitleType string
+}
+
+func (q *Queries) ListMediaProfileSubtitleLanguages(ctx context.Context, profileID string) ([]ListMediaProfileSubtitleLanguagesRow, error) {
+	rows, err := q.db.Query(ctx, listMediaProfileSubtitleLanguages, profileID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListMediaProfileSubtitleLanguagesRow
+	for rows.Next() {
+		var i ListMediaProfileSubtitleLanguagesRow
+		if err := rows.Scan(&i.LanguageID, &i.Required, &i.SubtitleType); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

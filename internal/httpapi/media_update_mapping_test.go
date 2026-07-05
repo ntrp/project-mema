@@ -69,7 +69,7 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 		t.Fatalf("write fixture: %v", err)
 	}
 
-	files := mediaFileInfoResponses([]string{filePath, missingPath})
+	files := mediaFileInfoResponses([]string{filePath, missingPath}, nil)
 
 	if files == nil || len(*files) != 2 {
 		t.Fatalf("files = %#v", files)

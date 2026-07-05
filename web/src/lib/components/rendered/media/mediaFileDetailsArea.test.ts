@@ -22,6 +22,8 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 
 		expect(body).toContain('Missing file');
 		expect(body).toContain('No matched file for this movie');
+		expect(body).toContain('Subtitles');
+		expect(body).toContain('Missing');
 		expect(body).toContain('Automatic search');
 		expect(body).toContain('Manual search');
 		expect(body).not.toContain('Delete file');
@@ -43,6 +45,33 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
+	});
+
+	it('renders satisfied subtitle state in file summaries', () => {
+		const { body } = renderWithTooltip(MediaFileSummary, {
+			mediaItemId: 'media-1',
+			mediaTitle: 'Scenario Movie',
+			row: {
+				...detailedFileRow(),
+				subtitleSatisfaction: {
+					state: 'satisfied' as const,
+					wantedLanguages: ['english'],
+					matchedLanguages: ['english'],
+					missingLanguages: []
+				}
+			},
+			canManage: true,
+			searching: false,
+			fileLabel: 'Movie file',
+			missingLabel: 'No matched file for this movie',
+			onAutoSearch: vi.fn(),
+			onManualSearch: vi.fn(),
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Subtitles');
+		expect(body).toContain('Satisfied');
+		expect(body).toContain('English');
 	});
 });
 

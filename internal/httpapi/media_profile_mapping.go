@@ -49,6 +49,14 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 			Required:   value.Required,
 		})
 	}
+	subtitleLanguages := make([]storage.MediaProfileSubtitleLanguage, 0, len(request.SubtitleLanguages))
+	for _, value := range request.SubtitleLanguages {
+		subtitleLanguages = append(subtitleLanguages, storage.MediaProfileSubtitleLanguage{
+			LanguageID:   value.LanguageId,
+			Required:     value.Required,
+			SubtitleType: string(value.SubtitleType),
+		})
+	}
 	customFormatScores := make([]storage.MediaProfileCustomFormatScore, 0, len(request.CustomFormatScores))
 	for _, value := range request.CustomFormatScores {
 		customFormatScores = append(customFormatScores, storage.MediaProfileCustomFormatScore{
@@ -70,6 +78,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		SeriesPackPreference:              string(request.SeriesPackPreference),
 		TargetLanguages:                   targetLanguages,
 		TargetLanguageScores:              targetLanguageScores,
+		SubtitleLanguages:                 subtitleLanguages,
 		CustomFormatScores:                customFormatScores,
 	}, true
 }
@@ -97,6 +106,7 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		SeriesPackPreference:              MediaProfileSeriesPackPreference(profile.SeriesPackPreference),
 		TargetLanguages:                   profile.TargetLanguages,
 		TargetLanguageScores:              mediaProfileLanguageScoreResponses(profile.TargetLanguageScores),
+		SubtitleLanguages:                 mediaProfileSubtitleLanguageResponses(profile.SubtitleLanguages),
 		CustomFormatScores:                mediaProfileCustomFormatScoreResponses(profile.CustomFormatScores),
 		CreatedAt:                         profile.CreatedAt,
 		UpdatedAt:                         profile.UpdatedAt,
@@ -110,6 +120,20 @@ func mediaProfileLanguageScoreResponses(scores []storage.MediaProfileLanguageSco
 			LanguageId: score.LanguageID,
 			Score:      score.Score,
 			Required:   score.Required,
+		})
+	}
+	return response
+}
+
+func mediaProfileSubtitleLanguageResponses(
+	languages []storage.MediaProfileSubtitleLanguage,
+) []MediaProfileSubtitleLanguage {
+	response := make([]MediaProfileSubtitleLanguage, 0, len(languages))
+	for _, language := range languages {
+		response = append(response, MediaProfileSubtitleLanguage{
+			LanguageId:   language.LanguageID,
+			Required:     language.Required,
+			SubtitleType: MediaProfileSubtitleLanguageSubtitleType(language.SubtitleType),
 		})
 	}
 	return response

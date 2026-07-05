@@ -327,6 +327,13 @@ type AppMediaProfileQuality struct {
 	SortOrder int32
 }
 
+type AppMediaProfileSubtitleLanguage struct {
+	ProfileID    string
+	LanguageID   string
+	Required     bool
+	SubtitleType string
+}
+
 type AppMediaReleaseCandidate struct {
 	ID               uuid.UUID
 	MediaItemID      uuid.UUID

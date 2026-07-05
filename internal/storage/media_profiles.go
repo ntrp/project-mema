@@ -118,6 +118,9 @@ func (s *SettingsStore) saveMediaProfile(
 	if err := replaceMediaProfileLanguages(ctx, tx, id, input.TargetLanguageScores); err != nil {
 		return MediaProfile{}, normalizeMediaProfileWriteError(err)
 	}
+	if err := replaceMediaProfileSubtitleLanguages(ctx, tx, id, input.SubtitleLanguages); err != nil {
+		return MediaProfile{}, normalizeMediaProfileWriteError(err)
+	}
 	if err := replaceMediaProfileCustomFormats(ctx, tx, id, input.CustomFormatScores); err != nil {
 		return MediaProfile{}, normalizeMediaProfileWriteError(err)
 	}

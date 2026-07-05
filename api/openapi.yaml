@@ -4732,6 +4732,35 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaFileChapter"
+        subtitleSatisfaction:
+          $ref: "#/components/schemas/MediaFileSubtitleSatisfaction"
+    MediaFileSubtitleSatisfaction:
+      type: object
+      additionalProperties: false
+      required:
+        - state
+        - wantedLanguages
+        - matchedLanguages
+        - missingLanguages
+      properties:
+        state:
+          type: string
+          enum:
+            - satisfied
+            - missing
+            - ignored
+        wantedLanguages:
+          type: array
+          items:
+            type: string
+        matchedLanguages:
+          type: array
+          items:
+            type: string
+        missingLanguages:
+          type: array
+          items:
+            type: string
     MediaFileChapter:
       type: object
       additionalProperties: false
@@ -5196,6 +5225,7 @@ components:
         - seriesPackPreference
         - targetLanguages
         - targetLanguageScores
+        - subtitleLanguages
         - customFormatScores
       properties:
         name:
@@ -5249,6 +5279,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaProfileLanguageScore"
+        subtitleLanguages:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaProfileSubtitleLanguage"
         customFormatScores:
           type: array
           items:
@@ -5270,6 +5304,26 @@ components:
           format: int32
         required:
           type: boolean
+    MediaProfileSubtitleLanguage:
+      type: object
+      additionalProperties: false
+      required:
+        - languageId
+        - required
+        - subtitleType
+      properties:
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 40
+        required:
+          type: boolean
+        subtitleType:
+          type: string
+          enum:
+            - any
+            - embedded
+            - external
     MediaProfileCustomFormatScore:
       type: object
       additionalProperties: false

@@ -77,6 +77,13 @@ values
     ('anime-1080p', 'english', 0)
 on conflict (profile_id, language_id) do nothing;
 
+insert into app.media_profile_subtitle_languages (profile_id, language_id, required, subtitle_type)
+values
+    ('hd-1080p', 'english', true, 'any'),
+    ('uhd-4k', 'english', true, 'any'),
+    ('anime-1080p', 'english', false, 'any')
+on conflict (profile_id, language_id) do nothing;
+
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)
 values
     ('any', 'unknown', 1),

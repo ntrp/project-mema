@@ -13,7 +13,8 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			name: '',
 			qualityIds: [],
 			targetLanguages: ['english'],
-			targetLanguageScores: [{ languageId: 'english', score: 0, required: false }]
+			targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
+			subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'any' }]
 		});
 	});
 
@@ -32,15 +33,18 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			seriesPackPreference: 'auto',
 			targetLanguages: ['english'],
 			targetLanguageScores: [{ languageId: 'english', score: 10, required: true }],
+			subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'embedded' }],
 			customFormatScores: [{ customFormatId: 'cf-1', score: 50 }]
 		} as MediaProfile;
 
 		const form = mediaProfileFormFromProfile(profile);
 		form.qualityIds.push('bluray-2160p');
 		form.targetLanguageScores[0].score = 20;
+		form.subtitleLanguages[0].subtitleType = 'external';
 
 		expect(profile.qualityIds).toEqual(['webdl-1080p']);
 		expect(profile.targetLanguageScores?.[0].score).toBe(10);
+		expect(profile.subtitleLanguages?.[0].subtitleType).toBe('embedded');
 	});
 
 	it('normalizes profile request payloads', () => {
@@ -58,6 +62,10 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{ languageId: 'english', score: '100', required: true },
 				{ languageId: 'english', score: 50, required: false },
 				{ languageId: ' german ', score: Number.NaN, required: false }
+			],
+			subtitleLanguages: [
+				{ languageId: 'english', required: true, subtitleType: 'embedded' },
+				{ languageId: 'english', required: false, subtitleType: 'external' }
 			],
 			customFormatScores: [
 				{ customFormatId: 'cf-1', score: '25.9' },
@@ -79,6 +87,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{ languageId: 'english', score: 100, required: true },
 				{ languageId: 'german', score: 0, required: false }
 			],
+			subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'embedded' }],
 			customFormatScores: [{ customFormatId: 'cf-1', score: 25 }]
 		});
 	});

@@ -2371,6 +2371,14 @@ export interface components {
 			sizeBytes?: number;
 			tracks?: components['schemas']['MediaFileTrack'][];
 			chapters?: components['schemas']['MediaFileChapter'][];
+			subtitleSatisfaction?: components['schemas']['MediaFileSubtitleSatisfaction'];
+		};
+		MediaFileSubtitleSatisfaction: {
+			/** @enum {string} */
+			state: 'satisfied' | 'missing' | 'ignored';
+			wantedLanguages: string[];
+			matchedLanguages: string[];
+			missingLanguages: string[];
 		};
 		MediaFileChapter: {
 			/** Format: int32 */
@@ -2563,6 +2571,7 @@ export interface components {
 			seriesPackPreference: 'auto' | 'preferPacks' | 'preferEpisodes';
 			targetLanguages: string[];
 			targetLanguageScores: components['schemas']['MediaProfileLanguageScore'][];
+			subtitleLanguages: components['schemas']['MediaProfileSubtitleLanguage'][];
 			customFormatScores: components['schemas']['MediaProfileCustomFormatScore'][];
 		};
 		MediaProfileLanguageScore: {
@@ -2570,6 +2579,12 @@ export interface components {
 			/** Format: int32 */
 			score: number;
 			required: boolean;
+		};
+		MediaProfileSubtitleLanguage: {
+			languageId: string;
+			required: boolean;
+			/** @enum {string} */
+			subtitleType: 'any' | 'embedded' | 'external';
 		};
 		MediaProfileCustomFormatScore: {
 			/** Format: uuid */

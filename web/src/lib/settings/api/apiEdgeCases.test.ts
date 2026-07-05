@@ -240,6 +240,7 @@ function mediaProfileForm() {
 		seriesPackPreference: 'auto',
 		targetLanguages: ['english'],
 		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
+		subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'any' }],
 		customFormatScores: []
 	} as const;
 }

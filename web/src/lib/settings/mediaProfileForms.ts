@@ -14,6 +14,7 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 		seriesPackPreference: 'auto',
 		targetLanguages: ['english'],
 		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
+		subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'any' }],
 		customFormatScores: []
 	};
 }
@@ -33,6 +34,7 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		seriesPackPreference: profile.seriesPackPreference,
 		targetLanguages: [...(profile.targetLanguages ?? [])],
 		targetLanguageScores: languageScoresFromProfile(profile),
+		subtitleLanguages: (profile.subtitleLanguages ?? []).map((language) => ({ ...language })),
 		customFormatScores: (profile.customFormatScores ?? []).map((score) => ({ ...score }))
 	};
 }
@@ -46,6 +48,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 			score: normalizedInteger(score.score)
 		}));
 	const targetLanguageScores = languageScoresFromForm(form);
+	const subtitleLanguages = subtitleLanguagesFromForm(form);
 	return {
 		name: form.name.trim(),
 		qualityIds,
@@ -65,6 +68,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 		seriesPackPreference: form.seriesPackPreference ?? 'auto',
 		targetLanguages: targetLanguageScores.map((score) => score.languageId),
 		targetLanguageScores,
+		subtitleLanguages,
 		customFormatScores
 	};
 }
@@ -95,6 +99,24 @@ function languageScoresFromForm(form: MediaProfileForm) {
 		scores.push({ languageId, score: normalizedInteger(value.score), required: value.required });
 	}
 	return scores;
+}
+
+function subtitleLanguagesFromForm(form: MediaProfileForm) {
+	const seen = new Set<string>();
+	const languages = [];
+	for (const value of form.subtitleLanguages ?? []) {
+		const languageId = value.languageId.trim();
+		if (!languageId || seen.has(languageId)) {
+			continue;
+		}
+		seen.add(languageId);
+		languages.push({
+			languageId,
+			required: value.required,
+			subtitleType: value.subtitleType ?? 'any'
+		});
+	}
+	return languages;
 }
 
 function normalizedInteger(value: number | string | undefined) {

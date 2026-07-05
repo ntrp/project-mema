@@ -20,6 +20,7 @@ type MediaProfile struct {
 	SeriesPackPreference              string
 	TargetLanguages                   []string
 	TargetLanguageScores              []MediaProfileLanguageScore
+	SubtitleLanguages                 []MediaProfileSubtitleLanguage
 	CustomFormatScores                []MediaProfileCustomFormatScore
 	CreatedAt                         time.Time
 	UpdatedAt                         time.Time
@@ -38,6 +39,7 @@ type MediaProfileInput struct {
 	SeriesPackPreference              string
 	TargetLanguages                   []string
 	TargetLanguageScores              []MediaProfileLanguageScore
+	SubtitleLanguages                 []MediaProfileSubtitleLanguage
 	CustomFormatScores                []MediaProfileCustomFormatScore
 }
 
@@ -50,4 +52,10 @@ type MediaProfileLanguageScore struct {
 type MediaProfileCustomFormatScore struct {
 	CustomFormatID uuid.UUID
 	Score          int32
+}
+
+type MediaProfileSubtitleLanguage struct {
+	LanguageID   string
+	Required     bool
+	SubtitleType string
 }

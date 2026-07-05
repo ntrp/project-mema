@@ -275,6 +275,17 @@ create table if not exists app.media_profile_languages (
 create index if not exists idx_media_profile_languages_profile
     on app.media_profile_languages (profile_id, language_id);
 
+create table if not exists app.media_profile_subtitle_languages (
+    profile_id text not null references app.media_profiles(id) on delete cascade,
+    language_id text not null,
+    required boolean not null default true,
+    subtitle_type text not null default 'any' check (subtitle_type in ('any', 'embedded', 'external')),
+    primary key (profile_id, language_id)
+);
+
+create index if not exists idx_media_profile_subtitle_languages_profile
+    on app.media_profile_subtitle_languages (profile_id, language_id);
+
 create table if not exists app.languages (
     code text primary key,
     display_name text not null,

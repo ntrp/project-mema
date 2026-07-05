@@ -80,7 +80,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		LibraryFolderPath:   item.LibraryFolderPath,
 		MediaFolderPath:     item.MediaFolderPath,
 		FilePaths:           item.FilePaths,
-		Files:               mediaFileInfoResponses(item.FilePaths),
+		Files:               mediaFileInfoResponses(item.FilePaths, item.SubtitleLanguages),
 		MetadataFilePaths:   item.MetadataFilePaths,
 		Tags:                &item.Tags,
 		CreatedAt:           item.CreatedAt,

@@ -26,7 +26,7 @@ func TestScenarioSCNMedia007AdminManagesMediaItemMonitoringOptions(t *testing.T)
 
 	var created MediaItem
 	client.doJSON(t, http.MethodPost, "/media/items", mediaItemCreateRequest(profiles.Profiles[0].Id, folder.Folder.Id), http.StatusCreated, &created)
-	if created.Title != "Managed Scenario Movie" || !created.Monitored || created.Status != Missing {
+	if created.Title != "Managed Scenario Movie" || !created.Monitored || created.Status != MediaItemStatusMissing {
 		t.Fatalf("created media item = %#v", created)
 	}
 

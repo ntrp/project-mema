@@ -75,6 +75,7 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 		seriesPackPreference: 'auto',
 		targetLanguages: ['english'],
 		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
+		subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'any' }],
 		customFormatScores: [],
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',

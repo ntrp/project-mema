@@ -6,6 +6,7 @@
 	import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
+	import { displayLanguage } from '$lib/settings/languageDisplay';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import type { ActivityQueueStatus } from '$lib/components/app/activity/activityQueue';
 
@@ -47,6 +48,8 @@
 			activityStatus?.status === 'downloading'
 	);
 	const statusLabel = $derived(activityStatus?.label ?? '-');
+	const subtitleState = $derived(row.subtitleSatisfaction?.state ?? 'ignored');
+	const subtitleLabel = $derived(subtitleSatisfactionLabel(row));
 
 	function toggleDetails() {
 		if (row.exists) {
@@ -58,6 +61,19 @@
 		if (!row.exists || (event.key !== 'Enter' && event.key !== ' ')) return;
 		event.preventDefault();
 		toggleDetails();
+	}
+
+	function subtitleSatisfactionLabel(row: MediaFileRow) {
+		const satisfaction = row.subtitleSatisfaction;
+		if (!satisfaction || satisfaction.state === 'ignored') return 'Ignored';
+		if (satisfaction.state === 'satisfied') {
+			return `Satisfied: ${languageList(satisfaction.matchedLanguages)}`;
+		}
+		return `Missing: ${languageList(satisfaction.missingLanguages)}`;
+	}
+
+	function languageList(values: string[]) {
+		return values.map(displayLanguage).join(', ') || '-';
 	}
 </script>
 
@@ -73,7 +89,7 @@
 		aria-disabled={!row.exists}
 		aria-expanded={row.exists ? detailsOpen : undefined}
 		class={cn(
-			'relative grid gap-3 p-4 pb-5 lg:grid-cols-[minmax(180px,1.2fr)_repeat(4,minmax(84px,0.55fr))_minmax(120px,0.8fr)_auto]',
+			'relative grid gap-3 p-4 pb-5 lg:grid-cols-[minmax(180px,1.2fr)_repeat(5,minmax(84px,0.55fr))_minmax(120px,0.8fr)_auto]',
 			row.exists &&
 				'cursor-pointer transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/50 focus-visible:outline-none'
 		)}
@@ -109,6 +125,19 @@
 		<span class="grid gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Score</strong>
 			<span class="text-sm">{row.score}</span>
+		</span>
+		<span class="grid gap-1">
+			<strong class="text-xs font-medium text-muted-foreground uppercase">Subtitles</strong>
+			{#if subtitleState !== 'ignored'}
+				<Badge
+					variant={subtitleState === 'missing' ? 'destructive' : 'secondary'}
+					class="justify-self-start"
+				>
+					{subtitleLabel}
+				</Badge>
+			{:else}
+				<span class="text-sm">{subtitleLabel}</span>
+			{/if}
 		</span>
 		<span class="grid gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Status</strong>

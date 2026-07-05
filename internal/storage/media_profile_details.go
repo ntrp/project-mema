@@ -17,6 +17,10 @@ func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *Media
 	if err != nil {
 		return err
 	}
+	subtitleLanguages, err := loadMediaProfileSubtitleLanguages(ctx, s.pool, profile.ID)
+	if err != nil {
+		return err
+	}
 	scores, err := loadMediaProfileCustomFormats(ctx, s.pool, profile.ID)
 	if err != nil {
 		return err
@@ -24,6 +28,7 @@ func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *Media
 	profile.QualityIDs = qualities
 	profile.TargetLanguageScores = languageScores
 	profile.TargetLanguages = languageIDsFromScores(languageScores)
+	profile.SubtitleLanguages = subtitleLanguages
 	profile.CustomFormatScores = scores
 	return nil
 }
@@ -54,6 +59,26 @@ func loadMediaProfileLanguages(
 		})
 	}
 	return scores, nil
+}
+
+func loadMediaProfileSubtitleLanguages(
+	ctx context.Context,
+	q storagegen.DBTX,
+	profileID string,
+) ([]MediaProfileSubtitleLanguage, error) {
+	rows, err := storagegen.New(q).ListMediaProfileSubtitleLanguages(ctx, profileID)
+	if err != nil {
+		return nil, err
+	}
+	languages := make([]MediaProfileSubtitleLanguage, 0, len(rows))
+	for _, row := range rows {
+		languages = append(languages, MediaProfileSubtitleLanguage{
+			LanguageID:   row.LanguageID,
+			Required:     row.Required,
+			SubtitleType: row.SubtitleType,
+		})
+	}
+	return languages, nil
 }
 
 func loadMediaProfileCustomFormats(
@@ -113,6 +138,29 @@ func replaceMediaProfileLanguages(
 			LanguageID: score.LanguageID,
 			Score:      score.Score,
 			Required:   score.Required,
+		}); err != nil {
+			return normalizeMediaProfileWriteError(err)
+		}
+	}
+	return nil
+}
+
+func replaceMediaProfileSubtitleLanguages(
+	ctx context.Context,
+	q mediaProfileQuerier,
+	profileID string,
+	languages []MediaProfileSubtitleLanguage,
+) error {
+	queries := storagegen.New(q)
+	if err := queries.ClearMediaProfileSubtitleLanguages(ctx, profileID); err != nil {
+		return err
+	}
+	for _, language := range languages {
+		if err := queries.AddMediaProfileSubtitleLanguage(ctx, storagegen.AddMediaProfileSubtitleLanguageParams{
+			ProfileID:    profileID,
+			LanguageID:   language.LanguageID,
+			Required:     language.Required,
+			SubtitleType: language.SubtitleType,
 		}); err != nil {
 			return normalizeMediaProfileWriteError(err)
 		}
