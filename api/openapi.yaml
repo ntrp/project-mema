@@ -1400,6 +1400,27 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/rename-preview:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: previewMediaRename
+      tags:
+        - Media
+      summary: Preview safe rename/reorganize paths for media files
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Rename preview rows for the media item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRenamePreviewResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/grab:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4879,6 +4900,41 @@ components:
         createdAt:
           type: string
           format: date-time
+    MediaRenamePreviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaRenamePreviewRow"
+    MediaRenamePreviewRow:
+      type: object
+      additionalProperties: false
+      required:
+        - currentPath
+        - proposedPath
+        - status
+        - messages
+      properties:
+        currentPath:
+          type: string
+        proposedPath:
+          type: string
+        status:
+          type: string
+          enum:
+            - safe
+            - unchanged
+            - conflict
+            - missing
+            - blocked
+        messages:
+          type: array
+          items:
+            type: string
     MediaFileChapter:
       type: object
       additionalProperties: false

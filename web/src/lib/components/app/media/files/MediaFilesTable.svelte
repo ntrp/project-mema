@@ -1,16 +1,19 @@
 <script lang="ts">
 	import MediaFileSummary from '$lib/components/app/media/files/MediaFileSummary.svelte';
 	import MediaFileDeleteModal from '$lib/components/app/media/files/MediaFileDeleteModal.svelte';
+	import MediaRenamePreviewPanel from '$lib/components/app/media/files/MediaRenamePreviewPanel.svelte';
 	import MediaFileSearchModal from '$lib/components/app/media/files/MediaFileSearchModal.svelte';
 	import MediaRootPanel from '$lib/components/app/media/collection/MediaRootPanel.svelte';
 	import { activityForMovie } from '$lib/components/app/activity/activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
+	import { previewMediaRename } from '$lib/settings/api';
 	import type {
 		DownloadActivity,
 		Language,
 		LibraryFolder,
 		MediaItem,
 		MediaItemUpdateRequest,
+		MediaRenamePreviewRow,
 		ReleaseCandidate,
 		ReleaseOverrideDetails
 	} from '$lib/settings/types';
@@ -56,6 +59,9 @@
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
+	let previewRows = $state<MediaRenamePreviewRow[]>([]);
+	let previewLoading = $state(false);
+	let previewError = $state<string | undefined>();
 	const groups = $derived(mediaFileGroups(item, qualityProfiles));
 	const activityStatus = $derived(
 		item.type === 'movie' ? activityForMovie(activities, item.id) : undefined
@@ -77,12 +83,33 @@
 		onDeleteFile(item, deleteRow.path);
 		deleteRow = undefined;
 	}
+
+	async function loadRenamePreview() {
+		previewLoading = true;
+		previewError = undefined;
+		try {
+			const preview = await previewMediaRename(item.id);
+			previewRows = preview.rows;
+		} catch (error) {
+			previewError = error instanceof Error ? error.message : 'Could not preview rename';
+		} finally {
+			previewLoading = false;
+		}
+	}
 </script>
 
 <section aria-labelledby="media-files-title">
 	<h2 id="media-files-title" class="m-0 text-3xl font-semibold text-foreground">Files</h2>
 	<div class="grid gap-3.5">
 		<MediaRootPanel {item} {libraryFolders} {canManage} {onSaveOptions} />
+		{#if canManage && item.filePaths.length > 0}
+			<MediaRenamePreviewPanel
+				rows={previewRows}
+				loading={previewLoading}
+				errorMessage={previewError}
+				onPreview={loadRenamePreview}
+			/>
+		{/if}
 		{#each groups as group (group.key)}
 			<div class="grid" aria-label={group.title}>
 				{#each group.rows as row (row.key)}

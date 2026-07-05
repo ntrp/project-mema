@@ -42,6 +42,7 @@ import type {
 	MediaItemUpdateRequest,
 	MediaProfile,
 	MediaProfileForm,
+	MediaRenamePreviewResponse,
 	MediaRequestApproveRequest,
 	MediaRequestCreateRequest,
 	MediaSearchRequest,
@@ -856,6 +857,17 @@ export async function listMediaFileHistory(id: string): Promise<MediaFileHistory
 		throw new Error(error.message);
 	}
 	return data ?? { entries: [] };
+}
+
+export async function previewMediaRename(id: string): Promise<MediaRenamePreviewResponse> {
+	const { data, error } = await client.GET('/media/items/{id}/rename-preview', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? { rows: [] };
 }
 
 export async function searchMediaReleases(id: string) {

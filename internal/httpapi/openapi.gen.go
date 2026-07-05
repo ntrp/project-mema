@@ -715,6 +715,33 @@ func (e MediaProfileSubtitleLanguageSubtitleType) Valid() bool {
 	}
 }
 
+// Defines values for MediaRenamePreviewRowStatus.
+const (
+	Blocked   MediaRenamePreviewRowStatus = "blocked"
+	Conflict  MediaRenamePreviewRowStatus = "conflict"
+	Missing   MediaRenamePreviewRowStatus = "missing"
+	Safe      MediaRenamePreviewRowStatus = "safe"
+	Unchanged MediaRenamePreviewRowStatus = "unchanged"
+)
+
+// Valid indicates whether the value is a known member of the MediaRenamePreviewRowStatus enum.
+func (e MediaRenamePreviewRowStatus) Valid() bool {
+	switch e {
+	case Blocked:
+		return true
+	case Conflict:
+		return true
+	case Missing:
+		return true
+	case Safe:
+		return true
+	case Unchanged:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaRequestStatus.
 const (
 	MediaRequestStatusApproved MediaRequestStatus = "approved"
@@ -2151,6 +2178,22 @@ type MediaProfileSubtitleLanguage struct {
 // MediaProfileSubtitleLanguageSubtitleType defines model for MediaProfileSubtitleLanguage.SubtitleType.
 type MediaProfileSubtitleLanguageSubtitleType string
 
+// MediaRenamePreviewResponse defines model for MediaRenamePreviewResponse.
+type MediaRenamePreviewResponse struct {
+	Rows []MediaRenamePreviewRow `json:"rows"`
+}
+
+// MediaRenamePreviewRow defines model for MediaRenamePreviewRow.
+type MediaRenamePreviewRow struct {
+	CurrentPath  string                      `json:"currentPath"`
+	Messages     []string                    `json:"messages"`
+	ProposedPath string                      `json:"proposedPath"`
+	Status       MediaRenamePreviewRowStatus `json:"status"`
+}
+
+// MediaRenamePreviewRowStatus defines model for MediaRenamePreviewRow.Status.
+type MediaRenamePreviewRowStatus string
+
 // MediaRequest defines model for MediaRequest.
 type MediaRequest struct {
 	CreatedAt           time.Time           `json:"createdAt"`
@@ -3322,6 +3365,9 @@ type ServerInterface interface {
 	// List latest release candidates for a monitored item
 	// (GET /media/items/{id}/releases)
 	SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Preview safe rename/reorganize paths for media files
+	// (GET /media/items/{id}/rename-preview)
+	PreviewMediaRename(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a subtitle search and download for a monitored item
 	// (POST /media/items/{id}/subtitle-searches)
 	EnqueueMediaSubtitleSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -3898,6 +3944,12 @@ func (_ Unimplemented) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.R
 // List latest release candidates for a monitored item
 // (GET /media/items/{id}/releases)
 func (_ Unimplemented) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Preview safe rename/reorganize paths for media files
+// (GET /media/items/{id}/rename-preview)
+func (_ Unimplemented) PreviewMediaRename(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6525,6 +6577,38 @@ func (siw *ServerInterfaceWrapper) SearchMediaReleases(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchMediaReleases(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewMediaRename operation middleware
+func (siw *ServerInterfaceWrapper) PreviewMediaRename(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewMediaRename(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9680,6 +9764,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/releases", wrapper.SearchMediaReleases)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/rename-preview", wrapper.PreviewMediaRename)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/subtitle-searches", wrapper.EnqueueMediaSubtitleSearch)

@@ -131,6 +131,7 @@ func renderMediaTemplate(template string, input MediaItemInput) string {
 	}
 	values := map[string]string{
 		"movie_title":  title,
+		"quality_full": "",
 		"release_year": year,
 		"series_title": title,
 		"year":         year,
