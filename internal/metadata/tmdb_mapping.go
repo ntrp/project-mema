@@ -58,10 +58,11 @@ func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) De
 				continue
 			}
 			mapped := Season{
-				Name:       name,
-				AirDate:    optionalString(season.AirDate),
-				PosterPath: optionalString(season.PosterPath),
-				Episodes:   []Episode{},
+				Name:         name,
+				SeasonNumber: season.SeasonNumber,
+				AirDate:      optionalString(season.AirDate),
+				PosterPath:   optionalString(season.PosterPath),
+				Episodes:     []Episode{},
 			}
 			if season.EpisodeCount > 0 {
 				mapped.EpisodeCount = &season.EpisodeCount

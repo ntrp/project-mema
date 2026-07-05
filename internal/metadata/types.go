@@ -163,6 +163,7 @@ type Fact struct {
 
 type Season struct {
 	Name         string
+	SeasonNumber int32
 	EpisodeCount *int32
 	AirDate      *string
 	PosterPath   *string

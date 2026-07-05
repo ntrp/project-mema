@@ -13,10 +13,27 @@ func (s *SettingsStore) UpdateMediaItemMetadata(ctx context.Context, id uuid.UUI
 	if err != nil {
 		return MediaItem{}, err
 	}
-	if err := storagegen.New(s.pool).UpdateMediaItemMetadataRecord(ctx, mediaItemMetadataParams(id, input, metadataPayloads)); err != nil {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
 		return MediaItem{}, err
 	}
-	return s.GetMediaItem(ctx, id)
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+	if err := storagegen.New(tx).UpdateMediaItemMetadataRecord(ctx, mediaItemMetadataParams(id, input, metadataPayloads)); err != nil {
+		return MediaItem{}, err
+	}
+	if err := materializeMediaSeriesSnapshot(ctx, tx, id, input); err != nil {
+		return MediaItem{}, err
+	}
+	item, err := getMediaItem(ctx, tx, id)
+	if err != nil {
+		return MediaItem{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return MediaItem{}, err
+	}
+	return item, nil
 }
 
 func mediaItemMetadataParams(

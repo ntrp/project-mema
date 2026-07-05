@@ -91,8 +91,8 @@ func TestMediaSeriesRowsCascadeAndJsonCompatibility(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got.Seasons) != 1 || got.Seasons[0].Name != "Legacy Season" {
-		t.Fatalf("expected legacy seasons JSON unchanged, got %#v", got.Seasons)
+	if len(got.Seasons) != 1 || got.Seasons[0].Name != "Season 1" {
+		t.Fatalf("expected relational seasons to drive response, got %#v", got.Seasons)
 	}
 	if err := store.DeleteMediaItem(ctx, item.ID, true); err != nil {
 		t.Fatal(err)
@@ -103,6 +103,73 @@ func TestMediaSeriesRowsCascadeAndJsonCompatibility(t *testing.T) {
 	}
 	if len(seasons) != 0 {
 		t.Fatalf("expected cascade delete, got %#v", seasons)
+	}
+}
+
+func TestMediaSeriesSnapshotRefreshPreservesMonitorState(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:      "serie",
+		Title:     "Refresh Series " + uuid.NewString(),
+		Monitored: true,
+		MediaMetadataSnapshot: MediaMetadataSnapshot{
+			Seasons: []MediaSeason{{
+				Name:         "Season 1",
+				SeasonNumber: 1,
+				Monitored:    true,
+				Episodes: []MediaEpisode{
+					{Name: "Pilot", EpisodeNumber: 1, Monitored: true},
+					{Name: "Second", EpisodeNumber: 2, Monitored: true},
+				},
+			}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seasons, err := store.ListMediaSeriesSeasons(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(seasons) != 1 || len(seasons[0].Episodes) != 2 {
+		t.Fatalf("expected create to materialize rows, got %#v", seasons)
+	}
+	if _, err := store.SetMediaSeriesEpisodeMonitored(ctx, seasons[0].Episodes[0].ID, false); err != nil {
+		t.Fatal(err)
+	}
+
+	refreshed, err := store.UpdateMediaItemMetadata(ctx, item.ID, MediaItemInput{
+		Type:      "serie",
+		Title:     item.Title,
+		Monitored: true,
+		MediaMetadataSnapshot: MediaMetadataSnapshot{
+			Seasons: []MediaSeason{{
+				Name:         "Season One",
+				SeasonNumber: 1,
+				Monitored:    true,
+				Episodes: []MediaEpisode{
+					{Name: "Pilot Updated", EpisodeNumber: 1, Monitored: true},
+					{Name: "Second Updated", EpisodeNumber: 2, Monitored: true},
+					{Name: "Third", EpisodeNumber: 3, Monitored: true},
+				},
+			}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if refreshed.Seasons[0].Name != "Season One" {
+		t.Fatalf("expected season metadata update, got %#v", refreshed.Seasons[0])
+	}
+	episodes := refreshed.Seasons[0].Episodes
+	if len(episodes) != 3 {
+		t.Fatalf("expected added episode, got %#v", episodes)
+	}
+	if episodes[0].Name != "Pilot Updated" || episodes[0].Monitored {
+		t.Fatalf("expected renamed episode with preserved monitor=false, got %#v", episodes[0])
+	}
+	if !episodes[1].Monitored || !episodes[2].Monitored {
+		t.Fatalf("expected existing true and new true monitor state, got %#v", episodes)
 	}
 }
 

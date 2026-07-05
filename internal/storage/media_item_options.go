@@ -43,6 +43,11 @@ func (s *SettingsStore) UpdateMediaItemOptions(ctx context.Context, id uuid.UUID
 	if rows == 0 {
 		return MediaItem{}, ErrNotFound
 	}
+	if updateSeasons && seasons != nil {
+		if err := applyMediaSeriesMonitorSnapshot(ctx, s.pool, id, *seasons); err != nil {
+			return MediaItem{}, err
+		}
+	}
 	if input.LibraryFolderID != nil {
 		return s.RescanMediaItemFiles(ctx, id)
 	}

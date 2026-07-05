@@ -20,7 +20,7 @@ func (s *SettingsStore) ListMediaItems(ctx context.Context) ([]MediaItem, error)
 	for _, row := range rows {
 		items = append(items, mediaItemFromListRow(row))
 	}
-	return items, nil
+	return hydrateMediaItemsSeries(ctx, s.pool, items)
 }
 
 func (s *SettingsStore) SearchMediaItems(ctx context.Context, query string, mediaType *string, limit int) ([]MediaItem, error) {
@@ -40,7 +40,7 @@ func (s *SettingsStore) SearchMediaItems(ctx context.Context, query string, medi
 	for _, row := range rows {
 		items = append(items, mediaItemFromSearchRow(row))
 	}
-	return items, nil
+	return hydrateMediaItemsSeries(ctx, s.pool, items)
 }
 
 func (s *SettingsStore) GetMediaItem(ctx context.Context, id uuid.UUID) (MediaItem, error) {
@@ -52,7 +52,11 @@ func getMediaItem(ctx context.Context, q mediaItemQuerier, id uuid.UUID) (MediaI
 	if errors.Is(err, pgx.ErrNoRows) {
 		return MediaItem{}, ErrNotFound
 	}
-	return mediaItemFromGetRow(row), err
+	if err != nil {
+		return MediaItem{}, err
+	}
+	item := mediaItemFromGetRow(row)
+	return hydrateMediaItemSeries(ctx, q, item)
 }
 
 func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInput) (MediaItem, error) {
@@ -80,6 +84,9 @@ func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInpu
 	if err := assignMediaItemTags(ctx, tx, itemID, input.Tags); err != nil {
 		return MediaItem{}, err
 	}
+	if err := materializeMediaSeriesSnapshot(ctx, tx, itemID, input); err != nil {
+		return MediaItem{}, err
+	}
 	item, err := getMediaItem(ctx, tx, itemID)
 	if err != nil {
 		return MediaItem{}, err
@@ -100,5 +107,5 @@ func (s *SettingsStore) ListMissingMediaItems(ctx context.Context) ([]MediaItem,
 	for _, row := range rows {
 		items = append(items, mediaItemFromMissingRow(row))
 	}
-	return items, nil
+	return hydrateMediaItemsSeries(ctx, s.pool, items)
 }

@@ -12,7 +12,15 @@ import (
 )
 
 func (s *SettingsStore) ListMediaSeriesSeasons(ctx context.Context, mediaItemID uuid.UUID) ([]MediaSeriesSeason, error) {
-	queries := storagegen.New(s.pool)
+	return listMediaSeriesSeasons(ctx, s.pool, mediaItemID)
+}
+
+func listMediaSeriesSeasons(
+	ctx context.Context,
+	q storagegen.DBTX,
+	mediaItemID uuid.UUID,
+) ([]MediaSeriesSeason, error) {
+	queries := storagegen.New(q)
 	seasonRows, err := queries.ListMediaSeasonRows(ctx, mediaItemID)
 	if err != nil {
 		return nil, err
@@ -47,30 +55,50 @@ func (s *SettingsStore) UpsertMediaSeriesSeasons(
 	defer func() {
 		_ = tx.Rollback(ctx)
 	}()
-	queries := storagegen.New(tx)
-	for _, season := range input {
-		params, err := mediaSeriesSeasonParams(mediaItemID, season)
-		if err != nil {
-			return nil, err
-		}
-		row, err := queries.UpsertMediaSeasonRow(ctx, params)
-		if err != nil {
-			return nil, err
-		}
-		for _, episode := range season.Episodes {
-			params, err := mediaSeriesEpisodeParams(mediaItemID, row.ID, season.SeasonNumber, episode)
-			if err != nil {
-				return nil, err
-			}
-			if _, err := queries.UpsertMediaEpisodeRow(ctx, params); err != nil {
-				return nil, err
-			}
-		}
+	if err := upsertMediaSeriesSeasons(ctx, tx, mediaItemID, input, false); err != nil {
+		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
 	return s.ListMediaSeriesSeasons(ctx, mediaItemID)
+}
+
+func upsertMediaSeriesSeasons(
+	ctx context.Context,
+	q storagegen.DBTX,
+	mediaItemID uuid.UUID,
+	input []MediaSeriesSeasonInput,
+	preserveMonitor bool,
+) error {
+	if preserveMonitor {
+		var err error
+		input, err = preserveMediaSeriesMonitorState(ctx, q, mediaItemID, input)
+		if err != nil {
+			return err
+		}
+	}
+	queries := storagegen.New(q)
+	for _, season := range input {
+		params, err := mediaSeriesSeasonParams(mediaItemID, season)
+		if err != nil {
+			return err
+		}
+		row, err := queries.UpsertMediaSeasonRow(ctx, params)
+		if err != nil {
+			return err
+		}
+		for _, episode := range season.Episodes {
+			params, err := mediaSeriesEpisodeParams(mediaItemID, row.ID, season.SeasonNumber, episode)
+			if err != nil {
+				return err
+			}
+			if _, err := queries.UpsertMediaEpisodeRow(ctx, params); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (s *SettingsStore) SetMediaSeriesSeasonMonitored(

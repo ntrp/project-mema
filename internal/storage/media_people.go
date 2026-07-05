@@ -31,6 +31,7 @@ type MediaFact struct {
 
 type MediaSeason struct {
 	Name         string         `json:"name"`
+	SeasonNumber int32          `json:"seasonNumber,omitempty"`
 	EpisodeCount *int32         `json:"episodeCount,omitempty"`
 	AirDate      *string        `json:"airDate,omitempty"`
 	PosterPath   *string        `json:"posterPath,omitempty"`

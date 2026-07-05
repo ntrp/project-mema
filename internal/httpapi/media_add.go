@@ -129,6 +129,7 @@ func mediaSeasons(seasons []metadata.Season) []storage.MediaSeason {
 	for _, season := range seasons {
 		items = append(items, storage.MediaSeason{
 			Name:         season.Name,
+			SeasonNumber: season.SeasonNumber,
 			EpisodeCount: season.EpisodeCount,
 			AirDate:      season.AirDate,
 			PosterPath:   season.PosterPath,

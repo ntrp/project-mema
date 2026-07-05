@@ -70,6 +70,9 @@ func insertMediaItem(ctx context.Context, q mediaItemQuerier, input MediaItemInp
 	if err := assignMediaItemTags(ctx, q, itemID, input.Tags); err != nil {
 		return MediaItem{}, err
 	}
+	if err := materializeMediaSeriesSnapshot(ctx, q, itemID, input); err != nil {
+		return MediaItem{}, err
+	}
 	return getMediaItem(ctx, q, itemID)
 }
 
