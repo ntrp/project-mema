@@ -2669,7 +2669,18 @@ export interface components {
 			/** Format: date-time */
 			publishedAt?: string;
 			grabDisabledReason?: string;
+			sources: components['schemas']['ReleaseCandidateSource'][];
 			match: components['schemas']['ReleaseCandidateMatch'];
+		};
+		ReleaseCandidateSource: {
+			/** Format: uuid */
+			indexerId?: string;
+			indexerName: string;
+			indexerProtocol: components['schemas']['IndexerProtocol'];
+			title: string;
+			downloadUrl: string;
+			infoUrl?: string;
+			guid?: string;
 		};
 		ReleaseCandidateMatch: {
 			/** @enum {string} */

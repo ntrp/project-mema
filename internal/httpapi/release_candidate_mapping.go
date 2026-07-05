@@ -66,6 +66,7 @@ func releaseCandidateResponseWithBlockAndGrabReason(
 		Peers:              release.Peers,
 		PublishedAt:        release.PublishedAt,
 		GrabDisabledReason: grabDisabledReason,
+		Sources:            releaseCandidateSourceResponses(storage.ReleaseCandidateSourcesForStored(release)),
 		Match: ReleaseCandidateMatch{
 			Severity:          ReleaseCandidateMatchSeverity(match.Severity),
 			Details:           match.Details,
@@ -94,6 +95,29 @@ func releaseScoreContributorResponses(
 		responses = append(responses, ReleaseScoreContributor{
 			Label: contributor.Label,
 			Score: contributor.Score,
+		})
+	}
+	return responses
+}
+
+func releaseCandidateSourceResponses(
+	sources []storage.ReleaseCandidateSource,
+) []ReleaseCandidateSource {
+	responses := make([]ReleaseCandidateSource, 0, len(sources))
+	for _, source := range sources {
+		var indexerID *openapi_types.UUID
+		if source.IndexerID != nil {
+			value := openapi_types.UUID(*source.IndexerID)
+			indexerID = &value
+		}
+		responses = append(responses, ReleaseCandidateSource{
+			IndexerId:       indexerID,
+			IndexerName:     source.IndexerName,
+			IndexerProtocol: IndexerProtocol(source.IndexerProtocol),
+			Title:           source.Title,
+			DownloadUrl:     source.DownloadURL,
+			InfoUrl:         source.InfoURL,
+			Guid:            source.GUID,
 		})
 	}
 	return responses

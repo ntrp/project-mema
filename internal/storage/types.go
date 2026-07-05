@@ -112,6 +112,7 @@ type ReleaseCandidate struct {
 	SearchKind       string
 	RequestedSeason  *int32
 	RequestedEpisode *int32
+	Sources          []ReleaseCandidateSource
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
@@ -132,6 +133,17 @@ type ReleaseCandidateInput struct {
 	SearchKind       string
 	RequestedSeason  *int32
 	RequestedEpisode *int32
+	Sources          []ReleaseCandidateSource
+}
+
+type ReleaseCandidateSource struct {
+	IndexerID       *uuid.UUID `json:"indexerId,omitempty"`
+	IndexerName     string     `json:"indexerName"`
+	IndexerProtocol string     `json:"indexerProtocol"`
+	Title           string     `json:"title"`
+	DownloadURL     string     `json:"downloadUrl"`
+	InfoURL         *string    `json:"infoUrl,omitempty"`
+	GUID            *string    `json:"guid,omitempty"`
 }
 
 type ReleaseBlocklistItem struct {

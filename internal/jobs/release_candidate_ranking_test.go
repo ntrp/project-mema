@@ -12,9 +12,14 @@ func TestSCNMedia002DedupeReleaseCandidatesKeepsBestDuplicate(t *testing.T) {
 	guid := "same-release"
 	season := int32(1)
 	episode := int32(2)
+	firstIndexerID := uuid.New()
+	secondIndexerID := uuid.New()
 	item := storage.MediaItem{Type: "serie", Title: "Scenario Series"}
 	releases := []storage.ReleaseCandidateInput{
 		{
+			IndexerID:        &firstIndexerID,
+			IndexerName:      "Indexer One",
+			IndexerProtocol:  "torrent",
 			Title:            "Scenario.Series.S01.1080p.WEBDL",
 			GUID:             &guid,
 			SearchKind:       "episode",
@@ -22,6 +27,9 @@ func TestSCNMedia002DedupeReleaseCandidatesKeepsBestDuplicate(t *testing.T) {
 			RequestedEpisode: &episode,
 		},
 		{
+			IndexerID:        &secondIndexerID,
+			IndexerName:      "Indexer Two",
+			IndexerProtocol:  "torrent",
 			Title:            "Scenario.Series.S01E02.1080p.WEBDL",
 			GUID:             &guid,
 			SearchKind:       "episode",
@@ -37,6 +45,68 @@ func TestSCNMedia002DedupeReleaseCandidatesKeepsBestDuplicate(t *testing.T) {
 	}
 	if deduped[0].Title != "Scenario.Series.S01E02.1080p.WEBDL" {
 		t.Fatalf("deduped title = %q", deduped[0].Title)
+	}
+	if got := deduped[0].Sources; len(got) != 2 || got[0].IndexerName != "Indexer Two" || got[1].IndexerName != "Indexer One" {
+		t.Fatalf("sources = %#v, want representative source followed by duplicate source", got)
+	}
+}
+
+func TestSCNMedia002DedupeReleaseCandidatesGroupsTitleSizeMatches(t *testing.T) {
+	item := storage.MediaItem{Type: "movie", Title: "Scenario Movie"}
+	highSeeders := int32(20)
+	lowSeeders := int32(5)
+	releases := []storage.ReleaseCandidateInput{
+		{
+			IndexerName:     "Indexer One",
+			IndexerProtocol: "torrent",
+			Title:           "Scenario.Movie.2026.1080p.WEB-DL-GRP",
+			DownloadURL:     "https://one.test/download/1",
+			SizeBytes:       4_000,
+			Seeders:         &highSeeders,
+		},
+		{
+			IndexerName:     "Indexer Two",
+			IndexerProtocol: "torrent",
+			Title:           "Scenario Movie 2026 1080p WEB DL GRP",
+			DownloadURL:     "https://two.test/download/2",
+			SizeBytes:       4_000,
+			Seeders:         &lowSeeders,
+		},
+	}
+
+	deduped := dedupeReleaseCandidates(item, nil, nil, nil, releases)
+
+	if len(deduped) != 1 {
+		t.Fatalf("deduped len = %d, want 1: %#v", len(deduped), deduped)
+	}
+	if got := deduped[0].Sources; len(got) != 2 || got[0].IndexerName != "Indexer One" || got[1].IndexerName != "Indexer Two" {
+		t.Fatalf("sources = %#v", got)
+	}
+}
+
+func TestSCNMedia002DedupeReleaseCandidatesDoesNotMergeTitleOnlyMatches(t *testing.T) {
+	item := storage.MediaItem{Type: "movie", Title: "Scenario Movie"}
+	releases := []storage.ReleaseCandidateInput{
+		{
+			IndexerName:     "Indexer One",
+			IndexerProtocol: "torrent",
+			Title:           "Scenario.Movie.2026.Directors.Cut.1080p",
+			DownloadURL:     "https://one.test/download/1",
+			SizeBytes:       4_000,
+		},
+		{
+			IndexerName:     "Indexer Two",
+			IndexerProtocol: "torrent",
+			Title:           "Scenario.Movie.2026.Directors.Cut.1080p",
+			DownloadURL:     "https://two.test/download/2",
+			SizeBytes:       5_000,
+		},
+	}
+
+	deduped := dedupeReleaseCandidates(item, nil, nil, nil, releases)
+
+	if len(deduped) != 2 {
+		t.Fatalf("deduped len = %d, want 2: %#v", len(deduped), deduped)
 	}
 }
 
@@ -89,11 +159,18 @@ func TestSCNMedia002ReleaseCandidateRankingFallbackHelpers(t *testing.T) {
 	infoURL := " https://indexer.local/info/1 "
 	downloadURL := " HTTPS://INDEXER.LOCAL/DOWNLOAD/1 "
 
-	if got := releaseDedupeKey(storage.ReleaseCandidateInput{InfoURL: &infoURL}); got != "https://indexer.local/info/1" {
+	if got := releaseDedupeKey(storage.ReleaseCandidateInput{InfoURL: &infoURL}); got != "info:https://indexer.local/info/1" {
 		t.Fatalf("info url dedupe key = %q", got)
 	}
-	if got := releaseDedupeKey(storage.ReleaseCandidateInput{DownloadURL: downloadURL}); got != "https://indexer.local/download/1" {
+	if got := releaseDedupeKey(storage.ReleaseCandidateInput{DownloadURL: downloadURL}); got != "download:https://indexer.local/download/1" {
 		t.Fatalf("download url dedupe key = %q", got)
+	}
+	if got := releaseDedupeKey(storage.ReleaseCandidateInput{
+		IndexerProtocol: "Torrent",
+		Title:           "Scenario.Movie.2026.1080p.WEB-DL",
+		SizeBytes:       42,
+	}); got != "title-size:scenario movie 2026 1080p web dl:42:torrent" {
+		t.Fatalf("title-size dedupe key = %q", got)
 	}
 	if got := releaseDedupeKey(storage.ReleaseCandidateInput{}); got != "" {
 		t.Fatalf("empty dedupe key = %q", got)

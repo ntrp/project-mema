@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/google/uuid"
@@ -40,16 +41,20 @@ func (s *SettingsStore) ReplaceReleaseSearchResults(ctx context.Context, mediaIt
 }
 
 func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID uuid.UUID, release ReleaseCandidateInput) error {
-	_, err := q.Exec(ctx, `
+	sources, err := json.Marshal(ReleaseCandidateSourcesForInput(release))
+	if err != nil {
+		return err
+	}
+	_, err = q.Exec(ctx, `
 		insert into app.media_release_candidates (
 			id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
 			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
-			requested_season, requested_episode
+			requested_season, requested_episode, sources
 		)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 	`, uuid.New(), mediaItemID, release.IndexerID, release.IndexerName, release.IndexerProtocol, release.Title,
 		release.DownloadURL, release.InfoURL, release.GUID, release.SizeBytes, release.Seeders, release.Peers,
-		release.PublishedAt, release.SearchKind, release.RequestedSeason, release.RequestedEpisode)
+		release.PublishedAt, release.SearchKind, release.RequestedSeason, release.RequestedEpisode, sources)
 	return err
 }
 
@@ -57,7 +62,7 @@ func (s *SettingsStore) GetReleaseCandidate(ctx context.Context, id uuid.UUID, m
 	release, err := scanReleaseCandidate(s.pool.QueryRow(ctx, `
 		select id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
 			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
-			requested_season, requested_episode, created_at, updated_at
+			requested_season, requested_episode, sources, created_at, updated_at
 		from app.media_release_candidates
 		where id = $1 and media_item_id = $2
 	`, id, mediaItemID))
@@ -83,7 +88,7 @@ func (s *SettingsStore) listReleaseCandidates(ctx context.Context, mediaItemID u
 	rows, err := s.pool.Query(ctx, `
 		select id, media_item_id, indexer_id, indexer_name, indexer_protocol, title, download_url,
 			info_url, guid, size_bytes, seeders, peers, published_at, search_kind,
-			requested_season, requested_episode, created_at, updated_at
+			requested_season, requested_episode, sources, created_at, updated_at
 		from app.media_release_candidates
 		where media_item_id = $1
 		order by coalesce(seeders, -1) desc, size_bytes desc, created_at desc
@@ -129,6 +134,7 @@ func (s *SettingsStore) listReleaseSearchErrors(ctx context.Context, mediaItemID
 
 func scanReleaseCandidate(row pgx.Row) (ReleaseCandidate, error) {
 	var release ReleaseCandidate
+	var sources []byte
 	err := row.Scan(
 		&release.ID,
 		&release.MediaItemID,
@@ -146,8 +152,15 @@ func scanReleaseCandidate(row pgx.Row) (ReleaseCandidate, error) {
 		&release.SearchKind,
 		&release.RequestedSeason,
 		&release.RequestedEpisode,
+		&sources,
 		&release.CreatedAt,
 		&release.UpdatedAt,
 	)
+	if err != nil {
+		return release, err
+	}
+	if len(sources) > 0 {
+		err = json.Unmarshal(sources, &release.Sources)
+	}
 	return release, err
 }
