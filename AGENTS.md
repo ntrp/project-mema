@@ -8,6 +8,8 @@
 - Single responsibility principle, each module or component should have a single responsibility or a very small number of them
 - Always use a modal for confirmation dialogs, never use a browser confirm dialog
 - Always use a tooltip component for showing tooltips, never use a browser tooltip
+- This project is not released yet; do not create new database migrations. Apply database schema changes directly to `internal/storage/migrations/00001_initial_schema.sql`, then reset the development database.
+- never touch the dev.local.sql seed unless explicitly asked to update it
 
 ## Dev workflow
 

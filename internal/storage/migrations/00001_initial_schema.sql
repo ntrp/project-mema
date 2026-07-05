@@ -5,6 +5,8 @@ create table if not exists app.users (
     id uuid primary key,
     username text not null unique,
     password_hash text not null,
+    display_name text not null default '',
+    picture_url text not null default '',
     role text not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
