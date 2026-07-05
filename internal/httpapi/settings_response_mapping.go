@@ -31,6 +31,11 @@ func indexerResponse(indexer storage.Indexer, languages catalogLanguageMapper) I
 	if categories == nil {
 		categories = []int32{}
 	}
+	mediaTypeScopes := indexerMediaTypeScopeResponses(indexer.MediaTypeScopes)
+	tagScopes := append([]string(nil), indexer.TagScopes...)
+	if tagScopes == nil {
+		tagScopes = []string{}
+	}
 	return Indexer{
 		Id:                 openapi_types.UUID(indexer.ID),
 		DefinitionId:       indexer.DefinitionID,
@@ -47,6 +52,8 @@ func indexerResponse(indexer storage.Indexer, languages catalogLanguageMapper) I
 		BaseUrl:            indexer.BaseURL,
 		ApiKey:             indexer.APIKey,
 		Categories:         &categories,
+		MediaTypeScopes:    &mediaTypeScopes,
+		TagScopes:          &tagScopes,
 		Fields:             indexerFieldValues(indexer.Fields),
 		Capabilities:       indexerCapabilities(indexer.Capabilities),
 		Redirect:           &indexer.Redirect,
@@ -73,6 +80,14 @@ func indexerResponse(indexer storage.Indexer, languages catalogLanguageMapper) I
 		CreatedAt:          indexer.CreatedAt,
 		UpdatedAt:          indexer.UpdatedAt,
 	}
+}
+
+func indexerMediaTypeScopeResponses(values []string) []IndexerMediaType {
+	scopes := make([]IndexerMediaType, 0, len(values))
+	for _, value := range values {
+		scopes = append(scopes, IndexerMediaType(value))
+	}
+	return scopes
 }
 
 func indexerSearchResponse(

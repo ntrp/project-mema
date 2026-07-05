@@ -78,7 +78,7 @@
 		const parsedYear = Number.parseInt(year, 10);
 		const request: MediaAdvancedSearchRequest = {
 			query: query.trim(),
-			type: target === 'movie' || target === 'series' ? target : undefined,
+			type: target === 'movie' ? 'movie' : target === 'series' ? 'serie' : undefined,
 			includeMedia,
 			includePeople,
 			year: includeMedia && Number.isFinite(parsedYear) ? parsedYear : undefined,

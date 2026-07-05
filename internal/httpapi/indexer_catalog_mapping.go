@@ -30,6 +30,7 @@ func catalogEntryResponses(entries []indexers.CatalogEntry, languages catalogLan
 func catalogEntryResponse(entry indexers.CatalogEntry, languages catalogLanguageMapper) IndexerCatalogEntry {
 	indexerURLs := append([]string(nil), entry.IndexerURLs...)
 	legacyURLs := append([]string(nil), entry.LegacyURLs...)
+	mediaTypeScopes := indexerMediaTypeScopeResponses(indexers.DefaultMediaTypeScopes(entry))
 	return IndexerCatalogEntry{
 		DefinitionId:       entry.DefinitionID,
 		Name:               entry.Name,
@@ -48,6 +49,7 @@ func catalogEntryResponse(entry indexers.CatalogEntry, languages catalogLanguage
 		SupportsPagination: entry.SupportsPagination,
 		Capabilities:       catalogCapabilities(entry.Capabilities),
 		Fields:             catalogFields(entry.Fields),
+		MediaTypeScopes:    &mediaTypeScopes,
 	}
 }
 

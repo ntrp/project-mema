@@ -78,6 +78,8 @@ create table if not exists app.indexers (
     base_url text not null,
     api_key text,
     categories integer[] not null default '{}',
+    media_type_scopes text[] not null default '{movie,serie,anime,audio,book}',
+    tag_scopes text[] not null default '{}',
     fields jsonb not null default '[]'::jsonb,
     capabilities jsonb not null default '{"categories":[],"supportsRawSearch":true,"searchParams":["q"],"tvSearchParams":["q","season","ep"],"movieSearchParams":["q","imdbid"]}'::jsonb,
     redirect boolean not null default true,
@@ -102,7 +104,8 @@ create table if not exists app.indexers (
     last_error text,
     failure_count integer not null default 0 check (failure_count >= 0),
     created_at timestamptz not null default now(),
-    updated_at timestamptz not null default now()
+    updated_at timestamptz not null default now(),
+    constraint indexers_media_type_scopes_check check (media_type_scopes <@ array['movie', 'serie', 'anime', 'audio', 'book']::text[])
 );
 
 create index if not exists idx_indexers_priority
@@ -146,7 +149,7 @@ on conflict (id) do nothing;
 
 create table if not exists app.indexer_search_cache (
     indexer_id uuid not null references app.indexers(id) on delete cascade,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
+    media_type text not null check (media_type in ('movie', 'serie', 'mixed')),
     query text not null,
     response jsonb not null,
     result_count integer not null default 0 check (result_count >= 0),
@@ -165,7 +168,7 @@ create table if not exists app.indexer_search_history (
     indexer_name text not null,
     indexer_type text not null default 'torznab',
     indexer_protocol text not null default 'torrent',
-    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
+    media_type text not null check (media_type in ('movie', 'serie', 'mixed')),
     query text not null,
     cache_hit boolean not null,
     success boolean not null,
@@ -198,7 +201,7 @@ create table if not exists app.quality_size_settings (
 
 create table if not exists app.discover_blacklist (
     id uuid primary key,
-    media_type text not null check (media_type in ('movie', 'series')),
+    media_type text not null check (media_type in ('movie', 'serie')),
     title text not null,
     year integer,
     external_provider text,
@@ -310,7 +313,7 @@ create table if not exists app.file_naming_settings (
 
 create table if not exists app.media_items (
     id uuid primary key,
-    media_type text not null check (media_type in ('movie', 'series')),
+    media_type text not null check (media_type in ('movie', 'serie')),
     title text not null,
     year integer,
     monitored boolean not null default true,
@@ -422,7 +425,7 @@ create index if not exists idx_metadata_providers_priority
 
 create table if not exists app.metadata_search_cache (
     provider_id uuid not null references app.metadata_providers(id) on delete cascade,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed', 'person')),
+    media_type text not null check (media_type in ('movie', 'serie', 'mixed', 'person')),
     query text not null,
     year integer not null default 0,
     results jsonb not null,
@@ -450,7 +453,7 @@ create table if not exists app.metadata_search_history (
     provider_id uuid references app.metadata_providers(id) on delete set null,
     provider_name text not null,
     provider_type text not null,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed', 'person')),
+    media_type text not null check (media_type in ('movie', 'serie', 'mixed', 'person')),
     query text not null,
     year integer not null default 0,
     cache_hit boolean not null,
@@ -521,7 +524,7 @@ end $$;
 create table if not exists app.media_requests (
     id uuid primary key,
     requested_by_user_id uuid not null references app.users(id) on delete cascade,
-    media_type text not null check (media_type in ('movie', 'series')),
+    media_type text not null check (media_type in ('movie', 'serie')),
     title text not null,
     year integer,
     external_provider text,

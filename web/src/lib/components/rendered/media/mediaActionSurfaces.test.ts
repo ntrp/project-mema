@@ -9,7 +9,7 @@ describe('rendered media action surfaces (SCN-MEDIA-004)', () => {
 	it('renders admin and requester option controls for media actions', () => {
 		const admin = render(MediaActionOptions, {
 			props: {
-				mediaType: 'series',
+				mediaType: 'serie',
 				isAdmin: true,
 				libraryFolders: [libraryFolder()],
 				qualityProfiles: [qualityProfile()],

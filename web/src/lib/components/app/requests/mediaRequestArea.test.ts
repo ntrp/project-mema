@@ -40,7 +40,7 @@ describe('media request area (SCN-MEDIA-012)', () => {
 			props: {
 				requests: [
 					mediaRequest(),
-					mediaRequest({ id: 'request-2', title: 'Frieren', type: 'series' })
+					mediaRequest({ id: 'request-2', title: 'Frieren', type: 'serie' })
 				],
 				libraryFolders,
 				qualityProfiles,

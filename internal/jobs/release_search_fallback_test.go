@@ -57,7 +57,7 @@ func TestSeasonFallbackCriteriaDropsEpisode(t *testing.T) {
 func episodeFallbackFixture() (storage.MediaItem, decisions.ReleaseSearchCriteria) {
 	season := int32(1)
 	episode := int32(1)
-	item := storage.MediaItem{Type: "series", Title: "The Show"}
+	item := storage.MediaItem{Type: "serie", Title: "The Show"}
 	criteria := decisions.ReleaseSearchCriteria{
 		Kind:          "episode",
 		Title:         "The Show",

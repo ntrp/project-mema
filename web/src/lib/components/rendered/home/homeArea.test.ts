@@ -58,7 +58,7 @@ function baseProps(): HomeAreaProps {
 		activitySection: 'queue',
 		mediaItems: [
 			mediaItem(),
-			mediaItem({ id: 'series-1', title: 'Library Series', type: 'series', status: 'downloaded' })
+			mediaItem({ id: 'series-1', title: 'Library Series', type: 'serie', status: 'downloaded' })
 		],
 		mediaRequests: [mediaRequest()],
 		discoverSections: [discoverSection()],

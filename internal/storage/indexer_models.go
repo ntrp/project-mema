@@ -23,6 +23,8 @@ type Indexer struct {
 	BaseURL            string
 	APIKey             *string
 	Categories         []int32
+	MediaTypeScopes    []string
+	TagScopes          []string
 	Fields             json.RawMessage
 	Capabilities       json.RawMessage
 	Redirect           bool
@@ -65,6 +67,8 @@ type IndexerInput struct {
 	BaseURL            string
 	APIKey             *string
 	Categories         []int32
+	MediaTypeScopes    []string
+	TagScopes          []string
 	Fields             json.RawMessage
 	Capabilities       json.RawMessage
 	Redirect           bool

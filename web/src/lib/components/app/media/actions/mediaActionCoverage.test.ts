@@ -64,7 +64,7 @@ describe('media monitoring payloads (SCN-MEDIA-004)', () => {
 		} as unknown as MediaItem;
 		const series = {
 			title: 'Scenario Series',
-			type: 'series',
+			type: 'serie',
 			monitored: false,
 			monitorMode: 'none',
 			minimumAvailability: 'released',

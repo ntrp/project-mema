@@ -63,7 +63,7 @@ func discoverBlacklistInput(
 		writeError(w, http.StatusBadRequest, "invalid_title", "Title is required")
 		return storage.DiscoverBlacklistInput{}, false
 	}
-	if request.Type != Movie && request.Type != Series {
+	if request.Type != MediaTypeMovie && request.Type != MediaTypeSerie {
 		writeError(w, http.StatusBadRequest, "invalid_type", "Media type is required")
 		return storage.DiscoverBlacklistInput{}, false
 	}

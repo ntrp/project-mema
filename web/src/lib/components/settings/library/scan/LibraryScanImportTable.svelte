@@ -63,7 +63,7 @@
 							title: item.matchedTitle ?? item.detectedTitle,
 							type:
 								item.detectedMediaKind === 'series' || item.detectedMediaKind === 'anime_series'
-									? 'series'
+									? 'serie'
 									: 'movie',
 							year: item.matchedYear ?? item.detectedYear
 						}

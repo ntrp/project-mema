@@ -90,7 +90,7 @@ func TestSCNActivity002ManualSeriesImportRequiresEpisodeCoordinates(t *testing.T
 	}
 	folder := createImportFolder(t, store, filepath.Join(root, "library"))
 	item := createImportMediaItem(t, store, storage.MediaItemInput{
-		Type:            "series",
+		Type:            "serie",
 		Title:           "Scenario Series",
 		Monitored:       true,
 		LibraryFolderID: &folder.ID,

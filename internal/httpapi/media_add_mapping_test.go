@@ -18,7 +18,7 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 	episodeTotal := int32(2)
 	details := metadata.Details{
 		Title:            "Scenario Series",
-		Type:             "series",
+		Type:             "serie",
 		Year:             &year,
 		ExternalProvider: "tmdb",
 		ExternalID:       "series-1",
@@ -73,7 +73,7 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 		}},
 		Similar: []metadata.SearchResult{{
 			Title:            "Similar",
-			Type:             "series",
+			Type:             "serie",
 			ExternalProvider: "tmdb",
 			ExternalID:       "sim-1",
 		}},
@@ -81,7 +81,7 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 
 	input := applyMediaDetails(storage.MediaItemInput{Title: "Old"}, details)
 
-	if input.Title != "Scenario Series" || input.Type != "series" || input.Year == nil || *input.Year != year {
+	if input.Title != "Scenario Series" || input.Type != "serie" || input.Year == nil || *input.Year != year {
 		t.Fatalf("core fields = %#v", input)
 	}
 	if input.ExternalProvider == nil || *input.ExternalProvider != "tmdb" || input.ExternalID == nil || *input.ExternalID != "series-1" {

@@ -17,26 +17,26 @@ func (s *Server) discoverSeriesProviderResults(
 ) ([]metadata.SearchResult, error) {
 	cacheKey := discoverSeriesCacheKey(request)
 	cached := []metadata.SearchResult{}
-	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, "series", cacheKey, nil, &cached)
+	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, "serie", cacheKey, nil, &cached)
 	if err != nil {
 		return nil, err
 	}
 	if found {
-		s.recordMetadataSearchHistory(ctx, provider, "series", cacheKey, nil, true, cached, nil)
+		s.recordMetadataSearchHistory(ctx, provider, "serie", cacheKey, nil, true, cached, nil)
 		return cached, nil
 	}
 
 	results, err := s.metadata.DiscoverSeries(ctx, metadataProviderConfig(provider), request)
 	if err != nil {
-		s.recordMetadataSearchHistory(ctx, provider, "series", cacheKey, nil, false, nil, err)
+		s.recordMetadataSearchHistory(ctx, provider, "serie", cacheKey, nil, false, nil, err)
 		return nil, err
 	}
 	expiresAt := s.now().Add(24 * time.Hour)
-	s.recordMetadataSearchHistory(ctx, provider, "series", cacheKey, nil, false, results, nil)
-	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, "series", cacheKey, nil, results, expiresAt); err != nil {
+	s.recordMetadataSearchHistory(ctx, provider, "serie", cacheKey, nil, false, results, nil)
+	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, "serie", cacheKey, nil, results, expiresAt); err != nil {
 		return nil, err
 	}
-	s.publishMetadataCacheUpdated(ctx, provider, "series", cacheKey, nil, results, expiresAt)
+	s.publishMetadataCacheUpdated(ctx, provider, "serie", cacheKey, nil, results, expiresAt)
 	return results, nil
 }
 

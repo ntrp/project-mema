@@ -41,7 +41,7 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 		Categories:   &categories,
 		Enabled:      true,
 		Priority:     10,
-	}, testLanguageCatalog())
+	}, testLanguageCatalog(), nil)
 	if !ok || indexer.Name != "Indexer" || len(indexer.Categories) != 2 {
 		t.Fatalf("indexer input = %#v, ok = %v", indexer, ok)
 	}
@@ -82,6 +82,7 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 			w,
 			IndexerRequest{DefinitionId: "bad", Name: "Bad", BaseUrl: "http://x"},
 			testLanguageCatalog(),
+			nil,
 		)
 		return ok
 	})

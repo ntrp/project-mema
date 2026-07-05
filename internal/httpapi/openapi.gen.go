@@ -205,6 +205,33 @@ func (e IndexerHealthStatus) Valid() bool {
 	}
 }
 
+// Defines values for IndexerMediaType.
+const (
+	IndexerMediaTypeAnime IndexerMediaType = "anime"
+	IndexerMediaTypeAudio IndexerMediaType = "audio"
+	IndexerMediaTypeBook  IndexerMediaType = "book"
+	IndexerMediaTypeMovie IndexerMediaType = "movie"
+	IndexerMediaTypeSerie IndexerMediaType = "serie"
+)
+
+// Valid indicates whether the value is a known member of the IndexerMediaType enum.
+func (e IndexerMediaType) Valid() bool {
+	switch e {
+	case IndexerMediaTypeAnime:
+		return true
+	case IndexerMediaTypeAudio:
+		return true
+	case IndexerMediaTypeBook:
+		return true
+	case IndexerMediaTypeMovie:
+		return true
+	case IndexerMediaTypeSerie:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IndexerPrivacy.
 const (
 	Private     IndexerPrivacy = "private"
@@ -312,9 +339,9 @@ func (e LibraryScanItemStatus) Valid() bool {
 
 // Defines values for MediaDiscoverMediaType.
 const (
-	MediaDiscoverMediaTypeMixed  MediaDiscoverMediaType = "mixed"
-	MediaDiscoverMediaTypeMovie  MediaDiscoverMediaType = "movie"
-	MediaDiscoverMediaTypeSeries MediaDiscoverMediaType = "series"
+	MediaDiscoverMediaTypeMixed MediaDiscoverMediaType = "mixed"
+	MediaDiscoverMediaTypeMovie MediaDiscoverMediaType = "movie"
+	MediaDiscoverMediaTypeSerie MediaDiscoverMediaType = "serie"
 )
 
 // Valid indicates whether the value is a known member of the MediaDiscoverMediaType enum.
@@ -324,7 +351,7 @@ func (e MediaDiscoverMediaType) Valid() bool {
 		return true
 	case MediaDiscoverMediaTypeMovie:
 		return true
-	case MediaDiscoverMediaTypeSeries:
+	case MediaDiscoverMediaTypeSerie:
 		return true
 	default:
 		return false
@@ -588,16 +615,16 @@ func (e MediaSearchSourceType) Valid() bool {
 
 // Defines values for MediaType.
 const (
-	Movie  MediaType = "movie"
-	Series MediaType = "series"
+	MediaTypeMovie MediaType = "movie"
+	MediaTypeSerie MediaType = "serie"
 )
 
 // Valid indicates whether the value is a known member of the MediaType enum.
 func (e MediaType) Valid() bool {
 	switch e {
-	case Movie:
+	case MediaTypeMovie:
 		return true
-	case Series:
+	case MediaTypeSerie:
 		return true
 	default:
 		return false
@@ -1126,6 +1153,7 @@ type Indexer struct {
 	LastStatusCode     *int32               `json:"lastStatusCode,omitempty"`
 	LastSuccessAt      *time.Time           `json:"lastSuccessAt,omitempty"`
 	LegacyUrls         *[]string            `json:"legacyUrls,omitempty"`
+	MediaTypeScopes    *[]IndexerMediaType  `json:"mediaTypeScopes,omitempty"`
 	MinimumSeeders     *int32               `json:"minimumSeeders,omitempty"`
 	Name               string               `json:"name"`
 	NextCheckAt        *time.Time           `json:"nextCheckAt,omitempty"`
@@ -1141,6 +1169,7 @@ type Indexer struct {
 	SupportsRedirect   bool                 `json:"supportsRedirect"`
 	SupportsRss        bool                 `json:"supportsRss"`
 	SupportsSearch     bool                 `json:"supportsSearch"`
+	TagScopes          *[]string            `json:"tagScopes,omitempty"`
 	UpdatedAt          time.Time            `json:"updatedAt"`
 }
 
@@ -1194,6 +1223,7 @@ type IndexerCatalogEntry struct {
 	IndexerUrls        *[]string           `json:"indexerUrls,omitempty"`
 	Language           string              `json:"language"`
 	LegacyUrls         *[]string           `json:"legacyUrls,omitempty"`
+	MediaTypeScopes    *[]IndexerMediaType `json:"mediaTypeScopes,omitempty"`
 	Name               string              `json:"name"`
 	Privacy            IndexerPrivacy      `json:"privacy"`
 	Protocol           IndexerProtocol     `json:"protocol"`
@@ -1260,6 +1290,9 @@ type IndexerListResponse struct {
 	Indexers []Indexer `json:"indexers"`
 }
 
+// IndexerMediaType defines model for IndexerMediaType.
+type IndexerMediaType string
+
 // IndexerPrivacy defines model for IndexerPrivacy.
 type IndexerPrivacy string
 
@@ -1309,6 +1342,7 @@ type IndexerRequest struct {
 	Fields             *[]IndexerFieldValue `json:"fields,omitempty"`
 	Implementation     *string              `json:"implementation,omitempty"`
 	ImplementationName *string              `json:"implementationName,omitempty"`
+	MediaTypeScopes    *[]IndexerMediaType  `json:"mediaTypeScopes,omitempty"`
 	MinimumSeeders     *int32               `json:"minimumSeeders,omitempty"`
 	Name               string               `json:"name"`
 	PackSeedTime       *int32               `json:"packSeedTime,omitempty"`
@@ -1317,6 +1351,7 @@ type IndexerRequest struct {
 	Redirect           *bool                `json:"redirect,omitempty"`
 	SeedRatio          *float64             `json:"seedRatio,omitempty"`
 	SeedTime           *int32               `json:"seedTime,omitempty"`
+	TagScopes          *[]string            `json:"tagScopes,omitempty"`
 }
 
 // IndexerSearchCacheEntry defines model for IndexerSearchCacheEntry.

@@ -146,7 +146,7 @@
 			<main class="grid min-w-0 gap-6 [&>section]:grid [&>section]:min-w-0 [&>section]:gap-2.5">
 				<MediaMetadataCore {detail} {castHref} {crewHref}>
 					{#snippet seasonsContent()}
-						{#if item.type === 'series'}
+						{#if item.type === 'serie'}
 							<MediaSeriesSeasons
 								{item}
 								activities={itemActivities}

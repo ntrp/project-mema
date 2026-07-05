@@ -24,7 +24,7 @@ func TestMovieYearFallbackQueryRemovesSeparatedMovieYear(t *testing.T) {
 
 func TestMovieYearFallbackQuerySkipsSeries(t *testing.T) {
 	year := int32(2026)
-	item := storage.MediaItem{Type: "series", Title: "Obsession", Year: &year}
+	item := storage.MediaItem{Type: "serie", Title: "Obsession", Year: &year}
 	if got := movieYearFallbackQuery(item, "Obsession 2026"); got != "" {
 		t.Fatalf("fallback = %q, want empty", got)
 	}

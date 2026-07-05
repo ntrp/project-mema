@@ -60,14 +60,14 @@
 	}: HomeAreaProps = $props();
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
-	const series = $derived(mediaItems.filter((item) => item.type === 'series'));
+	const series = $derived(mediaItems.filter((item) => item.type === 'serie'));
 	const wanted = $derived(mediaItems.filter((item) => item.status === 'missing'));
 	const selectedMediaItem = $derived(
 		selectedMediaItemId
 			? mediaItems.find(
 					(item) =>
 						item.id === selectedMediaItemId &&
-						item.type === (activeSection === 'movies' ? 'movie' : 'series')
+						item.type === (activeSection === 'movies' ? 'movie' : 'serie')
 				)
 			: undefined
 	);
@@ -107,7 +107,7 @@
 	{:else if activeSection === 'movies' || activeSection === 'series'}
 		{#if selectedMediaItemId}
 			<MediaDetail
-				mediaType={activeSection === 'movies' ? 'movie' : 'series'}
+				mediaType={activeSection === 'movies' ? 'movie' : 'serie'}
 				item={selectedMediaItem}
 				loading={loadingMediaItems && !selectedMediaItem}
 				{mediaItems}
@@ -134,7 +134,7 @@
 			/>
 		{:else}
 			<MediaItemList
-				mediaType={activeSection === 'movies' ? 'movie' : 'series'}
+				mediaType={activeSection === 'movies' ? 'movie' : 'serie'}
 				items={activeSection === 'movies' ? movies : series}
 			/>
 		{/if}

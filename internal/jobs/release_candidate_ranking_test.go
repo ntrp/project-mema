@@ -14,7 +14,7 @@ func TestSCNMedia002DedupeReleaseCandidatesKeepsBestDuplicate(t *testing.T) {
 	episode := int32(2)
 	firstIndexerID := uuid.New()
 	secondIndexerID := uuid.New()
-	item := storage.MediaItem{Type: "series", Title: "Scenario Series"}
+	item := storage.MediaItem{Type: "serie", Title: "Scenario Series"}
 	releases := []storage.ReleaseCandidateInput{
 		{
 			IndexerID:        &firstIndexerID,

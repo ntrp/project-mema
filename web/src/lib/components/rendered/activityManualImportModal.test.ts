@@ -43,7 +43,7 @@ describe('rendered activity manual import form (SCN-ACTIVITY-002)', () => {
 			props: {
 				activity: downloadActivity({
 					mediaTitle: 'Scenario Series',
-					mediaType: 'series',
+					mediaType: 'serie',
 					releaseTitle: 'Scenario.Series.S02E05.1080p.WEB-DL-GROUP'
 				}),
 				importing: true,
@@ -64,7 +64,7 @@ describe('rendered activity manual import form (SCN-ACTIVITY-002)', () => {
 	it('builds request payloads from defaults and trimmed optional fields', () => {
 		const form = initialManualImportForm(
 			downloadActivity({
-				mediaType: 'series',
+				mediaType: 'serie',
 				mediaTitle: 'Scenario Series',
 				releaseTitle: 'Scenario.Series.S02E05.German.1080p.WEB-DL-GROUP'
 			})

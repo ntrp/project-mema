@@ -22,7 +22,7 @@ func releaseSearchBranches(
 	criteria decisions.ReleaseSearchCriteria,
 	query string,
 ) []releaseSearchBranch {
-	if item.Type != "series" || criteria.Kind != "series" {
+	if item.Type != "serie" || criteria.Kind != "serie" {
 		return []releaseSearchBranch{{criteria: criteria, queries: decisions.SearchQueriesForCriteria(criteria, query)}}
 	}
 	seasons := monitoredSeasons(item.Seasons)

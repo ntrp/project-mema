@@ -85,7 +85,7 @@ describe('media actions (SCN-MEDIA-001)', () => {
 	it('adds monitored media for admins and routes to the matching library section', async () => {
 		const shell = state();
 		const actionDeps = deps();
-		const selected = candidate({ type: 'series' });
+		const selected = candidate({ type: 'serie' });
 		const actions = createMediaActions(shell, actionDeps);
 
 		actions.addMedia(selected as never);
@@ -100,7 +100,7 @@ describe('media actions (SCN-MEDIA-001)', () => {
 		});
 
 		expect(apiMock.createMediaItem).toHaveBeenCalledWith(
-			expect.objectContaining({ type: 'series', seriesType: 'standard', startSearch: true })
+			expect.objectContaining({ type: 'serie', seriesType: 'standard', startSearch: true })
 		);
 		expect(actionDeps.loadMediaItems).toHaveBeenCalledOnce();
 		expect(actionDeps.loadSettings).toHaveBeenCalledOnce();

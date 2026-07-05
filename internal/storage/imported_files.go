@@ -65,7 +65,7 @@ func mediaItemKind(mediaType string) (string, error) {
 	switch mediaType {
 	case "movie":
 		return "movie", nil
-	case "series":
+	case "serie":
 		return "series", nil
 	default:
 		return "", errors.New("unsupported media type")

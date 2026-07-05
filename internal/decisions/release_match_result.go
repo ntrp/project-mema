@@ -17,7 +17,7 @@ func releaseCriteria(item storage.MediaItem, release storage.ReleaseCandidate) R
 }
 
 func parsedResourceTitle(mediaType string, parsed ParsedRelease) string {
-	if mediaType == "series" && parsed.SeriesTitle != "" {
+	if mediaType == "serie" && parsed.SeriesTitle != "" {
 		return parsed.SeriesTitle
 	}
 	return parsed.MovieTitle

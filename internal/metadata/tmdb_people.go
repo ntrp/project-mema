@@ -81,7 +81,7 @@ func tmdbCreditAppearance(item tmdbCreditMedia, role string) PersonAppearance {
 	mediaType := tmdbResultMediaType(item.MediaType)
 	title := strings.TrimSpace(item.Title)
 	date := item.ReleaseDate
-	if mediaType == "series" {
+	if mediaType == "serie" {
 		title = strings.TrimSpace(item.Name)
 		date = item.FirstAirDate
 	}

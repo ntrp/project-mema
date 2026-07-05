@@ -8,7 +8,7 @@ import (
 func tmdbDetailsResult(item tmdbDetails, mediaType string, externalID string) Details {
 	title := strings.TrimSpace(item.Title)
 	date := item.ReleaseDate
-	if mediaType == "series" {
+	if mediaType == "serie" {
 		title = strings.TrimSpace(item.Name)
 		date = item.FirstAirDate
 	}

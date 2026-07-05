@@ -83,7 +83,7 @@ func searchType(mediaType string) string {
 	switch mediaType {
 	case "movie":
 		return "movie"
-	case "series":
+	case "serie":
 		return "tvsearch"
 	default:
 		return "search"

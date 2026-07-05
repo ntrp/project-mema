@@ -5,7 +5,7 @@ import "testing"
 func TestNormalizeMediaItemOptions(t *testing.T) {
 	seriesType := "weird"
 	input := normalizeMediaItemOptions(MediaItemInput{
-		Type:                "series",
+		Type:                "serie",
 		MonitorMode:         "invalid",
 		SeriesType:          &seriesType,
 		MinimumAvailability: "soon",
@@ -39,7 +39,7 @@ func TestNormalizeMediaItemOptionsForUnmonitoredMovie(t *testing.T) {
 func TestNormalizeMediaRequestOptions(t *testing.T) {
 	seriesType := "daily"
 	input := normalizeMediaRequestOptions(MediaRequestInput{
-		Type:                "series",
+		Type:                "serie",
 		MonitorMode:         "future_episodes",
 		SeriesType:          &seriesType,
 		MinimumAvailability: "in_cinema",

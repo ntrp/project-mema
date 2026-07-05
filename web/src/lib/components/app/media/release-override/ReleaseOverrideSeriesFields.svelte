@@ -56,7 +56,7 @@
 		}
 		loadingSearch = true;
 		try {
-			const found = await searchMedia({ query, type: 'series' });
+			const found = await searchMedia({ query, type: 'serie' });
 			if (current === requestNumber) {
 				results = found.filter((result) => result.externalProvider === 'tmdb').slice(0, 6);
 			}
@@ -76,7 +76,7 @@
 	async function loadSeriesDetails(externalId: string, title: string) {
 		loadingDetails = true;
 		try {
-			details = await getMediaMetadataDetails('tmdb', 'series', externalId);
+			details = await getMediaMetadataDetails('tmdb', 'serie', externalId);
 			setSeriesTitle(title);
 			selectDefaultSeason();
 		} finally {

@@ -13,6 +13,7 @@ func indexerInput(
 	w http.ResponseWriter,
 	request IndexerRequest,
 	languages []storage.Language,
+	tags []storage.Tag,
 ) (storage.IndexerInput, bool) {
 	name := strings.TrimSpace(request.Name)
 	baseURL := strings.TrimSpace(request.BaseUrl)
@@ -36,6 +37,11 @@ func indexerInput(
 	}
 	if definition.Protocol == "usenet" && definition.SupportsRedirect && request.Redirect != nil && !*request.Redirect {
 		writeError(w, http.StatusBadRequest, "invalid_redirect", "Redirect must be enabled for Usenet indexers")
+		return storage.IndexerInput{}, false
+	}
+	mediaTypeScopes := indexerMediaTypeScopes(request.MediaTypeScopes, definition)
+	tagScopes, ok := indexerTagScopes(w, request.TagScopes, tags)
+	if !ok {
 		return storage.IndexerInput{}, false
 	}
 
@@ -73,6 +79,8 @@ func indexerInput(
 		BaseURL:            baseURL,
 		APIKey:             optionalTrimmedString(request.ApiKey),
 		Categories:         categories,
+		MediaTypeScopes:    mediaTypeScopes,
+		TagScopes:          tagScopes,
 		Fields:             fields,
 		Capabilities:       capabilities,
 		Redirect:           optionalBool(request.Redirect, true),
@@ -89,6 +97,54 @@ func indexerInput(
 		Enabled:            request.Enabled,
 		Priority:           request.Priority,
 	}, true
+}
+
+func indexerMediaTypeScopes(values *[]IndexerMediaType, definition indexers.CatalogEntry) []string {
+	if values == nil {
+		return indexers.DefaultMediaTypeScopes(definition)
+	}
+	scopes := make([]string, 0, len(*values))
+	for _, value := range *values {
+		scopes = append(scopes, string(value))
+	}
+	return scopes
+}
+
+func indexerTagScopes(w http.ResponseWriter, values *[]string, tags []storage.Tag) ([]string, bool) {
+	if values == nil {
+		return []string{}, true
+	}
+	allowed := map[string]bool{}
+	for _, tag := range tags {
+		allowed[strings.ToLower(tag.Name)] = true
+	}
+	scopes := []string{}
+	for _, tag := range normalizedIndexerTagScopes(*values) {
+		if !allowed[strings.ToLower(tag)] {
+			writeError(w, http.StatusBadRequest, "invalid_tag_scope", "Indexer tag scopes must match existing tags")
+			return nil, false
+		}
+		scopes = append(scopes, tag)
+	}
+	return scopes, true
+}
+
+func normalizedIndexerTagScopes(values []string) []string {
+	seen := map[string]bool{}
+	tags := []string{}
+	for _, value := range values {
+		name := strings.Join(strings.Fields(value), " ")
+		if name == "" {
+			continue
+		}
+		key := strings.ToLower(name)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		tags = append(tags, name)
+	}
+	return tags
 }
 
 func firstNonEmptyString(value *string, fallback string) string {

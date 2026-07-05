@@ -9,7 +9,7 @@ import (
 
 func TestReleaseSearchBranchesExpandsMonitoredSeasons(t *testing.T) {
 	item := storage.MediaItem{
-		Type:  "series",
+		Type:  "serie",
 		Title: "The Show",
 		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
 			Seasons: []storage.MediaSeason{
@@ -30,7 +30,7 @@ func TestReleaseSearchBranchesExpandsMonitoredSeasons(t *testing.T) {
 func TestReleaseSearchBranchesExpandsMonitoredEpisodesWithoutSeasonMonitor(t *testing.T) {
 	airDate := "2026-01-01"
 	item := storage.MediaItem{
-		Type:  "series",
+		Type:  "serie",
 		Title: "The Show",
 		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
 			Seasons: []storage.MediaSeason{{

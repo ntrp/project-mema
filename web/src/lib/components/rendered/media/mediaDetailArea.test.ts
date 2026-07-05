@@ -59,10 +59,10 @@ describe('rendered media detail area (SCN-MEDIA-004)', () => {
 	it('renders season file size for added series', () => {
 		const filePath = '/library/Scenario Series/Season 01/Scenario.Series.S01E01.mkv';
 		const { body } = renderDetail({
-			mediaType: 'series',
+			mediaType: 'serie',
 			item: mediaItem({
 				title: 'Scenario Series',
-				type: 'series',
+				type: 'serie',
 				filePaths: [filePath],
 				files: [{ path: filePath, sizeBytes: 5 * 1024 * 1024 * 1024 }],
 				seasons: [

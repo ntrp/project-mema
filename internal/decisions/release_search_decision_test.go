@@ -10,7 +10,7 @@ import (
 func TestSCNMedia002SearchCriteriaForMoviesAndSeries(t *testing.T) {
 	year := int32(2026)
 	movie := storage.MediaItem{Type: "movie", Title: "Scenario Movie", Year: &year}
-	series := storage.MediaItem{Type: "series", Title: "Scenario Series", Year: &year}
+	series := storage.MediaItem{Type: "serie", Title: "Scenario Series", Year: &year}
 
 	if query := SearchQueryForMediaItem(movie); query != "Scenario Movie 2026" {
 		t.Fatalf("movie query = %q", query)
@@ -27,7 +27,7 @@ func TestSCNMedia002SearchCriteriaForMoviesAndSeries(t *testing.T) {
 	if season.Kind != "season" || *season.SeasonNumber != 2 || season.EpisodeNumber != nil {
 		t.Fatalf("season criteria = %#v", season)
 	}
-	if all := SearchCriteriaForQuery(series, "Scenario Series"); all.Kind != "series" {
+	if all := SearchCriteriaForQuery(series, "Scenario Series"); all.Kind != "serie" {
 		t.Fatalf("series criteria = %#v", all)
 	}
 }
@@ -115,7 +115,7 @@ func TestSCNMedia002SeasonPackPreferenceBreaksReleaseTie(t *testing.T) {
 		SeriesPackPreference: "preferPacks",
 	}
 	decision, ok := NewEngine().ChooseReleaseWithProfile(
-		storage.MediaItem{Type: "series", Title: "Scenario Series"},
+		storage.MediaItem{Type: "serie", Title: "Scenario Series"},
 		&profile,
 		nil,
 		[]storage.ReleaseCandidateInput{

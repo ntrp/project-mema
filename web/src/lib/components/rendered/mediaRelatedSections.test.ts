@@ -41,10 +41,10 @@ describe('rendered media related sections (SCN-MEDIA-008)', () => {
 		const { body } = render(MediaRelatedSections, {
 			props: {
 				detail: metadataDetail({
-					type: 'series',
+					type: 'serie',
 					externalId: 'series-1',
 					recommendations: [],
-					similar: [searchResult({ title: 'Similar Series Candidate', type: 'series' })]
+					similar: [searchResult({ title: 'Similar Series Candidate', type: 'serie' })]
 				}),
 				actionLabel: 'Add series',
 				onAdd: vi.fn()
@@ -54,7 +54,7 @@ describe('rendered media related sections (SCN-MEDIA-008)', () => {
 		expect(body).not.toContain('Recommendations');
 		expect(body).toContain('Similar Series');
 		expect(body).toContain('Similar Series Candidate');
-		expect(body).toContain('/media/tmdb/series/series-1/similar');
+		expect(body).toContain('/media/tmdb/serie/series-1/similar');
 	});
 });
 

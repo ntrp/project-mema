@@ -43,7 +43,7 @@ func (e *Engine) search(ctx context.Context, config engine.Config, query string,
 	if mediaType == "movie" {
 		searchType = "movie"
 	}
-	if mediaType == "series" {
+	if mediaType == "serie" {
 		searchType = "tvsearch"
 	}
 

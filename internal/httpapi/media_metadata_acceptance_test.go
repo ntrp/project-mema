@@ -17,7 +17,7 @@ func TestScenarioSCNMedia008SignedInUsersSearchAndInspectProviderMetadata(t *tes
 	var search MediaSearchResponse
 	client.doJSON(t, http.MethodPost, "/media/search", MediaSearchRequest{
 		Query: "Example Movie",
-		Type:  Movie,
+		Type:  MediaTypeMovie,
 	}, http.StatusOK, &search)
 	assertHasProviderResult(t, search.Results, "Example Movie")
 
@@ -26,7 +26,7 @@ func TestScenarioSCNMedia008SignedInUsersSearchAndInspectProviderMetadata(t *tes
 	assertHasProviderGroup(t, autocomplete.Groups)
 
 	query := "Example"
-	mediaType := Movie
+	mediaType := MediaTypeMovie
 	limit := int32(5)
 	var advanced MediaGroupedSearchResponse
 	client.doJSON(t, http.MethodPost, "/media/advanced-search", MediaAdvancedSearchRequest{
@@ -59,7 +59,7 @@ func TestScenarioSCNMedia008SignedInUsersSearchAndInspectProviderMetadata(t *tes
 
 	var details MediaMetadataDetails
 	client.doJSON(t, http.MethodGet, "/media/metadata/tmdb/movie/936075", nil, http.StatusOK, &details)
-	if details.Title != "Example Movie" || details.ExternalId != "936075" || details.Type != Movie {
+	if details.Title != "Example Movie" || details.ExternalId != "936075" || details.Type != MediaTypeMovie {
 		t.Fatalf("metadata details = %#v", details)
 	}
 	if details.Crew == nil || len(*details.Crew) == 0 || (*details.Crew)[0].ExternalId == nil || *(*details.Crew)[0].ExternalId != "2001" {
@@ -157,7 +157,7 @@ func assertHasFilteredMovieCacheEntry(t *testing.T, cache MetadataCacheResponse)
 	foundEntry := false
 	for _, entry := range cache.Entries {
 		if entry.CacheKind == MetadataCacheEntryCacheKindDiscover &&
-			entry.MediaType == Movie &&
+			entry.MediaType == MediaTypeMovie &&
 			strings.HasPrefix(entry.Query, "discover:movies:") &&
 			entry.ItemCount > 0 {
 			foundEntry = true
@@ -172,7 +172,7 @@ func assertHasFilteredMovieCacheEntry(t *testing.T, cache MetadataCacheResponse)
 	hitFound := false
 	for _, entry := range cache.HistoryEntries {
 		if entry.CacheKind != MetadataSearchHistoryEntryCacheKindDiscover ||
-			entry.MediaType != Movie ||
+			entry.MediaType != MediaTypeMovie ||
 			!strings.HasPrefix(entry.Query, "discover:movies:") {
 			continue
 		}

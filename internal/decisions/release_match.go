@@ -52,7 +52,7 @@ func SearchCriteriaForQuery(item storage.MediaItem, query string) ReleaseSearchC
 	case season != nil:
 		criteria.Kind = "season"
 	default:
-		criteria.Kind = "series"
+		criteria.Kind = "serie"
 	}
 	return criteria
 }

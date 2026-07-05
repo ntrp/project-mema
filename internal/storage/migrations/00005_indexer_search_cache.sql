@@ -13,7 +13,7 @@ on conflict (id) do nothing;
 
 create table if not exists app.indexer_search_cache (
     indexer_id uuid not null references app.indexers(id) on delete cascade,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
+    media_type text not null check (media_type in ('movie', 'serie', 'mixed')),
     query text not null,
     response jsonb not null,
     result_count integer not null default 0 check (result_count >= 0),
@@ -31,7 +31,7 @@ create table if not exists app.indexer_search_history (
     indexer_id uuid references app.indexers(id) on delete set null,
     indexer_name text not null,
     indexer_type text not null,
-    media_type text not null check (media_type in ('movie', 'series', 'mixed')),
+    media_type text not null check (media_type in ('movie', 'serie', 'mixed')),
     query text not null,
     cache_hit boolean not null,
     success boolean not null,

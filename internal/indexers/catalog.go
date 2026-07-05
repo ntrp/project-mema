@@ -81,6 +81,41 @@ func CatalogEntryByID(definitionID string) (CatalogEntry, bool) {
 	return CatalogEntry{}, false
 }
 
+func DefaultMediaTypeScopes(entry CatalogEntry) []string {
+	seen := map[string]bool{}
+	collectCategoryScopes(entry.Capabilities.Categories, seen)
+	if len(seen) == 0 {
+		return []string{"movie", "serie", "anime", "audio", "book"}
+	}
+	order := []string{"movie", "serie", "anime", "audio", "book"}
+	scopes := []string{}
+	for _, scope := range order {
+		if seen[scope] {
+			scopes = append(scopes, scope)
+		}
+	}
+	return scopes
+}
+
+func collectCategoryScopes(categories []Category, seen map[string]bool) {
+	for _, category := range categories {
+		name := strings.ToLower(category.Name)
+		switch {
+		case strings.Contains(name, "anime"):
+			seen["anime"] = true
+		case strings.Contains(name, "movie"):
+			seen["movie"] = true
+		case strings.Contains(name, "tv") || strings.Contains(name, "series") || strings.Contains(name, "show"):
+			seen["serie"] = true
+		case strings.Contains(name, "book") || strings.Contains(name, "ebook") || strings.Contains(name, "audiobook"):
+			seen["book"] = true
+		case strings.Contains(name, "audio") || strings.Contains(name, "music"):
+			seen["audio"] = true
+		}
+		collectCategoryScopes(category.Children, seen)
+	}
+}
+
 var catalogEntries = loadCatalogEntries()
 
 func loadCatalogEntries() []CatalogEntry {

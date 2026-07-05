@@ -51,7 +51,7 @@ function searchGroups(): MediaSearchGroup[] {
 				{
 					id: 'series-1',
 					title: 'Local Series',
-					type: 'series',
+					type: 'serie',
 					year: 2025,
 					overview: 'Already in the library'
 				}

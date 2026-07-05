@@ -9,7 +9,7 @@ import (
 )
 
 func applySeriesMonitoring(input storage.MediaItemInput) storage.MediaItemInput {
-	if input.Type != "series" {
+	if input.Type != "serie" {
 		return input
 	}
 	input.MonitorMode = seriesMonitorMode(input.MonitorMode)

@@ -52,7 +52,7 @@ func (s *Server) providerPersonSearchGroups(
 	}
 	providerRequest := request
 	if len(providerRequest.mediaTypes) == 0 {
-		providerRequest.mediaTypes = []string{"movie", "series"}
+		providerRequest.mediaTypes = []string{"movie", "serie"}
 	}
 	providers, err := s.searchableMetadataProviders(ctx, providerRequest)
 	if err != nil {

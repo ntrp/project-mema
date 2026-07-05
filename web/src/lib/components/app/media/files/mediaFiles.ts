@@ -38,7 +38,7 @@ export function mediaFileGroups(
 	item: MediaItem,
 	qualityProfiles: MediaFileProfileOption[] = []
 ): MediaFileGroup[] {
-	return item.type === 'series'
+	return item.type === 'serie'
 		? seriesGroups(item, qualityProfiles)
 		: movieGroups(item, qualityProfiles);
 }

@@ -22,12 +22,14 @@
 		IndexerSearchResponse,
 		IndexerSearchSettings,
 		IntegrationTestResponse,
-		IntegrationTestResults
+		IntegrationTestResults,
+		Tag
 	} from '$lib/settings/types';
 
 	interface Props {
 		indexers: Indexer[];
 		indexerSearch: IndexerSearchResponse;
+		tags: Tag[];
 		form: IndexerFormValue;
 		saving: boolean;
 		clearingIndexerSearchCache: boolean;
@@ -47,6 +49,7 @@
 	let {
 		indexers,
 		indexerSearch,
+		tags,
 		form = $bindable(),
 		saving,
 		clearingIndexerSearchCache,
@@ -168,6 +171,7 @@
 			<IndexerForm
 				bind:form
 				{catalog}
+				{tags}
 				{saving}
 				onSave={save}
 				onCancel={closeModal}

@@ -10,7 +10,7 @@ import (
 func TestSCNMedia007SeriesMonitoringDefaultsToAllEpisodes(t *testing.T) {
 	past := "2026-01-01"
 	input := storage.MediaItemInput{
-		Type: "series",
+		Type: "serie",
 		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
 			Seasons: []storage.MediaSeason{{
 				Name: "Season 1",
@@ -37,7 +37,7 @@ func TestSCNMedia007SeriesMonitoringFutureEpisodesSkipsPastAndUnknown(t *testing
 	past := time.Now().AddDate(0, 0, -2).Format("2006-01-02")
 	future := time.Now().AddDate(0, 0, 2).Format("2006-01-02")
 	input := storage.MediaItemInput{
-		Type:        "series",
+		Type:        "serie",
 		MonitorMode: "future_episodes",
 		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
 			Seasons: []storage.MediaSeason{{
@@ -69,7 +69,7 @@ func TestSCNMedia007SeriesMonitoringFutureEpisodesSkipsPastAndUnknown(t *testing
 
 func TestSCNMedia007NoSpecialsLeavesSpecialSeasonsUnmonitored(t *testing.T) {
 	input := storage.MediaItemInput{
-		Type:        "series",
+		Type:        "serie",
 		MonitorMode: "no_specials",
 		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
 			Seasons: []storage.MediaSeason{

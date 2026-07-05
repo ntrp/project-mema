@@ -12,7 +12,7 @@ func TestScenarioSCNMedia005AdminManagesDiscoveryBlacklist(t *testing.T) {
 
 	var created DiscoverBlacklistItem
 	client.doJSON(t, http.MethodPost, "/media/discover/blacklist", discoverBlacklistRequest(), http.StatusCreated, &created)
-	if created.Title != "Scenario Movie" || created.Type != Movie {
+	if created.Title != "Scenario Movie" || created.Type != MediaTypeMovie {
 		t.Fatalf("created discover blacklist item = %#v", created)
 	}
 
@@ -23,10 +23,10 @@ func TestScenarioSCNMedia005AdminManagesDiscoveryBlacklist(t *testing.T) {
 	}
 
 	filtered := filterDiscoverBlacklist([]MediaSearchResult{
-		{Type: Movie, Title: "Scenario Movie", Year: int32Ptr(2026)},
-		{Type: Movie, Title: "Visible Movie", Year: int32Ptr(2027)},
+		{Type: MediaTypeMovie, Title: "Scenario Movie", Year: int32Ptr(2026)},
+		{Type: MediaTypeMovie, Title: "Visible Movie", Year: int32Ptr(2027)},
 	}, []storage.DiscoverBlacklistItem{{
-		Type:  string(Movie),
+		Type:  string(MediaTypeMovie),
 		Title: "Scenario Movie",
 		Year:  int32Ptr(2026),
 	}})
@@ -41,7 +41,7 @@ func discoverBlacklistRequest() DiscoverBlacklistRequest {
 	provider := "tmdb"
 	externalID := "scenario-movie"
 	return DiscoverBlacklistRequest{
-		Type:             Movie,
+		Type:             MediaTypeMovie,
 		Title:            "Scenario Movie",
 		Year:             int32Ptr(2026),
 		ExternalProvider: &provider,
