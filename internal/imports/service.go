@@ -58,8 +58,8 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 		return err
 	}
 	if len(selection.SelectedSources) == 0 {
-		slog.Error("import completed download had no completed video files", "activityId", activity.ID, "reportedFileCount", len(files))
-		return fmt.Errorf("download client did not report completed video files")
+		slog.Error("import completed download had no valid video candidates", "activityId", activity.ID, "reportedFileCount", len(files), "rejectedCandidates", selection.RejectedCandidates)
+		return fmt.Errorf("download client did not report valid import candidates%s", rejectedCandidateSummary(selection.RejectedCandidates))
 	}
 
 	if err := os.MkdirAll(*item.MediaFolderPath, 0o755); err != nil {

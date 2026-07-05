@@ -40,13 +40,9 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	sourcePath := filepath.Join(appPath, "complete", "Toy.Story.5.2026.1080p.mkv")
-	if err := os.WriteFile(sourcePath, []byte("video"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSparseImportFile(t, sourcePath, 800*1024*1024)
 	extraPath := filepath.Join(appPath, "complete", "Toy.Story.5.2026.sample.mkv")
-	if err := os.WriteFile(extraPath, []byte("x"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeSparseImportFile(t, extraPath, 2*1024*1024)
 
 	folder, err := store.CreateLibraryFolder(ctx, libraryPath)
 	if err != nil {
@@ -125,5 +121,15 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(libraryPath, filepath.Base(extraPath))); !os.IsNotExist(err) {
 		t.Fatalf("extra target stat err = %v, want missing", err)
+	}
+}
+
+func writeSparseImportFile(t *testing.T, path string, size int64) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte{0}, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Truncate(path, size); err != nil {
+		t.Fatal(err)
 	}
 }

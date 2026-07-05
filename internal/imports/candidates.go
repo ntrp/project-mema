@@ -11,6 +11,8 @@ import (
 	"media-manager/internal/storage"
 )
 
+const minimumImportCandidateSizeBytes = 50 * 1024 * 1024
+
 type completedDownloadSelection struct {
 	SelectedSources    []string
 	RejectedCandidates []rejectedDownloadCandidate
@@ -61,17 +63,32 @@ func selectCompletedDownloadCandidates(files []downloadclients.StatusFile, mappi
 	if len(candidates) == 0 {
 		return completedDownloadSelection{RejectedCandidates: rejected}, nil
 	}
-	sort.SliceStable(candidates, func(i, j int) bool {
-		return betterCandidate(candidates[i], candidates[j])
+	largest := largestCandidateSize(candidates)
+	validCandidates := make([]downloadCandidate, 0, len(candidates))
+	for _, candidate := range candidates {
+		if reason := candidateRejectionReason(candidate, largest); reason != "" {
+			rejected = append(rejected, rejectedDownloadCandidate{
+				SourcePath: candidate.SourcePath,
+				Reason:     reason,
+			})
+			continue
+		}
+		validCandidates = append(validCandidates, candidate)
+	}
+	if len(validCandidates) == 0 {
+		return completedDownloadSelection{RejectedCandidates: rejected}, nil
+	}
+	sort.SliceStable(validCandidates, func(i, j int) bool {
+		return betterCandidate(validCandidates[i], validCandidates[j])
 	})
-	for _, candidate := range candidates[1:] {
+	for _, candidate := range validCandidates[1:] {
 		rejected = append(rejected, rejectedDownloadCandidate{
 			SourcePath: candidate.SourcePath,
 			Reason:     "lower_scoring_candidate",
 		})
 	}
 	return completedDownloadSelection{
-		SelectedSources:    []string{candidates[0].SourcePath},
+		SelectedSources:    []string{validCandidates[0].SourcePath},
 		RejectedCandidates: rejected,
 	}, nil
 }
@@ -122,6 +139,58 @@ func betterCandidate(left downloadCandidate, right downloadCandidate) bool {
 		return left.Depth < right.Depth
 	}
 	return left.SourcePath < right.SourcePath
+}
+
+func largestCandidateSize(candidates []downloadCandidate) int64 {
+	var largest int64
+	for _, candidate := range candidates {
+		if candidate.SizeBytes > largest {
+			largest = candidate.SizeBytes
+		}
+	}
+	return largest
+}
+
+func candidateRejectionReason(candidate downloadCandidate, largestSize int64) string {
+	if candidate.SizeBytes > 0 && candidate.SizeBytes < minimumImportCandidateSizeBytes {
+		return "tiny_file"
+	}
+	if largestSize > 0 && candidate.SizeBytes > 0 && candidate.SizeBytes*10 < largestSize {
+		return "relative_tiny_file"
+	}
+	if keywordCandidate(candidate.SourcePath) && largestSize > candidate.SizeBytes && candidate.SizeBytes*4 < largestSize {
+		return "sample_or_extra"
+	}
+	return ""
+}
+
+func keywordCandidate(path string) bool {
+	path = strings.ToLower(path)
+	path = strings.NewReplacer(".", " ", "_", " ", "-", " ", string(os.PathSeparator), " ").Replace(path)
+	path = strings.Join(strings.Fields(path), " ")
+	for _, keyword := range []string{"sample", "trailer", "featurette", "extras", "behind the scenes"} {
+		if strings.Contains(path, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func rejectedCandidateSummary(rejected []rejectedDownloadCandidate) string {
+	if len(rejected) == 0 {
+		return ""
+	}
+	reasons := make([]string, 0, len(rejected))
+	seen := map[string]struct{}{}
+	for _, candidate := range rejected {
+		if _, ok := seen[candidate.Reason]; ok {
+			continue
+		}
+		seen[candidate.Reason] = struct{}{}
+		reasons = append(reasons, candidate.Reason)
+	}
+	sort.Strings(reasons)
+	return " (rejected: " + strings.Join(reasons, ", ") + ")"
 }
 
 func videoExtensionRank(path string) int {
