@@ -193,7 +193,9 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 	river.AddWorker(workers, &GrabReleaseWorker{settings: settings, downloadClients: downloadClientService, events: eventBroker})
 	river.AddWorker(workers, &DownloadActivitySyncWorker{
 		settings:        settings,
+		indexers:        indexerService,
 		downloadClients: downloadClientService,
+		decisions:       decisionEngine,
 		imports:         importService,
 		events:          eventBroker,
 	})

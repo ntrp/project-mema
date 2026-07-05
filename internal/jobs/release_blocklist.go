@@ -46,15 +46,16 @@ func blockAutomaticRelease(
 	release storage.ReleaseCandidateInput,
 	reason string,
 	source string,
-) {
+) bool {
 	expiresAt := automaticBlockExpiry(ctx, settings)
 	block, err := settings.BlockReleaseCandidate(ctx, release, reason, source, &expiresAt)
 	if err != nil {
 		slog.Error("automatic release block failed", "mediaItemId", release.MediaItemID, "releaseTitle", release.Title, "error", err)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Automatic release block failed", map[string]any{"mediaItemId": release.MediaItemID.String(), "releaseTitle": release.Title, "error": err.Error()})
-		return
+		return false
 	}
 	publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "downloads", "Release temporarily blocklisted", map[string]any{"mediaItemId": release.MediaItemID.String(), "releaseTitle": release.Title, "blockId": block.ID.String(), "expiresAt": expiresAt})
+	return true
 }
 
 func automaticBlockExpiry(ctx context.Context, settings *storage.SettingsStore) time.Time {

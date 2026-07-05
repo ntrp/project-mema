@@ -2,13 +2,17 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"media-manager/internal/decisions"
 	"media-manager/internal/storage"
+	"media-manager/internal/testdb"
 )
 
 func TestSCNMedia002AutoSearchSkipsAlreadyHandledMedia(t *testing.T) {
@@ -43,6 +47,64 @@ func TestSCNMedia002TopDecisionRejectionsReturnUniqueBlockingReasons(t *testing.
 			t.Fatalf("duplicate rejection reason %q in %#v", reason, reasons)
 		}
 		seen[reason] = struct{}{}
+	}
+}
+
+func TestAutoSearchExcludesBlocklistedReleaseCandidates(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
+		Type:      "movie",
+		Title:     "Scenario Movie " + uuid.NewString(),
+		Monitored: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	guid := "blocked-" + uuid.NewString()
+	blocked := storage.ReleaseCandidateInput{
+		MediaItemID:     item.ID,
+		IndexerName:     "Scenario Indexer",
+		IndexerProtocol: "usenet",
+		Title:           "Scenario.Movie.2026.1080p.WEB-DL",
+		DownloadURL:     "https://indexer.test/blocked",
+		GUID:            &guid,
+		SizeBytes:       8_000_000_000,
+	}
+	allowed := storage.ReleaseCandidateInput{
+		MediaItemID:     item.ID,
+		IndexerName:     "Scenario Indexer",
+		IndexerProtocol: "usenet",
+		Title:           "Scenario.Movie.2026.720p.WEB-DL",
+		DownloadURL:     "https://indexer.test/allowed",
+		SizeBytes:       4_000_000_000,
+	}
+	expiresAt := time.Now().Add(time.Hour)
+	if _, err := store.BlockReleaseCandidate(ctx, blocked, "client rejected", "download_failed", &expiresAt); err != nil {
+		t.Fatal(err)
+	}
+
+	filtered, err := unblockedReleaseCandidates(ctx, store, []storage.ReleaseCandidateInput{blocked, allowed})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(filtered) != 1 || filtered[0].Title != allowed.Title {
+		t.Fatalf("filtered releases = %#v", filtered)
+	}
+}
+
+func TestAutoSearchAlternativeRetryIsBounded(t *testing.T) {
+	err := fmt.Errorf("%w: Scenario.Movie.2026.1080p", errRetryAlternativeRelease)
+	if !shouldRetryAlternativeRelease(err, 1) {
+		t.Fatal("first retry should be allowed")
+	}
+	if shouldRetryAlternativeRelease(err, maxAutomaticGrabAttempts) {
+		t.Fatal("retry at limit should not be allowed")
+	}
+	if !automaticRetryLimitReached(err, maxAutomaticGrabAttempts) {
+		t.Fatal("retry limit should be reached")
+	}
+	if automaticRetryLimitReached(context.Canceled, maxAutomaticGrabAttempts) {
+		t.Fatal("non retry errors should not hit retry limit")
 	}
 }
 
@@ -99,4 +161,19 @@ func TestSCNSystem008JobArgumentKindsAreStable(t *testing.T) {
 
 func int32Ptr(value int32) *int32 {
 	return &value
+}
+
+func jobsTestStore(t *testing.T) (context.Context, *storage.SettingsStore) {
+	t.Helper()
+	ctx := context.Background()
+	databaseURL := testdb.Create(t)
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	if err := storage.EnsureSchema(ctx, databaseURL); err != nil {
+		t.Fatal(err)
+	}
+	return ctx, storage.NewSettingsStore(pool)
 }

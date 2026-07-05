@@ -8,9 +8,11 @@ import (
 
 	"github.com/riverqueue/river"
 
+	"media-manager/internal/decisions"
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/events"
 	"media-manager/internal/imports"
+	"media-manager/internal/indexers"
 	"media-manager/internal/storage"
 )
 
@@ -24,7 +26,9 @@ type DownloadActivitySyncWorker struct {
 	river.WorkerDefaults[DownloadActivitySyncArgs]
 
 	settings        *storage.SettingsStore
+	indexers        *indexers.Service
 	downloadClients *downloadclients.Service
+	decisions       decisions.Engine
 	imports         *imports.Service
 	events          *events.Broker
 }
@@ -78,9 +82,12 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		}
 		updated, err := w.settings.FailDownloadActivity(ctx, activity.ID, &message, "download")
 		if err == nil {
-			w.blockActivity(ctx, activity, message, "download_status_unavailable")
+			blocked := w.blockActivity(ctx, activity, message, "download_status_unavailable")
 			w.publishActivity(updated, activity)
 			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity status check failed", map[string]any{"activityId": activity.ID.String(), "message": message})
+			if blocked {
+				w.retryAlternativeRelease(ctx, activity, "download_status_unavailable")
+			}
 		} else {
 			slog.Error("failed to mark download activity failed", "activityId", activity.ID, "error", err)
 			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity failure update failed", map[string]any{"activityId": activity.ID.String(), "error": err.Error()})
@@ -102,6 +109,7 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Completed download imported", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "fileCount": len(result.Files)})
 	}
 	message := (*string)(nil)
+	blocked := false
 	if result.Status == "failed" {
 		trimmed := strings.TrimSpace(result.Message)
 		if trimmed != "" {
@@ -111,7 +119,7 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		if message != nil {
 			blockMessage = *message
 		}
-		w.blockActivity(ctx, activity, blockMessage, "download_failed")
+		blocked = w.blockActivity(ctx, activity, blockMessage, "download_failed")
 	}
 	updated, err := w.settings.UpdateDownloadActivityProgress(ctx, activity.ID, result.Status, result.ProgressPercent, message)
 	if err != nil {
@@ -121,6 +129,9 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 	}
 	if result.Status == "failed" {
 		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity failed", map[string]any{"activityId": activity.ID.String(), "status": result.Status})
+		if blocked {
+			w.retryAlternativeRelease(ctx, activity, "download_failed")
+		}
 	}
 	w.publishActivity(updated, activity)
 	return nil
@@ -136,14 +147,34 @@ func (w *DownloadActivitySyncWorker) failActivity(ctx context.Context, activity 
 		return err
 	}
 	w.publishActivity(updated, activity)
-	w.blockActivity(ctx, activity, message, "import_failed")
+	if w.blockActivity(ctx, activity, message, "import_failed") {
+		w.retryAlternativeRelease(ctx, activity, "import_failed")
+	}
 	return nil
 }
 
-func (w *DownloadActivitySyncWorker) blockActivity(ctx context.Context, activity storage.DownloadActivity, reason string, source string) {
+func (w *DownloadActivitySyncWorker) blockActivity(ctx context.Context, activity storage.DownloadActivity, reason string, source string) bool {
 	expiresAt := automaticBlockExpiry(ctx, w.settings)
 	if _, err := w.settings.BlockReleaseActivity(ctx, activity, reason, source, &expiresAt); err != nil {
 		slog.Error("release block failed", "activityId", activity.ID, "releaseTitle", activity.ReleaseTitle, "source", source, "error", err)
+		return false
+	}
+	publishSystemEvent(ctx, w.settings, w.events, jobEventWarning, "downloads", "Release temporarily blocklisted", map[string]any{"mediaItemId": activity.MediaItemID.String(), "activityId": activity.ID.String(), "releaseTitle": activity.ReleaseTitle, "source": source, "expiresAt": expiresAt})
+	return true
+}
+
+func (w *DownloadActivitySyncWorker) retryAlternativeRelease(ctx context.Context, activity storage.DownloadActivity, source string) {
+	if w.indexers == nil || w.downloadClients == nil {
+		return
+	}
+	item, err := w.settings.GetMediaItem(ctx, activity.MediaItemID)
+	if err != nil {
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Alternative release retry failed to load media", map[string]any{"mediaItemId": activity.MediaItemID.String(), "activityId": activity.ID.String(), "error": err.Error()})
+		return
+	}
+	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Trying alternative release after blocklist", map[string]any{"mediaItemId": item.ID.String(), "activityId": activity.ID.String(), "title": item.Title, "source": source})
+	if err := autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item); err != nil {
+		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Alternative release retry failed", map[string]any{"mediaItemId": item.ID.String(), "activityId": activity.ID.String(), "title": item.Title, "error": err.Error()})
 	}
 }
 

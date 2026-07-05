@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -16,6 +17,10 @@ import (
 	"media-manager/internal/indexers"
 	"media-manager/internal/storage"
 )
+
+const maxAutomaticGrabAttempts = 3
+
+var errRetryAlternativeRelease = errors.New("retry alternative release")
 
 type AutoSearchDownloadArgs struct {
 	MediaItemID string `json:"media_item_id" river:"unique"`
@@ -124,71 +129,49 @@ func autoSearchDownload(
 		return err
 	}
 	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
-	releases, clients, ok, err := autoSearchCandidatesWithDownloadClient(ctx, settings, eventBroker, item, releases, searchErrors)
-	if err != nil || !ok {
-		return err
-	}
 	profile, formats, languages := releaseDecisionContext(ctx, settings, item)
-	decision, ok := decisionEngine.ChooseReleaseWithProfileAndLanguages(
-		item,
-		profile,
-		formats,
-		languages,
-		releases,
-	)
-	if !ok {
-		slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
-		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{
-			"mediaItemId":  item.ID.String(),
-			"title":        item.Title,
-			"releaseCount": len(releases),
-			"errorCount":   len(searchErrors),
-			"reasons":      topDecisionRejections(item, profile, formats, languages, releases),
-		})
-		return nil
-	}
-	if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, clients, item, decision.Release); err != nil {
-		slog.Error("auto search grab failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title, "error", err)
-		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search grab failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title, "error": err.Error()})
-		return err
-	}
-	slog.Debug("auto search grab queued", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title)
-	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search queued download", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title})
-	return nil
-}
-
-func topDecisionRejections(
-	item storage.MediaItem,
-	profile *storage.MediaProfile,
-	formats []storage.CustomFormat,
-	languages []storage.Language,
-	releases []storage.ReleaseCandidateInput,
-) []string {
-	seen := map[string]struct{}{}
-	reasons := []string{}
-	for _, release := range releases {
-		match := decisions.EvaluateReleaseCandidateInputMatchWithLanguageContext(
+	for attempt := 1; attempt <= maxAutomaticGrabAttempts; attempt++ {
+		availableReleases, clients, ok, err := autoSearchCandidatesWithDownloadClient(ctx, settings, eventBroker, item, releases, searchErrors)
+		if err != nil || !ok {
+			return err
+		}
+		decision, ok := decisionEngine.ChooseReleaseWithProfileAndLanguages(
 			item,
-			release,
 			profile,
 			formats,
 			languages,
+			availableReleases,
 		)
-		if match.Severity != "error" {
-			continue
+		if !ok {
+			slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
+			publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{
+				"mediaItemId":  item.ID.String(),
+				"title":        item.Title,
+				"releaseCount": len(availableReleases),
+				"errorCount":   len(searchErrors),
+				"reasons":      topDecisionRejections(item, profile, formats, languages, availableReleases),
+			})
+			return nil
 		}
-		for _, detail := range match.Details {
-			if _, ok := seen[detail]; ok {
+		if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, clients, item, decision.Release); err != nil {
+			slog.Error("auto search grab failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title, "error", err)
+			if shouldRetryAlternativeRelease(err, attempt) {
+				publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search trying alternative release", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "failedReleaseTitle": decision.Release.Title, "attempt": attempt})
 				continue
 			}
-			seen[detail] = struct{}{}
-			reasons = append(reasons, detail)
-			if len(reasons) == 3 {
-				return reasons
+			if automaticRetryLimitReached(err, attempt) {
+				publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search retry limit reached", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "attempts": attempt})
+				return nil
+			} else {
+				publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search grab failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title, "error": err.Error()})
 			}
+			return err
 		}
+		slog.Debug("auto search grab queued", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search queued download", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title})
+		return nil
 	}
-	return reasons
+	return nil
 }
 
 func grabReleaseNow(
@@ -241,7 +224,12 @@ func grabReleaseNow(
 		}
 		slog.Error("download client rejected release", "activityId", activity.ID, "mediaItemId", item.ID, "releaseTitle", release.Title, "downloadClientName", client.Name, "message", message)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download client rejected automatic release", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "releaseTitle": release.Title, "downloadClientName": client.Name, "message": message})
-		blockAutomaticRelease(ctx, settings, eventBroker, release, message, "download_client_rejected")
+		if blockAutomaticRelease(ctx, settings, eventBroker, release, message, "download_client_rejected") {
+			if _, err := settings.FailDownloadActivity(ctx, activity.ID, &message, "download"); err != nil {
+				return err
+			}
+			return fmt.Errorf("%w: %s", errRetryAlternativeRelease, release.Title)
+		}
 		_, err := settings.FailDownloadActivity(ctx, activity.ID, &message, "download")
 		return err
 	}
@@ -257,38 +245,4 @@ func grabReleaseNow(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "downloads", "Download activity state update failed", map[string]any{"activityId": activity.ID.String(), "mediaItemId": item.ID.String(), "error": err.Error()})
 	}
 	return err
-}
-
-func unblockedReleaseCandidates(ctx context.Context, settings *storage.SettingsStore, releases []storage.ReleaseCandidateInput) ([]storage.ReleaseCandidateInput, error) {
-	filtered := releases[:0]
-	for _, release := range releases {
-		blocked, err := settings.ReleaseCandidateInputBlocked(ctx, release)
-		if err != nil {
-			return nil, fmt.Errorf("check release blocklist: %w", err)
-		}
-		if !blocked {
-			filtered = append(filtered, release)
-		}
-	}
-	return filtered, nil
-}
-
-func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
-	return downloadclients.Config{
-		Name:     client.Name,
-		Type:     client.Type,
-		BaseURL:  client.BaseURL,
-		Username: client.Username,
-		Password: client.Password,
-		APIKey:   client.APIKey,
-		Category: client.Category,
-	}
-}
-
-func optionalString(value string) *string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return nil
-	}
-	return &value
 }
