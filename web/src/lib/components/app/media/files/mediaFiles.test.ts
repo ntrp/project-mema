@@ -7,6 +7,7 @@ import {
 	missingRow,
 	seasonNumberFromName
 } from '$lib/components/app/media/files/mediaFiles';
+import { qualityInfo } from '$lib/components/app/media/files/mediaFileParsing';
 import type { MediaItem } from '$lib/settings/types';
 
 const movie = {
@@ -50,7 +51,7 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 			size: '5.00 GiB',
 			sizeBytes: 5368709120,
 			languages: 'English',
-			quality: '1080p',
+			quality: 'WEBDL-1080p',
 			formats: ['WEB-DL'],
 			upgrade: {
 				state: 'upgradeable',
@@ -108,5 +109,13 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 		expect(seasonNumberFromName('Season 12')).toBe(12);
 		expect(seasonNumberFromName('No number')).toBeUndefined();
 		expect(episodeKey(2, 3)).toBe('2:3');
+	});
+
+	it('shows full quality labels when source and resolution are detected', () => {
+		expect(qualityInfo('Scenario.Movie.2026.2160p.WEB-DL.mkv')).toBe('WEBDL-2160p');
+		expect(qualityInfo('Madagascar.2005.2160p.BluRayRIP.TrueHD.7.1.Atmos.mkv')).toBe(
+			'BluRay-2160p'
+		);
+		expect(qualityInfo('Scenario.Movie.2026.1080p.mkv')).toBe('1080p');
 	});
 });

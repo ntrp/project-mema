@@ -31,9 +31,10 @@
 			</Table.Row>
 		</Table.Header>
 		<Table.Body>
-			{#each rows as track (track.key)}
+			{#each rows as track, index (track.key)}
 				<Table.Row
 					class={cn(
+						index > 0 && track.type !== rows[index - 1]?.type && 'border-t-4 border-border',
 						track.missing && 'bg-destructive/10 text-destructive',
 						track.unwanted && 'bg-secondary/40'
 					)}

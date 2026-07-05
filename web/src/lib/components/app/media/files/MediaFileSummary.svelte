@@ -2,11 +2,15 @@
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import { Badge } from '$lib/components/ui/badge';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
 	import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
-	import { displayLanguage } from '$lib/settings/languageDisplay';
+	import {
+		audioSatisfaction,
+		subtitleSatisfaction
+	} from '$lib/components/app/media/files/mediaFileSummaryStatus';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import type { ActivityQueueStatus } from '$lib/components/app/activity/activityQueue';
 
@@ -48,8 +52,8 @@
 			activityStatus?.status === 'downloading'
 	);
 	const statusLabel = $derived(activityStatus?.label ?? '-');
-	const subtitleState = $derived(row.subtitleSatisfaction?.state ?? 'ignored');
-	const subtitleLabel = $derived(subtitleSatisfactionLabel(row));
+	const audioStatus = $derived(audioSatisfaction(row));
+	const subtitleStatus = $derived(subtitleSatisfaction(row));
 	const upgradeVariant = $derived(row.upgrade.state === 'upgradeable' ? 'secondary' : 'outline');
 
 	function toggleDetails() {
@@ -64,23 +68,11 @@
 		toggleDetails();
 	}
 
-	function subtitleSatisfactionLabel(row: MediaFileRow) {
-		const satisfaction = row.subtitleSatisfaction;
-		if (!satisfaction || satisfaction.state === 'ignored') return 'Ignored';
-		if (satisfaction.state === 'satisfied') {
-			return `Satisfied: ${languageList(satisfaction.matchedLanguages)}`;
-		}
-		return `Missing: ${languageList(satisfaction.missingLanguages)}`;
-	}
-
-	function languageList(values: string[]) {
-		return values.map(displayLanguage).join(', ') || '-';
-	}
 </script>
 
 <div
 	class={cn(
-		'relative overflow-hidden rounded-md border bg-card text-card-foreground shadow-xs',
+		'relative rounded-md border bg-card text-card-foreground shadow-xs',
 		!row.exists && 'border-dashed bg-muted/30'
 	)}
 >
@@ -90,57 +82,55 @@
 		aria-disabled={!row.exists}
 		aria-expanded={row.exists ? detailsOpen : undefined}
 		class={cn(
-			'relative grid gap-3 p-4 pb-5 lg:grid-cols-[minmax(180px,1.2fr)_repeat(5,minmax(84px,0.55fr))_minmax(120px,0.8fr)_auto]',
+			'relative grid items-start gap-3 p-4 pb-5 lg:grid-cols-[minmax(260px,1fr)_118px_118px_76px_104px_60px_116px_auto]',
 			row.exists &&
 				'cursor-pointer transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/50 focus-visible:outline-none'
 		)}
 		onclick={toggleDetails}
 		onkeydown={handleCardKeydown}
 	>
-		<div class="grid min-w-0 gap-1">
-			<strong class="break-anywhere text-sm font-semibold">
+		<div class="grid min-w-0 content-start gap-1">
+			<strong class="text-xs font-medium text-muted-foreground uppercase">File</strong>
+			<span class="break-anywhere text-sm font-semibold">
 				{row.exists ? row.relativePath : 'Missing file'}
-			</strong>
-			<span class="text-sm text-muted-foreground">{row.exists ? fileLabel : missingLabel}</span>
+			</span>
+			<span class="sr-only">{row.exists ? fileLabel : missingLabel}</span>
 		</div>
-		<span class="grid gap-1">
+		<span class="grid content-start gap-1">
+			<strong class="text-xs font-medium text-muted-foreground uppercase">Audio</strong>
+			<Badge
+				variant={audioStatus.state === 'missing' ? 'destructive' : 'secondary'}
+				class="justify-self-start"
+			>
+				{audioStatus.label}
+			</Badge>
+		</span>
+		<span class="grid content-start gap-1">
+			<strong class="text-xs font-medium text-muted-foreground uppercase">Subtitles</strong>
+			{#if subtitleStatus.state !== 'ignored'}
+				<Badge
+					variant={subtitleStatus.state === 'missing' ? 'destructive' : 'secondary'}
+					class="justify-self-start"
+				>
+					{subtitleStatus.label}
+				</Badge>
+			{:else}
+				<span class="text-sm">{subtitleStatus.label}</span>
+			{/if}
+		</span>
+		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Size</strong>
 			<span class="text-sm">{row.size}</span>
 		</span>
-		<span class="grid gap-1">
+		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Quality</strong>
 			<span class="text-sm">{row.quality}</span>
 		</span>
-		<span class="grid gap-1">
-			<strong class="text-xs font-medium text-muted-foreground uppercase">Formats</strong>
-			<span class="flex flex-wrap gap-1">
-				{#if row.formats.length > 0}
-					{#each row.formats as format (format)}
-						<Badge variant="outline">{format}</Badge>
-					{/each}
-				{:else}
-					<span class="text-sm">-</span>
-				{/if}
-			</span>
-		</span>
-		<span class="grid gap-1">
+		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Score</strong>
 			<span class="text-sm">{row.score}</span>
 		</span>
-		<span class="grid gap-1">
-			<strong class="text-xs font-medium text-muted-foreground uppercase">Subtitles</strong>
-			{#if subtitleState !== 'ignored'}
-				<Badge
-					variant={subtitleState === 'missing' ? 'destructive' : 'secondary'}
-					class="justify-self-start"
-				>
-					{subtitleLabel}
-				</Badge>
-			{:else}
-				<span class="text-sm">{subtitleLabel}</span>
-			{/if}
-		</span>
-		<span class="grid gap-1">
+		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Status</strong>
 			{#if activityStatus}
 				<Badge
@@ -151,14 +141,21 @@
 					{statusLabel}
 				</Badge>
 			{:else}
-				<Badge
-					variant={upgradeVariant}
-					class="justify-self-start"
-					aria-label={row.upgrade.reasons.join(' ')}
-				>
-					{row.upgrade.label}
-				</Badge>
-				<span class="text-xs text-muted-foreground">{row.upgrade.reasons[0]}</span>
+				<Tooltip.Root>
+					<Tooltip.Trigger>
+						{#snippet child({ props })}
+							<Badge
+								{...props}
+								variant={upgradeVariant}
+								class="justify-self-start"
+								aria-label={row.upgrade.reasons.join(' ')}
+							>
+								{row.upgrade.label}
+							</Badge>
+						{/snippet}
+					</Tooltip.Trigger>
+					<Tooltip.Content>{row.upgrade.reasons.join(', ')}</Tooltip.Content>
+				</Tooltip.Root>
 			{/if}
 		</span>
 		<MediaFileSummaryActions

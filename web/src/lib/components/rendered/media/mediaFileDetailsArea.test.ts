@@ -27,6 +27,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Automatic search');
 		expect(body).toContain('Manual search');
 		expect(body).not.toContain('Delete file');
+		expect(body).not.toContain('Formats');
 	});
 
 	it('renders media track details, chapters, and missing expected languages', () => {
@@ -45,6 +46,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
+		expect(body).toContain('border-t-4');
 	});
 
 	it('renders satisfied subtitle state in file summaries', () => {
@@ -71,9 +73,27 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 
 		expect(body).toContain('Subtitles');
 		expect(body).toContain('Satisfied');
+		expect(body).toContain('Audio');
+		expect(body).toContain('Missing: German');
 		expect(body).toContain('English');
+		expect(body).not.toContain('Formats');
+		expect(summaryOrder(body)).toEqual([
+			'File',
+			'Audio',
+			'Subtitles',
+			'Size',
+			'Quality',
+			'Score',
+			'Status'
+		]);
 	});
 });
+
+function summaryOrder(body: string) {
+	return ['File', 'Audio', 'Subtitles', 'Size', 'Quality', 'Score', 'Status'].sort(
+		(left, right) => body.indexOf(left) - body.indexOf(right)
+	);
+}
 
 function detailedFileRow(): MediaFileRow {
 	return {
