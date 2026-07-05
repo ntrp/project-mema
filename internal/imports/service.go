@@ -73,7 +73,7 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 			slog.Error("completed download file link failed", "activityId", activity.ID, "source", source, "target", target, "error", err)
 			return err
 		}
-		if err := s.settings.RecordImportedMediaFile(ctx, item, target); err != nil {
+		if err := s.settings.RecordImportedMediaFileWithHistory(ctx, item, source, target, string(ImportModeHardlink)); err != nil {
 			slog.Error("completed download imported file record failed", "activityId", activity.ID, "target", target, "error", err)
 			return fmt.Errorf("record imported file: %w", err)
 		}
@@ -116,7 +116,7 @@ func (s *Service) ImportManualDownload(ctx context.Context, activity storage.Dow
 	if err := importFile(source, target, input.ImportMode); err != nil {
 		return err
 	}
-	if err := s.settings.RecordImportedMediaFile(ctx, item, target); err != nil {
+	if err := s.settings.RecordImportedMediaFileWithHistory(ctx, item, source, target, string(input.ImportMode)); err != nil {
 		return fmt.Errorf("record imported file: %w", err)
 	}
 	return nil

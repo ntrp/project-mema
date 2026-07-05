@@ -122,7 +122,7 @@ func TestScenarioSCNAuth001ExpiredSessionIsCleared(t *testing.T) {
 	server := NewServer(config.Config{AppEnv: "development", SessionTTL: time.Hour}, nil, nil, nil, nil, nil, nil)
 	expiredID := "expired-session"
 	server.sessions.put(expiredID, session{
-		user:      UserSummary{Username: "admin", Role: Admin},
+		user:      UserSummary{Username: "admin", Role: UserRoleAdmin},
 		expiresAt: time.Now().Add(-time.Hour),
 	})
 	HandlerFromMux(server, router)

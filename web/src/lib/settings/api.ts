@@ -37,6 +37,7 @@ import type {
 	LibraryScanItemMatchRequest,
 	ManualImportRequest,
 	MediaAdvancedSearchRequest,
+	MediaFileHistoryResponse,
 	MediaItemCreateRequest,
 	MediaItemUpdateRequest,
 	MediaProfile,
@@ -844,6 +845,17 @@ export async function deleteMediaItemFile(id: string, path: string) {
 		throw new Error('Media item was not returned');
 	}
 	return data;
+}
+
+export async function listMediaFileHistory(id: string): Promise<MediaFileHistoryResponse> {
+	const { data, error } = await client.GET('/media/items/{id}/file-history', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? { entries: [] };
 }
 
 export async function searchMediaReleases(id: string) {

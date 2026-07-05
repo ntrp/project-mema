@@ -122,6 +122,29 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(libraryPath, filepath.Base(extraPath))); !os.IsNotExist(err) {
 		t.Fatalf("extra target stat err = %v, want missing", err)
 	}
+	history, err := store.ListMediaFileHistory(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history) != 1 || history[0].Operation != "imported" || history[0].Status != "succeeded" {
+		t.Fatalf("history = %#v", history)
+	}
+	if history[0].SourcePath == nil || *history[0].SourcePath != sourcePath {
+		t.Fatalf("history source = %#v", history[0].SourcePath)
+	}
+	if history[0].DestinationPath == nil || *history[0].DestinationPath != imported.FilePaths[0] {
+		t.Fatalf("history destination = %#v", history[0].DestinationPath)
+	}
+	if _, err := store.DeleteMediaItemFile(ctx, item.ID, imported.FilePaths[0]); err != nil {
+		t.Fatal(err)
+	}
+	history, err = store.ListMediaFileHistory(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(history) != 2 || history[0].Operation != "deleted" || history[0].Status != "succeeded" {
+		t.Fatalf("delete history = %#v", history)
+	}
 }
 
 func writeSparseImportFile(t *testing.T, path string, size int64) {

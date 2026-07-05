@@ -249,6 +249,22 @@ type AppMediaEpisode struct {
 	UpdatedAt        time.Time
 }
 
+type AppMediaFileHistory struct {
+	ID              uuid.UUID
+	MediaItemID     *uuid.UUID
+	FilePath        string
+	SourcePath      pgtype.Text
+	DestinationPath pgtype.Text
+	Operation       string
+	Status          string
+	ActorType       string
+	ActorID         pgtype.Text
+	JobID           pgtype.Text
+	Details         []byte
+	FailureDetails  pgtype.Text
+	CreatedAt       time.Time
+}
+
 type AppMediaItem struct {
 	ID                  uuid.UUID
 	MediaType           string

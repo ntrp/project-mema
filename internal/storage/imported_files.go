@@ -16,6 +16,16 @@ import (
 var importedEpisodePattern = regexp.MustCompile(`(?i)s(\d{1,2})e(\d{1,3})`)
 
 func (s *SettingsStore) RecordImportedMediaFile(ctx context.Context, item MediaItem, filePath string) error {
+	return s.RecordImportedMediaFileWithHistory(ctx, item, "", filePath, "")
+}
+
+func (s *SettingsStore) RecordImportedMediaFileWithHistory(
+	ctx context.Context,
+	item MediaItem,
+	sourcePath string,
+	filePath string,
+	importMode string,
+) error {
 	if item.LibraryFolderID == nil {
 		return ErrNotFound
 	}
@@ -67,6 +77,18 @@ func (s *SettingsStore) RecordImportedMediaFile(ctx context.Context, item MediaI
 		MediaItemID:       &mediaItemID,
 		SeasonID:          seasonID,
 		EpisodeID:         episodeID,
+	}); err != nil {
+		return err
+	}
+	if _, err := createMediaFileHistory(ctx, tx, MediaFileHistoryInput{
+		MediaItemID:     &mediaItemID,
+		FilePath:        filePath,
+		SourcePath:      optionalHistoryString(sourcePath),
+		DestinationPath: optionalHistoryString(filePath),
+		Operation:       "imported",
+		Status:          "succeeded",
+		ActorType:       "system",
+		Details:         map[string]any{"importMode": importMode},
 	}); err != nil {
 		return err
 	}

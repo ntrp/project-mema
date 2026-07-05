@@ -10,12 +10,12 @@ func TestScenarioSCNAuth003UserUpdatesProfile(t *testing.T) {
 
 	var initial UserProfile
 	client.doJSON(t, http.MethodGet, "/profile", nil, http.StatusOK, &initial)
-	if initial.Username != "admin" || initial.Role != Admin {
+	if initial.Username != "admin" || initial.Role != UserRoleAdmin {
 		t.Fatalf("initial profile = %#v", initial)
 	}
 
 	request := UserProfileUpdateRequest{
-		DisplayName: "Scenario Admin",
+		DisplayName: "Scenario UserRoleAdmin",
 		PictureUrl:  "https://example.test/avatar.png",
 	}
 	var updated UserProfile

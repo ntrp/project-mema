@@ -825,3 +825,25 @@ create index if not exists idx_media_item_subtitles_media_item
 create index if not exists idx_media_item_subtitles_episode
     on app.media_item_subtitles (episode_id)
     where episode_id is not null;
+
+create table if not exists app.media_file_history (
+    id uuid primary key,
+    media_item_id uuid references app.media_items(id) on delete set null,
+    file_path text not null,
+    source_path text,
+    destination_path text,
+    operation text not null check (operation in ('imported', 'renamed', 'moved', 'replaced', 'deleted', 'restored', 'superseded')),
+    status text not null check (status in ('succeeded', 'failed', 'skipped')),
+    actor_type text not null default 'system' check (actor_type in ('system', 'user', 'job')),
+    actor_id text,
+    job_id text,
+    details jsonb not null default '{}'::jsonb check (jsonb_typeof(details) = 'object'),
+    failure_details text,
+    created_at timestamptz not null default now()
+);
+
+create index if not exists idx_media_file_history_media_item
+    on app.media_file_history (media_item_id, created_at desc);
+
+create index if not exists idx_media_file_history_file_path
+    on app.media_file_history (file_path, created_at desc);

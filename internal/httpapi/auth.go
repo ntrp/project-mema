@@ -103,7 +103,7 @@ func (s *Server) requireAdmin(w http.ResponseWriter, r *http.Request) (session, 
 	if !ok {
 		return session{}, false
 	}
-	if currentSession.user.Role != Admin {
+	if currentSession.user.Role != UserRoleAdmin {
 		writeError(w, http.StatusForbidden, "forbidden", "Admin role required")
 		return session{}, false
 	}

@@ -379,6 +379,81 @@ func (e MediaDiscoverMediaType) Valid() bool {
 	}
 }
 
+// Defines values for MediaFileHistoryEntryActorType.
+const (
+	MediaFileHistoryEntryActorTypeJob    MediaFileHistoryEntryActorType = "job"
+	MediaFileHistoryEntryActorTypeSystem MediaFileHistoryEntryActorType = "system"
+	MediaFileHistoryEntryActorTypeUser   MediaFileHistoryEntryActorType = "user"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileHistoryEntryActorType enum.
+func (e MediaFileHistoryEntryActorType) Valid() bool {
+	switch e {
+	case MediaFileHistoryEntryActorTypeJob:
+		return true
+	case MediaFileHistoryEntryActorTypeSystem:
+		return true
+	case MediaFileHistoryEntryActorTypeUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaFileHistoryEntryOperation.
+const (
+	Deleted    MediaFileHistoryEntryOperation = "deleted"
+	Imported   MediaFileHistoryEntryOperation = "imported"
+	Moved      MediaFileHistoryEntryOperation = "moved"
+	Renamed    MediaFileHistoryEntryOperation = "renamed"
+	Replaced   MediaFileHistoryEntryOperation = "replaced"
+	Restored   MediaFileHistoryEntryOperation = "restored"
+	Superseded MediaFileHistoryEntryOperation = "superseded"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileHistoryEntryOperation enum.
+func (e MediaFileHistoryEntryOperation) Valid() bool {
+	switch e {
+	case Deleted:
+		return true
+	case Imported:
+		return true
+	case Moved:
+		return true
+	case Renamed:
+		return true
+	case Replaced:
+		return true
+	case Restored:
+		return true
+	case Superseded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaFileHistoryEntryStatus.
+const (
+	Failed    MediaFileHistoryEntryStatus = "failed"
+	Skipped   MediaFileHistoryEntryStatus = "skipped"
+	Succeeded MediaFileHistoryEntryStatus = "succeeded"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileHistoryEntryStatus enum.
+func (e MediaFileHistoryEntryStatus) Valid() bool {
+	switch e {
+	case Failed:
+		return true
+	case Skipped:
+		return true
+	case Succeeded:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaFilePreviewClientProfile.
 const (
 	Browser MediaFilePreviewClientProfile = "browser"
@@ -906,16 +981,16 @@ func (e ToolName) Valid() bool {
 
 // Defines values for UserRole.
 const (
-	Admin UserRole = "admin"
-	User  UserRole = "user"
+	UserRoleAdmin UserRole = "admin"
+	UserRoleUser  UserRole = "user"
 )
 
 // Valid indicates whether the value is a known member of the UserRole enum.
 func (e UserRole) Valid() bool {
 	switch e {
-	case Admin:
+	case UserRoleAdmin:
 		return true
-	case User:
+	case UserRoleUser:
 		return true
 	default:
 		return false
@@ -1716,6 +1791,37 @@ type MediaFileChapter struct {
 // MediaFileDeleteRequest defines model for MediaFileDeleteRequest.
 type MediaFileDeleteRequest struct {
 	Path string `json:"path"`
+}
+
+// MediaFileHistoryEntry defines model for MediaFileHistoryEntry.
+type MediaFileHistoryEntry struct {
+	ActorId         *string                        `json:"actorId,omitempty"`
+	ActorType       MediaFileHistoryEntryActorType `json:"actorType"`
+	CreatedAt       time.Time                      `json:"createdAt"`
+	DestinationPath *string                        `json:"destinationPath,omitempty"`
+	Details         map[string]interface{}         `json:"details"`
+	FailureDetails  *string                        `json:"failureDetails,omitempty"`
+	FilePath        string                         `json:"filePath"`
+	Id              openapi_types.UUID             `json:"id"`
+	JobId           *string                        `json:"jobId,omitempty"`
+	MediaItemId     *openapi_types.UUID            `json:"mediaItemId,omitempty"`
+	Operation       MediaFileHistoryEntryOperation `json:"operation"`
+	SourcePath      *string                        `json:"sourcePath,omitempty"`
+	Status          MediaFileHistoryEntryStatus    `json:"status"`
+}
+
+// MediaFileHistoryEntryActorType defines model for MediaFileHistoryEntry.ActorType.
+type MediaFileHistoryEntryActorType string
+
+// MediaFileHistoryEntryOperation defines model for MediaFileHistoryEntry.Operation.
+type MediaFileHistoryEntryOperation string
+
+// MediaFileHistoryEntryStatus defines model for MediaFileHistoryEntry.Status.
+type MediaFileHistoryEntryStatus string
+
+// MediaFileHistoryResponse defines model for MediaFileHistoryResponse.
+type MediaFileHistoryResponse struct {
+	Entries []MediaFileHistoryEntry `json:"entries"`
 }
 
 // MediaFileInfo defines model for MediaFileInfo.
@@ -3174,6 +3280,9 @@ type ServerInterface interface {
 	// Enqueue an automatic search and grab for a monitored item
 	// (POST /media/items/{id}/automatic-searches)
 	EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List file history and provenance records for a media item
+	// (GET /media/items/{id}/file-history)
+	ListMediaFileHistory(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Delete one media file and rescan the item folder
 	// (POST /media/items/{id}/files/delete)
 	DeleteMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -3705,6 +3814,12 @@ func (_ Unimplemented) UpdateMediaItem(w http.ResponseWriter, r *http.Request, i
 // Enqueue an automatic search and grab for a monitored item
 // (POST /media/items/{id}/automatic-searches)
 func (_ Unimplemented) EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List file history and provenance records for a media item
+// (GET /media/items/{id}/file-history)
+func (_ Unimplemented) ListMediaFileHistory(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -5694,6 +5809,38 @@ func (siw *ServerInterfaceWrapper) EnqueueMediaAutomaticSearch(w http.ResponseWr
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.EnqueueMediaAutomaticSearch(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMediaFileHistory operation middleware
+func (siw *ServerInterfaceWrapper) ListMediaFileHistory(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMediaFileHistory(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9491,6 +9638,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/automatic-searches", wrapper.EnqueueMediaAutomaticSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/file-history", wrapper.ListMediaFileHistory)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/files/delete", wrapper.DeleteMediaItemFile)

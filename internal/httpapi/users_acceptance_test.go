@@ -17,9 +17,9 @@ func TestScenarioSCNSettings024AdminManagesApplicationUsers(t *testing.T) {
 	client.doJSON(t, http.MethodPost, "/settings/users", UserCreateRequest{
 		Username: username,
 		Password: "scenario-password-123",
-		Role:     User,
+		Role:     UserRoleUser,
 	}, http.StatusCreated, &created)
-	if created.Username != username || created.Role != User {
+	if created.Username != username || created.Role != UserRoleUser {
 		t.Fatalf("created user = %#v", created)
 	}
 
@@ -27,9 +27,9 @@ func TestScenarioSCNSettings024AdminManagesApplicationUsers(t *testing.T) {
 	client.doJSON(t, http.MethodPut, "/settings/users/"+created.Id.String(), UserUpdateRequest{
 		Username: renamed,
 		Password: &updatedPassword,
-		Role:     Admin,
+		Role:     UserRoleAdmin,
 	}, http.StatusOK, &updated)
-	if updated.Username != renamed || updated.Role != Admin {
+	if updated.Username != renamed || updated.Role != UserRoleAdmin {
 		t.Fatalf("updated user = %#v", updated)
 	}
 

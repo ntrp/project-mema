@@ -103,7 +103,7 @@ func TestSCNSettings009UserTagLanguageAndQualityInputsValidateEdges(t *testing.T
 	user, ok := userCreateInput(httptest.NewRecorder(), UserCreateRequest{
 		Username: " scenario ",
 		Password: " password123 ",
-		Role:     Admin,
+		Role:     UserRoleAdmin,
 	})
 	if !ok || user.Username != "scenario" || user.Password == nil || *user.Password != "password123" {
 		t.Fatalf("user create input = %#v, ok = %v", user, ok)
@@ -112,7 +112,7 @@ func TestSCNSettings009UserTagLanguageAndQualityInputsValidateEdges(t *testing.T
 	updated, ok := userUpdateInput(httptest.NewRecorder(), UserUpdateRequest{
 		Username: "viewer",
 		Password: stringPtr(""),
-		Role:     User,
+		Role:     UserRoleUser,
 	})
 	if !ok || updated.Password != nil {
 		t.Fatalf("user update input = %#v, ok = %v", updated, ok)
@@ -147,7 +147,7 @@ func TestSCNSettings009UserTagLanguageAndQualityInputsValidateEdges(t *testing.T
 	}
 
 	assertBadRequest(t, func(w http.ResponseWriter) bool {
-		_, ok := userCreateInput(w, UserCreateRequest{Username: "x", Password: "short", Role: Admin})
+		_, ok := userCreateInput(w, UserCreateRequest{Username: "x", Password: "short", Role: UserRoleAdmin})
 		return ok
 	})
 	assertBadRequest(t, func(w http.ResponseWriter) bool {

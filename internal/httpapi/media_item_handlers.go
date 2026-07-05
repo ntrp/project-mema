@@ -130,7 +130,7 @@ func (s *Server) ListMediaRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requests, err := s.settings.ListMediaRequests(r.Context(), uuid.UUID(session.user.Id), session.user.Role == Admin)
+	requests, err := s.settings.ListMediaRequests(r.Context(), uuid.UUID(session.user.Id), session.user.Role == UserRoleAdmin)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "media_request_list_failed", "Could not list media requests")
 		return
@@ -172,7 +172,7 @@ func (s *Server) GetMediaRequest(w http.ResponseWriter, r *http.Request, id Reso
 		return
 	}
 
-	request, err := s.settings.GetMediaRequest(r.Context(), uuid.UUID(id), uuid.UUID(session.user.Id), session.user.Role == Admin)
+	request, err := s.settings.GetMediaRequest(r.Context(), uuid.UUID(id), uuid.UUID(session.user.Id), session.user.Role == UserRoleAdmin)
 	if err != nil {
 		writeSettingsError(w, err, "Could not find media request")
 		return

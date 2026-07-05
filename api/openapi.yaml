@@ -1379,6 +1379,27 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/file-history:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: listMediaFileHistory
+      tags:
+        - Media
+      summary: List file history and provenance records for a media item
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: File history for the media item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaFileHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/grab:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4790,6 +4811,74 @@ components:
           type: array
           items:
             type: string
+    MediaFileHistoryResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaFileHistoryEntry"
+    MediaFileHistoryEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - filePath
+        - operation
+        - status
+        - actorType
+        - details
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
+        filePath:
+          type: string
+        sourcePath:
+          type: string
+        destinationPath:
+          type: string
+        operation:
+          type: string
+          enum:
+            - imported
+            - renamed
+            - moved
+            - replaced
+            - deleted
+            - restored
+            - superseded
+        status:
+          type: string
+          enum:
+            - succeeded
+            - failed
+            - skipped
+        actorType:
+          type: string
+          enum:
+            - system
+            - user
+            - job
+        actorId:
+          type: string
+        jobId:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+        failureDetails:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
     MediaFileChapter:
       type: object
       additionalProperties: false

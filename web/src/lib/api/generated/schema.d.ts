@@ -711,6 +711,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/file-history': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** List file history and provenance records for a media item */
+		get: operations['listMediaFileHistory'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/grab': {
 		parameters: {
 			query?: never;
@@ -2398,6 +2417,39 @@ export interface components {
 			wantedLanguages: string[];
 			matchedLanguages: string[];
 			missingLanguages: string[];
+		};
+		MediaFileHistoryResponse: {
+			entries: components['schemas']['MediaFileHistoryEntry'][];
+		};
+		MediaFileHistoryEntry: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId?: string;
+			filePath: string;
+			sourcePath?: string;
+			destinationPath?: string;
+			/** @enum {string} */
+			operation:
+				| 'imported'
+				| 'renamed'
+				| 'moved'
+				| 'replaced'
+				| 'deleted'
+				| 'restored'
+				| 'superseded';
+			/** @enum {string} */
+			status: 'succeeded' | 'failed' | 'skipped';
+			/** @enum {string} */
+			actorType: 'system' | 'user' | 'job';
+			actorId?: string;
+			jobId?: string;
+			details: {
+				[key: string]: unknown;
+			};
+			failureDetails?: string;
+			/** Format: date-time */
+			createdAt: string;
 		};
 		MediaFileChapter: {
 			/** Format: int32 */
@@ -4749,6 +4801,30 @@ export interface operations {
 				};
 			};
 			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listMediaFileHistory: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description File history for the media item */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaFileHistoryResponse'];
+				};
+			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};
