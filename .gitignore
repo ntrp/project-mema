@@ -1,5 +1,6 @@
 .cache/
 .data/
+.research/
 .DS_Store
 
 # Go
@@ -25,3 +26,4 @@ output/playwright/
 !.env.example
 .data/secrets/
 internal/storage/seeds/dev.local.sql
+
