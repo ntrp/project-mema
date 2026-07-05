@@ -7,6 +7,7 @@ import {
 	saveMediaProfile as saveMediaProfileRequest,
 	saveMetadataProvider as saveMetadataProviderRequest,
 	savePathMapping as savePathMappingRequest,
+	saveSubtitleProvider as saveSubtitleProviderRequest,
 	saveTag as saveTagRequest,
 	saveUser as saveUserRequest
 } from '$lib/settings/api';
@@ -18,11 +19,13 @@ import {
 	emptyLibraryFolderForm,
 	emptyMediaProfileForm,
 	emptyPathMappingForm,
+	emptySubtitleProviderForm,
 	emptyUserForm
 } from '$lib/settings/forms';
 import type {
 	CustomFormatForm as CustomFormatFormValue,
-	MetadataProviderForm as MetadataProviderFormValue
+	MetadataProviderForm as MetadataProviderFormValue,
+	SubtitleProviderForm as SubtitleProviderFormValue
 } from '$lib/settings/types';
 import { emptyTagForm, errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
@@ -81,6 +84,22 @@ export function createSettingsSaveActions(state: AppShellState, deps: SettingsSa
 			state.errorMessage = errorMessageFrom(error, 'Could not save metadata provider');
 		} finally {
 			state.savingMetadataProviderId = undefined;
+		}
+	}
+
+	async function saveSubtitleProvider(form: SubtitleProviderFormValue) {
+		state.savingSubtitleProviderId = form.id;
+		clearNotice();
+
+		try {
+			await saveSubtitleProviderRequest(form);
+			state.subtitleProviderForm = emptySubtitleProviderForm();
+			state.message = 'Subtitle provider saved';
+			await loadSettings();
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not save subtitle provider');
+		} finally {
+			state.savingSubtitleProviderId = undefined;
 		}
 	}
 
@@ -244,6 +263,7 @@ export function createSettingsSaveActions(state: AppShellState, deps: SettingsSa
 		saveDownloadClient,
 		saveIndexer,
 		saveMetadataProvider,
+		saveSubtitleProvider,
 		saveLibraryFolder,
 		savePathMapping,
 		saveUser,

@@ -36,6 +36,9 @@ export type MetadataCacheStats = components['schemas']['MetadataCacheStats'];
 export type MetadataSearchHistoryEntry = components['schemas']['MetadataSearchHistoryEntry'];
 export type MetadataProviderRequest = components['schemas']['MetadataProviderRequest'];
 export type MetadataProviderType = components['schemas']['MetadataProviderType'];
+export type SubtitleProvider = components['schemas']['SubtitleProvider'];
+export type SubtitleProviderRequest = components['schemas']['SubtitleProviderRequest'];
+export type SubtitleProviderType = components['schemas']['SubtitleProviderType'];
 export type IntegrationTestResponse = components['schemas']['IntegrationTestResponse'];
 export type SystemLogEntry = components['schemas']['SystemLogEntry'];
 export type SystemStatusResponse = components['schemas']['SystemStatusResponse'];
@@ -131,6 +134,7 @@ export type IndexerForm = Omit<IndexerRequest, 'categories'> & {
 };
 export type IndexerProxyForm = IndexerProxyRequest & { id?: string };
 export type MetadataProviderForm = MetadataProviderRequest & { id?: string };
+export type SubtitleProviderForm = SubtitleProviderRequest & { id?: string };
 export type LibraryFolderForm = LibraryFolderRequest;
 export type PathMappingForm = PathMappingRequest;
 export type MediaProfileForm = MediaProfileRequest & { id?: string };
@@ -188,6 +192,7 @@ export type SettingsSection =
 	| 'profiles'
 	| 'custom-formats'
 	| 'metadata'
+	| 'subtitles'
 	| 'languages'
 	| 'tags'
 	| 'users';
@@ -197,6 +202,7 @@ export interface SettingsData {
 	indexers: Indexer[];
 	indexerSearch: IndexerSearchResponse;
 	metadataProviders: MetadataProvider[];
+	subtitleProviders: SubtitleProvider[];
 	metadataCache: MetadataCacheResponse;
 	libraryFolders: LibraryFolder[];
 	pathMappings: PathMapping[];

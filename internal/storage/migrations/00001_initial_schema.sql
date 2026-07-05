@@ -516,6 +516,23 @@ create table if not exists app.metadata_search_history (
 create index if not exists idx_metadata_search_history_created_at
     on app.metadata_search_history (created_at desc);
 
+create table if not exists app.subtitle_providers (
+    id uuid primary key,
+    name text not null,
+    type text not null check (type in ('opensubtitles')),
+    base_url text not null,
+    username text,
+    password text,
+    api_key text,
+    enabled boolean not null default true,
+    priority integer not null default 100 check (priority between 0 and 1000),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create unique index if not exists idx_subtitle_providers_type_name_lower
+    on app.subtitle_providers (type, lower(name));
+
 create table if not exists app.library_folders (
     id uuid primary key,
     path text not null unique,

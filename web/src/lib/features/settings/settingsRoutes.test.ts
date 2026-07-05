@@ -14,6 +14,7 @@ import LibrarySettingsRoute from '$lib/features/settings/routes/LibrarySettingsR
 import MetadataSettingsRoute from '$lib/features/settings/routes/MetadataSettingsRoute.svelte';
 import ProfilesSettingsRoute from '$lib/features/settings/routes/ProfilesSettingsRoute.svelte';
 import QualitySettingsRoute from '$lib/features/settings/routes/QualitySettingsRoute.svelte';
+import SubtitlesSettingsRoute from '$lib/features/settings/routes/SubtitlesSettingsRoute.svelte';
 import TagsSettingsRoute from '$lib/features/settings/routes/TagsSettingsRoute.svelte';
 import UsersSettingsRoute from '$lib/features/settings/routes/UsersSettingsRoute.svelte';
 
@@ -110,6 +111,17 @@ describe('settings route wrappers (SCN-SETTINGS-022)', () => {
 		expect(body).toContain('Metadata');
 		expect(body).toContain('TMDB');
 		expect(body).toContain('TVDB');
+	});
+});
+
+describe('settings route wrappers (SCN-SETTINGS-024)', () => {
+	it('renders subtitle provider route content for admins', () => {
+		const { body } = renderRoute(SubtitlesSettingsRoute, createAppShell());
+
+		expect(body).toContain('Subtitles');
+		expect(body).toContain('OpenSubtitles');
+		expect(body).toContain('Saved API key');
+		expect(body).toContain('Saved password');
 	});
 });
 

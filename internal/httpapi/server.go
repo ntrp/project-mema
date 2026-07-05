@@ -10,6 +10,7 @@ import (
 	"media-manager/internal/jobs"
 	"media-manager/internal/metadata"
 	"media-manager/internal/storage"
+	"media-manager/internal/subtitles"
 )
 
 type Server struct {
@@ -18,6 +19,7 @@ type Server struct {
 	downloadClients *downloadclients.Service
 	indexers        *indexers.Service
 	metadata        *metadata.Service
+	subtitles       *subtitles.Service
 	jobs            *jobs.Client
 	events          *events.Broker
 	sessions        *sessionStore
@@ -35,6 +37,7 @@ func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClien
 		downloadClients: downloadClients,
 		indexers:        indexerService,
 		metadata:        metadataService,
+		subtitles:       subtitles.NewService(nil),
 		jobs:            jobs,
 		events:          eventBroker,
 		sessions:        newSessionStore(),

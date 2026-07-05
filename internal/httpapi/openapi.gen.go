@@ -775,6 +775,21 @@ func (e SeriesType) Valid() bool {
 	}
 }
 
+// Defines values for SubtitleProviderType.
+const (
+	Opensubtitles SubtitleProviderType = "opensubtitles"
+)
+
+// Valid indicates whether the value is a known member of the SubtitleProviderType enum.
+func (e SubtitleProviderType) Valid() bool {
+	switch e {
+	case Opensubtitles:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SystemEventSeverity.
 const (
 	SystemEventSeverityError   SystemEventSeverity = "error"
@@ -2431,6 +2446,41 @@ type SessionResponse struct {
 	User          *UserSummary `json:"user,omitempty"`
 }
 
+// SubtitleProvider defines model for SubtitleProvider.
+type SubtitleProvider struct {
+	ApiKeySet   bool                 `json:"apiKeySet"`
+	BaseUrl     string               `json:"baseUrl"`
+	CreatedAt   time.Time            `json:"createdAt"`
+	Enabled     bool                 `json:"enabled"`
+	Id          openapi_types.UUID   `json:"id"`
+	Name        string               `json:"name"`
+	PasswordSet bool                 `json:"passwordSet"`
+	Priority    int32                `json:"priority"`
+	Type        SubtitleProviderType `json:"type"`
+	UpdatedAt   time.Time            `json:"updatedAt"`
+	Username    *string              `json:"username,omitempty"`
+}
+
+// SubtitleProviderListResponse defines model for SubtitleProviderListResponse.
+type SubtitleProviderListResponse struct {
+	Providers []SubtitleProvider `json:"providers"`
+}
+
+// SubtitleProviderRequest defines model for SubtitleProviderRequest.
+type SubtitleProviderRequest struct {
+	ApiKey   *string              `json:"apiKey,omitempty"`
+	BaseUrl  string               `json:"baseUrl"`
+	Enabled  bool                 `json:"enabled"`
+	Name     string               `json:"name"`
+	Password *string              `json:"password,omitempty"`
+	Priority int32                `json:"priority"`
+	Type     SubtitleProviderType `json:"type"`
+	Username *string              `json:"username,omitempty"`
+}
+
+// SubtitleProviderType defines model for SubtitleProviderType.
+type SubtitleProviderType string
+
 // SystemEvent defines model for SystemEvent.
 type SystemEvent struct {
 	Category  string                 `json:"category"`
@@ -2933,6 +2983,12 @@ type UpdateMediaProfileJSONRequestBody = MediaProfileRequest
 // UpdateQualitySizeSettingsJSONRequestBody defines body for UpdateQualitySizeSettings for application/json ContentType.
 type UpdateQualitySizeSettingsJSONRequestBody = QualitySizeSettingsUpdateRequest
 
+// CreateSubtitleProviderJSONRequestBody defines body for CreateSubtitleProvider for application/json ContentType.
+type CreateSubtitleProviderJSONRequestBody = SubtitleProviderRequest
+
+// UpdateSubtitleProviderJSONRequestBody defines body for UpdateSubtitleProvider for application/json ContentType.
+type UpdateSubtitleProviderJSONRequestBody = SubtitleProviderRequest
+
 // CreateTagJSONRequestBody defines body for CreateTag for application/json ContentType.
 type CreateTagJSONRequestBody = TagRequest
 
@@ -3307,6 +3363,21 @@ type ServerInterface interface {
 	// Update quality size settings
 	// (PUT /settings/quality-sizes)
 	UpdateQualitySizeSettings(w http.ResponseWriter, r *http.Request)
+	// List configured subtitle providers
+	// (GET /settings/subtitle-providers)
+	ListSubtitleProviders(w http.ResponseWriter, r *http.Request)
+	// Create a subtitle provider
+	// (POST /settings/subtitle-providers)
+	CreateSubtitleProvider(w http.ResponseWriter, r *http.Request)
+	// Delete a subtitle provider
+	// (DELETE /settings/subtitle-providers/{id})
+	DeleteSubtitleProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update a subtitle provider
+	// (PUT /settings/subtitle-providers/{id})
+	UpdateSubtitleProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Test a configured subtitle provider
+	// (POST /settings/subtitle-providers/{id}/test)
+	TestSubtitleProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// List media tags
 	// (GET /settings/tags)
 	ListTags(w http.ResponseWriter, r *http.Request)
@@ -4084,6 +4155,36 @@ func (_ Unimplemented) ListQualitySizeSettings(w http.ResponseWriter, r *http.Re
 // Update quality size settings
 // (PUT /settings/quality-sizes)
 func (_ Unimplemented) UpdateQualitySizeSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List configured subtitle providers
+// (GET /settings/subtitle-providers)
+func (_ Unimplemented) ListSubtitleProviders(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a subtitle provider
+// (POST /settings/subtitle-providers)
+func (_ Unimplemented) CreateSubtitleProvider(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a subtitle provider
+// (DELETE /settings/subtitle-providers/{id})
+func (_ Unimplemented) DeleteSubtitleProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a subtitle provider
+// (PUT /settings/subtitle-providers/{id})
+func (_ Unimplemented) UpdateSubtitleProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test a configured subtitle provider
+// (POST /settings/subtitle-providers/{id}/test)
+func (_ Unimplemented) TestSubtitleProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8272,6 +8373,142 @@ func (siw *ServerInterfaceWrapper) UpdateQualitySizeSettings(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
+// ListSubtitleProviders operation middleware
+func (siw *ServerInterfaceWrapper) ListSubtitleProviders(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSubtitleProviders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSubtitleProvider operation middleware
+func (siw *ServerInterfaceWrapper) CreateSubtitleProvider(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSubtitleProvider(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSubtitleProvider operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSubtitleProvider(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSubtitleProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSubtitleProvider operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSubtitleProvider(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSubtitleProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestSubtitleProvider operation middleware
+func (siw *ServerInterfaceWrapper) TestSubtitleProvider(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestSubtitleProvider(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListTags operation middleware
 func (siw *ServerInterfaceWrapper) ListTags(w http.ResponseWriter, r *http.Request) {
 
@@ -9402,6 +9639,21 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/quality-sizes", wrapper.UpdateQualitySizeSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/subtitle-providers", wrapper.ListSubtitleProviders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/subtitle-providers", wrapper.CreateSubtitleProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/subtitle-providers/{id}", wrapper.DeleteSubtitleProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/subtitle-providers/{id}", wrapper.UpdateSubtitleProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/subtitle-providers/{id}/test", wrapper.TestSubtitleProvider)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/tags", wrapper.ListTags)

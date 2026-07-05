@@ -10,6 +10,9 @@ import type {
 	MetadataProvider,
 	MetadataProviderForm,
 	MetadataProviderRequest,
+	SubtitleProvider,
+	SubtitleProviderForm,
+	SubtitleProviderRequest,
 	LibraryFolderForm,
 	LibraryFolderRequest,
 	PathMappingForm,
@@ -85,6 +88,19 @@ export function emptyMetadataProviderForm(): MetadataProviderForm {
 	};
 }
 
+export function emptySubtitleProviderForm(): SubtitleProviderForm {
+	return {
+		name: 'OpenSubtitles',
+		type: 'opensubtitles',
+		baseUrl: 'https://api.opensubtitles.com',
+		username: '',
+		password: '',
+		apiKey: '',
+		enabled: true,
+		priority: 100
+	};
+}
+
 export function emptyLibraryFolderForm(): LibraryFolderForm {
 	return {
 		path: ''
@@ -153,6 +169,20 @@ export function metadataProviderFormFromProvider(provider: MetadataProvider): Me
 	};
 }
 
+export function subtitleProviderFormFromProvider(provider: SubtitleProvider): SubtitleProviderForm {
+	return {
+		id: provider.id,
+		name: provider.name,
+		type: provider.type,
+		baseUrl: provider.baseUrl,
+		username: provider.username ?? '',
+		password: undefined,
+		apiKey: undefined,
+		enabled: provider.enabled,
+		priority: provider.priority
+	};
+}
+
 export function normalizeDownloadClientForm(form: DownloadClientForm): DownloadClientRequest {
 	return {
 		name: form.name.trim(),
@@ -204,6 +234,19 @@ export function normalizeMetadataProviderForm(form: MetadataProviderForm): Metad
 		apiKey: optionalString(form.apiKey),
 		pin: optionalString(form.pin),
 		accessToken: optionalString(form.accessToken),
+		enabled: form.enabled,
+		priority: form.priority
+	};
+}
+
+export function normalizeSubtitleProviderForm(form: SubtitleProviderForm): SubtitleProviderRequest {
+	return {
+		name: form.name.trim(),
+		type: form.type,
+		baseUrl: form.baseUrl.trim(),
+		username: optionalString(form.username),
+		password: optionalString(form.password),
+		apiKey: optionalString(form.apiKey),
 		enabled: form.enabled,
 		priority: form.priority
 	};

@@ -20,6 +20,7 @@ export function createLoadActions(state: AppShellState) {
 			state.indexers = settings.indexers;
 			state.indexerSearch = settings.indexerSearch;
 			state.metadataProviders = settings.metadataProviders;
+			state.subtitleProviders = settings.subtitleProviders;
 			state.metadataCache = settings.metadataCache;
 			state.libraryFolders = settings.libraryFolders;
 			state.pathMappings = settings.pathMappings;

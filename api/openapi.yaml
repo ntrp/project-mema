@@ -2558,6 +2558,111 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/subtitle-providers:
+    get:
+      operationId: listSubtitleProviders
+      tags:
+        - Settings
+      summary: List configured subtitle providers
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Configured subtitle providers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubtitleProviderListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createSubtitleProvider
+      tags:
+        - Settings
+      summary: Create a subtitle provider
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubtitleProviderRequest"
+      responses:
+        "201":
+          description: Subtitle provider created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubtitleProvider"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/subtitle-providers/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    put:
+      operationId: updateSubtitleProvider
+      tags:
+        - Settings
+      summary: Update a subtitle provider
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubtitleProviderRequest"
+      responses:
+        "200":
+          description: Subtitle provider updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubtitleProvider"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteSubtitleProvider
+      tags:
+        - Settings
+      summary: Delete a subtitle provider
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: Subtitle provider deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/subtitle-providers/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: testSubtitleProvider
+      tags:
+        - Settings
+      summary: Test a configured subtitle provider
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Subtitle provider test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/metadata-cache:
     get:
       operationId: getMetadataCache
@@ -6866,6 +6971,97 @@ components:
       enum:
         - tmdb
         - tvdb
+    SubtitleProviderListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubtitleProvider"
+    SubtitleProvider:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - type
+        - baseUrl
+        - enabled
+        - priority
+        - apiKeySet
+        - passwordSet
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/SubtitleProviderType"
+        baseUrl:
+          type: string
+        username:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          format: int32
+        apiKeySet:
+          type: boolean
+        passwordSet:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SubtitleProviderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - type
+        - baseUrl
+        - enabled
+        - priority
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        type:
+          $ref: "#/components/schemas/SubtitleProviderType"
+        baseUrl:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        username:
+          type: string
+          maxLength: 1024
+        password:
+          type: string
+          maxLength: 1024
+        apiKey:
+          type: string
+          maxLength: 1024
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+    SubtitleProviderType:
+      type: string
+      enum:
+        - opensubtitles
     MetadataCacheResponse:
       type: object
       additionalProperties: false

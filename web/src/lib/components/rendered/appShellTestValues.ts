@@ -3,6 +3,7 @@ import type {
 	ManagedUser,
 	MediaProfile,
 	MetadataProvider,
+	SubtitleProvider,
 	Tag,
 	UserProfile,
 	UserForm as UserFormValue,
@@ -95,6 +96,23 @@ export function metadataProvider(overrides: Partial<MetadataProvider> = {}): Met
 		updatedAt: '2026-07-03T00:00:00Z',
 		...overrides
 	} as MetadataProvider;
+}
+
+export function subtitleProvider(overrides: Partial<SubtitleProvider> = {}): SubtitleProvider {
+	return {
+		id: 'subtitle-1',
+		name: 'OpenSubtitles',
+		type: 'opensubtitles',
+		enabled: true,
+		baseUrl: 'https://api.opensubtitles.com',
+		username: 'scenario-user',
+		apiKeySet: true,
+		passwordSet: true,
+		priority: 100,
+		createdAt: '2026-07-03T00:00:00Z',
+		updatedAt: '2026-07-03T00:00:00Z',
+		...overrides
+	};
 }
 
 export function emptyIndexerSearch(): IndexerSearchResponse {

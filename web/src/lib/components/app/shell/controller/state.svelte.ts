@@ -13,6 +13,7 @@ import {
 	emptyLibraryFolderForm,
 	emptyMediaProfileForm,
 	emptyPathMappingForm,
+	emptySubtitleProviderForm,
 	emptyUserForm
 } from '$lib/settings/forms';
 import type {
@@ -52,6 +53,8 @@ import type {
 	ReleaseSearchResults,
 	ReleaseBlocklistItem,
 	SettingsSection,
+	SubtitleProvider,
+	SubtitleProviderForm,
 	SystemSection,
 	Tag,
 	TagForm,
@@ -69,6 +72,7 @@ export class AppShellState {
 	savingDownloadClient = $state(false);
 	savingIndexer = $state(false);
 	savingMetadataProviderId = $state<string | undefined>();
+	savingSubtitleProviderId = $state<string | undefined>();
 	savingLibraryFolder = $state(false);
 	savingPathMapping = $state(false);
 	deletingPathMappingId = $state<string | undefined>();
@@ -92,6 +96,7 @@ export class AppShellState {
 	indexers = $state<Indexer[]>([]);
 	indexerSearch = $state<IndexerSearchResponse>(emptyIndexerSearch());
 	metadataProviders = $state<MetadataProvider[]>([]);
+	subtitleProviders = $state<SubtitleProvider[]>([]);
 	metadataCache = $state<MetadataCacheResponse>(emptyMetadataCache());
 	libraryFolders = $state<LibraryFolder[]>([]);
 	pathMappings = $state<PathMapping[]>([]);
@@ -124,8 +129,10 @@ export class AppShellState {
 	tagForm = $state<TagForm>({ name: '' });
 	languageForm = $state<LanguageForm>(emptyLanguageForm());
 	userForm = $state<UserFormValue>(emptyUserForm());
+	subtitleProviderForm = $state<SubtitleProviderForm>(emptySubtitleProviderForm());
 	testingIndexerId = $state<string | undefined>();
 	testingMetadataProviderId = $state<string | undefined>();
+	testingSubtitleProviderId = $state<string | undefined>();
 	loadingMetadataCache = $state(false);
 	clearingMetadataCache = $state(false);
 	loadingIndexerSearch = $state(false);
@@ -166,6 +173,7 @@ export class AppShellState {
 	openLibraryFolderId = $state<string | undefined>();
 	indexerTests = $state<IntegrationTestResults>({});
 	metadataProviderTests = $state<IntegrationTestResults>({});
+	subtitleProviderTests = $state<IntegrationTestResults>({});
 	activeView = $state<AppView>('home');
 	activeHomeSection = $state<HomeSection>('discover');
 	activeActivitySection = $state<ActivitySection>('queue');

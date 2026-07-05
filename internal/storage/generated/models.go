@@ -489,6 +489,20 @@ type AppSession struct {
 	CreatedAt time.Time
 }
 
+type AppSubtitleProvider struct {
+	ID        uuid.UUID
+	Name      string
+	Type      string
+	BaseUrl   string
+	Username  pgtype.Text
+	Password  pgtype.Text
+	ApiKey    pgtype.Text
+	Enabled   bool
+	Priority  int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type AppSystemEvent struct {
 	ID        uuid.UUID
 	Severity  string

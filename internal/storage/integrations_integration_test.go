@@ -170,3 +170,47 @@ func TestScenarioSCNSettings014StorageMetadataProviderLifecycle(t *testing.T) {
 		t.Fatalf("expected deleted provider to be missing, got %v", err)
 	}
 }
+
+func TestSubtitleProviderLifecycle(t *testing.T) {
+	ctx, store := testDBStore(t)
+	suffix := uuid.NewString()
+	provider, err := store.CreateSubtitleProvider(ctx, SubtitleProviderInput{
+		Name:     "OpenSubtitles " + suffix,
+		Type:     "opensubtitles",
+		BaseURL:  "https://api.opensubtitles.com",
+		Username: stringPtr("user"),
+		Password: stringPtr("secret"),
+		APIKey:   stringPtr("key"),
+		Enabled:  true,
+		Priority: 10,
+	})
+	if err != nil {
+		t.Fatalf("create subtitle provider: %v", err)
+	}
+	providers, err := store.ListSubtitleProviders(ctx)
+	if err != nil {
+		t.Fatalf("list subtitle providers: %v", err)
+	}
+	if len(providers) != 1 || providers[0].APIKey == nil || providers[0].Password == nil {
+		t.Fatalf("providers = %#v", providers)
+	}
+	updated, err := store.UpdateSubtitleProvider(ctx, provider.ID, SubtitleProviderInput{
+		Name:     "Updated " + suffix,
+		Type:     "opensubtitles",
+		BaseURL:  "https://api.opensubtitles.com",
+		Enabled:  false,
+		Priority: 20,
+	})
+	if err != nil {
+		t.Fatalf("update subtitle provider: %v", err)
+	}
+	if updated.Enabled || updated.APIKey != nil || updated.Password != nil {
+		t.Fatalf("updated provider = %#v", updated)
+	}
+	if err := store.DeleteSubtitleProvider(ctx, provider.ID); err != nil {
+		t.Fatalf("delete subtitle provider: %v", err)
+	}
+	if _, err := store.GetSubtitleProvider(ctx, provider.ID); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("expected deleted provider to be missing, got %v", err)
+	}
+}

@@ -2,7 +2,8 @@ import {
 	testDownloadClientConfig as testDownloadClientConfigRequest,
 	testIndexerConfig as testIndexerConfigRequest,
 	testIndexer as testIndexerRequest,
-	testMetadataProvider as testMetadataProviderRequest
+	testMetadataProvider as testMetadataProviderRequest,
+	testSubtitleProvider as testSubtitleProviderRequest
 } from '$lib/settings/api';
 import type {
 	DownloadClientForm as DownloadClientFormValue,
@@ -72,11 +73,26 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		}
 	}
 
+	async function testSubtitleProvider(id: string) {
+		clearNotice();
+		state.testingSubtitleProviderId = id;
+
+		try {
+			const result = await testSubtitleProviderRequest(id);
+			state.subtitleProviderTests = { ...state.subtitleProviderTests, [id]: result };
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not test subtitle provider');
+		} finally {
+			state.testingSubtitleProviderId = undefined;
+		}
+	}
+
 	return {
 		testDownloadClientConfig,
 		testIndexer,
 		testIndexerConfig,
 		testMetadataProvider,
+		testSubtitleProvider,
 		...cacheActions
 	};
 }

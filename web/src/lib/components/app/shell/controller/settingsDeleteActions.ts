@@ -6,6 +6,7 @@ import {
 	deleteLibraryFolder as deleteLibraryFolderRequest,
 	deleteMediaProfile as deleteMediaProfileRequest,
 	deletePathMapping as deletePathMappingRequest,
+	deleteSubtitleProvider as deleteSubtitleProviderRequest,
 	deleteTag as deleteTagRequest,
 	deleteUser as deleteUserRequest,
 	matchLibraryScanItem as matchLibraryScanItemRequest,
@@ -19,6 +20,7 @@ import {
 	emptyIndexerForm,
 	emptyLanguageForm,
 	emptyMediaProfileForm,
+	emptySubtitleProviderForm,
 	emptyUserForm
 } from '$lib/settings/forms';
 import type { LibraryMediaKind, LibraryScan } from '$lib/settings/types';
@@ -62,6 +64,22 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 			await loadSettings();
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete indexer');
+		}
+	}
+
+	async function deleteSubtitleProvider(id: string) {
+		clearNotice();
+
+		try {
+			await deleteSubtitleProviderRequest(id);
+			if (state.subtitleProviderForm.id === id) {
+				state.subtitleProviderForm = emptySubtitleProviderForm();
+			}
+			state.subtitleProviderTests = omitResult(state.subtitleProviderTests, id);
+			state.message = 'Subtitle provider deleted';
+			await loadSettings();
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not delete subtitle provider');
 		}
 	}
 
@@ -240,6 +258,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 	return {
 		deleteDownloadClient,
 		deleteIndexer,
+		deleteSubtitleProvider,
 		deleteLibraryFolder,
 		scanLibraryFolder,
 		deletePathMapping,

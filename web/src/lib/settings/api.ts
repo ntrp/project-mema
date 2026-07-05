@@ -10,6 +10,7 @@ import {
 	normalizeMediaProfileForm,
 	normalizeMetadataProviderForm,
 	normalizePathMappingForm,
+	normalizeSubtitleProviderForm,
 	normalizeUserCreateForm,
 	normalizeUserUpdateForm
 } from './forms';
@@ -56,6 +57,7 @@ import type {
 	ReleaseOverrideDetails,
 	SessionResponse,
 	SettingsData,
+	SubtitleProviderForm,
 	SystemEventSettings,
 	SystemEventSettingsRequest,
 	SystemLogFile,
@@ -277,6 +279,7 @@ export async function loadSettings(): Promise<SettingsData> {
 		indexerResult,
 		indexerSearchResult,
 		metadataProviderResult,
+		subtitleProviderResult,
 		metadataCacheResult,
 		libraryFolderResult,
 		pathMappingResult,
@@ -290,6 +293,7 @@ export async function loadSettings(): Promise<SettingsData> {
 		client.GET('/settings/indexers'),
 		client.GET('/settings/indexer-search'),
 		client.GET('/settings/metadata-providers'),
+		client.GET('/settings/subtitle-providers'),
 		client.GET('/settings/metadata-cache'),
 		client.GET('/settings/library/folders'),
 		client.GET('/settings/library/path-mappings'),
@@ -311,6 +315,9 @@ export async function loadSettings(): Promise<SettingsData> {
 	}
 	if (metadataProviderResult.error) {
 		throw new Error(metadataProviderResult.error.message);
+	}
+	if (subtitleProviderResult.error) {
+		throw new Error(subtitleProviderResult.error.message);
 	}
 	if (metadataCacheResult.error) {
 		throw new Error(metadataCacheResult.error.message);
@@ -342,6 +349,7 @@ export async function loadSettings(): Promise<SettingsData> {
 		indexers: indexerResult.data?.indexers ?? [],
 		indexerSearch: indexerSearchResult.data ?? emptyIndexerSearch(),
 		metadataProviders: metadataProviderResult.data?.providers ?? [],
+		subtitleProviders: subtitleProviderResult.data?.providers ?? [],
 		metadataCache: metadataCacheResult.data ?? emptyMetadataCache(),
 		libraryFolders: libraryFolderResult.data?.folders ?? [],
 		pathMappings: pathMappingResult.data?.mappings ?? [],
@@ -1118,6 +1126,20 @@ export async function saveMetadataProvider(form: MetadataProviderForm) {
 	}
 }
 
+export async function saveSubtitleProvider(form: SubtitleProviderForm) {
+	const body = normalizeSubtitleProviderForm(form);
+	const result = form.id
+		? await client.PUT('/settings/subtitle-providers/{id}', {
+				params: { path: { id: form.id } },
+				body
+			})
+		: await client.POST('/settings/subtitle-providers', { body });
+
+	if (result.error) {
+		throw new Error(result.error.message);
+	}
+}
+
 export async function saveUser(form: UserForm) {
 	const result = form.id
 		? await client.PUT('/settings/users/{id}', {
@@ -1198,6 +1220,20 @@ export async function testMetadataProvider(id: string) {
 	}
 	if (!data) {
 		throw new Error('Metadata provider test did not return a result');
+	}
+	return data;
+}
+
+export async function testSubtitleProvider(id: string) {
+	const { data, error } = await client.POST('/settings/subtitle-providers/{id}/test', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Subtitle provider test did not return a result');
 	}
 	return data;
 }
@@ -1353,6 +1389,16 @@ export async function deleteIndexer(id: string) {
 
 export async function deleteMetadataProvider(id: string) {
 	const { error } = await client.DELETE('/settings/metadata-providers/{id}', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+}
+
+export async function deleteSubtitleProvider(id: string) {
+	const { error } = await client.DELETE('/settings/subtitle-providers/{id}', {
 		params: { path: { id } }
 	});
 

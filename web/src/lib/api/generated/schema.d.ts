@@ -1388,6 +1388,63 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/subtitle-providers': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List configured subtitle providers */
+		get: operations['listSubtitleProviders'];
+		put?: never;
+		/** Create a subtitle provider */
+		post: operations['createSubtitleProvider'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/subtitle-providers/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a subtitle provider */
+		put: operations['updateSubtitleProvider'];
+		post?: never;
+		/** Delete a subtitle provider */
+		delete: operations['deleteSubtitleProvider'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/subtitle-providers/{id}/test': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test a configured subtitle provider */
+		post: operations['testSubtitleProvider'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/metadata-cache': {
 		parameters: {
 			query?: never;
@@ -3135,6 +3192,39 @@ export interface components {
 		};
 		/** @enum {string} */
 		MetadataProviderType: 'tmdb' | 'tvdb';
+		SubtitleProviderListResponse: {
+			providers: components['schemas']['SubtitleProvider'][];
+		};
+		SubtitleProvider: {
+			/** Format: uuid */
+			id: string;
+			name: string;
+			type: components['schemas']['SubtitleProviderType'];
+			baseUrl: string;
+			username?: string;
+			enabled: boolean;
+			/** Format: int32 */
+			priority: number;
+			apiKeySet: boolean;
+			passwordSet: boolean;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		SubtitleProviderRequest: {
+			name: string;
+			type: components['schemas']['SubtitleProviderType'];
+			baseUrl: string;
+			username?: string;
+			password?: string;
+			apiKey?: string;
+			enabled: boolean;
+			/** Format: int32 */
+			priority: number;
+		};
+		/** @enum {string} */
+		SubtitleProviderType: 'opensubtitles';
 		MetadataCacheResponse: {
 			stats: components['schemas']['MetadataCacheStats'];
 			entries: components['schemas']['MetadataCacheEntry'][];
@@ -5938,6 +6028,128 @@ export interface operations {
 		requestBody?: never;
 		responses: {
 			/** @description Metadata provider test result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IntegrationTestResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listSubtitleProviders: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Configured subtitle providers */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SubtitleProviderListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createSubtitleProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SubtitleProviderRequest'];
+			};
+		};
+		responses: {
+			/** @description Subtitle provider created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SubtitleProvider'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateSubtitleProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SubtitleProviderRequest'];
+			};
+		};
+		responses: {
+			/** @description Subtitle provider updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SubtitleProvider'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteSubtitleProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Subtitle provider deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	testSubtitleProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Subtitle provider test result */
 			200: {
 				headers: {
 					[name: string]: unknown;

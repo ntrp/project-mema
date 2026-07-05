@@ -36,6 +36,7 @@
 		| '/settings/profiles'
 		| '/settings/custom-formats'
 		| '/settings/metadata'
+		| '/settings/subtitles'
 		| '/settings/languages'
 		| '/settings/tags'
 		| '/settings/users'
