@@ -29,6 +29,7 @@ import {
 	deleteUser,
 	enqueueMediaAutomaticSearch,
 	enqueueMediaReleaseSearch,
+	enqueueMediaSubtitleSearch,
 	getFileNamingSettings,
 	getIndexerSearch,
 	getLibraryScan,
@@ -111,6 +112,7 @@ describe('UI API edge cases (SCN-SETTINGS-009)', () => {
 			],
 			[() => enqueueMediaReleaseSearch('media-1'), 'Release search job was not returned'],
 			[() => enqueueMediaAutomaticSearch('media-1'), 'Automatic search job was not returned'],
+			[() => enqueueMediaSubtitleSearch('media-1'), 'Subtitle search job was not returned'],
 			[() => cancelDownloadActivity('activity-1'), 'Download activity was not returned'],
 			[
 				() => manualImportDownloadActivity('activity-1', { sourcePath: '/movie.mkv' } as never),

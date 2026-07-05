@@ -29,6 +29,7 @@ type MediaItem struct {
 	FilePaths           []string
 	MetadataFilePaths   []string
 	SubtitleLanguages   []MediaProfileSubtitleLanguage
+	ExternalSubtitles   []MediaItemSubtitle
 	Tags                []string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
@@ -189,6 +190,33 @@ type ReleaseBlocklistInput struct {
 type ReleaseSearchSnapshot struct {
 	Releases []ReleaseCandidate
 	Errors   []string
+}
+
+type MediaItemSubtitle struct {
+	ID           uuid.UUID
+	MediaItemID  uuid.UUID
+	SeasonID     *uuid.UUID
+	EpisodeID    *uuid.UUID
+	ProviderID   *uuid.UUID
+	ProviderName string
+	LanguageID   string
+	FilePath     string
+	SourceURL    *string
+	ReleaseName  *string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+type MediaItemSubtitleInput struct {
+	MediaItemID  uuid.UUID
+	SeasonID     *uuid.UUID
+	EpisodeID    *uuid.UUID
+	ProviderID   *uuid.UUID
+	ProviderName string
+	LanguageID   string
+	FilePath     string
+	SourceURL    *string
+	ReleaseName  *string
 }
 
 type IndexerSearchSettings struct {

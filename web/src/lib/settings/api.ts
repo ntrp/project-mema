@@ -58,6 +58,7 @@ import type {
 	SessionResponse,
 	SettingsData,
 	SubtitleProviderForm,
+	SubtitleSearchRequest,
 	SystemEventSettings,
 	SystemEventSettingsRequest,
 	SystemLogFile,
@@ -884,6 +885,21 @@ export async function enqueueMediaAutomaticSearch(id: string) {
 	}
 	if (!data) {
 		throw new Error('Automatic search job was not returned');
+	}
+	return data;
+}
+
+export async function enqueueMediaSubtitleSearch(id: string, request: SubtitleSearchRequest = {}) {
+	const { data, error } = await client.POST('/media/items/{id}/subtitle-searches', {
+		params: { path: { id } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Subtitle search job was not returned');
 	}
 	return data;
 }

@@ -1321,6 +1321,35 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/subtitle-searches:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: enqueueMediaSubtitleSearch
+      tags:
+        - Media
+      summary: Enqueue a subtitle search and download for a monitored item
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubtitleSearchRequest"
+      responses:
+        "202":
+          description: Subtitle search job enqueued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobEnqueueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/files/delete:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -6009,6 +6038,16 @@ components:
           format: int64
         message:
           type: string
+    SubtitleSearchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        languageId:
+          type: string
+          minLength: 1
+        filePath:
+          type: string
+          minLength: 1
     SystemJobListResponse:
       type: object
       additionalProperties: false

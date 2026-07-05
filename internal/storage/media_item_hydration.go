@@ -11,7 +11,11 @@ func hydrateMediaItem(ctx context.Context, q storagegen.DBTX, item MediaItem) (M
 	if err != nil {
 		return item, err
 	}
-	return hydrateMediaItemProfile(ctx, q, item)
+	item, err = hydrateMediaItemProfile(ctx, q, item)
+	if err != nil {
+		return item, err
+	}
+	return hydrateMediaItemSubtitles(ctx, q, item)
 }
 
 func hydrateMediaItems(ctx context.Context, q storagegen.DBTX, items []MediaItem) ([]MediaItem, error) {
@@ -38,5 +42,19 @@ func hydrateMediaItemProfile(
 		return item, err
 	}
 	item.SubtitleLanguages = languages
+	return item, nil
+}
+
+func hydrateMediaItemSubtitles(
+	ctx context.Context,
+	q storagegen.DBTX,
+	item MediaItem,
+) (MediaItem, error) {
+	subtitles, err := listMediaItemSubtitles(ctx, q, item.ID)
+	if err != nil {
+		return item, err
+	}
+	item.ExternalSubtitles = subtitles
+	item.MetadataFilePaths = append(item.MetadataFilePaths, subtitleFilePaths(subtitles)...)
 	return item, nil
 }

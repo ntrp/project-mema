@@ -94,6 +94,7 @@ export type MediaItemCreateRequest = components['schemas']['MediaItemCreateReque
 export type MediaItemUpdateRequest = components['schemas']['MediaItemUpdateRequest'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type MediaItemStatus = components['schemas']['MediaItemStatus'];
+export type SubtitleSearchRequest = components['schemas']['SubtitleSearchRequest'];
 export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
 export type SeriesType = components['schemas']['SeriesType'];
 export type MinimumAvailability = components['schemas']['MinimumAvailability'];

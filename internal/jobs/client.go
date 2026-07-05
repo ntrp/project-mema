@@ -1,0 +1,78 @@
+package jobs
+
+import (
+	"context"
+	"strings"
+
+	"github.com/google/uuid"
+	"github.com/riverqueue/river"
+)
+
+func (c *Client) Start(ctx context.Context) error {
+	return c.river.Start(ctx)
+}
+
+func (c *Client) Stop(ctx context.Context) error {
+	return c.river.Stop(ctx)
+}
+
+func (c *Client) AbortJob(ctx context.Context, id int64) error {
+	_, err := c.river.JobCancel(ctx, id)
+	return err
+}
+
+func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID, query string) (int64, error) {
+	result, err := c.river.Insert(ctx, ReleaseSearchArgs{MediaItemID: mediaItemID.String(), Query: strings.TrimSpace(query)}, &river.InsertOpts{
+		Queue: queueMediaSearch,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	publishJobUpdated(c.events, result.Job, "")
+	return result.Job.ID, nil
+}
+
+func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid.UUID) (int64, error) {
+	result, err := c.river.Insert(ctx, AutoSearchDownloadArgs{MediaItemID: mediaItemID.String()}, &river.InsertOpts{
+		Queue: queueMediaSearch,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	publishJobUpdated(c.events, result.Job, "")
+	return result.Job.ID, nil
+}
+
+func (c *Client) EnqueueSubtitleSearch(ctx context.Context, args SubtitleSearchArgs) (int64, error) {
+	result, err := c.river.Insert(ctx, args, &river.InsertOpts{
+		Queue: queueMediaSearch,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	publishJobUpdated(c.events, result.Job, "")
+	return result.Job.ID, nil
+}
+
+func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (int64, error) {
+	result, err := c.river.Insert(ctx, args, &river.InsertOpts{
+		Queue: queueDownloads,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	publishJobUpdated(c.events, result.Job, "")
+	return result.Job.ID, nil
+}

@@ -802,3 +802,26 @@ create table if not exists app.media_release_search_errors (
 
 create index if not exists idx_media_release_search_errors_media_item
     on app.media_release_search_errors (media_item_id, created_at desc);
+
+create table if not exists app.media_item_subtitles (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    season_id uuid references app.media_seasons(id) on delete set null,
+    episode_id uuid references app.media_episodes(id) on delete set null,
+    provider_id uuid references app.subtitle_providers(id) on delete set null,
+    provider_name text not null,
+    language_id text not null,
+    file_path text not null,
+    source_url text,
+    release_name text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (media_item_id, language_id, file_path)
+);
+
+create index if not exists idx_media_item_subtitles_media_item
+    on app.media_item_subtitles (media_item_id, language_id);
+
+create index if not exists idx_media_item_subtitles_episode
+    on app.media_item_subtitles (episode_id)
+    where episode_id is not null;

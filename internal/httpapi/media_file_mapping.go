@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 
 	"media-manager/internal/storage"
@@ -10,6 +11,7 @@ import (
 func mediaFileInfoResponses(
 	paths []string,
 	subtitleTargets []storage.MediaProfileSubtitleLanguage,
+	externalSubtitles []storage.MediaItemSubtitle,
 ) *[]MediaFileInfo {
 	files := make([]MediaFileInfo, 0, len(paths))
 	for _, path := range paths {
@@ -24,7 +26,11 @@ func mediaFileInfoResponses(
 			if len(probe.chapters) > 0 {
 				file.Chapters = &probe.chapters
 			}
-			file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(probe.tracks, subtitleTargets, nil)
+			file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(
+				probe.tracks,
+				subtitleTargets,
+				externalSubtitleLanguagesForPath(externalSubtitles, path),
+			)
 		}
 		files = append(files, file)
 	}
@@ -112,6 +118,23 @@ func languageSet(values []string) map[string]struct{} {
 		}
 	}
 	return languages
+}
+
+func externalSubtitleLanguagesForPath(subtitles []storage.MediaItemSubtitle, path string) []string {
+	languages := []string{}
+	for _, subtitle := range subtitles {
+		if !sameSubtitleMediaBase(subtitle.FilePath, path) {
+			continue
+		}
+		languages = append(languages, subtitle.LanguageID)
+	}
+	return languages
+}
+
+func sameSubtitleMediaBase(subtitlePath string, mediaPath string) bool {
+	subtitleBase := strings.TrimSuffix(filepath.Base(subtitlePath), filepath.Ext(subtitlePath))
+	mediaBase := strings.TrimSuffix(filepath.Base(mediaPath), filepath.Ext(mediaPath))
+	return strings.HasPrefix(strings.ToLower(subtitleBase), strings.ToLower(mediaBase)+".")
 }
 
 func languageMatchKey(value string) string {

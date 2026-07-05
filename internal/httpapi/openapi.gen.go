@@ -2547,6 +2547,12 @@ type SubtitleProviderRequest struct {
 // SubtitleProviderType defines model for SubtitleProviderType.
 type SubtitleProviderType string
 
+// SubtitleSearchRequest defines model for SubtitleSearchRequest.
+type SubtitleSearchRequest struct {
+	FilePath   *string `json:"filePath,omitempty"`
+	LanguageId *string `json:"languageId,omitempty"`
+}
+
 // SystemEvent defines model for SystemEvent.
 type SystemEvent struct {
 	Category  string                 `json:"category"`
@@ -2956,6 +2962,9 @@ type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
 // EnqueueMediaReleaseSearchJSONRequestBody defines body for EnqueueMediaReleaseSearch for application/json ContentType.
 type EnqueueMediaReleaseSearchJSONRequestBody = ReleaseSearchRequest
 
+// EnqueueMediaSubtitleSearchJSONRequestBody defines body for EnqueueMediaSubtitleSearch for application/json ContentType.
+type EnqueueMediaSubtitleSearchJSONRequestBody = SubtitleSearchRequest
+
 // CreateMediaRequestJSONRequestBody defines body for CreateMediaRequest for application/json ContentType.
 type CreateMediaRequestJSONRequestBody = MediaRequestCreateRequest
 
@@ -3204,6 +3213,9 @@ type ServerInterface interface {
 	// List latest release candidates for a monitored item
 	// (GET /media/items/{id}/releases)
 	SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Enqueue a subtitle search and download for a monitored item
+	// (POST /media/items/{id}/subtitle-searches)
+	EnqueueMediaSubtitleSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Get provider metadata details for a media candidate
 	// (GET /media/metadata/{provider}/{type}/{externalId})
 	GetMediaMetadataDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, pType MediaType, externalId string)
@@ -3771,6 +3783,12 @@ func (_ Unimplemented) StreamMediaReleaseSearch(w http.ResponseWriter, r *http.R
 // List latest release candidates for a monitored item
 // (GET /media/items/{id}/releases)
 func (_ Unimplemented) SearchMediaReleases(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Enqueue a subtitle search and download for a monitored item
+// (POST /media/items/{id}/subtitle-searches)
+func (_ Unimplemented) EnqueueMediaSubtitleSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6360,6 +6378,38 @@ func (siw *ServerInterfaceWrapper) SearchMediaReleases(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchMediaReleases(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnqueueMediaSubtitleSearch operation middleware
+func (siw *ServerInterfaceWrapper) EnqueueMediaSubtitleSearch(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnqueueMediaSubtitleSearch(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9480,6 +9530,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/releases", wrapper.SearchMediaReleases)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/subtitle-searches", wrapper.EnqueueMediaSubtitleSearch)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/metadata/{provider}/{type}/{externalId}", wrapper.GetMediaMetadataDetails)

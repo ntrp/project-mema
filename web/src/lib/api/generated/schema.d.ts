@@ -673,6 +673,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/subtitle-searches': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Enqueue a subtitle search and download for a monitored item */
+		post: operations['enqueueMediaSubtitleSearch'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/delete': {
 		parameters: {
 			query?: never;
@@ -2836,6 +2855,10 @@ export interface components {
 			jobId: number;
 			message: string;
 		};
+		SubtitleSearchRequest: {
+			languageId?: string;
+			filePath?: string;
+		};
 		SystemJobListResponse: {
 			jobs: components['schemas']['SystemJob'][];
 		};
@@ -4668,6 +4691,35 @@ export interface operations {
 					'application/json': components['schemas']['JobEnqueueResponse'];
 				};
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	enqueueMediaSubtitleSearch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['SubtitleSearchRequest'];
+			};
+		};
+		responses: {
+			/** @description Subtitle search job enqueued */
+			202: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['JobEnqueueResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};

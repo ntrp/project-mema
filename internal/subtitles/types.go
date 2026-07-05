@@ -22,6 +22,30 @@ type TestResult struct {
 	Details map[string]any
 }
 
+type SearchRequest struct {
+	MediaType     string
+	Title         string
+	LanguageID    string
+	Year          *int32
+	SeasonNumber  *int32
+	EpisodeNumber *int32
+	FilePath      string
+}
+
+type Candidate struct {
+	ProviderName  string
+	LanguageID    string
+	FileID        int64
+	ReleaseName   string
+	DownloadCount int
+	SourceURL     string
+}
+
+type Download struct {
+	Content []byte
+	URL     string
+}
+
 type Service struct {
 	client *http.Client
 }
@@ -51,4 +75,16 @@ func (s *Service) Test(ctx context.Context, config Config) TestResult {
 		Latency: latency,
 		Details: map[string]any{"provider": config.Type},
 	}
+}
+
+func (s *Service) Search(
+	ctx context.Context,
+	config Config,
+	request SearchRequest,
+) ([]Candidate, error) {
+	return s.searchOpenSubtitles(ctx, config, request)
+}
+
+func (s *Service) Download(ctx context.Context, config Config, candidate Candidate) (Download, error) {
+	return s.downloadOpenSubtitles(ctx, config, candidate)
 }

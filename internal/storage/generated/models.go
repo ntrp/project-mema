@@ -288,6 +288,21 @@ type AppMediaItem struct {
 	LibraryFolderID     *uuid.UUID
 }
 
+type AppMediaItemSubtitle struct {
+	ID           uuid.UUID
+	MediaItemID  uuid.UUID
+	SeasonID     *uuid.UUID
+	EpisodeID    *uuid.UUID
+	ProviderID   *uuid.UUID
+	ProviderName string
+	LanguageID   string
+	FilePath     string
+	SourceUrl    pgtype.Text
+	ReleaseName  pgtype.Text
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
 type AppMediaItemTag struct {
 	MediaItemID uuid.UUID
 	TagID       uuid.UUID
