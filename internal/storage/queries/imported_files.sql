@@ -14,7 +14,7 @@ values ($1, $2, 'completed', 1, 1, 0, now());
 -- name: CreateImportedFileLibraryScanItem :exec
 insert into app.library_scan_items (
     id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
-    status, matched_title, matched_year, matched_media_kind, media_item_id
+    status, matched_title, matched_year, matched_media_kind, media_item_id, season_id, episode_id
 )
 values (
     sqlc.arg(id),
@@ -28,8 +28,16 @@ values (
     sqlc.arg(detected_title),
     sqlc.narg(detected_year),
     sqlc.arg(detected_media_kind),
-    sqlc.arg(media_item_id)
+    sqlc.arg(media_item_id),
+    sqlc.narg(season_id),
+    sqlc.narg(episode_id)
 );
+
+-- name: GetImportedFileEpisodeReference :one
+select season_id, episode_id
+from app.library_scan_items
+where media_item_id = $1
+    and path = $2;
 
 -- name: DeleteLibraryScanItemsForMediaItem :exec
 delete from app.library_scan_items

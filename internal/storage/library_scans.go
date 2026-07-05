@@ -43,3 +43,41 @@ func libraryScanItemFromRow(row storagegen.AppLibraryScanItem) LibraryScanItem {
 		UpdatedAt:         row.UpdatedAt,
 	}
 }
+
+func libraryScanItemFromListRow(row storagegen.ListLibraryScanItemsRow) LibraryScanItem {
+	return LibraryScanItem{
+		ID:                row.ID,
+		ScanID:            row.ScanID,
+		Path:              row.Path,
+		FileName:          row.FileName,
+		DetectedTitle:     row.DetectedTitle,
+		DetectedYear:      int4Ptr(row.DetectedYear),
+		DetectedMediaKind: row.DetectedMediaKind,
+		Status:            row.Status,
+		MatchedTitle:      textPtr(row.MatchedTitle),
+		MatchedYear:       int4Ptr(row.MatchedYear),
+		MatchedMediaKind:  textPtr(row.MatchedMediaKind),
+		MediaItemID:       row.MediaItemID,
+		CreatedAt:         row.CreatedAt,
+		UpdatedAt:         row.UpdatedAt,
+	}
+}
+
+func libraryScanItemFromMatchRow(row storagegen.MatchLibraryScanItemRow) LibraryScanItem {
+	return LibraryScanItem{
+		ID:                row.ID,
+		ScanID:            row.ScanID,
+		Path:              row.Path,
+		FileName:          row.FileName,
+		DetectedTitle:     row.DetectedTitle,
+		DetectedYear:      int4Ptr(row.DetectedYear),
+		DetectedMediaKind: row.DetectedMediaKind,
+		Status:            row.Status,
+		MatchedTitle:      textPtr(row.MatchedTitle),
+		MatchedYear:       int4Ptr(row.MatchedYear),
+		MatchedMediaKind:  textPtr(row.MatchedMediaKind),
+		MediaItemID:       row.MediaItemID,
+		CreatedAt:         row.CreatedAt,
+		UpdatedAt:         row.UpdatedAt,
+	}
+}

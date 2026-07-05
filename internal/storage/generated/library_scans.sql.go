@@ -186,15 +186,32 @@ where scan_id = $1
 order by status desc, path asc
 `
 
-func (q *Queries) ListLibraryScanItems(ctx context.Context, scanID uuid.UUID) ([]AppLibraryScanItem, error) {
+type ListLibraryScanItemsRow struct {
+	ID                uuid.UUID
+	ScanID            uuid.UUID
+	Path              string
+	FileName          string
+	DetectedTitle     string
+	DetectedYear      pgtype.Int4
+	DetectedMediaKind string
+	Status            string
+	MatchedTitle      pgtype.Text
+	MatchedYear       pgtype.Int4
+	MatchedMediaKind  pgtype.Text
+	MediaItemID       *uuid.UUID
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
+func (q *Queries) ListLibraryScanItems(ctx context.Context, scanID uuid.UUID) ([]ListLibraryScanItemsRow, error) {
 	rows, err := q.db.Query(ctx, listLibraryScanItems, scanID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []AppLibraryScanItem
+	var items []ListLibraryScanItemsRow
 	for rows.Next() {
-		var i AppLibraryScanItem
+		var i ListLibraryScanItemsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ScanID,
@@ -257,7 +274,24 @@ type MatchLibraryScanItemParams struct {
 	ID               uuid.UUID
 }
 
-func (q *Queries) MatchLibraryScanItem(ctx context.Context, arg MatchLibraryScanItemParams) (AppLibraryScanItem, error) {
+type MatchLibraryScanItemRow struct {
+	ID                uuid.UUID
+	ScanID            uuid.UUID
+	Path              string
+	FileName          string
+	DetectedTitle     string
+	DetectedYear      pgtype.Int4
+	DetectedMediaKind string
+	Status            string
+	MatchedTitle      pgtype.Text
+	MatchedYear       pgtype.Int4
+	MatchedMediaKind  pgtype.Text
+	MediaItemID       *uuid.UUID
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
+func (q *Queries) MatchLibraryScanItem(ctx context.Context, arg MatchLibraryScanItemParams) (MatchLibraryScanItemRow, error) {
 	row := q.db.QueryRow(ctx, matchLibraryScanItem,
 		arg.MatchedTitle,
 		arg.MatchedYear,
@@ -266,7 +300,7 @@ func (q *Queries) MatchLibraryScanItem(ctx context.Context, arg MatchLibraryScan
 		arg.ScanID,
 		arg.ID,
 	)
-	var i AppLibraryScanItem
+	var i MatchLibraryScanItemRow
 	err := row.Scan(
 		&i.ID,
 		&i.ScanID,

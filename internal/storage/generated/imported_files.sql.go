@@ -32,7 +32,7 @@ func (q *Queries) CreateImportedFileLibraryScan(ctx context.Context, arg CreateI
 const createImportedFileLibraryScanItem = `-- name: CreateImportedFileLibraryScanItem :exec
 insert into app.library_scan_items (
     id, scan_id, path, file_name, detected_title, detected_year, detected_media_kind,
-    status, matched_title, matched_year, matched_media_kind, media_item_id
+    status, matched_title, matched_year, matched_media_kind, media_item_id, season_id, episode_id
 )
 values (
     $1,
@@ -46,7 +46,9 @@ values (
     $5,
     $6,
     $7,
-    $8
+    $8,
+    $9,
+    $10
 )
 `
 
@@ -59,6 +61,8 @@ type CreateImportedFileLibraryScanItemParams struct {
 	DetectedYear      pgtype.Int4
 	DetectedMediaKind string
 	MediaItemID       *uuid.UUID
+	SeasonID          *uuid.UUID
+	EpisodeID         *uuid.UUID
 }
 
 func (q *Queries) CreateImportedFileLibraryScanItem(ctx context.Context, arg CreateImportedFileLibraryScanItemParams) error {
@@ -71,6 +75,8 @@ func (q *Queries) CreateImportedFileLibraryScanItem(ctx context.Context, arg Cre
 		arg.DetectedYear,
 		arg.DetectedMediaKind,
 		arg.MediaItemID,
+		arg.SeasonID,
+		arg.EpisodeID,
 	)
 	return err
 }
@@ -101,6 +107,30 @@ where media_item_id = $1
 func (q *Queries) DeleteLibraryScanItemsForMediaItem(ctx context.Context, mediaItemID *uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteLibraryScanItemsForMediaItem, mediaItemID)
 	return err
+}
+
+const getImportedFileEpisodeReference = `-- name: GetImportedFileEpisodeReference :one
+select season_id, episode_id
+from app.library_scan_items
+where media_item_id = $1
+    and path = $2
+`
+
+type GetImportedFileEpisodeReferenceParams struct {
+	MediaItemID *uuid.UUID
+	Path        string
+}
+
+type GetImportedFileEpisodeReferenceRow struct {
+	SeasonID  *uuid.UUID
+	EpisodeID *uuid.UUID
+}
+
+func (q *Queries) GetImportedFileEpisodeReference(ctx context.Context, arg GetImportedFileEpisodeReferenceParams) (GetImportedFileEpisodeReferenceRow, error) {
+	row := q.db.QueryRow(ctx, getImportedFileEpisodeReference, arg.MediaItemID, arg.Path)
+	var i GetImportedFileEpisodeReferenceRow
+	err := row.Scan(&i.SeasonID, &i.EpisodeID)
+	return i, err
 }
 
 const importedMediaFileExists = `-- name: ImportedMediaFileExists :one

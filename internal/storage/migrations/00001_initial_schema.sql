@@ -652,12 +652,18 @@ create table if not exists app.library_scan_items (
     matched_year integer,
     matched_media_kind text check (matched_media_kind in ('movie', 'series', 'anime_movie', 'anime_series', 'unknown')),
     media_item_id uuid references app.media_items(id) on delete set null,
+    season_id uuid references app.media_seasons(id) on delete set null,
+    episode_id uuid references app.media_episodes(id) on delete set null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
 create index if not exists idx_library_scan_items_scan_status
     on app.library_scan_items (scan_id, status, path);
+
+create index if not exists idx_library_scan_items_episode
+    on app.library_scan_items (episode_id)
+    where episode_id is not null;
 
 create table if not exists app.download_activity (
     id uuid primary key,

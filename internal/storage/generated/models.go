@@ -215,6 +215,8 @@ type AppLibraryScanItem struct {
 	MatchedYear       pgtype.Int4
 	MatchedMediaKind  pgtype.Text
 	MediaItemID       *uuid.UUID
+	SeasonID          *uuid.UUID
+	EpisodeID         *uuid.UUID
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }

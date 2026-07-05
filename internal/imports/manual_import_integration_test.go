@@ -80,6 +80,64 @@ func TestSCNActivity002ManualMovieImportLinksSanitizedTarget(t *testing.T) {
 	}
 }
 
+func TestManualSeriesImportAssociatesPersistedEpisode(t *testing.T) {
+	store := importTestStore(t)
+	ctx := context.Background()
+	root := t.TempDir()
+	sourcePath := filepath.Join(root, "episode.mkv")
+	if err := os.WriteFile(sourcePath, []byte("video"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	folder := createImportFolder(t, store, filepath.Join(root, "library"))
+	item := createImportMediaItem(t, store, storage.MediaItemInput{
+		Type:            "serie",
+		Title:           "Scenario Series",
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
+			Seasons: []storage.MediaSeason{{
+				Name:         "Season 1",
+				SeasonNumber: 1,
+				Monitored:    false,
+				Episodes: []storage.MediaEpisode{{
+					Name:          "Pilot",
+					EpisodeNumber: 1,
+					Monitored:     true,
+				}},
+			}},
+		},
+	})
+	seasons, err := store.ListMediaSeriesSeasons(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantEpisodeID := seasons[0].Episodes[0].ID
+
+	err = NewService(store).ImportManualDownload(ctx, storage.DownloadActivity{
+		ID:          uuid.New(),
+		MediaItemID: item.ID,
+	}, ManualImportInput{
+		SourcePath:    sourcePath,
+		SeasonNumber:  int32Ptr(1),
+		EpisodeNumber: int32Ptr(1),
+		EpisodeTitle:  "Pilot",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	imported, err := store.GetMediaItem(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotEpisodeID, err := store.ImportedMediaFileEpisodeID(ctx, item.ID, imported.FilePaths[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotEpisodeID == nil || *gotEpisodeID != wantEpisodeID {
+		t.Fatalf("episode id = %v, want %s", gotEpisodeID, wantEpisodeID)
+	}
+}
+
 func TestSCNActivity002ManualSeriesImportRequiresEpisodeCoordinates(t *testing.T) {
 	store := importTestStore(t)
 	ctx := context.Background()
@@ -145,6 +203,10 @@ func createImportPathMapping(t *testing.T, store *storage.SettingsStore, clientP
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = store.DeletePathMapping(context.Background(), mapping.ID) })
+}
+
+func int32Ptr(value int32) *int32 {
+	return &value
 }
 
 func createImportMediaItem(t *testing.T, store *storage.SettingsStore, input storage.MediaItemInput) storage.MediaItem {

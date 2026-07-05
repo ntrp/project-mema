@@ -227,7 +227,7 @@ func (s *SettingsStore) MatchLibraryScanItem(ctx context.Context, scanID uuid.UU
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
-	updated := libraryScanItemFromRow(row)
+	updated := libraryScanItemFromMatchRow(row)
 	if err := storagegen.New(tx).RefreshLibraryScanManualCount(ctx, scanID); err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
@@ -249,7 +249,7 @@ func (s *SettingsStore) listLibraryScanItems(ctx context.Context, scanID uuid.UU
 
 	items := make([]LibraryScanItem, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, libraryScanItemFromRow(row))
+		items = append(items, libraryScanItemFromListRow(row))
 	}
 	return items, nil
 }
