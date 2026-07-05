@@ -130,6 +130,27 @@ func (e DownloadClientType) Valid() bool {
 	}
 }
 
+// Defines values for FileDeleteMode.
+const (
+	Keep      FileDeleteMode = "keep"
+	Permanent FileDeleteMode = "permanent"
+	Recycle   FileDeleteMode = "recycle"
+)
+
+// Valid indicates whether the value is a known member of the FileDeleteMode enum.
+func (e FileDeleteMode) Valid() bool {
+	switch e {
+	case Keep:
+		return true
+	case Permanent:
+		return true
+	case Recycle:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for HealthStatus.
 const (
 	Degraded    HealthStatus = "degraded"
@@ -1296,6 +1317,23 @@ type ErrorResponse struct {
 	Code    string                  `json:"code"`
 	Details *map[string]interface{} `json:"details,omitempty"`
 	Message string                  `json:"message"`
+}
+
+// FileDeleteMode defines model for FileDeleteMode.
+type FileDeleteMode string
+
+// FileDeleteSettings defines model for FileDeleteSettings.
+type FileDeleteSettings struct {
+	CreatedAt     time.Time      `json:"createdAt"`
+	Mode          FileDeleteMode `json:"mode"`
+	RecycleFolder string         `json:"recycleFolder"`
+	UpdatedAt     time.Time      `json:"updatedAt"`
+}
+
+// FileDeleteSettingsRequest defines model for FileDeleteSettingsRequest.
+type FileDeleteSettingsRequest struct {
+	Mode          FileDeleteMode `json:"mode"`
+	RecycleFolder string         `json:"recycleFolder"`
 }
 
 // FileNamingSettings defines model for FileNamingSettings.
@@ -3198,6 +3236,9 @@ type TestDownloadClientConfigJSONRequestBody = DownloadClientRequest
 // UpdateDownloadClientJSONRequestBody defines body for UpdateDownloadClient for application/json ContentType.
 type UpdateDownloadClientJSONRequestBody = DownloadClientRequest
 
+// UpdateFileDeleteSettingsJSONRequestBody defines body for UpdateFileDeleteSettings for application/json ContentType.
+type UpdateFileDeleteSettingsJSONRequestBody = FileDeleteSettingsRequest
+
 // UpdateFileNamingSettingsJSONRequestBody defines body for UpdateFileNamingSettings for application/json ContentType.
 type UpdateFileNamingSettingsJSONRequestBody = FileNamingSettingsRequest
 
@@ -3488,6 +3529,12 @@ type ServerInterface interface {
 	// Test a configured download client
 	// (POST /settings/download-clients/{id}/test)
 	TestDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get media file delete policy settings
+	// (GET /settings/file-delete)
+	GetFileDeleteSettings(w http.ResponseWriter, r *http.Request)
+	// Update media file delete policy settings
+	// (PUT /settings/file-delete)
+	UpdateFileDeleteSettings(w http.ResponseWriter, r *http.Request)
 	// Get file naming settings
 	// (GET /settings/file-naming)
 	GetFileNamingSettings(w http.ResponseWriter, r *http.Request)
@@ -4139,6 +4186,18 @@ func (_ Unimplemented) UpdateDownloadClient(w http.ResponseWriter, r *http.Reque
 // Test a configured download client
 // (POST /settings/download-clients/{id}/test)
 func (_ Unimplemented) TestDownloadClient(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get media file delete policy settings
+// (GET /settings/file-delete)
+func (_ Unimplemented) GetFileDeleteSettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update media file delete policy settings
+// (PUT /settings/file-delete)
+func (_ Unimplemented) UpdateFileDeleteSettings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7280,6 +7339,46 @@ func (siw *ServerInterfaceWrapper) TestDownloadClient(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetFileDeleteSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetFileDeleteSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFileDeleteSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateFileDeleteSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateFileDeleteSettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateFileDeleteSettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetFileNamingSettings operation middleware
 func (siw *ServerInterfaceWrapper) GetFileNamingSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -9928,6 +10027,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/download-clients/{id}/test", wrapper.TestDownloadClient)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/file-delete", wrapper.GetFileDeleteSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/file-delete", wrapper.UpdateFileDeleteSettings)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/file-naming", wrapper.GetFileNamingSettings)

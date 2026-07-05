@@ -2352,6 +2352,47 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/file-delete:
+    get:
+      operationId: getFileDeleteSettings
+      tags:
+        - Settings
+      summary: Get media file delete policy settings
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: File delete policy settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileDeleteSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateFileDeleteSettings
+      tags:
+        - Settings
+      summary: Update media file delete policy settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileDeleteSettingsRequest"
+      responses:
+        "200":
+          description: File delete policy settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileDeleteSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/profiles:
     get:
       operationId: listMediaProfiles
@@ -5904,6 +5945,40 @@ components:
           minLength: 1
           maxLength: 500
         specialsFolderFormat:
+          type: string
+          minLength: 1
+          maxLength: 500
+    FileDeleteMode:
+      type: string
+      enum:
+        - permanent
+        - recycle
+        - keep
+    FileDeleteSettings:
+      allOf:
+        - $ref: "#/components/schemas/FileDeleteSettingsRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - createdAt
+            - updatedAt
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    FileDeleteSettingsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - mode
+        - recycleFolder
+      properties:
+        mode:
+          $ref: "#/components/schemas/FileDeleteMode"
+        recycleFolder:
           type: string
           minLength: 1
           maxLength: 500

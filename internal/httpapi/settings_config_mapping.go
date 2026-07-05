@@ -22,6 +22,15 @@ func fileNamingSettingsResponse(settings storage.FileNamingSettings) FileNamingS
 	}
 }
 
+func fileDeleteSettingsResponse(settings storage.FileDeleteSettings) FileDeleteSettings {
+	return FileDeleteSettings{
+		Mode:          FileDeleteMode(settings.Mode),
+		RecycleFolder: settings.RecycleFolder,
+		CreatedAt:     settings.CreatedAt,
+		UpdatedAt:     settings.UpdatedAt,
+	}
+}
+
 func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {
 	return downloadclients.Config{
 		Name:     client.Name,

@@ -89,6 +89,29 @@ func TestScenarioSCNSettings003AdminManagesLanguageAliases(t *testing.T) {
 	}
 }
 
+func TestScenarioSCNSettings005AdminManagesFileDeletePolicy(t *testing.T) {
+	client := newAcceptanceClient(t, "SCN-SETTINGS-005")
+
+	var settings FileDeleteSettings
+	client.doJSON(t, http.MethodGet, "/settings/file-delete", nil, http.StatusOK, &settings)
+	if settings.Mode != Permanent || settings.RecycleFolder != ".recycle" {
+		t.Fatalf("default file delete settings = %#v", settings)
+	}
+
+	client.doJSON(t, http.MethodPut, "/settings/file-delete", FileDeleteSettingsRequest{
+		Mode:          Recycle,
+		RecycleFolder: ".trash",
+	}, http.StatusOK, &settings)
+	if settings.Mode != Recycle || settings.RecycleFolder != ".trash" {
+		t.Fatalf("updated file delete settings = %#v", settings)
+	}
+
+	client.doJSON(t, http.MethodPut, "/settings/file-delete", FileDeleteSettingsRequest{
+		Mode:          Recycle,
+		RecycleFolder: "../trash",
+	}, http.StatusBadRequest, nil)
+}
+
 func TestScenarioSCNSettings004AdminManagesIndexerConfiguration(t *testing.T) {
 	provider := testmocks.NewProviderServer()
 	t.Cleanup(provider.Close)

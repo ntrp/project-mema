@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	storagegen "media-manager/internal/storage/generated"
@@ -17,10 +16,9 @@ func (s *SettingsStore) DeleteMediaItem(ctx context.Context, id uuid.UUID, keepF
 		return err
 	}
 	if !keepFiles {
-		err = removeMediaFolder(item)
-	}
-	if err != nil {
-		return err
+		if err := s.removeMediaFolder(ctx, item); err != nil {
+			return err
+		}
 	}
 	rows, err := storagegen.New(s.pool).DeleteMediaItemRecord(ctx, id)
 	if err != nil {
@@ -32,13 +30,17 @@ func (s *SettingsStore) DeleteMediaItem(ctx context.Context, id uuid.UUID, keepF
 	return nil
 }
 
-func removeMediaFolder(item MediaItem) error {
+func (s *SettingsStore) removeMediaFolder(ctx context.Context, item MediaItem) error {
 	path, ok, err := mediaFolderDeletePath(item)
 	if err != nil || !ok {
 		return err
 	}
-	if err := os.RemoveAll(path); err != nil {
-		return fmt.Errorf("delete media folder: %w", err)
+	result := s.applyFolderDeletePolicy(ctx, item, path)
+	if err := s.recordFileDeletePolicy(ctx, item.ID, result); err != nil {
+		return err
+	}
+	if result.Status == "failed" {
+		return fmt.Errorf("delete media folder: %s", result.Failure)
 	}
 	return nil
 }

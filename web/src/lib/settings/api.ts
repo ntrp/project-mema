@@ -22,6 +22,8 @@ import type {
 	DiscoverBlacklistItem,
 	DiscoverBlacklistRequest,
 	DownloadClientForm,
+	FileDeleteSettings,
+	FileDeleteSettingsRequest,
 	FileNamingSettings,
 	FileNamingSettingsRequest,
 	IndexerBulkUpdateRequest,
@@ -458,6 +460,32 @@ export async function updateFileNamingSettings(request: FileNamingSettingsReques
 	}
 	if (!data) {
 		throw new Error('File naming settings were not returned');
+	}
+	return data;
+}
+
+export async function getFileDeleteSettings(): Promise<FileDeleteSettings> {
+	const { data, error } = await client.GET('/settings/file-delete');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('File delete settings were not returned');
+	}
+	return data;
+}
+
+export async function updateFileDeleteSettings(
+	request: FileDeleteSettingsRequest
+): Promise<FileDeleteSettings> {
+	const { data, error } = await client.PUT('/settings/file-delete', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('File delete settings were not returned');
 	}
 	return data;
 }

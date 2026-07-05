@@ -1,14 +1,29 @@
 package storage
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestRemoveMediaFolderDeletesMediaRoot(t *testing.T) {
+	ctx, store := testDBStore(t)
 	root := t.TempDir()
-	mediaPath := filepath.Join(root, "Movie")
+	folder, err := store.CreateLibraryFolder(ctx, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:            "movie",
+		Title:           "Movie",
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mediaPath := *item.MediaFolderPath
 	nestedFile := filepath.Join(mediaPath, "extras", "sample.txt")
 	if err := os.MkdirAll(filepath.Dir(nestedFile), 0o755); err != nil {
 		t.Fatalf("create nested folder: %v", err)
@@ -17,10 +32,7 @@ func TestRemoveMediaFolderDeletesMediaRoot(t *testing.T) {
 		t.Fatalf("write nested file: %v", err)
 	}
 
-	if err := removeMediaFolder(MediaItem{
-		LibraryFolderPath: &root,
-		MediaFolderPath:   &mediaPath,
-	}); err != nil {
+	if err := store.removeMediaFolder(ctx, item); err != nil {
 		t.Fatalf("remove media folder: %v", err)
 	}
 	if _, err := os.Stat(mediaPath); !os.IsNotExist(err) {
@@ -57,7 +69,33 @@ func TestMediaFolderDeletePathRejectsOutsideLibraryRoot(t *testing.T) {
 }
 
 func TestRemoveMediaFolderSkipsMissingPath(t *testing.T) {
-	if err := removeMediaFolder(MediaItem{}); err != nil {
+	ctx, store := testDBStore(t)
+	if err := store.removeMediaFolder(ctx, MediaItem{}); err != nil {
 		t.Fatalf("remove media folder without path: %v", err)
 	}
+}
+
+func deletePolicyItem(t *testing.T, ctx context.Context, store *SettingsStore) (MediaItem, string) {
+	t.Helper()
+	root := t.TempDir()
+	folder, err := store.CreateLibraryFolder(ctx, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:            "movie",
+		Title:           "Policy Movie",
+		Year:            int32Ptr(2026),
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(*item.MediaFolderPath, "Policy.Movie.mkv")
+	writeTestFile(t, path)
+	if err := store.RecordImportedMediaFile(ctx, item, path); err != nil {
+		t.Fatal(err)
+	}
+	return item, path
 }

@@ -330,6 +330,18 @@ create table if not exists app.file_naming_settings (
     updated_at timestamptz not null default now()
 );
 
+create table if not exists app.file_delete_settings (
+    id boolean primary key default true check (id),
+    mode text not null default 'permanent' check (mode in ('permanent', 'recycle', 'keep')),
+    recycle_folder text not null default '.recycle',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+insert into app.file_delete_settings (id, mode, recycle_folder)
+values (true, 'permanent', '.recycle')
+on conflict (id) do nothing;
+
 create table if not exists app.media_items (
     id uuid primary key,
     media_type text not null check (media_type in ('movie', 'serie')),

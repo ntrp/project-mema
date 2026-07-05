@@ -65,6 +65,14 @@ type AppDownloadClient struct {
 	UpdatedAt time.Time
 }
 
+type AppFileDeleteSetting struct {
+	ID            bool
+	Mode          string
+	RecycleFolder string
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
 type AppFileNamingSetting struct {
 	ID                   int32
 	MovieFileFormat      string

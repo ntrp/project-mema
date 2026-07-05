@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LibraryFolderForm from '$lib/components/settings/library/LibraryFolderForm.svelte';
 	import LibraryFolderAccordion from '$lib/components/settings/library/LibraryFolderAccordion.svelte';
+	import FileDeleteSettings from '$lib/components/settings/library/FileDeleteSettings.svelte';
 	import FileNamingSettings from '$lib/components/settings/library/FileNamingSettings.svelte';
 	import PathMappingSettings from '$lib/components/settings/library/PathMappingSettings.svelte';
 	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
@@ -120,6 +121,7 @@
 		</div>
 	</Card>
 	<FileNamingSettings />
+	<FileDeleteSettings />
 	{#if modalOpen}
 		<SettingsFormModal title="Add library folder" onClose={closeModal}>
 			<LibraryFolderForm bind:form {saving} onSave={save} />
