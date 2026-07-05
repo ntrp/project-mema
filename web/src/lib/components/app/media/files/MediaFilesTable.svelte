@@ -1,12 +1,13 @@
 <script lang="ts">
 	import MediaFileSummary from '$lib/components/app/media/files/MediaFileSummary.svelte';
 	import MediaFileDeleteModal from '$lib/components/app/media/files/MediaFileDeleteModal.svelte';
+	import MediaRenameApplyModal from '$lib/components/app/media/files/MediaRenameApplyModal.svelte';
 	import MediaRenamePreviewPanel from '$lib/components/app/media/files/MediaRenamePreviewPanel.svelte';
 	import MediaFileSearchModal from '$lib/components/app/media/files/MediaFileSearchModal.svelte';
 	import MediaRootPanel from '$lib/components/app/media/collection/MediaRootPanel.svelte';
 	import { activityForMovie } from '$lib/components/app/activity/activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import { previewMediaRename } from '$lib/settings/api';
+	import { applyMediaRename, previewMediaRename } from '$lib/settings/api';
 	import type {
 		DownloadActivity,
 		Language,
@@ -61,8 +62,11 @@
 	let searchOpen = $state(false);
 	let previewRows = $state<MediaRenamePreviewRow[]>([]);
 	let previewLoading = $state(false);
+	let previewApplying = $state(false);
 	let previewError = $state<string | undefined>();
+	let renameApplyOpen = $state(false);
 	const groups = $derived(mediaFileGroups(item, qualityProfiles));
+	const safeRenameCount = $derived(previewRows.filter((row) => row.status === 'safe').length);
 	const activityStatus = $derived(
 		item.type === 'movie' ? activityForMovie(activities, item.id) : undefined
 	);
@@ -96,6 +100,20 @@
 			previewLoading = false;
 		}
 	}
+
+	async function confirmRenameApply() {
+		renameApplyOpen = false;
+		previewApplying = true;
+		previewError = undefined;
+		try {
+			const result = await applyMediaRename(item.id);
+			previewRows = result.rows;
+		} catch (error) {
+			previewError = error instanceof Error ? error.message : 'Could not apply rename';
+		} finally {
+			previewApplying = false;
+		}
+	}
 </script>
 
 <section aria-labelledby="media-files-title">
@@ -106,8 +124,10 @@
 			<MediaRenamePreviewPanel
 				rows={previewRows}
 				loading={previewLoading}
+				applying={previewApplying}
 				errorMessage={previewError}
 				onPreview={loadRenamePreview}
+				onApply={() => (renameApplyOpen = true)}
 			/>
 		{/if}
 		{#each groups as group (group.key)}
@@ -137,6 +157,14 @@
 		row={deleteRow}
 		onCancel={() => (deleteRow = undefined)}
 		onConfirm={confirmDelete}
+	/>
+{/if}
+
+{#if renameApplyOpen}
+	<MediaRenameApplyModal
+		safeCount={safeRenameCount}
+		onCancel={() => (renameApplyOpen = false)}
+		onConfirm={confirmRenameApply}
 	/>
 {/if}
 

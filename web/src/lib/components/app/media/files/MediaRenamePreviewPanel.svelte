@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CheckIcon from '@lucide/svelte/icons/check';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import { Button } from '$lib/components/ui/button';
 	import { Badge } from '$lib/components/ui/badge';
@@ -7,14 +8,17 @@
 	interface Props {
 		rows: MediaRenamePreviewRow[];
 		loading: boolean;
+		applying: boolean;
 		errorMessage?: string;
 		onPreview: () => void;
+		onApply: () => void;
 	}
 
-	let { rows, loading, errorMessage, onPreview }: Props = $props();
+	let { rows, loading, applying, errorMessage, onPreview, onApply }: Props = $props();
+	const safeCount = $derived(rows.filter((row) => row.status === 'safe').length);
 
 	function statusVariant(status: MediaRenamePreviewRow['status']) {
-		if (status === 'safe') return 'secondary';
+		if (status === 'safe' || status === 'applied') return 'secondary';
 		if (status === 'unchanged') return 'outline';
 		return 'destructive';
 	}
@@ -34,10 +38,16 @@
 					: 'No preview loaded'}
 			</p>
 		</div>
-		<Button type="button" variant="outline" onclick={onPreview} disabled={loading}>
-			<RefreshCwIcon aria-hidden="true" />
-			{loading ? 'Previewing' : 'Preview'}
-		</Button>
+		<div class="flex flex-wrap gap-2">
+			<Button type="button" variant="outline" onclick={onPreview} disabled={loading || applying}>
+				<RefreshCwIcon aria-hidden="true" />
+				{loading ? 'Previewing' : 'Preview'}
+			</Button>
+			<Button type="button" onclick={onApply} disabled={safeCount === 0 || loading || applying}>
+				<CheckIcon aria-hidden="true" />
+				{applying ? 'Applying' : 'Apply'}
+			</Button>
+		</div>
 	</div>
 	{#if errorMessage}
 		<p class="m-0 text-sm text-destructive">{errorMessage}</p>

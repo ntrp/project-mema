@@ -266,6 +266,36 @@ func (q *Queries) ListMediaFileRecordsForItem(ctx context.Context, mediaItemID *
 	return items, nil
 }
 
+const renameMediaFileRecord = `-- name: RenameMediaFileRecord :execrows
+update app.library_scan_items
+set path = $1,
+    file_name = $2,
+    status = 'restored',
+    updated_at = now()
+where media_item_id = $3
+    and path = $4
+`
+
+type RenameMediaFileRecordParams struct {
+	DestinationPath string
+	FileName        string
+	MediaItemID     *uuid.UUID
+	SourcePath      string
+}
+
+func (q *Queries) RenameMediaFileRecord(ctx context.Context, arg RenameMediaFileRecordParams) (int64, error) {
+	result, err := q.db.Exec(ctx, renameMediaFileRecord,
+		arg.DestinationPath,
+		arg.FileName,
+		arg.MediaItemID,
+		arg.SourcePath,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const updateLibraryScanItemStatus = `-- name: UpdateLibraryScanItemStatus :exec
 update app.library_scan_items
 set status = $2,

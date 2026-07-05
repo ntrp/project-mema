@@ -70,6 +70,15 @@ set status = $2,
     updated_at = now()
 where id = $1;
 
+-- name: RenameMediaFileRecord :execrows
+update app.library_scan_items
+set path = sqlc.arg(destination_path),
+    file_name = sqlc.arg(file_name),
+    status = 'restored',
+    updated_at = now()
+where media_item_id = sqlc.arg(media_item_id)
+    and path = sqlc.arg(source_path);
+
 -- name: CreateMediaFileRescanLibraryScan :exec
 insert into app.library_scans (
     id, library_folder_id, status, total_files, auto_matched_count, manual_count, completed_at

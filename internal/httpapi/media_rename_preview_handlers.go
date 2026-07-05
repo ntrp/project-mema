@@ -20,15 +20,44 @@ func (s *Server) PreviewMediaRename(w http.ResponseWriter, r *http.Request, id R
 	writeJSON(w, http.StatusOK, mediaRenamePreviewResponse(preview))
 }
 
+func (s *Server) ApplyMediaRename(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireSession(w, r); !ok {
+		return
+	}
+	result, err := s.settings.ApplyMediaItemRename(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not apply file rename")
+		return
+	}
+	writeJSON(w, http.StatusOK, mediaRenameApplyResponse(result))
+}
+
 func mediaRenamePreviewResponse(preview storage.MediaRenamePreview) MediaRenamePreviewResponse {
 	response := MediaRenamePreviewResponse{Rows: make([]MediaRenamePreviewRow, 0, len(preview.Rows))}
 	for _, row := range preview.Rows {
-		response.Rows = append(response.Rows, MediaRenamePreviewRow{
-			CurrentPath:  row.CurrentPath,
-			ProposedPath: row.ProposedPath,
-			Status:       MediaRenamePreviewRowStatus(row.Status),
-			Messages:     row.Messages,
-		})
+		response.Rows = append(response.Rows, mediaRenamePreviewRow(row))
 	}
 	return response
+}
+
+func mediaRenameApplyResponse(result storage.MediaRenameApplyResult) MediaRenameApplyResponse {
+	response := MediaRenameApplyResponse{
+		Rows:         make([]MediaRenamePreviewRow, 0, len(result.Rows)),
+		AppliedCount: result.AppliedCount,
+		SkippedCount: result.SkippedCount,
+		FailedCount:  result.FailedCount,
+	}
+	for _, row := range result.Rows {
+		response.Rows = append(response.Rows, mediaRenamePreviewRow(row))
+	}
+	return response
+}
+
+func mediaRenamePreviewRow(row storage.MediaRenamePreviewRow) MediaRenamePreviewRow {
+	return MediaRenamePreviewRow{
+		CurrentPath:  row.CurrentPath,
+		ProposedPath: row.ProposedPath,
+		Status:       MediaRenamePreviewRowStatus(row.Status),
+		Messages:     row.Messages,
+	}
 }

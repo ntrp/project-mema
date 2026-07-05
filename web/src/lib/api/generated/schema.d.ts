@@ -749,6 +749,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/rename-apply': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Apply safe rename/reorganize paths for media files */
+		post: operations['applyMediaRename'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/grab': {
 		parameters: {
 			query?: never;
@@ -2481,8 +2500,25 @@ export interface components {
 			currentPath: string;
 			proposedPath: string;
 			/** @enum {string} */
-			status: 'safe' | 'unchanged' | 'conflict' | 'missing' | 'blocked';
+			status:
+				| 'safe'
+				| 'unchanged'
+				| 'conflict'
+				| 'missing'
+				| 'blocked'
+				| 'skipped'
+				| 'applied'
+				| 'failed';
 			messages: string[];
+		};
+		MediaRenameApplyResponse: {
+			rows: components['schemas']['MediaRenamePreviewRow'][];
+			/** Format: int32 */
+			appliedCount: number;
+			/** Format: int32 */
+			skippedCount: number;
+			/** Format: int32 */
+			failedCount: number;
 		};
 		MediaFileChapter: {
 			/** Format: int32 */
@@ -4886,6 +4922,30 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['MediaRenamePreviewResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	applyMediaRename: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Rename apply result rows for the media item */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaRenameApplyResponse'];
 				};
 			};
 			401: components['responses']['Unauthorized'];

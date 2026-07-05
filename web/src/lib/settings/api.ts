@@ -42,6 +42,7 @@ import type {
 	MediaItemUpdateRequest,
 	MediaProfile,
 	MediaProfileForm,
+	MediaRenameApplyResponse,
 	MediaRenamePreviewResponse,
 	MediaRequestApproveRequest,
 	MediaRequestCreateRequest,
@@ -868,6 +869,17 @@ export async function previewMediaRename(id: string): Promise<MediaRenamePreview
 		throw new Error(error.message);
 	}
 	return data ?? { rows: [] };
+}
+
+export async function applyMediaRename(id: string): Promise<MediaRenameApplyResponse> {
+	const { data, error } = await client.POST('/media/items/{id}/rename-apply', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? { rows: [], appliedCount: 0, skippedCount: 0, failedCount: 0 };
 }
 
 export async function searchMediaReleases(id: string) {

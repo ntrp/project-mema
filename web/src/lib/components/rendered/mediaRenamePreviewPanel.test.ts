@@ -31,10 +31,18 @@ describe('rendered rename preview panel', () => {
 						proposedPath: '',
 						status: 'blocked',
 						messages: ['Season and episode could not be detected.']
+					},
+					{
+						currentPath: '/library/applied.mkv',
+						proposedPath: '/library/renamed.mkv',
+						status: 'applied',
+						messages: ['File renamed.']
 					}
 				],
 				loading: false,
-				onPreview: vi.fn()
+				applying: false,
+				onPreview: vi.fn(),
+				onApply: vi.fn()
 			}
 		});
 
@@ -43,6 +51,7 @@ describe('rendered rename preview panel', () => {
 		expect(body).toContain('unchanged');
 		expect(body).toContain('skipped');
 		expect(body).toContain('blocked');
+		expect(body).toContain('applied');
 		expect(body).toContain('Season and episode could not be detected.');
 	});
 });

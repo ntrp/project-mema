@@ -34,7 +34,7 @@ func TestMediaFileHistoryResponseMapsProvenance(t *testing.T) {
 		t.Fatalf("media item id = %#v", response.MediaItemId)
 	}
 	if response.Operation != MediaFileHistoryEntryOperationImported ||
-		response.Status != Failed ||
+		response.Status != MediaFileHistoryEntryStatusFailed ||
 		response.ActorType != MediaFileHistoryEntryActorTypeJob {
 		t.Fatalf("response = %#v", response)
 	}

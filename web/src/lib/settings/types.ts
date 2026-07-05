@@ -96,6 +96,7 @@ export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type MediaItemStatus = components['schemas']['MediaItemStatus'];
 export type MediaFileHistoryEntry = components['schemas']['MediaFileHistoryEntry'];
 export type MediaFileHistoryResponse = components['schemas']['MediaFileHistoryResponse'];
+export type MediaRenameApplyResponse = components['schemas']['MediaRenameApplyResponse'];
 export type MediaRenamePreviewResponse = components['schemas']['MediaRenamePreviewResponse'];
 export type MediaRenamePreviewRow = components['schemas']['MediaRenamePreviewRow'];
 export type SubtitleSearchRequest = components['schemas']['SubtitleSearchRequest'];

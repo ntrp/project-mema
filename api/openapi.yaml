@@ -1421,6 +1421,27 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/rename-apply:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: applyMediaRename
+      tags:
+        - Media
+      summary: Apply safe rename/reorganize paths for media files
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Rename apply result rows for the media item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaRenameApplyResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/grab:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4939,10 +4960,38 @@ components:
             - conflict
             - missing
             - blocked
+            - skipped
+            - applied
+            - failed
         messages:
           type: array
           items:
             type: string
+    MediaRenameApplyResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rows
+        - appliedCount
+        - skippedCount
+        - failedCount
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaRenamePreviewRow"
+        appliedCount:
+          type: integer
+          format: int32
+          minimum: 0
+        skippedCount:
+          type: integer
+          format: int32
+          minimum: 0
+        failedCount:
+          type: integer
+          format: int32
+          minimum: 0
     MediaFileChapter:
       type: object
       additionalProperties: false
