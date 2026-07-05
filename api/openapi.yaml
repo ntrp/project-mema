@@ -5998,6 +5998,8 @@ components:
         sourcePath:
           type: string
           minLength: 1
+        importMode:
+          $ref: "#/components/schemas/ImportMode"
         targetFileName:
           type: string
         movieTitle:
@@ -6025,6 +6027,12 @@ components:
           type: array
           items:
             type: string
+    ImportMode:
+      type: string
+      enum:
+        - hardlink
+        - copy
+        - move
     DownloadClientListResponse:
       type: object
       additionalProperties: false

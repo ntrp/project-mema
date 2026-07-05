@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import * as Select from '$lib/components/ui/select';
 	import type { DownloadActivity, ManualImportRequest } from '$lib/settings/types';
 	import { initialManualImportForm, manualImportRequestFromForm } from './activityManualImportForm';
 
@@ -37,6 +38,19 @@
 	<label class="grid gap-1.5 md:col-span-2">
 		<span class="text-sm font-bold text-muted-foreground">Source path</span>
 		<Input bind:value={form.sourcePath} required placeholder="/downloads/release/file.mkv" />
+	</label>
+	<label class="grid gap-1.5">
+		<span class="text-sm font-bold text-muted-foreground">Import mode</span>
+		<Select.Root type="single" bind:value={form.importMode}>
+			<Select.Trigger class="w-full">
+				{form.importMode === 'hardlink' ? 'Hardlink' : form.importMode === 'copy' ? 'Copy' : 'Move'}
+			</Select.Trigger>
+			<Select.Content>
+				<Select.Item value="hardlink" label="Hardlink" />
+				<Select.Item value="copy" label="Copy" />
+				<Select.Item value="move" label="Move" />
+			</Select.Content>
+		</Select.Root>
 	</label>
 	<label class="grid gap-1.5 md:col-span-2">
 		<span class="text-sm font-bold text-muted-foreground">Target filename override</span>

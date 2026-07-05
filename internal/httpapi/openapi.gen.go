@@ -151,6 +151,27 @@ func (e HealthStatus) Valid() bool {
 	}
 }
 
+// Defines values for ImportMode.
+const (
+	Copy     ImportMode = "copy"
+	Hardlink ImportMode = "hardlink"
+	Move     ImportMode = "move"
+)
+
+// Valid indicates whether the value is a known member of the ImportMode enum.
+func (e ImportMode) Valid() bool {
+	switch e {
+	case Copy:
+		return true
+	case Hardlink:
+		return true
+	case Move:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for IndexerFieldType.
 const (
 	IndexerFieldTypeCheckbox IndexerFieldType = "checkbox"
@@ -1127,6 +1148,9 @@ type HealthResponse struct {
 // HealthStatus defines model for HealthStatus.
 type HealthStatus string
 
+// ImportMode defines model for ImportMode.
+type ImportMode string
+
 // Indexer defines model for Indexer.
 type Indexer struct {
 	ApiKey             *string              `json:"apiKey,omitempty"`
@@ -1571,17 +1595,18 @@ type ManagedUser struct {
 
 // ManualImportRequest defines model for ManualImportRequest.
 type ManualImportRequest struct {
-	Edition        *string   `json:"edition,omitempty"`
-	EpisodeNumber  *int32    `json:"episodeNumber,omitempty"`
-	EpisodeTitle   *string   `json:"episodeTitle,omitempty"`
-	Languages      *[]string `json:"languages,omitempty"`
-	MovieTitle     *string   `json:"movieTitle,omitempty"`
-	Quality        *string   `json:"quality,omitempty"`
-	ReleaseGroup   *string   `json:"releaseGroup,omitempty"`
-	SeasonNumber   *int32    `json:"seasonNumber,omitempty"`
-	SourcePath     string    `json:"sourcePath"`
-	TargetFileName *string   `json:"targetFileName,omitempty"`
-	Year           *int32    `json:"year,omitempty"`
+	Edition        *string     `json:"edition,omitempty"`
+	EpisodeNumber  *int32      `json:"episodeNumber,omitempty"`
+	EpisodeTitle   *string     `json:"episodeTitle,omitempty"`
+	ImportMode     *ImportMode `json:"importMode,omitempty"`
+	Languages      *[]string   `json:"languages,omitempty"`
+	MovieTitle     *string     `json:"movieTitle,omitempty"`
+	Quality        *string     `json:"quality,omitempty"`
+	ReleaseGroup   *string     `json:"releaseGroup,omitempty"`
+	SeasonNumber   *int32      `json:"seasonNumber,omitempty"`
+	SourcePath     string      `json:"sourcePath"`
+	TargetFileName *string     `json:"targetFileName,omitempty"`
+	Year           *int32      `json:"year,omitempty"`
 }
 
 // MediaAdvancedSearchRequest defines model for MediaAdvancedSearchRequest.

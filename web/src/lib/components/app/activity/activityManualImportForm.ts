@@ -1,8 +1,9 @@
 import { activityDisplay, releaseGroupFromTitle } from './activityDisplay';
-import type { DownloadActivity, ManualImportRequest } from '$lib/settings/types';
+import type { DownloadActivity, ImportMode, ManualImportRequest } from '$lib/settings/types';
 
 export interface ManualImportFormState {
 	sourcePath: string;
+	importMode: ImportMode;
 	targetFileName: string;
 	movieTitle: string;
 	year?: number;
@@ -20,6 +21,7 @@ export function initialManualImportForm(activity: DownloadActivity): ManualImpor
 
 	return {
 		sourcePath: '',
+		importMode: 'hardlink',
 		targetFileName: '',
 		movieTitle: activity.mediaTitle,
 		year: activity.mediaYear ?? undefined,
@@ -36,6 +38,7 @@ export function initialManualImportForm(activity: DownloadActivity): ManualImpor
 export function manualImportRequestFromForm(form: ManualImportFormState): ManualImportRequest {
 	return {
 		sourcePath: form.sourcePath,
+		importMode: form.importMode,
 		targetFileName: optional(form.targetFileName),
 		movieTitle: optional(form.movieTitle),
 		year: form.year,

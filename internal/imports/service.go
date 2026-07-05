@@ -20,6 +20,7 @@ type Service struct {
 type ManualImportInput struct {
 	SourcePath     string
 	TargetFileName string
+	ImportMode     ImportMode
 	MovieTitle     string
 	Year           *int32
 	SeasonNumber   *int32
@@ -68,7 +69,7 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 	for _, source := range sources {
 		target := filepath.Join(*item.MediaFolderPath, filepath.Base(source))
 		slog.Debug("linking completed download file", "activityId", activity.ID, "source", source, "target", target)
-		if err := hardlink(source, target); err != nil {
+		if err := importFile(source, target, ImportModeHardlink); err != nil {
 			slog.Error("completed download file link failed", "activityId", activity.ID, "source", source, "target", target, "error", err)
 			return err
 		}
@@ -112,7 +113,7 @@ func (s *Service) ImportManualDownload(ctx context.Context, activity storage.Dow
 		return fmt.Errorf("create media folder: %w", err)
 	}
 	target := filepath.Join(*item.MediaFolderPath, targetName)
-	if err := hardlink(source, target); err != nil {
+	if err := importFile(source, target, input.ImportMode); err != nil {
 		return err
 	}
 	if err := s.settings.RecordImportedMediaFile(ctx, item, target); err != nil {
@@ -179,22 +180,6 @@ func videoFilesInDir(root string) ([]string, error) {
 		return nil
 	})
 	return files, err
-}
-
-func hardlink(source string, target string) error {
-	if sameExistingFile(source, target) {
-		return nil
-	}
-	if err := os.Link(source, target); err != nil {
-		return fmt.Errorf("hardlink %s to %s: %w", source, target, err)
-	}
-	return nil
-}
-
-func sameExistingFile(source string, target string) bool {
-	sourceInfo, sourceErr := os.Stat(source)
-	targetInfo, targetErr := os.Stat(target)
-	return sourceErr == nil && targetErr == nil && os.SameFile(sourceInfo, targetInfo)
 }
 
 func manualTargetFileName(item storage.MediaItem, input ManualImportInput, source string) (string, error) {

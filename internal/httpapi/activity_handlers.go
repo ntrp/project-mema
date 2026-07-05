@@ -141,6 +141,7 @@ func manualImportAllowed(activity storage.DownloadActivity) bool {
 func manualImportInput(request ManualImportRequest) imports.ManualImportInput {
 	return imports.ManualImportInput{
 		SourcePath:     request.SourcePath,
+		ImportMode:     imports.ImportMode(manualImportMode(request.ImportMode)),
 		TargetFileName: manualString(request.TargetFileName),
 		MovieTitle:     manualString(request.MovieTitle),
 		Year:           request.Year,
@@ -152,6 +153,13 @@ func manualImportInput(request ManualImportRequest) imports.ManualImportInput {
 		Quality:        manualString(request.Quality),
 		Languages:      manualStrings(request.Languages),
 	}
+}
+
+func manualImportMode(value *ImportMode) string {
+	if value == nil {
+		return ""
+	}
+	return string(*value)
 }
 
 func manualString(value *string) string {

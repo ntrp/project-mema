@@ -99,6 +99,7 @@ export type ReleaseBlocklistItem = components['schemas']['ReleaseBlocklistItem']
 export type ReleaseOverrideDetails = components['schemas']['ReleaseOverrideDetails'];
 export type DownloadActivity = components['schemas']['DownloadActivity'];
 export type DownloadActivityStatus = components['schemas']['DownloadActivity']['status'];
+export type ImportMode = components['schemas']['ImportMode'];
 export type ManualImportRequest = components['schemas']['ManualImportRequest'];
 export type JobEnqueueResponse = components['schemas']['JobEnqueueResponse'];
 export type Tag = components['schemas']['Tag'];

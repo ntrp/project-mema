@@ -27,6 +27,8 @@ describe('rendered activity manual import form (SCN-ACTIVITY-002)', () => {
 		expect(body).toContain('Scenario.Movie.2026.German.2160p.WEB-DL.Atmos-GROUP');
 		expect(body).toContain('Source path');
 		expect(body).toContain('/downloads/release/file.mkv');
+		expect(body).toContain('Import mode');
+		expect(body).toContain('Hardlink');
 		expect(body).toContain('Target filename override');
 		expect(body).toContain('Movie');
 		expect(body).toContain('Year');
@@ -90,6 +92,7 @@ describe('rendered activity manual import form (SCN-ACTIVITY-002)', () => {
 			})
 		).toEqual({
 			sourcePath: '/downloads/scenario.mkv',
+			importMode: 'hardlink',
 			targetFileName: 'Scenario Series - S02E05.mkv',
 			movieTitle: 'Scenario Series',
 			year: 2026,

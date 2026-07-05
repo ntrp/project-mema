@@ -31,8 +31,10 @@ func TestSCNMedia009ActivityStateRulesAndManualImportInput(t *testing.T) {
 	}
 
 	languages := []string{" en ", "", " de "}
+	mode := Move
 	input := manualImportInput(ManualImportRequest{
 		SourcePath:     "/downloads/movie.mkv",
+		ImportMode:     &mode,
 		TargetFileName: stringPtr(" Movie.mkv "),
 		MovieTitle:     stringPtr(" Scenario Movie "),
 		Languages:      &languages,
@@ -42,6 +44,9 @@ func TestSCNMedia009ActivityStateRulesAndManualImportInput(t *testing.T) {
 	}
 	if input.MovieTitle != "Scenario Movie" || len(input.Languages) != 2 || input.Languages[0] != "en" || input.Languages[1] != "de" {
 		t.Fatalf("manual import metadata = %#v", input)
+	}
+	if input.ImportMode != "move" {
+		t.Fatalf("manual import mode = %q", input.ImportMode)
 	}
 	if manualString(nil) != "" || manualStrings(nil) != nil {
 		t.Fatal("nil manual fields should map to empty values")

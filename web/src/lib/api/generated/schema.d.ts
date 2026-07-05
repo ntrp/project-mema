@@ -2819,6 +2819,7 @@ export interface components {
 		DownloadActivityFailureType: 'download' | 'import';
 		ManualImportRequest: {
 			sourcePath: string;
+			importMode?: components['schemas']['ImportMode'];
 			targetFileName?: string;
 			movieTitle?: string;
 			/** Format: int32 */
@@ -2833,6 +2834,8 @@ export interface components {
 			quality?: string;
 			languages?: string[];
 		};
+		/** @enum {string} */
+		ImportMode: 'hardlink' | 'copy' | 'move';
 		DownloadClientListResponse: {
 			clients: components['schemas']['DownloadClient'][];
 		};
