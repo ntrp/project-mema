@@ -31,6 +31,12 @@ func (MissingMediaRetryArgs) Kind() string {
 	return "media.missing_media_retry"
 }
 
+type WantedRSSSyncArgs struct{}
+
+func (WantedRSSSyncArgs) Kind() string {
+	return "media.wanted_rss_sync"
+}
+
 type AutoSearchDownloadWorker struct {
 	river.WorkerDefaults[AutoSearchDownloadArgs]
 
@@ -59,43 +65,6 @@ func (w *AutoSearchDownloadWorker) Work(ctx context.Context, job *river.Job[Auto
 	slog.Debug("auto search download started", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
 	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Automatic search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
 	return autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item)
-}
-
-type MissingMediaRetryWorker struct {
-	river.WorkerDefaults[MissingMediaRetryArgs]
-
-	settings        *storage.SettingsStore
-	indexers        *indexers.Service
-	downloadClients *downloadclients.Service
-	decisions       decisions.Engine
-	events          *events.Broker
-}
-
-func (w *MissingMediaRetryWorker) Work(ctx context.Context, job *river.Job[MissingMediaRetryArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
-
-	items, err := w.settings.ListMissingMediaItems(ctx)
-	if err != nil {
-		slog.Error("missing media retry list failed", "error", err)
-		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Missing media retry failed to list items", map[string]any{"error": err.Error()})
-		return fmt.Errorf("list missing media: %w", err)
-	}
-	slog.Debug("missing media retry started", "itemCount", len(items))
-	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Missing media retry started", map[string]any{"itemCount": len(items)})
-	var failures []string
-	for _, item := range items {
-		if err := autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item); err != nil {
-			slog.Error("missing media retry item failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
-			failures = append(failures, fmt.Sprintf("%s: %s", item.Title, err.Error()))
-		}
-	}
-	if len(failures) > 0 {
-		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "jobs", "Missing media retry finished with failures", map[string]any{"failureCount": len(failures)})
-		return fmt.Errorf("missing media retry failed for %d item(s): %s", len(failures), strings.Join(failures, "; "))
-	}
-	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Missing media retry finished", map[string]any{"itemCount": len(items)})
-	return nil
 }
 
 func autoSearchDownload(

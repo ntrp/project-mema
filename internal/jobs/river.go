@@ -190,6 +190,13 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 		decisions:       decisionEngine,
 		events:          eventBroker,
 	})
+	river.AddWorker(workers, &WantedRSSSyncWorker{
+		settings:        settings,
+		indexers:        indexerService,
+		downloadClients: downloadClientService,
+		decisions:       decisionEngine,
+		events:          eventBroker,
+	})
 	river.AddWorker(workers, &GrabReleaseWorker{settings: settings, downloadClients: downloadClientService, events: eventBroker})
 	river.AddWorker(workers, &DownloadActivitySyncWorker{
 		settings:        settings,
@@ -208,9 +215,9 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 			river.NewPeriodicJob(
 				river.PeriodicInterval(6*time.Hour),
 				func() (river.JobArgs, *river.InsertOpts) {
-					return MissingMediaRetryArgs{}, &river.InsertOpts{Queue: queueMediaSearch}
+					return WantedRSSSyncArgs{}, &river.InsertOpts{Queue: queueMediaSearch}
 				},
-				&river.PeriodicJobOpts{ID: "missing_media_retry"},
+				&river.PeriodicJobOpts{ID: "wanted_rss_sync"},
 			),
 			river.NewPeriodicJob(
 				river.PeriodicInterval(10*time.Second),
