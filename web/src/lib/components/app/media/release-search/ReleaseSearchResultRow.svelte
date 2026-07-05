@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Table from '$lib/components/ui/table';
+	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { MediaItem, ReleaseCandidate, ReleaseOverrideDetails } from '$lib/settings/types';
 	import ReleaseGrabActions from '$lib/components/app/media/release-display/ReleaseGrabActions.svelte';
 	import ReleaseMatchInfo from '$lib/components/app/media/release-display/ReleaseMatchInfo.svelte';
@@ -35,6 +36,8 @@
 
 	const source = $derived(releaseSource(release));
 	const peers = $derived(peerLabel(release));
+	const releaseSources = $derived(release.sources ?? []);
+	const sourceCount = $derived(releaseSources.length);
 </script>
 
 <Table.Row>
@@ -53,7 +56,37 @@
 			{/if}
 		</Badge>
 	</Table.Cell>
-	<Table.Cell class="max-w-[160px] truncate whitespace-nowrap">{release.indexerName}</Table.Cell>
+	<Table.Cell class="max-w-[180px] whitespace-nowrap">
+		{#if sourceCount > 1}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<span {...props} class="flex min-w-0 items-center gap-1">
+							<span class="min-w-0 truncate">{release.indexerName}</span>
+							<Badge variant="outline" class="px-1 py-0 text-[10px] leading-4">
+								+{sourceCount - 1}
+							</Badge>
+						</span>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content class="max-w-96">
+					<div class="space-y-2">
+						{#each releaseSources as releaseSource (releaseSource.downloadUrl)}
+							<div class="space-y-0.5">
+								<div class="font-semibold">
+									{releaseSource.indexerName}
+									<span class="text-muted-foreground">({releaseSource.indexerProtocol})</span>
+								</div>
+								<div class="text-muted-foreground truncate">{releaseSource.downloadUrl}</div>
+							</div>
+						{/each}
+					</div>
+				</Tooltip.Content>
+			</Tooltip.Root>
+		{:else}
+			<span class="block truncate">{release.indexerName}</span>
+		{/if}
+	</Table.Cell>
 	<Table.Cell class="whitespace-nowrap">{ageLabel(release)}</Table.Cell>
 	<Table.Cell class="w-full min-w-0 max-w-0">
 		<ReleaseTitleCell {release} {copiedReleaseId} {onCopy} />

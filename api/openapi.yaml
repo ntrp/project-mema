@@ -5558,6 +5558,7 @@ components:
         - indexerProtocol
         - title
         - sizeBytes
+        - sources
         - match
       properties:
         id:
@@ -5591,8 +5592,36 @@ components:
           format: date-time
         grabDisabledReason:
           type: string
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReleaseCandidateSource"
         match:
           $ref: "#/components/schemas/ReleaseCandidateMatch"
+    ReleaseCandidateSource:
+      type: object
+      additionalProperties: false
+      required:
+        - indexerName
+        - indexerProtocol
+        - title
+        - downloadUrl
+      properties:
+        indexerId:
+          type: string
+          format: uuid
+        indexerName:
+          type: string
+        indexerProtocol:
+          $ref: "#/components/schemas/IndexerProtocol"
+        title:
+          type: string
+        downloadUrl:
+          type: string
+        infoUrl:
+          type: string
+        guid:
+          type: string
     ReleaseCandidateMatch:
       type: object
       additionalProperties: false

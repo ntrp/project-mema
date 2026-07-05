@@ -73,6 +73,23 @@ func TestSCNMedia002ReleaseCandidateResponsePreservesIndexerAndMatchDetails(t *t
 			Seeders:         &seeders,
 			Peers:           &peers,
 			PublishedAt:     &publishedAt,
+			Sources: []storage.ReleaseCandidateSource{
+				{
+					IndexerID:       &indexerID,
+					IndexerName:     "Local Torznab",
+					IndexerProtocol: "torrent",
+					Title:           "Scenario.Movie.2026.1080p.WEBDL.German-GRP",
+					DownloadURL:     "https://indexer.test/download/scenario",
+					InfoURL:         &infoURL,
+					GUID:            &guid,
+				},
+				{
+					IndexerName:     "Mirror Torznab",
+					IndexerProtocol: "torrent",
+					Title:           "Scenario.Movie.2026.1080p.WEBDL.German-GRP",
+					DownloadURL:     "https://mirror.test/download/scenario",
+				},
+			},
 		},
 		&storage.MediaProfile{QualityIDs: []string{"webdl-1080p"}, TargetLanguages: []string{"de"}},
 		nil,
@@ -87,6 +104,9 @@ func TestSCNMedia002ReleaseCandidateResponsePreservesIndexerAndMatchDetails(t *t
 	}
 	if response.InfoUrl == nil || *response.InfoUrl != infoURL || response.Guid == nil || *response.Guid != guid {
 		t.Fatalf("urls = info %v guid %v", response.InfoUrl, response.Guid)
+	}
+	if len(response.Sources) != 2 || response.Sources[0].IndexerName != "Local Torznab" || response.Sources[1].IndexerName != "Mirror Torznab" {
+		t.Fatalf("sources = %#v", response.Sources)
 	}
 	if response.Match.Severity != "info" {
 		t.Fatalf("match severity = %q details %v", response.Match.Severity, response.Match.Details)
