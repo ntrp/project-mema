@@ -7,6 +7,8 @@
 	import * as Table from '$lib/components/ui/table';
 	import {
 		folderName,
+		canImportRows,
+		importRequestForDraft,
 		scanMediaKind,
 		searchCacheKey,
 		sortedScanItems,
@@ -46,10 +48,7 @@
 	const checkedRowsMatched = $derived(
 		checkedRows.length > 0 && checkedRows.every((item) => drafts[item.id]?.matched)
 	);
-	const canImport = $derived(
-		checkedRows.length > 0 &&
-			checkedRows.every((item) => drafts[item.id]?.matched && drafts[item.id]?.qualityProfileId)
-	);
+	const canImport = $derived(canImportRows(checkedRows, drafts, bulkQualityProfileId));
 	$effect(() => {
 		for (const item of scan.items) {
 			if (drafts[item.id]) continue;
@@ -139,19 +138,11 @@
 					const match = draft!.matched!;
 					return {
 						item,
-						request: {
-							mediaKind: draft!.mediaKind,
-							title: match.title,
-							year: match.year,
-							monitored: draft!.monitorMode !== 'none',
-							qualityProfileId: draft!.qualityProfileId,
-							monitorMode: draft!.monitorMode,
-							minimumAvailability: draft!.minimumAvailability,
-							externalProvider: match.externalProvider,
-							externalId: match.externalId,
-							overview: match.overview,
-							posterPath: match.posterPath
-						}
+						request: importRequestForDraft(draft!, match, {
+							qualityProfileId: bulkQualityProfileId,
+							monitorMode: bulkMonitorMode,
+							minimumAvailability: bulkMinimumAvailability
+						})
 					};
 				})
 			);

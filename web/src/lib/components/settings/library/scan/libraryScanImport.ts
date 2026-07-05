@@ -68,6 +68,51 @@ export function searchCacheKey(kind: LibraryMediaKind, query: string) {
 	return `${kind}:${query.trim().toLowerCase()}`;
 }
 
+export function effectiveDraftValue<T extends string>(draftValue: T, bulkValue: T): T {
+	return draftValue || bulkValue;
+}
+
+export function canImportRows(
+	items: LibraryScanItem[],
+	drafts: Record<string, MatchDraft>,
+	bulkQualityProfileId: string
+) {
+	return (
+		items.length > 0 &&
+		items.every((item) => {
+			const draft = drafts[item.id];
+			return Boolean(
+				draft?.matched && effectiveDraftValue(draft.qualityProfileId, bulkQualityProfileId)
+			);
+		})
+	);
+}
+
+export function importRequestForDraft(
+	draft: MatchDraft,
+	match: MediaSearchResult,
+	bulk: {
+		qualityProfileId: string;
+		monitorMode: MediaMonitorMode;
+		minimumAvailability: MinimumAvailability;
+	}
+): LibraryScanItemMatchRequest {
+	const monitorMode = effectiveDraftValue(draft.monitorMode, bulk.monitorMode);
+	return {
+		mediaKind: draft.mediaKind,
+		title: match.title,
+		year: match.year,
+		monitored: monitorMode !== 'none',
+		qualityProfileId: effectiveDraftValue(draft.qualityProfileId, bulk.qualityProfileId),
+		monitorMode,
+		minimumAvailability: effectiveDraftValue(draft.minimumAvailability, bulk.minimumAvailability),
+		externalProvider: match.externalProvider,
+		externalId: match.externalId,
+		overview: match.overview,
+		posterPath: match.posterPath
+	};
+}
+
 export function wait(ms: number) {
 	return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
