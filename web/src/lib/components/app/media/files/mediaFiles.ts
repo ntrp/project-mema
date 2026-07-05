@@ -45,7 +45,10 @@ export interface MediaFileRow {
 	subtitleSatisfaction?: MediaFileSubtitleSatisfaction;
 	upgrade: MediaFileUpgradeInfo;
 	expectedLanguages: string[];
+	expectedRequiredLanguages: string[];
+	expectedSubtitleLanguages: string[];
 	removeNonEnabledLanguages: boolean;
+	removeNonEnabledSubtitleLanguages: boolean;
 	score: number;
 }
 export interface MediaFileGroup {
@@ -148,7 +151,10 @@ export function fileRow(
 		subtitleSatisfaction: info?.subtitleSatisfaction,
 		upgrade,
 		expectedLanguages: profile.expectedLanguages,
+		expectedRequiredLanguages: profile.expectedRequiredLanguages,
+		expectedSubtitleLanguages: profile.expectedSubtitleLanguages,
 		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
+		removeNonEnabledSubtitleLanguages: profile.removeNonEnabledSubtitleLanguages,
 		score: 0
 	};
 }
@@ -182,7 +188,10 @@ export function missingRow(
 		},
 		upgrade: { state: 'missing', label: 'Missing', reasons: ['File is missing'] },
 		expectedLanguages: [],
+		expectedRequiredLanguages: [],
+		expectedSubtitleLanguages: [],
 		removeNonEnabledLanguages: false,
+		removeNonEnabledSubtitleLanguages: false,
 		score: 0
 	};
 }

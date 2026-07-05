@@ -11,6 +11,7 @@ import type {
 	LibraryScan,
 	LibraryScanItem,
 	MediaSearchResult,
+	MetadataProvider,
 	QualityProfileOption,
 	QualitySizeSetting
 } from '$lib/settings/types';
@@ -32,17 +33,23 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 	it('renders scan import controls and matched row choices', () => {
 		const item = scanItem({ id: 'scan-item-1', fileName: 'Scenario.Movie.2026.mkv' });
 		const profiles = [{ id: 'profile-1', name: 'Scenario Profile' }] as QualityProfileOption[];
+		const providers = [
+			{ id: 'metadata-1', name: 'TMDB', type: 'tmdb', enabled: true }
+		] as MetadataProvider[];
 		const draft = {
 			selected: true,
 			query: 'Scenario Movie',
 			mediaKind: 'movie',
+			metadataProviderId: 'metadata-1',
 			matched: { title: 'Scenario Movie', type: 'movie', year: 2026 } as MediaSearchResult,
 			results: [],
 			searching: false,
 			searched: true,
 			qualityProfileId: 'profile-1',
 			monitorMode: 'only_media',
-			minimumAvailability: 'released'
+			minimumAvailability: 'released',
+			seriesType: 'standard',
+			removeDuplicate: false
 		} as MatchDraft;
 
 		const table = render(LibraryScanImportTable, {
@@ -54,6 +61,7 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 					items: [item]
 				} as LibraryScan,
 				qualityProfiles: profiles,
+				metadataProviders: providers,
 				loading: false,
 				onSearchMatch: vi.fn(),
 				onImport: vi.fn()
@@ -63,19 +71,31 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 			props: {
 				item,
 				draft,
-				sortMode: 'folders',
 				qualityProfiles: profiles,
-				folderLabel: '/downloads',
+				metadataProviders: providers,
+				onSearch: vi.fn(),
+				onSelect: vi.fn()
+			}
+		});
+		const unmatchedRow = render(LibraryScanImportRow, {
+			props: {
+				item,
+				draft: { ...draft, matched: undefined, selected: false, searched: false },
+				qualityProfiles: profiles,
+				metadataProviders: providers,
 				onSearch: vi.fn(),
 				onSelect: vi.fn()
 			}
 		});
 
 		expect(table.body).toContain('1 files');
-		expect(table.body).toContain('Folder / file');
-		expect(table.body).toContain('0 checked');
+		expect(table.body).toContain('Directory / File');
+		expect(table.body).toContain('Metadata provider');
+		expect(table.body).toContain('Import Selected');
 		expect(row.body).toContain('/downloads');
 		expect(row.body).toContain('Scenario Movie (2026)');
+		expect(unmatchedRow.body).toContain('No match');
+		expect(unmatchedRow.body).toContain('text-amber-500');
 		expect(row.body).toContain('Scenario Profile');
 		expect(row.body).toContain('Only this media');
 	});

@@ -17,19 +17,11 @@
 	const selected = $derived(score !== undefined);
 </script>
 
-<div class="grid gap-2 rounded-md bg-muted/20 p-2 sm:grid-cols-[1fr_120px_120px] sm:items-center">
+<div class="grid gap-2 rounded-md bg-muted/20 p-2 sm:grid-cols-[1fr_120px_80px] sm:items-center">
 	<Label class="flex items-center gap-2 text-sm">
 		<Checkbox checked={selected} onCheckedChange={() => onToggle(id)} />
 		<span>{label}</span>
 	</Label>
-	<Input
-		type="number"
-		aria-label={`${label} score`}
-		value={score?.score ?? 0}
-		disabled={!selected}
-		inputmode="numeric"
-		oninput={(event) => onScoreChange(id, event.currentTarget.valueAsNumber)}
-	/>
 	<Label class="flex items-center gap-2 text-sm">
 		<Checkbox
 			checked={score?.required === true}
@@ -38,4 +30,13 @@
 		/>
 		<span>Required</span>
 	</Label>
+	<Input
+		class="w-20"
+		type="number"
+		aria-label={`${label} score`}
+		value={score?.score ?? 0}
+		disabled={!selected}
+		inputmode="numeric"
+		oninput={(event) => onScoreChange(id, event.currentTarget.valueAsNumber)}
+	/>
 </div>

@@ -198,6 +198,7 @@ type AppLanguage struct {
 type AppLibraryFolder struct {
 	ID        uuid.UUID
 	Path      string
+	Kind      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -214,22 +215,32 @@ type AppLibraryScan struct {
 }
 
 type AppLibraryScanItem struct {
-	ID                uuid.UUID
-	ScanID            uuid.UUID
-	Path              string
-	FileName          string
-	DetectedTitle     string
-	DetectedYear      pgtype.Int4
-	DetectedMediaKind string
-	Status            string
-	MatchedTitle      pgtype.Text
-	MatchedYear       pgtype.Int4
-	MatchedMediaKind  pgtype.Text
-	MediaItemID       *uuid.UUID
-	SeasonID          *uuid.UUID
-	EpisodeID         *uuid.UUID
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                         uuid.UUID
+	ScanID                     uuid.UUID
+	Path                       string
+	FileName                   string
+	SizeBytes                  int64
+	DetectedTitle              string
+	DetectedYear               pgtype.Int4
+	DetectedMediaKind          string
+	SeasonNumber               pgtype.Int4
+	EpisodeNumber              pgtype.Int4
+	Status                     string
+	Imported                   bool
+	MatchedTitle               pgtype.Text
+	MatchedYear                pgtype.Int4
+	MatchedMediaKind           pgtype.Text
+	MatchedExternalProvider    pgtype.Text
+	MatchedExternalID          pgtype.Text
+	MatchSource                pgtype.Text
+	SelectedMetadataProviderID *uuid.UUID
+	DuplicateGroupID           pgtype.Text
+	DuplicateRemovalAllowed    bool
+	MediaItemID                *uuid.UUID
+	SeasonID                   *uuid.UUID
+	EpisodeID                  *uuid.UUID
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
 }
 
 type AppLogFileSetting struct {
@@ -338,12 +349,14 @@ type AppMediaItemTag struct {
 type AppMediaProfile struct {
 	ID                                string
 	Name                              string
+	IsDefault                         bool
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             pgtype.Text
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveNonEnabledLanguages         bool
+	RemoveNonEnabledSubtitleLanguages bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	CreatedAt                         time.Time
@@ -372,6 +385,7 @@ type AppMediaProfileQuality struct {
 type AppMediaProfileSubtitleLanguage struct {
 	ProfileID    string
 	LanguageID   string
+	Score        int32
 	Required     bool
 	SubtitleType string
 }

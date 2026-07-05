@@ -62,7 +62,7 @@ function shellState(overrides: Record<string, unknown> = {}) {
 		openLibraryFolderId: 'folder-1',
 		downloadForm: { name: 'Client' },
 		indexerForm: { name: 'Indexer' },
-		libraryFolderForm: { path: '/media' },
+		libraryFolderForm: { path: '/media', kind: 'movie' },
 		pathMappingForm: { hostPath: '/downloads' },
 		mediaProfileForm: { name: 'Profile' },
 		customFormatForm: { name: 'Format' },

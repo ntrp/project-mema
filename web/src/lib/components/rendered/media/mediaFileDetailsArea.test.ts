@@ -90,12 +90,16 @@ function detailedFileRow(): MediaFileRow {
 		formats: ['WEB-DL'],
 		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
 		expectedLanguages: ['english', 'german'],
+		expectedRequiredLanguages: ['german'],
+		expectedSubtitleLanguages: ['english'],
 		removeNonEnabledLanguages: true,
+		removeNonEnabledSubtitleLanguages: true,
 		score: 120,
 		tracks: [
 			{ type: 'video', index: 0, codec: 'h264', width: 1920, height: 1080 },
 			{ type: 'audio', index: 1, codec: 'DTS', language: 'eng', channels: 6 },
-			{ type: 'subtitle', index: 2, codec: 'SRT', language: 'eng', title: 'Signs' }
+			{ type: 'subtitle', index: 2, codec: 'SRT', language: 'eng', title: 'Signs' },
+			{ type: 'subtitle', index: 3, codec: 'SRT', language: 'spa', title: 'Spanish' }
 		],
 		chapters: [{ index: 0, title: 'Opening', startTime: '00:00:00', endTime: '00:05:00' }]
 	};

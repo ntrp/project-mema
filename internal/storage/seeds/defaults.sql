@@ -52,6 +52,7 @@ on conflict (quality_id) do nothing;
 insert into app.media_profiles (
     id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
@@ -62,10 +63,10 @@ insert into app.media_profiles (
     series_pack_preference
 )
 values
-    ('any', 'Any acceptable release', true, 'raw-hd', 0, 0, 1, false, 'any', 'auto'),
-    ('hd-1080p', 'HD 1080p', true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto'),
-    ('uhd-4k', 'UHD 4K', true, 'remux-2160p', 0, 10000, 1, false, 'any', 'auto'),
-    ('anime-1080p', 'Anime 1080p', true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto')
+    ('any', 'Any acceptable release', false, true, 'raw-hd', 0, 0, 1, false, 'any', 'auto'),
+    ('hd-1080p', 'HD 1080p', true, true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto'),
+    ('uhd-4k', 'UHD 4K', false, true, 'remux-2160p', 0, 10000, 1, false, 'any', 'auto'),
+    ('anime-1080p', 'Anime 1080p', false, true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto')
 on conflict (id) do nothing;
 
 insert into app.media_profile_languages (profile_id, language_id, score)
@@ -77,11 +78,11 @@ values
     ('anime-1080p', 'english', 0)
 on conflict (profile_id, language_id) do nothing;
 
-insert into app.media_profile_subtitle_languages (profile_id, language_id, required, subtitle_type)
+insert into app.media_profile_subtitle_languages (profile_id, language_id, score, required, subtitle_type)
 values
-    ('hd-1080p', 'english', true, 'any'),
-    ('uhd-4k', 'english', true, 'any'),
-    ('anime-1080p', 'english', false, 'any')
+    ('hd-1080p', 'english', 0, false, 'any'),
+    ('uhd-4k', 'english', 0, false, 'any'),
+    ('anime-1080p', 'english', 0, false, 'any')
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)

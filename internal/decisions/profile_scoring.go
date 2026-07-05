@@ -55,7 +55,7 @@ func languageScore(
 	profile *storage.MediaProfile,
 	languageCatalog []storage.Language,
 ) (int32, []ReleaseScoreContributor, string) {
-	if profile == nil || len(profile.TargetLanguageScores) == 0 {
+	if profile == nil || (len(profile.TargetLanguageScores) == 0 && len(profile.SubtitleLanguages) == 0) {
 		return 0, nil, ""
 	}
 	releaseLanguages := normalizedLanguages(parsed.Languages)
@@ -72,6 +72,20 @@ func languageScore(
 		total += target.Score
 		contributors = append(contributors, ReleaseScoreContributor{
 			Label: displayName,
+			Score: target.Score,
+		})
+	}
+	for _, target := range profile.SubtitleLanguages {
+		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
+		if _, ok := releaseLanguages[target.LanguageID]; !ok {
+			if target.Required {
+				return 0, nil, fmt.Sprintf("Required subtitle language %s is missing.", displayName)
+			}
+			continue
+		}
+		total += target.Score
+		contributors = append(contributors, ReleaseScoreContributor{
+			Label: "Subtitle: " + displayName,
 			Score: target.Score,
 		})
 	}

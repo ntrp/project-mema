@@ -67,13 +67,14 @@ func (q *Queries) AddMediaProfileQuality(ctx context.Context, arg AddMediaProfil
 }
 
 const addMediaProfileSubtitleLanguage = `-- name: AddMediaProfileSubtitleLanguage :exec
-insert into app.media_profile_subtitle_languages (profile_id, language_id, required, subtitle_type)
-values ($1, $2, $3, $4)
+insert into app.media_profile_subtitle_languages (profile_id, language_id, score, required, subtitle_type)
+values ($1, $2, $3, $4, $5)
 `
 
 type AddMediaProfileSubtitleLanguageParams struct {
 	ProfileID    string
 	LanguageID   string
+	Score        int32
 	Required     bool
 	SubtitleType string
 }
@@ -82,9 +83,22 @@ func (q *Queries) AddMediaProfileSubtitleLanguage(ctx context.Context, arg AddMe
 	_, err := q.db.Exec(ctx, addMediaProfileSubtitleLanguage,
 		arg.ProfileID,
 		arg.LanguageID,
+		arg.Score,
 		arg.Required,
 		arg.SubtitleType,
 	)
+	return err
+}
+
+const clearDefaultMediaProfiles = `-- name: ClearDefaultMediaProfiles :exec
+update app.media_profiles
+set is_default = false,
+    updated_at = now()
+where is_default
+`
+
+func (q *Queries) ClearDefaultMediaProfiles(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, clearDefaultMediaProfiles)
 	return err
 }
 
@@ -132,12 +146,14 @@ const createMediaProfile = `-- name: CreateMediaProfile :exec
 insert into app.media_profiles (
     id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_non_enabled_languages,
+    remove_non_enabled_subtitle_languages,
     preferred_protocol,
     series_pack_preference
 )
@@ -151,19 +167,23 @@ values (
     $7,
     $8,
     $9,
-    $10
+    $10,
+    $11,
+    $12
 )
 `
 
 type CreateMediaProfileParams struct {
 	ID                                string
 	Name                              string
+	IsDefault                         bool
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             pgtype.Text
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveNonEnabledLanguages         bool
+	RemoveNonEnabledSubtitleLanguages bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 }
@@ -172,12 +192,14 @@ func (q *Queries) CreateMediaProfile(ctx context.Context, arg CreateMediaProfile
 	_, err := q.db.Exec(ctx, createMediaProfile,
 		arg.ID,
 		arg.Name,
+		arg.IsDefault,
 		arg.UpgradesAllowed,
 		arg.UpgradeUntilQualityID,
 		arg.MinimumCustomFormatScore,
 		arg.UpgradeUntilCustomFormatScore,
 		arg.MinimumCustomFormatScoreIncrement,
 		arg.RemoveNonEnabledLanguages,
+		arg.RemoveNonEnabledSubtitleLanguages,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
 	)
@@ -200,12 +222,14 @@ func (q *Queries) DeleteMediaProfile(ctx context.Context, id string) (int64, err
 const getMediaProfile = `-- name: GetMediaProfile :one
 select id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_non_enabled_languages,
+    remove_non_enabled_subtitle_languages,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -220,12 +244,14 @@ func (q *Queries) GetMediaProfile(ctx context.Context, id string) (AppMediaProfi
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.IsDefault,
 		&i.UpgradesAllowed,
 		&i.UpgradeUntilQualityID,
 		&i.MinimumCustomFormatScore,
 		&i.UpgradeUntilCustomFormatScore,
 		&i.MinimumCustomFormatScoreIncrement,
 		&i.RemoveNonEnabledLanguages,
+		&i.RemoveNonEnabledSubtitleLanguages,
 		&i.PreferredProtocol,
 		&i.SeriesPackPreference,
 		&i.CreatedAt,
@@ -328,7 +354,7 @@ func (q *Queries) ListMediaProfileQualities(ctx context.Context, profileID strin
 }
 
 const listMediaProfileSubtitleLanguages = `-- name: ListMediaProfileSubtitleLanguages :many
-select language_id, required, subtitle_type
+select language_id, score, required, subtitle_type
 from app.media_profile_subtitle_languages
 where profile_id = $1
 order by language_id
@@ -336,6 +362,7 @@ order by language_id
 
 type ListMediaProfileSubtitleLanguagesRow struct {
 	LanguageID   string
+	Score        int32
 	Required     bool
 	SubtitleType string
 }
@@ -349,7 +376,12 @@ func (q *Queries) ListMediaProfileSubtitleLanguages(ctx context.Context, profile
 	var items []ListMediaProfileSubtitleLanguagesRow
 	for rows.Next() {
 		var i ListMediaProfileSubtitleLanguagesRow
-		if err := rows.Scan(&i.LanguageID, &i.Required, &i.SubtitleType); err != nil {
+		if err := rows.Scan(
+			&i.LanguageID,
+			&i.Score,
+			&i.Required,
+			&i.SubtitleType,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -363,12 +395,14 @@ func (q *Queries) ListMediaProfileSubtitleLanguages(ctx context.Context, profile
 const listMediaProfiles = `-- name: ListMediaProfiles :many
 select id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_non_enabled_languages,
+    remove_non_enabled_subtitle_languages,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -389,12 +423,14 @@ func (q *Queries) ListMediaProfiles(ctx context.Context) ([]AppMediaProfile, err
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.IsDefault,
 			&i.UpgradesAllowed,
 			&i.UpgradeUntilQualityID,
 			&i.MinimumCustomFormatScore,
 			&i.UpgradeUntilCustomFormatScore,
 			&i.MinimumCustomFormatScoreIncrement,
 			&i.RemoveNonEnabledLanguages,
+			&i.RemoveNonEnabledSubtitleLanguages,
 			&i.PreferredProtocol,
 			&i.SeriesPackPreference,
 			&i.CreatedAt,
@@ -424,26 +460,30 @@ func (q *Queries) MediaProfileExists(ctx context.Context, id string) (bool, erro
 const updateMediaProfile = `-- name: UpdateMediaProfile :execrows
 update app.media_profiles
 set name = $1,
-    upgrades_allowed = $2,
-    upgrade_until_quality_id = $3,
-    minimum_custom_format_score = $4,
-    upgrade_until_custom_format_score = $5,
-    minimum_custom_format_score_increment = $6,
-    remove_non_enabled_languages = $7,
-    preferred_protocol = $8,
-    series_pack_preference = $9,
+    is_default = $2,
+    upgrades_allowed = $3,
+    upgrade_until_quality_id = $4,
+    minimum_custom_format_score = $5,
+    upgrade_until_custom_format_score = $6,
+    minimum_custom_format_score_increment = $7,
+    remove_non_enabled_languages = $8,
+    remove_non_enabled_subtitle_languages = $9,
+    preferred_protocol = $10,
+    series_pack_preference = $11,
     updated_at = now()
-where id = $10
+where id = $12
 `
 
 type UpdateMediaProfileParams struct {
 	Name                              string
+	IsDefault                         bool
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             pgtype.Text
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveNonEnabledLanguages         bool
+	RemoveNonEnabledSubtitleLanguages bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	ID                                string
@@ -452,12 +492,14 @@ type UpdateMediaProfileParams struct {
 func (q *Queries) UpdateMediaProfile(ctx context.Context, arg UpdateMediaProfileParams) (int64, error) {
 	result, err := q.db.Exec(ctx, updateMediaProfile,
 		arg.Name,
+		arg.IsDefault,
 		arg.UpgradesAllowed,
 		arg.UpgradeUntilQualityID,
 		arg.MinimumCustomFormatScore,
 		arg.UpgradeUntilCustomFormatScore,
 		arg.MinimumCustomFormatScoreIncrement,
 		arg.RemoveNonEnabledLanguages,
+		arg.RemoveNonEnabledSubtitleLanguages,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
 		arg.ID,

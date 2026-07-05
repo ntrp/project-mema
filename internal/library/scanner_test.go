@@ -37,6 +37,9 @@ func TestSCNMedia010DiscoverClassifiesLibraryFiles(t *testing.T) {
 	if !movie.SafeMatch {
 		t.Fatalf("movie should be a safe match: %#v", movie)
 	}
+	if movie.SizeBytes != int64(len("fixture")) {
+		t.Fatalf("movie size = %d, want fixture size", movie.SizeBytes)
+	}
 
 	episode := byPath["Shows/Scenario Series/Season 1/Scenario.Series.S01E02.mkv"]
 	if episode.DetectedKind != MediaKindSeries || episode.DetectedTitle != "Scenario Series" {
@@ -45,10 +48,33 @@ func TestSCNMedia010DiscoverClassifiesLibraryFiles(t *testing.T) {
 	if !episode.SafeMatch {
 		t.Fatalf("episode should be a safe match: %#v", episode)
 	}
+	if episode.SeasonNumber == nil || *episode.SeasonNumber != 1 || episode.EpisodeNumber == nil || *episode.EpisodeNumber != 2 {
+		t.Fatalf("episode numbers = S%vE%v, want S1E2", episode.SeasonNumber, episode.EpisodeNumber)
+	}
 
 	unsafe := byPath["Unsafe/Other.Movie.2026.1080p.WEBDL.mkv"]
 	if unsafe.SafeMatch {
 		t.Fatalf("release-token file should not be a safe match: %#v", unsafe)
+	}
+}
+
+func TestDiscoverMoviesTreatsEpisodeNamedFilesAsMovies(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, root, "Movies/Scenario.Movie.S01E02.2026.mkv")
+
+	files, err := DiscoverMovies(root)
+	if err != nil {
+		t.Fatalf("discover movies failed: %v", err)
+	}
+	if len(files) != 1 {
+		t.Fatalf("discovered %d files, want 1: %#v", len(files), files)
+	}
+	file := files[0]
+	if file.DetectedKind != MediaKindMovie {
+		t.Fatalf("detected kind = %s, want movie: %#v", file.DetectedKind, file)
+	}
+	if file.SeasonNumber != nil || file.EpisodeNumber != nil {
+		t.Fatalf("movie scan should not carry episode numbers: %#v", file)
 	}
 }
 

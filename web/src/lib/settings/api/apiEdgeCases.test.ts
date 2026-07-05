@@ -154,7 +154,7 @@ describe('UI API edge cases (SCN-SETTINGS-009)', () => {
 			cacheEntries: []
 		});
 		await expect(
-			saveLibraryFolder({ path: ' /media ', mediaKind: 'movie' } as never)
+			saveLibraryFolder({ path: ' /media ', kind: 'movie' } as never)
 		).resolves.toEqual({
 			id: 'created'
 		});
@@ -232,17 +232,19 @@ function providerForm() {
 function mediaProfileForm() {
 	return {
 		name: 'Profile',
+		isDefault: false,
 		qualityIds: [],
 		upgradesAllowed: true,
 		minimumCustomFormatScore: 0,
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
 		removeNonEnabledLanguages: false,
+		removeNonEnabledSubtitleLanguages: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
 		targetLanguages: ['english'],
 		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
-		subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'any' }],
+		subtitleLanguages: [{ languageId: 'english', score: 0, required: true, subtitleType: 'any' }],
 		customFormatScores: []
 	} as const;
 }

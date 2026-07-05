@@ -14,6 +14,7 @@ import (
 type LibraryFolder struct {
 	ID        uuid.UUID
 	Path      string
+	Kind      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -22,6 +23,7 @@ type LibraryScan struct {
 	ID               uuid.UUID
 	FolderID         uuid.UUID
 	FolderPath       string
+	FolderKind       string
 	Status           string
 	TotalFiles       int32
 	AutoMatchedCount int32
@@ -32,29 +34,53 @@ type LibraryScan struct {
 }
 
 type LibraryScanItem struct {
-	ID                uuid.UUID
-	ScanID            uuid.UUID
-	Path              string
-	FileName          string
-	DetectedTitle     string
-	DetectedYear      *int32
-	DetectedMediaKind string
-	Status            string
-	MatchedTitle      *string
-	MatchedYear       *int32
-	MatchedMediaKind  *string
-	MediaItemID       *uuid.UUID
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                         uuid.UUID
+	ScanID                     uuid.UUID
+	Path                       string
+	FileName                   string
+	SizeBytes                  int64
+	DetectedTitle              string
+	DetectedYear               *int32
+	DetectedMediaKind          string
+	SeasonNumber               *int32
+	EpisodeNumber              *int32
+	Status                     string
+	Imported                   bool
+	MatchedTitle               *string
+	MatchedYear                *int32
+	MatchedMediaKind           *string
+	MatchedExternalProvider    *string
+	MatchedExternalID          *string
+	MatchSource                *string
+	SelectedMetadataProviderID *uuid.UUID
+	DuplicateGroupID           *string
+	DuplicateRemovalAllowed    bool
+	MediaItemID                *uuid.UUID
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
 }
 
 type LibraryScanItemInput struct {
-	Path              string
-	FileName          string
-	DetectedTitle     string
-	DetectedYear      *int32
-	DetectedMediaKind string
-	SafeMatch         bool
+	Path                       string
+	FileName                   string
+	SizeBytes                  int64
+	DetectedTitle              string
+	DetectedYear               *int32
+	DetectedMediaKind          string
+	SeasonNumber               *int32
+	EpisodeNumber              *int32
+	SafeMatch                  bool
+	Imported                   bool
+	MatchedTitle               *string
+	MatchedYear                *int32
+	MatchedMediaKind           *string
+	MatchedExternalProvider    *string
+	MatchedExternalID          *string
+	MatchSource                *string
+	SelectedMetadataProviderID *uuid.UUID
+	DuplicateGroupID           *string
+	DuplicateRemovalAllowed    bool
+	MediaItemID                *uuid.UUID
 }
 
 type LibraryMatchInput struct {
@@ -65,10 +91,14 @@ type LibraryMatchInput struct {
 	QualityProfileID    string
 	MonitorMode         string
 	MinimumAvailability string
+	SeriesType          *string
+	MetadataProviderID  *uuid.UUID
+	MediaItemID         *uuid.UUID
 	ExternalProvider    *string
 	ExternalID          *string
 	Overview            *string
 	PosterPath          *string
+	MediaMetadataSnapshot
 }
 
 func (s *SettingsStore) ListLibraryFolders(ctx context.Context) ([]LibraryFolder, error) {
@@ -84,10 +114,11 @@ func (s *SettingsStore) ListLibraryFolders(ctx context.Context) ([]LibraryFolder
 	return folders, nil
 }
 
-func (s *SettingsStore) CreateLibraryFolder(ctx context.Context, path string) (LibraryFolder, error) {
+func (s *SettingsStore) CreateLibraryFolder(ctx context.Context, path string, kind string) (LibraryFolder, error) {
 	row, err := storagegen.New(s.pool).UpsertLibraryFolder(ctx, storagegen.UpsertLibraryFolderParams{
 		ID:   uuid.New(),
 		Path: path,
+		Kind: kind,
 	})
 	if err != nil {
 		return LibraryFolder{}, err
@@ -133,14 +164,28 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 	for _, input := range inputs {
 		manualCount++
 		if err := q.AddLibraryScanItem(ctx, storagegen.AddLibraryScanItemParams{
-			ID:                uuid.New(),
-			ScanID:            scanID,
-			Path:              input.Path,
-			FileName:          input.FileName,
-			DetectedTitle:     input.DetectedTitle,
-			DetectedYear:      int4Value(input.DetectedYear),
-			DetectedMediaKind: input.DetectedMediaKind,
-			Status:            "pending",
+			ID:                         uuid.New(),
+			ScanID:                     scanID,
+			Path:                       input.Path,
+			FileName:                   input.FileName,
+			SizeBytes:                  input.SizeBytes,
+			DetectedTitle:              input.DetectedTitle,
+			DetectedYear:               int4Value(input.DetectedYear),
+			DetectedMediaKind:          input.DetectedMediaKind,
+			SeasonNumber:               int4Value(input.SeasonNumber),
+			EpisodeNumber:              int4Value(input.EpisodeNumber),
+			Status:                     "pending",
+			Imported:                   input.Imported,
+			MatchedTitle:               textValue(input.MatchedTitle),
+			MatchedYear:                int4Value(input.MatchedYear),
+			MatchedMediaKind:           textValue(input.MatchedMediaKind),
+			MatchedExternalProvider:    textValue(input.MatchedExternalProvider),
+			MatchedExternalID:          textValue(input.MatchedExternalID),
+			MatchSource:                textValue(input.MatchSource),
+			SelectedMetadataProviderID: input.SelectedMetadataProviderID,
+			DuplicateGroupID:           textValue(input.DuplicateGroupID),
+			DuplicateRemovalAllowed:    input.DuplicateRemovalAllowed,
+			MediaItemID:                input.MediaItemID,
 		}); err != nil {
 			return LibraryScan{}, err
 		}
@@ -176,69 +221,16 @@ func (s *SettingsStore) GetLibraryScan(ctx context.Context, id uuid.UUID) (Libra
 	return scan, nil
 }
 
-func (s *SettingsStore) MatchLibraryScanItem(ctx context.Context, scanID uuid.UUID, itemID uuid.UUID, input LibraryMatchInput) (LibraryScanItem, MediaItem, error) {
-	tx, err := s.pool.Begin(ctx)
+func (s *SettingsStore) ActiveImportedPathsForLibraryFolder(ctx context.Context, folderID uuid.UUID) (map[string]struct{}, error) {
+	paths, err := storagegen.New(s.pool).ListActiveImportedPathsForLibraryFolder(ctx, folderID)
 	if err != nil {
-		return LibraryScanItem{}, MediaItem{}, err
+		return nil, err
 	}
-	defer func() {
-		_ = tx.Rollback(ctx)
-	}()
-
-	mediaType, ok := mediaKindToMediaType(input.MediaKind)
-	if !ok {
-		return LibraryScanItem{}, MediaItem{}, ErrNotFound
+	result := make(map[string]struct{}, len(paths))
+	for _, path := range paths {
+		result[path] = struct{}{}
 	}
-	folderID, err := storagegen.New(tx).GetLibraryScanFolderID(ctx, scanID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return LibraryScanItem{}, MediaItem{}, ErrNotFound
-		}
-		return LibraryScanItem{}, MediaItem{}, err
-	}
-	item, err := createMediaItemIfMissing(ctx, tx, MediaItemInput{
-		Type:                mediaType,
-		Title:               input.Title,
-		Year:                input.Year,
-		Monitored:           input.Monitored,
-		ExternalProvider:    input.ExternalProvider,
-		ExternalID:          input.ExternalID,
-		Overview:            input.Overview,
-		PosterPath:          input.PosterPath,
-		MonitorMode:         input.MonitorMode,
-		MinimumAvailability: input.MinimumAvailability,
-		QualityProfileID:    &input.QualityProfileID,
-		LibraryFolderID:     &folderID,
-	})
-	if err != nil {
-		return LibraryScanItem{}, MediaItem{}, err
-	}
-	row, err := storagegen.New(tx).MatchLibraryScanItem(ctx, storagegen.MatchLibraryScanItemParams{
-		MatchedTitle:     textValue(&input.Title),
-		MatchedYear:      int4Value(input.Year),
-		MatchedMediaKind: textValue(&input.MediaKind),
-		MediaItemID:      &item.ID,
-		ScanID:           scanID,
-		ID:               itemID,
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return LibraryScanItem{}, MediaItem{}, ErrNotFound
-	}
-	if err != nil {
-		return LibraryScanItem{}, MediaItem{}, err
-	}
-	updated := libraryScanItemFromMatchRow(row)
-	if err := storagegen.New(tx).RefreshLibraryScanManualCount(ctx, scanID); err != nil {
-		return LibraryScanItem{}, MediaItem{}, err
-	}
-	item, err = getMediaItem(ctx, tx, item.ID)
-	if err != nil {
-		return LibraryScanItem{}, MediaItem{}, err
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return LibraryScanItem{}, MediaItem{}, err
-	}
-	return updated, item, nil
+	return result, nil
 }
 
 func (s *SettingsStore) listLibraryScanItems(ctx context.Context, scanID uuid.UUID) ([]LibraryScanItem, error) {

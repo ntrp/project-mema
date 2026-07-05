@@ -115,7 +115,10 @@ function playbackRow(): MediaFileRow {
 		],
 		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
 		expectedLanguages: [],
+		expectedRequiredLanguages: [],
+		expectedSubtitleLanguages: [],
 		removeNonEnabledLanguages: false,
+		removeNonEnabledSubtitleLanguages: false,
 		score: 0
 	};
 }

@@ -41,4 +41,17 @@ describe('language catalog selectors (SCN-SETTINGS-010)', () => {
 			displayLabel: 'custom-language'
 		});
 	});
+
+	it('shows legacy selected profile ids with catalog codes', () => {
+		const options = profileLanguageOptions(catalog, ['english']);
+
+		expect(options.filter((option) => option.displayLabel === 'English (EN)')).toHaveLength(1);
+		expect(options.find((option) => option.id === 'english')).toEqual({
+			id: 'english',
+			code: 'EN',
+			label: 'English',
+			displayLabel: 'English (EN)'
+		});
+		expect(options.some((option) => option.id === 'EN')).toBe(false);
+	});
 });

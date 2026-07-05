@@ -5,6 +5,7 @@
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import type {
@@ -57,13 +58,17 @@
 			</p>
 		{/if}
 		<div
-			class="grid min-w-0 items-start gap-4.5 min-[981px]:grid-cols-[minmax(340px,0.82fr)_minmax(440px,1fr)]"
+			class="grid min-w-0 items-start gap-4.5 min-[981px]:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
 		>
 			<div class="grid min-w-0 gap-3.5">
 				<div class="grid gap-1.5">
 					<Label>Name</Label>
 					<Input bind:value={form.name} type="text" maxlength={200} required />
 				</div>
+				<Label class="flex items-center gap-2 text-sm">
+					<Checkbox bind:checked={form.isDefault} />
+					<span>Default profile</span>
+				</Label>
 
 				<MediaProfileRules {form} {qualities} {languages} onChange={(value) => (form = value)} />
 				<MediaProfileCustomFormatScores

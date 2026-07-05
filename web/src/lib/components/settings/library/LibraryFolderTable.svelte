@@ -30,7 +30,7 @@
 		<Table.Body>
 			{#each folders as folder (folder.id)}
 				<Table.Row>
-					<Table.Cell class="max-w-[520px] truncate">{folder.path}</Table.Cell>
+					<Table.Cell class="max-w-130 truncate">{folder.path}</Table.Cell>
 					<Table.Cell>{formatDateTime(folder.createdAt)}</Table.Cell>
 					<Table.Cell>
 						<div class="flex justify-end gap-2">

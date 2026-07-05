@@ -12,20 +12,23 @@ func TestLibraryFoldersUseGeneratedQueries(t *testing.T) {
 	ctx, store := testDBStore(t)
 	path := filepath.Join(t.TempDir(), "library")
 
-	created, err := store.CreateLibraryFolder(ctx, path)
+	created, err := store.CreateLibraryFolder(ctx, path, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if created.Path != path {
+	if created.Path != path || created.Kind != "movie" {
 		t.Fatalf("created folder = %#v", created)
 	}
 
-	upserted, err := store.CreateLibraryFolder(ctx, path)
+	upserted, err := store.CreateLibraryFolder(ctx, path, "series")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if upserted.ID != created.ID {
 		t.Fatalf("upserted folder id = %s, want %s", upserted.ID, created.ID)
+	}
+	if upserted.Kind != "series" {
+		t.Fatalf("upserted folder kind = %s, want series", upserted.Kind)
 	}
 
 	fetched, err := store.GetLibraryFolder(ctx, created.ID)

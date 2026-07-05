@@ -109,7 +109,7 @@ func TestRescanMediaItemFilesCreatesMovedCandidate(t *testing.T) {
 
 func rescanMediaItem(t *testing.T, ctx context.Context, store *SettingsStore) MediaItem {
 	t.Helper()
-	folder, err := store.CreateLibraryFolder(ctx, t.TempDir())
+	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")
 	if err != nil {
 		t.Fatal(err)
 	}

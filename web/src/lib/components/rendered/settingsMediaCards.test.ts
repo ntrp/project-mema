@@ -42,6 +42,7 @@ describe('rendered settings cards (SCN-SETTINGS-009)', () => {
 		});
 
 		expect(body).toContain('Scenario Profile');
+		expect(body).toContain('Default');
 		expect(body).toContain('HD-1080p');
 		expect(body).toContain('UHD-2160p');
 		expect(body).toContain('eng, deu');
@@ -137,6 +138,7 @@ function mediaProfile(): MediaProfile {
 	return {
 		id: 'profile-1',
 		name: 'Scenario Profile',
+		isDefault: true,
 		qualityIds: ['q-1080p', 'q-2160p'],
 		upgradesAllowed: true,
 		upgradeUntilQualityId: 'q-2160p',

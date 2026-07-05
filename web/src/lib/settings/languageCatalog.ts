@@ -49,15 +49,25 @@ export function profileLanguageOptions(
 			continue;
 		}
 		const language = findLanguage(id, languages);
+		if (language) {
+			removeOption(options, language.code);
+		}
 		options.push({
 			id,
 			code: language?.code ?? id,
 			label: language?.displayName ?? id,
-			displayLabel: language ? `${language.displayName} (${id})` : id
+			displayLabel: language ? `${language.displayName} (${language.code})` : id
 		});
 		known.add(id.toLowerCase());
 	}
 	return options;
+}
+
+function removeOption(options: LanguageOption[], id: string) {
+	const index = options.findIndex((option) => option.id.toLowerCase() === id.toLowerCase());
+	if (index >= 0) {
+		options.splice(index, 1);
+	}
 }
 
 function findLanguage(value: string, languages: Language[]) {

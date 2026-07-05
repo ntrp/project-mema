@@ -30,21 +30,28 @@ function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): Medi
 		type: track.type,
 		language: displayLanguage(track.language),
 		description: trackDescription(row, track),
-		unwanted: unwantedAudioTrack(row, track)
+		unwanted: unwantedTrack(row, track)
 	};
 }
 
-function unwantedAudioTrack(row: MediaFileRow, track: MediaFileTrack) {
-	if (
-		!row.removeNonEnabledLanguages ||
-		track.type !== 'audio' ||
-		row.expectedLanguages.length === 0
-	) {
+function unwantedTrack(row: MediaFileRow, track: MediaFileTrack) {
+	const expectedLanguages = wantedLanguagesForTrack(row, track);
+	if (expectedLanguages.length === 0) {
 		return false;
 	}
-	const enabled = new Set(row.expectedLanguages.map(languageMatchKey).filter(Boolean));
+	const enabled = new Set(expectedLanguages.map(languageMatchKey).filter(Boolean));
 	const language = languageMatchKey(track.language);
 	return language !== '' && !enabled.has(language);
+}
+
+function wantedLanguagesForTrack(row: MediaFileRow, track: MediaFileTrack) {
+	if (track.type === 'audio' && row.removeNonEnabledLanguages) {
+		return row.expectedLanguages;
+	}
+	if (track.type === 'subtitle' && row.removeNonEnabledSubtitleLanguages) {
+		return row.expectedSubtitleLanguages;
+	}
+	return [];
 }
 
 function chapterRow(chapter: MediaFileChapter): MediaFileDetailRow {
@@ -64,14 +71,14 @@ function missingLanguageRows(
 	row: MediaFileRow,
 	existingRows: MediaFileDetailRow[]
 ): MediaFileDetailRow[] {
-	if (row.expectedLanguages.length < 2) return [];
+	if (row.expectedRequiredLanguages.length === 0) return [];
 	const audioLanguages = new Set(
 		existingRows
 			.filter((track) => track.type === 'audio')
 			.map((track) => languageMatchKey(track.language))
 			.filter(Boolean)
 	);
-	return row.expectedLanguages
+	return row.expectedRequiredLanguages
 		.filter((language) => !audioLanguages.has(languageMatchKey(language)))
 		.map((language) => ({
 			key: `missing-audio-${languageMatchKey(language)}`,

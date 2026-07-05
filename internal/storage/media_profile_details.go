@@ -74,6 +74,7 @@ func loadMediaProfileSubtitleLanguages(
 	for _, row := range rows {
 		languages = append(languages, MediaProfileSubtitleLanguage{
 			LanguageID:   row.LanguageID,
+			Score:        row.Score,
 			Required:     row.Required,
 			SubtitleType: row.SubtitleType,
 		})
@@ -159,6 +160,7 @@ func replaceMediaProfileSubtitleLanguages(
 		if err := queries.AddMediaProfileSubtitleLanguage(ctx, storagegen.AddMediaProfileSubtitleLanguageParams{
 			ProfileID:    profileID,
 			LanguageID:   language.LanguageID,
+			Score:        language.Score,
 			Required:     language.Required,
 			SubtitleType: language.SubtitleType,
 		}); err != nil {

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"media-manager/internal/config"
@@ -123,6 +124,7 @@ func openDatabase(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error)
 
 func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.Client, error) {
 	apiRouter := chi.NewRouter()
+	apiRouter.Use(middleware.Recoverer)
 	settingsStore := storage.NewSettingsStore(pool)
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	downloadClientService := downloadclients.NewService(httpClient)

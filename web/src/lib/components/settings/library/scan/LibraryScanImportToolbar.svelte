@@ -1,28 +1,36 @@
 <script lang="ts">
-	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
-	import {
-		scanSortModeOptions,
-		type LibraryScanSortMode
-	} from '$lib/components/settings/library/scan/libraryScanImport';
+	import { Checkbox } from '$lib/components/ui/checkbox';
 
 	interface Props {
 		totalFiles: number;
-		sortMode: LibraryScanSortMode;
+		matchedCount: number;
+		noMatchCount: number;
+		importedCount: number;
+		duplicateCount: number;
+		showImported: boolean;
 	}
 
-	let { totalFiles, sortMode = $bindable() }: Props = $props();
+	let {
+		totalFiles,
+		matchedCount,
+		noMatchCount,
+		importedCount,
+		duplicateCount,
+		showImported = $bindable()
+	}: Props = $props();
 </script>
 
 <div
-	class="flex items-center justify-between gap-3 text-[13px] font-extrabold text-muted-foreground"
+	class="flex flex-wrap items-center justify-between gap-3 text-[13px] font-extrabold text-muted-foreground"
 >
-	<span>{totalFiles} files</span>
-	<label class="flex items-center gap-2">
-		<span>Sort</span>
-		<SettingsSelect
-			value={sortMode}
-			options={scanSortModeOptions}
-			onValueChange={(value) => (sortMode = value as LibraryScanSortMode)}
-		/>
-	</label>
+	<span>
+		{totalFiles} files · {matchedCount} matched · {noMatchCount} no match · {importedCount} imported ·
+		{duplicateCount} duplicates
+	</span>
+	<div class="flex items-center gap-4">
+		<label class="flex items-center gap-2">
+			<Checkbox bind:checked={showImported} />
+			<span>Show Imported</span>
+		</label>
+	</div>
 </div>

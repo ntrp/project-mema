@@ -23,10 +23,15 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 	if len(created.SubtitleLanguages) != 1 || created.SubtitleLanguages[0].SubtitleType != MediaProfileSubtitleLanguageSubtitleTypeAny {
 		t.Fatalf("created media profile subtitles = %#v", created.SubtitleLanguages)
 	}
+	if !created.RemoveNonEnabledSubtitleLanguages {
+		t.Fatalf("created media profile did not preserve subtitle removal setting: %#v", created)
+	}
 
 	var updated MediaProfile
-	client.doJSON(t, http.MethodPut, "/settings/profiles/"+created.Id, mediaProfileRequest("Updated Scenario Profile", qualityIDs), http.StatusOK, &updated)
-	if updated.Name != "Updated Scenario Profile" || updated.PreferredProtocol != MediaProfilePreferredProtocolUsenet {
+	updateRequest := mediaProfileRequest("Updated Scenario Profile", qualityIDs)
+	updateRequest.IsDefault = true
+	client.doJSON(t, http.MethodPut, "/settings/profiles/"+created.Id, updateRequest, http.StatusOK, &updated)
+	if updated.Name != "Updated Scenario Profile" || updated.PreferredProtocol != MediaProfilePreferredProtocolUsenet || !updated.IsDefault {
 		t.Fatalf("updated media profile = %#v", updated)
 	}
 
@@ -34,6 +39,9 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 	client.doJSON(t, http.MethodGet, "/settings/profiles", nil, http.StatusOK, &listed)
 	if !mediaProfileListHas(listed.Profiles, updated.Id, "Updated Scenario Profile") {
 		t.Fatalf("updated media profile not listed: %#v", listed.Profiles)
+	}
+	if mediaProfileDefaultCount(listed.Profiles) != 1 {
+		t.Fatalf("expected exactly one default media profile: %#v", listed.Profiles)
 	}
 
 	var qualitySizes QualitySizeSettingsResponse
@@ -59,6 +67,7 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 	return MediaProfileRequest{
 		Name:                              name,
+		IsDefault:                         false,
 		QualityIds:                        append([]string(nil), qualityIDs...),
 		UpgradesAllowed:                   true,
 		UpgradeUntilQualityId:             stringPtr(qualityIDs[len(qualityIDs)-1]),
@@ -66,6 +75,7 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		UpgradeUntilCustomFormatScore:     50,
 		MinimumCustomFormatScoreIncrement: 1,
 		RemoveNonEnabledLanguages:         true,
+		RemoveNonEnabledSubtitleLanguages: true,
 		PreferredProtocol:                 MediaProfileRequestPreferredProtocolUsenet,
 		SeriesPackPreference:              MediaProfileRequestSeriesPackPreferencePreferPacks,
 		TargetLanguages:                   []string{"en"},
@@ -76,6 +86,7 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		}},
 		SubtitleLanguages: []MediaProfileSubtitleLanguage{{
 			LanguageId:   "en",
+			Score:        25,
 			Required:     true,
 			SubtitleType: MediaProfileSubtitleLanguageSubtitleTypeAny,
 		}},
@@ -90,6 +101,16 @@ func mediaProfileListHas(profiles []MediaProfile, id string, name string) bool {
 		}
 	}
 	return false
+}
+
+func mediaProfileDefaultCount(profiles []MediaProfile) int {
+	count := 0
+	for _, profile := range profiles {
+		if profile.IsDefault {
+			count++
+		}
+	}
+	return count
 }
 
 func qualitySizeListHas(settings []QualitySizeSetting, qualityID string, minimum float64) bool {

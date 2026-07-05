@@ -5,6 +5,8 @@ import (
 
 	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
+
+	"media-manager/internal/storage"
 )
 
 func (s *Server) ListLibraryFolderOptions(w http.ResponseWriter, r *http.Request, params ListLibraryFolderOptionsParams) {
@@ -61,20 +63,16 @@ func (s *Server) CreateLibraryFolder(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	path, ok := libraryFolderInput(w, s.cfg.MediaDataDir, body)
+	path, kind, ok := libraryFolderInput(w, s.cfg.MediaDataDir, body)
 	if !ok {
 		return
 	}
-	inputs, ok := libraryScanInputsForPath(w, path)
-	if !ok {
-		return
-	}
-	folder, err := s.settings.CreateLibraryFolder(r.Context(), path)
+	folder, err := s.settings.CreateLibraryFolder(r.Context(), path, kind)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "library_folder_create_failed", "Could not create library folder")
 		return
 	}
-	scan, ok := s.storeLibraryScan(w, r.Context(), folder, inputs)
+	scan, ok := s.createLibraryScan(w, r.Context(), folder)
 	if !ok {
 		return
 	}
@@ -168,8 +166,17 @@ func (s *Server) MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id
 	if !decodeJSON(w, r, &body) {
 		return
 	}
+	scan, err := s.settings.GetLibraryScan(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find library scan")
+		return
+	}
 	input, ok := libraryMatchInput(w, body)
 	if !ok {
+		return
+	}
+	if !libraryFolderKindAllowsMediaKind(scan.FolderKind, input.MediaKind) {
+		writeError(w, http.StatusBadRequest, "invalid_media_kind", "Matched media type does not belong in this library folder")
 		return
 	}
 	item, mediaItem, err := s.settings.MatchLibraryScanItem(r.Context(), uuid.UUID(id), uuid.UUID(itemId), input)
@@ -180,5 +187,72 @@ func (s *Server) MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id
 	writeJSON(w, http.StatusOK, LibraryScanItemMatchResponse{
 		Item:      libraryScanItemResponse(item),
 		MediaItem: mediaItemResponse(mediaItem),
+	})
+}
+
+func (s *Server) ImportLibraryScanItems(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	var body LibraryScanImportRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	if len(body.Items) == 0 {
+		writeError(w, http.StatusBadRequest, "invalid_import_rows", "At least one import row is required")
+		return
+	}
+	scanID := uuid.UUID(id)
+	scan, err := s.settings.GetLibraryScan(r.Context(), scanID)
+	if err != nil {
+		writeSettingsError(w, err, "Could not find library scan")
+		return
+	}
+	mediaItems := make([]MediaItem, 0, len(body.Items))
+	storageItems := make([]storage.MediaItem, 0, len(body.Items))
+	for _, row := range body.Items {
+		input, ok := libraryMatchInput(w, row.Match)
+		if !ok {
+			return
+		}
+		if !libraryFolderKindAllowsMediaKind(scan.FolderKind, input.MediaKind) {
+			writeError(w, http.StatusBadRequest, "invalid_media_kind", "Matched media type does not belong in this library folder")
+			return
+		}
+		input, err = s.enrichLibraryImportMatch(r.Context(), input)
+		if err != nil {
+			writeMetadataDetailsError(w, err)
+			return
+		}
+		_, mediaItem, err := s.settings.ImportLibraryScanItem(r.Context(), scanID, uuid.UUID(row.ItemId), input)
+		if err != nil {
+			writeSettingsError(w, err, "Could not import library scan item")
+			return
+		}
+		storageItems = append(storageItems, mediaItem)
+		mediaItems = append(mediaItems, mediaItemResponse(mediaItem))
+	}
+	removed := int32(0)
+	if body.RemoveDuplicatePaths != nil && len(*body.RemoveDuplicatePaths) > 0 && len(storageItems) > 0 {
+		mediaItemID := storageItems[0].ID
+		for _, path := range *body.RemoveDuplicatePaths {
+			if err := s.settings.DeleteLibraryFolderFileForMedia(r.Context(), mediaItemID, scan.FolderID, path); err != nil {
+				writeSettingsError(w, err, "Could not remove duplicate library file")
+				return
+			}
+			removed++
+		}
+	}
+	refreshed, err := s.settings.GetLibraryScan(r.Context(), scanID)
+	if err != nil {
+		writeSettingsError(w, err, "Could not reload library scan")
+		return
+	}
+	writeJSON(w, http.StatusOK, LibraryScanImportResponse{
+		Scan:                  libraryScanResponse(refreshed),
+		MediaItems:            mediaItems,
+		ImportedCount:         int32(len(body.Items)),
+		RemovedDuplicateCount: removed,
 	})
 }

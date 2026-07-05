@@ -36,6 +36,7 @@ import type {
 	LibraryFolderOption,
 	LibraryFolderOptionListResponse,
 	LibraryMediaKind,
+	LibraryScanImportRequest,
 	LibraryScanItemMatchRequest,
 	ManualImportRequest,
 	MediaAdvancedSearchRequest,
@@ -1661,6 +1662,21 @@ export async function matchLibraryScanItem(
 	}
 	if (!data) {
 		throw new Error('Library match was not returned');
+	}
+	return data;
+}
+
+export async function importLibraryScanItems(scanId: string, request: LibraryScanImportRequest) {
+	const { data, error } = await client.POST('/settings/library/scans/{id}/import', {
+		params: { path: { id: scanId } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Library import result was not returned');
 	}
 	return data;
 }

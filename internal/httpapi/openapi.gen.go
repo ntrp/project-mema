@@ -313,6 +313,24 @@ func (e IndexerProtocol) Valid() bool {
 	}
 }
 
+// Defines values for LibraryFolderKind.
+const (
+	LibraryFolderKindMovie  LibraryFolderKind = "movie"
+	LibraryFolderKindSeries LibraryFolderKind = "series"
+)
+
+// Valid indicates whether the value is a known member of the LibraryFolderKind enum.
+func (e LibraryFolderKind) Valid() bool {
+	switch e {
+	case LibraryFolderKindMovie:
+		return true
+	case LibraryFolderKindSeries:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for LibraryMediaKind.
 const (
 	LibraryMediaKindAnimeMovie  LibraryMediaKind = "anime_movie"
@@ -352,6 +370,27 @@ func (e LibraryScanStatus) Valid() bool {
 	case LibraryScanStatusCompleted:
 		return true
 	case LibraryScanStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for LibraryScanItemMatchSource.
+const (
+	LibraryScanItemMatchSourceLibrary  LibraryScanItemMatchSource = "library"
+	LibraryScanItemMatchSourceManual   LibraryScanItemMatchSource = "manual"
+	LibraryScanItemMatchSourceProvider LibraryScanItemMatchSource = "provider"
+)
+
+// Valid indicates whether the value is a known member of the LibraryScanItemMatchSource enum.
+func (e LibraryScanItemMatchSource) Valid() bool {
+	switch e {
+	case LibraryScanItemMatchSourceLibrary:
+		return true
+	case LibraryScanItemMatchSourceManual:
+		return true
+	case LibraryScanItemMatchSourceProvider:
 		return true
 	default:
 		return false
@@ -825,16 +864,16 @@ func (e MediaRequestStatus) Valid() bool {
 
 // Defines values for MediaSearchSourceType.
 const (
-	Library  MediaSearchSourceType = "library"
-	Provider MediaSearchSourceType = "provider"
+	MediaSearchSourceTypeLibrary  MediaSearchSourceType = "library"
+	MediaSearchSourceTypeProvider MediaSearchSourceType = "provider"
 )
 
 // Valid indicates whether the value is a known member of the MediaSearchSourceType enum.
 func (e MediaSearchSourceType) Valid() bool {
 	switch e {
-	case Library:
+	case MediaSearchSourceTypeLibrary:
 		return true
-	case Provider:
+	case MediaSearchSourceTypeProvider:
 		return true
 	default:
 		return false
@@ -1716,6 +1755,7 @@ type LanguageUpdateRequest struct {
 type LibraryFolder struct {
 	CreatedAt time.Time          `json:"createdAt"`
 	Id        openapi_types.UUID `json:"id"`
+	Kind      LibraryFolderKind  `json:"kind"`
 	Path      string             `json:"path"`
 	UpdatedAt time.Time          `json:"updatedAt"`
 }
@@ -1725,6 +1765,9 @@ type LibraryFolderCreateResponse struct {
 	Folder LibraryFolder `json:"folder"`
 	Scan   LibraryScan   `json:"scan"`
 }
+
+// LibraryFolderKind defines model for LibraryFolderKind.
+type LibraryFolderKind string
 
 // LibraryFolderListResponse defines model for LibraryFolderListResponse.
 type LibraryFolderListResponse struct {
@@ -1752,7 +1795,8 @@ type LibraryFolderOptionListResponse struct {
 
 // LibraryFolderRequest defines model for LibraryFolderRequest.
 type LibraryFolderRequest struct {
-	Path string `json:"path"`
+	Kind LibraryFolderKind `json:"kind"`
+	Path string            `json:"path"`
 }
 
 // LibraryMediaKind defines model for LibraryMediaKind.
@@ -1764,6 +1808,7 @@ type LibraryScan struct {
 	CompletedAt      *time.Time         `json:"completedAt,omitempty"`
 	CreatedAt        time.Time          `json:"createdAt"`
 	FolderId         openapi_types.UUID `json:"folderId"`
+	FolderKind       LibraryFolderKind  `json:"folderKind"`
 	FolderPath       string             `json:"folderPath"`
 	Id               openapi_types.UUID `json:"id"`
 	Items            []LibraryScanItem  `json:"items"`
@@ -1775,35 +1820,68 @@ type LibraryScan struct {
 // LibraryScanStatus defines model for LibraryScan.Status.
 type LibraryScanStatus string
 
+// LibraryScanImportRequest defines model for LibraryScanImportRequest.
+type LibraryScanImportRequest struct {
+	Items                []LibraryScanImportRowRequest `json:"items"`
+	RemoveDuplicatePaths *[]string                     `json:"removeDuplicatePaths,omitempty"`
+}
+
+// LibraryScanImportResponse defines model for LibraryScanImportResponse.
+type LibraryScanImportResponse struct {
+	ImportedCount         int32       `json:"importedCount"`
+	MediaItems            []MediaItem `json:"mediaItems"`
+	RemovedDuplicateCount int32       `json:"removedDuplicateCount"`
+	Scan                  LibraryScan `json:"scan"`
+}
+
+// LibraryScanImportRowRequest defines model for LibraryScanImportRowRequest.
+type LibraryScanImportRowRequest struct {
+	ItemId openapi_types.UUID          `json:"itemId"`
+	Match  LibraryScanItemMatchRequest `json:"match"`
+}
+
 // LibraryScanItem defines model for LibraryScanItem.
 type LibraryScanItem struct {
-	CreatedAt         time.Time             `json:"createdAt"`
-	DetectedMediaKind LibraryMediaKind      `json:"detectedMediaKind"`
-	DetectedTitle     string                `json:"detectedTitle"`
-	DetectedYear      *int32                `json:"detectedYear,omitempty"`
-	FileName          string                `json:"fileName"`
-	Id                openapi_types.UUID    `json:"id"`
-	MatchedMediaKind  *LibraryMediaKind     `json:"matchedMediaKind,omitempty"`
-	MatchedTitle      *string               `json:"matchedTitle,omitempty"`
-	MatchedYear       *int32                `json:"matchedYear,omitempty"`
-	MediaItemId       *openapi_types.UUID   `json:"mediaItemId,omitempty"`
-	Path              string                `json:"path"`
-	ScanId            openapi_types.UUID    `json:"scanId"`
-	Status            LibraryScanItemStatus `json:"status"`
-	UpdatedAt         time.Time             `json:"updatedAt"`
+	CreatedAt                  time.Time                   `json:"createdAt"`
+	DetectedMediaKind          LibraryMediaKind            `json:"detectedMediaKind"`
+	DetectedTitle              string                      `json:"detectedTitle"`
+	DetectedYear               *int32                      `json:"detectedYear,omitempty"`
+	DuplicateGroupId           *string                     `json:"duplicateGroupId,omitempty"`
+	DuplicateRemovalAllowed    bool                        `json:"duplicateRemovalAllowed"`
+	EpisodeNumber              *int32                      `json:"episodeNumber,omitempty"`
+	FileName                   string                      `json:"fileName"`
+	Id                         openapi_types.UUID          `json:"id"`
+	Imported                   bool                        `json:"imported"`
+	MatchSource                *LibraryScanItemMatchSource `json:"matchSource,omitempty"`
+	MatchedExternalId          *string                     `json:"matchedExternalId,omitempty"`
+	MatchedExternalProvider    *string                     `json:"matchedExternalProvider,omitempty"`
+	MatchedMediaKind           *LibraryMediaKind           `json:"matchedMediaKind,omitempty"`
+	MatchedTitle               *string                     `json:"matchedTitle,omitempty"`
+	MatchedYear                *int32                      `json:"matchedYear,omitempty"`
+	MediaItemId                *openapi_types.UUID         `json:"mediaItemId,omitempty"`
+	Path                       string                      `json:"path"`
+	ScanId                     openapi_types.UUID          `json:"scanId"`
+	SeasonNumber               *int32                      `json:"seasonNumber,omitempty"`
+	SelectedMetadataProviderId *openapi_types.UUID         `json:"selectedMetadataProviderId,omitempty"`
+	SizeBytes                  *int64                      `json:"sizeBytes,omitempty"`
+	Status                     LibraryScanItemStatus       `json:"status"`
+	UpdatedAt                  time.Time                   `json:"updatedAt"`
 }
 
 // LibraryScanItemMatchRequest defines model for LibraryScanItemMatchRequest.
 type LibraryScanItemMatchRequest struct {
 	ExternalId          *string             `json:"externalId,omitempty"`
 	ExternalProvider    *string             `json:"externalProvider,omitempty"`
+	MediaItemId         *openapi_types.UUID `json:"mediaItemId,omitempty"`
 	MediaKind           LibraryMediaKind    `json:"mediaKind"`
+	MetadataProviderId  *openapi_types.UUID `json:"metadataProviderId,omitempty"`
 	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
 	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
 	Monitored           bool                `json:"monitored"`
 	Overview            *string             `json:"overview,omitempty"`
 	PosterPath          *string             `json:"posterPath,omitempty"`
 	QualityProfileId    string              `json:"qualityProfileId"`
+	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
 	Title               string              `json:"title"`
 	Year                *int32              `json:"year,omitempty"`
 }
@@ -1813,6 +1891,9 @@ type LibraryScanItemMatchResponse struct {
 	Item      LibraryScanItem `json:"item"`
 	MediaItem MediaItem       `json:"mediaItem"`
 }
+
+// LibraryScanItemMatchSource defines model for LibraryScanItemMatchSource.
+type LibraryScanItemMatchSource string
 
 // LibraryScanItemStatus defines model for LibraryScanItemStatus.
 type LibraryScanItemStatus string
@@ -2188,12 +2269,14 @@ type MediaProfile struct {
 	CreatedAt                         time.Time                        `json:"createdAt"`
 	CustomFormatScores                []MediaProfileCustomFormatScore  `json:"customFormatScores"`
 	Id                                string                           `json:"id"`
+	IsDefault                         bool                             `json:"isDefault"`
 	MinimumCustomFormatScore          int32                            `json:"minimumCustomFormatScore"`
 	MinimumCustomFormatScoreIncrement int32                            `json:"minimumCustomFormatScoreIncrement"`
 	Name                              string                           `json:"name"`
 	PreferredProtocol                 MediaProfilePreferredProtocol    `json:"preferredProtocol"`
 	QualityIds                        []string                         `json:"qualityIds"`
 	RemoveNonEnabledLanguages         bool                             `json:"removeNonEnabledLanguages"`
+	RemoveNonEnabledSubtitleLanguages bool                             `json:"removeNonEnabledSubtitleLanguages"`
 	SeriesPackPreference              MediaProfileSeriesPackPreference `json:"seriesPackPreference"`
 	SubtitleLanguages                 []MediaProfileSubtitleLanguage   `json:"subtitleLanguages"`
 	TargetLanguageScores              []MediaProfileLanguageScore      `json:"targetLanguageScores"`
@@ -2231,12 +2314,14 @@ type MediaProfileListResponse struct {
 // MediaProfileRequest defines model for MediaProfileRequest.
 type MediaProfileRequest struct {
 	CustomFormatScores                []MediaProfileCustomFormatScore         `json:"customFormatScores"`
+	IsDefault                         bool                                    `json:"isDefault"`
 	MinimumCustomFormatScore          int32                                   `json:"minimumCustomFormatScore"`
 	MinimumCustomFormatScoreIncrement int32                                   `json:"minimumCustomFormatScoreIncrement"`
 	Name                              string                                  `json:"name"`
 	PreferredProtocol                 MediaProfileRequestPreferredProtocol    `json:"preferredProtocol"`
 	QualityIds                        []string                                `json:"qualityIds"`
 	RemoveNonEnabledLanguages         bool                                    `json:"removeNonEnabledLanguages"`
+	RemoveNonEnabledSubtitleLanguages bool                                    `json:"removeNonEnabledSubtitleLanguages"`
 	SeriesPackPreference              MediaProfileRequestSeriesPackPreference `json:"seriesPackPreference"`
 	SubtitleLanguages                 []MediaProfileSubtitleLanguage          `json:"subtitleLanguages"`
 	TargetLanguageScores              []MediaProfileLanguageScore             `json:"targetLanguageScores"`
@@ -2256,6 +2341,7 @@ type MediaProfileRequestSeriesPackPreference string
 type MediaProfileSubtitleLanguage struct {
 	LanguageId   string                                   `json:"languageId"`
 	Required     bool                                     `json:"required"`
+	Score        int32                                    `json:"score"`
 	SubtitleType MediaProfileSubtitleLanguageSubtitleType `json:"subtitleType"`
 }
 
@@ -3281,6 +3367,9 @@ type CreateLibraryFolderJSONRequestBody = LibraryFolderRequest
 // CreatePathMappingJSONRequestBody defines body for CreatePathMapping for application/json ContentType.
 type CreatePathMappingJSONRequestBody = PathMappingRequest
 
+// ImportLibraryScanItemsJSONRequestBody defines body for ImportLibraryScanItems for application/json ContentType.
+type ImportLibraryScanItemsJSONRequestBody = LibraryScanImportRequest
+
 // MatchLibraryScanItemJSONRequestBody defines body for MatchLibraryScanItem for application/json ContentType.
 type MatchLibraryScanItemJSONRequestBody = LibraryScanItemMatchRequest
 
@@ -3649,6 +3738,9 @@ type ServerInterface interface {
 	// Get a library folder scan with discovered media review items
 	// (GET /settings/library/scans/{id})
 	GetLibraryScan(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Import selected discovered files from a library scan
+	// (POST /settings/library/scans/{id}/import)
+	ImportLibraryScanItems(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Manually match a discovered file to a movie, series, or anime item
 	// (POST /settings/library/scans/{id}/items/{itemId}/match)
 	MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID)
@@ -4426,6 +4518,12 @@ func (_ Unimplemented) DeletePathMapping(w http.ResponseWriter, r *http.Request,
 // Get a library folder scan with discovered media review items
 // (GET /settings/library/scans/{id})
 func (_ Unimplemented) GetLibraryScan(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Import selected discovered files from a library scan
+// (POST /settings/library/scans/{id}/import)
+func (_ Unimplemented) ImportLibraryScanItems(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8403,6 +8501,38 @@ func (siw *ServerInterfaceWrapper) GetLibraryScan(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ImportLibraryScanItems operation middleware
+func (siw *ServerInterfaceWrapper) ImportLibraryScanItems(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportLibraryScanItems(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // MatchLibraryScanItem operation middleware
 func (siw *ServerInterfaceWrapper) MatchLibraryScanItem(w http.ResponseWriter, r *http.Request) {
 
@@ -10147,6 +10277,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/library/scans/{id}", wrapper.GetLibraryScan)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/library/scans/{id}/import", wrapper.ImportLibraryScanItems)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/library/scans/{id}/items/{itemId}/match", wrapper.MatchLibraryScanItem)

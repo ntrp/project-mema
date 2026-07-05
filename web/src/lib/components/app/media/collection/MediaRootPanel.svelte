@@ -2,6 +2,7 @@
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import { matchingLibraryFolders } from '$lib/components/app/media/actions/mediaActionDefaults';
 	import type { LibraryFolder, MediaItem, MediaItemUpdateRequest } from '$lib/settings/types';
 	import MediaRootEditModal from '$lib/components/app/media/collection/MediaRootEditModal.svelte';
 
@@ -16,7 +17,8 @@
 	let editing = $state(false);
 
 	const rootPath = $derived(item.mediaFolderPath ?? item.libraryFolderPath ?? '-');
-	const canEdit = $derived(canManage && libraryFolders.length > 0);
+	const matchingFolders = $derived(matchingLibraryFolders(item.type, libraryFolders));
+	const canEdit = $derived(canManage && matchingFolders.length > 0);
 
 	function saveRoot(libraryFolderId: string) {
 		onSaveOptions(item, { libraryFolderId });
@@ -54,7 +56,7 @@
 {#if editing}
 	<MediaRootEditModal
 		{item}
-		{libraryFolders}
+		libraryFolders={matchingFolders}
 		onCancel={() => (editing = false)}
 		onConfirm={saveRoot}
 	/>

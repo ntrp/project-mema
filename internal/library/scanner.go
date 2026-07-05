@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"media-manager/internal/decisions"
 )
 
 type MediaKind string
@@ -21,9 +23,12 @@ const (
 type DiscoveredFile struct {
 	Path          string
 	FileName      string
+	SizeBytes     int64
 	DetectedTitle string
 	DetectedYear  *int32
 	DetectedKind  MediaKind
+	SeasonNumber  *int32
+	EpisodeNumber *int32
 	SafeMatch     bool
 }
 
@@ -46,6 +51,17 @@ var (
 )
 
 func Discover(root string) ([]DiscoveredFile, error) {
+	return discover(root, parseMediaFile)
+}
+
+func DiscoverMovies(root string) ([]DiscoveredFile, error) {
+	return discover(root, parseMovieFile)
+}
+
+func discover(
+	root string,
+	parse func(relativePath string, fileName string, info fs.FileInfo) DiscoveredFile,
+) ([]DiscoveredFile, error) {
 	root = filepath.Clean(root)
 	files := []DiscoveredFile{}
 	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
@@ -65,35 +81,84 @@ func Discover(root string) ([]DiscoveredFile, error) {
 		if err != nil {
 			return err
 		}
-		files = append(files, parseMediaFile(root, relativePath, entry.Name()))
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		files = append(files, parse(relativePath, entry.Name(), info))
 		return nil
 	})
 	return files, err
 }
 
-func parseMediaFile(root string, relativePath string, fileName string) DiscoveredFile {
+func parseMediaFile(relativePath string, fileName string, info fs.FileInfo) DiscoveredFile {
 	withoutExtension := strings.TrimSuffix(fileName, filepath.Ext(fileName))
-	episodeMatch := episodePattern.FindStringIndex(withoutExtension)
-	if episodeMatch != nil {
-		title := seriesTitle(relativePath, withoutExtension, episodeMatch[0])
+	parsed := decisions.ParseReleaseFileName(fileName)
+	if parsed.SeasonNumber != nil {
+		title := firstNonEmpty(seriesTitleFromParsed(relativePath, parsed), seriesTitle(relativePath, withoutExtension, 0))
 		return DiscoveredFile{
 			Path:          filepath.ToSlash(relativePath),
 			FileName:      fileName,
+			SizeBytes:     info.Size(),
 			DetectedTitle: title,
 			DetectedKind:  MediaKindSeries,
+			SeasonNumber:  parsed.SeasonNumber,
+			EpisodeNumber: parsed.EpisodeNumber,
 			SafeMatch:     isCleanTitle(title) && !releasePattern.MatchString(withoutExtension),
 		}
 	}
 
-	title, year := movieTitleAndYear(withoutExtension)
+	return parseMovieFile(relativePath, fileName, info)
+}
+
+func parseMovieFile(relativePath string, fileName string, info fs.FileInfo) DiscoveredFile {
+	withoutExtension := strings.TrimSuffix(fileName, filepath.Ext(fileName))
+	parsed := decisions.ParseReleaseFileName(fileName)
+	title, year := movieTitleAndYear(firstNonEmpty(parsed.MovieTitle, withoutExtension))
 	return DiscoveredFile{
 		Path:          filepath.ToSlash(relativePath),
 		FileName:      fileName,
+		SizeBytes:     info.Size(),
 		DetectedTitle: title,
-		DetectedYear:  year,
+		DetectedYear:  firstYear(year, parsed.Year),
 		DetectedKind:  MediaKindMovie,
 		SafeMatch:     isCleanTitle(title) && !releasePattern.MatchString(withoutExtension),
 	}
+}
+
+func seriesTitleFromParsed(relativePath string, parsed decisions.ParsedRelease) string {
+	parts := strings.Split(filepath.ToSlash(relativePath), "/")
+	if len(parts) >= 3 && strings.HasPrefix(strings.ToLower(parts[len(parts)-2]), "season") {
+		return cleanTitle(parts[len(parts)-3])
+	}
+	if len(parts) >= 2 {
+		parent := cleanTitle(parts[len(parts)-2])
+		if isCleanTitle(parent) {
+			return parent
+		}
+	}
+	return cleanTitle(parsed.SeriesTitle)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstYear(existing *int32, parsed string) *int32 {
+	if existing != nil || parsed == "" {
+		return existing
+	}
+	value, err := strconv.ParseInt(parsed, 10, 32)
+	if err != nil {
+		return nil
+	}
+	year := int32(value)
+	return &year
 }
 
 func seriesTitle(relativePath string, fileTitle string, episodeIndex int) string {

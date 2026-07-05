@@ -133,6 +133,7 @@ func normalizeSubtitleLanguages(values []MediaProfileSubtitleLanguage) []MediaPr
 		seen[language] = struct{}{}
 		languages = append(languages, MediaProfileSubtitleLanguage{
 			LanguageID:   language,
+			Score:        value.Score,
 			Required:     value.Required,
 			SubtitleType: normalizeSubtitleType(value.SubtitleType),
 		})
@@ -174,6 +175,7 @@ func scanMediaProfileBase(row pgx.Row) (MediaProfile, error) {
 		&profile.UpgradeUntilCustomFormatScore,
 		&profile.MinimumCustomFormatScoreIncrement,
 		&profile.RemoveNonEnabledLanguages,
+		&profile.RemoveNonEnabledSubtitleLanguages,
 		&profile.PreferredProtocol,
 		&profile.SeriesPackPreference,
 		&profile.CreatedAt,

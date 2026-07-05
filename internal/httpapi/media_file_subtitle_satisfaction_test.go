@@ -45,3 +45,16 @@ func TestMediaFileSubtitleSatisfactionUsesExternalRecords(t *testing.T) {
 		t.Fatalf("expected satisfied subtitle state, got %#v", result)
 	}
 }
+
+func TestMediaFileSubtitleSatisfactionOnlyMissingWhenRequired(t *testing.T) {
+	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleLanguage{
+		{LanguageID: "english", Required: false, SubtitleType: "external"},
+	}, nil)
+
+	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {
+		t.Fatalf("expected optional subtitle to stay satisfied, got %#v", result)
+	}
+	if len(result.MissingLanguages) != 0 {
+		t.Fatalf("expected no missing optional subtitles, got %#v", result.MissingLanguages)
+	}
+}

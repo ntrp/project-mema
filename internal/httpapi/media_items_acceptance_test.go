@@ -22,6 +22,7 @@ func TestScenarioSCNMedia007AdminManagesMediaItemMonitoringOptions(t *testing.T)
 	var folder LibraryFolderCreateResponse
 	client.doJSON(t, http.MethodPost, "/settings/library/folders", LibraryFolderRequest{
 		Path: libraryPath,
+		Kind: LibraryFolderKindMovie,
 	}, http.StatusCreated, &folder)
 
 	var created MediaItem

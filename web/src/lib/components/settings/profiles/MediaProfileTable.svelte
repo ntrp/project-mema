@@ -58,7 +58,14 @@
 		<Table.Body>
 			{#each profiles as profile (profile.id)}
 				<Table.Row>
-					<Table.Cell><strong>{profile.name}</strong></Table.Cell>
+					<Table.Cell>
+						<div class="flex items-center gap-2">
+							<strong>{profile.name}</strong>
+							{#if profile.isDefault}
+								<Badge>Default</Badge>
+							{/if}
+						</div>
+					</Table.Cell>
 					<Table.Cell>
 						<div class="flex flex-wrap gap-1.5" aria-label={`${profile.name} qualities`}>
 							{#each selectedQualityNames(profile).slice(0, 6) as name (name)}

@@ -19,9 +19,11 @@
 
 	let { form, languages, onChange }: Props = $props();
 	let languageFilter = $state('');
+	let fallbackSubtitleType = $state<MediaProfileSubtitleLanguage['subtitleType']>('embedded');
 	let selectedLanguages = $derived(
 		new Map(form.subtitleLanguages.map((item) => [item.languageId, item]))
 	);
+	let sharedSubtitleType = $derived(form.subtitleLanguages[0]?.subtitleType ?? fallbackSubtitleType);
 	let options = $derived(
 		profileLanguageOptions(
 			languages,
@@ -46,8 +48,14 @@
 	function toggleLanguage(language: string) {
 		const next = [...form.subtitleLanguages];
 		const index = next.findIndex((item) => item.languageId === language);
-		if (index >= 0) next.splice(index, 1);
-		else next.push({ languageId: language, required: true, subtitleType: 'any' });
+		if (index >= 0) {
+			if (next.length === 1) {
+				fallbackSubtitleType = next[index].subtitleType;
+			}
+			next.splice(index, 1);
+		} else {
+			next.push({ languageId: language, score: 0, required: true, subtitleType: sharedSubtitleType });
+		}
 		patch(next);
 	}
 	function updateRequired(language: string, required: boolean) {
@@ -57,15 +65,18 @@
 			)
 		);
 	}
-	function updateType(
-		language: string,
-		subtitleType: MediaProfileSubtitleLanguage['subtitleType']
-	) {
+	function updateScore(language: string, score: number) {
 		patch(
 			form.subtitleLanguages.map((item) =>
-				item.languageId === language ? { ...item, subtitleType } : item
+				item.languageId === language ? { ...item, score: Number.isFinite(score) ? score : 0 } : item
 			)
 		);
+	}
+	function updateType(
+		subtitleType: MediaProfileSubtitleLanguage['subtitleType']
+	) {
+		fallbackSubtitleType = subtitleType;
+		patch(form.subtitleLanguages.map((item) => ({ ...item, subtitleType })));
 	}
 	function typeLabel(value?: string) {
 		if (value === 'embedded') return 'Embedded';
@@ -78,6 +89,32 @@
 	<Card.Header><Card.Title>Subtitle languages</Card.Title></Card.Header>
 	<Card.Content class="mt-2 grid gap-4">
 		<div class="grid gap-2 text-sm">
+			<span class="flex items-center gap-2 text-muted-foreground">
+				<Checkbox
+					checked={form.removeNonEnabledSubtitleLanguages}
+					onCheckedChange={(checked) =>
+						onChange({ ...form, removeNonEnabledSubtitleLanguages: checked === true })}
+				/>
+				Remove subtitle tracks that are not wanted
+			</span>
+		</div>
+		<div class="grid gap-2 text-sm sm:max-w-60">
+			<Label>Subtitle source</Label>
+			<Select.Root
+				type="single"
+				value={sharedSubtitleType}
+				onValueChange={(value: string) =>
+					updateType(value as MediaProfileSubtitleLanguage['subtitleType'])}
+			>
+				<Select.Trigger class="w-full">{typeLabel(sharedSubtitleType)}</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="embedded" label="Embedded" />
+					<Select.Item value="external" label="External" />
+					<Select.Item value="any" label="Any" />
+				</Select.Content>
+			</Select.Root>
+		</div>
+		<div class="grid gap-2 text-sm">
 			<Label>Quick filter</Label>
 			<Input bind:value={languageFilter} type="search" placeholder="Filter subtitle languages" />
 		</div>
@@ -85,7 +122,7 @@
 			{#each filteredOptions as option (option.id)}
 				{@const selected = selectedLanguages.get(option.id)}
 				<div
-					class="grid gap-2 rounded-md bg-muted/20 p-2 sm:grid-cols-[1fr_120px_140px] sm:items-center"
+					class="grid gap-2 rounded-md bg-muted/20 p-2 sm:grid-cols-[1fr_120px_80px] sm:items-center"
 				>
 					<Label class="flex items-center gap-2 text-sm">
 						<Checkbox
@@ -102,20 +139,15 @@
 						/>
 						<span>Required</span>
 					</Label>
-					<Select.Root
-						type="single"
-						value={selected?.subtitleType ?? 'any'}
+					<Input
+						class="w-20"
+						type="number"
+						aria-label={`${option.displayLabel} subtitle score`}
+						value={selected?.score ?? 0}
 						disabled={!selected}
-						onValueChange={(value: string) =>
-							updateType(option.id, value as MediaProfileSubtitleLanguage['subtitleType'])}
-					>
-						<Select.Trigger class="w-full">{typeLabel(selected?.subtitleType)}</Select.Trigger>
-						<Select.Content>
-							<Select.Item value="any" label="Any" />
-							<Select.Item value="embedded" label="Embedded" />
-							<Select.Item value="external" label="External" />
-						</Select.Content>
-					</Select.Root>
+						inputmode="numeric"
+						oninput={(event) => updateScore(option.id, event.currentTarget.valueAsNumber)}
+					/>
 				</div>
 			{:else}
 				<p class="m-0 p-4 text-center text-sm text-muted-foreground">

@@ -44,7 +44,7 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	extraPath := filepath.Join(appPath, "complete", "Toy.Story.5.2026.sample.mkv")
 	writeSparseImportFile(t, extraPath, 2*1024*1024)
 
-	folder, err := store.CreateLibraryFolder(ctx, libraryPath)
+	folder, err := store.CreateLibraryFolder(ctx, libraryPath, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}

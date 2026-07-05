@@ -3329,6 +3329,35 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/library/scans/{id}/import:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: importLibraryScanItems
+      tags:
+        - Settings
+      summary: Import selected discovered files from a library scan
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryScanImportRequest"
+      responses:
+        "200":
+          description: Selected scan items imported
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryScanImportResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/library/scans/{id}/items/{itemId}/match:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4080,6 +4109,9 @@ components:
       enum:
         - movie
         - serie
+      x-enum-varnames:
+        - MediaTypeMovie
+        - MediaTypeSerie
     MediaDiscoverMediaType:
       type: string
       enum:
@@ -5487,12 +5519,14 @@ components:
       additionalProperties: false
       required:
         - name
+        - isDefault
         - qualityIds
         - upgradesAllowed
         - minimumCustomFormatScore
         - upgradeUntilCustomFormatScore
         - minimumCustomFormatScoreIncrement
         - removeNonEnabledLanguages
+        - removeNonEnabledSubtitleLanguages
         - preferredProtocol
         - seriesPackPreference
         - targetLanguages
@@ -5504,6 +5538,8 @@ components:
           type: string
           minLength: 1
           maxLength: 200
+        isDefault:
+          type: boolean
         qualityIds:
           type: array
           items:
@@ -5528,6 +5564,8 @@ components:
           format: int32
           minimum: 0
         removeNonEnabledLanguages:
+          type: boolean
+        removeNonEnabledSubtitleLanguages:
           type: boolean
         preferredProtocol:
           type: string
@@ -5581,6 +5619,7 @@ components:
       additionalProperties: false
       required:
         - languageId
+        - score
         - required
         - subtitleType
       properties:
@@ -5588,6 +5627,9 @@ components:
           type: string
           minLength: 1
           maxLength: 40
+        score:
+          type: integer
+          format: int32
         required:
           type: boolean
         subtitleType:
@@ -7661,11 +7703,14 @@ components:
       additionalProperties: false
       required:
         - path
+        - kind
       properties:
         path:
           type: string
           minLength: 1
           maxLength: 4000
+        kind:
+          $ref: "#/components/schemas/LibraryFolderKind"
     PathMappingListResponse:
       type: object
       additionalProperties: false
@@ -7759,6 +7804,11 @@ components:
         - anime_movie
         - anime_series
         - unknown
+    LibraryFolderKind:
+      type: string
+      enum:
+        - movie
+        - series
     LibraryScanItemStatus:
       type: string
       enum:
@@ -7768,6 +7818,12 @@ components:
         - missing
         - moved_candidate
         - restored
+    LibraryScanItemMatchSource:
+      type: string
+      enum:
+        - library
+        - provider
+        - manual
     LibraryScan:
       type: object
       additionalProperties: false
@@ -7775,6 +7831,7 @@ components:
         - id
         - folderId
         - folderPath
+        - folderKind
         - status
         - totalFiles
         - autoMatchedCount
@@ -7790,6 +7847,8 @@ components:
           format: uuid
         folderPath:
           type: string
+        folderKind:
+          $ref: "#/components/schemas/LibraryFolderKind"
         status:
           type: string
           enum:
@@ -7828,6 +7887,8 @@ components:
         - detectedTitle
         - detectedMediaKind
         - status
+        - imported
+        - duplicateRemovalAllowed
         - createdAt
         - updatedAt
       properties:
@@ -7841,6 +7902,10 @@ components:
           type: string
         fileName:
           type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
         detectedTitle:
           type: string
         detectedYear:
@@ -7850,8 +7915,18 @@ components:
           maximum: 3000
         detectedMediaKind:
           $ref: "#/components/schemas/LibraryMediaKind"
+        seasonNumber:
+          type: integer
+          format: int32
+          minimum: 0
+        episodeNumber:
+          type: integer
+          format: int32
+          minimum: 0
         status:
           $ref: "#/components/schemas/LibraryScanItemStatus"
+        imported:
+          type: boolean
         matchedTitle:
           type: string
         matchedYear:
@@ -7864,6 +7939,22 @@ components:
         mediaItemId:
           type: string
           format: uuid
+        matchedExternalProvider:
+          type: string
+          maxLength: 100
+        matchedExternalId:
+          type: string
+          maxLength: 200
+        matchSource:
+          $ref: "#/components/schemas/LibraryScanItemMatchSource"
+        selectedMetadataProviderId:
+          type: string
+          format: uuid
+        duplicateGroupId:
+          type: string
+          maxLength: 200
+        duplicateRemovalAllowed:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -7902,6 +7993,14 @@ components:
           $ref: "#/components/schemas/MediaMonitorMode"
         minimumAvailability:
           $ref: "#/components/schemas/MinimumAvailability"
+        seriesType:
+          $ref: "#/components/schemas/SeriesType"
+        metadataProviderId:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
         externalProvider:
           type: string
           maxLength: 100
@@ -7914,6 +8013,58 @@ components:
         posterPath:
           type: string
           maxLength: 2000
+    LibraryScanImportRowRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - itemId
+        - match
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        match:
+          $ref: "#/components/schemas/LibraryScanItemMatchRequest"
+    LibraryScanImportRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/LibraryScanImportRowRequest"
+        removeDuplicatePaths:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          maxItems: 200
+    LibraryScanImportResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - scan
+        - mediaItems
+        - importedCount
+        - removedDuplicateCount
+      properties:
+        scan:
+          $ref: "#/components/schemas/LibraryScan"
+        mediaItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaItem"
+        importedCount:
+          type: integer
+          format: int32
+          minimum: 0
+        removedDuplicateCount:
+          type: integer
+          format: int32
+          minimum: 0
     LibraryScanItemMatchResponse:
       type: object
       additionalProperties: false

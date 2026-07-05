@@ -9,7 +9,7 @@ import (
 func TestMediaRenamePreviewExpandsTemplatesAndDetectsConflict(t *testing.T) {
 	ctx, store := testDBStore(t)
 	root := t.TempDir()
-	folder, err := store.CreateLibraryFolder(ctx, root)
+	folder, err := store.CreateLibraryFolder(ctx, root, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -66,7 +66,7 @@ func TestMediaRenamePreviewExpandsTemplatesAndDetectsConflict(t *testing.T) {
 func TestApplyMediaItemRenameMovesSafeRowsAndRecordsHistory(t *testing.T) {
 	ctx, store := testDBStore(t)
 	root := t.TempDir()
-	folder, err := store.CreateLibraryFolder(ctx, root)
+	folder, err := store.CreateLibraryFolder(ctx, root, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +120,7 @@ func TestApplyMediaItemRenameMovesSafeRowsAndRecordsHistory(t *testing.T) {
 func TestApplyMediaItemRenameSkipsConflictRows(t *testing.T) {
 	ctx, store := testDBStore(t)
 	root := t.TempDir()
-	folder, err := store.CreateLibraryFolder(ctx, root)
+	folder, err := store.CreateLibraryFolder(ctx, root, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +160,7 @@ func TestApplyMediaItemRenameSkipsConflictRows(t *testing.T) {
 func TestApplyMediaItemRenameRollsBackWhenRecordIsStale(t *testing.T) {
 	ctx, store := testDBStore(t)
 	root := t.TempDir()
-	folder, err := store.CreateLibraryFolder(ctx, root)
+	folder, err := store.CreateLibraryFolder(ctx, root, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}

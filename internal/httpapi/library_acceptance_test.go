@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
+	"media-manager/internal/testmocks"
 )
 
 func TestScenarioSCNSettings016AdminManagesLibraryFoldersAndMappings(t *testing.T) {
@@ -38,6 +40,7 @@ func TestScenarioSCNSettings016AdminManagesLibraryFoldersAndMappings(t *testing.
 	var created LibraryFolderCreateResponse
 	client.doJSON(t, http.MethodPost, "/settings/library/folders", LibraryFolderRequest{
 		Path: libraryPath,
+		Kind: LibraryFolderKindMovie,
 	}, http.StatusCreated, &created)
 	if created.Folder.Path != libraryPath || created.Scan.TotalFiles == 0 {
 		t.Fatalf("created library folder = %#v", created)
@@ -116,6 +119,123 @@ func stringPtr(value string) *string {
 func libraryFolderHas(folders []LibraryFolder, id uuid.UUID) bool {
 	for _, folder := range folders {
 		if uuid.UUID(folder.Id) == id {
+			return true
+		}
+	}
+	return false
+}
+
+func TestScenarioSCNSettings016LibraryImportStoresMetadataAndImportedState(t *testing.T) {
+	provider := testmocks.NewProviderServer()
+	t.Cleanup(provider.Close)
+	client := newAcceptanceClientWithProviders(t, "SCN-SETTINGS-016", provider)
+	createScenarioMetadataProvider(t, client, provider.URL+"/tmdb/3")
+
+	libraryPath := filepath.Join(t.TempDir(), "library")
+	if err := os.MkdirAll(libraryPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(libraryPath, "Example.Movie.2026.mkv"), []byte("video"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var profiles MediaProfileListResponse
+	client.doJSON(t, http.MethodGet, "/settings/profiles", nil, http.StatusOK, &profiles)
+	if len(profiles.Profiles) == 0 {
+		t.Fatal("expected seeded media profile")
+	}
+
+	var created LibraryFolderCreateResponse
+	client.doJSON(t, http.MethodPost, "/settings/library/folders", LibraryFolderRequest{
+		Path: libraryPath,
+		Kind: LibraryFolderKindMovie,
+	}, http.StatusCreated, &created)
+	if len(created.Scan.Items) == 0 {
+		t.Fatalf("created scan has no items: %#v", created.Scan)
+	}
+
+	var imported LibraryScanImportResponse
+	client.doJSON(t, http.MethodPost, "/settings/library/scans/"+created.Scan.Id.String()+"/import", LibraryScanImportRequest{
+		Items: []LibraryScanImportRowRequest{{
+			ItemId: created.Scan.Items[0].Id,
+			Match: LibraryScanItemMatchRequest{
+				MediaKind:           LibraryMediaKindMovie,
+				Title:               "Example Movie",
+				Year:                int32Ptr(2026),
+				Monitored:           true,
+				QualityProfileId:    profiles.Profiles[0].Id,
+				MonitorMode:         OnlyMedia,
+				MinimumAvailability: Released,
+				ExternalProvider:    stringPtr("tmdb"),
+				ExternalId:          stringPtr("936075"),
+			},
+		}},
+	}, http.StatusOK, &imported)
+	if imported.ImportedCount != 1 || len(imported.MediaItems) != 1 {
+		t.Fatalf("import response = %#v", imported)
+	}
+	item := imported.MediaItems[0]
+	if item.Overview == nil || *item.Overview != "A realistic local metadata detail response." {
+		t.Fatalf("imported media missing enriched overview: %#v", item)
+	}
+	if item.Crew == nil || len(*item.Crew) == 0 {
+		t.Fatalf("imported media missing crew metadata: %#v", item)
+	}
+	importedPath := filepath.Join(libraryPath, "Example.Movie.2026.mkv")
+	if !stringListHas(item.FilePaths, importedPath) || item.Status != Downloaded {
+		t.Fatalf("imported media not linked to file: %#v", item)
+	}
+	if !mediaFilesHasAvailablePath(item.Files, importedPath) {
+		t.Fatalf("imported media file not available: %#v", item.Files)
+	}
+	requireImportedScanItem(t, imported.Scan, created.Scan.Items[0].Id)
+
+	var rescanned LibraryScan
+	client.doJSON(t, http.MethodPost, "/settings/library/folders/"+created.Folder.Id.String()+"/scan", nil, http.StatusCreated, &rescanned)
+	requireImportedScanItemByPath(t, rescanned, importedPath)
+}
+
+func requireImportedScanItem(t *testing.T, scan LibraryScan, id uuid.UUID) {
+	t.Helper()
+	for _, item := range scan.Items {
+		if uuid.UUID(item.Id) == id {
+			if !item.Imported {
+				t.Fatalf("scan item not marked imported: %#v", item)
+			}
+			return
+		}
+	}
+	t.Fatalf("scan item %s not found: %#v", id, scan.Items)
+}
+
+func requireImportedScanItemByPath(t *testing.T, scan LibraryScan, path string) {
+	t.Helper()
+	for _, item := range scan.Items {
+		if item.Path == path {
+			if !item.Imported {
+				t.Fatalf("rescanned item not marked imported: %#v", item)
+			}
+			return
+		}
+	}
+	t.Fatalf("scan path %s not found: %#v", path, scan.Items)
+}
+
+func stringListHas(values []string, expected string) bool {
+	for _, value := range values {
+		if value == expected {
+			return true
+		}
+	}
+	return false
+}
+
+func mediaFilesHasAvailablePath(files *[]MediaFileInfo, path string) bool {
+	if files == nil {
+		return false
+	}
+	for _, file := range *files {
+		if file.Path == path && file.Status == MediaFileInfoStatusAvailable {
 			return true
 		}
 	}

@@ -3,6 +3,7 @@ import type { MediaProfile, MediaProfileForm, MediaProfileRequest } from './type
 export function emptyMediaProfileForm(): MediaProfileForm {
 	return {
 		name: '',
+		isDefault: false,
 		qualityIds: [],
 		upgradesAllowed: true,
 		upgradeUntilQualityId: undefined,
@@ -10,11 +11,12 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
 		removeNonEnabledLanguages: false,
+		removeNonEnabledSubtitleLanguages: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
-		targetLanguages: ['english'],
-		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
-		subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'any' }],
+		targetLanguages: ['EN'],
+		targetLanguageScores: [{ languageId: 'EN', score: 0, required: false }],
+		subtitleLanguages: [{ languageId: 'EN', score: 0, required: false, subtitleType: 'embedded' }],
 		customFormatScores: []
 	};
 }
@@ -23,6 +25,7 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 	return {
 		id: profile.id,
 		name: profile.name,
+		isDefault: profile.isDefault,
 		qualityIds: [...(profile.qualityIds ?? [])],
 		upgradesAllowed: profile.upgradesAllowed,
 		upgradeUntilQualityId: profile.upgradeUntilQualityId,
@@ -30,6 +33,7 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		upgradeUntilCustomFormatScore: profile.upgradeUntilCustomFormatScore,
 		minimumCustomFormatScoreIncrement: profile.minimumCustomFormatScoreIncrement,
 		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
+		removeNonEnabledSubtitleLanguages: profile.removeNonEnabledSubtitleLanguages,
 		preferredProtocol: profile.preferredProtocol,
 		seriesPackPreference: profile.seriesPackPreference,
 		targetLanguages: [...(profile.targetLanguages ?? [])],
@@ -51,6 +55,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 	const subtitleLanguages = subtitleLanguagesFromForm(form);
 	return {
 		name: form.name.trim(),
+		isDefault: form.isDefault,
 		qualityIds,
 		upgradesAllowed: form.upgradesAllowed,
 		upgradeUntilQualityId:
@@ -64,6 +69,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 			normalizedInteger(form.minimumCustomFormatScoreIncrement)
 		),
 		removeNonEnabledLanguages: form.removeNonEnabledLanguages,
+		removeNonEnabledSubtitleLanguages: form.removeNonEnabledSubtitleLanguages,
 		preferredProtocol: form.preferredProtocol ?? 'any',
 		seriesPackPreference: form.seriesPackPreference ?? 'auto',
 		targetLanguages: targetLanguageScores.map((score) => score.languageId),
@@ -112,6 +118,7 @@ function subtitleLanguagesFromForm(form: MediaProfileForm) {
 		seen.add(languageId);
 		languages.push({
 			languageId,
+			score: normalizedInteger(value.score),
 			required: value.required,
 			subtitleType: value.subtitleType ?? 'any'
 		});

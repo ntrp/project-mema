@@ -1,12 +1,14 @@
 -- name: ListMediaProfiles :many
 select id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_non_enabled_languages,
+    remove_non_enabled_subtitle_languages,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -21,24 +23,28 @@ select exists(select 1 from app.media_profiles where id = $1);
 insert into app.media_profiles (
     id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_non_enabled_languages,
+    remove_non_enabled_subtitle_languages,
     preferred_protocol,
     series_pack_preference
 )
 values (
     sqlc.arg(id),
     sqlc.arg(name),
+    sqlc.arg(is_default),
     sqlc.arg(upgrades_allowed),
     sqlc.narg(upgrade_until_quality_id),
     sqlc.arg(minimum_custom_format_score),
     sqlc.arg(upgrade_until_custom_format_score),
     sqlc.arg(minimum_custom_format_score_increment),
     sqlc.arg(remove_non_enabled_languages),
+    sqlc.arg(remove_non_enabled_subtitle_languages),
     sqlc.arg(preferred_protocol),
     sqlc.arg(series_pack_preference)
 );
@@ -46,12 +52,14 @@ values (
 -- name: UpdateMediaProfile :execrows
 update app.media_profiles
 set name = sqlc.arg(name),
+    is_default = sqlc.arg(is_default),
     upgrades_allowed = sqlc.arg(upgrades_allowed),
     upgrade_until_quality_id = sqlc.narg(upgrade_until_quality_id),
     minimum_custom_format_score = sqlc.arg(minimum_custom_format_score),
     upgrade_until_custom_format_score = sqlc.arg(upgrade_until_custom_format_score),
     minimum_custom_format_score_increment = sqlc.arg(minimum_custom_format_score_increment),
     remove_non_enabled_languages = sqlc.arg(remove_non_enabled_languages),
+    remove_non_enabled_subtitle_languages = sqlc.arg(remove_non_enabled_subtitle_languages),
     preferred_protocol = sqlc.arg(preferred_protocol),
     series_pack_preference = sqlc.arg(series_pack_preference),
     updated_at = now()
@@ -64,18 +72,26 @@ where id = $1;
 -- name: GetMediaProfile :one
 select id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_non_enabled_languages,
+    remove_non_enabled_subtitle_languages,
     preferred_protocol,
     series_pack_preference,
     created_at,
     updated_at
 from app.media_profiles
 where id = $1;
+
+-- name: ClearDefaultMediaProfiles :exec
+update app.media_profiles
+set is_default = false,
+    updated_at = now()
+where is_default;
 
 -- name: ListMediaProfileQualities :many
 select quality_id
@@ -90,7 +106,7 @@ where profile_id = $1
 order by language_id;
 
 -- name: ListMediaProfileSubtitleLanguages :many
-select language_id, required, subtitle_type
+select language_id, score, required, subtitle_type
 from app.media_profile_subtitle_languages
 where profile_id = $1
 order by language_id;
@@ -123,8 +139,8 @@ delete from app.media_profile_subtitle_languages
 where profile_id = $1;
 
 -- name: AddMediaProfileSubtitleLanguage :exec
-insert into app.media_profile_subtitle_languages (profile_id, language_id, required, subtitle_type)
-values (sqlc.arg(profile_id), sqlc.arg(language_id), sqlc.arg(required), sqlc.arg(subtitle_type));
+insert into app.media_profile_subtitle_languages (profile_id, language_id, score, required, subtitle_type)
+values (sqlc.arg(profile_id), sqlc.arg(language_id), sqlc.arg(score), sqlc.arg(required), sqlc.arg(subtitle_type));
 
 -- name: ClearMediaProfileCustomFormats :exec
 delete from app.media_profile_custom_formats

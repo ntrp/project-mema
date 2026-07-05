@@ -103,7 +103,8 @@ export function emptySubtitleProviderForm(): SubtitleProviderForm {
 
 export function emptyLibraryFolderForm(): LibraryFolderForm {
 	return {
-		path: ''
+		path: '',
+		kind: 'movie'
 	};
 }
 
@@ -254,7 +255,8 @@ export function normalizeSubtitleProviderForm(form: SubtitleProviderForm): Subti
 
 export function normalizeLibraryFolderForm(form: LibraryFolderForm): LibraryFolderRequest {
 	return {
-		path: form.path.trim()
+		path: form.path.trim(),
+		kind: form.kind
 	};
 }
 

@@ -19,13 +19,23 @@ insert into app.library_scan_items (
     scan_id,
     path,
     file_name,
+    size_bytes,
     detected_title,
     detected_year,
     detected_media_kind,
+    season_number,
+    episode_number,
     status,
+    imported,
     matched_title,
     matched_year,
     matched_media_kind,
+    matched_external_provider,
+    matched_external_id,
+    match_source,
+    selected_metadata_provider_id,
+    duplicate_group_id,
+    duplicate_removal_allowed,
     media_item_id
 )
 values (
@@ -40,23 +50,43 @@ values (
     $9,
     $10,
     $11,
-    $12
+    $12,
+    $13,
+    $14,
+    $15,
+    $16,
+    $17,
+    $18,
+    $19,
+    $20,
+    $21,
+    $22
 )
 `
 
 type AddLibraryScanItemParams struct {
-	ID                uuid.UUID
-	ScanID            uuid.UUID
-	Path              string
-	FileName          string
-	DetectedTitle     string
-	DetectedYear      pgtype.Int4
-	DetectedMediaKind string
-	Status            string
-	MatchedTitle      pgtype.Text
-	MatchedYear       pgtype.Int4
-	MatchedMediaKind  pgtype.Text
-	MediaItemID       *uuid.UUID
+	ID                         uuid.UUID
+	ScanID                     uuid.UUID
+	Path                       string
+	FileName                   string
+	SizeBytes                  int64
+	DetectedTitle              string
+	DetectedYear               pgtype.Int4
+	DetectedMediaKind          string
+	SeasonNumber               pgtype.Int4
+	EpisodeNumber              pgtype.Int4
+	Status                     string
+	Imported                   bool
+	MatchedTitle               pgtype.Text
+	MatchedYear                pgtype.Int4
+	MatchedMediaKind           pgtype.Text
+	MatchedExternalProvider    pgtype.Text
+	MatchedExternalID          pgtype.Text
+	MatchSource                pgtype.Text
+	SelectedMetadataProviderID *uuid.UUID
+	DuplicateGroupID           pgtype.Text
+	DuplicateRemovalAllowed    bool
+	MediaItemID                *uuid.UUID
 }
 
 func (q *Queries) AddLibraryScanItem(ctx context.Context, arg AddLibraryScanItemParams) error {
@@ -65,13 +95,23 @@ func (q *Queries) AddLibraryScanItem(ctx context.Context, arg AddLibraryScanItem
 		arg.ScanID,
 		arg.Path,
 		arg.FileName,
+		arg.SizeBytes,
 		arg.DetectedTitle,
 		arg.DetectedYear,
 		arg.DetectedMediaKind,
+		arg.SeasonNumber,
+		arg.EpisodeNumber,
 		arg.Status,
+		arg.Imported,
 		arg.MatchedTitle,
 		arg.MatchedYear,
 		arg.MatchedMediaKind,
+		arg.MatchedExternalProvider,
+		arg.MatchedExternalID,
+		arg.MatchSource,
+		arg.SelectedMetadataProviderID,
+		arg.DuplicateGroupID,
+		arg.DuplicateRemovalAllowed,
 		arg.MediaItemID,
 	)
 	return err
@@ -113,6 +153,7 @@ const getLibraryScan = `-- name: GetLibraryScan :one
 select s.id,
     s.library_folder_id,
     f.path as folder_path,
+    f.kind as folder_kind,
     s.status,
     s.total_files,
     s.auto_matched_count,
@@ -128,6 +169,7 @@ type GetLibraryScanRow struct {
 	ID               uuid.UUID
 	LibraryFolderID  uuid.UUID
 	FolderPath       string
+	FolderKind       string
 	Status           string
 	TotalFiles       int32
 	AutoMatchedCount int32
@@ -143,6 +185,7 @@ func (q *Queries) GetLibraryScan(ctx context.Context, id uuid.UUID) (GetLibraryS
 		&i.ID,
 		&i.LibraryFolderID,
 		&i.FolderPath,
+		&i.FolderKind,
 		&i.Status,
 		&i.TotalFiles,
 		&i.AutoMatchedCount,
@@ -166,18 +209,76 @@ func (q *Queries) GetLibraryScanFolderID(ctx context.Context, id uuid.UUID) (uui
 	return library_folder_id, err
 }
 
+const getLibraryScanItemPath = `-- name: GetLibraryScanItemPath :one
+select path
+from app.library_scan_items
+where scan_id = $1
+    and id = $2
+`
+
+type GetLibraryScanItemPathParams struct {
+	ScanID uuid.UUID
+	ID     uuid.UUID
+}
+
+func (q *Queries) GetLibraryScanItemPath(ctx context.Context, arg GetLibraryScanItemPathParams) (string, error) {
+	row := q.db.QueryRow(ctx, getLibraryScanItemPath, arg.ScanID, arg.ID)
+	var path string
+	err := row.Scan(&path)
+	return path, err
+}
+
+const listActiveImportedPathsForLibraryFolder = `-- name: ListActiveImportedPathsForLibraryFolder :many
+select distinct lsi.path
+from app.library_scan_items lsi
+join app.library_scans ls on ls.id = lsi.scan_id
+where ls.library_folder_id = $1
+    and lsi.media_item_id is not null
+    and lsi.status in ('auto_added', 'manually_added', 'restored')
+`
+
+func (q *Queries) ListActiveImportedPathsForLibraryFolder(ctx context.Context, libraryFolderID uuid.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, listActiveImportedPathsForLibraryFolder, libraryFolderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var path string
+		if err := rows.Scan(&path); err != nil {
+			return nil, err
+		}
+		items = append(items, path)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listLibraryScanItems = `-- name: ListLibraryScanItems :many
 select id,
     scan_id,
     path,
     file_name,
+    size_bytes,
     detected_title,
     detected_year,
     detected_media_kind,
+    season_number,
+    episode_number,
     status,
+    imported,
     matched_title,
     matched_year,
     matched_media_kind,
+    matched_external_provider,
+    matched_external_id,
+    match_source,
+    selected_metadata_provider_id,
+    duplicate_group_id,
+    duplicate_removal_allowed,
     media_item_id,
     created_at,
     updated_at
@@ -187,20 +288,30 @@ order by status desc, path asc
 `
 
 type ListLibraryScanItemsRow struct {
-	ID                uuid.UUID
-	ScanID            uuid.UUID
-	Path              string
-	FileName          string
-	DetectedTitle     string
-	DetectedYear      pgtype.Int4
-	DetectedMediaKind string
-	Status            string
-	MatchedTitle      pgtype.Text
-	MatchedYear       pgtype.Int4
-	MatchedMediaKind  pgtype.Text
-	MediaItemID       *uuid.UUID
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                         uuid.UUID
+	ScanID                     uuid.UUID
+	Path                       string
+	FileName                   string
+	SizeBytes                  int64
+	DetectedTitle              string
+	DetectedYear               pgtype.Int4
+	DetectedMediaKind          string
+	SeasonNumber               pgtype.Int4
+	EpisodeNumber              pgtype.Int4
+	Status                     string
+	Imported                   bool
+	MatchedTitle               pgtype.Text
+	MatchedYear                pgtype.Int4
+	MatchedMediaKind           pgtype.Text
+	MatchedExternalProvider    pgtype.Text
+	MatchedExternalID          pgtype.Text
+	MatchSource                pgtype.Text
+	SelectedMetadataProviderID *uuid.UUID
+	DuplicateGroupID           pgtype.Text
+	DuplicateRemovalAllowed    bool
+	MediaItemID                *uuid.UUID
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
 }
 
 func (q *Queries) ListLibraryScanItems(ctx context.Context, scanID uuid.UUID) ([]ListLibraryScanItemsRow, error) {
@@ -217,13 +328,23 @@ func (q *Queries) ListLibraryScanItems(ctx context.Context, scanID uuid.UUID) ([
 			&i.ScanID,
 			&i.Path,
 			&i.FileName,
+			&i.SizeBytes,
 			&i.DetectedTitle,
 			&i.DetectedYear,
 			&i.DetectedMediaKind,
+			&i.SeasonNumber,
+			&i.EpisodeNumber,
 			&i.Status,
+			&i.Imported,
 			&i.MatchedTitle,
 			&i.MatchedYear,
 			&i.MatchedMediaKind,
+			&i.MatchedExternalProvider,
+			&i.MatchedExternalID,
+			&i.MatchSource,
+			&i.SelectedMetadataProviderID,
+			&i.DuplicateGroupID,
+			&i.DuplicateRemovalAllowed,
 			&i.MediaItemID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -241,62 +362,103 @@ func (q *Queries) ListLibraryScanItems(ctx context.Context, scanID uuid.UUID) ([
 const matchLibraryScanItem = `-- name: MatchLibraryScanItem :one
 update app.library_scan_items
 set status = 'manually_added',
-    matched_title = $1,
-    matched_year = $2,
-    matched_media_kind = $3,
-    media_item_id = $4,
+    imported = $1,
+    matched_title = $2,
+    matched_year = $3,
+    matched_media_kind = $4,
+    matched_external_provider = $5,
+    matched_external_id = $6,
+    match_source = $7,
+    selected_metadata_provider_id = $8,
+    media_item_id = $9,
+    season_id = $10,
+    episode_id = $11,
     updated_at = now()
-where scan_id = $5
-    and id = $6
+where scan_id = $12
+    and id = $13
     and status = 'pending'
 returning id,
     scan_id,
     path,
     file_name,
+    size_bytes,
     detected_title,
     detected_year,
     detected_media_kind,
+    season_number,
+    episode_number,
     status,
+    imported,
     matched_title,
     matched_year,
     matched_media_kind,
+    matched_external_provider,
+    matched_external_id,
+    match_source,
+    selected_metadata_provider_id,
+    duplicate_group_id,
+    duplicate_removal_allowed,
     media_item_id,
     created_at,
     updated_at
 `
 
 type MatchLibraryScanItemParams struct {
-	MatchedTitle     pgtype.Text
-	MatchedYear      pgtype.Int4
-	MatchedMediaKind pgtype.Text
-	MediaItemID      *uuid.UUID
-	ScanID           uuid.UUID
-	ID               uuid.UUID
+	Imported                   bool
+	MatchedTitle               pgtype.Text
+	MatchedYear                pgtype.Int4
+	MatchedMediaKind           pgtype.Text
+	MatchedExternalProvider    pgtype.Text
+	MatchedExternalID          pgtype.Text
+	MatchSource                pgtype.Text
+	SelectedMetadataProviderID *uuid.UUID
+	MediaItemID                *uuid.UUID
+	SeasonID                   *uuid.UUID
+	EpisodeID                  *uuid.UUID
+	ScanID                     uuid.UUID
+	ID                         uuid.UUID
 }
 
 type MatchLibraryScanItemRow struct {
-	ID                uuid.UUID
-	ScanID            uuid.UUID
-	Path              string
-	FileName          string
-	DetectedTitle     string
-	DetectedYear      pgtype.Int4
-	DetectedMediaKind string
-	Status            string
-	MatchedTitle      pgtype.Text
-	MatchedYear       pgtype.Int4
-	MatchedMediaKind  pgtype.Text
-	MediaItemID       *uuid.UUID
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	ID                         uuid.UUID
+	ScanID                     uuid.UUID
+	Path                       string
+	FileName                   string
+	SizeBytes                  int64
+	DetectedTitle              string
+	DetectedYear               pgtype.Int4
+	DetectedMediaKind          string
+	SeasonNumber               pgtype.Int4
+	EpisodeNumber              pgtype.Int4
+	Status                     string
+	Imported                   bool
+	MatchedTitle               pgtype.Text
+	MatchedYear                pgtype.Int4
+	MatchedMediaKind           pgtype.Text
+	MatchedExternalProvider    pgtype.Text
+	MatchedExternalID          pgtype.Text
+	MatchSource                pgtype.Text
+	SelectedMetadataProviderID *uuid.UUID
+	DuplicateGroupID           pgtype.Text
+	DuplicateRemovalAllowed    bool
+	MediaItemID                *uuid.UUID
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
 }
 
 func (q *Queries) MatchLibraryScanItem(ctx context.Context, arg MatchLibraryScanItemParams) (MatchLibraryScanItemRow, error) {
 	row := q.db.QueryRow(ctx, matchLibraryScanItem,
+		arg.Imported,
 		arg.MatchedTitle,
 		arg.MatchedYear,
 		arg.MatchedMediaKind,
+		arg.MatchedExternalProvider,
+		arg.MatchedExternalID,
+		arg.MatchSource,
+		arg.SelectedMetadataProviderID,
 		arg.MediaItemID,
+		arg.SeasonID,
+		arg.EpisodeID,
 		arg.ScanID,
 		arg.ID,
 	)
@@ -306,13 +468,23 @@ func (q *Queries) MatchLibraryScanItem(ctx context.Context, arg MatchLibraryScan
 		&i.ScanID,
 		&i.Path,
 		&i.FileName,
+		&i.SizeBytes,
 		&i.DetectedTitle,
 		&i.DetectedYear,
 		&i.DetectedMediaKind,
+		&i.SeasonNumber,
+		&i.EpisodeNumber,
 		&i.Status,
+		&i.Imported,
 		&i.MatchedTitle,
 		&i.MatchedYear,
 		&i.MatchedMediaKind,
+		&i.MatchedExternalProvider,
+		&i.MatchedExternalID,
+		&i.MatchSource,
+		&i.SelectedMetadataProviderID,
+		&i.DuplicateGroupID,
+		&i.DuplicateRemovalAllowed,
 		&i.MediaItemID,
 		&i.CreatedAt,
 		&i.UpdatedAt,

@@ -9,10 +9,10 @@ import {
 	deleteSubtitleProvider as deleteSubtitleProviderRequest,
 	deleteTag as deleteTagRequest,
 	deleteUser as deleteUserRequest,
-	matchLibraryScanItem as matchLibraryScanItemRequest,
+	advancedSearchMedia,
+	importLibraryScanItems as importLibraryScanItemsRequest,
 	mediaTypeForLibraryKind,
-	scanLibraryFolder as scanLibraryFolderRequest,
-	searchMedia as searchMediaRequest
+	scanLibraryFolder as scanLibraryFolderRequest
 } from '$lib/settings/api';
 import {
 	emptyCustomFormatForm,
@@ -23,8 +23,7 @@ import {
 	emptySubtitleProviderForm,
 	emptyUserForm
 } from '$lib/settings/forms';
-import type { LibraryMediaKind, LibraryScan } from '$lib/settings/types';
-import type { LibraryScanImportRow } from '$lib/components/settings/library/scan/libraryScanImport';
+import type { LibraryMediaKind, LibraryScan, LibraryScanImportRequest } from '$lib/settings/types';
 import { emptyTagForm, errorMessageFrom, omitResult } from './helpers';
 import type { AppShellState } from './state.svelte';
 
@@ -219,37 +218,33 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 		}
 	}
 
-	async function searchLibraryMatch(kind: LibraryMediaKind, query: string) {
-		return await searchMediaRequest({
+	async function searchLibraryMatch(kind: LibraryMediaKind, query: string, providerId?: string) {
+		const groups = await advancedSearchMedia({
 			type: mediaTypeForLibraryKind(kind),
-			query: query.trim()
+			query: query.trim(),
+			includeMedia: true,
+			includePeople: false,
+			providerIds: providerId ? [providerId] : undefined,
+			limit: 8
 		});
+		return groups.flatMap((group) => group.results);
 	}
 
-	async function importLibraryScanRows(scan: LibraryScan, rows: LibraryScanImportRow[]) {
+	async function importLibraryScanRows(scan: LibraryScan, request: LibraryScanImportRequest) {
 		clearNotice();
 
 		try {
-			const results: Awaited<ReturnType<typeof matchLibraryScanItemRequest>>[] = [];
-			for (const row of rows) {
-				results.push(await matchLibraryScanItemRequest(scan.id, row.item.id, row.request));
-			}
-			const importedMediaIds = results.map((result) => result.mediaItem.id);
+			const result = await importLibraryScanItemsRequest(scan.id, request);
+			const importedMediaIds = result.mediaItems.map((item) => item.id);
 			state.mediaItems = [
-				...results.map((result) => result.mediaItem),
+				...result.mediaItems,
 				...state.mediaItems.filter((item) => !importedMediaIds.includes(item.id))
 			];
 			state.libraryScansByFolder = {
 				...state.libraryScansByFolder,
-				[scan.folderId]: {
-					...scan,
-					manualCount: Math.max(0, scan.manualCount - results.length),
-					items: scan.items.map(
-						(item) => results.find((result) => result.item.id === item.id)?.item ?? item
-					)
-				}
+				[scan.folderId]: result.scan
 			};
-			state.message = `Imported ${results.length} media item${results.length === 1 ? '' : 's'}`;
+			state.message = `Imported ${result.importedCount} media item${result.importedCount === 1 ? '' : 's'}`;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not import library items');
 		}

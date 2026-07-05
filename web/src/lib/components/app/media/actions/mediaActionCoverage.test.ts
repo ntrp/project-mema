@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	matchingLibraryFolders,
 	mediaPosterUrl,
 	preselectLibraryFolderId,
 	preselectQualityProfileId
@@ -40,13 +41,19 @@ describe('media action defaults (SCN-MEDIA-003)', () => {
 			{ id: 'uhd', name: 'UHD 2160p' }
 		] as QualityProfileOption[];
 		const folders = [
-			{ id: 'movies', path: '/media/movies' },
-			{ id: 'anime-movies', path: '/media/anime/movies' },
-			{ id: 'series', path: '/media/tv' }
+			{ id: 'movies', path: '/media/movies', kind: 'movie' },
+			{ id: 'anime-movies', path: '/media/anime/movies', kind: 'movie' },
+			{ id: 'series', path: '/media/tv', kind: 'series' }
 		] as LibraryFolder[];
 
 		expect(preselectQualityProfileId(anime, profiles)).toBe('anime-1080p');
 		expect(preselectLibraryFolderId(anime, folders)).toBe('anime-movies');
+		expect(preselectLibraryFolderId({ title: 'Show', type: 'serie' } as MediaSearchResult, folders)).toBe('series');
+		expect(matchingLibraryFolders('movie', folders).map((folder) => folder.id)).toEqual([
+			'movies',
+			'anime-movies'
+		]);
+		expect(matchingLibraryFolders('serie', folders).map((folder) => folder.id)).toEqual(['series']);
 		expect(mediaPosterUrl('/poster.jpg')).toBe('https://image.tmdb.org/t/p/w780/poster.jpg');
 		expect(mediaPosterUrl('https://image.test/poster.jpg')).toBe('https://image.test/poster.jpg');
 		expect(mediaPosterUrl()).toBeUndefined();
@@ -104,11 +111,14 @@ describe('media monitoring payloads (SCN-MEDIA-004)', () => {
 });
 
 describe('media file detail rows (SCN-MEDIA-004)', () => {
-	it('describes tracks, chapters, unwanted audio, and missing expected languages', () => {
+	it('describes tracks, chapters, unwanted streams, and missing expected languages', () => {
 		const rows = fileDetailRows({
 			quality: 'HD-1080p',
 			expectedLanguages: ['English', 'German'],
+			expectedRequiredLanguages: ['German'],
+			expectedSubtitleLanguages: ['English'],
 			removeNonEnabledLanguages: true,
+			removeNonEnabledSubtitleLanguages: true,
 			tracks: [
 				{
 					index: 0,
@@ -130,7 +140,8 @@ describe('media file detail rows (SCN-MEDIA-004)', () => {
 					bitRate: '640000',
 					title: 'Main'
 				},
-				{ index: 2, type: 'audio', language: 'spa', codec: 'aac' }
+				{ index: 2, type: 'audio', language: 'spa', codec: 'aac' },
+				{ index: 3, type: 'subtitle', language: 'spa', codec: 'srt' }
 			],
 			chapters: [{ index: 0, title: 'Opening', startTime: '00:00:00', endTime: '00:01:00' }]
 		} as never);
@@ -141,6 +152,7 @@ describe('media file detail rows (SCN-MEDIA-004)', () => {
 			'h264 · 1920x1080 · High · yuv420p · 24 · 4000 kbps'
 		]);
 		expect(rows.find((row) => row.key === 'audio-2')?.unwanted).toBe(true);
+		expect(rows.find((row) => row.key === 'subtitle-3')?.unwanted).toBe(true);
 		expect(rows.find((row) => row.key === 'chapter-0')?.description).toBe(
 			'Opening · 00:00:00 - 00:01:00'
 		);

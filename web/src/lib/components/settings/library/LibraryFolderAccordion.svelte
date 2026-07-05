@@ -2,15 +2,19 @@
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronUpIcon from '@lucide/svelte/icons/chevron-up';
 	import LibraryScanImportTable from '$lib/components/settings/library/scan/LibraryScanImportTable.svelte';
-	import type { LibraryScanImportRow } from '$lib/components/settings/library/scan/libraryScanImport';
 	import SettingsRowActionButton from '$lib/components/settings/shared/SettingsRowActionButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
+	import { mediaBadgeToneClass } from '$lib/components/app/media/shared/mediaBadge';
+	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import type {
 		LibraryFolder,
+		LibraryFolderKind,
 		LibraryMediaKind,
 		LibraryScan,
+		LibraryScanImportRequest,
 		MediaSearchResult,
+		MetadataProvider,
 		QualityProfileOption
 	} from '$lib/settings/types';
 
@@ -20,10 +24,15 @@
 		openFolderId?: string;
 		scanningFolderId?: string;
 		qualityProfiles: QualityProfileOption[];
+		metadataProviders: MetadataProvider[];
 		onScan: (_id: string) => void | Promise<void>;
 		onDelete: (_id: string) => void | Promise<void>;
-		onSearchMatch: (_kind: LibraryMediaKind, _query: string) => Promise<MediaSearchResult[]>;
-		onImport: (_scan: LibraryScan, _rows: LibraryScanImportRow[]) => Promise<void>;
+		onSearchMatch: (
+			_kind: LibraryMediaKind,
+			_query: string,
+			_providerId?: string
+		) => Promise<MediaSearchResult[]>;
+		onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
 	}
 
 	let {
@@ -32,6 +41,7 @@
 		openFolderId,
 		scanningFolderId,
 		qualityProfiles,
+		metadataProviders,
 		onScan,
 		onDelete,
 		onSearchMatch,
@@ -52,6 +62,10 @@
 			void onScan(id);
 		}
 	}
+
+	function folderKindLabel(kind: LibraryFolderKind) {
+		return kind === 'series' ? 'Series' : 'Movies';
+	}
 </script>
 
 <div class="grid gap-3">
@@ -71,6 +85,11 @@
 						<ChevronDownIcon aria-hidden="true" />
 					{/if}
 					<span class="truncate">{folder.path}</span>
+					<span
+						class={`ml-auto rounded-sm border px-1.5 py-0.5 text-xs font-bold ${mediaBadgeToneClass(folder.kind)}`}
+					>
+						{folderKindLabel(folder.kind)}
+					</span>
 				</Button>
 				<div class="flex shrink-0 items-center gap-2">
 					<SettingsRowActionButton
@@ -93,11 +112,14 @@
 			{#if opened[folder.id]}
 				<div class="grid gap-3 p-3">
 					{#if scanningFolderId === folder.id && !scan}
-						<p class="m-0 text-sm leading-6 text-muted-foreground">Scanning folder</p>
+						<p class="m-0 leading-6">
+							<InlineSpinner label="Scanning folder" />
+						</p>
 					{:else if scan}
 						<LibraryScanImportTable
 							{scan}
 							{qualityProfiles}
+							{metadataProviders}
 							loading={scanningFolderId === folder.id}
 							{onSearchMatch}
 							{onImport}

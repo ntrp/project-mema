@@ -62,7 +62,9 @@ func mediaFileSubtitleSatisfaction(
 			matched = append(matched, target.LanguageID)
 			continue
 		}
-		missing = append(missing, target.LanguageID)
+		if target.Required {
+			missing = append(missing, target.LanguageID)
+		}
 	}
 	state := MediaFileSubtitleSatisfactionStateSatisfied
 	if len(missing) > 0 {

@@ -53,6 +53,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 	for _, value := range request.SubtitleLanguages {
 		subtitleLanguages = append(subtitleLanguages, storage.MediaProfileSubtitleLanguage{
 			LanguageID:   value.LanguageId,
+			Score:        value.Score,
 			Required:     value.Required,
 			SubtitleType: string(value.SubtitleType),
 		})
@@ -67,6 +68,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 
 	return storage.MediaProfileInput{
 		Name:                              name,
+		IsDefault:                         request.IsDefault,
 		QualityIDs:                        qualityIDs,
 		UpgradesAllowed:                   request.UpgradesAllowed,
 		UpgradeUntilQualityID:             request.UpgradeUntilQualityId,
@@ -74,6 +76,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		UpgradeUntilCustomFormatScore:     request.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: request.MinimumCustomFormatScoreIncrement,
 		RemoveNonEnabledLanguages:         request.RemoveNonEnabledLanguages,
+		RemoveNonEnabledSubtitleLanguages: request.RemoveNonEnabledSubtitleLanguages,
 		PreferredProtocol:                 string(request.PreferredProtocol),
 		SeriesPackPreference:              string(request.SeriesPackPreference),
 		TargetLanguages:                   targetLanguages,
@@ -95,6 +98,7 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 	return MediaProfile{
 		Id:                                profile.ID,
 		Name:                              profile.Name,
+		IsDefault:                         profile.IsDefault,
 		QualityIds:                        profile.QualityIDs,
 		UpgradesAllowed:                   profile.UpgradesAllowed,
 		UpgradeUntilQualityId:             profile.UpgradeUntilQualityID,
@@ -102,6 +106,7 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		UpgradeUntilCustomFormatScore:     profile.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: profile.MinimumCustomFormatScoreIncrement,
 		RemoveNonEnabledLanguages:         profile.RemoveNonEnabledLanguages,
+		RemoveNonEnabledSubtitleLanguages: profile.RemoveNonEnabledSubtitleLanguages,
 		PreferredProtocol:                 MediaProfilePreferredProtocol(profile.PreferredProtocol),
 		SeriesPackPreference:              MediaProfileSeriesPackPreference(profile.SeriesPackPreference),
 		TargetLanguages:                   profile.TargetLanguages,
@@ -132,6 +137,7 @@ func mediaProfileSubtitleLanguageResponses(
 	for _, language := range languages {
 		response = append(response, MediaProfileSubtitleLanguage{
 			LanguageId:   language.LanguageID,
+			Score:        language.Score,
 			Required:     language.Required,
 			SubtitleType: MediaProfileSubtitleLanguageSubtitleType(language.SubtitleType),
 		})

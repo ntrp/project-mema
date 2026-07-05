@@ -66,6 +66,57 @@ func TestSCNMedia002RequiredLanguageRejectsMissingReleaseLanguage(t *testing.T) 
 	}
 }
 
+func TestSCNMedia002SubtitleLanguageScoreContributesToReleaseMatch(t *testing.T) {
+	profile := storage.MediaProfile{
+		QualityIDs: []string{"webdl-1080p"},
+		SubtitleLanguages: []storage.MediaProfileSubtitleLanguage{
+			{LanguageID: "english", Score: 25, Required: false, SubtitleType: "any"},
+		},
+	}
+
+	match := EvaluateReleaseMatchWithLanguageContext(
+		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},
+		storage.ReleaseCandidate{Title: "Scenario.Movie.2026.English.1080p.WEBDL"},
+		&profile,
+		nil,
+		[]storage.Language{{Code: "EN", DisplayName: "English", Aliases: []string{"ENG"}}},
+	)
+
+	if match.Severity != "info" {
+		t.Fatalf("expected info match, got %q: %v", match.Severity, match.Details)
+	}
+	if match.Score != 25 {
+		t.Fatalf("score = %d, want subtitle score 25", match.Score)
+	}
+	if len(match.LanguageContributors) != 1 || match.LanguageContributors[0].Label != "Subtitle: English" {
+		t.Fatalf("language contributors = %#v", match.LanguageContributors)
+	}
+}
+
+func TestSCNMedia002RequiredSubtitleLanguageRejectsMissingReleaseLanguage(t *testing.T) {
+	profile := storage.MediaProfile{
+		QualityIDs: []string{"webdl-1080p"},
+		SubtitleLanguages: []storage.MediaProfileSubtitleLanguage{
+			{LanguageID: "japanese", Score: 25, Required: true, SubtitleType: "any"},
+		},
+	}
+
+	match := EvaluateReleaseMatchWithLanguageContext(
+		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},
+		storage.ReleaseCandidate{Title: "Scenario.Movie.2026.English.1080p.WEBDL"},
+		&profile,
+		nil,
+		[]storage.Language{{Code: "JA", DisplayName: "Japanese", Aliases: []string{"JPN"}}},
+	)
+
+	if match.Severity != "error" {
+		t.Fatalf("expected subtitle language rejection, got %q: %v", match.Severity, match.Details)
+	}
+	if len(match.Details) == 0 || !strings.Contains(match.Details[0], "Required subtitle language Japanese is missing") {
+		t.Fatalf("details = %#v", match.Details)
+	}
+}
+
 func TestSCNMedia002RemoveNonEnabledLanguagesRejectsExtraLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs:                    []string{"webdl-1080p"},

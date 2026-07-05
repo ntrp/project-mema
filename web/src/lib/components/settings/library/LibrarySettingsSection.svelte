@@ -11,15 +11,16 @@
 	import { Card } from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
 	import { emptyLibraryFolderForm } from '$lib/settings/forms';
-	import type { LibraryScanImportRow } from '$lib/components/settings/library/scan/libraryScanImport';
 	import type {
 		LibraryFolder,
 		LibraryFolderForm as LibraryFolderFormValue,
 		LibraryMediaKind,
 		LibraryScan,
+		LibraryScanImportRequest,
 		PathMapping,
 		PathMappingForm,
 		MediaSearchResult,
+		MetadataProvider,
 		QualityProfileOption
 	} from '$lib/settings/types';
 
@@ -31,6 +32,7 @@
 		scansByFolder: Record<string, LibraryScan>;
 		openFolderId?: string;
 		qualityProfiles: QualityProfileOption[];
+		metadataProviders: MetadataProvider[];
 		saving: boolean;
 		scanningLibraryFolderId?: string;
 		savingPathMapping: boolean;
@@ -40,8 +42,12 @@
 		onDelete: (_id: string) => void | Promise<void>;
 		onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;
 		onDeletePathMapping: (_id: string) => void | Promise<void>;
-		onSearchMatch: (_kind: LibraryMediaKind, _query: string) => Promise<MediaSearchResult[]>;
-		onImport: (_scan: LibraryScan, _rows: LibraryScanImportRow[]) => Promise<void>;
+		onSearchMatch: (
+			_kind: LibraryMediaKind,
+			_query: string,
+			_providerId?: string
+		) => Promise<MediaSearchResult[]>;
+		onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
 	}
 
 	let {
@@ -52,6 +58,7 @@
 		scansByFolder,
 		openFolderId,
 		qualityProfiles,
+		metadataProviders,
 		saving,
 		scanningLibraryFolderId,
 		savingPathMapping,
@@ -104,6 +111,7 @@
 					{openFolderId}
 					scanningFolderId={scanningLibraryFolderId}
 					{qualityProfiles}
+					{metadataProviders}
 					{onScan}
 					{onDelete}
 					{onSearchMatch}

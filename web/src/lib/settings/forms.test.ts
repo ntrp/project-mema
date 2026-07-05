@@ -65,8 +65,9 @@ describe('settings form normalization', () => {
 			})
 		).toMatchObject({ name: 'TMDB', pin: '1234', accessToken: undefined });
 
-		expect(normalizeLibraryFolderForm({ path: ' /media/movies ' })).toEqual({
-			path: '/media/movies'
+		expect(normalizeLibraryFolderForm({ path: ' /media/movies ', kind: 'movie' })).toEqual({
+			path: '/media/movies',
+			kind: 'movie'
 		});
 		expect(normalizePathMappingForm({ clientPath: ' /downloads ', appPath: ' /data ' })).toEqual({
 			clientPath: '/downloads',

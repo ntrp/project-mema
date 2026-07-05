@@ -55,6 +55,7 @@ export type SystemLogLevelResponse = components['schemas']['SystemLogLevelRespon
 export type SystemJob = components['schemas']['SystemJob'];
 export type SystemJobListResponse = components['schemas']['SystemJobListResponse'];
 export type LibraryFolder = components['schemas']['LibraryFolder'];
+export type LibraryFolderKind = components['schemas']['LibraryFolderKind'];
 export type LibraryFolderOption = components['schemas']['LibraryFolderOption'];
 export type LibraryFolderOptionCreateRequest =
 	components['schemas']['LibraryFolderOptionCreateRequest'];
@@ -67,6 +68,8 @@ export type LibraryMediaKind = components['schemas']['LibraryMediaKind'];
 export type LibraryScan = components['schemas']['LibraryScan'];
 export type LibraryScanItem = components['schemas']['LibraryScanItem'];
 export type LibraryScanItemMatchRequest = components['schemas']['LibraryScanItemMatchRequest'];
+export type LibraryScanImportRequest = components['schemas']['LibraryScanImportRequest'];
+export type LibraryScanImportResponse = components['schemas']['LibraryScanImportResponse'];
 export type MediaType = components['schemas']['MediaType'];
 export type MediaSearchRequest = components['schemas']['MediaSearchRequest'];
 export type MediaSearchResult = components['schemas']['MediaSearchResult'];
@@ -165,8 +168,12 @@ export type UserForm = {
 export interface QualityProfileOption {
 	id: string;
 	name: string;
+	isDefault?: boolean;
 	targetLanguages?: string[];
+	targetLanguageScores?: MediaProfileLanguageScore[];
+	subtitleLanguages?: MediaProfileSubtitleLanguage[];
 	removeNonEnabledLanguages?: boolean;
+	removeNonEnabledSubtitleLanguages?: boolean;
 }
 
 export type AppView =

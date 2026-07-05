@@ -34,9 +34,9 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 			{LanguageID: "Brazilian Portuguese", Score: 50},
 		},
 		SubtitleLanguages: []MediaProfileSubtitleLanguage{
-			{LanguageID: " English ", Required: true, SubtitleType: "embedded"},
-			{LanguageID: "english", Required: false, SubtitleType: "external"},
-			{LanguageID: "German", Required: false, SubtitleType: "not-real"},
+			{LanguageID: " English ", Score: 25, Required: true, SubtitleType: "embedded"},
+			{LanguageID: "english", Score: 10, Required: false, SubtitleType: "external"},
+			{LanguageID: "German", Score: 5, Required: false, SubtitleType: "not-real"},
 		},
 	}, []string{"webdl-1080p", "bluray-2160p"})
 	if err != nil {
@@ -56,10 +56,10 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if len(input.SubtitleLanguages) != 2 {
 		t.Fatalf("expected deduped subtitle languages, got %#v", input.SubtitleLanguages)
 	}
-	if input.SubtitleLanguages[0].LanguageID != "english" || input.SubtitleLanguages[0].SubtitleType != "embedded" {
+	if input.SubtitleLanguages[0].LanguageID != "english" || input.SubtitleLanguages[0].SubtitleType != "embedded" || input.SubtitleLanguages[0].Score != 25 {
 		t.Fatalf("unexpected first subtitle language: %#v", input.SubtitleLanguages[0])
 	}
-	if input.SubtitleLanguages[1].LanguageID != "german" || input.SubtitleLanguages[1].SubtitleType != "any" {
+	if input.SubtitleLanguages[1].LanguageID != "german" || input.SubtitleLanguages[1].SubtitleType != "any" || input.SubtitleLanguages[1].Score != 5 {
 		t.Fatalf("unexpected second subtitle language: %#v", input.SubtitleLanguages[1])
 	}
 }

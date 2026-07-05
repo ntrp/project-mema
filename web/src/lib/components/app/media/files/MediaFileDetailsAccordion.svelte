@@ -72,7 +72,7 @@
 										{/snippet}
 									</Tooltip.Trigger>
 									<Tooltip.Content>
-										This audio track is not enabled for the profile and will be removed after the
+										This track is not enabled for the profile and will be removed after the
 										download client item is gone.
 									</Tooltip.Content>
 								</Tooltip.Root>

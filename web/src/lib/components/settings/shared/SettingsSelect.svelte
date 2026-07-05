@@ -4,6 +4,7 @@
 	interface Option {
 		value: string;
 		label: string;
+		disabled?: boolean;
 	}
 
 	interface Props {
@@ -33,7 +34,7 @@
 	<Select.Trigger {size} class="w-full">{selectedLabel}</Select.Trigger>
 	<Select.Content>
 		{#each options as option (option.value)}
-			<Select.Item value={option.value} label={option.label} />
+			<Select.Item value={option.value} label={option.label} disabled={option.disabled} />
 		{/each}
 	</Select.Content>
 </Select.Root>

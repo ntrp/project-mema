@@ -98,6 +98,11 @@ func (s *SettingsStore) saveMediaProfile(
 	defer tx.Rollback(ctx) //nolint:errcheck
 	q := storagegen.New(tx)
 
+	if input.IsDefault {
+		if err := q.ClearDefaultMediaProfiles(ctx); err != nil {
+			return MediaProfile{}, normalizeMediaProfileWriteError(err)
+		}
+	}
 	if create {
 		if err := q.CreateMediaProfile(ctx, mediaProfileParams(id, name, input)); err != nil {
 			return MediaProfile{}, normalizeMediaProfileWriteError(err)
@@ -176,12 +181,14 @@ func mediaProfileParams(id string, name string, input MediaProfileInput) storage
 	return storagegen.CreateMediaProfileParams{
 		ID:                                id,
 		Name:                              name,
+		IsDefault:                         input.IsDefault,
 		UpgradesAllowed:                   input.UpgradesAllowed,
 		UpgradeUntilQualityID:             textValue(input.UpgradeUntilQualityID),
 		MinimumCustomFormatScore:          input.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     input.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: input.MinimumCustomFormatScoreIncrement,
 		RemoveNonEnabledLanguages:         input.RemoveNonEnabledLanguages,
+		RemoveNonEnabledSubtitleLanguages: input.RemoveNonEnabledSubtitleLanguages,
 		PreferredProtocol:                 input.PreferredProtocol,
 		SeriesPackPreference:              input.SeriesPackPreference,
 	}
@@ -191,12 +198,14 @@ func mediaProfileUpdateParams(id string, name string, input MediaProfileInput) s
 	return storagegen.UpdateMediaProfileParams{
 		ID:                                id,
 		Name:                              name,
+		IsDefault:                         input.IsDefault,
 		UpgradesAllowed:                   input.UpgradesAllowed,
 		UpgradeUntilQualityID:             textValue(input.UpgradeUntilQualityID),
 		MinimumCustomFormatScore:          input.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     input.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: input.MinimumCustomFormatScoreIncrement,
 		RemoveNonEnabledLanguages:         input.RemoveNonEnabledLanguages,
+		RemoveNonEnabledSubtitleLanguages: input.RemoveNonEnabledSubtitleLanguages,
 		PreferredProtocol:                 input.PreferredProtocol,
 		SeriesPackPreference:              input.SeriesPackPreference,
 	}
@@ -206,12 +215,14 @@ func mediaProfileFromRow(row storagegen.AppMediaProfile) MediaProfile {
 	return MediaProfile{
 		ID:                                row.ID,
 		Name:                              row.Name,
+		IsDefault:                         row.IsDefault,
 		UpgradesAllowed:                   row.UpgradesAllowed,
 		UpgradeUntilQualityID:             textPtr(row.UpgradeUntilQualityID),
 		MinimumCustomFormatScore:          row.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     row.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: row.MinimumCustomFormatScoreIncrement,
 		RemoveNonEnabledLanguages:         row.RemoveNonEnabledLanguages,
+		RemoveNonEnabledSubtitleLanguages: row.RemoveNonEnabledSubtitleLanguages,
 		PreferredProtocol:                 row.PreferredProtocol,
 		SeriesPackPreference:              row.SeriesPackPreference,
 		CreatedAt:                         row.CreatedAt,

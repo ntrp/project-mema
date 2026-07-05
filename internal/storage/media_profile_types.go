@@ -9,6 +9,7 @@ import (
 type MediaProfile struct {
 	ID                                string
 	Name                              string
+	IsDefault                         bool
 	QualityIDs                        []string
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             *string
@@ -16,6 +17,7 @@ type MediaProfile struct {
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveNonEnabledLanguages         bool
+	RemoveNonEnabledSubtitleLanguages bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	TargetLanguages                   []string
@@ -28,6 +30,7 @@ type MediaProfile struct {
 
 type MediaProfileInput struct {
 	Name                              string
+	IsDefault                         bool
 	QualityIDs                        []string
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             *string
@@ -35,6 +38,7 @@ type MediaProfileInput struct {
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveNonEnabledLanguages         bool
+	RemoveNonEnabledSubtitleLanguages bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	TargetLanguages                   []string
@@ -56,6 +60,7 @@ type MediaProfileCustomFormatScore struct {
 
 type MediaProfileSubtitleLanguage struct {
 	LanguageID   string
+	Score        int32
 	Required     bool
 	SubtitleType string
 }

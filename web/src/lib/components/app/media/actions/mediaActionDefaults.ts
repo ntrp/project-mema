@@ -16,7 +16,17 @@ export function preselectLibraryFolderId(
 	candidate: MediaSearchResult,
 	libraryFolders: LibraryFolder[]
 ) {
-	return bestScored(libraryFolders, (folder) => folderScore(candidate, folder))?.id ?? '';
+	return bestScored(matchingLibraryFolders(candidate.type, libraryFolders), (folder) =>
+		folderScore(candidate, folder)
+	)?.id ?? '';
+}
+
+export function matchingLibraryFolders(
+	type: MediaSearchResult['type'],
+	libraryFolders: LibraryFolder[]
+) {
+	const kind = type === 'serie' ? 'series' : 'movie';
+	return libraryFolders.filter((folder) => folder.kind === kind);
 }
 
 export function mediaPosterUrl(path?: string) {

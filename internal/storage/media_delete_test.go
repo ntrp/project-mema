@@ -10,7 +10,7 @@ import (
 func TestRemoveMediaFolderDeletesMediaRoot(t *testing.T) {
 	ctx, store := testDBStore(t)
 	root := t.TempDir()
-	folder, err := store.CreateLibraryFolder(ctx, root)
+	folder, err := store.CreateLibraryFolder(ctx, root, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestRemoveMediaFolderSkipsMissingPath(t *testing.T) {
 func deletePolicyItem(t *testing.T, ctx context.Context, store *SettingsStore) (MediaItem, string) {
 	t.Helper()
 	root := t.TempDir()
-	folder, err := store.CreateLibraryFolder(ctx, root)
+	folder, err := store.CreateLibraryFolder(ctx, root, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}

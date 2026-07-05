@@ -1,6 +1,7 @@
 insert into app.media_profiles (
     id,
     name,
+    is_default,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
@@ -11,7 +12,7 @@ insert into app.media_profiles (
     series_pack_preference
 )
 values
-    ('low-quality-demo', 'Low Quality Demo', true, 'webdl-480p', 0, 100, 1, false, 'any', 'preferEpisodes')
+    ('low-quality-demo', 'Low Quality Demo', false, true, 'webdl-480p', 0, 100, 1, false, 'any', 'preferEpisodes')
 on conflict (id) do nothing;
 
 insert into app.media_profile_languages (profile_id, language_id, score)
@@ -52,101 +53,4 @@ values
     ('d06f380f-4c62-4af8-92d2-944074ffce97', 'Anime', '2026-07-04 14:20:00+00', '2026-07-04 14:20:00+00')
 on conflict (lower(name)) do update
 set name = excluded.name,
-    updated_at = excluded.updated_at;
-
-insert into app.indexers (
-    id,
-    definition_id,
-    name,
-    type,
-    implementation,
-    implementation_name,
-    protocol,
-    privacy,
-    language,
-    indexer_urls,
-    legacy_urls,
-    base_url,
-    categories,
-    media_type_scopes,
-    tag_scopes,
-    fields,
-    capabilities,
-    redirect,
-    app_profile_id,
-    prefer_magnet_url,
-    supports_rss,
-    supports_search,
-    supports_redirect,
-    supports_pagination,
-    enabled,
-    priority,
-    created_at,
-    updated_at
-)
-values
-    (
-        '34ef8f5b-347b-41c5-a4f8-8892365a4dd3',
-        'generic-torznab',
-        'Local Movie Torznab',
-        'torznab',
-        'Torznab',
-        'Local Movie Torznab',
-        'torrent',
-        'private',
-        'EN',
-        '{http://localhost:18082/api}'::text[],
-        '{}'::text[],
-        'http://localhost:18082/api',
-        '{2000,2040}'::integer[],
-        '{movie}'::text[],
-        '{HD}'::text[],
-        '[]'::jsonb,
-        '{"categories":[{"id":2000,"name":"Movies","children":[{"id":2040,"name":"HD","children":[]}]}],"supportsRawSearch":true,"searchParams":["q"],"tvSearchParams":["q","season","ep"],"movieSearchParams":["q","imdbid"]}'::jsonb,
-        true,
-        'default',
-        false,
-        true,
-        true,
-        true,
-        true,
-        true,
-        90,
-        '2026-07-04 14:20:00+00',
-        '2026-07-04 14:20:00+00'
-    ),
-    (
-        '425c5553-5721-4e18-b701-90c84c30b410',
-        'generic-torznab',
-        'Local Series Torznab',
-        'torznab',
-        'Torznab',
-        'Local Series Torznab',
-        'torrent',
-        'private',
-        'EN',
-        '{http://localhost:18083/api}'::text[],
-        '{}'::text[],
-        'http://localhost:18083/api',
-        '{5000,5040,5070}'::integer[],
-        '{serie,anime}'::text[],
-        '{Kids,Anime}'::text[],
-        '[]'::jsonb,
-        '{"categories":[{"id":5000,"name":"TV","children":[{"id":5040,"name":"HD","children":[]},{"id":5070,"name":"Anime","children":[]}]}],"supportsRawSearch":true,"searchParams":["q"],"tvSearchParams":["q","season","ep"],"movieSearchParams":["q","imdbid"]}'::jsonb,
-        true,
-        'default',
-        false,
-        true,
-        true,
-        true,
-        true,
-        true,
-        100,
-        '2026-07-04 14:20:00+00',
-        '2026-07-04 14:20:00+00'
-    )
-on conflict (id) do update
-set media_type_scopes = excluded.media_type_scopes,
-    tag_scopes = excluded.tag_scopes,
-    categories = excluded.categories,
     updated_at = excluded.updated_at;

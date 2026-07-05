@@ -15,6 +15,7 @@
 		scansByFolder={app.libraryScansByFolder}
 		openFolderId={app.openLibraryFolderId}
 		qualityProfiles={app.mediaProfiles}
+		metadataProviders={app.metadataProviders}
 		saving={app.savingLibraryFolder}
 		scanningLibraryFolderId={app.scanningLibraryFolderId}
 		savingPathMapping={app.savingPathMapping}

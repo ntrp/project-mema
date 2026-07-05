@@ -83,6 +83,7 @@ describe('settings edit actions (SCN-SETTINGS-002)', () => {
 			upgradeUntilCustomFormatScore: 0,
 			minimumCustomFormatScoreIncrement: 1,
 			removeNonEnabledLanguages: false,
+			removeNonEnabledSubtitleLanguages: false,
 			preferredProtocol: 'any',
 			seriesPackPreference: 'auto',
 			targetLanguages: ['english'],

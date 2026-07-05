@@ -1814,6 +1814,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/library/scans/{id}/import': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Import selected discovered files from a library scan */
+		post: operations['importLibraryScanItems'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/library/scans/{id}/items/{itemId}/match': {
 		parameters: {
 			query?: never;
@@ -2713,6 +2732,7 @@ export interface components {
 		};
 		MediaProfileRequest: {
 			name: string;
+			isDefault: boolean;
 			qualityIds: string[];
 			upgradesAllowed: boolean;
 			upgradeUntilQualityId?: string | null;
@@ -2723,6 +2743,7 @@ export interface components {
 			/** Format: int32 */
 			minimumCustomFormatScoreIncrement: number;
 			removeNonEnabledLanguages: boolean;
+			removeNonEnabledSubtitleLanguages: boolean;
 			/** @enum {string} */
 			preferredProtocol: 'any' | 'torrent' | 'usenet';
 			/** @enum {string} */
@@ -2740,6 +2761,8 @@ export interface components {
 		};
 		MediaProfileSubtitleLanguage: {
 			languageId: string;
+			/** Format: int32 */
+			score: number;
 			required: boolean;
 			/** @enum {string} */
 			subtitleType: 'any' | 'embedded' | 'external';
@@ -3505,6 +3528,7 @@ export interface components {
 		};
 		LibraryFolderRequest: {
 			path: string;
+			kind: components['schemas']['LibraryFolderKind'];
 		};
 		PathMappingListResponse: {
 			mappings: components['schemas']['PathMapping'][];
@@ -3537,6 +3561,8 @@ export interface components {
 		/** @enum {string} */
 		LibraryMediaKind: 'movie' | 'series' | 'anime_movie' | 'anime_series' | 'unknown';
 		/** @enum {string} */
+		LibraryFolderKind: 'movie' | 'series';
+		/** @enum {string} */
 		LibraryScanItemStatus:
 			| 'pending'
 			| 'auto_added'
@@ -3544,12 +3570,15 @@ export interface components {
 			| 'missing'
 			| 'moved_candidate'
 			| 'restored';
+		/** @enum {string} */
+		LibraryScanItemMatchSource: 'library' | 'provider' | 'manual';
 		LibraryScan: {
 			/** Format: uuid */
 			id: string;
 			/** Format: uuid */
 			folderId: string;
 			folderPath: string;
+			folderKind: components['schemas']['LibraryFolderKind'];
 			/** @enum {string} */
 			status: 'completed' | 'failed';
 			/** Format: int32 */
@@ -3571,17 +3600,31 @@ export interface components {
 			scanId: string;
 			path: string;
 			fileName: string;
+			/** Format: int64 */
+			sizeBytes?: number;
 			detectedTitle: string;
 			/** Format: int32 */
 			detectedYear?: number;
 			detectedMediaKind: components['schemas']['LibraryMediaKind'];
+			/** Format: int32 */
+			seasonNumber?: number;
+			/** Format: int32 */
+			episodeNumber?: number;
 			status: components['schemas']['LibraryScanItemStatus'];
+			imported: boolean;
 			matchedTitle?: string;
 			/** Format: int32 */
 			matchedYear?: number;
 			matchedMediaKind?: components['schemas']['LibraryMediaKind'];
 			/** Format: uuid */
 			mediaItemId?: string;
+			matchedExternalProvider?: string;
+			matchedExternalId?: string;
+			matchSource?: components['schemas']['LibraryScanItemMatchSource'];
+			/** Format: uuid */
+			selectedMetadataProviderId?: string;
+			duplicateGroupId?: string;
+			duplicateRemovalAllowed: boolean;
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
@@ -3596,10 +3639,32 @@ export interface components {
 			qualityProfileId: string;
 			monitorMode: components['schemas']['MediaMonitorMode'];
 			minimumAvailability: components['schemas']['MinimumAvailability'];
+			seriesType?: components['schemas']['SeriesType'];
+			/** Format: uuid */
+			metadataProviderId?: string;
+			/** Format: uuid */
+			mediaItemId?: string;
 			externalProvider?: string;
 			externalId?: string;
 			overview?: string;
 			posterPath?: string;
+		};
+		LibraryScanImportRowRequest: {
+			/** Format: uuid */
+			itemId: string;
+			match: components['schemas']['LibraryScanItemMatchRequest'];
+		};
+		LibraryScanImportRequest: {
+			items: components['schemas']['LibraryScanImportRowRequest'][];
+			removeDuplicatePaths?: string[];
+		};
+		LibraryScanImportResponse: {
+			scan: components['schemas']['LibraryScan'];
+			mediaItems: components['schemas']['MediaItem'][];
+			/** Format: int32 */
+			importedCount: number;
+			/** Format: int32 */
+			removedDuplicateCount: number;
 		};
 		LibraryScanItemMatchResponse: {
 			item: components['schemas']['LibraryScanItem'];
@@ -7061,6 +7126,35 @@ export interface operations {
 					'application/json': components['schemas']['LibraryScan'];
 				};
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	importLibraryScanItems: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LibraryScanImportRequest'];
+			};
+		};
+		responses: {
+			/** @description Selected scan items imported */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryScanImportResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};

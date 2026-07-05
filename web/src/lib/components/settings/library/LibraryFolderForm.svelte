@@ -1,11 +1,12 @@
 <script lang="ts">
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import LibraryFolderPicker from '$lib/components/settings/library/folders/LibraryFolderPicker.svelte';
+	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import type { LibraryFolderForm } from '$lib/settings/types';
+	import type { LibraryFolderForm, LibraryFolderKind } from '$lib/settings/types';
 
 	interface Props {
 		form: LibraryFolderForm;
@@ -15,6 +16,10 @@
 
 	let { form = $bindable(), saving, onSave }: Props = $props();
 	let pickerOpen = $state(false);
+	const kindOptions = [
+		{ value: 'movie', label: 'Movies' },
+		{ value: 'series', label: 'Series' }
+	];
 
 	function openPicker() {
 		pickerOpen = true;
@@ -45,6 +50,14 @@
 					placeholder="/data/library or downloads/complete"
 					required
 					maxlength={4000}
+				/>
+			</div>
+			<div class="space-y-2">
+				<Label>Folder type</Label>
+				<SettingsSelect
+					value={form.kind}
+					options={kindOptions}
+					onValueChange={(value) => (form.kind = value as LibraryFolderKind)}
 				/>
 			</div>
 			<div class="flex flex-wrap justify-end gap-2">

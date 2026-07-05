@@ -35,7 +35,10 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 				upgradesAllowed: true,
 				upgradeUntilQualityId: 'bluray-1080p',
 				targetLanguages: ['english'],
-				removeNonEnabledLanguages: true
+				targetLanguageScores: [{ languageId: 'english', score: 0, required: true }],
+				subtitleLanguages: [{ languageId: 'english' }],
+				removeNonEnabledLanguages: true,
+				removeNonEnabledSubtitleLanguages: true
 			}
 		]);
 
@@ -55,7 +58,10 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 				reasons: ['Upgrade target is bluray-1080p']
 			},
 			expectedLanguages: ['english'],
-			removeNonEnabledLanguages: true
+			expectedRequiredLanguages: ['english'],
+			expectedSubtitleLanguages: ['english'],
+			removeNonEnabledLanguages: true,
+			removeNonEnabledSubtitleLanguages: true
 		});
 		expect(row.tracks).toHaveLength(1);
 		expect(row.chapters).toHaveLength(1);

@@ -185,7 +185,7 @@ func importTestStore(t *testing.T) *storage.SettingsStore {
 
 func createImportFolder(t *testing.T, store *storage.SettingsStore, path string) storage.LibraryFolder {
 	t.Helper()
-	folder, err := store.CreateLibraryFolder(context.Background(), path)
+	folder, err := store.CreateLibraryFolder(context.Background(), path, "movie")
 	if err != nil {
 		t.Fatal(err)
 	}

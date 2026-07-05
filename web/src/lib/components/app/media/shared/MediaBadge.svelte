@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import type { MediaType } from '$lib/settings/types';
+	import { mediaBadgeToneClass } from './mediaBadge';
 
 	interface Props {
 		type: MediaType;
@@ -10,11 +11,7 @@
 	let { type, inLibrary = false }: Props = $props();
 
 	const label = $derived(inLibrary ? 'In library' : type);
-	const toneClass = $derived(
-		type === 'movie'
-			? 'border-yellow-500 bg-yellow-400 text-yellow-950'
-			: 'border-blue-600 bg-blue-600 text-white'
-	);
+	const toneClass = $derived(mediaBadgeToneClass(type));
 </script>
 
 <span

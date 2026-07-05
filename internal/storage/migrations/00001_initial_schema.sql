@@ -230,12 +230,14 @@ create unique index if not exists idx_discover_blacklist_title
 create table if not exists app.media_profiles (
     id text primary key,
     name text not null,
+    is_default boolean not null default false,
     upgrades_allowed boolean not null default true,
     upgrade_until_quality_id text,
     minimum_custom_format_score integer not null default 0,
     upgrade_until_custom_format_score integer not null default 0,
     minimum_custom_format_score_increment integer not null default 1 check (minimum_custom_format_score_increment >= 0),
     remove_non_enabled_languages boolean not null default false,
+    remove_non_enabled_subtitle_languages boolean not null default false,
     preferred_protocol text not null default 'any' check (preferred_protocol in ('any', 'torrent', 'usenet')),
     series_pack_preference text not null default 'auto' check (series_pack_preference in ('auto', 'preferPacks', 'preferEpisodes')),
     created_at timestamptz not null default now(),
@@ -244,6 +246,10 @@ create table if not exists app.media_profiles (
 
 create unique index if not exists idx_media_profiles_name_lower
     on app.media_profiles (lower(name));
+
+create unique index if not exists idx_media_profiles_default
+    on app.media_profiles (is_default)
+    where is_default;
 
 create table if not exists app.custom_formats (
     id uuid primary key,
@@ -284,6 +290,7 @@ create index if not exists idx_media_profile_languages_profile
 create table if not exists app.media_profile_subtitle_languages (
     profile_id text not null references app.media_profiles(id) on delete cascade,
     language_id text not null,
+    score integer not null default 0,
     required boolean not null default true,
     subtitle_type text not null default 'any' check (subtitle_type in ('any', 'embedded', 'external')),
     primary key (profile_id, language_id)
@@ -565,6 +572,7 @@ create unique index if not exists idx_subtitle_providers_type_name_lower
 create table if not exists app.library_folders (
     id uuid primary key,
     path text not null unique,
+    kind text not null default 'movie' check (kind in ('movie', 'series')),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
@@ -690,13 +698,23 @@ create table if not exists app.library_scan_items (
     scan_id uuid not null references app.library_scans(id) on delete cascade,
     path text not null,
     file_name text not null,
+    size_bytes bigint not null default 0 check (size_bytes >= 0),
     detected_title text not null,
     detected_year integer,
     detected_media_kind text not null check (detected_media_kind in ('movie', 'series', 'anime_movie', 'anime_series', 'unknown')),
+    season_number integer check (season_number is null or season_number >= 0),
+    episode_number integer check (episode_number is null or episode_number >= 0),
     status text not null check (status in ('pending', 'auto_added', 'manually_added', 'missing', 'moved_candidate', 'restored')),
+    imported boolean not null default false,
     matched_title text,
     matched_year integer,
     matched_media_kind text check (matched_media_kind in ('movie', 'series', 'anime_movie', 'anime_series', 'unknown')),
+    matched_external_provider text,
+    matched_external_id text,
+    match_source text check (match_source is null or match_source in ('library', 'provider', 'manual')),
+    selected_metadata_provider_id uuid references app.metadata_providers(id) on delete set null,
+    duplicate_group_id text,
+    duplicate_removal_allowed boolean not null default false,
     media_item_id uuid references app.media_items(id) on delete set null,
     season_id uuid references app.media_seasons(id) on delete set null,
     episode_id uuid references app.media_episodes(id) on delete set null,
@@ -753,7 +771,7 @@ create table if not exists app.media_release_candidates (
     media_item_id uuid not null references app.media_items(id) on delete cascade,
     season_id uuid references app.media_seasons(id) on delete set null,
     episode_id uuid references app.media_episodes(id) on delete set null,
-    indexer_id uuid,
+    indexer_id uuid references app.indexers(id) on delete set null,
     indexer_name text not null,
     indexer_type text not null default 'torznab',
     indexer_protocol text not null default 'torrent',

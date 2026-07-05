@@ -87,7 +87,7 @@ describe('UI API settings command helpers (SCN-SETTINGS-009)', () => {
 		await expect(deleteLanguage('en')).resolves.toBeUndefined();
 		await expect(deleteMediaProfile('profile-1')).resolves.toBeUndefined();
 		await expect(deleteCustomFormat('format-1')).resolves.toBeUndefined();
-		await expect(saveLibraryFolder({ path: '/media' })).resolves.toEqual({});
+		await expect(saveLibraryFolder({ path: '/media', kind: 'movie' })).resolves.toEqual({});
 		await expect(listLibraryFolderOptions('/media')).resolves.toEqual({});
 		await expect(createLibraryFolderOption('/media', 'Movies')).resolves.toEqual({});
 		await expect(deleteLibraryFolder('folder-1')).resolves.toBeUndefined();
@@ -156,17 +156,19 @@ function customFormatForm() {
 function mediaProfileForm() {
 	return {
 		name: 'HD',
+		isDefault: false,
 		qualityIds: [],
 		upgradesAllowed: true,
 		minimumCustomFormatScore: 0,
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
 		removeNonEnabledLanguages: false,
+		removeNonEnabledSubtitleLanguages: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
 		targetLanguages: ['english'],
 		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
-		subtitleLanguages: [{ languageId: 'english', required: true, subtitleType: 'any' }],
+		subtitleLanguages: [{ languageId: 'english', score: 0, required: true, subtitleType: 'any' }],
 		customFormatScores: []
 	} as const;
 }

@@ -23,8 +23,10 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 	}
 
 	published := time.Now().Add(-2 * time.Hour).UTC().Truncate(time.Second)
-	firstIndexerID := uuid.New()
-	secondIndexerID := uuid.New()
+	firstIndexer := releaseCandidateTestIndexer(t, store, "Low Seed Indexer "+suffix)
+	secondIndexer := releaseCandidateTestIndexer(t, store, "High Seed Indexer "+suffix)
+	firstIndexerID := firstIndexer.ID
+	secondIndexerID := secondIndexer.ID
 	if err := store.ReplaceReleaseSearchResults(ctx, item.ID, []ReleaseCandidateInput{
 		{
 			IndexerID:       &firstIndexerID,
@@ -123,6 +125,44 @@ func TestScenarioSCNMedia011StorageReleaseSearchSnapshot(t *testing.T) {
 	}
 }
 
+func TestReleaseCandidateIndexerIDClearsWhenIndexerDeleted(t *testing.T) {
+	ctx, store := testDBStore(t)
+	suffix := uuid.NewString()
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:      "movie",
+		Title:     "Deleted Indexer Candidate " + suffix,
+		Monitored: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	indexer := releaseCandidateTestIndexer(t, store, "Deleted Candidate Indexer "+suffix)
+	if err := store.ReplaceReleaseSearchResults(ctx, item.ID, []ReleaseCandidateInput{{
+		IndexerID:       &indexer.ID,
+		IndexerName:     indexer.Name,
+		IndexerProtocol: indexer.Protocol,
+		Title:           "Deleted.Indexer.Candidate.2026.1080p.WEB-DL",
+		DownloadURL:     "http://indexer.test/download/deleted-" + suffix,
+		SizeBytes:       4_000_000_000,
+		SearchKind:      "manual",
+	}}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.DeleteIndexer(ctx, indexer.ID); err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := store.ListReleaseSearchResults(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshot.Releases) != 1 || snapshot.Releases[0].IndexerID != nil {
+		t.Fatalf("release candidate after indexer delete = %#v", snapshot.Releases)
+	}
+	if snapshot.Releases[0].IndexerName != indexer.Name {
+		t.Fatalf("release candidate should retain indexer name, got %#v", snapshot.Releases[0])
+	}
+}
+
 func TestReleaseCandidateStoresPersistedEpisodeReference(t *testing.T) {
 	ctx, store := testDBStore(t)
 	item, err := store.CreateMediaItem(ctx, MediaItemInput{
@@ -173,6 +213,22 @@ func TestReleaseCandidateStoresPersistedEpisodeReference(t *testing.T) {
 	if release.SeasonID == nil || *release.SeasonID != seasonID || release.EpisodeID == nil || *release.EpisodeID != episodeID {
 		t.Fatalf("expected persisted episode reference, got %#v", release)
 	}
+}
+
+func releaseCandidateTestIndexer(t *testing.T, store *SettingsStore, name string) Indexer {
+	t.Helper()
+	indexer, err := store.CreateIndexer(t.Context(), IndexerInput{
+		Name:       name,
+		Protocol:   "torrent",
+		BaseURL:    "http://indexer.test/" + uuid.NewString(),
+		Categories: []int32{2000},
+		Enabled:    true,
+		Priority:   100,
+	})
+	if err != nil {
+		t.Fatalf("create indexer: %v", err)
+	}
+	return indexer
 }
 
 func TestScenarioSCNMedia011ReleaseBlocklistMatchesAndExpires(t *testing.T) {

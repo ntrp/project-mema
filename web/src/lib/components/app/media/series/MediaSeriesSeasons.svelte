@@ -47,7 +47,10 @@
 		qualityProfiles: {
 			id: string;
 			targetLanguages?: string[];
+			targetLanguageScores?: { languageId: string; required: boolean }[];
+			subtitleLanguages?: { languageId: string }[];
 			removeNonEnabledLanguages?: boolean;
+			removeNonEnabledSubtitleLanguages?: boolean;
 		}[];
 		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 		onAutoSearch: (_item: MediaItem) => void;

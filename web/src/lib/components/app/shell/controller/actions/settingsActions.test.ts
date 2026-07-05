@@ -8,8 +8,8 @@ const apiMock = vi.hoisted(() => ({
 	scanLibraryFolder: vi.fn(),
 	deletePathMapping: vi.fn(),
 	deleteUser: vi.fn(),
-	searchMedia: vi.fn(),
-	matchLibraryScanItem: vi.fn(),
+	advancedSearchMedia: vi.fn(),
+	importLibraryScanItems: vi.fn(),
 	mediaTypeForLibraryKind: vi.fn((kind: string) => (kind.includes('series') ? 'serie' : 'movie')),
 	saveCustomFormat: vi.fn(),
 	saveDownloadClient: vi.fn(),
@@ -44,7 +44,7 @@ function shellState(overrides: Record<string, unknown> = {}) {
 		libraryFolderForm: { path: '/incoming', kind: 'movie' },
 		pathMappingForm: { hostPath: '/downloads', mediaPath: '/media' },
 		userForm: { id: 'user-1', username: 'editor', role: 'user', password: '' },
-		libraryFolders: [{ id: 'old-folder', path: '/old' }],
+		libraryFolders: [{ id: 'old-folder', path: '/old', kind: 'movie' }],
 		pathMappings: [{ id: 'old-map', hostPath: '/old', mediaPath: '/media-old' }],
 		libraryScansByFolder: {},
 		openLibraryFolderId: undefined,
@@ -70,8 +70,8 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 		const clearNotice = vi.fn();
 		const loadSettings = vi.fn();
 		apiMock.saveLibraryFolder.mockResolvedValue({
-			folder: { id: 'new-folder', path: '/incoming' },
-			scan: { folderId: 'new-folder', manualCount: 2 }
+			folder: { id: 'new-folder', path: '/incoming', kind: 'movie' },
+			scan: { folderId: 'new-folder', folderKind: 'movie', manualCount: 2 }
 		});
 
 		await createSettingsSaveActions(state, { clearNotice, loadSettings }).saveLibraryFolder(
@@ -168,15 +168,15 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 			loadSettings: vi.fn()
 		});
 		apiMock.scanLibraryFolder.mockResolvedValue({ ...scan, manualCount: 3 });
-		apiMock.matchLibraryScanItem.mockResolvedValue({
-			mediaItem: { id: 'media-1', title: 'Imported' },
-			item: { id: 'item-1', matched: true }
+		apiMock.importLibraryScanItems.mockResolvedValue({
+			importedCount: 1,
+			removedDuplicateCount: 0,
+			mediaItems: [{ id: 'media-1', title: 'Imported' }],
+			scan: { ...scan, manualCount: 1 }
 		});
 
 		await actions.scanLibraryFolder('folder-1');
-		await actions.importLibraryScanRows(scan, [
-			{ item: { id: 'item-1' }, request: { type: 'movie', monitored: true } } as never
-		]);
+		await actions.importLibraryScanRows(scan, { items: [] } as never);
 
 		expect(state.openLibraryFolderId).toBe('folder-1');
 		expect(state.mediaItems.map((item) => item.id)).toEqual(['media-1', 'existing-media']);
@@ -189,11 +189,20 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 			clearNotice: vi.fn(),
 			loadSettings: vi.fn()
 		});
-		apiMock.searchMedia.mockResolvedValue([{ title: 'Scenario Series' }]);
+		apiMock.advancedSearchMedia.mockResolvedValue([
+			{ sourceType: 'provider', sourceName: 'TMDB', results: [{ title: 'Scenario Series' }] }
+		]);
 
 		await expect(actions.searchLibraryMatch('anime_series', '  Scenario  ')).resolves.toEqual([
 			{ title: 'Scenario Series' }
 		]);
-		expect(apiMock.searchMedia).toHaveBeenCalledWith({ type: 'serie', query: 'Scenario' });
+		expect(apiMock.advancedSearchMedia).toHaveBeenCalledWith({
+			type: 'serie',
+			query: 'Scenario',
+			includeMedia: true,
+			includePeople: false,
+			providerIds: undefined,
+			limit: 8
+		});
 	});
 });

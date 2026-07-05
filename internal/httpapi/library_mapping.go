@@ -12,11 +12,16 @@ import (
 	"media-manager/internal/storage"
 )
 
-func libraryFolderInput(w http.ResponseWriter, mediaDataDir string, request LibraryFolderRequest) (string, bool) {
+func libraryFolderInput(w http.ResponseWriter, mediaDataDir string, request LibraryFolderRequest) (string, string, bool) {
 	path := strings.TrimSpace(request.Path)
 	if path == "" {
 		writeError(w, http.StatusBadRequest, "invalid_path", "Library folder path is required")
-		return "", false
+		return "", "", false
+	}
+	kind := string(request.Kind)
+	if kind != "movie" && kind != "series" {
+		writeError(w, http.StatusBadRequest, "invalid_folder_kind", "Library folder type must be movie or series")
+		return "", "", false
 	}
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(mediaDataDir, path)
@@ -24,18 +29,18 @@ func libraryFolderInput(w http.ResponseWriter, mediaDataDir string, request Libr
 	cleaned, err := filepath.Abs(filepath.Clean(path))
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_path", "Library folder path is invalid")
-		return "", false
+		return "", "", false
 	}
 	info, err := os.Stat(cleaned)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "path_unavailable", "Library folder path is not available")
-		return "", false
+		return "", "", false
 	}
 	if !info.IsDir() {
 		writeError(w, http.StatusBadRequest, "path_not_directory", "Library folder path must be a directory")
-		return "", false
+		return "", "", false
 	}
-	return cleaned, true
+	return cleaned, kind, true
 }
 
 func libraryFolderOptionList(w http.ResponseWriter, mediaDataDir string, requestedPath *string) (LibraryFolderOptionListResponse, bool) {
@@ -183,6 +188,9 @@ func libraryMatchInput(w http.ResponseWriter, request LibraryScanItemMatchReques
 		QualityProfileID:    qualityProfileID,
 		MonitorMode:         string(request.MonitorMode),
 		MinimumAvailability: string(request.MinimumAvailability),
+		SeriesType:          optionalLibrarySeriesType(request.SeriesType),
+		MetadataProviderID:  optionalUUID(request.MetadataProviderId),
+		MediaItemID:         optionalUUID(request.MediaItemId),
 		ExternalProvider:    optionalTrimmedString(request.ExternalProvider),
 		ExternalID:          optionalTrimmedString(request.ExternalId),
 		Overview:            optionalTrimmedString(request.Overview),
@@ -194,6 +202,7 @@ func libraryFolderResponse(folder storage.LibraryFolder) LibraryFolder {
 	return LibraryFolder{
 		Id:        openapi_types.UUID(folder.ID),
 		Path:      folder.Path,
+		Kind:      LibraryFolderKind(folder.Kind),
 		CreatedAt: folder.CreatedAt,
 		UpdatedAt: folder.UpdatedAt,
 	}
@@ -228,6 +237,7 @@ func libraryScanResponse(scan storage.LibraryScan) LibraryScan {
 		Id:               openapi_types.UUID(scan.ID),
 		FolderId:         openapi_types.UUID(scan.FolderID),
 		FolderPath:       scan.FolderPath,
+		FolderKind:       LibraryFolderKind(scan.FolderKind),
 		Status:           LibraryScanStatus(scan.Status),
 		TotalFiles:       scan.TotalFiles,
 		AutoMatchedCount: scan.AutoMatchedCount,
@@ -249,20 +259,35 @@ func libraryScanItemResponse(item storage.LibraryScanItem) LibraryScanItem {
 		value := LibraryMediaKind(*item.MatchedMediaKind)
 		matchedKind = &value
 	}
+	var selectedProviderID *openapi_types.UUID
+	if item.SelectedMetadataProviderID != nil {
+		value := openapi_types.UUID(*item.SelectedMetadataProviderID)
+		selectedProviderID = &value
+	}
 	return LibraryScanItem{
-		Id:                openapi_types.UUID(item.ID),
-		ScanId:            openapi_types.UUID(item.ScanID),
-		Path:              item.Path,
-		FileName:          item.FileName,
-		DetectedTitle:     item.DetectedTitle,
-		DetectedYear:      item.DetectedYear,
-		DetectedMediaKind: LibraryMediaKind(item.DetectedMediaKind),
-		Status:            LibraryScanItemStatus(item.Status),
-		MatchedTitle:      item.MatchedTitle,
-		MatchedYear:       item.MatchedYear,
-		MatchedMediaKind:  matchedKind,
-		MediaItemId:       mediaItemID,
-		CreatedAt:         item.CreatedAt,
-		UpdatedAt:         item.UpdatedAt,
+		Id:                         openapi_types.UUID(item.ID),
+		ScanId:                     openapi_types.UUID(item.ScanID),
+		Path:                       item.Path,
+		FileName:                   item.FileName,
+		SizeBytes:                  optionalInt64(item.SizeBytes),
+		DetectedTitle:              item.DetectedTitle,
+		DetectedYear:               item.DetectedYear,
+		DetectedMediaKind:          LibraryMediaKind(item.DetectedMediaKind),
+		SeasonNumber:               item.SeasonNumber,
+		EpisodeNumber:              item.EpisodeNumber,
+		Status:                     LibraryScanItemStatus(item.Status),
+		Imported:                   item.Imported,
+		MatchedTitle:               item.MatchedTitle,
+		MatchedYear:                item.MatchedYear,
+		MatchedMediaKind:           matchedKind,
+		MatchedExternalProvider:    item.MatchedExternalProvider,
+		MatchedExternalId:          item.MatchedExternalID,
+		MatchSource:                libraryMatchSourceResponse(item.MatchSource),
+		SelectedMetadataProviderId: selectedProviderID,
+		DuplicateGroupId:           item.DuplicateGroupID,
+		DuplicateRemovalAllowed:    item.DuplicateRemovalAllowed,
+		MediaItemId:                mediaItemID,
+		CreatedAt:                  item.CreatedAt,
+		UpdatedAt:                  item.UpdatedAt,
 	}
 }

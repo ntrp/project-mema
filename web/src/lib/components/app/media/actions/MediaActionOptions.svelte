@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { matchingLibraryFolders } from '$lib/components/app/media/actions/mediaActionDefaults';
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
 	import { Label } from '$lib/components/ui/label';
 	import type {
@@ -38,9 +39,10 @@
 		onSeriesTypeChange
 	}: Props = $props();
 
+	let matchingFolders = $derived(matchingLibraryFolders(mediaType, libraryFolders));
 	let libraryFolderOptions = $derived([
 		{ value: '', label: 'Select folder' },
-		...libraryFolders.map((folder) => ({ value: folder.id, label: folder.path }))
+		...matchingFolders.map((folder) => ({ value: folder.id, label: folder.path }))
 	]);
 	let qualityProfileOptions = $derived([
 		{ value: '', label: 'Select profile' },
