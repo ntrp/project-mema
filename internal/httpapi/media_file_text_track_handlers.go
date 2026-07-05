@@ -1,13 +1,11 @@
 package httpapi
 
 import (
-	"bytes"
-	"errors"
 	"net/http"
-	"os/exec"
 	"strconv"
 
 	"github.com/google/uuid"
+	mediatools "media-manager/internal/tools"
 )
 
 func (s *Server) PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileSubtitleParams) {
@@ -22,7 +20,7 @@ func (s *Server) PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Req
 	if _, ok := statMediaFile(w, target); !ok {
 		return
 	}
-	if _, err := exec.LookPath("ffmpeg"); err != nil {
+	if _, err := mediatools.LookPath("ffmpeg"); err != nil {
 		writeError(w, http.StatusInternalServerError, "ffmpeg_not_available", "ffmpeg is required for subtitle preview")
 		return
 	}
@@ -36,15 +34,11 @@ func (s *Server) PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Req
 }
 
 func runMediaSubtitlePreview(r *http.Request, w http.ResponseWriter, target string, subtitleTrackIndex int32) (bool, error) {
-	cmd := exec.CommandContext(r.Context(), "ffmpeg", mediaSubtitlePreviewArgs(target, subtitleTrackIndex)...)
-	var stderr bytes.Buffer
-	writer := &flushWriter{w: w}
-	cmd.Stdout = writer
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil && stderr.Len() > 0 {
-		return writer.wrote, errors.New(stderr.String())
+	if err := mediatools.SafePathArg(target); err != nil {
+		return false, err
 	}
+	writer := &flushWriter{w: w}
+	err := mediatools.RunStream(r.Context(), "ffmpeg", mediaSubtitlePreviewArgs(target, subtitleTrackIndex), writer, 64*1024)
 	return writer.wrote, err
 }
 

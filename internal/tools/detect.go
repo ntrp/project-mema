@@ -2,7 +2,6 @@ package tools
 
 import (
 	"context"
-	"os/exec"
 	"strings"
 	"time"
 )
@@ -34,7 +33,7 @@ func Detect(ctx context.Context, wanted []Tool) []Status {
 	for _, tool := range wanted {
 		status := Status{Name: tool.Name, Required: tool.Required}
 
-		path, err := exec.LookPath(tool.Name)
+		path, err := LookPath(tool.Name)
 		if err != nil {
 			status.Error = err.Error()
 			statuses = append(statuses, status)
@@ -58,10 +57,13 @@ func versionLine(ctx context.Context, name string) string {
 		args = []string{"--Version"}
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	output, err := exec.CommandContext(ctx, name, args...).CombinedOutput()
+	output, err := RunOutput(ctx, CommandSpec{
+		Name:           name,
+		Args:           args,
+		Timeout:        2 * time.Second,
+		MaxOutputBytes: 4 * 1024,
+		MaxStderrBytes: 4 * 1024,
+	})
 	if err != nil {
 		return ""
 	}

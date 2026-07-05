@@ -1,13 +1,11 @@
 package httpapi
 
 import (
-	"bytes"
-	"errors"
 	"math"
 	"net/http"
-	"os/exec"
 
 	"github.com/google/uuid"
+	mediatools "media-manager/internal/tools"
 )
 
 func (s *Server) PreviewMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileParams) {
@@ -54,6 +52,10 @@ func (s *Server) PreviewMediaItemFileSegment(w http.ResponseWriter, r *http.Requ
 	if !requireMediaPreviewFFmpeg(w) {
 		return
 	}
+	if err := mediatools.SafePathArg(target); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_media_path", "Media file path is invalid")
+		return
+	}
 	probe := mediaFileProbe(target)
 	clientProfile := mediaPreviewClientProfile(params.ClientProfile, r.UserAgent())
 	decision := mediaPreviewDecisionFromTracks(target, probe.tracks, params.AudioTrackIndex, clientProfile)
@@ -68,7 +70,7 @@ func (s *Server) PreviewMediaItemFileSegment(w http.ResponseWriter, r *http.Requ
 }
 
 func requireMediaPreviewFFmpeg(w http.ResponseWriter) bool {
-	if _, err := exec.LookPath("ffmpeg"); err == nil {
+	if _, err := mediatools.LookPath("ffmpeg"); err == nil {
 		return true
 	}
 	writeError(w, http.StatusInternalServerError, "ffmpeg_not_available", "ffmpeg is required for browser preview")
@@ -76,15 +78,8 @@ func requireMediaPreviewFFmpeg(w http.ResponseWriter) bool {
 }
 
 func runMediaPreviewCommand(r *http.Request, w http.ResponseWriter, args []string) (bool, error) {
-	cmd := exec.CommandContext(r.Context(), "ffmpeg", args...)
-	var stderr bytes.Buffer
 	writer := &flushWriter{w: w}
-	cmd.Stdout = writer
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	if err != nil && stderr.Len() > 0 {
-		return writer.wrote, errors.New(stderr.String())
-	}
+	err := mediatools.RunStream(r.Context(), "ffmpeg", args, writer, 64*1024)
 	return writer.wrote, err
 }
 

@@ -1,10 +1,13 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
-	"os/exec"
 	"sort"
 	"strconv"
+	"time"
+
+	mediatools "media-manager/internal/tools"
 )
 
 type ffprobeKeyframeOutput struct {
@@ -17,19 +20,27 @@ type ffprobeKeyframe struct {
 }
 
 func mediaPreviewVideoKeyframes(target string) []float64 {
-	if _, err := exec.LookPath("ffprobe"); err != nil {
+	if _, err := mediatools.LookPath("ffprobe"); err != nil {
 		return nil
 	}
-	output, err := exec.Command(
-		"ffprobe",
-		"-v", "error",
-		"-select_streams", "v:0",
-		"-skip_frame", "nokey",
-		"-show_frames",
-		"-show_entries", "frame=best_effort_timestamp_time,pkt_pts_time",
-		"-of", "json",
-		target,
-	).Output()
+	if err := mediatools.SafePathArg(target); err != nil {
+		return nil
+	}
+	output, err := mediatools.RunOutput(context.Background(), mediatools.CommandSpec{
+		Name: "ffprobe",
+		Args: []string{
+			"-v", "error",
+			"-select_streams", "v:0",
+			"-skip_frame", "nokey",
+			"-show_frames",
+			"-show_entries", "frame=best_effort_timestamp_time,pkt_pts_time",
+			"-of", "json",
+			target,
+		},
+		Timeout:        5 * time.Second,
+		MaxOutputBytes: 8 * 1024 * 1024,
+		MaxStderrBytes: 64 * 1024,
+	})
 	if err != nil {
 		return nil
 	}

@@ -3,9 +3,10 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
-	"os/exec"
 	"strings"
 	"time"
+
+	mediatools "media-manager/internal/tools"
 )
 
 type ffprobeOutput struct {
@@ -57,19 +58,26 @@ type mediaFileContainer struct {
 }
 
 func mediaFileProbe(path string) mediaFileProbeResult {
-	if _, err := exec.LookPath("ffprobe"); err != nil {
+	if _, err := mediatools.LookPath("ffprobe"); err != nil {
 		return mediaFileProbeResult{}
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	output, err := exec.CommandContext(ctx, "ffprobe",
-		"-v", "error",
-		"-show_streams",
-		"-show_chapters",
-		"-show_format",
-		"-of", "json",
-		path,
-	).Output()
+	if err := mediatools.SafePathArg(path); err != nil {
+		return mediaFileProbeResult{}
+	}
+	output, err := mediatools.RunOutput(context.Background(), mediatools.CommandSpec{
+		Name: "ffprobe",
+		Args: []string{
+			"-v", "error",
+			"-show_streams",
+			"-show_chapters",
+			"-show_format",
+			"-of", "json",
+			path,
+		},
+		Timeout:        3 * time.Second,
+		MaxOutputBytes: 4 * 1024 * 1024,
+		MaxStderrBytes: 64 * 1024,
+	})
 	if err != nil {
 		return mediaFileProbeResult{}
 	}
