@@ -23,7 +23,10 @@ function provider(overrides: Partial<MetadataProvider> = {}): MetadataProvider {
 		priority: 100,
 		createdAt: now,
 		updatedAt: now,
-		...overrides
+		...overrides,
+		apiKeySet: overrides.apiKeySet ?? false,
+		pinSet: overrides.pinSet ?? false,
+		accessTokenSet: overrides.accessTokenSet ?? false
 	};
 }
 

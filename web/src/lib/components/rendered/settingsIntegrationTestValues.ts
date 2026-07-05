@@ -16,7 +16,9 @@ export function downloadClient(overrides: Partial<DownloadClient> = {}): Downloa
 		priority: 50,
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',
-		...overrides
+		...overrides,
+		passwordSet: overrides.passwordSet ?? false,
+		apiKeySet: overrides.apiKeySet ?? false
 	};
 }
 
@@ -65,7 +67,8 @@ export function indexerRow(overrides: Partial<Indexer> = {}): Indexer {
 		failureCount: 0,
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',
-		...overrides
+		...overrides,
+		apiKeySet: overrides.apiKeySet ?? false
 	};
 }
 

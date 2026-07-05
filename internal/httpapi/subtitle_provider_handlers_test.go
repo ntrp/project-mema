@@ -49,3 +49,12 @@ func TestSubtitleProviderUpdatePreservesOmittedSecrets(t *testing.T) {
 		t.Fatalf("expected password to be preserved")
 	}
 }
+
+func TestSubtitleProviderResponseDoesNotContainRawSecrets(t *testing.T) {
+	secret := "raw-subtitle-secret"
+	response := subtitleProviderResponse(storage.SubtitleProvider{
+		APIKey:   stringPtr(secret),
+		Password: stringPtr(secret),
+	})
+	assertNoRawSecret(t, response, secret)
+}

@@ -140,102 +140,27 @@ export type CustomFormatParsingResponse = components['schemas']['CustomFormatPar
 export type CustomFormatSpec = components['schemas']['CustomFormatSpec'];
 export type CustomFormatSpecType = components['schemas']['CustomFormatSpecType'];
 
-export type DownloadClientForm = DownloadClientRequest & { id?: string };
-export type IndexerForm = Omit<IndexerRequest, 'categories'> & {
-	id?: string;
-	categoriesText: string;
-};
-export type IndexerProxyForm = IndexerProxyRequest & { id?: string };
-export type MetadataProviderForm = MetadataProviderRequest & { id?: string };
-export type SubtitleProviderForm = SubtitleProviderRequest & { id?: string };
-export type LibraryFolderForm = LibraryFolderRequest;
-export type PathMappingForm = PathMappingRequest;
-export type MediaProfileForm = MediaProfileRequest & { id?: string };
-export type CustomFormatForm = CustomFormatRequest & { id?: string };
-export type LanguageForm = {
-	code: string;
-	originalCode?: string;
-	displayName: string;
-	aliasesText: string;
-};
-export type UserForm = {
-	id?: string;
-	username: string;
-	password: string;
-	role: UserRole;
-};
-
-export interface QualityProfileOption {
-	id: string;
-	name: string;
-	isDefault?: boolean;
-	targetLanguages?: string[];
-	targetLanguageScores?: MediaProfileLanguageScore[];
-	subtitleLanguages?: MediaProfileSubtitleLanguage[];
-	removeNonEnabledLanguages?: boolean;
-	removeNonEnabledSubtitleLanguages?: boolean;
-}
-
-export type AppView =
-	| 'home'
-	| 'settings'
-	| 'system'
-	| 'profile'
-	| 'advanced-search'
-	| 'metadata-detail'
-	| 'media-people'
-	| 'person-detail'
-	| 'media-collection'
-	| 'related-section'
-	| 'discover-section'
-	| 'discover-movies'
-	| 'discover-series';
-export type HomeSection =
-	| 'discover'
-	| 'blacklist'
-	| 'requests'
-	| 'movies'
-	| 'series'
-	| 'wanted'
-	| 'activity';
-export type ActivitySection = 'queue' | 'history' | 'blocklist';
-export type SystemSection = 'status' | 'indexing' | 'metadata' | 'jobs' | 'logs' | 'events';
-export type SettingsSection =
-	| 'general'
-	| 'library'
-	| 'download-clients'
-	| 'indexers'
-	| 'quality'
-	| 'profiles'
-	| 'custom-formats'
-	| 'metadata'
-	| 'subtitles'
-	| 'languages'
-	| 'tags'
-	| 'users';
-export type TagForm = TagRequest & { id?: string };
-export interface SettingsData {
-	downloadClients: DownloadClient[];
-	indexers: Indexer[];
-	indexerSearch: IndexerSearchResponse;
-	metadataProviders: MetadataProvider[];
-	subtitleProviders: SubtitleProvider[];
-	metadataCache: MetadataCacheResponse;
-	libraryFolders: LibraryFolder[];
-	pathMappings: PathMapping[];
-	mediaProfiles: MediaProfile[];
-	customFormats: CustomFormat[];
-	users: ManagedUser[];
-	tags: Tag[];
-	languages: Language[];
-}
-
-export type IntegrationTestResults = Record<string, IntegrationTestResponse | undefined>;
-
-export interface ReleaseSearchState {
-	loaded: boolean;
-	releases: ReleaseCandidate[];
-	errors: string[];
-}
-
-export type ReleaseSearchResults = Record<string, ReleaseSearchState | undefined>;
+export type {
+	ActivitySection,
+	AppView,
+	CustomFormatForm,
+	DownloadClientForm,
+	HomeSection,
+	IndexerForm,
+	IndexerProxyForm,
+	IntegrationTestResults,
+	LanguageForm,
+	LibraryFolderForm,
+	MediaProfileForm,
+	MetadataProviderForm,
+	PathMappingForm,
+	QualityProfileOption,
+	ReleaseSearchResults,
+	ReleaseSearchState,
+	SettingsData,
+	SettingsSection,
+	SubtitleProviderForm,
+	SystemSection,
+	TagForm,
+	UserForm
+} from './formTypes';

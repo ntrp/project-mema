@@ -135,6 +135,12 @@ func (s *Server) UpdateIndexer(w http.ResponseWriter, r *http.Request, id Resour
 	if !ok {
 		return
 	}
+	current, err := s.settings.GetIndexer(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not update indexer")
+		return
+	}
+	input = preserveIndexerSecrets(input, body, current)
 
 	indexer, err := s.settings.UpdateIndexer(r.Context(), uuid.UUID(id), input)
 	if err != nil {
@@ -195,6 +201,13 @@ func (s *Server) DeleteIndexer(w http.ResponseWriter, r *http.Request, id Resour
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func preserveIndexerSecrets(input storage.IndexerInput, request IndexerRequest, current storage.Indexer) storage.IndexerInput {
+	if request.ApiKey == nil {
+		input.APIKey = current.APIKey
+	}
+	return input
 }
 
 func (s *Server) TestIndexer(w http.ResponseWriter, r *http.Request, id ResourceId) {

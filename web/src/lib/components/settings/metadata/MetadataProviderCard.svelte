@@ -42,6 +42,9 @@
 			apiKey: value.apiKey ?? '',
 			pin: value.pin ?? '',
 			accessToken: value.accessToken ?? '',
+			apiKeySet: value.apiKeySet,
+			pinSet: value.pinSet,
+			accessTokenSet: value.accessTokenSet,
 			enabled: value.enabled,
 			priority: value.priority
 		};
@@ -120,6 +123,7 @@
 				<Input
 					value={form.apiKey}
 					autocomplete="off"
+					placeholder={form.apiKeySet ? 'Saved API key' : ''}
 					oninput={(event) => updateText('apiKey', event.currentTarget.value)}
 				/>
 			</label>
@@ -129,6 +133,7 @@
 					<Input
 						value={form.pin}
 						autocomplete="off"
+						placeholder={form.pinSet ? 'Saved PIN' : ''}
 						oninput={(event) => updateText('pin', event.currentTarget.value)}
 					/>
 				</label>
@@ -138,6 +143,7 @@
 				<Input
 					value={form.accessToken}
 					autocomplete="off"
+					placeholder={form.accessTokenSet ? 'Saved access token' : ''}
 					oninput={(event) => updateText('accessToken', event.currentTarget.value)}
 				/>
 			</label>

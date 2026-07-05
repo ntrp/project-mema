@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+
+	"media-manager/internal/storage"
 )
 
 func (s *Server) ListMetadataProviders(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +63,12 @@ func (s *Server) UpdateMetadataProvider(w http.ResponseWriter, r *http.Request, 
 	if !ok {
 		return
 	}
+	current, err := s.settings.GetMetadataProvider(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not update metadata provider")
+		return
+	}
+	input = preserveMetadataProviderSecrets(input, body, current)
 
 	provider, err := s.settings.UpdateMetadataProvider(r.Context(), uuid.UUID(id), input)
 	if err != nil {
@@ -80,6 +88,23 @@ func (s *Server) DeleteMetadataProvider(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func preserveMetadataProviderSecrets(
+	input storage.MetadataProviderInput,
+	request MetadataProviderRequest,
+	current storage.MetadataProvider,
+) storage.MetadataProviderInput {
+	if request.ApiKey == nil {
+		input.APIKey = current.APIKey
+	}
+	if request.Pin == nil {
+		input.PIN = current.PIN
+	}
+	if request.AccessToken == nil {
+		input.AccessToken = current.AccessToken
+	}
+	return input
 }
 
 func (s *Server) TestMetadataProvider(w http.ResponseWriter, r *http.Request, id ResourceId) {

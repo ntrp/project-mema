@@ -6573,12 +6573,18 @@ components:
           additionalProperties: false
           required:
             - id
+            - passwordSet
+            - apiKeySet
             - createdAt
             - updatedAt
           properties:
             id:
               type: string
               format: uuid
+            passwordSet:
+              type: boolean
+            apiKeySet:
+              type: boolean
             createdAt:
               type: string
               format: date-time
@@ -6751,6 +6757,7 @@ components:
             - capabilities
             - healthStatus
             - failureCount
+            - apiKeySet
             - createdAt
             - updatedAt
           properties:
@@ -6808,6 +6815,8 @@ components:
               type: integer
               format: int32
               minimum: 0
+            apiKeySet:
+              type: boolean
             createdAt:
               type: string
               format: date-time
@@ -7330,12 +7339,21 @@ components:
           additionalProperties: false
           required:
             - id
+            - apiKeySet
+            - pinSet
+            - accessTokenSet
             - createdAt
             - updatedAt
           properties:
             id:
               type: string
               format: uuid
+            apiKeySet:
+              type: boolean
+            pinSet:
+              type: boolean
+            accessTokenSet:
+              type: boolean
             createdAt:
               type: string
               format: date-time

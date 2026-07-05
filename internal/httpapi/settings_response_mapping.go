@@ -10,19 +10,21 @@ import (
 
 func downloadClientResponse(client storage.DownloadClient) DownloadClient {
 	return DownloadClient{
-		Id:        openapi_types.UUID(client.ID),
-		Name:      client.Name,
-		Type:      DownloadClientType(client.Type),
-		Protocol:  IndexerProtocol(client.Protocol),
-		BaseUrl:   client.BaseURL,
-		Username:  client.Username,
-		Password:  client.Password,
-		ApiKey:    client.APIKey,
-		Category:  client.Category,
-		Enabled:   client.Enabled,
-		Priority:  client.Priority,
-		CreatedAt: client.CreatedAt,
-		UpdatedAt: client.UpdatedAt,
+		Id:          openapi_types.UUID(client.ID),
+		Name:        client.Name,
+		Type:        DownloadClientType(client.Type),
+		Protocol:    IndexerProtocol(client.Protocol),
+		BaseUrl:     client.BaseURL,
+		Username:    client.Username,
+		Password:    nil,
+		ApiKey:      nil,
+		PasswordSet: client.Password != nil,
+		ApiKeySet:   client.APIKey != nil,
+		Category:    client.Category,
+		Enabled:     client.Enabled,
+		Priority:    client.Priority,
+		CreatedAt:   client.CreatedAt,
+		UpdatedAt:   client.UpdatedAt,
 	}
 }
 
@@ -50,7 +52,8 @@ func indexerResponse(indexer storage.Indexer, languages catalogLanguageMapper) I
 		IndexerUrls:        &indexer.IndexerURLs,
 		LegacyUrls:         &indexer.LegacyURLs,
 		BaseUrl:            indexer.BaseURL,
-		ApiKey:             indexer.APIKey,
+		ApiKey:             nil,
+		ApiKeySet:          indexer.APIKey != nil,
 		Categories:         &categories,
 		MediaTypeScopes:    &mediaTypeScopes,
 		TagScopes:          &tagScopes,
@@ -165,17 +168,20 @@ func indexerSearchHistoryEntryResponse(entry storage.IndexerSearchHistoryEntry) 
 
 func metadataProviderResponse(provider storage.MetadataProvider) MetadataProvider {
 	return MetadataProvider{
-		Id:          openapi_types.UUID(provider.ID),
-		Name:        provider.Name,
-		Type:        MetadataProviderType(provider.Type),
-		BaseUrl:     provider.BaseURL,
-		ApiKey:      provider.APIKey,
-		Pin:         provider.PIN,
-		AccessToken: provider.AccessToken,
-		Enabled:     provider.Enabled,
-		Priority:    provider.Priority,
-		CreatedAt:   provider.CreatedAt,
-		UpdatedAt:   provider.UpdatedAt,
+		Id:             openapi_types.UUID(provider.ID),
+		Name:           provider.Name,
+		Type:           MetadataProviderType(provider.Type),
+		BaseUrl:        provider.BaseURL,
+		ApiKey:         nil,
+		Pin:            nil,
+		AccessToken:    nil,
+		ApiKeySet:      provider.APIKey != nil,
+		PinSet:         provider.PIN != nil,
+		AccessTokenSet: provider.AccessToken != nil,
+		Enabled:        provider.Enabled,
+		Priority:       provider.Priority,
+		CreatedAt:      provider.CreatedAt,
+		UpdatedAt:      provider.UpdatedAt,
 	}
 }
 

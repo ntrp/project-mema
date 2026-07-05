@@ -1314,19 +1314,21 @@ type DownloadActivityListResponse struct {
 
 // DownloadClient defines model for DownloadClient.
 type DownloadClient struct {
-	ApiKey    *string            `json:"apiKey,omitempty"`
-	BaseUrl   string             `json:"baseUrl"`
-	Category  *string            `json:"category,omitempty"`
-	CreatedAt time.Time          `json:"createdAt"`
-	Enabled   bool               `json:"enabled"`
-	Id        openapi_types.UUID `json:"id"`
-	Name      string             `json:"name"`
-	Password  *string            `json:"password,omitempty"`
-	Priority  int32              `json:"priority"`
-	Protocol  IndexerProtocol    `json:"protocol"`
-	Type      DownloadClientType `json:"type"`
-	UpdatedAt time.Time          `json:"updatedAt"`
-	Username  *string            `json:"username,omitempty"`
+	ApiKey      *string            `json:"apiKey,omitempty"`
+	ApiKeySet   bool               `json:"apiKeySet"`
+	BaseUrl     string             `json:"baseUrl"`
+	Category    *string            `json:"category,omitempty"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	Enabled     bool               `json:"enabled"`
+	Id          openapi_types.UUID `json:"id"`
+	Name        string             `json:"name"`
+	Password    *string            `json:"password,omitempty"`
+	PasswordSet bool               `json:"passwordSet"`
+	Priority    int32              `json:"priority"`
+	Protocol    IndexerProtocol    `json:"protocol"`
+	Type        DownloadClientType `json:"type"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+	Username    *string            `json:"username,omitempty"`
 }
 
 // DownloadClientListResponse defines model for DownloadClientListResponse.
@@ -1432,6 +1434,7 @@ type ImportMode string
 // Indexer defines model for Indexer.
 type Indexer struct {
 	ApiKey             *string              `json:"apiKey,omitempty"`
+	ApiKeySet          bool                 `json:"apiKeySet"`
 	AppProfileId       *string              `json:"appProfileId,omitempty"`
 	BaseUrl            string               `json:"baseUrl"`
 	Capabilities       IndexerCapabilities  `json:"capabilities"`
@@ -2532,17 +2535,20 @@ type MetadataCacheStats struct {
 
 // MetadataProvider defines model for MetadataProvider.
 type MetadataProvider struct {
-	AccessToken *string              `json:"accessToken,omitempty"`
-	ApiKey      *string              `json:"apiKey,omitempty"`
-	BaseUrl     string               `json:"baseUrl"`
-	CreatedAt   time.Time            `json:"createdAt"`
-	Enabled     bool                 `json:"enabled"`
-	Id          openapi_types.UUID   `json:"id"`
-	Name        string               `json:"name"`
-	Pin         *string              `json:"pin,omitempty"`
-	Priority    int32                `json:"priority"`
-	Type        MetadataProviderType `json:"type"`
-	UpdatedAt   time.Time            `json:"updatedAt"`
+	AccessToken    *string              `json:"accessToken,omitempty"`
+	AccessTokenSet bool                 `json:"accessTokenSet"`
+	ApiKey         *string              `json:"apiKey,omitempty"`
+	ApiKeySet      bool                 `json:"apiKeySet"`
+	BaseUrl        string               `json:"baseUrl"`
+	CreatedAt      time.Time            `json:"createdAt"`
+	Enabled        bool                 `json:"enabled"`
+	Id             openapi_types.UUID   `json:"id"`
+	Name           string               `json:"name"`
+	Pin            *string              `json:"pin,omitempty"`
+	PinSet         bool                 `json:"pinSet"`
+	Priority       int32                `json:"priority"`
+	Type           MetadataProviderType `json:"type"`
+	UpdatedAt      time.Time            `json:"updatedAt"`
 }
 
 // MetadataProviderListResponse defines model for MetadataProviderListResponse.

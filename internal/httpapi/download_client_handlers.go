@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+
+	"media-manager/internal/storage"
 )
 
 func (s *Server) ListDownloadClients(w http.ResponseWriter, r *http.Request) {
@@ -59,6 +61,12 @@ func (s *Server) UpdateDownloadClient(w http.ResponseWriter, r *http.Request, id
 	if !ok {
 		return
 	}
+	current, err := s.settings.GetDownloadClient(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not update download client")
+		return
+	}
+	input = preserveDownloadClientSecrets(input, body, current)
 
 	client, err := s.settings.UpdateDownloadClient(r.Context(), uuid.UUID(id), input)
 	if err != nil {
@@ -111,4 +119,18 @@ func (s *Server) TestDownloadClientConfig(w http.ResponseWriter, r *http.Request
 
 	result := s.downloadClients.Test(r.Context(), downloadClientInputConfig(input))
 	writeJSON(w, http.StatusOK, downloadClientTestResponse(s.now(), result))
+}
+
+func preserveDownloadClientSecrets(
+	input storage.DownloadClientInput,
+	request DownloadClientRequest,
+	current storage.DownloadClient,
+) storage.DownloadClientInput {
+	if request.Password == nil {
+		input.Password = current.Password
+	}
+	if request.ApiKey == nil {
+		input.APIKey = current.APIKey
+	}
+	return input
 }

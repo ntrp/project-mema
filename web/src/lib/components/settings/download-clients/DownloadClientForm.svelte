@@ -101,6 +101,7 @@
 						id="download-client-password"
 						bind:value={form.password}
 						autocomplete="off"
+						placeholder={form.passwordSet ? 'Saved password' : ''}
 						type="password"
 					/>
 				</div>
@@ -111,7 +112,13 @@
 			{:else}
 				<div class="space-y-2 sm:col-span-2">
 					<Label for="download-client-api-key">API key</Label>
-					<Input id="download-client-api-key" bind:value={form.apiKey} autocomplete="off" />
+					<Input
+						id="download-client-api-key"
+						bind:value={form.apiKey}
+						autocomplete="off"
+						placeholder={form.apiKeySet ? 'Saved API key' : ''}
+						type="password"
+					/>
 				</div>
 				<div class="space-y-2">
 					<Label for="download-client-category">Category</Label>

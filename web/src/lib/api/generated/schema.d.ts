@@ -3115,6 +3115,8 @@ export interface components {
 		DownloadClient: components['schemas']['DownloadClientRequest'] & {
 			/** Format: uuid */
 			id: string;
+			passwordSet: boolean;
+			apiKeySet: boolean;
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
@@ -3194,6 +3196,7 @@ export interface components {
 			lastError?: string;
 			/** Format: int32 */
 			failureCount: number;
+			apiKeySet: boolean;
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
@@ -3386,6 +3389,9 @@ export interface components {
 		MetadataProvider: components['schemas']['MetadataProviderRequest'] & {
 			/** Format: uuid */
 			id: string;
+			apiKeySet: boolean;
+			pinSet: boolean;
+			accessTokenSet: boolean;
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */

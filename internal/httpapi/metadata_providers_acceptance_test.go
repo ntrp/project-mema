@@ -24,7 +24,7 @@ func TestScenarioSCNSettings022AdminManagesMetadataProviders(t *testing.T) {
 		Enabled:  true,
 		Priority: 10,
 	}, http.StatusCreated, &created)
-	if created.Name != "Scenario TMDb" || created.Type != Tmdb || !created.Enabled || created.ApiKey == nil || *created.ApiKey != apiKey {
+	if created.Name != "Scenario TMDb" || created.Type != Tmdb || !created.Enabled || !created.ApiKeySet || created.ApiKey != nil {
 		t.Fatalf("created metadata provider = %#v", created)
 	}
 
