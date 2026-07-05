@@ -87,6 +87,22 @@ type AppFileNamingSetting struct {
 	UpdatedAt            time.Time
 }
 
+type AppImportAttempt struct {
+	ID                     uuid.UUID
+	ActivityID             uuid.UUID
+	MediaItemID            uuid.UUID
+	SourcePath             pgtype.Text
+	TargetPath             pgtype.Text
+	ImportMode             string
+	Status                 string
+	FailureStage           pgtype.Text
+	ErrorMessage           pgtype.Text
+	CreatedTargets         []string
+	InsertedMediaFilePaths []string
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
+}
+
 type AppIndexer struct {
 	ID                   uuid.UUID
 	DefinitionID         string

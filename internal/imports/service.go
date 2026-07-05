@@ -41,41 +41,49 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 	item, err := s.settings.GetMediaItem(ctx, activity.MediaItemID)
 	if err != nil {
 		slog.Error("import completed download media item load failed", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "error", err)
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "load_media_item", err, nil, nil)
 		return fmt.Errorf("load media item: %w", err)
 	}
 	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
 		slog.Error("import completed download missing media folder", "activityId", activity.ID, "mediaItemId", item.ID)
-		return fmt.Errorf("media folder is not set")
+		err := fmt.Errorf("media folder is not set")
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "load_media_item", err, nil, nil)
+		return err
 	}
 	mappings, err := s.settings.ListPathMappings(ctx)
 	if err != nil {
 		slog.Error("import completed download path mapping load failed", "activityId", activity.ID, "error", err)
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "load_path_mappings", err, nil, nil)
 		return fmt.Errorf("load path mappings: %w", err)
 	}
 	selection, err := selectCompletedDownloadCandidates(files, mappings)
 	if err != nil {
 		slog.Error("import completed download source discovery failed", "activityId", activity.ID, "error", err)
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "select_source", err, nil, nil)
 		return err
 	}
 	if len(selection.SelectedSources) == 0 {
 		slog.Error("import completed download had no valid video candidates", "activityId", activity.ID, "reportedFileCount", len(files), "rejectedCandidates", selection.RejectedCandidates)
-		return fmt.Errorf("download client did not report valid import candidates%s", rejectedCandidateSummary(selection.RejectedCandidates))
+		err := fmt.Errorf("download client did not report valid import candidates%s", rejectedCandidateSummary(selection.RejectedCandidates))
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "select_source", err, nil, nil)
+		return err
 	}
 
 	if err := os.MkdirAll(*item.MediaFolderPath, 0o755); err != nil {
 		slog.Error("import completed download media folder create failed", "activityId", activity.ID, "mediaFolderPath", *item.MediaFolderPath, "error", err)
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "create_media_folder", err, nil, nil)
 		return fmt.Errorf("create media folder: %w", err)
 	}
 	for _, source := range selection.SelectedSources {
 		target := filepath.Join(*item.MediaFolderPath, filepath.Base(source))
 		slog.Debug("linking completed download file", "activityId", activity.ID, "source", source, "target", target)
-		if err := importFile(source, target, ImportModeHardlink); err != nil {
-			slog.Error("completed download file link failed", "activityId", activity.ID, "source", source, "target", target, "error", err)
+		if err := s.importWithAttempt(ctx, activity, item, importRun{
+			source: source,
+			target: target,
+			mode:   ImportModeHardlink,
+		}); err != nil {
+			slog.Error("completed download import step failed", "activityId", activity.ID, "source", source, "target", target, "error", err)
 			return err
-		}
-		if err := s.settings.RecordImportedMediaFileWithHistory(ctx, item, source, target, string(ImportModeHardlink)); err != nil {
-			slog.Error("completed download imported file record failed", "activityId", activity.ID, "target", target, "error", err)
-			return fmt.Errorf("record imported file: %w", err)
 		}
 	}
 	slog.Debug("import completed download finished", "activityId", activity.ID, "mediaItemId", item.ID, "linkedFileCount", len(selection.SelectedSources), "rejectedFileCount", len(selection.RejectedCandidates))
@@ -85,41 +93,47 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 func (s *Service) ImportManualDownload(ctx context.Context, activity storage.DownloadActivity, input ManualImportInput) error {
 	item, err := s.settings.GetMediaItem(ctx, activity.MediaItemID)
 	if err != nil {
+		s.recordImportAttempt(ctx, activity, importRun{source: input.SourcePath, mode: input.ImportMode}, importStatusFailed, "load_media_item", err, nil, nil)
 		return fmt.Errorf("load media item: %w", err)
 	}
 	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
-		return fmt.Errorf("media folder is not set")
+		err := fmt.Errorf("media folder is not set")
+		s.recordImportAttempt(ctx, activity, importRun{source: input.SourcePath, mode: input.ImportMode}, importStatusFailed, "load_media_item", err, nil, nil)
+		return err
 	}
 	mappings, err := s.settings.ListPathMappings(ctx)
 	if err != nil {
+		s.recordImportAttempt(ctx, activity, importRun{source: input.SourcePath, mode: input.ImportMode}, importStatusFailed, "load_path_mappings", err, nil, nil)
 		return fmt.Errorf("load path mappings: %w", err)
 	}
 	source := mapPath(input.SourcePath, mappings)
 	info, err := os.Stat(source)
 	if err != nil {
-		return fmt.Errorf("source file is not visible to the app: %s", source)
+		err := fmt.Errorf("source file is not visible to the app: %s", source)
+		s.recordImportAttempt(ctx, activity, importRun{source: source, mode: input.ImportMode}, importStatusFailed, "select_source", err, nil, nil)
+		return err
 	}
 	if info.IsDir() {
-		return fmt.Errorf("source path must be a file")
+		err := fmt.Errorf("source path must be a file")
+		s.recordImportAttempt(ctx, activity, importRun{source: source, mode: input.ImportMode}, importStatusFailed, "select_source", err, nil, nil)
+		return err
 	}
 	if !isVideoFile(source) {
-		return fmt.Errorf("source path is not a video file")
+		err := fmt.Errorf("source path is not a video file")
+		s.recordImportAttempt(ctx, activity, importRun{source: source, mode: input.ImportMode}, importStatusFailed, "select_source", err, nil, nil)
+		return err
 	}
 	targetName, err := manualTargetFileName(item, input, source)
 	if err != nil {
+		s.recordImportAttempt(ctx, activity, importRun{source: source, mode: input.ImportMode}, importStatusFailed, "select_source", err, nil, nil)
 		return err
 	}
 	if err := os.MkdirAll(*item.MediaFolderPath, 0o755); err != nil {
+		s.recordImportAttempt(ctx, activity, importRun{source: source, mode: input.ImportMode}, importStatusFailed, "create_media_folder", err, nil, nil)
 		return fmt.Errorf("create media folder: %w", err)
 	}
 	target := filepath.Join(*item.MediaFolderPath, targetName)
-	if err := importFile(source, target, input.ImportMode); err != nil {
-		return err
-	}
-	if err := s.settings.RecordImportedMediaFileWithHistory(ctx, item, source, target, string(input.ImportMode)); err != nil {
-		return fmt.Errorf("record imported file: %w", err)
-	}
-	return nil
+	return s.importWithAttempt(ctx, activity, item, importRun{source: source, target: target, mode: input.ImportMode})
 }
 
 func mapPath(source string, mappings []storage.PathMapping) string {

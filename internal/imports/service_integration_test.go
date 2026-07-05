@@ -77,8 +77,9 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 		_ = store.DeleteMediaItem(context.Background(), item.ID, false)
 	})
 
+	activityID := uuid.New()
 	activity := storage.DownloadActivity{
-		ID:          uuid.New(),
+		ID:          activityID,
 		MediaItemID: item.ID,
 	}
 	err = NewService(store).ImportCompletedDownload(ctx, activity, []downloadclients.StatusFile{
@@ -144,6 +145,84 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	}
 	if len(history) != 2 || history[0].Operation != "deleted" || history[0].Status != "succeeded" {
 		t.Fatalf("delete history = %#v", history)
+	}
+	attempts, err := store.ListImportAttemptsForActivity(ctx, activityID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(attempts) != 1 || attempts[0].Status != "succeeded" || len(attempts[0].InsertedMediaFilePaths) != 1 {
+		t.Fatalf("attempts = %#v", attempts)
+	}
+}
+
+func TestImportCompletedDownloadRecordsFailureBeforeFileOperation(t *testing.T) {
+	databaseURL := testdb.Create(t)
+
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+
+	store := storage.NewSettingsStore(pool)
+	if err := storage.EnsureSchema(ctx, databaseURL); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.EnsureDefaultFileNamingSettings(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	root := t.TempDir()
+	appPath := filepath.Join(root, "client")
+	libraryPath := filepath.Join(root, "library")
+	sourcePath := filepath.Join(appPath, "complete", "Toy.Story.5.2026.sample.mkv")
+	if err := os.MkdirAll(filepath.Dir(sourcePath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeSparseImportFile(t, sourcePath, 2*1024*1024)
+
+	folder, err := store.CreateLibraryFolder(ctx, libraryPath, "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = store.DeleteLibraryFolder(context.Background(), folder.ID)
+	})
+
+	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
+		Type:            "movie",
+		Title:           "Toy Story 5",
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = store.DeleteMediaItem(context.Background(), item.ID, false)
+	})
+
+	activityID := uuid.New()
+	err = NewService(store).ImportCompletedDownload(ctx, storage.DownloadActivity{
+		ID:          activityID,
+		MediaItemID: item.ID,
+	}, []downloadclients.StatusFile{{
+		Path:     sourcePath,
+		Complete: true,
+	}})
+	if err == nil {
+		t.Fatal("expected import error")
+	}
+	if _, err := os.Stat(filepath.Join(libraryPath, filepath.Base(sourcePath))); !os.IsNotExist(err) {
+		t.Fatalf("target stat err = %v, want missing", err)
+	}
+	attempts, err := store.ListImportAttemptsForActivity(ctx, activityID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(attempts) != 1 || attempts[0].Status != "failed" || *attempts[0].FailureStage != "select_source" {
+		t.Fatalf("attempts = %#v", attempts)
 	}
 }
 

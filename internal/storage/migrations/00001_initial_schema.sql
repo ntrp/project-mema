@@ -766,6 +766,28 @@ end $$;
 create index if not exists idx_download_activity_created
     on app.download_activity (created_at desc);
 
+create table if not exists app.import_attempts (
+    id uuid primary key,
+    activity_id uuid not null,
+    media_item_id uuid not null,
+    source_path text,
+    target_path text,
+    import_mode text not null default 'hardlink' check (import_mode in ('hardlink', 'copy', 'move')),
+    status text not null check (status in ('succeeded', 'failed')),
+    failure_stage text check (failure_stage in ('load_media_item', 'load_path_mappings', 'select_source', 'create_media_folder', 'file_operation', 'record_media_file')),
+    error_message text,
+    created_targets text[] not null default '{}',
+    inserted_media_file_paths text[] not null default '{}',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_import_attempts_activity_created
+    on app.import_attempts (activity_id, created_at desc);
+
+create index if not exists idx_import_attempts_media_item_created
+    on app.import_attempts (media_item_id, created_at desc);
+
 create table if not exists app.media_release_candidates (
     id uuid primary key,
     media_item_id uuid not null references app.media_items(id) on delete cascade,

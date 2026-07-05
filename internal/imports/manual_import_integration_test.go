@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -37,8 +38,9 @@ func TestSCNActivity002ManualMovieImportLinksSanitizedTarget(t *testing.T) {
 		LibraryFolderID: &folder.ID,
 	})
 
+	activityID := uuid.New()
 	err := NewService(store).ImportManualDownload(ctx, storage.DownloadActivity{
-		ID:          uuid.New(),
+		ID:          activityID,
 		MediaItemID: item.ID,
 	}, ManualImportInput{
 		SourcePath:   "/client/downloads/Scenario.Movie.Raw.MP4",
@@ -77,6 +79,13 @@ func TestSCNActivity002ManualMovieImportLinksSanitizedTarget(t *testing.T) {
 	}
 	if !os.SameFile(sourceInfo, targetInfo) {
 		t.Fatalf("imported file is not linked to source")
+	}
+	attempts, err := store.ListImportAttemptsForActivity(ctx, activityID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(attempts) != 1 || attempts[0].Status != "succeeded" || len(attempts[0].InsertedMediaFilePaths) != 1 {
+		t.Fatalf("attempts = %#v", attempts)
 	}
 }
 
@@ -154,13 +163,82 @@ func TestSCNActivity002ManualSeriesImportRequiresEpisodeCoordinates(t *testing.T
 		LibraryFolderID: &folder.ID,
 	})
 
+	activityID := uuid.New()
 	err := NewService(store).ImportManualDownload(ctx, storage.DownloadActivity{
-		ID:          uuid.New(),
+		ID:          activityID,
 		MediaItemID: item.ID,
 	}, ManualImportInput{SourcePath: sourcePath})
 
 	if err == nil || err.Error() != "season and episode are required for series imports" {
 		t.Fatalf("error = %v", err)
+	}
+	attempts, err := store.ListImportAttemptsForActivity(ctx, activityID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(attempts) != 1 || attempts[0].Status != "failed" || *attempts[0].FailureStage != "select_source" {
+		t.Fatalf("attempts = %#v", attempts)
+	}
+}
+
+func TestManualImportRestoresMovedSourceWhenMediaRecordFails(t *testing.T) {
+	store := importTestStore(t)
+	ctx := context.Background()
+	root := t.TempDir()
+	sourcePath := filepath.Join(root, "episode.mkv")
+	if err := os.WriteFile(sourcePath, []byte("video"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	libraryPath := filepath.Join(root, "library")
+	folder := createImportFolder(t, store, libraryPath)
+	item := createImportMediaItem(t, store, storage.MediaItemInput{
+		Type:            "serie",
+		Title:           "Scenario Series",
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
+			Seasons: []storage.MediaSeason{{
+				Name:         "Season 1",
+				SeasonNumber: 1,
+				Monitored:    false,
+				Episodes: []storage.MediaEpisode{{
+					Name:          "Pilot",
+					EpisodeNumber: 1,
+					Monitored:     true,
+				}},
+			}},
+		},
+	})
+
+	activityID := uuid.New()
+	err := NewService(store).ImportManualDownload(ctx, storage.DownloadActivity{
+		ID:          activityID,
+		MediaItemID: item.ID,
+	}, ManualImportInput{
+		SourcePath:     sourcePath,
+		TargetFileName: "Scenario.Series.S01E99.mkv",
+		ImportMode:     ImportModeMove,
+	})
+
+	if err == nil || !strings.Contains(err.Error(), "episode import target S01E99 is not known") {
+		t.Fatalf("error = %v", err)
+	}
+	if _, err := os.Stat(sourcePath); err != nil {
+		t.Fatalf("source was not restored: %v", err)
+	}
+	targetPath := filepath.Join(libraryPath, "Scenario.Series.S01E99.mkv")
+	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
+		t.Fatalf("target stat err = %v, want missing", err)
+	}
+	attempts, err := store.ListImportAttemptsForActivity(ctx, activityID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(attempts) != 1 || attempts[0].Status != "failed" || *attempts[0].FailureStage != "record_media_file" {
+		t.Fatalf("attempts = %#v", attempts)
+	}
+	if len(attempts[0].CreatedTargets) != 1 || attempts[0].CreatedTargets[0] != targetPath {
+		t.Fatalf("created targets = %#v", attempts[0].CreatedTargets)
 	}
 }
 
