@@ -27,7 +27,7 @@ func TestSCNMedia010MediaItemFileTargetValidatesPaths(t *testing.T) {
 		t.Fatalf("absolute mediaItemFileTarget = %q", target)
 	}
 
-	for _, value := range []string{"", "..", "../outside.mkv", filepath.Join(root, "..", "outside.mkv")} {
+	for _, value := range []string{"", "..", "../outside.mkv", filepath.Join(root, "..", "outside.mkv"), "%2e%2e/outside.mkv"} {
 		if _, err := mediaItemFileTarget(item, value); err == nil {
 			t.Fatalf("expected %q to be rejected", value)
 		}

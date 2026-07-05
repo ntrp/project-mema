@@ -11,8 +11,14 @@ func moveMediaItemFiles(item MediaItem, newRoot string) error {
 	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
 		return nil
 	}
-	oldRoot := filepath.Clean(strings.TrimSpace(*item.MediaFolderPath))
-	newRoot = filepath.Clean(strings.TrimSpace(newRoot))
+	oldRoot, err := safeAbsRoot(*item.MediaFolderPath)
+	if err != nil {
+		return err
+	}
+	newRoot, err = safeAbsRoot(newRoot)
+	if err != nil {
+		return err
+	}
 	if oldRoot == newRoot {
 		return nil
 	}
@@ -47,11 +53,19 @@ func mediaItemMovePaths(item MediaItem) []string {
 }
 
 func movedMediaFileTarget(oldRoot string, newRoot string, source string) (string, error) {
+	source, err := safePathUnderRoot(oldRoot, source, false)
+	if err != nil {
+		return "", err
+	}
+	oldRoot, err = safeAbsRoot(oldRoot)
+	if err != nil {
+		return "", err
+	}
 	rel, err := filepath.Rel(oldRoot, source)
-	if err != nil || rel == "." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
+	if err != nil {
 		return "", ErrInvalidInput
 	}
-	return filepath.Join(newRoot, rel), nil
+	return safePathUnderRoot(newRoot, rel, false)
 }
 
 func moveFile(source string, target string) error {

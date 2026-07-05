@@ -74,6 +74,24 @@ func TestMediaRenamePreviewDetectsMissingSource(t *testing.T) {
 	}
 }
 
+func TestCheckedRenamePathRejectsRootAndOutsideDestinations(t *testing.T) {
+	root := t.TempDir()
+
+	for _, proposed := range []struct {
+		folder string
+		file   string
+	}{
+		{folder: root, file: ""},
+		{folder: filepath.Join(root, ".."), file: "outside.mkv"},
+		{folder: root, file: "%2e%2e/outside.mkv"},
+	} {
+		_, _, ok := checkedRenamePath(root, proposed.folder, proposed.file)
+		if ok {
+			t.Fatalf("expected %q/%q to be rejected", proposed.folder, proposed.file)
+		}
+	}
+}
+
 func writePreviewFile(t *testing.T, path string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

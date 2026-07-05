@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	storagegen "media-manager/internal/storage/generated"
@@ -48,18 +47,14 @@ func mediaFolderDeletePath(item MediaItem) (string, bool, error) {
 	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
 		return "", false, nil
 	}
-	path := filepath.Clean(strings.TrimSpace(*item.MediaFolderPath))
-	if !filepath.IsAbs(path) || path == string(os.PathSeparator) {
+	path, err := safeAbsRoot(*item.MediaFolderPath)
+	if err != nil {
 		return "", false, fmt.Errorf("unsafe media folder path: %s", path)
 	}
 	if item.LibraryFolderPath == nil || strings.TrimSpace(*item.LibraryFolderPath) == "" {
 		return path, true, nil
 	}
-	root := filepath.Clean(strings.TrimSpace(*item.LibraryFolderPath))
-	if path == root {
-		return "", false, fmt.Errorf("refusing to delete library root: %s", path)
-	}
-	if !strings.HasPrefix(path, root+string(os.PathSeparator)) {
+	if err := validatePathInRoot(*item.LibraryFolderPath, path, false); err != nil {
 		return "", false, fmt.Errorf("media folder is outside library root: %s", path)
 	}
 	return path, true, nil

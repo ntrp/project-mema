@@ -105,7 +105,7 @@ func seriesRenamePath(
 
 func checkedRenamePath(root string, folder string, file string) (string, []string, bool) {
 	proposed := filepath.Clean(filepath.Join(folder, file))
-	if proposed == root || !strings.HasPrefix(proposed, root+string(filepath.Separator)) {
+	if _, err := safePathUnderRoot(root, proposed, false); err != nil {
 		return proposed, []string{"Destination is outside the library root."}, false
 	}
 	return proposed, nil, true
