@@ -39,7 +39,11 @@ func (s *SettingsStore) CreateMediaComponentAssemblyRun(
 	if err != nil {
 		return MediaComponentAssemblyRun{}, err
 	}
-	runID, outputPath, err := mediaComponentAssemblyTarget(item, base, input.ArtifactIDs)
+	finalContainer, err := s.mediaComponentAssemblyContainer(ctx, item)
+	if err != nil {
+		return MediaComponentAssemblyRun{}, err
+	}
+	runID, outputPath, err := mediaComponentAssemblyTarget(item, base, input.ArtifactIDs, finalContainer)
 	if err != nil {
 		return MediaComponentAssemblyRun{}, err
 	}
@@ -207,6 +211,7 @@ func mediaComponentAssemblyTarget(
 	item MediaItem,
 	base MediaComponentSource,
 	artifactIDs []uuid.UUID,
+	finalContainer string,
 ) (uuid.UUID, string, error) {
 	if base.SourceRole != "baseVideo" || base.RetentionState != "retained" || len(artifactIDs) == 0 {
 		return uuid.Nil, "", ErrInvalidInput
@@ -215,8 +220,26 @@ func mediaComponentAssemblyTarget(
 		return uuid.Nil, "", err
 	}
 	id := uuid.New()
-	target, err := mediaComponentSourceTarget(item, filepath.Join(".mema", "assemblies", id.String(), "assembled.mkv"))
+	extension := ".mkv"
+	if finalContainer == "mp4" {
+		extension = ".mp4"
+	}
+	target, err := mediaComponentSourceTarget(item, filepath.Join(".mema", "assemblies", id.String(), "assembled"+extension))
 	return id, target, err
+}
+
+func (s *SettingsStore) mediaComponentAssemblyContainer(ctx context.Context, item MediaItem) (string, error) {
+	if item.QualityProfileID == nil || strings.TrimSpace(*item.QualityProfileID) == "" {
+		return "mkv", nil
+	}
+	profile, err := s.GetMediaProfile(ctx, *item.QualityProfileID)
+	if err != nil {
+		return "", err
+	}
+	if profile.FinalContainer == "mp4" {
+		return "mp4", nil
+	}
+	return "mkv", nil
 }
 
 func assemblyBaseInput(base MediaComponentSource) MediaComponentAssemblyInput {

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,14 +34,14 @@ type ComponentMuxWorker struct {
 }
 
 type componentMuxRunner interface {
-	Mux(ctx context.Context, args []string) (string, error)
+	Mux(ctx context.Context, command string, args []string) (string, error)
 }
 
 type mkvMergeRunner struct{}
 
-func (mkvMergeRunner) Mux(ctx context.Context, args []string) (string, error) {
+func (mkvMergeRunner) Mux(ctx context.Context, command string, args []string) (string, error) {
 	output, err := mediatools.RunOutput(ctx, mediatools.CommandSpec{
-		Name:           "mkvmerge",
+		Name:           command,
 		Args:           args,
 		Timeout:        30 * time.Minute,
 		MaxOutputBytes: 64 * 1024,
@@ -60,7 +62,7 @@ func (w *ComponentMuxWorker) Work(ctx context.Context, job *river.Job[MediaCompo
 	if err != nil {
 		return fmt.Errorf("start component assembly: %w", err)
 	}
-	args, err := MkvMergeArgs(run.OutputPath, assemblyInputPaths(run.Inputs))
+	command, args, err := ComponentMuxCommand(run.OutputPath, run.Inputs)
 	if err != nil {
 		return w.failRun(ctx, runID, "", err)
 	}
@@ -68,7 +70,7 @@ func (w *ComponentMuxWorker) Work(ctx context.Context, job *river.Job[MediaCompo
 		"runId":       run.ID.String(),
 		"mediaItemId": run.MediaItemID.String(),
 	})
-	summary, err := w.runnerOrDefault().Mux(ctx, args)
+	summary, err := w.runnerOrDefault().Mux(ctx, command, args)
 	if err != nil {
 		slog.Error("component assembly failed", "runId", runID, "error", err)
 		return w.failRun(ctx, runID, summary, err)
@@ -121,6 +123,41 @@ func MkvMergeArgs(outputPath string, inputPaths []string) ([]string, error) {
 		args = append(args, inputPath)
 	}
 	return args, nil
+}
+
+func ComponentMuxCommand(outputPath string, inputs []storage.MediaComponentAssemblyInput) (string, []string, error) {
+	if strings.EqualFold(filepath.Ext(outputPath), ".mp4") {
+		args, err := FfmpegMP4RemuxArgs(outputPath, inputs)
+		return "ffmpeg", args, err
+	}
+	args, err := MkvMergeArgs(outputPath, assemblyInputPaths(inputs))
+	return "mkvmerge", args, err
+}
+
+func FfmpegMP4RemuxArgs(outputPath string, inputs []storage.MediaComponentAssemblyInput) ([]string, error) {
+	if len(inputs) < 1 {
+		return nil, fmt.Errorf("at least one input is required")
+	}
+	if err := mediatools.SafePathArg(outputPath); err != nil {
+		return nil, err
+	}
+	args := []string{"-y"}
+	for _, input := range inputs {
+		if input.StreamType == "subtitle" {
+			return nil, fmt.Errorf("mp4 assembly does not support subtitle input %s", input.InputPath)
+		}
+		if err := mediatools.SafePathArg(input.InputPath); err != nil {
+			return nil, err
+		}
+		args = append(args, "-i", input.InputPath)
+	}
+	args = append(args, "-map", "0:v:0?")
+	for index, input := range inputs {
+		if input.StreamType == "audio" {
+			args = append(args, "-map", strconv.Itoa(index)+":a:0?")
+		}
+	}
+	return append(args, "-c", "copy", outputPath), nil
 }
 
 func assemblyInputPaths(inputs []storage.MediaComponentAssemblyInput) []string {

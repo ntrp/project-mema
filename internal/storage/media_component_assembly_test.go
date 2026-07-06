@@ -71,6 +71,65 @@ func TestMediaComponentAssemblyRunRequiresAllowedArtifactsAndTracksLifecycle(t *
 	}
 }
 
+func TestMediaComponentAssemblyUsesProfileFinalContainer(t *testing.T) {
+	ctx, store := testDBStore(t)
+	profile, err := store.CreateMediaProfile(ctx, MediaProfileInput{
+		Name:            "MP4 Assembly",
+		FinalContainer:  "mp4",
+		UpgradesAllowed: true,
+		QualityIDs:      []string{"webdl-1080p"},
+		AudioTargets:    []MediaProfileAudioTarget{{LanguageID: "english"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:             "movie",
+		Title:            "MP4 Assembly " + uuid.NewString(),
+		Monitored:        true,
+		QualityProfileID: &profile.ID,
+		LibraryFolderID:  &folder.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := retainCompatibilitySource(t, ctx, store, item, "baseVideo", "Base.mkv", 7_200_000, "")
+	source := retainCompatibilitySource(t, ctx, store, item, "audio", "Audio.mkv", 7_200_000, "")
+	if _, err := store.EvaluateMediaComponentCompatibility(ctx, item.ID, source.ID, base.ID); err != nil {
+		t.Fatal(err)
+	}
+	artifact, err := store.CreateMediaComponentArtifact(ctx, item.ID, source.ID, MediaComponentArtifactInput{
+		StreamID:   1,
+		StreamType: "audio",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(artifact.OutputPath, []byte("audio"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	artifact, err = store.CompleteMediaComponentArtifact(ctx, artifact.ID, "ok")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	run, err := store.CreateMediaComponentAssemblyRun(ctx, item.ID, MediaComponentAssemblyRunInput{
+		BaseSourceID: base.ID,
+		ArtifactIDs:  []uuid.UUID{artifact.ID},
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Ext(run.OutputPath) != ".mp4" {
+		t.Fatalf("output path = %q", run.OutputPath)
+	}
+}
+
 func TestMediaComponentAssemblyRejectsBlockedCompatibility(t *testing.T) {
 	ctx, store := testDBStore(t)
 	item, _ := componentSourceMediaItem(t, ctx, store)
