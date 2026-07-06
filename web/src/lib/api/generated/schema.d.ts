@@ -722,7 +722,8 @@ export interface paths {
 			cookie?: never;
 		};
 		get?: never;
-		put?: never;
+		/** Update external subtitle selection */
+		put: operations['updateMediaItemSubtitle'];
 		post?: never;
 		/** Delete one managed external subtitle */
 		delete: operations['deleteMediaItemSubtitle'];
@@ -2616,6 +2617,14 @@ export interface components {
 			sizeBytes?: number;
 			/** Format: date-time */
 			downloadedAt: string;
+			selected: boolean;
+			retentionMode: components['schemas']['MediaItemSubtitleRetentionMode'];
+		};
+		/** @enum {string} */
+		MediaItemSubtitleRetentionMode: 'external' | 'mux' | 'ignore';
+		MediaItemSubtitleSelectionRequest: {
+			selected: boolean;
+			retentionMode: components['schemas']['MediaItemSubtitleRetentionMode'];
 		};
 		MediaFileHistoryResponse: {
 			entries: components['schemas']['MediaFileHistoryEntry'][];
@@ -5096,6 +5105,36 @@ export interface operations {
 					'application/json': components['schemas']['MediaItemSubtitleListResponse'];
 				};
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	updateMediaItemSubtitle: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				subtitleId: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaItemSubtitleSelectionRequest'];
+			};
+		};
+		responses: {
+			/** @description Subtitle selection updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};

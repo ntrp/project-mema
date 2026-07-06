@@ -1380,6 +1380,32 @@ paths:
         schema:
           type: string
           format: uuid
+    put:
+      operationId: updateMediaItemSubtitle
+      tags:
+        - Media
+      summary: Update external subtitle selection
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaItemSubtitleSelectionRequest"
+      responses:
+        "200":
+          description: Subtitle selection updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       operationId: deleteMediaItemSubtitle
       tags:
@@ -5132,6 +5158,8 @@ components:
         - filePath
         - providerName
         - downloadedAt
+        - selected
+        - retentionMode
       properties:
         id:
           type: string
@@ -5170,6 +5198,31 @@ components:
         downloadedAt:
           type: string
           format: date-time
+        selected:
+          type: boolean
+        retentionMode:
+          $ref: "#/components/schemas/MediaItemSubtitleRetentionMode"
+    MediaItemSubtitleRetentionMode:
+      type: string
+      enum:
+        - external
+        - mux
+        - ignore
+      x-enum-varnames:
+        - MediaItemSubtitleRetentionExternal
+        - MediaItemSubtitleRetentionMux
+        - MediaItemSubtitleRetentionIgnore
+    MediaItemSubtitleSelectionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - selected
+        - retentionMode
+      properties:
+        selected:
+          type: boolean
+        retentionMode:
+          $ref: "#/components/schemas/MediaItemSubtitleRetentionMode"
     MediaFileHistoryResponse:
       type: object
       additionalProperties: false

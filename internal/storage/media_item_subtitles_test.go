@@ -94,3 +94,74 @@ func TestMediaItemSubtitleDeleteRejectsTraversal(t *testing.T) {
 		t.Fatalf("expected invalid input, got %v", err)
 	}
 }
+
+func TestMediaItemSubtitleSelectionAndAssemblyArtifacts(t *testing.T) {
+	ctx, store := testDBStore(t)
+	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:            "movie",
+		Title:           "Selection Movie " + uuid.NewString(),
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if item.MediaFolderPath == nil {
+		t.Fatal("expected media folder path")
+	}
+	size := int64(12)
+	selected, err := store.UpsertMediaItemSubtitle(ctx, MediaItemSubtitleInput{
+		MediaItemID:  item.ID,
+		ProviderName: "OpenSubtitles",
+		LanguageID:   "english",
+		FilePath:     filepath.Join(*item.MediaFolderPath, "Selection.Movie.english.srt"),
+		Checksum:     stringPtr("sha256:selected"),
+		SizeBytes:    &size,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ignored, err := store.UpsertMediaItemSubtitle(ctx, MediaItemSubtitleInput{
+		MediaItemID:  item.ID,
+		ProviderName: "OpenSubtitles",
+		LanguageID:   "german",
+		FilePath:     filepath.Join(*item.MediaFolderPath, "Selection.Movie.german.srt"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !selected.Selected || selected.RetentionMode != SubtitleRetentionExternal {
+		t.Fatalf("expected default active external subtitle, got %#v", selected)
+	}
+	item, err = store.UpdateMediaItemSubtitleSelection(ctx, item.ID, selected.ID, MediaItemSubtitleSelectionInput{
+		Selected:      true,
+		RetentionMode: SubtitleRetentionMux,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err = store.UpdateMediaItemSubtitleSelection(ctx, item.ID, ignored.ID, MediaItemSubtitleSelectionInput{
+		Selected:      false,
+		RetentionMode: SubtitleRetentionIgnore,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.UpdateMediaItemSubtitleSelection(ctx, item.ID, ignored.ID, MediaItemSubtitleSelectionInput{
+		Selected:      true,
+		RetentionMode: "invalid",
+	}); err != ErrInvalidInput {
+		t.Fatalf("expected invalid retention mode, got %v", err)
+	}
+	artifacts := SelectedSubtitleArtifacts(item)
+	if len(artifacts) != 1 || artifacts[0].ID != selected.ID {
+		t.Fatalf("expected only selected subtitle artifact, got %#v", artifacts)
+	}
+	if artifacts[0].RetentionMode != SubtitleRetentionMux || artifacts[0].Checksum == nil {
+		t.Fatalf("expected mux artifact with provenance, got %#v", artifacts[0])
+	}
+}

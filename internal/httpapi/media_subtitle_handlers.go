@@ -41,3 +41,35 @@ func (s *Server) DeleteMediaItemSubtitle(
 	})
 	writeJSON(w, http.StatusOK, mediaItemResponse(item))
 }
+
+func (s *Server) UpdateMediaItemSubtitle(
+	w http.ResponseWriter,
+	r *http.Request,
+	id ResourceId,
+	subtitleID openapi_types.UUID,
+) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	var body MediaItemSubtitleSelectionRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	item, err := s.settings.UpdateMediaItemSubtitleSelection(
+		r.Context(),
+		uuid.UUID(id),
+		uuid.UUID(subtitleID),
+		mediaSubtitleSelectionInput(body),
+	)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update subtitle")
+		return
+	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "subtitles", "Subtitle selection updated", map[string]any{
+		"mediaItemId":   uuid.UUID(id).String(),
+		"subtitleId":    uuid.UUID(subtitleID).String(),
+		"selected":      body.Selected,
+		"retentionMode": body.RetentionMode,
+	})
+	writeJSON(w, http.StatusOK, mediaItemResponse(item))
+}

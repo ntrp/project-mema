@@ -21,7 +21,9 @@ insert into app.media_item_subtitles (
     provider_subtitle_id,
     checksum,
     size_bytes,
-    downloaded_at
+    downloaded_at,
+    selected,
+    retention_mode
 )
 values (
     sqlc.arg(id),
@@ -39,7 +41,9 @@ values (
     sqlc.narg(provider_subtitle_id),
     sqlc.narg(checksum),
     sqlc.narg(size_bytes),
-    sqlc.arg(downloaded_at)
+    sqlc.arg(downloaded_at),
+    sqlc.arg(selected),
+    sqlc.arg(retention_mode)
 )
 on conflict (media_item_id, language_id, file_path) do update
 set provider_id = excluded.provider_id,
@@ -59,6 +63,23 @@ returning *;
 select *
 from app.media_item_subtitles
 where media_item_id = $1 and id = $2;
+
+-- name: ClearSelectedMediaItemSubtitles :exec
+update app.media_item_subtitles
+set selected = false,
+    updated_at = now()
+where media_item_id = $1
+  and language_id = $2
+  and file_path = $3
+  and id <> $4;
+
+-- name: UpdateMediaItemSubtitleSelection :one
+update app.media_item_subtitles
+set selected = $3,
+    retention_mode = $4,
+    updated_at = now()
+where media_item_id = $1 and id = $2
+returning *;
 
 -- name: DeleteMediaItemSubtitle :execrows
 delete from app.media_item_subtitles

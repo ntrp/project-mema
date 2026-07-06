@@ -986,6 +986,9 @@ create table if not exists app.media_item_subtitles (
     checksum text,
     size_bytes bigint check (size_bytes is null or size_bytes >= 0),
     downloaded_at timestamptz not null default now(),
+    selected boolean not null default true,
+    retention_mode text not null default 'external'
+        check (retention_mode in ('external', 'mux', 'ignore')),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     unique (media_item_id, language_id, file_path)
@@ -1008,6 +1011,12 @@ alter table app.media_item_subtitles
 
 alter table app.media_item_subtitles
     add column if not exists downloaded_at timestamptz not null default now();
+
+alter table app.media_item_subtitles
+    add column if not exists selected boolean not null default true;
+
+alter table app.media_item_subtitles
+    add column if not exists retention_mode text not null default 'external';
 
 create index if not exists idx_media_item_subtitles_media_item
     on app.media_item_subtitles (media_item_id, language_id);

@@ -6,6 +6,13 @@ import (
 	"media-manager/internal/storage"
 )
 
+func mediaSubtitleSelectionInput(request MediaItemSubtitleSelectionRequest) storage.MediaItemSubtitleSelectionInput {
+	return storage.MediaItemSubtitleSelectionInput{
+		Selected:      request.Selected,
+		RetentionMode: storage.SubtitleRetentionMode(request.RetentionMode),
+	}
+}
+
 func mediaSubtitleResponses(values []storage.MediaItemSubtitle) []MediaItemSubtitle {
 	items := make([]MediaItemSubtitle, 0, len(values))
 	for _, value := range values {
@@ -25,6 +32,8 @@ func mediaSubtitleResponses(values []storage.MediaItemSubtitle) []MediaItemSubti
 			Checksum:           value.Checksum,
 			SizeBytes:          value.SizeBytes,
 			DownloadedAt:       value.DownloadedAt,
+			Selected:           value.Selected,
+			RetentionMode:      MediaItemSubtitleRetentionMode(value.RetentionMode),
 		})
 	}
 	return items

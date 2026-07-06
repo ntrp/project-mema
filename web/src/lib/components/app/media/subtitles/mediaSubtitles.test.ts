@@ -49,6 +49,8 @@ function fileRow(): MediaFileRow {
 				languageId: 'german',
 				format: 'srt',
 				filePath: '/library/Scenario/Scenario.Movie.2026.german.srt',
+				selected: true,
+				retentionMode: 'external',
 				downloadedAt: '2026-07-06T10:00:00Z'
 			}
 		],

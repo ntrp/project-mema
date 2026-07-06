@@ -43,6 +43,7 @@ import type {
 	MediaFileHistoryResponse,
 	MediaItemCreateRequest,
 	MediaItemSubtitleListResponse,
+	MediaItemSubtitleSelectionRequest,
 	MediaItemUpdateRequest,
 	MediaProfile,
 	MediaProfileForm,
@@ -893,6 +894,25 @@ export async function listMediaItemSubtitles(id: string): Promise<MediaItemSubti
 export async function deleteMediaItemSubtitle(id: string, subtitleId: string) {
 	const { data, error } = await client.DELETE('/media/items/{id}/subtitles/{subtitleId}', {
 		params: { path: { id, subtitleId } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
+export async function updateMediaItemSubtitle(
+	id: string,
+	subtitleId: string,
+	request: MediaItemSubtitleSelectionRequest
+) {
+	const { data, error } = await client.PUT('/media/items/{id}/subtitles/{subtitleId}', {
+		params: { path: { id, subtitleId } },
+		body: request
 	});
 
 	if (error) {

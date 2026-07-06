@@ -95,6 +95,10 @@ export type MediaSearchGroup = components['schemas']['MediaSearchGroup'];
 export type MediaItem = components['schemas']['MediaItem'];
 export type MediaItemSubtitle = components['schemas']['MediaItemSubtitle'];
 export type MediaItemSubtitleListResponse = components['schemas']['MediaItemSubtitleListResponse'];
+export type MediaItemSubtitleRetentionMode =
+	components['schemas']['MediaItemSubtitleRetentionMode'];
+export type MediaItemSubtitleSelectionRequest =
+	components['schemas']['MediaItemSubtitleSelectionRequest'];
 export type MediaItemCreateRequest = components['schemas']['MediaItemCreateRequest'];
 export type MediaItemUpdateRequest = components['schemas']['MediaItemUpdateRequest'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];

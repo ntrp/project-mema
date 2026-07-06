@@ -733,6 +733,27 @@ func (e MediaItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaItemSubtitleRetentionMode.
+const (
+	MediaItemSubtitleRetentionExternal MediaItemSubtitleRetentionMode = "external"
+	MediaItemSubtitleRetentionIgnore   MediaItemSubtitleRetentionMode = "ignore"
+	MediaItemSubtitleRetentionMux      MediaItemSubtitleRetentionMode = "mux"
+)
+
+// Valid indicates whether the value is a known member of the MediaItemSubtitleRetentionMode enum.
+func (e MediaItemSubtitleRetentionMode) Valid() bool {
+	switch e {
+	case MediaItemSubtitleRetentionExternal:
+		return true
+	case MediaItemSubtitleRetentionIgnore:
+		return true
+	case MediaItemSubtitleRetentionMux:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaMonitorMode.
 const (
 	AllEpisodes      MediaMonitorMode = "all_episodes"
@@ -2342,26 +2363,37 @@ type MediaItemStatus string
 
 // MediaItemSubtitle defines model for MediaItemSubtitle.
 type MediaItemSubtitle struct {
-	Checksum           *string             `json:"checksum,omitempty"`
-	DownloadedAt       time.Time           `json:"downloadedAt"`
-	EpisodeId          *openapi_types.UUID `json:"episodeId,omitempty"`
-	FilePath           string              `json:"filePath"`
-	Format             string              `json:"format"`
-	Id                 openapi_types.UUID  `json:"id"`
-	LanguageId         string              `json:"languageId"`
-	ProviderId         *openapi_types.UUID `json:"providerId,omitempty"`
-	ProviderName       string              `json:"providerName"`
-	ProviderSubtitleId *string             `json:"providerSubtitleId,omitempty"`
-	ReleaseName        *string             `json:"releaseName,omitempty"`
-	SeasonId           *openapi_types.UUID `json:"seasonId,omitempty"`
-	SizeBytes          *int64              `json:"sizeBytes,omitempty"`
-	SourceReference    *string             `json:"sourceReference,omitempty"`
-	SourceUrl          *string             `json:"sourceUrl,omitempty"`
+	Checksum           *string                        `json:"checksum,omitempty"`
+	DownloadedAt       time.Time                      `json:"downloadedAt"`
+	EpisodeId          *openapi_types.UUID            `json:"episodeId,omitempty"`
+	FilePath           string                         `json:"filePath"`
+	Format             string                         `json:"format"`
+	Id                 openapi_types.UUID             `json:"id"`
+	LanguageId         string                         `json:"languageId"`
+	ProviderId         *openapi_types.UUID            `json:"providerId,omitempty"`
+	ProviderName       string                         `json:"providerName"`
+	ProviderSubtitleId *string                        `json:"providerSubtitleId,omitempty"`
+	ReleaseName        *string                        `json:"releaseName,omitempty"`
+	RetentionMode      MediaItemSubtitleRetentionMode `json:"retentionMode"`
+	SeasonId           *openapi_types.UUID            `json:"seasonId,omitempty"`
+	Selected           bool                           `json:"selected"`
+	SizeBytes          *int64                         `json:"sizeBytes,omitempty"`
+	SourceReference    *string                        `json:"sourceReference,omitempty"`
+	SourceUrl          *string                        `json:"sourceUrl,omitempty"`
 }
 
 // MediaItemSubtitleListResponse defines model for MediaItemSubtitleListResponse.
 type MediaItemSubtitleListResponse struct {
 	Subtitles []MediaItemSubtitle `json:"subtitles"`
+}
+
+// MediaItemSubtitleRetentionMode defines model for MediaItemSubtitleRetentionMode.
+type MediaItemSubtitleRetentionMode string
+
+// MediaItemSubtitleSelectionRequest defines model for MediaItemSubtitleSelectionRequest.
+type MediaItemSubtitleSelectionRequest struct {
+	RetentionMode MediaItemSubtitleRetentionMode `json:"retentionMode"`
+	Selected      bool                           `json:"selected"`
 }
 
 // MediaItemUpdateRequest defines model for MediaItemUpdateRequest.
@@ -3501,6 +3533,9 @@ type EnqueueMediaReleaseSearchJSONRequestBody = ReleaseSearchRequest
 // EnqueueMediaSubtitleSearchJSONRequestBody defines body for EnqueueMediaSubtitleSearch for application/json ContentType.
 type EnqueueMediaSubtitleSearchJSONRequestBody = SubtitleSearchRequest
 
+// UpdateMediaItemSubtitleJSONRequestBody defines body for UpdateMediaItemSubtitle for application/json ContentType.
+type UpdateMediaItemSubtitleJSONRequestBody = MediaItemSubtitleSelectionRequest
+
 // CreateMediaRequestJSONRequestBody defines body for CreateMediaRequest for application/json ContentType.
 type CreateMediaRequestJSONRequestBody = MediaRequestCreateRequest
 
@@ -3773,6 +3808,9 @@ type ServerInterface interface {
 	// Delete one managed external subtitle
 	// (DELETE /media/items/{id}/subtitles/{subtitleId})
 	DeleteMediaItemSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, subtitleId openapi_types.UUID)
+	// Update external subtitle selection
+	// (PUT /media/items/{id}/subtitles/{subtitleId})
+	UpdateMediaItemSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, subtitleId openapi_types.UUID)
 	// Get provider metadata details for a media candidate
 	// (GET /media/metadata/{provider}/{type}/{externalId})
 	GetMediaMetadataDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, pType MediaType, externalId string)
@@ -4385,6 +4423,12 @@ func (_ Unimplemented) ListMediaItemSubtitles(w http.ResponseWriter, r *http.Req
 // Delete one managed external subtitle
 // (DELETE /media/items/{id}/subtitles/{subtitleId})
 func (_ Unimplemented) DeleteMediaItemSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, subtitleId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update external subtitle selection
+// (PUT /media/items/{id}/subtitles/{subtitleId})
+func (_ Unimplemented) UpdateMediaItemSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, subtitleId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7193,6 +7237,47 @@ func (siw *ServerInterfaceWrapper) DeleteMediaItemSubtitle(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteMediaItemSubtitle(w, r, id, subtitleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateMediaItemSubtitle operation middleware
+func (siw *ServerInterfaceWrapper) UpdateMediaItemSubtitle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "subtitleId" -------------
+	var subtitleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "subtitleId", chi.URLParam(r, "subtitleId"), &subtitleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "subtitleId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateMediaItemSubtitle(w, r, id, subtitleId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10403,6 +10488,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/media/items/{id}/subtitles/{subtitleId}", wrapper.DeleteMediaItemSubtitle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/media/items/{id}/subtitles/{subtitleId}", wrapper.UpdateMediaItemSubtitle)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/metadata/{provider}/{type}/{externalId}", wrapper.GetMediaMetadataDetails)

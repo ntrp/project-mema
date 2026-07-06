@@ -390,6 +390,8 @@ type AppMediaItemSubtitle struct {
 	Checksum           pgtype.Text
 	SizeBytes          pgtype.Int8
 	DownloadedAt       time.Time
+	Selected           bool
+	RetentionMode      string
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
 }

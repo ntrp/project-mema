@@ -112,10 +112,8 @@
 						<span class="min-w-0">
 							<span>{subtitle.languageId}</span>
 							<span class="text-muted-foreground">
-								{subtitle.format} · {subtitleSourceLabel(subtitle)} · {subtitleFileLabel(
-									row,
-									subtitle
-								)}
+								{subtitle.selected ? 'Active' : 'Inactive'} · {subtitle.retentionMode} · {subtitle.format}
+								· {subtitleSourceLabel(subtitle)} · {subtitleFileLabel(row, subtitle)}
 							</span>
 						</span>
 						<ConfirmActionButton
