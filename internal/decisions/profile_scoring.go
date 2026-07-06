@@ -64,10 +64,7 @@ func languageScore(
 	for _, target := range profile.AudioTargets {
 		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
 		if _, ok := releaseLanguages[target.LanguageID]; !ok {
-			if target.Required {
-				return 0, nil, fmt.Sprintf("Required language %s is missing.", displayName)
-			}
-			continue
+			return 0, nil, fmt.Sprintf("Target language %s is missing.", displayName)
 		}
 		total += target.Score
 		contributors = append(contributors, ReleaseScoreContributor{
@@ -78,10 +75,7 @@ func languageScore(
 	for _, target := range profile.SubtitleTargets {
 		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
 		if _, ok := releaseLanguages[target.LanguageID]; !ok {
-			if target.Required {
-				return 0, nil, fmt.Sprintf("Required subtitle language %s is missing.", displayName)
-			}
-			continue
+			return 0, nil, fmt.Sprintf("Target subtitle language %s is missing.", displayName)
 		}
 		total += target.Score
 		contributors = append(contributors, ReleaseScoreContributor{

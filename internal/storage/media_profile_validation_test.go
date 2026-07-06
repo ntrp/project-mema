@@ -31,14 +31,14 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 		AudioLossyTranscodePolicy:         "lossyToLossy",
 		MinimumCustomFormatScoreIncrement: 5,
 		AudioTargets: []MediaProfileAudioTarget{
-			{LanguageID: " English ", Score: 100, Required: true, TargetCodec: stringPtr(" AAC "), TargetChannels: []string{"5.1"}},
+			{LanguageID: " English ", Score: 100, TargetCodec: stringPtr(" AAC "), TargetChannels: []string{"5.1"}},
 			{LanguageID: "english", Score: 80},
 			{LanguageID: "Brazilian Portuguese", Score: 50},
 		},
 		SubtitleTargets: []MediaProfileSubtitleTarget{
-			{LanguageID: " English ", Score: 25, Required: true, Source: "embedded", Formats: []string{" SRT "}},
-			{LanguageID: "english", Score: 10, Required: false, Source: "external"},
-			{LanguageID: "German", Score: 5, Required: false, Source: "not-real"},
+			{LanguageID: " English ", Score: 25, Source: "embedded", Formats: []string{" SRT "}},
+			{LanguageID: "english", Score: 10, Source: "external"},
+			{LanguageID: "German", Score: 5, Source: "not-real"},
 		},
 	}, []string{"webdl-1080p", "bluray-2160p"})
 	if err != nil {
@@ -60,7 +60,7 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if len(input.AudioTargets) != 2 {
 		t.Fatalf("expected deduped audio targets, got %#v", input.AudioTargets)
 	}
-	if !input.AudioTargets[0].Required || input.AudioTargets[0].Score != 100 || input.AudioTargets[0].TargetCodec == nil || *input.AudioTargets[0].TargetCodec != "aac" {
+	if input.AudioTargets[0].Score != 100 || input.AudioTargets[0].TargetCodec == nil || *input.AudioTargets[0].TargetCodec != "aac" {
 		t.Fatalf("expected first audio target to retain fields: %#v", input.AudioTargets[0])
 	}
 	if len(input.SubtitleTargets) != 2 {

@@ -81,7 +81,6 @@ func loadMediaProfileAudioTargets(
 		targets = append(targets, MediaProfileAudioTarget{
 			LanguageID:           row.LanguageID,
 			Score:                row.Score,
-			Required:             row.Required,
 			TargetCodec:          textPtr(row.TargetCodec),
 			TargetChannels:       row.TargetChannels,
 			MinimumBitrateKbps:   int4Ptr(row.MinimumBitrateKbps),
@@ -105,7 +104,6 @@ func loadMediaProfileSubtitleTargets(
 		targets = append(targets, MediaProfileSubtitleTarget{
 			LanguageID: row.LanguageID,
 			Score:      row.Score,
-			Required:   row.Required,
 			Source:     row.Source,
 			Formats:    row.Formats,
 		})
@@ -161,7 +159,6 @@ func replaceMediaProfileTargets(
 			ProfileID:            profileID,
 			LanguageID:           target.LanguageID,
 			Score:                target.Score,
-			Required:             target.Required,
 			TargetCodec:          textValue(target.TargetCodec),
 			TargetChannels:       target.TargetChannels,
 			MinimumBitrateKbps:   int4Value(target.MinimumBitrateKbps),
@@ -179,7 +176,6 @@ func replaceMediaProfileTargets(
 			ProfileID:  profileID,
 			LanguageID: target.LanguageID,
 			Score:      target.Score,
-			Required:   target.Required,
 			Source:     target.Source,
 			Formats:    target.Formats,
 			SortOrder:  int32(index),

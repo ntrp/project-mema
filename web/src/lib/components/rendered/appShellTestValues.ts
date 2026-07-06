@@ -81,11 +81,10 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 		audioTargets: [
 			{
 				languageId: 'english',
-				score: 0,
-				required: false
+				score: 0
 			}
 		],
-		subtitleTargets: [{ languageId: 'english', score: 0, required: true, source: 'any' }],
+		subtitleTargets: [{ languageId: 'english', score: 0, source: 'any' }],
 		customFormatScores: [],
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',

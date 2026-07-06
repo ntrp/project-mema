@@ -11,7 +11,7 @@ func TestSCNMedia002LanguageCatalogAddsAliasesToReleaseMatch(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		AudioTargets: []storage.MediaProfileAudioTarget{
-			{LanguageID: "japanese", Score: 100, Required: true},
+			{LanguageID: "japanese", Score: 100},
 		},
 	}
 	languages := []storage.Language{{
@@ -42,11 +42,11 @@ func TestSCNMedia002LanguageCatalogAddsAliasesToReleaseMatch(t *testing.T) {
 	}
 }
 
-func TestSCNMedia002RequiredLanguageRejectsMissingReleaseLanguage(t *testing.T) {
+func TestSCNMedia002TargetLanguageRejectsMissingReleaseLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		AudioTargets: []storage.MediaProfileAudioTarget{
-			{LanguageID: "japanese", Score: 100, Required: true},
+			{LanguageID: "japanese", Score: 100},
 		},
 	}
 
@@ -70,7 +70,7 @@ func TestSCNMedia002SubtitleLanguageScoreContributesToReleaseMatch(t *testing.T)
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
-			{LanguageID: "english", Score: 25, Required: false, Source: "any"},
+			{LanguageID: "english", Score: 25, Source: "any"},
 		},
 	}
 
@@ -93,11 +93,11 @@ func TestSCNMedia002SubtitleLanguageScoreContributesToReleaseMatch(t *testing.T)
 	}
 }
 
-func TestSCNMedia002RequiredSubtitleLanguageRejectsMissingReleaseLanguage(t *testing.T) {
+func TestSCNMedia002TargetSubtitleLanguageRejectsMissingReleaseLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
-			{LanguageID: "japanese", Score: 25, Required: true, Source: "any"},
+			{LanguageID: "japanese", Score: 25, Source: "any"},
 		},
 	}
 
@@ -112,7 +112,7 @@ func TestSCNMedia002RequiredSubtitleLanguageRejectsMissingReleaseLanguage(t *tes
 	if match.Severity != "error" {
 		t.Fatalf("expected subtitle language rejection, got %q: %v", match.Severity, match.Details)
 	}
-	if len(match.Details) == 0 || !strings.Contains(match.Details[0], "Required subtitle language Japanese is missing") {
+	if len(match.Details) == 0 || !strings.Contains(match.Details[0], "Target subtitle language Japanese is missing") {
 		t.Fatalf("details = %#v", match.Details)
 	}
 }

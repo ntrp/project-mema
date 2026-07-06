@@ -18,8 +18,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			audioTargets: [
 				{
 					languageId: 'EN',
-					score: 0,
-					required: true
+					score: 0
 				}
 			],
 			subtitleTargets: []
@@ -63,29 +62,25 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{
 					languageId: 'english',
 					score: '100',
-					required: true,
 					targetCodec: ' AAC ',
 					targetChannels: ['5.1', '7.1'],
 					minimumBitrateKbps: '384'
 				},
 				{
 					languageId: 'english',
-					score: 50,
-					required: false
+					score: 50
 				}
 			],
 			subtitleTargets: [
 				{
 					languageId: 'english',
 					score: '25',
-					required: true,
 					source: 'external',
 					formats: [' srt ', 'srt', 'ass']
 				},
 				{
 					languageId: 'english',
 					score: 10,
-					required: false,
 					source: 'embedded'
 				}
 			],
@@ -112,7 +107,6 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{
 					languageId: 'english',
 					score: 100,
-					required: true,
 					targetCodec: 'AAC',
 					targetChannels: ['5.1', '7.1'],
 					minimumBitrateKbps: 384
@@ -122,7 +116,6 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{
 					languageId: 'english',
 					score: 25,
-					required: true,
 					source: 'external',
 					formats: ['srt', 'ass']
 				}
@@ -153,15 +146,13 @@ function mediaProfile(): MediaProfile {
 		audioTargets: [
 			{
 				languageId: 'english',
-				score: 10,
-				required: true
+				score: 10
 			}
 		],
 		subtitleTargets: [
 			{
 				languageId: 'english',
 				score: 25,
-				required: true,
 				source: 'embedded'
 			}
 		],

@@ -126,7 +126,6 @@ limit 1;
 -- name: ListMediaProfileAudioTargets :many
 select language_id,
     score,
-    required,
     target_codec,
     target_channels,
     minimum_bitrate_kbps,
@@ -138,7 +137,6 @@ order by sort_order, language_id;
 -- name: ListMediaProfileSubtitleTargets :many
 select language_id,
     score,
-    required,
     source,
     formats
 from app.media_profile_subtitle_targets
@@ -205,7 +203,6 @@ insert into app.media_profile_audio_targets (
     profile_id,
     language_id,
     score,
-    required,
     target_codec,
     target_channels,
     minimum_bitrate_kbps,
@@ -216,7 +213,6 @@ values (
     sqlc.arg(profile_id),
     sqlc.arg(language_id),
     sqlc.arg(score),
-    sqlc.arg(required),
     sqlc.narg(target_codec),
     sqlc.arg(target_channels),
     sqlc.narg(minimum_bitrate_kbps),
@@ -233,7 +229,6 @@ insert into app.media_profile_subtitle_targets (
     profile_id,
     language_id,
     score,
-    required,
     source,
     formats,
     sort_order
@@ -242,7 +237,6 @@ values (
     sqlc.arg(profile_id),
     sqlc.arg(language_id),
     sqlc.arg(score),
-    sqlc.arg(required),
     sqlc.arg(source),
     sqlc.arg(formats),
     sqlc.arg(sort_order)

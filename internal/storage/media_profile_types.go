@@ -66,7 +66,6 @@ type MediaProfileVideoTarget struct {
 type MediaProfileAudioTarget struct {
 	LanguageID           string
 	Score                int32
-	Required             bool
 	TargetCodec          *string
 	TargetChannels       []string
 	MinimumBitrateKbps   *int32
@@ -81,7 +80,6 @@ type MediaProfileCustomFormatScore struct {
 type MediaProfileSubtitleTarget struct {
 	LanguageID string
 	Score      int32
-	Required   bool
 	Source     string
 	Formats    []string
 }

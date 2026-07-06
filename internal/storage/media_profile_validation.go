@@ -123,7 +123,6 @@ func normalizeAudioTargets(values []MediaProfileAudioTarget) []MediaProfileAudio
 		targets = append(targets, MediaProfileAudioTarget{
 			LanguageID:           language,
 			Score:                value.Score,
-			Required:             value.Required,
 			TargetCodec:          normalizedTextPtr(value.TargetCodec),
 			TargetChannels:       normalizedTextList(value.TargetChannels),
 			MinimumBitrateKbps:   positiveInt32Ptr(value.MinimumBitrateKbps),
@@ -148,7 +147,6 @@ func normalizeSubtitleTargets(values []MediaProfileSubtitleTarget) []MediaProfil
 		targets = append(targets, MediaProfileSubtitleTarget{
 			LanguageID: language,
 			Score:      value.Score,
-			Required:   value.Required,
 			Source:     normalizeSubtitleSource(value.Source),
 			Formats:    normalizedTextList(value.Formats),
 		})

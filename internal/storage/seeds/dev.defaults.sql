@@ -22,9 +22,9 @@ values
     ('low-quality-demo')
 on conflict (profile_id) do nothing;
 
-insert into app.media_profile_audio_targets (profile_id, language_id, score, required, sort_order)
+insert into app.media_profile_audio_targets (profile_id, language_id, score, sort_order)
 values
-    ('low-quality-demo', 'english', 0, true, 0)
+    ('low-quality-demo', 'english', 0, 0)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)

@@ -79,20 +79,20 @@ values
     ('anime-1080p')
 on conflict (profile_id) do nothing;
 
-insert into app.media_profile_audio_targets (profile_id, language_id, score, required, sort_order)
+insert into app.media_profile_audio_targets (profile_id, language_id, score, sort_order)
 values
-    ('any', 'english', 0, true, 0),
-    ('hd-1080p', 'english', 0, true, 0),
-    ('uhd-4k', 'english', 0, true, 0),
-    ('anime-1080p', 'japanese', 0, true, 0),
-    ('anime-1080p', 'english', 0, false, 1)
+    ('any', 'english', 0, 0),
+    ('hd-1080p', 'english', 0, 0),
+    ('uhd-4k', 'english', 0, 0),
+    ('anime-1080p', 'japanese', 0, 0),
+    ('anime-1080p', 'english', 0, 1)
 on conflict (profile_id, language_id) do nothing;
 
-insert into app.media_profile_subtitle_targets (profile_id, language_id, score, required, source, formats, sort_order)
+insert into app.media_profile_subtitle_targets (profile_id, language_id, score, source, formats, sort_order)
 values
-    ('hd-1080p', 'english', 0, false, 'any', array['srt'], 0),
-    ('uhd-4k', 'english', 0, false, 'any', array['srt'], 0),
-    ('anime-1080p', 'english', 0, false, 'any', array['srt'], 0)
+    ('hd-1080p', 'english', 0, 'any', array['srt'], 0),
+    ('uhd-4k', 'english', 0, 'any', array['srt'], 0),
+    ('anime-1080p', 'english', 0, 'any', array['srt'], 0)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)

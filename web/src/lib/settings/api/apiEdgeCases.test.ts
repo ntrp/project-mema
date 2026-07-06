@@ -244,11 +244,10 @@ function mediaProfileForm() {
 		audioTargets: [
 			{
 				languageId: 'english',
-				score: 0,
-				required: false
+				score: 0
 			}
 		],
-		subtitleTargets: [{ languageId: 'english', score: 0, required: true, source: 'any' }],
+		subtitleTargets: [{ languageId: 'english', score: 0, source: 'any' }],
 		customFormatScores: []
 	} as const;
 }

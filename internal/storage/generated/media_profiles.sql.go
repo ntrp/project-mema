@@ -17,7 +17,6 @@ insert into app.media_profile_audio_targets (
     profile_id,
     language_id,
     score,
-    required,
     target_codec,
     target_channels,
     minimum_bitrate_kbps,
@@ -32,8 +31,7 @@ values (
     $5,
     $6,
     $7,
-    $8,
-    $9
+    $8
 )
 `
 
@@ -41,7 +39,6 @@ type AddMediaProfileAudioTargetParams struct {
 	ProfileID            string
 	LanguageID           string
 	Score                int32
-	Required             bool
 	TargetCodec          pgtype.Text
 	TargetChannels       []string
 	MinimumBitrateKbps   pgtype.Int4
@@ -54,7 +51,6 @@ func (q *Queries) AddMediaProfileAudioTarget(ctx context.Context, arg AddMediaPr
 		arg.ProfileID,
 		arg.LanguageID,
 		arg.Score,
-		arg.Required,
 		arg.TargetCodec,
 		arg.TargetChannels,
 		arg.MinimumBitrateKbps,
@@ -101,7 +97,6 @@ insert into app.media_profile_subtitle_targets (
     profile_id,
     language_id,
     score,
-    required,
     source,
     formats,
     sort_order
@@ -112,8 +107,7 @@ values (
     $3,
     $4,
     $5,
-    $6,
-    $7
+    $6
 )
 `
 
@@ -121,7 +115,6 @@ type AddMediaProfileSubtitleTargetParams struct {
 	ProfileID  string
 	LanguageID string
 	Score      int32
-	Required   bool
 	Source     string
 	Formats    []string
 	SortOrder  int32
@@ -132,7 +125,6 @@ func (q *Queries) AddMediaProfileSubtitleTarget(ctx context.Context, arg AddMedi
 		arg.ProfileID,
 		arg.LanguageID,
 		arg.Score,
-		arg.Required,
 		arg.Source,
 		arg.Formats,
 		arg.SortOrder,
@@ -369,7 +361,6 @@ func (q *Queries) GetMediaProfileVideoTarget(ctx context.Context, profileID stri
 const listMediaProfileAudioTargets = `-- name: ListMediaProfileAudioTargets :many
 select language_id,
     score,
-    required,
     target_codec,
     target_channels,
     minimum_bitrate_kbps,
@@ -382,7 +373,6 @@ order by sort_order, language_id
 type ListMediaProfileAudioTargetsRow struct {
 	LanguageID           string
 	Score                int32
-	Required             bool
 	TargetCodec          pgtype.Text
 	TargetChannels       []string
 	MinimumBitrateKbps   pgtype.Int4
@@ -401,7 +391,6 @@ func (q *Queries) ListMediaProfileAudioTargets(ctx context.Context, profileID st
 		if err := rows.Scan(
 			&i.LanguageID,
 			&i.Score,
-			&i.Required,
 			&i.TargetCodec,
 			&i.TargetChannels,
 			&i.MinimumBitrateKbps,
@@ -480,7 +469,6 @@ func (q *Queries) ListMediaProfileQualities(ctx context.Context, profileID strin
 const listMediaProfileSubtitleTargets = `-- name: ListMediaProfileSubtitleTargets :many
 select language_id,
     score,
-    required,
     source,
     formats
 from app.media_profile_subtitle_targets
@@ -491,7 +479,6 @@ order by sort_order, language_id
 type ListMediaProfileSubtitleTargetsRow struct {
 	LanguageID string
 	Score      int32
-	Required   bool
 	Source     string
 	Formats    []string
 }
@@ -508,7 +495,6 @@ func (q *Queries) ListMediaProfileSubtitleTargets(ctx context.Context, profileID
 		if err := rows.Scan(
 			&i.LanguageID,
 			&i.Score,
-			&i.Required,
 			&i.Source,
 			&i.Formats,
 		); err != nil {

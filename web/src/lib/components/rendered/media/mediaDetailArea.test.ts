@@ -207,8 +207,7 @@ function qualityProfile(): QualityProfileOption {
 		audioTargets: [
 			{
 				languageId: 'english',
-				score: 0,
-				required: true
+				score: 0
 			}
 		]
 	};

@@ -525,7 +525,6 @@ type AppMediaProfileAudioTarget struct {
 	ProfileID            string
 	LanguageID           string
 	Score                int32
-	Required             bool
 	TargetCodec          pgtype.Text
 	TargetChannels       []string
 	MinimumBitrateKbps   pgtype.Int4
@@ -549,7 +548,6 @@ type AppMediaProfileSubtitleTarget struct {
 	ProfileID  string
 	LanguageID string
 	Score      int32
-	Required   bool
 	Source     string
 	Formats    []string
 	SortOrder  int32

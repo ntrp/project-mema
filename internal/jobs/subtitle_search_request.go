@@ -18,7 +18,7 @@ func subtitleSearchRequestsForItem(item storage.MediaItem) []SubtitleSearchArgs 
 	}
 	items := []SubtitleSearchArgs{}
 	for _, target := range item.SubtitleTargets {
-		if target.Source == "embedded" || !target.Required {
+		if target.Source == "embedded" {
 			continue
 		}
 		for _, path := range item.FilePaths {
@@ -71,7 +71,7 @@ func firstMissingSubtitleLanguage(item storage.MediaItem, filePath string) strin
 		return targets[i].LanguageID < targets[j].LanguageID
 	})
 	for _, target := range targets {
-		if target.Source == "embedded" || !target.Required {
+		if target.Source == "embedded" {
 			continue
 		}
 		if !externalSubtitleExists(item, target.LanguageID, filePath) {

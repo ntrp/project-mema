@@ -91,7 +91,6 @@ func mediaProfileAudioTargets(values []MediaProfileAudioTarget) []storage.MediaP
 		targets = append(targets, storage.MediaProfileAudioTarget{
 			LanguageID:           value.LanguageId,
 			Score:                value.Score,
-			Required:             value.Required,
 			TargetCodec:          value.TargetCodec,
 			TargetChannels:       compactUniquePtr(value.TargetChannels),
 			MinimumBitrateKbps:   value.MinimumBitrateKbps,
@@ -107,7 +106,6 @@ func mediaProfileSubtitleTargets(values []MediaProfileSubtitleTarget) []storage.
 		targets = append(targets, storage.MediaProfileSubtitleTarget{
 			LanguageID: value.LanguageId,
 			Score:      value.Score,
-			Required:   value.Required,
 			Source:     string(value.Source),
 			Formats:    compactUniquePtr(value.Formats),
 		})
@@ -180,7 +178,6 @@ func mediaProfileAudioTargetResponses(targets []storage.MediaProfileAudioTarget)
 		response = append(response, MediaProfileAudioTarget{
 			LanguageId:           target.LanguageID,
 			Score:                target.Score,
-			Required:             target.Required,
 			TargetCodec:          target.TargetCodec,
 			TargetChannels:       &target.TargetChannels,
 			MinimumBitrateKbps:   target.MinimumBitrateKbps,
@@ -196,7 +193,6 @@ func mediaProfileSubtitleTargetResponses(targets []storage.MediaProfileSubtitleT
 		response = append(response, MediaProfileSubtitleTarget{
 			LanguageId: target.LanguageID,
 			Score:      target.Score,
-			Required:   target.Required,
 			Source:     MediaProfileSubtitleSource(target.Source),
 			Formats:    &target.Formats,
 		})

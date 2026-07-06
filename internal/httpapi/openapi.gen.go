@@ -2952,7 +2952,6 @@ type MediaProfileAudioTarget struct {
 	LanguageId           string    `json:"languageId"`
 	MinimumBitrateKbps   *int32    `json:"minimumBitrateKbps,omitempty"`
 	PreferredBitrateKbps *int32    `json:"preferredBitrateKbps,omitempty"`
-	Required             bool      `json:"required"`
 	Score                int32     `json:"score"`
 	TargetChannels       *[]string `json:"targetChannels,omitempty"`
 	TargetCodec          *string   `json:"targetCodec,omitempty"`
@@ -3010,7 +3009,6 @@ type MediaProfileSubtitleSource string
 type MediaProfileSubtitleTarget struct {
 	Formats    *[]string                  `json:"formats,omitempty"`
 	LanguageId string                     `json:"languageId"`
-	Required   bool                       `json:"required"`
 	Score      int32                      `json:"score"`
 	Source     MediaProfileSubtitleSource `json:"source"`
 }

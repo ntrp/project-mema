@@ -86,8 +86,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 export function defaultAudioTarget(): MediaProfileRequest['audioTargets'][number] {
 	return {
 		languageId: 'EN',
-		score: 0,
-		required: true
+		score: 0
 	};
 }
 
@@ -95,7 +94,6 @@ export function defaultSubtitleTarget(): MediaProfileRequest['subtitleTargets'][
 	return {
 		languageId: 'EN',
 		score: 0,
-		required: true,
 		source: 'any',
 		formats: ['srt']
 	};
@@ -135,7 +133,6 @@ function audioTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['audi
 		targets.push({
 			languageId,
 			score: normalizedInteger(value.score),
-			required: true,
 			targetCodec: trimmedValue(value.targetCodec),
 			targetChannels: uniqueTrimmed(value.targetChannels ?? []),
 			minimumBitrateKbps: positiveInteger(value.minimumBitrateKbps),
@@ -155,7 +152,6 @@ function subtitleTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['s
 		targets.push({
 			languageId,
 			score: normalizedInteger(value.score),
-			required: true,
 			source: value.source ?? 'any',
 			formats: uniqueTrimmed(value.formats ?? [])
 		});

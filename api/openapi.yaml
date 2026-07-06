@@ -6681,7 +6681,6 @@ components:
       required:
         - languageId
         - score
-        - required
       properties:
         languageId:
           type: string
@@ -6690,8 +6689,6 @@ components:
         score:
           type: integer
           format: int32
-        required:
-          type: boolean
         targetCodec:
           type: string
           minLength: 1
@@ -6716,7 +6713,6 @@ components:
       required:
         - languageId
         - score
-        - required
         - source
       properties:
         languageId:
@@ -6726,8 +6722,6 @@ components:
         score:
           type: integer
           format: int32
-        required:
-          type: boolean
         source:
           $ref: "#/components/schemas/MediaProfileSubtitleSource"
         formats:

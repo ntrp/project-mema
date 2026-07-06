@@ -87,14 +87,12 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		AudioTargets: []MediaProfileAudioTarget{{
 			LanguageId:     "en",
 			Score:          100,
-			Required:       true,
 			TargetCodec:    stringPtr("aac"),
 			TargetChannels: &[]string{"5.1"},
 		}},
 		SubtitleTargets: []MediaProfileSubtitleTarget{{
 			LanguageId: "en",
 			Score:      25,
-			Required:   true,
 			Source:     MediaProfileSubtitleSourceAny,
 			Formats:    &[]string{"srt"},
 		}},

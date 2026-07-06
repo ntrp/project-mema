@@ -152,13 +152,11 @@ function mediaProfile(): MediaProfile {
 		audioTargets: [
 			{
 				languageId: 'eng',
-				score: 0,
-				required: true
+				score: 0
 			},
 			{
 				languageId: 'deu',
-				score: 0,
-				required: false
+				score: 0
 			}
 		],
 		subtitleTargets: [],

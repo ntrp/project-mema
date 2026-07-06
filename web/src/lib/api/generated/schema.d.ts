@@ -3235,7 +3235,6 @@ export interface components {
 			languageId: string;
 			/** Format: int32 */
 			score: number;
-			required: boolean;
 			targetCodec?: string;
 			targetChannels?: string[];
 			/** Format: int32 */
@@ -3247,7 +3246,6 @@ export interface components {
 			languageId: string;
 			/** Format: int32 */
 			score: number;
-			required: boolean;
 			source: components['schemas']['MediaProfileSubtitleSource'];
 			formats?: string[];
 		};
