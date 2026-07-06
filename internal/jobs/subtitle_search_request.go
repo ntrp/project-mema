@@ -109,7 +109,11 @@ func subtitleEpisodeNumbers(filePath string) (int32, int32, bool) {
 	return season, episode, season > 0 && episode > 0
 }
 
-func subtitleSidecarPath(filePath string, languageID string) string {
+func subtitleSidecarPath(filePath string, languageID string, format string) string {
 	base := strings.TrimSuffix(filePath, filepath.Ext(filePath))
-	return base + "." + languageMatchKey(languageID) + ".srt"
+	format = strings.TrimPrefix(strings.ToLower(strings.TrimSpace(format)), ".")
+	if format == "" || format == "subrip" {
+		format = "srt"
+	}
+	return base + "." + languageMatchKey(languageID) + "." + format
 }

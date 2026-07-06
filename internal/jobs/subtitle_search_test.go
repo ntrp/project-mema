@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -102,6 +103,85 @@ func TestSubtitleSearchDownloadsAndRecordsSubtitle(t *testing.T) {
 	}
 	if !hasSystemEvent(events, "Subtitle downloaded") {
 		t.Fatalf("events = %#v", events)
+	}
+}
+
+func TestSubtitleSearchConvertsDownloadedSubtitleToTargetFormat(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	tmp := t.TempDir()
+	mediaPath := filepath.Join(tmp, "Scenario.Movie.2026.mkv")
+	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	server := subtitleProviderServer(t, http.StatusOK)
+	apiKey := "subtitle-key"
+	if _, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
+		Name: "Scenario Subtitles", Type: "opensubtitles", BaseURL: server.URL, APIKey: &apiKey, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
+		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item.FilePaths = []string{mediaPath}
+	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Source: "any", Formats: []string{"vtt"}},
+	}
+
+	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
+
+	if err != nil {
+		t.Fatalf("subtitleSearchDownload returned error: %v", err)
+	}
+	subtitlePath := filepath.Join(tmp, "Scenario.Movie.2026.english.vtt")
+	content, err := os.ReadFile(subtitlePath)
+	if err != nil {
+		t.Fatalf("read subtitle: %v", err)
+	}
+	if !strings.HasPrefix(string(content), "WEBVTT") {
+		t.Fatalf("subtitle content = %q", content)
+	}
+	records, err := store.ListMediaItemSubtitles(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) != 1 || records[0].Format != "vtt" || records[0].FilePath != subtitlePath {
+		t.Fatalf("records = %#v", records)
+	}
+}
+
+func TestSubtitleSearchRejectsUnsupportedBitmapTargetFormat(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	tmp := t.TempDir()
+	mediaPath := filepath.Join(tmp, "Scenario.Movie.2026.mkv")
+	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	server := subtitleProviderServer(t, http.StatusOK)
+	apiKey := "subtitle-key"
+	if _, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
+		Name: "Scenario Subtitles", Type: "opensubtitles", BaseURL: server.URL, APIKey: &apiKey, Enabled: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
+		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item.FilePaths = []string{mediaPath}
+	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Source: "any", Formats: []string{"pgs"}},
+	}
+
+	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
+
+	if err == nil || !strings.Contains(err.Error(), "pgs") {
+		t.Fatalf("expected pgs conversion error, got %v", err)
 	}
 }
 

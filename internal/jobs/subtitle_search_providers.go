@@ -83,7 +83,7 @@ func subtitleRecord(
 		ProviderID:         &provider.ID,
 		ProviderName:       provider.Name,
 		LanguageID:         request.LanguageID,
-		Format:             firstNonEmpty(candidate.Format, artifact.Format),
+		Format:             firstNonEmpty(artifact.Format, candidate.Format),
 		FilePath:           artifact.Path,
 		SourceURL:          optionalSubtitleString(firstNonEmpty(sourceURL, candidate.SourceURL)),
 		SourceRef:          optionalSubtitleString(candidate.SourceRef),

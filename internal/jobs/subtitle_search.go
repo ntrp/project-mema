@@ -123,7 +123,8 @@ func subtitleSearchDownload(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "subtitles", "Subtitle download failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "languageId": request.LanguageID, "error": err.Error()})
 		return err
 	}
-	artifact, err := writeSubtitleFile(request, download.Content)
+	targetFormat := subtitleTargetFormat(item, request.LanguageID)
+	artifact, err := writeSubtitleFile(request, download.Content, targetFormat)
 	if err != nil {
 		return err
 	}
@@ -143,13 +144,17 @@ type subtitleArtifact struct {
 	SizeBytes int64
 }
 
-func writeSubtitleFile(request subtitles.SearchRequest, content []byte) (subtitleArtifact, error) {
-	target := subtitleSidecarPath(request.FilePath, request.LanguageID)
+func writeSubtitleFile(request subtitles.SearchRequest, content []byte, targetFormat string) (subtitleArtifact, error) {
+	converted, format, err := convertSubtitleContent(content, targetFormat)
+	if err != nil {
+		return subtitleArtifact{}, err
+	}
+	target := subtitleSidecarPath(request.FilePath, request.LanguageID, format)
 	artifact := subtitleArtifact{
 		Path:      target,
-		Format:    strings.TrimPrefix(strings.ToLower(filepath.Ext(target)), "."),
-		Checksum:  subtitleChecksum(content),
-		SizeBytes: int64(len(content)),
+		Format:    format,
+		Checksum:  subtitleChecksum(converted),
+		SizeBytes: int64(len(converted)),
 	}
 	if _, err := os.Stat(target); err == nil {
 		return artifact, nil
@@ -157,7 +162,7 @@ func writeSubtitleFile(request subtitles.SearchRequest, content []byte) (subtitl
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 		return subtitleArtifact{}, err
 	}
-	return artifact, os.WriteFile(target, content, 0o644)
+	return artifact, os.WriteFile(target, converted, 0o644)
 }
 
 func subtitleChecksum(content []byte) string {
