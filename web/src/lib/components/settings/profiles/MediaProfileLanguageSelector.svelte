@@ -9,6 +9,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
+	import AudioConversionSelect from './audio-targets/AudioConversionSelect.svelte';
 	import ProfileTargetMultiSelect from './ProfileTargetMultiSelect.svelte';
 	import { defaultAudioTarget } from '$lib/settings/forms';
 	import { audioChannelOptions, audioCodecOptions } from './profileTargetOptions';
@@ -82,27 +83,11 @@
 				/>
 				Remove audio tracks that are not wanted
 			</Label>
-			<div class="grid gap-2">
-				<Label for="audio-lossy-transcode-policy">Conversion</Label>
-				<Select.Root
-					type="single"
-					value={form.audioLossyTranscodePolicy ?? 'disabled'}
-					onValueChange={(value) =>
-						onChange({
-							...form,
-							audioLossyTranscodePolicy: value as MediaProfileForm['audioLossyTranscodePolicy']
-						})}
-				>
-					<Select.Trigger id="audio-lossy-transcode-policy">
-						{form.audioLossyTranscodePolicy ?? 'disabled'}
-					</Select.Trigger>
-					<Select.Content>
-						<Select.Item value="disabled" label="Disabled" />
-						<Select.Item value="losslessToLossy" label="From lossless" />
-						<Select.Item value="lossyToLossy" label="From lossy" />
-					</Select.Content>
-				</Select.Root>
-			</div>
+			<AudioConversionSelect
+				value={form.audioLossyTranscodePolicy ?? 'disabled'}
+				onChange={(audioLossyTranscodePolicy) =>
+					onChange({ ...form, audioLossyTranscodePolicy })}
+			/>
 		</div>
 		<Table.Root class="w-full table-fixed">
 			<Table.Header>
