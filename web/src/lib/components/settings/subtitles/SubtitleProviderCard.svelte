@@ -6,6 +6,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import SecretInput from '$lib/components/settings/shared/SecretInput.svelte';
 	import { emptySubtitleProviderForm, subtitleProviderFormFromProvider } from '$lib/settings/forms';
 	import type {
 		IntegrationTestResponse,
@@ -111,22 +112,18 @@
 			</label>
 			<label class="grid gap-1.5">
 				<span class="text-sm font-bold text-muted-foreground">API key</span>
-				<Input
+				<SecretInput
 					value={form.apiKey ?? ''}
-					placeholder={provider?.apiKeySet ? 'Saved API key' : ''}
-					type="password"
 					autocomplete="off"
-					oninput={(event) => updateText('apiKey', event.currentTarget.value)}
+					onValueChange={(value) => updateText('apiKey', value)}
 				/>
 			</label>
 			<label class="grid gap-1.5">
 				<span class="text-sm font-bold text-muted-foreground">Password</span>
-				<Input
+				<SecretInput
 					value={form.password ?? ''}
-					placeholder={provider?.passwordSet ? 'Saved password' : ''}
-					type="password"
 					autocomplete="current-password"
-					oninput={(event) => updateText('password', event.currentTarget.value)}
+					onValueChange={(value) => updateText('password', value)}
 				/>
 			</label>
 		</div>

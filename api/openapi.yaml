@@ -7437,6 +7437,10 @@ components:
           type: string
         username:
           type: string
+        password:
+          type: string
+        apiKey:
+          type: string
         enabled:
           type: boolean
         priority:

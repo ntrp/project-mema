@@ -120,8 +120,8 @@ describe('settings route wrappers (SCN-SETTINGS-024)', () => {
 
 		expect(body).toContain('Subtitles');
 		expect(body).toContain('OpenSubtitles');
-		expect(body).toContain('Saved API key');
-		expect(body).toContain('Saved password');
+		expect(body).toContain('type="password"');
+		expect(body).toContain('Show secret');
 	});
 });
 

@@ -3420,6 +3420,8 @@ export interface components {
 			type: components['schemas']['SubtitleProviderType'];
 			baseUrl: string;
 			username?: string;
+			password?: string;
+			apiKey?: string;
 			enabled: boolean;
 			/** Format: int32 */
 			priority: number;

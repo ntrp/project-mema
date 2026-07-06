@@ -1,5 +1,6 @@
 <script lang="ts">
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import SecretInput from '$lib/components/settings/shared/SecretInput.svelte';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
@@ -48,18 +49,21 @@
 			</div>
 		{:else if field.type === 'select'}
 			<SettingsSelect value={textValue} {options} {onValueChange} />
+		{:else if field.type === 'password'}
+			<SecretInput
+				id={fieldId}
+				value={textValue}
+				autocomplete="off"
+				placeholder={field.placeholder}
+				onValueChange={onValueChange}
+			/>
 		{:else}
 			<Input
 				id={fieldId}
 				value={textValue}
-				type={field.type === 'password'
-					? 'password'
-					: field.type === 'number'
-						? 'number'
-						: field.type}
+				type={field.type === 'number' ? 'number' : field.type}
 				step={field.type === 'number' && field.isFloat ? '0.01' : undefined}
 				placeholder={field.placeholder}
-				autocomplete={field.type === 'password' ? 'off' : undefined}
 				oninput={(event) =>
 					field.type === 'number'
 						? updateNumber(event.currentTarget.value)

@@ -3,6 +3,7 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import SecretInput from '$lib/components/settings/shared/SecretInput.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import IntegrationTestStatus from '../shared/IntegrationTestStatus.svelte';
 	import type {
@@ -120,31 +121,28 @@
 			</label>
 			<label class="grid gap-1.5">
 				<span class="text-sm font-bold text-muted-foreground">API key</span>
-				<Input
+				<SecretInput
 					value={form.apiKey}
 					autocomplete="off"
-					placeholder={form.apiKeySet ? 'Saved API key' : ''}
-					oninput={(event) => updateText('apiKey', event.currentTarget.value)}
+					onValueChange={(value) => updateText('apiKey', value)}
 				/>
 			</label>
 			{#if definition.fields === 'tvdb'}
 				<label class="grid gap-1.5">
 					<span class="text-sm font-bold text-muted-foreground">PIN</span>
-					<Input
+					<SecretInput
 						value={form.pin}
 						autocomplete="off"
-						placeholder={form.pinSet ? 'Saved PIN' : ''}
-						oninput={(event) => updateText('pin', event.currentTarget.value)}
+						onValueChange={(value) => updateText('pin', value)}
 					/>
 				</label>
 			{/if}
 			<label class="grid gap-1.5">
 				<span class="text-sm font-bold text-muted-foreground">Access token</span>
-				<Input
+				<SecretInput
 					value={form.accessToken}
 					autocomplete="off"
-					placeholder={form.accessTokenSet ? 'Saved access token' : ''}
-					oninput={(event) => updateText('accessToken', event.currentTarget.value)}
+					onValueChange={(value) => updateText('accessToken', value)}
 				/>
 			</label>
 			<label class="grid gap-1.5">

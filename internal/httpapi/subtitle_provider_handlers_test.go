@@ -8,7 +8,7 @@ import (
 	"media-manager/internal/storage"
 )
 
-func TestSubtitleProviderResponseMasksSecrets(t *testing.T) {
+func TestSubtitleProviderResponseIncludesSecrets(t *testing.T) {
 	response := subtitleProviderResponse(storage.SubtitleProvider{
 		Name:     "OpenSubtitles",
 		Type:     "opensubtitles",
@@ -19,6 +19,12 @@ func TestSubtitleProviderResponseMasksSecrets(t *testing.T) {
 	})
 	if !response.ApiKeySet || !response.PasswordSet {
 		t.Fatalf("expected secret presence flags, got %#v", response)
+	}
+	if response.ApiKey == nil || *response.ApiKey != "key" {
+		t.Fatalf("expected api key in response, got %#v", response.ApiKey)
+	}
+	if response.Password == nil || *response.Password != "secret" {
+		t.Fatalf("expected password in response, got %#v", response.Password)
 	}
 }
 
@@ -48,13 +54,4 @@ func TestSubtitleProviderUpdatePreservesOmittedSecrets(t *testing.T) {
 	if input.Password == nil || *input.Password != "secret" {
 		t.Fatalf("expected password to be preserved")
 	}
-}
-
-func TestSubtitleProviderResponseDoesNotContainRawSecrets(t *testing.T) {
-	secret := "raw-subtitle-secret"
-	response := subtitleProviderResponse(storage.SubtitleProvider{
-		APIKey:   stringPtr(secret),
-		Password: stringPtr(secret),
-	})
-	assertNoRawSecret(t, response, secret)
 }

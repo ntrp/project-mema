@@ -6,6 +6,7 @@
 	import IndexerCatalogPicker from '$lib/components/settings/indexers/IndexerCatalogPicker.svelte';
 	import IndexerDynamicField from '$lib/components/settings/indexers/IndexerDynamicField.svelte';
 	import IndexerScopeFields from '$lib/components/settings/indexers/IndexerScopeFields.svelte';
+	import SecretInput from '$lib/components/settings/shared/SecretInput.svelte';
 	import { flattenCategories } from '$lib/components/settings/indexers/indexerCatalogFilters';
 	import IntegrationTestStatus from '../shared/IntegrationTestStatus.svelte';
 	import type {
@@ -123,12 +124,10 @@
 		</div>
 		<div class="space-y-2">
 			<Label for="indexer-api-key">API key</Label>
-			<Input
+			<SecretInput
 				id="indexer-api-key"
 				bind:value={form.apiKey}
 				autocomplete="off"
-				placeholder={form.apiKeySet ? 'Saved API key' : ''}
-				type="password"
 			/>
 		</div>
 		<div class="space-y-2">

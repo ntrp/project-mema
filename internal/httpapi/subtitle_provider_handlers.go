@@ -159,6 +159,8 @@ func subtitleProviderResponse(provider storage.SubtitleProvider) SubtitleProvide
 		Type:        SubtitleProviderType(provider.Type),
 		BaseUrl:     provider.BaseURL,
 		Username:    provider.Username,
+		Password:    provider.Password,
+		ApiKey:      provider.APIKey,
 		Enabled:     provider.Enabled,
 		Priority:    provider.Priority,
 		ApiKeySet:   provider.APIKey != nil,

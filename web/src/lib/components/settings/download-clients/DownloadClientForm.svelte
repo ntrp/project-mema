@@ -5,6 +5,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
+	import SecretInput from '$lib/components/settings/shared/SecretInput.svelte';
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
 	import IntegrationTestStatus from '../shared/IntegrationTestStatus.svelte';
 	import type {
@@ -97,12 +98,10 @@
 				</div>
 				<div class="space-y-2">
 					<Label for="download-client-password">Password</Label>
-					<Input
+					<SecretInput
 						id="download-client-password"
 						bind:value={form.password}
 						autocomplete="off"
-						placeholder={form.passwordSet ? 'Saved password' : ''}
-						type="password"
 					/>
 				</div>
 				<div class="space-y-2">
@@ -112,12 +111,10 @@
 			{:else}
 				<div class="space-y-2 sm:col-span-2">
 					<Label for="download-client-api-key">API key</Label>
-					<Input
+					<SecretInput
 						id="download-client-api-key"
 						bind:value={form.apiKey}
 						autocomplete="off"
-						placeholder={form.apiKeySet ? 'Saved API key' : ''}
-						type="password"
 					/>
 				</div>
 				<div class="space-y-2">

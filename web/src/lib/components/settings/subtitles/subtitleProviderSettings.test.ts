@@ -17,8 +17,9 @@ describe('subtitle provider settings (SCN-SETTINGS-024)', () => {
 		});
 
 		expect(body).toContain('OpenSubtitles');
-		expect(body).toContain('Saved API key');
-		expect(body).toContain('Saved password');
-		expect(body).not.toContain('scenario-key');
+		expect(body).toContain('type="password"');
+		expect(body).toContain('Show secret');
+		expect(body).toContain('value="scenario-key"');
+		expect(body).toContain('value="scenario-password"');
 	});
 });

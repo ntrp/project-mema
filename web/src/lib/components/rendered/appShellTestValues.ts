@@ -109,6 +109,8 @@ export function subtitleProvider(overrides: Partial<SubtitleProvider> = {}): Sub
 		enabled: true,
 		baseUrl: 'https://api.opensubtitles.com',
 		username: 'scenario-user',
+		apiKey: 'scenario-key',
+		password: 'scenario-password',
 		apiKeySet: true,
 		passwordSet: true,
 		priority: 100,

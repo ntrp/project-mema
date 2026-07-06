@@ -39,9 +39,9 @@ export function metadataProviderFormFromProvider(provider: MetadataProvider): Me
 		name: provider.name,
 		type: provider.type,
 		baseUrl: provider.baseUrl,
-		apiKey: '',
-		pin: '',
-		accessToken: '',
+		apiKey: provider.apiKey ?? '',
+		pin: provider.pin ?? '',
+		accessToken: provider.accessToken ?? '',
 		apiKeySet: provider.apiKeySet,
 		pinSet: provider.pinSet,
 		accessTokenSet: provider.accessTokenSet,
@@ -57,8 +57,8 @@ export function subtitleProviderFormFromProvider(provider: SubtitleProvider): Su
 		type: provider.type,
 		baseUrl: provider.baseUrl,
 		username: provider.username ?? '',
-		password: undefined,
-		apiKey: undefined,
+		password: provider.password ?? '',
+		apiKey: provider.apiKey ?? '',
 		enabled: provider.enabled,
 		priority: provider.priority
 	};

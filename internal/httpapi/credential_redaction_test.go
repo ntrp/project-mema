@@ -1,28 +1,30 @@
 package httpapi
 
 import (
-	"encoding/json"
-	"strings"
 	"testing"
 
 	"media-manager/internal/storage"
 )
 
-func TestCredentialResponsesMaskRawSecrets(t *testing.T) {
+func TestCredentialResponsesIncludeRawSecrets(t *testing.T) {
 	secret := "raw-secret-value"
 	download := downloadClientResponse(storage.DownloadClient{
 		Password: &secret,
 		APIKey:   &secret,
 	})
-	assertNoRawSecret(t, download, secret)
-	if !download.PasswordSet || !download.ApiKeySet || download.Password != nil || download.ApiKey != nil {
+	if !download.PasswordSet || !download.ApiKeySet {
 		t.Fatalf("download client secret flags = %#v", download)
+	}
+	if download.Password == nil || *download.Password != secret || download.ApiKey == nil || *download.ApiKey != secret {
+		t.Fatalf("download client secrets = %#v", download)
 	}
 
 	indexer := indexerResponse(storage.Indexer{APIKey: &secret}, newCatalogLanguageMapper(nil))
-	assertNoRawSecret(t, indexer, secret)
-	if !indexer.ApiKeySet || indexer.ApiKey != nil {
+	if !indexer.ApiKeySet {
 		t.Fatalf("indexer secret flags = %#v", indexer)
+	}
+	if indexer.ApiKey == nil || *indexer.ApiKey != secret {
+		t.Fatalf("indexer secret = %#v", indexer)
 	}
 
 	provider := metadataProviderResponse(storage.MetadataProvider{
@@ -30,12 +32,13 @@ func TestCredentialResponsesMaskRawSecrets(t *testing.T) {
 		PIN:         &secret,
 		AccessToken: &secret,
 	})
-	assertNoRawSecret(t, provider, secret)
 	if !provider.ApiKeySet || !provider.PinSet || !provider.AccessTokenSet {
 		t.Fatalf("metadata provider secret flags = %#v", provider)
 	}
-	if provider.ApiKey != nil || provider.Pin != nil || provider.AccessToken != nil {
-		t.Fatalf("metadata provider leaked secret fields = %#v", provider)
+	if provider.ApiKey == nil || *provider.ApiKey != secret ||
+		provider.Pin == nil || *provider.Pin != secret ||
+		provider.AccessToken == nil || *provider.AccessToken != secret {
+		t.Fatalf("metadata provider secrets = %#v", provider)
 	}
 }
 
@@ -62,16 +65,5 @@ func TestCredentialUpdatesPreserveOmittedSecrets(t *testing.T) {
 	)
 	if provider.APIKey == nil || provider.PIN == nil || provider.AccessToken == nil {
 		t.Fatalf("metadata provider secrets = %#v", provider)
-	}
-}
-
-func assertNoRawSecret(t *testing.T, value any, secret string) {
-	t.Helper()
-	payload, err := json.Marshal(value)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(payload), secret) {
-		t.Fatalf("response leaked raw secret: %s", payload)
 	}
 }

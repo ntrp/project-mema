@@ -2847,12 +2847,14 @@ type SessionResponse struct {
 
 // SubtitleProvider defines model for SubtitleProvider.
 type SubtitleProvider struct {
+	ApiKey      *string              `json:"apiKey,omitempty"`
 	ApiKeySet   bool                 `json:"apiKeySet"`
 	BaseUrl     string               `json:"baseUrl"`
 	CreatedAt   time.Time            `json:"createdAt"`
 	Enabled     bool                 `json:"enabled"`
 	Id          openapi_types.UUID   `json:"id"`
 	Name        string               `json:"name"`
+	Password    *string              `json:"password,omitempty"`
 	PasswordSet bool                 `json:"passwordSet"`
 	Priority    int32                `json:"priority"`
 	Type        SubtitleProviderType `json:"type"`

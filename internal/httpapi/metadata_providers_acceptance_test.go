@@ -24,7 +24,10 @@ func TestScenarioSCNSettings022AdminManagesMetadataProviders(t *testing.T) {
 		Enabled:  true,
 		Priority: 10,
 	}, http.StatusCreated, &created)
-	if created.Name != "Scenario TMDb" || created.Type != Tmdb || !created.Enabled || !created.ApiKeySet || created.ApiKey != nil {
+	if created.Name != "Scenario TMDb" || created.Type != Tmdb || !created.Enabled || !created.ApiKeySet {
+		t.Fatalf("created metadata provider = %#v", created)
+	}
+	if created.ApiKey == nil || *created.ApiKey != apiKey {
 		t.Fatalf("created metadata provider = %#v", created)
 	}
 
@@ -39,6 +42,9 @@ func TestScenarioSCNSettings022AdminManagesMetadataProviders(t *testing.T) {
 	}, http.StatusOK, &updated)
 	if updated.Name != "Updated TMDb" || updated.Enabled || updated.Priority != 20 {
 		t.Fatalf("updated metadata provider = %#v", updated)
+	}
+	if updated.ApiKey == nil || *updated.ApiKey != apiKey {
+		t.Fatalf("updated metadata provider missing api key = %#v", updated)
 	}
 
 	var listed MetadataProviderListResponse
