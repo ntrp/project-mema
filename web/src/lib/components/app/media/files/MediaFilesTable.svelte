@@ -7,44 +7,9 @@
 	import MediaRootPanel from '$lib/components/app/media/collection/MediaRootPanel.svelte';
 	import { activityForMovie } from '$lib/components/app/activity/activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
+	import type { MediaFilesTableProps as Props } from '$lib/components/app/media/file-data/mediaFileComponentTypes';
 	import { applyMediaRename, previewMediaRename } from '$lib/settings/api';
-	import type {
-		DownloadActivity,
-		Language,
-		LibraryFolder,
-		MediaItem,
-		MediaItemUpdateRequest,
-		MediaRenamePreviewRow,
-		ReleaseCandidate,
-		ReleaseOverrideDetails
-	} from '$lib/settings/types';
-
-	interface Props {
-		item: MediaItem;
-		activities: DownloadActivity[];
-		searchingItemId?: string;
-		grabbingKey?: string;
-		canManage: boolean;
-		libraryFolders: LibraryFolder[];
-		languages: Language[];
-		qualityProfiles: {
-			id: string;
-			targetLanguages?: string[];
-			targetLanguageScores?: { languageId: string; required: boolean }[];
-			subtitleLanguages?: { languageId: string }[];
-			removeNonEnabledLanguages?: boolean;
-			removeNonEnabledSubtitleLanguages?: boolean;
-		}[];
-		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
-		onAutoSearch: (_item: MediaItem) => void;
-		onDeleteFile: (_item: MediaItem, _path: string) => void;
-		onGrabRelease: (
-			_item: MediaItem,
-			_release: ReleaseCandidate,
-			_overrideMatch?: boolean,
-			_details?: ReleaseOverrideDetails
-		) => void;
-	}
+	import type { MediaRenamePreviewRow } from '$lib/settings/types';
 
 	let {
 		item,
@@ -57,12 +22,15 @@
 		qualityProfiles,
 		onSaveOptions,
 		onAutoSearch,
+		onSearchSubtitle,
+		onDeleteSubtitle,
 		onDeleteFile,
 		onGrabRelease
 	}: Props = $props();
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
+	let subtitleSearchKey = $state<string | undefined>();
 	let previewRows = $state<MediaRenamePreviewRow[]>([]);
 	let previewLoading = $state(false);
 	let previewApplying = $state(false);
@@ -89,6 +57,20 @@
 		if (!deleteRow?.path) return;
 		onDeleteFile(item, deleteRow.path);
 		deleteRow = undefined;
+	}
+
+	async function searchSubtitle(row: MediaFileRow, languageId?: string) {
+		if (!row.path) return;
+		subtitleSearchKey = `${row.key}:${languageId ?? 'all'}`;
+		try {
+			await onSearchSubtitle(item, { languageId, filePath: row.path });
+		} finally {
+			subtitleSearchKey = undefined;
+		}
+	}
+
+	function deleteSubtitle(subtitleId: string) {
+		return onDeleteSubtitle(item, subtitleId);
 	}
 
 	async function loadRenamePreview() {
@@ -147,6 +129,9 @@
 						missingLabel="No matched file for this movie"
 						onAutoSearch={() => onAutoSearch(item)}
 						onManualSearch={() => (searchOpen = true)}
+						subtitleSearching={subtitleSearchKey?.startsWith(`${row.key}:`) === true}
+						onSearchSubtitle={searchSubtitle}
+						onDeleteSubtitle={(subtitle) => deleteSubtitle(subtitle.id)}
 						onDelete={requestDelete}
 					/>
 				{/each}

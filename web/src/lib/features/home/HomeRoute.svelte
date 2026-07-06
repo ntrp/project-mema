@@ -57,6 +57,8 @@
 	onApproveMediaRequest={app.approveMediaRequest}
 	onFindReleases={app.findReleases}
 	onAutoSearchMedia={app.autoSearchMedia}
+	onSearchMediaSubtitle={app.searchMediaSubtitle}
+	onDeleteMediaSubtitle={app.deleteMediaSubtitle}
 	onRefreshMediaMetadata={app.refreshMediaMetadata}
 	onSaveMediaItemOptions={app.saveMediaItemOptions}
 	onDeleteMediaFile={app.deleteMediaFile}

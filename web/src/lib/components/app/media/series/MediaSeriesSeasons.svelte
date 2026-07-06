@@ -24,44 +24,8 @@
 		seasonMonitored
 	} from '$lib/components/app/media/series/mediaSeriesRows';
 	import type { ReleaseSearchContext } from '$lib/components/app/media/release-search/releaseSearchQuery';
-	import type {
-		DownloadActivity,
-		Language,
-		LibraryFolder,
-		MediaItem,
-		MediaItemUpdateRequest,
-		MediaMetadataEpisode,
-		MediaMetadataSeason,
-		ReleaseCandidate,
-		ReleaseOverrideDetails
-	} from '$lib/settings/types';
-
-	interface Props {
-		item: MediaItem;
-		activities: DownloadActivity[];
-		searchingItemId?: string;
-		grabbingKey?: string;
-		canManage: boolean;
-		libraryFolders: LibraryFolder[];
-		languages: Language[];
-		qualityProfiles: {
-			id: string;
-			targetLanguages?: string[];
-			targetLanguageScores?: { languageId: string; required: boolean }[];
-			subtitleLanguages?: { languageId: string }[];
-			removeNonEnabledLanguages?: boolean;
-			removeNonEnabledSubtitleLanguages?: boolean;
-		}[];
-		onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
-		onAutoSearch: (_item: MediaItem) => void;
-		onDeleteFile: (_item: MediaItem, _path: string) => void;
-		onGrabRelease: (
-			_item: MediaItem,
-			_release: ReleaseCandidate,
-			_overrideMatch?: boolean,
-			_details?: ReleaseOverrideDetails
-		) => void;
-	}
+	import type { MediaSeriesSeasonsProps as Props } from './mediaSeriesSeasonsTypes';
+	import type { MediaMetadataEpisode, MediaMetadataSeason } from '$lib/settings/types';
 
 	let {
 		item,
@@ -74,12 +38,15 @@
 		qualityProfiles,
 		onSaveOptions,
 		onAutoSearch,
+		onSearchSubtitle,
+		onDeleteSubtitle,
 		onDeleteFile,
 		onGrabRelease
 	}: Props = $props();
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchContext = $state<ReleaseSearchContext | undefined>();
+	let subtitleSearchKey = $state<string | undefined>();
 	const seasons = $derived(item.seasons ?? []);
 	const mediaRows = $derived(item.filePaths.map((path) => fileRow(item, path, qualityProfiles)));
 
@@ -108,6 +75,20 @@
 
 	function episodeSearchContext(row: MediaFileRow): ReleaseSearchContext {
 		return { type: 'episode', seasonNumber: row.seasonNumber, episodeNumber: row.episodeNumber };
+	}
+
+	async function searchSubtitle(row: MediaFileRow, languageId?: string) {
+		if (!row.path) return;
+		subtitleSearchKey = `${row.key}:${languageId ?? 'all'}`;
+		try {
+			await onSearchSubtitle(item, { languageId, filePath: row.path });
+		} finally {
+			subtitleSearchKey = undefined;
+		}
+	}
+
+	function deleteSubtitle(subtitleId: string) {
+		return onDeleteSubtitle(item, subtitleId);
 	}
 </script>
 
@@ -163,6 +144,9 @@
 										searching={searchingItemId === item.id}
 										onAutoSearch={() => onAutoSearch(item)}
 										onManualSearch={() => (searchContext = episodeSearchContext(file.row))}
+										subtitleSearching={subtitleSearchKey?.startsWith(`${file.row.key}:`) === true}
+										onSearchSubtitle={searchSubtitle}
+										onDeleteSubtitle={(subtitle) => deleteSubtitle(subtitle.id)}
 										onDelete={requestDelete}
 									/>
 								</MediaEpisodeRow>

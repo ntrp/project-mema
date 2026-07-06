@@ -15,47 +15,17 @@ import {
 	matchToken,
 	qualityInfo
 } from '$lib/components/app/media/files/mediaFileParsing';
-import {
-	mediaFileUpgradeInfo,
-	type MediaFileUpgradeInfo
-} from '$lib/components/app/media/files/mediaFileUpgradeState';
-import type { MediaItem } from '$lib/settings/types';
-type MediaFileTrack = NonNullable<NonNullable<MediaItem['files']>[number]['tracks']>[number];
-type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['chapters']>[number];
-type MediaFileSubtitleSatisfaction = NonNullable<
-	NonNullable<MediaItem['files']>[number]['subtitleSatisfaction']
->;
-export interface MediaFileRow {
-	key: string;
-	path?: string;
-	relativePath: string;
-	exists: boolean;
-	seasonNumber?: number;
-	episodeNumber?: number;
-	episodeTitle?: string;
-	videoCodec: string;
-	audioInfo: string;
-	size: string;
-	sizeBytes?: number;
-	languages: string;
-	quality: string;
-	formats: string[];
-	tracks: MediaFileTrack[];
-	chapters: MediaFileChapter[];
-	subtitleSatisfaction?: MediaFileSubtitleSatisfaction;
-	upgrade: MediaFileUpgradeInfo;
-	expectedLanguages: string[];
-	expectedRequiredLanguages: string[];
-	expectedSubtitleLanguages: string[];
-	removeNonEnabledLanguages: boolean;
-	removeNonEnabledSubtitleLanguages: boolean;
-	score: number;
-}
-export interface MediaFileGroup {
-	key: string;
-	title: string;
-	rows: MediaFileRow[];
-}
+import { mediaFileUpgradeInfo } from '$lib/components/app/media/files/mediaFileUpgradeState';
+import type {
+	MediaFileGroup,
+	MediaFileRow
+} from '$lib/components/app/media/file-data/mediaFileRows';
+import type { MediaItem, MediaItemSubtitle } from '$lib/settings/types';
+
+export type {
+	MediaFileGroup,
+	MediaFileRow
+} from '$lib/components/app/media/file-data/mediaFileRows';
 export function mediaFileGroups(
 	item: MediaItem,
 	qualityProfiles: MediaFileProfileOption[] = []
@@ -149,6 +119,7 @@ export function fileRow(
 		tracks: info?.tracks ?? [],
 		chapters: info?.chapters ?? [],
 		subtitleSatisfaction: info?.subtitleSatisfaction,
+		externalSubtitles: externalSubtitlesForPath(item.externalSubtitles ?? [], path),
 		upgrade,
 		expectedLanguages: profile.expectedLanguages,
 		expectedRequiredLanguages: profile.expectedRequiredLanguages,
@@ -180,6 +151,7 @@ export function missingRow(
 		formats: [],
 		tracks: [],
 		chapters: [],
+		externalSubtitles: [],
 		subtitleSatisfaction: {
 			state: 'missing',
 			wantedLanguages: [],
@@ -205,4 +177,20 @@ export function seasonNumberFromName(name: string) {
 	}
 	const match = /(\d+)/.exec(name);
 	return match ? Number(match[1]) : undefined;
+}
+
+function externalSubtitlesForPath(subtitles: MediaItemSubtitle[], path: string) {
+	return subtitles.filter((subtitle) => sameSubtitleMediaBase(subtitle.filePath, path));
+}
+
+function sameSubtitleMediaBase(subtitlePath: string, mediaPath: string) {
+	const subtitleBase = baseWithoutExtension(subtitlePath);
+	const mediaBase = baseWithoutExtension(mediaPath);
+	return subtitleBase.toLowerCase().startsWith(`${mediaBase.toLowerCase()}.`);
+}
+
+function baseWithoutExtension(path: string) {
+	const name = fileName(path);
+	const extensionIndex = name.lastIndexOf('.');
+	return extensionIndex > 0 ? name.slice(0, extensionIndex) : name;
 }

@@ -7,27 +7,12 @@
 	import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
+	import MediaSubtitlePanel from '$lib/components/app/media/subtitles/MediaSubtitlePanel.svelte';
 	import {
 		audioSatisfaction,
 		subtitleSatisfaction
 	} from '$lib/components/app/media/files/mediaFileSummaryStatus';
-	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import type { ActivityQueueStatus } from '$lib/components/app/activity/activityQueue';
-
-	interface Props {
-		mediaItemId: string;
-		mediaTitle: string;
-		row: MediaFileRow;
-		activityStatus?: ActivityQueueStatus;
-		canManage: boolean;
-		searching: boolean;
-		fileLabel?: string;
-		missingLabel?: string;
-		showSearchActions?: boolean;
-		onAutoSearch: () => void;
-		onManualSearch: () => void;
-		onDelete: (_row: MediaFileRow) => void;
-	}
+	import type { MediaFileSummaryProps as Props } from '$lib/components/app/media/file-data/mediaFileComponentTypes';
 
 	let {
 		mediaItemId,
@@ -39,8 +24,11 @@
 		fileLabel = 'Episode file',
 		missingLabel = 'No matched file for this episode',
 		showSearchActions = true,
+		subtitleSearching = false,
 		onAutoSearch,
 		onManualSearch,
+		onSearchSubtitle = () => {},
+		onDeleteSubtitle = () => {},
 		onDelete
 	}: Props = $props();
 	let detailsOpen = $state(false);
@@ -180,6 +168,13 @@
 	{#if row.exists && detailsOpen}
 		<MediaFileDetailsAccordion {row} />
 	{/if}
+	<MediaSubtitlePanel
+		{row}
+		{canManage}
+		searching={subtitleSearching}
+		onSearch={(languageId) => onSearchSubtitle(row, languageId)}
+		onDelete={onDeleteSubtitle}
+	/>
 </div>
 
 {#if row.exists && row.path && previewOpen}

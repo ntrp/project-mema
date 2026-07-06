@@ -1,4 +1,4 @@
-import type { DownloadActivity } from '$lib/settings/types';
+import type { DownloadActivity, SystemEvent } from '$lib/settings/types';
 import type { createEventActions } from './events';
 import type { AppShellState } from './state.svelte';
 
@@ -25,6 +25,12 @@ export function connectAppEvents(state: AppShellState, deps: EventConnectionDeps
 		deps.upsertActivity(activity);
 		deps.updateMediaStatusFromActivity(activity);
 		if (activity.status === 'completed') {
+			void deps.loadMediaItems();
+		}
+	});
+	source.addEventListener('system.event.created', (event) => {
+		const systemEvent = deps.parseEventData<SystemEvent>(event);
+		if (systemEvent?.category === 'subtitles') {
 			void deps.loadMediaItems();
 		}
 	});

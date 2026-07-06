@@ -9,7 +9,10 @@
 	import MediaRelatedSections from '$lib/components/app/media/posters/MediaRelatedSections.svelte';
 	import MediaSeriesSeasons from '$lib/components/app/media/series/MediaSeriesSeasons.svelte';
 	import { resolve } from '$app/paths';
-	import { mediaMetadataDetail } from '$lib/components/app/media/detail/mediaDetail';
+	import {
+		mediaMetadataDetail,
+		type MediaDetailProps as Props
+	} from '$lib/components/app/media/detail/mediaDetail';
 	import {
 		monitorUpdate,
 		titleMonitorActive,
@@ -17,49 +20,7 @@
 		titleMonitorStatus,
 		toggledMediaMonitor
 	} from '$lib/components/app/media/series/mediaMonitoring';
-	import type {
-		DownloadActivity,
-		LibraryFolder,
-		Language,
-		MediaItem,
-		MediaItemUpdateRequest,
-		QualityProfileOption,
-		MediaSearchResult,
-		MediaType,
-		ReleaseCandidate,
-		ReleaseOverrideDetails
-	} from '$lib/settings/types';
-	interface Props {
-		mediaType: MediaType;
-		item?: MediaItem;
-		loading?: boolean;
-		mediaItems?: MediaItem[];
-		libraryFolders: LibraryFolder[];
-		languages: Language[];
-		qualityProfiles: QualityProfileOption[];
-		requestedItemId: string;
-		activities: DownloadActivity[];
-		searchingItemId?: string;
-		refreshingMetadataItemId?: string;
-		savingMediaItemOptionsId?: string;
-		grabbingKey?: string;
-		addingKey?: string;
-		deletingMediaItemId?: string;
-		canManage: boolean;
-		actionLabel: string;
-		onAutoSearchMedia: (_item: MediaItem) => void;
-		onRefreshMediaMetadata: (_item: MediaItem) => void;
-		onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
-		onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
-		onDeleteMedia: (_item: MediaItem) => void;
-		onGrabRelease: (
-			_item: MediaItem,
-			_release: ReleaseCandidate,
-			_overrideMatch?: boolean,
-			_details?: ReleaseOverrideDetails
-		) => void;
-		onAddMedia: (_candidate: MediaSearchResult) => void;
-	}
+	import type { MediaItem } from '$lib/settings/types';
 
 	let {
 		mediaType,
@@ -80,6 +41,8 @@
 		canManage,
 		actionLabel,
 		onAutoSearchMedia,
+		onSearchMediaSubtitle = () => {},
+		onDeleteMediaSubtitle = () => {},
 		onRefreshMediaMetadata,
 		onSaveMediaItemOptions,
 		onDeleteMediaFile,
@@ -158,6 +121,8 @@
 								{canManage}
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
+								onSearchSubtitle={onSearchMediaSubtitle}
+								onDeleteSubtitle={onDeleteMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
 								{onGrabRelease}
 							/>
@@ -176,6 +141,8 @@
 								{canManage}
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
+								onSearchSubtitle={onSearchMediaSubtitle}
+								onDeleteSubtitle={onDeleteMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
 								{onGrabRelease}
 							/>

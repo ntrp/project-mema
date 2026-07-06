@@ -55,6 +55,11 @@ export interface HomeAreaProps {
 	onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
 	onFindReleases: (_item: MediaItem, _query?: string) => void;
 	onAutoSearchMedia: (_item: MediaItem) => void;
+	onSearchMediaSubtitle?: (
+		_item: MediaItem,
+		_request: { languageId?: string; filePath?: string }
+	) => void | Promise<void>;
+	onDeleteMediaSubtitle?: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;
 	onRefreshMediaMetadata: (_item: MediaItem) => void;
 	onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 	onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
