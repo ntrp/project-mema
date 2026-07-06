@@ -59,40 +59,58 @@ insert into app.media_profiles (
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
+    audio_lossy_transcode_policy,
     remove_unwanted_audio,
     remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference
 )
 values
-    ('any', 'Any acceptable release', false, 'mkv', true, 'raw-hd', 0, 0, 1, false, false, 'any', 'auto'),
-    ('hd-1080p', 'HD 1080p', true, 'mkv', true, 'bluray-1080p', 0, 10000, 1, false, false, 'any', 'auto'),
-    ('uhd-4k', 'UHD 4K', false, 'mkv', true, 'remux-2160p', 0, 10000, 1, false, false, 'any', 'auto'),
-    ('anime-1080p', 'Anime 1080p', false, 'mkv', true, 'bluray-1080p', 0, 10000, 1, false, false, 'any', 'auto')
+    ('any', 'Any acceptable release', false, 'mkv', true, 'raw-hd', 0, 0, 1, 'disabled', false, false, 'any', 'auto'),
+    ('hd-1080p', 'HD 1080p', true, 'mkv', true, 'bluray-1080p', 0, 10000, 1, 'losslessToLossy', false, false, 'any', 'auto'),
+    ('uhd-4k', 'UHD 4K', false, 'mkv', true, 'remux-2160p', 0, 10000, 1, 'losslessToLossy', false, false, 'any', 'auto'),
+    ('anime-1080p', 'Anime 1080p', false, 'mkv', true, 'bluray-1080p', 0, 10000, 1, 'losslessToLossy', false, false, 'any', 'auto')
 on conflict (id) do nothing;
 
-insert into app.media_profile_video_targets (profile_id)
+insert into app.media_profile_video_targets (
+    profile_id,
+    codecs,
+    codec_score,
+    hdr_formats,
+    hdr_score,
+    pixel_formats,
+    pixel_format_score
+)
 values
-    ('any'),
-    ('hd-1080p'),
-    ('uhd-4k'),
-    ('anime-1080p')
+    ('any', '{}', 0, '{}', 0, '{}', 0),
+    ('hd-1080p', array['h264', 'hevc'], 100, array['sdr'], 25, array['yuv420p', 'yuv420p10le'], 25),
+    ('uhd-4k', array['hevc', 'av1'], 100, array['hdr10', 'hdr10plus', 'dolby-vision'], 75, array['yuv420p10le'], 25),
+    ('anime-1080p', array['h264', 'hevc'], 75, array['sdr'], 10, array['yuv420p10le'], 50)
 on conflict (profile_id) do nothing;
 
-insert into app.media_profile_audio_targets (profile_id, language_id, score, sort_order)
+insert into app.media_profile_audio_targets (
+    profile_id,
+    language_id,
+    score,
+    target_codec,
+    target_channels,
+    minimum_bitrate_kbps,
+    preferred_bitrate_kbps,
+    sort_order
+)
 values
-    ('any', 'english', 0, 0),
-    ('hd-1080p', 'english', 0, 0),
-    ('uhd-4k', 'english', 0, 0),
-    ('anime-1080p', 'japanese', 0, 0),
-    ('anime-1080p', 'english', 0, 1)
+    ('any', 'english', 0, null, '{}', null, null, 0),
+    ('hd-1080p', 'english', 25, 'aac', array['2.0', '5.1'], 192, 640, 0),
+    ('uhd-4k', 'english', 50, 'eac3', array['5.1', '7.1', 'atmos'], 640, 1536, 0),
+    ('anime-1080p', 'japanese', 50, 'aac', array['2.0'], 160, 256, 0),
+    ('anime-1080p', 'english', 25, 'aac', array['2.0'], 160, 256, 1)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_subtitle_targets (profile_id, language_id, score, source, formats, sort_order)
 values
     ('hd-1080p', 'english', 0, 'any', array['srt'], 0),
     ('uhd-4k', 'english', 0, 'any', array['srt'], 0),
-    ('anime-1080p', 'english', 0, 'any', array['srt'], 0)
+    ('anime-1080p', 'english', 25, 'any', array['ass', 'srt'], 0)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)
