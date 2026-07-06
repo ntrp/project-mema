@@ -1,5 +1,6 @@
 <script lang="ts">
 	import MediaProfileCustomFormatScores from '$lib/components/settings/profiles/MediaProfileCustomFormatScores.svelte';
+	import MediaProfileComponentTargets from '$lib/components/settings/profiles/component-targets/MediaProfileComponentTargets.svelte';
 	import MediaProfileQualitySelector from '$lib/components/settings/profiles/MediaProfileQualitySelector.svelte';
 	import MediaProfileRules from '$lib/components/settings/profiles/MediaProfileRules.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
@@ -71,6 +72,7 @@
 				</Label>
 
 				<MediaProfileRules {form} {qualities} {languages} onChange={(value) => (form = value)} />
+				<MediaProfileComponentTargets {form} onChange={(value) => (form = value)} />
 				<MediaProfileCustomFormatScores
 					{form}
 					{customFormats}

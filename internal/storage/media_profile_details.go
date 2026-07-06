@@ -21,6 +21,10 @@ func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *Media
 	if err != nil {
 		return err
 	}
+	componentTargets, err := loadMediaProfileComponentTargets(ctx, s.pool, profile.ID)
+	if err != nil {
+		return err
+	}
 	scores, err := loadMediaProfileCustomFormats(ctx, s.pool, profile.ID)
 	if err != nil {
 		return err
@@ -29,6 +33,7 @@ func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *Media
 	profile.TargetLanguageScores = languageScores
 	profile.TargetLanguages = languageIDsFromScores(languageScores)
 	profile.SubtitleLanguages = subtitleLanguages
+	profile.ComponentTargets = componentTargets
 	profile.CustomFormatScores = scores
 	return nil
 }
@@ -99,6 +104,60 @@ func loadMediaProfileCustomFormats(
 		})
 	}
 	return scores, nil
+}
+
+func loadMediaProfileComponentTargets(
+	ctx context.Context,
+	q storagegen.DBTX,
+	profileID string,
+) ([]MediaProfileComponentTarget, error) {
+	rows, err := storagegen.New(q).ListMediaProfileComponentTargets(ctx, profileID)
+	if err != nil {
+		return nil, err
+	}
+	targets := make([]MediaProfileComponentTarget, 0, len(rows))
+	for _, row := range rows {
+		targets = append(targets, MediaProfileComponentTarget{
+			ID:               row.ID,
+			ComponentType:    row.ComponentType,
+			Required:         row.Required,
+			LanguageID:       textPtr(row.LanguageID),
+			Codec:            textPtr(row.Codec),
+			Channels:         textPtr(row.Channels),
+			Source:           row.Source,
+			FallbackBehavior: row.FallbackBehavior,
+		})
+	}
+	return targets, nil
+}
+
+func replaceMediaProfileComponentTargets(
+	ctx context.Context,
+	q mediaProfileQuerier,
+	profileID string,
+	targets []MediaProfileComponentTarget,
+) error {
+	queries := storagegen.New(q)
+	if err := queries.ClearMediaProfileComponentTargets(ctx, profileID); err != nil {
+		return err
+	}
+	for index, target := range targets {
+		if err := queries.AddMediaProfileComponentTarget(ctx, storagegen.AddMediaProfileComponentTargetParams{
+			ID:               target.ID,
+			ProfileID:        profileID,
+			ComponentType:    target.ComponentType,
+			Required:         target.Required,
+			LanguageID:       textValue(target.LanguageID),
+			Codec:            textValue(target.Codec),
+			Channels:         textValue(target.Channels),
+			Source:           target.Source,
+			FallbackBehavior: target.FallbackBehavior,
+			SortOrder:        int32(index),
+		}); err != nil {
+			return normalizeMediaProfileWriteError(err)
+		}
+	}
+	return nil
 }
 
 func replaceMediaProfileCustomFormats(

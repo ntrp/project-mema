@@ -5823,6 +5823,7 @@ components:
         - targetLanguages
         - targetLanguageScores
         - subtitleLanguages
+        - componentTargets
         - customFormatScores
       properties:
         name:
@@ -5884,10 +5885,76 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaProfileSubtitleLanguage"
+        componentTargets:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaProfileComponentTarget"
         customFormatScores:
           type: array
           items:
             $ref: "#/components/schemas/MediaProfileCustomFormatScore"
+    MediaProfileComponentTarget:
+      type: object
+      additionalProperties: false
+      required:
+        - componentType
+        - required
+        - source
+        - fallbackBehavior
+      properties:
+        id:
+          type: string
+          format: uuid
+        componentType:
+          $ref: "#/components/schemas/MediaProfileComponentType"
+        required:
+          type: boolean
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 50
+        codec:
+          type: string
+          minLength: 1
+          maxLength: 80
+        channels:
+          type: string
+          minLength: 1
+          maxLength: 40
+        source:
+          $ref: "#/components/schemas/MediaProfileComponentSource"
+        fallbackBehavior:
+          $ref: "#/components/schemas/MediaProfileComponentFallback"
+    MediaProfileComponentType:
+      type: string
+      enum:
+        - video
+        - audio
+        - subtitle
+      x-enum-varnames:
+        - MediaProfileComponentTypeVideo
+        - MediaProfileComponentTypeAudio
+        - MediaProfileComponentTypeSubtitle
+    MediaProfileComponentSource:
+      type: string
+      enum:
+        - release
+        - subtitleProvider
+        - existing
+      x-enum-varnames:
+        - MediaProfileComponentSourceRelease
+        - MediaProfileComponentSourceSubtitleProvider
+        - MediaProfileComponentSourceExisting
+    MediaProfileComponentFallback:
+      type: string
+      enum:
+        - strict
+        - preferExisting
+        - allowMissing
+      x-enum-varnames:
+        - MediaProfileComponentFallbackStrict
+        - MediaProfileComponentFallbackPreferExisting
+        - MediaProfileComponentFallbackAllowMissing
     MediaProfileLanguageScore:
       type: object
       additionalProperties: false

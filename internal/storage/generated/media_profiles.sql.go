@@ -12,6 +12,62 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addMediaProfileComponentTarget = `-- name: AddMediaProfileComponentTarget :exec
+insert into app.media_profile_component_targets (
+    id,
+    profile_id,
+    component_type,
+    required,
+    language_id,
+    codec,
+    channels,
+    source,
+    fallback_behavior,
+    sort_order
+)
+values (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10
+)
+`
+
+type AddMediaProfileComponentTargetParams struct {
+	ID               uuid.UUID
+	ProfileID        string
+	ComponentType    string
+	Required         bool
+	LanguageID       pgtype.Text
+	Codec            pgtype.Text
+	Channels         pgtype.Text
+	Source           string
+	FallbackBehavior string
+	SortOrder        int32
+}
+
+func (q *Queries) AddMediaProfileComponentTarget(ctx context.Context, arg AddMediaProfileComponentTargetParams) error {
+	_, err := q.db.Exec(ctx, addMediaProfileComponentTarget,
+		arg.ID,
+		arg.ProfileID,
+		arg.ComponentType,
+		arg.Required,
+		arg.LanguageID,
+		arg.Codec,
+		arg.Channels,
+		arg.Source,
+		arg.FallbackBehavior,
+		arg.SortOrder,
+	)
+	return err
+}
+
 const addMediaProfileCustomFormat = `-- name: AddMediaProfileCustomFormat :exec
 insert into app.media_profile_custom_formats (profile_id, custom_format_id, score)
 values ($1, $2, $3)
@@ -99,6 +155,16 @@ where is_default
 
 func (q *Queries) ClearDefaultMediaProfiles(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, clearDefaultMediaProfiles)
+	return err
+}
+
+const clearMediaProfileComponentTargets = `-- name: ClearMediaProfileComponentTargets :exec
+delete from app.media_profile_component_targets
+where profile_id = $1
+`
+
+func (q *Queries) ClearMediaProfileComponentTargets(ctx context.Context, profileID string) error {
+	_, err := q.db.Exec(ctx, clearMediaProfileComponentTargets, profileID)
 	return err
 }
 
@@ -258,6 +324,63 @@ func (q *Queries) GetMediaProfile(ctx context.Context, id string) (AppMediaProfi
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listMediaProfileComponentTargets = `-- name: ListMediaProfileComponentTargets :many
+select id,
+    component_type,
+    required,
+    language_id,
+    codec,
+    channels,
+    source,
+    fallback_behavior,
+    sort_order
+from app.media_profile_component_targets
+where profile_id = $1
+order by sort_order, component_type, language_id, codec, channels
+`
+
+type ListMediaProfileComponentTargetsRow struct {
+	ID               uuid.UUID
+	ComponentType    string
+	Required         bool
+	LanguageID       pgtype.Text
+	Codec            pgtype.Text
+	Channels         pgtype.Text
+	Source           string
+	FallbackBehavior string
+	SortOrder        int32
+}
+
+func (q *Queries) ListMediaProfileComponentTargets(ctx context.Context, profileID string) ([]ListMediaProfileComponentTargetsRow, error) {
+	rows, err := q.db.Query(ctx, listMediaProfileComponentTargets, profileID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListMediaProfileComponentTargetsRow
+	for rows.Next() {
+		var i ListMediaProfileComponentTargetsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ComponentType,
+			&i.Required,
+			&i.LanguageID,
+			&i.Codec,
+			&i.Channels,
+			&i.Source,
+			&i.FallbackBehavior,
+			&i.SortOrder,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listMediaProfileCustomFormats = `-- name: ListMediaProfileCustomFormats :many

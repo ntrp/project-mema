@@ -111,6 +111,20 @@ from app.media_profile_subtitle_languages
 where profile_id = $1
 order by language_id;
 
+-- name: ListMediaProfileComponentTargets :many
+select id,
+    component_type,
+    required,
+    language_id,
+    codec,
+    channels,
+    source,
+    fallback_behavior,
+    sort_order
+from app.media_profile_component_targets
+where profile_id = $1
+order by sort_order, component_type, language_id, codec, channels;
+
 -- name: ListMediaProfileCustomFormats :many
 select pcf.custom_format_id, pcf.score
 from app.media_profile_custom_formats pcf
@@ -141,6 +155,36 @@ where profile_id = $1;
 -- name: AddMediaProfileSubtitleLanguage :exec
 insert into app.media_profile_subtitle_languages (profile_id, language_id, score, required, subtitle_type)
 values (sqlc.arg(profile_id), sqlc.arg(language_id), sqlc.arg(score), sqlc.arg(required), sqlc.arg(subtitle_type));
+
+-- name: ClearMediaProfileComponentTargets :exec
+delete from app.media_profile_component_targets
+where profile_id = $1;
+
+-- name: AddMediaProfileComponentTarget :exec
+insert into app.media_profile_component_targets (
+    id,
+    profile_id,
+    component_type,
+    required,
+    language_id,
+    codec,
+    channels,
+    source,
+    fallback_behavior,
+    sort_order
+)
+values (
+    sqlc.arg(id),
+    sqlc.arg(profile_id),
+    sqlc.arg(component_type),
+    sqlc.arg(required),
+    sqlc.narg(language_id),
+    sqlc.narg(codec),
+    sqlc.narg(channels),
+    sqlc.arg(source),
+    sqlc.arg(fallback_behavior),
+    sqlc.arg(sort_order)
+);
 
 -- name: ClearMediaProfileCustomFormats :exec
 delete from app.media_profile_custom_formats

@@ -16,7 +16,10 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			targetLanguages: ['EN'],
 			targetLanguageScores: [{ languageId: 'EN', score: 0, required: false }],
 			removeNonEnabledSubtitleLanguages: false,
-			subtitleLanguages: [{ languageId: 'EN', score: 0, required: false, subtitleType: 'embedded' }]
+			subtitleLanguages: [
+				{ languageId: 'EN', score: 0, required: false, subtitleType: 'embedded' }
+			],
+			componentTargets: []
 		});
 	});
 
@@ -40,6 +43,18 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			subtitleLanguages: [
 				{ languageId: 'english', score: 25, required: true, subtitleType: 'embedded' }
 			],
+			componentTargets: [
+				{
+					id: '00000000-0000-0000-0000-000000000001',
+					componentType: 'audio',
+					required: true,
+					languageId: 'english',
+					codec: 'aac',
+					channels: '5.1',
+					source: 'release',
+					fallbackBehavior: 'preferExisting'
+				}
+			],
 			customFormatScores: [{ customFormatId: 'cf-1', score: 50 }]
 		} as MediaProfile;
 
@@ -53,6 +68,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 		expect(profile.targetLanguageScores?.[0].score).toBe(10);
 		expect(profile.subtitleLanguages?.[0].score).toBe(25);
 		expect(profile.subtitleLanguages?.[0].subtitleType).toBe('embedded');
+		expect(profile.componentTargets?.[0].codec).toBe('aac');
 		expect(form.isDefault).toBe(true);
 		expect(form.removeNonEnabledSubtitleLanguages).toBe(true);
 	});
@@ -78,6 +94,24 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{ languageId: 'english', score: '25', required: true, subtitleType: 'embedded' },
 				{ languageId: 'english', score: 10, required: false, subtitleType: 'external' }
 			],
+			componentTargets: [
+				{
+					componentType: 'audio',
+					required: true,
+					languageId: ' english ',
+					codec: ' AAC ',
+					channels: '5.1',
+					source: 'existing',
+					fallbackBehavior: 'preferExisting'
+				},
+				{
+					componentType: 'subtitle',
+					required: false,
+					languageId: ' german ',
+					source: 'release',
+					fallbackBehavior: 'allowMissing'
+				}
+			],
 			customFormatScores: [
 				{ customFormatId: 'cf-1', score: '25.9' },
 				{ customFormatId: '', score: 100 }
@@ -102,6 +136,24 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			],
 			subtitleLanguages: [
 				{ languageId: 'english', score: 25, required: true, subtitleType: 'embedded' }
+			],
+			componentTargets: [
+				{
+					componentType: 'audio',
+					required: true,
+					languageId: 'english',
+					codec: 'AAC',
+					channels: '5.1',
+					source: 'existing',
+					fallbackBehavior: 'preferExisting'
+				},
+				{
+					componentType: 'subtitle',
+					required: false,
+					languageId: 'german',
+					source: 'subtitleProvider',
+					fallbackBehavior: 'allowMissing'
+				}
 			],
 			customFormatScores: [{ customFormatId: 'cf-1', score: 25 }]
 		});

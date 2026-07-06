@@ -38,6 +38,11 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 			{LanguageID: "english", Score: 10, Required: false, SubtitleType: "external"},
 			{LanguageID: "German", Score: 5, Required: false, SubtitleType: "not-real"},
 		},
+		ComponentTargets: []MediaProfileComponentTarget{
+			{ComponentType: "video", Required: true, LanguageID: stringPtr("English"), Channels: stringPtr("5.1"), Source: "release"},
+			{ComponentType: "audio", Required: true, LanguageID: stringPtr(" English "), Codec: stringPtr(" AAC "), Channels: stringPtr("5.1"), Source: "release", FallbackBehavior: "preferExisting"},
+			{ComponentType: "subtitle", Required: false, LanguageID: stringPtr("German"), Source: "release", FallbackBehavior: "allowMissing"},
+		},
 	}, []string{"webdl-1080p", "bluray-2160p"})
 	if err != nil {
 		t.Fatalf("normalize media profile input: %v", err)
@@ -62,6 +67,15 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if input.SubtitleLanguages[1].LanguageID != "german" || input.SubtitleLanguages[1].SubtitleType != "any" || input.SubtitleLanguages[1].Score != 5 {
 		t.Fatalf("unexpected second subtitle language: %#v", input.SubtitleLanguages[1])
 	}
+	if len(input.ComponentTargets) != 3 || input.ComponentTargets[0].LanguageID != nil {
+		t.Fatalf("unexpected component targets: %#v", input.ComponentTargets)
+	}
+	if *input.ComponentTargets[1].LanguageID != "english" || *input.ComponentTargets[1].Codec != "aac" || input.ComponentTargets[1].FallbackBehavior != "preferExisting" {
+		t.Fatalf("unexpected audio component target: %#v", input.ComponentTargets[1])
+	}
+	if input.ComponentTargets[2].Source != "subtitleProvider" {
+		t.Fatalf("expected subtitle provider source, got %#v", input.ComponentTargets[2])
+	}
 }
 
 func TestNormalizeMediaProfileInputRejectsInvalidUpgradeQuality(t *testing.T) {
@@ -71,6 +85,15 @@ func TestNormalizeMediaProfileInputRejectsInvalidUpgradeQuality(t *testing.T) {
 	}, []string{"webdl-1080p"})
 	if !errors.Is(err, ErrInvalidInput) {
 		t.Fatalf("expected invalid upgrade quality error, got %v", err)
+	}
+}
+
+func TestNormalizeMediaProfileInputRejectsInvalidComponentTarget(t *testing.T) {
+	_, err := normalizeMediaProfileInput(MediaProfileInput{
+		ComponentTargets: []MediaProfileComponentTarget{{ComponentType: "not-real"}},
+	}, []string{"webdl-1080p"})
+	if !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("expected invalid component target error, got %v", err)
 	}
 }
 

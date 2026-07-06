@@ -78,6 +78,7 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 		targetLanguages: ['english'],
 		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
 		subtitleLanguages: [{ languageId: 'english', score: 0, required: true, subtitleType: 'any' }],
+		componentTargets: [],
 		customFormatScores: [],
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',

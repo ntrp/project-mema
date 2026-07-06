@@ -1,4 +1,11 @@
-import type { MediaProfile, MediaProfileForm, MediaProfileRequest } from './types';
+import type {
+	MediaProfile,
+	MediaProfileComponentFallback,
+	MediaProfileComponentSource,
+	MediaProfileComponentType,
+	MediaProfileForm,
+	MediaProfileRequest
+} from './types';
 
 export function emptyMediaProfileForm(): MediaProfileForm {
 	return {
@@ -17,6 +24,7 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 		targetLanguages: ['EN'],
 		targetLanguageScores: [{ languageId: 'EN', score: 0, required: false }],
 		subtitleLanguages: [{ languageId: 'EN', score: 0, required: false, subtitleType: 'embedded' }],
+		componentTargets: [],
 		customFormatScores: []
 	};
 }
@@ -39,6 +47,7 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		targetLanguages: [...(profile.targetLanguages ?? [])],
 		targetLanguageScores: languageScoresFromProfile(profile),
 		subtitleLanguages: (profile.subtitleLanguages ?? []).map((language) => ({ ...language })),
+		componentTargets: (profile.componentTargets ?? []).map((target) => ({ ...target })),
 		customFormatScores: (profile.customFormatScores ?? []).map((score) => ({ ...score }))
 	};
 }
@@ -53,6 +62,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 		}));
 	const targetLanguageScores = languageScoresFromForm(form);
 	const subtitleLanguages = subtitleLanguagesFromForm(form);
+	const componentTargets = componentTargetsFromForm(form);
 	return {
 		name: form.name.trim(),
 		isDefault: form.isDefault,
@@ -75,6 +85,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 		targetLanguages: targetLanguageScores.map((score) => score.languageId),
 		targetLanguageScores,
 		subtitleLanguages,
+		componentTargets,
 		customFormatScores
 	};
 }
@@ -124,6 +135,52 @@ function subtitleLanguagesFromForm(form: MediaProfileForm) {
 		});
 	}
 	return languages;
+}
+
+function componentTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['componentTargets'] {
+	const targets = [];
+	for (const value of form.componentTargets ?? []) {
+		const componentType = componentTypeFrom(value.componentType);
+		const languageId = trimmedValue(value.languageId);
+		const codec = trimmedValue(value.codec);
+		const channels = componentType === 'audio' ? trimmedValue(value.channels) : undefined;
+		if (componentType === 'audio' && !languageId && !codec && !channels) continue;
+		if (componentType === 'subtitle' && !languageId && !codec) continue;
+		targets.push({
+			id: value.id,
+			componentType,
+			required: value.required,
+			languageId: componentType === 'video' ? undefined : languageId,
+			codec,
+			channels,
+			source: componentSourceFrom(value.source, componentType),
+			fallbackBehavior: componentFallbackFrom(value.fallbackBehavior)
+		});
+	}
+	return targets;
+}
+
+function componentTypeFrom(value: string | undefined): MediaProfileComponentType {
+	return value === 'audio' || value === 'subtitle' ? value : 'video';
+}
+
+function componentSourceFrom(
+	value: string | undefined,
+	componentType: MediaProfileComponentType
+): MediaProfileComponentSource {
+	if (value === 'existing') return 'existing';
+	if (componentType === 'subtitle') return 'subtitleProvider';
+	return 'release';
+}
+
+function componentFallbackFrom(value: string | undefined): MediaProfileComponentFallback {
+	if (value === 'preferExisting' || value === 'allowMissing') return value;
+	return 'strict';
+}
+
+function trimmedValue(value: string | undefined) {
+	const trimmed = value?.trim();
+	return trimmed ? trimmed : undefined;
 }
 
 function normalizedInteger(value: number | string | undefined) {

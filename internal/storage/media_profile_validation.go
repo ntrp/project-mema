@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -57,6 +58,11 @@ func normalizeMediaProfileInput(
 	normalized.TargetLanguageScores = normalizeTargetLanguageScores(input)
 	normalized.TargetLanguages = languageIDsFromScores(normalized.TargetLanguageScores)
 	normalized.SubtitleLanguages = normalizeSubtitleLanguages(input.SubtitleLanguages)
+	componentTargets, err := normalizeComponentTargets(input.ComponentTargets)
+	if err != nil {
+		return MediaProfileInput{}, err
+	}
+	normalized.ComponentTargets = componentTargets
 	normalized.CustomFormatScores = normalizeCustomFormatScores(input.CustomFormatScores)
 	return normalized, nil
 }
@@ -148,6 +154,93 @@ func normalizeSubtitleType(value string) string {
 	default:
 		return "any"
 	}
+}
+
+func normalizeComponentTargets(values []MediaProfileComponentTarget) ([]MediaProfileComponentTarget, error) {
+	targets := []MediaProfileComponentTarget{}
+	for _, value := range values {
+		target, ok, err := normalizeComponentTarget(value)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			targets = append(targets, target)
+		}
+	}
+	return targets, nil
+}
+
+func normalizeComponentTarget(value MediaProfileComponentTarget) (MediaProfileComponentTarget, bool, error) {
+	target := MediaProfileComponentTarget{
+		ID:               value.ID,
+		ComponentType:    strings.TrimSpace(value.ComponentType),
+		Required:         value.Required,
+		LanguageID:       normalizedTextPtr(value.LanguageID, "-"),
+		Codec:            normalizedTextPtr(value.Codec),
+		Channels:         normalizedTextPtr(value.Channels),
+		Source:           normalizeComponentSource(value.Source),
+		FallbackBehavior: normalizeComponentFallback(value.FallbackBehavior),
+	}
+	if target.ID == uuid.Nil {
+		target.ID = uuid.New()
+	}
+	switch target.ComponentType {
+	case "video":
+		target.LanguageID = nil
+		target.Channels = nil
+	case "audio":
+		if target.LanguageID == nil && target.Codec == nil && target.Channels == nil {
+			return MediaProfileComponentTarget{}, false, nil
+		}
+	case "subtitle":
+		target.Channels = nil
+		if target.Source == "release" {
+			target.Source = "subtitleProvider"
+		}
+		if target.LanguageID == nil && target.Codec == nil {
+			return MediaProfileComponentTarget{}, false, nil
+		}
+	default:
+		return MediaProfileComponentTarget{}, false, ErrInvalidInput
+	}
+	if target.Source == "" || target.FallbackBehavior == "" {
+		return MediaProfileComponentTarget{}, false, ErrInvalidInput
+	}
+	return target, true, nil
+}
+
+func normalizeComponentSource(value string) string {
+	switch strings.TrimSpace(value) {
+	case "release", "subtitleProvider", "existing":
+		return strings.TrimSpace(value)
+	default:
+		return "release"
+	}
+}
+
+func normalizeComponentFallback(value string) string {
+	switch strings.TrimSpace(value) {
+	case "strict", "preferExisting", "allowMissing":
+		return strings.TrimSpace(value)
+	default:
+		return "strict"
+	}
+}
+
+func normalizedTextPtr(value *string, emptyValues ...string) *string {
+	if value == nil {
+		return nil
+	}
+	text := strings.ToLower(strings.Join(strings.Fields(*value), "-"))
+	for _, empty := range emptyValues {
+		if text == empty {
+			return nil
+		}
+	}
+	if text == "" {
+		return nil
+	}
+	return &text
 }
 
 func normalizeMediaProfileName(value string) string {

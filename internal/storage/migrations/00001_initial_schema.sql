@@ -302,6 +302,28 @@ create table if not exists app.media_profile_subtitle_languages (
 create index if not exists idx_media_profile_subtitle_languages_profile
     on app.media_profile_subtitle_languages (profile_id, language_id);
 
+create table if not exists app.media_profile_component_targets (
+    id uuid primary key,
+    profile_id text not null references app.media_profiles(id) on delete cascade,
+    component_type text not null check (component_type in ('video', 'audio', 'subtitle')),
+    required boolean not null default true,
+    language_id text,
+    codec text,
+    channels text,
+    source text not null default 'release' check (source in ('release', 'subtitleProvider', 'existing')),
+    fallback_behavior text not null default 'strict' check (fallback_behavior in ('strict', 'preferExisting', 'allowMissing')),
+    sort_order integer not null default 0,
+    constraint media_profile_component_target_video_check check (
+        component_type <> 'video' or (language_id is null and channels is null)
+    ),
+    constraint media_profile_component_target_audio_check check (
+        component_type = 'audio' or channels is null
+    )
+);
+
+create index if not exists idx_media_profile_component_targets_profile
+    on app.media_profile_component_targets (profile_id, sort_order, component_type);
+
 create table if not exists app.languages (
     code text primary key,
     display_name text not null,

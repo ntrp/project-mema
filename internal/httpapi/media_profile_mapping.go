@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"media-manager/internal/storage"
@@ -58,6 +59,19 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 			SubtitleType: string(value.SubtitleType),
 		})
 	}
+	componentTargets := make([]storage.MediaProfileComponentTarget, 0, len(request.ComponentTargets))
+	for _, value := range request.ComponentTargets {
+		componentTargets = append(componentTargets, storage.MediaProfileComponentTarget{
+			ID:               optionalUUIDValue(value.Id),
+			ComponentType:    string(value.ComponentType),
+			Required:         value.Required,
+			LanguageID:       value.LanguageId,
+			Codec:            value.Codec,
+			Channels:         value.Channels,
+			Source:           string(value.Source),
+			FallbackBehavior: string(value.FallbackBehavior),
+		})
+	}
 	customFormatScores := make([]storage.MediaProfileCustomFormatScore, 0, len(request.CustomFormatScores))
 	for _, value := range request.CustomFormatScores {
 		customFormatScores = append(customFormatScores, storage.MediaProfileCustomFormatScore{
@@ -82,6 +96,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		TargetLanguages:                   targetLanguages,
 		TargetLanguageScores:              targetLanguageScores,
 		SubtitleLanguages:                 subtitleLanguages,
+		ComponentTargets:                  componentTargets,
 		CustomFormatScores:                customFormatScores,
 	}, true
 }
@@ -112,10 +127,31 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		TargetLanguages:                   profile.TargetLanguages,
 		TargetLanguageScores:              mediaProfileLanguageScoreResponses(profile.TargetLanguageScores),
 		SubtitleLanguages:                 mediaProfileSubtitleLanguageResponses(profile.SubtitleLanguages),
+		ComponentTargets:                  mediaProfileComponentTargetResponses(profile.ComponentTargets),
 		CustomFormatScores:                mediaProfileCustomFormatScoreResponses(profile.CustomFormatScores),
 		CreatedAt:                         profile.CreatedAt,
 		UpdatedAt:                         profile.UpdatedAt,
 	}
+}
+
+func mediaProfileComponentTargetResponses(
+	targets []storage.MediaProfileComponentTarget,
+) []MediaProfileComponentTarget {
+	response := make([]MediaProfileComponentTarget, 0, len(targets))
+	for _, target := range targets {
+		id := openapi_types.UUID(target.ID)
+		response = append(response, MediaProfileComponentTarget{
+			Id:               &id,
+			ComponentType:    MediaProfileComponentType(target.ComponentType),
+			Required:         target.Required,
+			LanguageId:       target.LanguageID,
+			Codec:            target.Codec,
+			Channels:         target.Channels,
+			Source:           MediaProfileComponentSource(target.Source),
+			FallbackBehavior: MediaProfileComponentFallback(target.FallbackBehavior),
+		})
+	}
+	return response
 }
 
 func mediaProfileLanguageScoreResponses(scores []storage.MediaProfileLanguageScore) []MediaProfileLanguageScore {
@@ -156,4 +192,11 @@ func mediaProfileCustomFormatScoreResponses(
 		})
 	}
 	return response
+}
+
+func optionalUUIDValue(value *openapi_types.UUID) uuid.UUID {
+	if value == nil {
+		return uuid.Nil
+	}
+	return uuid.UUID(*value)
 }

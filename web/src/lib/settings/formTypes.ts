@@ -44,6 +44,7 @@ export interface QualityProfileOption {
 	targetLanguages?: string[];
 	targetLanguageScores?: Schemas['MediaProfileLanguageScore'][];
 	subtitleLanguages?: Schemas['MediaProfileSubtitleLanguage'][];
+	componentTargets?: Schemas['MediaProfileComponentTarget'][];
 	removeNonEnabledLanguages?: boolean;
 	removeNonEnabledSubtitleLanguages?: boolean;
 }

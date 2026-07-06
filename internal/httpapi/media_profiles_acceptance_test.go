@@ -26,6 +26,9 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 	if !created.RemoveNonEnabledSubtitleLanguages {
 		t.Fatalf("created media profile did not preserve subtitle removal setting: %#v", created)
 	}
+	if len(created.ComponentTargets) != 2 || created.ComponentTargets[0].ComponentType != MediaProfileComponentTypeVideo {
+		t.Fatalf("created media profile components = %#v", created.ComponentTargets)
+	}
 
 	var updated MediaProfile
 	updateRequest := mediaProfileRequest("Updated Scenario Profile", qualityIDs)
@@ -90,6 +93,23 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 			Required:     true,
 			SubtitleType: MediaProfileSubtitleLanguageSubtitleTypeAny,
 		}},
+		ComponentTargets: []MediaProfileComponentTarget{
+			{
+				ComponentType:    MediaProfileComponentTypeVideo,
+				Required:         true,
+				Source:           MediaProfileComponentSourceRelease,
+				FallbackBehavior: MediaProfileComponentFallbackStrict,
+			},
+			{
+				ComponentType:    MediaProfileComponentTypeAudio,
+				Required:         true,
+				LanguageId:       stringPtr("en"),
+				Codec:            stringPtr("aac"),
+				Channels:         stringPtr("5.1"),
+				Source:           MediaProfileComponentSourceRelease,
+				FallbackBehavior: MediaProfileComponentFallbackPreferExisting,
+			},
+		},
 		CustomFormatScores: []MediaProfileCustomFormatScore{},
 	}
 }

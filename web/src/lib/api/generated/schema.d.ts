@@ -2882,8 +2882,26 @@ export interface components {
 			targetLanguages: string[];
 			targetLanguageScores: components['schemas']['MediaProfileLanguageScore'][];
 			subtitleLanguages: components['schemas']['MediaProfileSubtitleLanguage'][];
+			componentTargets: components['schemas']['MediaProfileComponentTarget'][];
 			customFormatScores: components['schemas']['MediaProfileCustomFormatScore'][];
 		};
+		MediaProfileComponentTarget: {
+			/** Format: uuid */
+			id?: string;
+			componentType: components['schemas']['MediaProfileComponentType'];
+			required: boolean;
+			languageId?: string;
+			codec?: string;
+			channels?: string;
+			source: components['schemas']['MediaProfileComponentSource'];
+			fallbackBehavior: components['schemas']['MediaProfileComponentFallback'];
+		};
+		/** @enum {string} */
+		MediaProfileComponentType: 'video' | 'audio' | 'subtitle';
+		/** @enum {string} */
+		MediaProfileComponentSource: 'release' | 'subtitleProvider' | 'existing';
+		/** @enum {string} */
+		MediaProfileComponentFallback: 'strict' | 'preferExisting' | 'allowMissing';
 		MediaProfileLanguageScore: {
 			languageId: string;
 			/** Format: int32 */

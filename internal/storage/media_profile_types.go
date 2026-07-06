@@ -23,6 +23,7 @@ type MediaProfile struct {
 	TargetLanguages                   []string
 	TargetLanguageScores              []MediaProfileLanguageScore
 	SubtitleLanguages                 []MediaProfileSubtitleLanguage
+	ComponentTargets                  []MediaProfileComponentTarget
 	CustomFormatScores                []MediaProfileCustomFormatScore
 	CreatedAt                         time.Time
 	UpdatedAt                         time.Time
@@ -44,6 +45,7 @@ type MediaProfileInput struct {
 	TargetLanguages                   []string
 	TargetLanguageScores              []MediaProfileLanguageScore
 	SubtitleLanguages                 []MediaProfileSubtitleLanguage
+	ComponentTargets                  []MediaProfileComponentTarget
 	CustomFormatScores                []MediaProfileCustomFormatScore
 }
 
@@ -63,4 +65,15 @@ type MediaProfileSubtitleLanguage struct {
 	Score        int32
 	Required     bool
 	SubtitleType string
+}
+
+type MediaProfileComponentTarget struct {
+	ID               uuid.UUID
+	ComponentType    string
+	Required         bool
+	LanguageID       *string
+	Codec            *string
+	Channels         *string
+	Source           string
+	FallbackBehavior string
 }

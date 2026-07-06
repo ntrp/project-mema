@@ -856,6 +856,69 @@ func (e MediaProfileSeriesPackPreference) Valid() bool {
 	}
 }
 
+// Defines values for MediaProfileComponentFallback.
+const (
+	MediaProfileComponentFallbackAllowMissing   MediaProfileComponentFallback = "allowMissing"
+	MediaProfileComponentFallbackPreferExisting MediaProfileComponentFallback = "preferExisting"
+	MediaProfileComponentFallbackStrict         MediaProfileComponentFallback = "strict"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileComponentFallback enum.
+func (e MediaProfileComponentFallback) Valid() bool {
+	switch e {
+	case MediaProfileComponentFallbackAllowMissing:
+		return true
+	case MediaProfileComponentFallbackPreferExisting:
+		return true
+	case MediaProfileComponentFallbackStrict:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaProfileComponentSource.
+const (
+	MediaProfileComponentSourceExisting         MediaProfileComponentSource = "existing"
+	MediaProfileComponentSourceRelease          MediaProfileComponentSource = "release"
+	MediaProfileComponentSourceSubtitleProvider MediaProfileComponentSource = "subtitleProvider"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileComponentSource enum.
+func (e MediaProfileComponentSource) Valid() bool {
+	switch e {
+	case MediaProfileComponentSourceExisting:
+		return true
+	case MediaProfileComponentSourceRelease:
+		return true
+	case MediaProfileComponentSourceSubtitleProvider:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaProfileComponentType.
+const (
+	MediaProfileComponentTypeAudio    MediaProfileComponentType = "audio"
+	MediaProfileComponentTypeSubtitle MediaProfileComponentType = "subtitle"
+	MediaProfileComponentTypeVideo    MediaProfileComponentType = "video"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileComponentType enum.
+func (e MediaProfileComponentType) Valid() bool {
+	switch e {
+	case MediaProfileComponentTypeAudio:
+		return true
+	case MediaProfileComponentTypeSubtitle:
+		return true
+	case MediaProfileComponentTypeVideo:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaProfileRequestPreferredProtocol.
 const (
 	MediaProfileRequestPreferredProtocolAny     MediaProfileRequestPreferredProtocol = "any"
@@ -2486,6 +2549,7 @@ type MediaNumberingStrategy string
 
 // MediaProfile defines model for MediaProfile.
 type MediaProfile struct {
+	ComponentTargets                  []MediaProfileComponentTarget    `json:"componentTargets"`
 	CreatedAt                         time.Time                        `json:"createdAt"`
 	CustomFormatScores                []MediaProfileCustomFormatScore  `json:"customFormatScores"`
 	Id                                string                           `json:"id"`
@@ -2513,6 +2577,27 @@ type MediaProfilePreferredProtocol string
 // MediaProfileSeriesPackPreference defines model for MediaProfile.SeriesPackPreference.
 type MediaProfileSeriesPackPreference string
 
+// MediaProfileComponentFallback defines model for MediaProfileComponentFallback.
+type MediaProfileComponentFallback string
+
+// MediaProfileComponentSource defines model for MediaProfileComponentSource.
+type MediaProfileComponentSource string
+
+// MediaProfileComponentTarget defines model for MediaProfileComponentTarget.
+type MediaProfileComponentTarget struct {
+	Channels         *string                       `json:"channels,omitempty"`
+	Codec            *string                       `json:"codec,omitempty"`
+	ComponentType    MediaProfileComponentType     `json:"componentType"`
+	FallbackBehavior MediaProfileComponentFallback `json:"fallbackBehavior"`
+	Id               *openapi_types.UUID           `json:"id,omitempty"`
+	LanguageId       *string                       `json:"languageId,omitempty"`
+	Required         bool                          `json:"required"`
+	Source           MediaProfileComponentSource   `json:"source"`
+}
+
+// MediaProfileComponentType defines model for MediaProfileComponentType.
+type MediaProfileComponentType string
+
 // MediaProfileCustomFormatScore defines model for MediaProfileCustomFormatScore.
 type MediaProfileCustomFormatScore struct {
 	CustomFormatId openapi_types.UUID `json:"customFormatId"`
@@ -2533,6 +2618,7 @@ type MediaProfileListResponse struct {
 
 // MediaProfileRequest defines model for MediaProfileRequest.
 type MediaProfileRequest struct {
+	ComponentTargets                  []MediaProfileComponentTarget           `json:"componentTargets"`
 	CustomFormatScores                []MediaProfileCustomFormatScore         `json:"customFormatScores"`
 	IsDefault                         bool                                    `json:"isDefault"`
 	MinimumCustomFormatScore          int32                                   `json:"minimumCustomFormatScore"`

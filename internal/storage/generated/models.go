@@ -418,6 +418,19 @@ type AppMediaProfile struct {
 	UpdatedAt                         time.Time
 }
 
+type AppMediaProfileComponentTarget struct {
+	ID               uuid.UUID
+	ProfileID        string
+	ComponentType    string
+	Required         bool
+	LanguageID       pgtype.Text
+	Codec            pgtype.Text
+	Channels         pgtype.Text
+	Source           string
+	FallbackBehavior string
+	SortOrder        int32
+}
+
 type AppMediaProfileCustomFormat struct {
 	ProfileID      string
 	CustomFormatID uuid.UUID
