@@ -25,7 +25,7 @@
 	<Label for="audio-lossy-transcode-policy">Conversion</Label>
 	<Select.Root
 		type="single"
-		value={value}
+		{value}
 		onValueChange={(selected) => onChange(selected as AudioLossyTranscodePolicy)}
 	>
 		<Select.Trigger id="audio-lossy-transcode-policy">

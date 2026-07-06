@@ -85,8 +85,7 @@
 			</Label>
 			<AudioConversionSelect
 				value={form.audioLossyTranscodePolicy ?? 'disabled'}
-				onChange={(audioLossyTranscodePolicy) =>
-					onChange({ ...form, audioLossyTranscodePolicy })}
+				onChange={(audioLossyTranscodePolicy) => onChange({ ...form, audioLossyTranscodePolicy })}
 			/>
 		</div>
 		<Table.Root class="w-full table-fixed">
