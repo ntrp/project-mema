@@ -44,6 +44,13 @@ func TestMediaComponentAssemblyRunRequiresAllowedArtifactsAndTracksLifecycle(t *
 	if run.Inputs[0].StreamType != "video" || run.Inputs[1].Provenance["artifactId"] != artifact.ID.String() {
 		t.Fatalf("inputs = %#v", run.Inputs)
 	}
+	provenance, err := store.ListMediaComponentProvenance(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !componentProvenanceHas(provenance, "container") || !componentProvenanceHas(provenance, "audio") {
+		t.Fatalf("provenance = %#v", provenance)
+	}
 	run, err = store.StartMediaComponentAssemblyRun(ctx, run.ID)
 	if err != nil {
 		t.Fatal(err)
@@ -68,6 +75,9 @@ func TestMediaComponentAssemblyRunRequiresAllowedArtifactsAndTracksLifecycle(t *
 	}
 	if len(loaded.AssemblyRuns) != 1 || len(loaded.AssemblyRuns[0].Inputs) != 2 {
 		t.Fatalf("assembly runs not hydrated: %#v", loaded.AssemblyRuns)
+	}
+	if len(loaded.ComponentProvenance) < 2 {
+		t.Fatalf("component provenance not hydrated: %#v", loaded.ComponentProvenance)
 	}
 }
 
@@ -160,4 +170,13 @@ func TestMediaComponentAssemblyRejectsBlockedCompatibility(t *testing.T) {
 	if err != ErrInvalidInput {
 		t.Fatalf("error = %v, want invalid", err)
 	}
+}
+
+func componentProvenanceHas(values []MediaComponentProvenance, componentType string) bool {
+	for _, value := range values {
+		if value.ComponentType == componentType && len(value.TransformationChain) > 0 {
+			return true
+		}
+	}
+	return false
 }

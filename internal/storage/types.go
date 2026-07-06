@@ -34,6 +34,7 @@ type MediaItem struct {
 	ExternalSubtitles   []MediaItemSubtitle
 	ComponentSources    []MediaComponentSource
 	AssemblyRuns        []MediaComponentAssemblyRun
+	ComponentProvenance []MediaComponentProvenance
 	ProviderMappings    []MediaProviderMapping
 	Aliases             []MediaItemAlias
 	EpisodeNumbering    []MediaEpisodeNumbering

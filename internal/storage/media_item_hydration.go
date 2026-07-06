@@ -27,7 +27,11 @@ func hydrateMediaItem(ctx context.Context, q storagegen.DBTX, item MediaItem) (M
 	if err != nil {
 		return item, err
 	}
-	return hydrateMediaItemAssemblyRuns(ctx, q, item)
+	item, err = hydrateMediaItemAssemblyRuns(ctx, q, item)
+	if err != nil {
+		return item, err
+	}
+	return hydrateMediaItemComponentProvenance(ctx, q, item)
 }
 
 func hydrateMediaItems(ctx context.Context, q storagegen.DBTX, items []MediaItem) ([]MediaItem, error) {
@@ -106,5 +110,21 @@ func hydrateMediaItemAssemblyRuns(
 		return item, err
 	}
 	item.AssemblyRuns = runs
+	return item, nil
+}
+
+func hydrateMediaItemComponentProvenance(
+	ctx context.Context,
+	q storagegen.DBTX,
+	item MediaItem,
+) (MediaItem, error) {
+	rows, err := storagegen.New(q).ListMediaComponentProvenance(ctx, item.ID)
+	if err != nil {
+		return item, err
+	}
+	item.ComponentProvenance = make([]MediaComponentProvenance, 0, len(rows))
+	for _, row := range rows {
+		item.ComponentProvenance = append(item.ComponentProvenance, mediaComponentProvenanceFromRow(row))
+	}
 	return item, nil
 }

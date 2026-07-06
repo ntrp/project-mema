@@ -82,7 +82,14 @@ func (s *SettingsStore) CreateMediaComponentAssemblyRun(
 	if err := tx.Commit(ctx); err != nil {
 		return MediaComponentAssemblyRun{}, err
 	}
-	return mediaComponentAssemblyRunWithInputs(ctx, s.pool, row, nil)
+	run, err := mediaComponentAssemblyRunWithInputs(ctx, s.pool, row, nil)
+	if err != nil {
+		return MediaComponentAssemblyRun{}, err
+	}
+	if err := s.WriteMediaComponentAssemblyProvenance(ctx, run.ID); err != nil {
+		return MediaComponentAssemblyRun{}, err
+	}
+	return run, nil
 }
 
 func (s *SettingsStore) AssignMediaComponentAssemblyJob(
