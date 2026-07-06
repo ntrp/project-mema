@@ -1090,6 +1090,27 @@ create table if not exists app.media_component_artifacts (
 create index if not exists idx_media_component_artifacts_source
     on app.media_component_artifacts (source_id, created_at desc);
 
+create table if not exists app.media_component_compatibility_decisions (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    base_source_id uuid not null references app.media_component_sources(id) on delete cascade,
+    component_source_id uuid not null references app.media_component_sources(id) on delete cascade,
+    confidence_state text not null check (confidence_state in ('exact', 'likely', 'uncertain', 'incompatible')),
+    automation_state text not null check (automation_state in ('allowed', 'blocked')),
+    review_state text not null check (review_state in ('notRequired', 'pending', 'approved', 'rejected')),
+    reason text not null,
+    runtime_delta_ms integer,
+    evidence jsonb not null default '{}'::jsonb check (jsonb_typeof(evidence) = 'object'),
+    review_reason text,
+    reviewed_at timestamptz,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (media_item_id, base_source_id, component_source_id)
+);
+
+create index if not exists idx_media_component_compatibility_component
+    on app.media_component_compatibility_decisions (component_source_id, created_at desc);
+
 create table if not exists app.media_file_history (
     id uuid primary key,
     media_item_id uuid references app.media_items(id) on delete set null,

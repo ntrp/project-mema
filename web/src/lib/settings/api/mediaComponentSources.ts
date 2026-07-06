@@ -1,11 +1,17 @@
 import { client } from '$lib/api/client';
+import type { components } from '$lib/api/generated/schema';
 
-import type {
-	MediaComponentExtractionEnqueueResponse,
-	MediaComponentExtractionRequest,
-	MediaComponentSourceListResponse,
-	MediaComponentSourceRetainRequest
-} from '../types';
+type MediaComponentSourceListResponse = components['schemas']['MediaComponentSourceListResponse'];
+type MediaComponentSourceRetainRequest = components['schemas']['MediaComponentSourceRetainRequest'];
+type MediaComponentExtractionEnqueueResponse =
+	components['schemas']['MediaComponentExtractionEnqueueResponse'];
+type MediaComponentExtractionRequest = components['schemas']['MediaComponentExtractionRequest'];
+type MediaComponentCompatibilityDecision =
+	components['schemas']['MediaComponentCompatibilityDecision'];
+type MediaComponentCompatibilityEvaluateRequest =
+	components['schemas']['MediaComponentCompatibilityEvaluateRequest'];
+type MediaComponentCompatibilityReviewRequest =
+	components['schemas']['MediaComponentCompatibilityReviewRequest'];
 
 export async function listMediaComponentSources(
 	id: string
@@ -87,6 +93,51 @@ export async function enqueueMediaComponentExtraction(
 	}
 	if (!data) {
 		throw new Error('Component extraction job was not returned');
+	}
+	return data;
+}
+
+export async function evaluateMediaComponentCompatibility(
+	id: string,
+	sourceId: string,
+	request: MediaComponentCompatibilityEvaluateRequest
+): Promise<MediaComponentCompatibilityDecision> {
+	const { data, error } = await client.POST(
+		'/media/items/{id}/component-sources/{sourceId}/compatibility',
+		{
+			params: { path: { id, sourceId } },
+			body: request
+		}
+	);
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Component compatibility decision was not returned');
+	}
+	return data;
+}
+
+export async function reviewMediaComponentCompatibility(
+	id: string,
+	sourceId: string,
+	decisionId: string,
+	request: MediaComponentCompatibilityReviewRequest
+): Promise<MediaComponentCompatibilityDecision> {
+	const { data, error } = await client.PUT(
+		'/media/items/{id}/component-sources/{sourceId}/compatibility/{decisionId}/review',
+		{
+			params: { path: { id, sourceId, decisionId } },
+			body: request
+		}
+	);
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Component compatibility decision was not returned');
 	}
 	return data;
 }

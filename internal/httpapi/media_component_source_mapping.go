@@ -27,6 +27,7 @@ func mediaComponentSourceResponses(values []storage.MediaComponentSource) []Medi
 
 func mediaComponentSourceResponse(value storage.MediaComponentSource) MediaComponentSource {
 	artifacts := mediaComponentArtifactResponses(value.Artifacts)
+	compatibility := mediaComponentCompatibilityResponses(value.Compatibility)
 	return MediaComponentSource{
 		Id:              openapi_types.UUID(value.ID),
 		MediaItemId:     openapi_types.UUID(value.MediaItemID),
@@ -44,6 +45,7 @@ func mediaComponentSourceResponse(value storage.MediaComponentSource) MediaCompo
 		CreatedAt:       value.CreatedAt,
 		UpdatedAt:       value.UpdatedAt,
 		Artifacts:       &artifacts,
+		Compatibility:   &compatibility,
 	}
 }
 
@@ -81,5 +83,45 @@ func mediaComponentArtifactResponse(value storage.MediaComponentArtifact) MediaC
 		CreatedAt:    value.CreatedAt,
 		UpdatedAt:    value.UpdatedAt,
 		CompletedAt:  value.CompletedAt,
+	}
+}
+
+func mediaComponentCompatibilityReviewInput(
+	request MediaComponentCompatibilityReviewRequest,
+) storage.MediaComponentCompatibilityReviewInput {
+	return storage.MediaComponentCompatibilityReviewInput{
+		ReviewState: string(request.ReviewState),
+		Reason:      optionalTrimmedString(request.Reason),
+	}
+}
+
+func mediaComponentCompatibilityResponses(
+	values []storage.MediaComponentCompatibilityDecision,
+) []MediaComponentCompatibilityDecision {
+	items := make([]MediaComponentCompatibilityDecision, 0, len(values))
+	for _, value := range values {
+		items = append(items, mediaComponentCompatibilityResponse(value))
+	}
+	return items
+}
+
+func mediaComponentCompatibilityResponse(
+	value storage.MediaComponentCompatibilityDecision,
+) MediaComponentCompatibilityDecision {
+	return MediaComponentCompatibilityDecision{
+		Id:                openapi_types.UUID(value.ID),
+		MediaItemId:       openapi_types.UUID(value.MediaItemID),
+		BaseSourceId:      openapi_types.UUID(value.BaseSourceID),
+		ComponentSourceId: openapi_types.UUID(value.ComponentSourceID),
+		ConfidenceState:   MediaComponentCompatibilityConfidenceState(value.ConfidenceState),
+		AutomationState:   MediaComponentCompatibilityAutomationState(value.AutomationState),
+		ReviewState:       MediaComponentCompatibilityReviewState(value.ReviewState),
+		Reason:            value.Reason,
+		RuntimeDeltaMs:    value.RuntimeDeltaMs,
+		Evidence:          value.Evidence,
+		ReviewReason:      value.ReviewReason,
+		ReviewedAt:        value.ReviewedAt,
+		CreatedAt:         value.CreatedAt,
+		UpdatedAt:         value.UpdatedAt,
 	}
 }

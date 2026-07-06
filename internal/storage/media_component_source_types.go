@@ -23,6 +23,7 @@ type MediaComponentSource struct {
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 	Artifacts       []MediaComponentArtifact
+	Compatibility   []MediaComponentCompatibilityDecision
 }
 
 type MediaComponentSourceInput struct {

@@ -1560,6 +1560,82 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/component-sources/{sourceId}/compatibility:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: sourceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: evaluateMediaComponentCompatibility
+      tags:
+        - Media
+      summary: Evaluate source compatibility against a base source
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaComponentCompatibilityEvaluateRequest"
+      responses:
+        "200":
+          description: Compatibility decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaComponentCompatibilityDecision"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/component-sources/{sourceId}/compatibility/{decisionId}/review:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: sourceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: decisionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    put:
+      operationId: reviewMediaComponentCompatibility
+      tags:
+        - Media
+      summary: Approve or reject a compatibility decision
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaComponentCompatibilityReviewRequest"
+      responses:
+        "200":
+          description: Reviewed compatibility decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaComponentCompatibilityDecision"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/files/delete:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -5450,6 +5526,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaComponentArtifact"
+        compatibility:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaComponentCompatibilityDecision"
     MediaComponentSourceRole:
       type: string
       enum:
@@ -5578,6 +5658,111 @@ components:
         - MediaComponentArtifactStatusRunning
         - MediaComponentArtifactStatusSucceeded
         - MediaComponentArtifactStatusFailed
+    MediaComponentCompatibilityEvaluateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - baseSourceId
+      properties:
+        baseSourceId:
+          type: string
+          format: uuid
+    MediaComponentCompatibilityReviewRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - reviewState
+      properties:
+        reviewState:
+          $ref: "#/components/schemas/MediaComponentCompatibilityReviewState"
+        reason:
+          type: string
+    MediaComponentCompatibilityDecision:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mediaItemId
+        - baseSourceId
+        - componentSourceId
+        - confidenceState
+        - automationState
+        - reviewState
+        - reason
+        - evidence
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
+        baseSourceId:
+          type: string
+          format: uuid
+        componentSourceId:
+          type: string
+          format: uuid
+        confidenceState:
+          $ref: "#/components/schemas/MediaComponentCompatibilityConfidenceState"
+        automationState:
+          $ref: "#/components/schemas/MediaComponentCompatibilityAutomationState"
+        reviewState:
+          $ref: "#/components/schemas/MediaComponentCompatibilityReviewState"
+        reason:
+          type: string
+        runtimeDeltaMs:
+          type: integer
+          format: int32
+          minimum: 0
+        evidence:
+          type: object
+          additionalProperties: true
+        reviewReason:
+          type: string
+        reviewedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    MediaComponentCompatibilityConfidenceState:
+      type: string
+      enum:
+        - exact
+        - likely
+        - uncertain
+        - incompatible
+      x-enum-varnames:
+        - MediaComponentCompatibilityConfidenceExact
+        - MediaComponentCompatibilityConfidenceLikely
+        - MediaComponentCompatibilityConfidenceUncertain
+        - MediaComponentCompatibilityConfidenceIncompatible
+    MediaComponentCompatibilityAutomationState:
+      type: string
+      enum:
+        - allowed
+        - blocked
+      x-enum-varnames:
+        - MediaComponentCompatibilityAutomationAllowed
+        - MediaComponentCompatibilityAutomationBlocked
+    MediaComponentCompatibilityReviewState:
+      type: string
+      enum:
+        - notRequired
+        - pending
+        - approved
+        - rejected
+      x-enum-varnames:
+        - MediaComponentCompatibilityReviewNotRequired
+        - MediaComponentCompatibilityReviewPending
+        - MediaComponentCompatibilityReviewApproved
+        - MediaComponentCompatibilityReviewRejected
     MediaFileHistoryResponse:
       type: object
       additionalProperties: false

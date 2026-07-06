@@ -287,6 +287,23 @@ type AppMediaComponentArtifact struct {
 	CompletedAt  *time.Time
 }
 
+type AppMediaComponentCompatibilityDecision struct {
+	ID                uuid.UUID
+	MediaItemID       uuid.UUID
+	BaseSourceID      uuid.UUID
+	ComponentSourceID uuid.UUID
+	ConfidenceState   string
+	AutomationState   string
+	ReviewState       string
+	Reason            string
+	RuntimeDeltaMs    pgtype.Int4
+	Evidence          []byte
+	ReviewReason      pgtype.Text
+	ReviewedAt        *time.Time
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+}
+
 type AppMediaComponentSource struct {
 	ID              uuid.UUID
 	MediaItemID     uuid.UUID

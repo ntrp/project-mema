@@ -812,6 +812,47 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/component-sources/{sourceId}/compatibility': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Evaluate source compatibility against a base source */
+		post: operations['evaluateMediaComponentCompatibility'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/component-sources/{sourceId}/compatibility/{decisionId}/review': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+				decisionId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Approve or reject a compatibility decision */
+		put: operations['reviewMediaComponentCompatibility'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/delete': {
 		parameters: {
 			query?: never;
@@ -2742,6 +2783,7 @@ export interface components {
 			/** Format: date-time */
 			updatedAt: string;
 			artifacts?: components['schemas']['MediaComponentArtifact'][];
+			compatibility?: components['schemas']['MediaComponentCompatibilityDecision'][];
 		};
 		/** @enum {string} */
 		MediaComponentSourceRole: 'baseVideo' | 'audio' | 'subtitle' | 'other';
@@ -2789,6 +2831,46 @@ export interface components {
 		MediaComponentArtifactStreamType: 'audio' | 'subtitle';
 		/** @enum {string} */
 		MediaComponentArtifactStatus: 'queued' | 'running' | 'succeeded' | 'failed';
+		MediaComponentCompatibilityEvaluateRequest: {
+			/** Format: uuid */
+			baseSourceId: string;
+		};
+		MediaComponentCompatibilityReviewRequest: {
+			reviewState: components['schemas']['MediaComponentCompatibilityReviewState'];
+			reason?: string;
+		};
+		MediaComponentCompatibilityDecision: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId: string;
+			/** Format: uuid */
+			baseSourceId: string;
+			/** Format: uuid */
+			componentSourceId: string;
+			confidenceState: components['schemas']['MediaComponentCompatibilityConfidenceState'];
+			automationState: components['schemas']['MediaComponentCompatibilityAutomationState'];
+			reviewState: components['schemas']['MediaComponentCompatibilityReviewState'];
+			reason: string;
+			/** Format: int32 */
+			runtimeDeltaMs?: number;
+			evidence: {
+				[key: string]: unknown;
+			};
+			reviewReason?: string;
+			/** Format: date-time */
+			reviewedAt?: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		/** @enum {string} */
+		MediaComponentCompatibilityConfidenceState: 'exact' | 'likely' | 'uncertain' | 'incompatible';
+		/** @enum {string} */
+		MediaComponentCompatibilityAutomationState: 'allowed' | 'blocked';
+		/** @enum {string} */
+		MediaComponentCompatibilityReviewState: 'notRequired' | 'pending' | 'approved' | 'rejected';
 		MediaFileHistoryResponse: {
 			entries: components['schemas']['MediaFileHistoryEntry'][];
 		};
@@ -5471,6 +5553,67 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['MediaComponentExtractionEnqueueResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	evaluateMediaComponentCompatibility: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaComponentCompatibilityEvaluateRequest'];
+			};
+		};
+		responses: {
+			/** @description Compatibility decision */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentCompatibilityDecision'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	reviewMediaComponentCompatibility: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+				decisionId: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaComponentCompatibilityReviewRequest'];
+			};
+		};
+		responses: {
+			/** @description Reviewed compatibility decision */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentCompatibilityDecision'];
 				};
 			};
 			400: components['responses']['BadRequest'];

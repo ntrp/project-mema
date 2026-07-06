@@ -82,6 +82,11 @@ func hydrateMediaItemComponentSources(
 			return item, err
 		}
 		sources[index].Artifacts = artifacts
+		compatibility, err := listMediaComponentCompatibilityForSource(ctx, q, sources[index].ID)
+		if err != nil {
+			return item, err
+		}
+		sources[index].Compatibility = compatibility
 	}
 	item.ComponentSources = sources
 	return item, nil

@@ -469,6 +469,72 @@ func (e MediaComponentArtifactStreamType) Valid() bool {
 	}
 }
 
+// Defines values for MediaComponentCompatibilityAutomationState.
+const (
+	MediaComponentCompatibilityAutomationAllowed MediaComponentCompatibilityAutomationState = "allowed"
+	MediaComponentCompatibilityAutomationBlocked MediaComponentCompatibilityAutomationState = "blocked"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentCompatibilityAutomationState enum.
+func (e MediaComponentCompatibilityAutomationState) Valid() bool {
+	switch e {
+	case MediaComponentCompatibilityAutomationAllowed:
+		return true
+	case MediaComponentCompatibilityAutomationBlocked:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaComponentCompatibilityConfidenceState.
+const (
+	MediaComponentCompatibilityConfidenceExact        MediaComponentCompatibilityConfidenceState = "exact"
+	MediaComponentCompatibilityConfidenceIncompatible MediaComponentCompatibilityConfidenceState = "incompatible"
+	MediaComponentCompatibilityConfidenceLikely       MediaComponentCompatibilityConfidenceState = "likely"
+	MediaComponentCompatibilityConfidenceUncertain    MediaComponentCompatibilityConfidenceState = "uncertain"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentCompatibilityConfidenceState enum.
+func (e MediaComponentCompatibilityConfidenceState) Valid() bool {
+	switch e {
+	case MediaComponentCompatibilityConfidenceExact:
+		return true
+	case MediaComponentCompatibilityConfidenceIncompatible:
+		return true
+	case MediaComponentCompatibilityConfidenceLikely:
+		return true
+	case MediaComponentCompatibilityConfidenceUncertain:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaComponentCompatibilityReviewState.
+const (
+	MediaComponentCompatibilityReviewApproved    MediaComponentCompatibilityReviewState = "approved"
+	MediaComponentCompatibilityReviewNotRequired MediaComponentCompatibilityReviewState = "notRequired"
+	MediaComponentCompatibilityReviewPending     MediaComponentCompatibilityReviewState = "pending"
+	MediaComponentCompatibilityReviewRejected    MediaComponentCompatibilityReviewState = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentCompatibilityReviewState enum.
+func (e MediaComponentCompatibilityReviewState) Valid() bool {
+	switch e {
+	case MediaComponentCompatibilityReviewApproved:
+		return true
+	case MediaComponentCompatibilityReviewNotRequired:
+		return true
+	case MediaComponentCompatibilityReviewPending:
+		return true
+	case MediaComponentCompatibilityReviewRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaComponentSourceRetentionState.
 const (
 	MediaComponentSourceRetentionStateReleased MediaComponentSourceRetentionState = "released"
@@ -2265,6 +2331,44 @@ type MediaComponentArtifactStatus string
 // MediaComponentArtifactStreamType defines model for MediaComponentArtifactStreamType.
 type MediaComponentArtifactStreamType string
 
+// MediaComponentCompatibilityAutomationState defines model for MediaComponentCompatibilityAutomationState.
+type MediaComponentCompatibilityAutomationState string
+
+// MediaComponentCompatibilityConfidenceState defines model for MediaComponentCompatibilityConfidenceState.
+type MediaComponentCompatibilityConfidenceState string
+
+// MediaComponentCompatibilityDecision defines model for MediaComponentCompatibilityDecision.
+type MediaComponentCompatibilityDecision struct {
+	AutomationState   MediaComponentCompatibilityAutomationState `json:"automationState"`
+	BaseSourceId      openapi_types.UUID                         `json:"baseSourceId"`
+	ComponentSourceId openapi_types.UUID                         `json:"componentSourceId"`
+	ConfidenceState   MediaComponentCompatibilityConfidenceState `json:"confidenceState"`
+	CreatedAt         time.Time                                  `json:"createdAt"`
+	Evidence          map[string]interface{}                     `json:"evidence"`
+	Id                openapi_types.UUID                         `json:"id"`
+	MediaItemId       openapi_types.UUID                         `json:"mediaItemId"`
+	Reason            string                                     `json:"reason"`
+	ReviewReason      *string                                    `json:"reviewReason,omitempty"`
+	ReviewState       MediaComponentCompatibilityReviewState     `json:"reviewState"`
+	ReviewedAt        *time.Time                                 `json:"reviewedAt,omitempty"`
+	RuntimeDeltaMs    *int32                                     `json:"runtimeDeltaMs,omitempty"`
+	UpdatedAt         time.Time                                  `json:"updatedAt"`
+}
+
+// MediaComponentCompatibilityEvaluateRequest defines model for MediaComponentCompatibilityEvaluateRequest.
+type MediaComponentCompatibilityEvaluateRequest struct {
+	BaseSourceId openapi_types.UUID `json:"baseSourceId"`
+}
+
+// MediaComponentCompatibilityReviewRequest defines model for MediaComponentCompatibilityReviewRequest.
+type MediaComponentCompatibilityReviewRequest struct {
+	Reason      *string                                `json:"reason,omitempty"`
+	ReviewState MediaComponentCompatibilityReviewState `json:"reviewState"`
+}
+
+// MediaComponentCompatibilityReviewState defines model for MediaComponentCompatibilityReviewState.
+type MediaComponentCompatibilityReviewState string
+
 // MediaComponentExtractionEnqueueResponse defines model for MediaComponentExtractionEnqueueResponse.
 type MediaComponentExtractionEnqueueResponse struct {
 	Artifact MediaComponentArtifact `json:"artifact"`
@@ -2281,22 +2385,23 @@ type MediaComponentExtractionRequest struct {
 
 // MediaComponentSource defines model for MediaComponentSource.
 type MediaComponentSource struct {
-	Artifacts       *[]MediaComponentArtifact          `json:"artifacts,omitempty"`
-	Checksum        *string                            `json:"checksum,omitempty"`
-	CreatedAt       time.Time                          `json:"createdAt"`
-	Id              openapi_types.UUID                 `json:"id"`
-	MediaItemId     openapi_types.UUID                 `json:"mediaItemId"`
-	ReleaseTitle    *string                            `json:"releaseTitle,omitempty"`
-	ReleasedAt      *time.Time                         `json:"releasedAt,omitempty"`
-	RetainedAt      time.Time                          `json:"retainedAt"`
-	RetainedPath    string                             `json:"retainedPath"`
-	RetentionState  MediaComponentSourceRetentionState `json:"retentionState"`
-	SizeBytes       *int64                             `json:"sizeBytes,omitempty"`
-	SourceFilePath  string                             `json:"sourceFilePath"`
-	SourceMetadata  *string                            `json:"sourceMetadata,omitempty"`
-	SourceRole      MediaComponentSourceRole           `json:"sourceRole"`
-	StreamInventory string                             `json:"streamInventory"`
-	UpdatedAt       time.Time                          `json:"updatedAt"`
+	Artifacts       *[]MediaComponentArtifact              `json:"artifacts,omitempty"`
+	Checksum        *string                                `json:"checksum,omitempty"`
+	Compatibility   *[]MediaComponentCompatibilityDecision `json:"compatibility,omitempty"`
+	CreatedAt       time.Time                              `json:"createdAt"`
+	Id              openapi_types.UUID                     `json:"id"`
+	MediaItemId     openapi_types.UUID                     `json:"mediaItemId"`
+	ReleaseTitle    *string                                `json:"releaseTitle,omitempty"`
+	ReleasedAt      *time.Time                             `json:"releasedAt,omitempty"`
+	RetainedAt      time.Time                              `json:"retainedAt"`
+	RetainedPath    string                                 `json:"retainedPath"`
+	RetentionState  MediaComponentSourceRetentionState     `json:"retentionState"`
+	SizeBytes       *int64                                 `json:"sizeBytes,omitempty"`
+	SourceFilePath  string                                 `json:"sourceFilePath"`
+	SourceMetadata  *string                                `json:"sourceMetadata,omitempty"`
+	SourceRole      MediaComponentSourceRole               `json:"sourceRole"`
+	StreamInventory string                                 `json:"streamInventory"`
+	UpdatedAt       time.Time                              `json:"updatedAt"`
 }
 
 // MediaComponentSourceListResponse defines model for MediaComponentSourceListResponse.
@@ -3776,6 +3881,12 @@ type UpdateMediaItemJSONRequestBody = MediaItemUpdateRequest
 // RetainMediaComponentSourceJSONRequestBody defines body for RetainMediaComponentSource for application/json ContentType.
 type RetainMediaComponentSourceJSONRequestBody = MediaComponentSourceRetainRequest
 
+// EvaluateMediaComponentCompatibilityJSONRequestBody defines body for EvaluateMediaComponentCompatibility for application/json ContentType.
+type EvaluateMediaComponentCompatibilityJSONRequestBody = MediaComponentCompatibilityEvaluateRequest
+
+// ReviewMediaComponentCompatibilityJSONRequestBody defines body for ReviewMediaComponentCompatibility for application/json ContentType.
+type ReviewMediaComponentCompatibilityJSONRequestBody = MediaComponentCompatibilityReviewRequest
+
 // EnqueueMediaComponentExtractionJSONRequestBody defines body for EnqueueMediaComponentExtraction for application/json ContentType.
 type EnqueueMediaComponentExtractionJSONRequestBody = MediaComponentExtractionRequest
 
@@ -4018,6 +4129,12 @@ type ServerInterface interface {
 	// Inspect one retained component source
 	// (GET /media/items/{id}/component-sources/{sourceId})
 	GetMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
+	// Evaluate source compatibility against a base source
+	// (POST /media/items/{id}/component-sources/{sourceId}/compatibility)
+	EvaluateMediaComponentCompatibility(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
+	// Approve or reject a compatibility decision
+	// (PUT /media/items/{id}/component-sources/{sourceId}/compatibility/{decisionId}/review)
+	ReviewMediaComponentCompatibility(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID, decisionId openapi_types.UUID)
 	// Extract one stream from a retained component source
 	// (POST /media/items/{id}/component-sources/{sourceId}/extractions)
 	EnqueueMediaComponentExtraction(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
@@ -4600,6 +4717,18 @@ func (_ Unimplemented) RetainMediaComponentSource(w http.ResponseWriter, r *http
 // Inspect one retained component source
 // (GET /media/items/{id}/component-sources/{sourceId})
 func (_ Unimplemented) GetMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Evaluate source compatibility against a base source
+// (POST /media/items/{id}/component-sources/{sourceId}/compatibility)
+func (_ Unimplemented) EvaluateMediaComponentCompatibility(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Approve or reject a compatibility decision
+// (PUT /media/items/{id}/component-sources/{sourceId}/compatibility/{decisionId}/review)
+func (_ Unimplemented) ReviewMediaComponentCompatibility(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID, decisionId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6760,6 +6889,97 @@ func (siw *ServerInterfaceWrapper) GetMediaComponentSource(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMediaComponentSource(w, r, id, sourceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EvaluateMediaComponentCompatibility operation middleware
+func (siw *ServerInterfaceWrapper) EvaluateMediaComponentCompatibility(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sourceId" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sourceId", chi.URLParam(r, "sourceId"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sourceId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EvaluateMediaComponentCompatibility(w, r, id, sourceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReviewMediaComponentCompatibility operation middleware
+func (siw *ServerInterfaceWrapper) ReviewMediaComponentCompatibility(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sourceId" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sourceId", chi.URLParam(r, "sourceId"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sourceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "decisionId" -------------
+	var decisionId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "decisionId", chi.URLParam(r, "decisionId"), &decisionId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "decisionId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReviewMediaComponentCompatibility(w, r, id, sourceId, decisionId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10930,6 +11150,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}", wrapper.GetMediaComponentSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}/compatibility", wrapper.EvaluateMediaComponentCompatibility)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}/compatibility/{decisionId}/review", wrapper.ReviewMediaComponentCompatibility)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}/extractions", wrapper.EnqueueMediaComponentExtraction)
