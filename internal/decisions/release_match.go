@@ -199,7 +199,7 @@ func evaluateParsedRelease(
 		context.Profile,
 		context.Languages,
 	)
-	targetScore, targetContributors, targetReject := videoTargetScore(parsed, context.Profile)
+	targetScore, targetContributors, targetReject := profileTargetScore(parsed, context.Profile)
 
 	if !resourceTitleMatches(criteria, matchedMedia, meta.Title) {
 		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, "Does not match this series/movie.")

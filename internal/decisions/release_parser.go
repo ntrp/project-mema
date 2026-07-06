@@ -3,44 +3,47 @@ package decisions
 import (
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"media-manager/internal/storage"
 )
 
 type ParsedRelease struct {
-	FileName      string
-	ReleaseTitle  string
-	MovieTitle    string
-	SeriesTitle   string
-	Year          string
-	SeasonNumber  *int32
-	EpisodeNumber *int32
-	SeasonPack    bool
-	Edition       string
-	ReleaseGroup  string
-	ReleaseHash   string
-	QualityID     string
-	Quality       string
-	Source        string
-	Resolution    string
-	VideoCodec    string
-	HDRFormat     string
-	PixelFormat   string
-	AudioCodec    string
-	AudioChannels string
-	Version       string
-	Proper        bool
-	Repack        bool
-	Real          bool
-	ReleaseType   string
-	Languages     []string
+	FileName         string
+	ReleaseTitle     string
+	MovieTitle       string
+	SeriesTitle      string
+	Year             string
+	SeasonNumber     *int32
+	EpisodeNumber    *int32
+	SeasonPack       bool
+	Edition          string
+	ReleaseGroup     string
+	ReleaseHash      string
+	QualityID        string
+	Quality          string
+	Source           string
+	Resolution       string
+	VideoCodec       string
+	HDRFormat        string
+	PixelFormat      string
+	AudioCodec       string
+	AudioChannels    string
+	AudioBitrateKbps int32
+	Version          string
+	Proper           bool
+	Repack           bool
+	Real             bool
+	ReleaseType      string
+	Languages        []string
 }
 
 var (
 	yearPattern          = regexp.MustCompile(`\b(19\d{2}|20\d{2})\b`)
 	resolutionPattern    = regexp.MustCompile(`(?i)\b(2160|1080|720|576|480)[pi]\b`)
 	audioChannelsPattern = regexp.MustCompile(`(?i)(^|[^0-9])([257]\.1|[12345678]\.0)([^0-9]|$)`)
+	audioBitratePattern  = regexp.MustCompile(`(?i)\b([1-9][0-9]{1,4})\s?(kbps|kbit|kb/s)\b`)
 	versionPattern       = regexp.MustCompile(`(?i)\bv([0-9]+)\b`)
 	hashPattern          = regexp.MustCompile(`(?i)\b[a-f0-9]{8,}\b`)
 	extensionPattern     = regexp.MustCompile(`(?i)\.(mkv|mp4|avi|mov|wmv|ts|m2ts|iso)$`)
@@ -71,6 +74,7 @@ func ParseReleaseFileName(fileName string) ParsedRelease {
 		ReleaseType:  detectReleaseType(title),
 	}
 	parsed.AudioChannels = detectAudioChannels(title)
+	parsed.AudioBitrateKbps = detectAudioBitrateKbps(title)
 	parsed.MovieTitle = releaseMovieTitle(title, parsed.Year)
 	parsed.SeriesTitle = releaseSeriesTitle(title)
 	parsed.SeasonNumber, parsed.EpisodeNumber = detectSeasonEpisode(title)
@@ -162,6 +166,18 @@ func detectAudioChannels(title string) string {
 		return ""
 	}
 	return match[2]
+}
+
+func detectAudioBitrateKbps(title string) int32 {
+	match := audioBitratePattern.FindStringSubmatch(title)
+	if len(match) < 2 {
+		return 0
+	}
+	value, err := strconv.Atoi(match[1])
+	if err != nil {
+		return 0
+	}
+	return int32(value)
 }
 
 func detectLanguages(title string) []string {
