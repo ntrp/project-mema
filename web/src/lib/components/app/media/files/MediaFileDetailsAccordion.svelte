@@ -1,5 +1,7 @@
 <script lang="ts">
 	import CaptionsIcon from '@lucide/svelte/icons/captions';
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import ClapperboardIcon from '@lucide/svelte/icons/clapperboard';
 	import FileTextIcon from '@lucide/svelte/icons/file-text';
 	import MusicIcon from '@lucide/svelte/icons/music';
@@ -8,7 +10,11 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
-	import { fileDetailRows } from '$lib/components/app/media/files/mediaFileDetails';
+	import {
+		fileChapterDetailRows,
+		fileChapterSummaryRow,
+		fileTrackDetailRows
+	} from '$lib/components/app/media/files/mediaFileDetails';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 
 	interface Props {
@@ -17,7 +23,25 @@
 
 	let { row }: Props = $props();
 
-	const rows = $derived(fileDetailRows(row));
+	let chaptersExpanded = $state(false);
+
+	const trackRows = $derived(fileTrackDetailRows(row));
+	const chapterRows = $derived(fileChapterDetailRows(row));
+	const chapterSummary = $derived(fileChapterSummaryRow(row));
+	const rows = $derived.by(() => [
+		...trackRows,
+		...(chapterSummary ? [chapterSummary, ...(chaptersExpanded ? chapterRows : [])] : [])
+	]);
+
+	function toggleChapters() {
+		chaptersExpanded = !chaptersExpanded;
+	}
+
+	function handleChapterSummaryKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Enter' && event.key !== ' ') return;
+		event.preventDefault();
+		toggleChapters();
+	}
 </script>
 
 <div class="overflow-x-auto border-t border-border bg-background" aria-label="Track details">
@@ -36,10 +60,34 @@
 					class={cn(
 						index > 0 && track.type !== rows[index - 1]?.type && 'border-t-4 border-border',
 						track.missing && 'bg-destructive/10 text-destructive',
-						track.unwanted && 'bg-secondary/40'
+						track.unwanted && 'bg-secondary/40',
+						track.chapterSummary && 'cursor-pointer'
 					)}
+					role={track.chapterSummary ? 'button' : undefined}
+					tabindex={track.chapterSummary ? 0 : undefined}
+					aria-expanded={track.chapterSummary ? chaptersExpanded : undefined}
+					aria-label={track.chapterSummary
+						? chaptersExpanded
+							? 'Collapse chapters'
+							: 'Expand chapters'
+						: undefined}
+					onclick={track.chapterSummary ? toggleChapters : undefined}
+					onkeydown={track.chapterSummary ? handleChapterSummaryKeydown : undefined}
 				>
-					<Table.Cell>{track.trackNumber}</Table.Cell>
+					<Table.Cell>
+						{#if track.chapterSummary}
+							<span class="inline-flex items-center gap-1 text-foreground">
+								{#if chaptersExpanded}
+									<ChevronDownIcon class="size-4" aria-hidden="true" />
+								{:else}
+									<ChevronRightIcon class="size-4" aria-hidden="true" />
+								{/if}
+								<span>{track.trackNumber}</span>
+							</span>
+						{:else}
+							{track.trackNumber}
+						{/if}
+					</Table.Cell>
 					<Table.Cell>
 						<span class="inline-flex items-center">
 							{#if track.type === 'video'}

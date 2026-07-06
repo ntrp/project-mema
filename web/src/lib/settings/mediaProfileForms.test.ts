@@ -15,6 +15,8 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			finalContainer: 'mkv',
 			qualityIds: [],
 			audioLossyTranscodePolicy: 'disabled',
+			subtitlePreferredMode: 'mixed',
+			allowSubtitleReleaseFallback: false,
 			audioTargets: [
 				{
 					languageId: 'EN',
@@ -51,6 +53,8 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			minimumCustomFormatScore: '10',
 			upgradeUntilCustomFormatScore: '20.9',
 			minimumCustomFormatScoreIncrement: '-5',
+			subtitlePreferredMode: 'embedded',
+			allowSubtitleReleaseFallback: true,
 			preferredProtocol: undefined,
 			seriesPackPreference: undefined,
 			videoTarget: {
@@ -75,13 +79,11 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{
 					languageId: 'english',
 					score: '25',
-					source: 'external',
 					formats: [' srt ', 'srt', 'ass']
 				},
 				{
 					languageId: 'english',
-					score: 10,
-					source: 'embedded'
+					score: 10
 				}
 			],
 			customFormatScores: [
@@ -102,6 +104,8 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			preferredProtocol: 'any',
 			seriesPackPreference: 'auto',
 			audioLossyTranscodePolicy: 'disabled',
+			subtitlePreferredMode: 'embedded',
+			allowSubtitleReleaseFallback: true,
 			videoTarget: { codecs: ['h265', 'av1'], codecScore: 15, hdrFormats: ['HDR10'] },
 			audioTargets: [
 				{
@@ -116,7 +120,6 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{
 					languageId: 'english',
 					score: 25,
-					source: 'external',
 					formats: ['srt', 'ass']
 				}
 			],
@@ -140,6 +143,8 @@ function mediaProfile(): MediaProfile {
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: true,
+		subtitlePreferredMode: 'embedded',
+		allowSubtitleReleaseFallback: true,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
 		videoTarget: {},
@@ -152,8 +157,7 @@ function mediaProfile(): MediaProfile {
 		subtitleTargets: [
 			{
 				languageId: 'english',
-				score: 25,
-				source: 'embedded'
+				score: 25
 			}
 		],
 		customFormatScores: [{ customFormatId: 'cf-1', score: 50 }],

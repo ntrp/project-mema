@@ -20,8 +20,11 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 	if created.Name != "Scenario Profile" || len(created.QualityIds) != len(qualityIDs) {
 		t.Fatalf("created media profile = %#v", created)
 	}
-	if len(created.SubtitleTargets) != 1 || created.SubtitleTargets[0].Source != MediaProfileSubtitleSourceAny {
+	if len(created.SubtitleTargets) != 1 || created.SubtitlePreferredMode != MediaProfileSubtitlePreferredModeMixed {
 		t.Fatalf("created media profile subtitles = %#v", created.SubtitleTargets)
+	}
+	if !created.AllowSubtitleReleaseFallback {
+		t.Fatalf("created media profile did not preserve subtitle release fallback setting: %#v", created)
 	}
 	if !created.RemoveUnwantedSubtitles {
 		t.Fatalf("created media profile did not preserve subtitle removal setting: %#v", created)
@@ -81,6 +84,8 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		RemoveUnwantedAudio:               true,
 		AudioLossyTranscodePolicy:         MediaProfileLossyTranscodePolicyDisabled,
 		RemoveUnwantedSubtitles:           true,
+		SubtitlePreferredMode:             MediaProfileSubtitlePreferredModeMixed,
+		AllowSubtitleReleaseFallback:      true,
 		PreferredProtocol:                 Usenet,
 		SeriesPackPreference:              MediaProfileRequestSeriesPackPreferencePreferPacks,
 		VideoTarget:                       MediaProfileVideoTarget{},
@@ -93,7 +98,6 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		SubtitleTargets: []MediaProfileSubtitleTarget{{
 			LanguageId: "en",
 			Score:      25,
-			Source:     MediaProfileSubtitleSourceAny,
 			Formats:    &[]string{"srt"},
 		}},
 		CustomFormatScores: []MediaProfileCustomFormatScore{},

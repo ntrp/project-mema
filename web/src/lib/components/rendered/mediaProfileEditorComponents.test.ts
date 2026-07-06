@@ -4,8 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 import MediaProfileCustomFormatScores from '$lib/components/settings/profiles/MediaProfileCustomFormatScores.svelte';
 import MediaProfileQualitySelector from '$lib/components/settings/profiles/MediaProfileQualitySelector.svelte';
 import MediaProfileRules from '$lib/components/settings/profiles/MediaProfileRules.svelte';
+import MediaProfileSubtitleSelector from '$lib/components/settings/profiles/MediaProfileSubtitleSelector.svelte';
 import { emptyMediaProfileForm } from '$lib/settings/forms';
-import type { CustomFormat, QualitySizeSetting } from '$lib/settings/types';
+import type { CustomFormat, Language, QualitySizeSetting } from '$lib/settings/types';
 
 describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 	it('renders grouped quality choices and loading errors', () => {
@@ -47,6 +48,8 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 			removeUnwantedAudio: true,
 			audioLossyTranscodePolicy: 'disabled' as const,
 			removeUnwantedSubtitles: true,
+			subtitlePreferredMode: 'mixed' as const,
+			allowSubtitleReleaseFallback: true,
 			audioTargets: [
 				{
 					languageId: 'japanese',
@@ -58,8 +61,7 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 				{
 					languageId: 'english',
 					score: 25,
-					required: false,
-					source: 'any' as const
+					required: false
 				}
 			]
 		};
@@ -75,6 +77,33 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 		expect(body).toContain('WEB-DL 1080p');
 		expect(body).toContain('Prefer Usenet');
 		expect(body).toContain('Prefer season packs');
+	});
+
+	it('renders subtitle preferred mode choices', () => {
+		const { body } = render(MediaProfileSubtitleSelector, {
+			props: {
+				form: {
+					...emptyMediaProfileForm(),
+					subtitlePreferredMode: 'embedded',
+					allowSubtitleReleaseFallback: true,
+					subtitleTargets: [{ languageId: 'english', score: 25 }]
+				},
+				languages: [
+					{
+						code: 'english',
+						displayName: 'English',
+						aliases: [],
+						createdAt: '2026-07-06T00:00:00Z',
+						updatedAt: '2026-07-06T00:00:00Z'
+					}
+				] satisfies Language[],
+				onChange: vi.fn()
+			}
+		});
+
+		expect(body).toContain('Preferred Mode');
+		expect(body).toContain('Embedded');
+		expect(body).toContain('Allow searching subtitles in other releases');
 	});
 
 	it('renders custom format scores and empty state', () => {

@@ -104,7 +104,6 @@ func loadMediaProfileSubtitleTargets(
 		targets = append(targets, MediaProfileSubtitleTarget{
 			LanguageID: row.LanguageID,
 			Score:      row.Score,
-			Source:     row.Source,
 			Formats:    row.Formats,
 		})
 	}
@@ -176,7 +175,6 @@ func replaceMediaProfileTargets(
 			ProfileID:  profileID,
 			LanguageID: target.LanguageID,
 			Score:      target.Score,
-			Source:     target.Source,
 			Formats:    target.Formats,
 			SortOrder:  int32(index),
 		}); err != nil {

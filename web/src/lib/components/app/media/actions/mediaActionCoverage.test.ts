@@ -119,8 +119,8 @@ describe('media file detail rows (SCN-MEDIA-004)', () => {
 			expectedLanguages: ['English', 'German'],
 			expectedRequiredLanguages: ['German'],
 			expectedSubtitleLanguages: ['English'],
-			removeUnwantedAudio: true,
-			removeUnwantedSubtitles: true,
+			removeNonEnabledLanguages: true,
+			removeNonEnabledSubtitleLanguages: true,
 			tracks: [
 				{
 					index: 0,

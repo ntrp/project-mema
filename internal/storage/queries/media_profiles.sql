@@ -11,6 +11,8 @@ select id,
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
+    subtitle_preferred_mode,
+    allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -35,6 +37,8 @@ insert into app.media_profiles (
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
+    subtitle_preferred_mode,
+    allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference
 )
@@ -51,6 +55,8 @@ values (
     sqlc.arg(remove_unwanted_audio),
     sqlc.arg(audio_lossy_transcode_policy),
     sqlc.arg(remove_unwanted_subtitles),
+    sqlc.arg(subtitle_preferred_mode),
+    sqlc.arg(allow_subtitle_release_fallback),
     sqlc.arg(preferred_protocol),
     sqlc.arg(series_pack_preference)
 );
@@ -68,6 +74,8 @@ set name = sqlc.arg(name),
     remove_unwanted_audio = sqlc.arg(remove_unwanted_audio),
     audio_lossy_transcode_policy = sqlc.arg(audio_lossy_transcode_policy),
     remove_unwanted_subtitles = sqlc.arg(remove_unwanted_subtitles),
+    subtitle_preferred_mode = sqlc.arg(subtitle_preferred_mode),
+    allow_subtitle_release_fallback = sqlc.arg(allow_subtitle_release_fallback),
     preferred_protocol = sqlc.arg(preferred_protocol),
     series_pack_preference = sqlc.arg(series_pack_preference),
     updated_at = now()
@@ -90,6 +98,8 @@ select id,
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
+    subtitle_preferred_mode,
+    allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -137,7 +147,6 @@ order by sort_order, language_id;
 -- name: ListMediaProfileSubtitleTargets :many
 select language_id,
     score,
-    source,
     formats
 from app.media_profile_subtitle_targets
 where profile_id = $1
@@ -229,7 +238,6 @@ insert into app.media_profile_subtitle_targets (
     profile_id,
     language_id,
     score,
-    source,
     formats,
     sort_order
 )
@@ -237,7 +245,6 @@ values (
     sqlc.arg(profile_id),
     sqlc.arg(language_id),
     sqlc.arg(score),
-    sqlc.arg(source),
     sqlc.arg(formats),
     sqlc.arg(sort_order)
 );

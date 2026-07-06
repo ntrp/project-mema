@@ -153,7 +153,8 @@ export type MediaProfileAudioTarget = components['schemas']['MediaProfileAudioTa
 export type MediaProfileSubtitleTarget = components['schemas']['MediaProfileSubtitleTarget'];
 export type MediaProfileLossyTranscodePolicy =
 	components['schemas']['MediaProfileLossyTranscodePolicy'];
-export type MediaProfileSubtitleSource = components['schemas']['MediaProfileSubtitleSource'];
+export type MediaProfileSubtitlePreferredMode =
+	components['schemas']['MediaProfileSubtitlePreferredMode'];
 export type MediaProfileCustomFormatScore = components['schemas']['MediaProfileCustomFormatScore'];
 export type FileNamingSettings = components['schemas']['FileNamingSettings'];
 export type FileNamingSettingsRequest = components['schemas']['FileNamingSettingsRequest'];

@@ -62,14 +62,16 @@ insert into app.media_profiles (
     audio_lossy_transcode_policy,
     remove_unwanted_audio,
     remove_unwanted_subtitles,
+    subtitle_preferred_mode,
+    allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference
 )
 values
-    ('any', 'Any acceptable release', false, 'mkv', true, 'raw-hd', 0, 0, 1, 'disabled', false, false, 'any', 'auto'),
-    ('hd-1080p', 'HD 1080p', true, 'mkv', true, 'bluray-1080p', 0, 10000, 1, 'losslessToLossy', false, false, 'any', 'auto'),
-    ('uhd-4k', 'UHD 4K', false, 'mkv', true, 'remux-2160p', 0, 10000, 1, 'losslessToLossy', false, false, 'any', 'auto'),
-    ('anime-1080p', 'Anime 1080p', false, 'mkv', true, 'bluray-1080p', 0, 10000, 1, 'losslessToLossy', false, false, 'any', 'auto')
+    ('any', 'Any acceptable release', false, 'mkv', true, 'raw-hd', 0, 0, 1, 'disabled', false, false, 'mixed', false, 'any', 'auto'),
+    ('hd-1080p', 'HD 1080p', true, 'mkv', true, 'bluray-1080p', 0, 10000, 1, 'losslessToLossy', false, false, 'mixed', false, 'any', 'auto'),
+    ('uhd-4k', 'UHD 4K', false, 'mkv', true, 'remux-2160p', 0, 10000, 1, 'losslessToLossy', false, false, 'mixed', false, 'any', 'auto'),
+    ('anime-1080p', 'Anime 1080p', false, 'mkv', true, 'bluray-1080p', 0, 10000, 1, 'losslessToLossy', false, false, 'mixed', true, 'any', 'auto')
 on conflict (id) do nothing;
 
 insert into app.media_profile_video_targets (
@@ -106,11 +108,11 @@ values
     ('anime-1080p', 'english', 25, 'aac', array['2.0'], 160, 256, 1)
 on conflict (profile_id, language_id) do nothing;
 
-insert into app.media_profile_subtitle_targets (profile_id, language_id, score, source, formats, sort_order)
+insert into app.media_profile_subtitle_targets (profile_id, language_id, score, formats, sort_order)
 values
-    ('hd-1080p', 'english', 0, 'any', array['srt'], 0),
-    ('uhd-4k', 'english', 0, 'any', array['srt'], 0),
-    ('anime-1080p', 'english', 25, 'any', array['ass', 'srt'], 0)
+    ('hd-1080p', 'english', 0, array['srt'], 0),
+    ('uhd-4k', 'english', 0, array['srt'], 0),
+    ('anime-1080p', 'english', 25, array['ass', 'srt'], 0)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)

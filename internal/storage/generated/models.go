@@ -515,6 +515,8 @@ type AppMediaProfile struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
+	SubtitlePreferredMode             string
+	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	CreatedAt                         time.Time
@@ -548,7 +550,6 @@ type AppMediaProfileSubtitleTarget struct {
 	ProfileID  string
 	LanguageID string
 	Score      int32
-	Source     string
 	Formats    []string
 	SortOrder  int32
 }

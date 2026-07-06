@@ -97,7 +97,6 @@ insert into app.media_profile_subtitle_targets (
     profile_id,
     language_id,
     score,
-    source,
     formats,
     sort_order
 )
@@ -106,8 +105,7 @@ values (
     $2,
     $3,
     $4,
-    $5,
-    $6
+    $5
 )
 `
 
@@ -115,7 +113,6 @@ type AddMediaProfileSubtitleTargetParams struct {
 	ProfileID  string
 	LanguageID string
 	Score      int32
-	Source     string
 	Formats    []string
 	SortOrder  int32
 }
@@ -125,7 +122,6 @@ func (q *Queries) AddMediaProfileSubtitleTarget(ctx context.Context, arg AddMedi
 		arg.ProfileID,
 		arg.LanguageID,
 		arg.Score,
-		arg.Source,
 		arg.Formats,
 		arg.SortOrder,
 	)
@@ -198,6 +194,8 @@ insert into app.media_profiles (
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
+    subtitle_preferred_mode,
+    allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference
 )
@@ -215,7 +213,9 @@ values (
     $11,
     $12,
     $13,
-    $14
+    $14,
+    $15,
+    $16
 )
 `
 
@@ -232,6 +232,8 @@ type CreateMediaProfileParams struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
+	SubtitlePreferredMode             string
+	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 }
@@ -250,6 +252,8 @@ func (q *Queries) CreateMediaProfile(ctx context.Context, arg CreateMediaProfile
 		arg.RemoveUnwantedAudio,
 		arg.AudioLossyTranscodePolicy,
 		arg.RemoveUnwantedSubtitles,
+		arg.SubtitlePreferredMode,
+		arg.AllowSubtitleReleaseFallback,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
 	)
@@ -282,6 +286,8 @@ select id,
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
+    subtitle_preferred_mode,
+    allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -306,6 +312,8 @@ func (q *Queries) GetMediaProfile(ctx context.Context, id string) (AppMediaProfi
 		&i.RemoveUnwantedAudio,
 		&i.AudioLossyTranscodePolicy,
 		&i.RemoveUnwantedSubtitles,
+		&i.SubtitlePreferredMode,
+		&i.AllowSubtitleReleaseFallback,
 		&i.PreferredProtocol,
 		&i.SeriesPackPreference,
 		&i.CreatedAt,
@@ -469,7 +477,6 @@ func (q *Queries) ListMediaProfileQualities(ctx context.Context, profileID strin
 const listMediaProfileSubtitleTargets = `-- name: ListMediaProfileSubtitleTargets :many
 select language_id,
     score,
-    source,
     formats
 from app.media_profile_subtitle_targets
 where profile_id = $1
@@ -479,7 +486,6 @@ order by sort_order, language_id
 type ListMediaProfileSubtitleTargetsRow struct {
 	LanguageID string
 	Score      int32
-	Source     string
 	Formats    []string
 }
 
@@ -492,12 +498,7 @@ func (q *Queries) ListMediaProfileSubtitleTargets(ctx context.Context, profileID
 	var items []ListMediaProfileSubtitleTargetsRow
 	for rows.Next() {
 		var i ListMediaProfileSubtitleTargetsRow
-		if err := rows.Scan(
-			&i.LanguageID,
-			&i.Score,
-			&i.Source,
-			&i.Formats,
-		); err != nil {
+		if err := rows.Scan(&i.LanguageID, &i.Score, &i.Formats); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -521,6 +522,8 @@ select id,
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
+    subtitle_preferred_mode,
+    allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -551,6 +554,8 @@ func (q *Queries) ListMediaProfiles(ctx context.Context) ([]AppMediaProfile, err
 			&i.RemoveUnwantedAudio,
 			&i.AudioLossyTranscodePolicy,
 			&i.RemoveUnwantedSubtitles,
+			&i.SubtitlePreferredMode,
+			&i.AllowSubtitleReleaseFallback,
 			&i.PreferredProtocol,
 			&i.SeriesPackPreference,
 			&i.CreatedAt,
@@ -590,10 +595,12 @@ set name = $1,
     remove_unwanted_audio = $9,
     audio_lossy_transcode_policy = $10,
     remove_unwanted_subtitles = $11,
-    preferred_protocol = $12,
-    series_pack_preference = $13,
+    subtitle_preferred_mode = $12,
+    allow_subtitle_release_fallback = $13,
+    preferred_protocol = $14,
+    series_pack_preference = $15,
     updated_at = now()
-where id = $14
+where id = $16
 `
 
 type UpdateMediaProfileParams struct {
@@ -608,6 +615,8 @@ type UpdateMediaProfileParams struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
+	SubtitlePreferredMode             string
+	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	ID                                string
@@ -626,6 +635,8 @@ func (q *Queries) UpdateMediaProfile(ctx context.Context, arg UpdateMediaProfile
 		arg.RemoveUnwantedAudio,
 		arg.AudioLossyTranscodePolicy,
 		arg.RemoveUnwantedSubtitles,
+		arg.SubtitlePreferredMode,
+		arg.AllowSubtitleReleaseFallback,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
 		arg.ID,

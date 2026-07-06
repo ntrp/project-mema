@@ -165,6 +165,8 @@ function mediaProfileForm() {
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
+		subtitlePreferredMode: 'mixed',
+		allowSubtitleReleaseFallback: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
 		audioTargets: [
@@ -173,7 +175,7 @@ function mediaProfileForm() {
 				score: 0
 			}
 		],
-		subtitleTargets: [{ languageId: 'english', score: 0, source: 'any' }],
+		subtitleTargets: [{ languageId: 'english', score: 0 }],
 		customFormatScores: []
 	} as const;
 }

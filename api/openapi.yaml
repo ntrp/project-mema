@@ -6544,6 +6544,8 @@ components:
         - removeUnwantedAudio
         - audioLossyTranscodePolicy
         - removeUnwantedSubtitles
+        - subtitlePreferredMode
+        - allowSubtitleReleaseFallback
         - preferredProtocol
         - seriesPackPreference
         - videoTarget
@@ -6590,6 +6592,10 @@ components:
         audioLossyTranscodePolicy:
           $ref: "#/components/schemas/MediaProfileLossyTranscodePolicy"
         removeUnwantedSubtitles:
+          type: boolean
+        subtitlePreferredMode:
+          $ref: "#/components/schemas/MediaProfileSubtitlePreferredMode"
+        allowSubtitleReleaseFallback:
           type: boolean
         preferredProtocol:
           type: string
@@ -6665,16 +6671,16 @@ components:
         - MediaProfileLossyTranscodePolicyDisabled
         - MediaProfileLossyTranscodePolicyLosslessToLossy
         - MediaProfileLossyTranscodePolicyLossyToLossy
-    MediaProfileSubtitleSource:
+    MediaProfileSubtitlePreferredMode:
       type: string
       enum:
-        - any
+        - mixed
         - embedded
         - external
       x-enum-varnames:
-        - MediaProfileSubtitleSourceAny
-        - MediaProfileSubtitleSourceEmbedded
-        - MediaProfileSubtitleSourceExternal
+        - MediaProfileSubtitlePreferredModeMixed
+        - MediaProfileSubtitlePreferredModeEmbedded
+        - MediaProfileSubtitlePreferredModeExternal
     MediaProfileAudioTarget:
       type: object
       additionalProperties: false
@@ -6713,7 +6719,6 @@ components:
       required:
         - languageId
         - score
-        - source
       properties:
         languageId:
           type: string
@@ -6722,8 +6727,6 @@ components:
         score:
           type: integer
           format: int32
-        source:
-          $ref: "#/components/schemas/MediaProfileSubtitleSource"
         formats:
           type: array
           items:

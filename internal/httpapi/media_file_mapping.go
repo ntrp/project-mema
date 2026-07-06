@@ -11,6 +11,7 @@ import (
 func mediaFileInfoResponses(
 	paths []string,
 	subtitleTargets []storage.MediaProfileSubtitleTarget,
+	subtitlePreferredMode string,
 	externalSubtitles []storage.MediaItemSubtitle,
 ) *[]MediaFileInfo {
 	files := make([]MediaFileInfo, 0, len(paths))
@@ -30,6 +31,7 @@ func mediaFileInfoResponses(
 			file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(
 				probe.tracks,
 				subtitleTargets,
+				subtitlePreferredMode,
 				externalSubtitleLanguagesForPath(externalSubtitles, path),
 			)
 		}
@@ -41,6 +43,7 @@ func mediaFileInfoResponses(
 func mediaFileSubtitleSatisfaction(
 	tracks []MediaFileTrack,
 	targets []storage.MediaProfileSubtitleTarget,
+	subtitlePreferredMode string,
 	externalLanguages []string,
 ) *MediaFileSubtitleSatisfaction {
 	if len(targets) == 0 {
@@ -58,7 +61,7 @@ func mediaFileSubtitleSatisfaction(
 	missing := []string{}
 	for _, target := range targets {
 		wanted = append(wanted, target.LanguageID)
-		if subtitleTargetSatisfied(target, embedded, external) {
+		if subtitleTargetSatisfied(target, subtitlePreferredMode, embedded, external) {
 			matched = append(matched, target.LanguageID)
 			continue
 		}
@@ -78,11 +81,12 @@ func mediaFileSubtitleSatisfaction(
 
 func subtitleTargetSatisfied(
 	target storage.MediaProfileSubtitleTarget,
+	subtitlePreferredMode string,
 	embedded map[string]struct{},
 	external map[string]struct{},
 ) bool {
 	language := languageMatchKey(target.LanguageID)
-	switch target.Source {
+	switch subtitlePreferredMode {
 	case "embedded":
 		_, ok := embedded[language]
 		return ok

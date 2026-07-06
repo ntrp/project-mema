@@ -20,7 +20,6 @@
 		targetLanguageValue
 	} from './profileTargetLanguages';
 	import type { Language, MediaProfileForm, MediaProfileSubtitleTarget } from '$lib/settings/types';
-	import type { MediaProfileSubtitleSource } from '$lib/settings/types';
 
 	interface Props {
 		form: MediaProfileForm;
@@ -48,6 +47,19 @@
 	function remove(index: number) {
 		patch(targets.filter((_, row) => row !== index));
 	}
+	function patchForm(value: Partial<MediaProfileForm>) {
+		onChange({ ...form, ...value });
+	}
+	function subtitleModeLabel(value: MediaProfileForm['subtitlePreferredMode'] | undefined) {
+		switch (value) {
+			case 'embedded':
+				return 'Embedded';
+			case 'external':
+				return 'External';
+			default:
+				return 'Mixed';
+		}
+	}
 </script>
 
 <Card.Root>
@@ -69,13 +81,40 @@
 	</Card.Header>
 	<Card.Content class="mt-2 grid gap-4">
 		<div class="grid gap-3">
+			<div class="grid gap-2 text-sm md:max-w-xs">
+				<Label>Preferred Mode</Label>
+				<Select.Root
+					type="single"
+					value={form.subtitlePreferredMode ?? 'mixed'}
+					onValueChange={(value: string) =>
+						patchForm({
+							subtitlePreferredMode: value as MediaProfileForm['subtitlePreferredMode']
+						})}
+				>
+					<Select.Trigger class="w-full">
+						{subtitleModeLabel(form.subtitlePreferredMode)}
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="mixed" label="Mixed" />
+						<Select.Item value="embedded" label="Embedded" />
+						<Select.Item value="external" label="External" />
+					</Select.Content>
+				</Select.Root>
+			</div>
 			<Label class="flex items-center gap-2 text-sm text-muted-foreground">
 				<Checkbox
 					checked={form.removeUnwantedSubtitles}
-					onCheckedChange={(checked) =>
-						onChange({ ...form, removeUnwantedSubtitles: checked === true })}
+					onCheckedChange={(checked) => patchForm({ removeUnwantedSubtitles: checked === true })}
 				/>
 				Remove subtitle tracks that are not wanted
+			</Label>
+			<Label class="flex items-center gap-2 text-sm text-muted-foreground">
+				<Checkbox
+					checked={form.allowSubtitleReleaseFallback}
+					onCheckedChange={(checked) =>
+						patchForm({ allowSubtitleReleaseFallback: checked === true })}
+				/>
+				Allow searching subtitles in other releases
 			</Label>
 		</div>
 
@@ -83,7 +122,6 @@
 			<Table.Header>
 				<Table.Row>
 					<Table.Head class="w-60 text-left">Language</Table.Head>
-					<Table.Head class="w-32 text-left">Source</Table.Head>
 					<Table.Head class="w-44 text-left">Format</Table.Head>
 					<Table.Head class="w-20 text-right">Score</Table.Head>
 					<Table.Head class="w-14 text-right"><span class="sr-only">Actions</span></Table.Head>
@@ -105,21 +143,6 @@
 									{#each targetLanguageChoices(languages, target.languageId, selected) as option (option.id)}
 										<Select.Item value={option.id} label={option.displayLabel} />
 									{/each}
-								</Select.Content>
-							</Select.Root>
-						</Table.Cell>
-						<Table.Cell>
-							<Select.Root
-								type="single"
-								value={target.source}
-								onValueChange={(value) =>
-									update(index, { source: value as MediaProfileSubtitleSource })}
-							>
-								<Select.Trigger class="w-full">{target.source}</Select.Trigger>
-								<Select.Content>
-									<Select.Item value="any" label="Any" />
-									<Select.Item value="embedded" label="Embedded" />
-									<Select.Item value="external" label="External" />
 								</Select.Content>
 							</Select.Root>
 						</Table.Cell>
@@ -156,7 +179,7 @@
 					</Table.Row>
 				{:else}
 					<Table.Row>
-						<Table.Cell colspan={5} class="py-6 text-center text-muted-foreground">
+						<Table.Cell colspan={4} class="py-6 text-center text-muted-foreground">
 							No subtitle targets configured.
 						</Table.Cell>
 					</Table.Row>

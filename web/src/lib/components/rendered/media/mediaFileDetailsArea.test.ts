@@ -30,7 +30,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).not.toContain('Formats');
 	});
 
-	it('renders media track details, chapters, and missing expected languages', () => {
+	it('renders media track details, collapsed chapters, and missing expected languages', () => {
 		const { body } = renderWithTooltip(MediaFileDetailsAccordion, { row: detailedFileRow() });
 
 		expect(body).toContain('Track Nr.');
@@ -43,7 +43,9 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Subtitle');
 		expect(body).toContain('Signs');
 		expect(body).toContain('Chapter');
-		expect(body).toContain('Opening');
+		expect(body).toContain('2-21');
+		expect(body).toContain('20 chapters');
+		expect(body).not.toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
 		expect(body).toContain('border-t-4');
@@ -121,6 +123,11 @@ function detailedFileRow(): MediaFileRow {
 			{ type: 'subtitle', index: 2, codec: 'SRT', language: 'eng', title: 'Signs' },
 			{ type: 'subtitle', index: 3, codec: 'SRT', language: 'spa', title: 'Spanish' }
 		],
-		chapters: [{ index: 0, title: 'Opening', startTime: '00:00:00', endTime: '00:05:00' }]
+		chapters: Array.from({ length: 20 }, (_, index) => ({
+			index: index + 1,
+			title: index === 0 ? 'Opening' : `Chapter ${index + 1}`,
+			startTime: `00:${String(index).padStart(2, '0')}:00`,
+			endTime: `00:${String(index + 1).padStart(2, '0')}:00`
+		}))
 	};
 }

@@ -18,11 +18,8 @@ func subtitleSearchRequestsForItem(item storage.MediaItem) []SubtitleSearchArgs 
 	}
 	items := []SubtitleSearchArgs{}
 	for _, target := range item.SubtitleTargets {
-		if target.Source == "embedded" {
-			continue
-		}
 		for _, path := range item.FilePaths {
-			if externalSubtitleExists(item, target.LanguageID, path) {
+			if subtitleSearchTargetSatisfied(item, target, path) {
 				continue
 			}
 			items = append(items, SubtitleSearchArgs{
@@ -47,7 +44,7 @@ func subtitleSearchRequest(
 	if language == "" {
 		language = firstMissingSubtitleLanguage(item, filePath)
 	}
-	if language == "" || filePath == "" || externalSubtitleExists(item, language, filePath) {
+	if language == "" || filePath == "" || subtitleSearchLanguageSatisfied(item, language, filePath) {
 		return subtitles.SearchRequest{}, false
 	}
 	request := subtitles.SearchRequest{
@@ -71,14 +68,26 @@ func firstMissingSubtitleLanguage(item storage.MediaItem, filePath string) strin
 		return targets[i].LanguageID < targets[j].LanguageID
 	})
 	for _, target := range targets {
-		if target.Source == "embedded" {
-			continue
-		}
-		if !externalSubtitleExists(item, target.LanguageID, filePath) {
+		if !subtitleSearchTargetSatisfied(item, target, filePath) {
 			return target.LanguageID
 		}
 	}
 	return ""
+}
+
+func subtitleSearchTargetSatisfied(
+	item storage.MediaItem,
+	target storage.MediaProfileSubtitleTarget,
+	filePath string,
+) bool {
+	return subtitleSearchLanguageSatisfied(item, target.LanguageID, filePath)
+}
+
+func subtitleSearchLanguageSatisfied(item storage.MediaItem, languageID string, filePath string) bool {
+	if subtitlePreferredMode(item.SubtitlePreferredMode) == "embedded" {
+		return embeddedSubtitleExists(item, storage.MediaProfileSubtitleTarget{LanguageID: languageID})
+	}
+	return externalSubtitleExists(item, languageID, filePath)
 }
 
 func externalSubtitleExists(item storage.MediaItem, languageID string, filePath string) bool {

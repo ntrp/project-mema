@@ -70,7 +70,7 @@ func TestSCNMedia002SubtitleLanguageScoreContributesToReleaseMatch(t *testing.T)
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
-			{LanguageID: "english", Score: 25, Source: "any"},
+			{LanguageID: "english", Score: 25},
 		},
 	}
 
@@ -97,7 +97,7 @@ func TestSCNMedia002TargetSubtitleLanguageRejectsMissingReleaseLanguage(t *testi
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
-			{LanguageID: "japanese", Score: 25, Source: "any"},
+			{LanguageID: "japanese", Score: 25},
 		},
 	}
 

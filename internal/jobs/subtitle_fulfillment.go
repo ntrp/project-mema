@@ -9,11 +9,11 @@ import (
 )
 
 type SubtitleFulfillmentNeed struct {
-	LanguageID string
-	Source     string
-	Formats    []string
-	Mode       string
-	Query      string
+	LanguageID    string
+	PreferredMode string
+	Formats       []string
+	Mode          string
+	Query         string
 }
 
 type SubtitleFulfillmentCandidate struct {
@@ -29,10 +29,10 @@ func SubtitleFulfillmentNeeds(item storage.MediaItem) []SubtitleFulfillmentNeed 
 	for _, target := range item.SubtitleTargets {
 		for _, mode := range subtitleFulfillmentModes(item, target) {
 			need := SubtitleFulfillmentNeed{
-				LanguageID: target.LanguageID,
-				Source:     target.Source,
-				Formats:    normalizedSubtitleFormats(target.Formats),
-				Mode:       mode,
+				LanguageID:    target.LanguageID,
+				PreferredMode: subtitlePreferredMode(item.SubtitlePreferredMode),
+				Formats:       normalizedSubtitleFormats(target.Formats),
+				Mode:          mode,
 			}
 			need.Query = subtitleFulfillmentQuery(item, need)
 			needs = append(needs, need)
@@ -78,18 +78,24 @@ func SubtitleFulfillmentSourceInput(
 }
 
 func subtitleFulfillmentModes(item storage.MediaItem, target storage.MediaProfileSubtitleTarget) []string {
-	source := strings.TrimSpace(target.Source)
-	if source == "" {
-		source = "any"
-	}
+	mode := subtitlePreferredMode(item.SubtitlePreferredMode)
 	modes := []string{}
-	if source != "embedded" && !externalSubtitleExists(item, target.LanguageID, firstMediaFilePath(item)) {
+	if !subtitleSearchTargetSatisfied(item, target, firstMediaFilePath(item)) {
 		modes = append(modes, "provider")
 	}
-	if source != "external" && !embeddedSubtitleExists(item, target) {
+	if item.AllowSubtitleReleaseFallback && mode != "external" && !embeddedSubtitleExists(item, target) {
 		modes = append(modes, "alternateRelease")
 	}
 	return modes
+}
+
+func subtitlePreferredMode(value string) string {
+	switch strings.TrimSpace(value) {
+	case "embedded", "external":
+		return strings.TrimSpace(value)
+	default:
+		return "mixed"
+	}
 }
 
 func bestSubtitleFulfillmentCandidate(
@@ -172,12 +178,13 @@ func subtitleStreamMatchesTarget(stream subtitleInventoryStream, target storage.
 
 func subtitleFulfillmentMetadata(release storage.ReleaseCandidateInput, need SubtitleFulfillmentNeed) string {
 	payload := map[string]any{
-		"kind":     "subtitleFulfillment",
-		"release":  release.Title,
-		"indexer":  release.IndexerName,
-		"language": need.LanguageID,
-		"formats":  need.Formats,
-		"mode":     need.Mode,
+		"kind":          "subtitleFulfillment",
+		"release":       release.Title,
+		"indexer":       release.IndexerName,
+		"language":      need.LanguageID,
+		"formats":       need.Formats,
+		"mode":          need.Mode,
+		"preferredMode": need.PreferredMode,
 	}
 	data, _ := json.Marshal(payload)
 	return string(data)

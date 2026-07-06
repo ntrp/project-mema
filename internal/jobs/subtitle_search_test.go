@@ -18,13 +18,14 @@ import (
 func TestSubtitleSearchRequestBuildsEpisodeContext(t *testing.T) {
 	year := int32(2026)
 	item := storage.MediaItem{
-		ID:        uuid.New(),
-		Type:      "serie",
-		Title:     "Scenario Series",
-		Year:      &year,
-		FilePaths: []string{"/library/Scenario.Series.S01E02.mkv"},
+		ID:                    uuid.New(),
+		Type:                  "serie",
+		Title:                 "Scenario Series",
+		Year:                  &year,
+		FilePaths:             []string{"/library/Scenario.Series.S01E02.mkv"},
+		SubtitlePreferredMode: "mixed",
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
-			{LanguageID: "english", Source: "any"},
+			{LanguageID: "english"},
 		},
 	}
 
@@ -73,8 +74,9 @@ func TestSubtitleSearchDownloadsAndRecordsSubtitle(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
+	item.SubtitlePreferredMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english", Source: "any"},
+		{LanguageID: "english"},
 	}
 
 	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
@@ -127,8 +129,9 @@ func TestSubtitleSearchConvertsDownloadedSubtitleToTargetFormat(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
+	item.SubtitlePreferredMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english", Source: "any", Formats: []string{"vtt"}},
+		{LanguageID: "english", Formats: []string{"vtt"}},
 	}
 
 	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
@@ -174,8 +177,9 @@ func TestSubtitleSearchRejectsUnsupportedBitmapTargetFormat(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
+	item.SubtitlePreferredMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english", Source: "any", Formats: []string{"pgs"}},
+		{LanguageID: "english", Formats: []string{"pgs"}},
 	}
 
 	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})

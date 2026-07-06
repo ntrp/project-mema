@@ -10,8 +10,8 @@ func TestMediaFileSubtitleSatisfactionUsesEmbeddedTracks(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction([]MediaFileTrack{
 		{Type: Subtitle, Language: stringPtr("eng")},
 	}, []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english", Source: "any"},
-	}, nil)
+		{LanguageID: "english"},
+	}, "mixed", nil)
 
 	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {
 		t.Fatalf("expected satisfied subtitle state, got %#v", result)
@@ -25,8 +25,8 @@ func TestMediaFileSubtitleSatisfactionReportsMissingTargets(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction([]MediaFileTrack{
 		{Type: Subtitle, Language: stringPtr("jpn")},
 	}, []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english", Source: "embedded"},
-	}, nil)
+		{LanguageID: "english"},
+	}, "embedded", nil)
 
 	if result.State != MediaFileSubtitleSatisfactionStateMissing {
 		t.Fatalf("expected missing subtitle state, got %#v", result)
@@ -38,8 +38,8 @@ func TestMediaFileSubtitleSatisfactionReportsMissingTargets(t *testing.T) {
 
 func TestMediaFileSubtitleSatisfactionUsesExternalRecords(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english", Source: "external"},
-	}, []string{"eng"})
+		{LanguageID: "english"},
+	}, "external", []string{"eng"})
 
 	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {
 		t.Fatalf("expected satisfied subtitle state, got %#v", result)
@@ -48,8 +48,8 @@ func TestMediaFileSubtitleSatisfactionUsesExternalRecords(t *testing.T) {
 
 func TestMediaFileSubtitleSatisfactionReportsEveryTargetMissing(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english", Source: "external"},
-	}, nil)
+		{LanguageID: "english"},
+	}, "external", nil)
 
 	if result.State != MediaFileSubtitleSatisfactionStateMissing {
 		t.Fatalf("expected missing subtitle state, got %#v", result)

@@ -38,6 +38,8 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		RemoveUnwantedAudio:               request.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:         string(request.AudioLossyTranscodePolicy),
 		RemoveUnwantedSubtitles:           request.RemoveUnwantedSubtitles,
+		SubtitlePreferredMode:             string(request.SubtitlePreferredMode),
+		AllowSubtitleReleaseFallback:      request.AllowSubtitleReleaseFallback,
 		PreferredProtocol:                 string(request.PreferredProtocol),
 		SeriesPackPreference:              string(request.SeriesPackPreference),
 		VideoTarget:                       mediaProfileVideoTarget(request.VideoTarget),
@@ -106,7 +108,6 @@ func mediaProfileSubtitleTargets(values []MediaProfileSubtitleTarget) []storage.
 		targets = append(targets, storage.MediaProfileSubtitleTarget{
 			LanguageID: value.LanguageId,
 			Score:      value.Score,
-			Source:     string(value.Source),
 			Formats:    compactUniquePtr(value.Formats),
 		})
 	}
@@ -147,6 +148,8 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		RemoveUnwantedAudio:               profile.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:         MediaProfileLossyTranscodePolicy(profile.AudioLossyTranscodePolicy),
 		RemoveUnwantedSubtitles:           profile.RemoveUnwantedSubtitles,
+		SubtitlePreferredMode:             mediaProfileSubtitlePreferredModeResponse(profile.SubtitlePreferredMode),
+		AllowSubtitleReleaseFallback:      profile.AllowSubtitleReleaseFallback,
 		PreferredProtocol:                 MediaProfilePreferredProtocol(profile.PreferredProtocol),
 		SeriesPackPreference:              MediaProfileSeriesPackPreference(profile.SeriesPackPreference),
 		VideoTarget:                       mediaProfileVideoTargetResponse(profile.VideoTarget),
@@ -193,11 +196,21 @@ func mediaProfileSubtitleTargetResponses(targets []storage.MediaProfileSubtitleT
 		response = append(response, MediaProfileSubtitleTarget{
 			LanguageId: target.LanguageID,
 			Score:      target.Score,
-			Source:     MediaProfileSubtitleSource(target.Source),
 			Formats:    &target.Formats,
 		})
 	}
 	return response
+}
+
+func mediaProfileSubtitlePreferredModeResponse(value string) MediaProfileSubtitlePreferredMode {
+	switch value {
+	case "embedded":
+		return MediaProfileSubtitlePreferredModeEmbedded
+	case "external":
+		return MediaProfileSubtitlePreferredModeExternal
+	default:
+		return MediaProfileSubtitlePreferredModeMixed
+	}
 }
 
 func mediaProfileCustomFormatScoreResponses(scores []storage.MediaProfileCustomFormatScore) []MediaProfileCustomFormatScore {

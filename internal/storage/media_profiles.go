@@ -188,6 +188,8 @@ func mediaProfileParams(id string, name string, input MediaProfileInput) storage
 		RemoveUnwantedAudio:               input.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:         input.AudioLossyTranscodePolicy,
 		RemoveUnwantedSubtitles:           input.RemoveUnwantedSubtitles,
+		SubtitlePreferredMode:             input.SubtitlePreferredMode,
+		AllowSubtitleReleaseFallback:      input.AllowSubtitleReleaseFallback,
 		PreferredProtocol:                 input.PreferredProtocol,
 		SeriesPackPreference:              input.SeriesPackPreference,
 	}
@@ -207,6 +209,8 @@ func mediaProfileUpdateParams(id string, name string, input MediaProfileInput) s
 		RemoveUnwantedAudio:               input.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:         input.AudioLossyTranscodePolicy,
 		RemoveUnwantedSubtitles:           input.RemoveUnwantedSubtitles,
+		SubtitlePreferredMode:             input.SubtitlePreferredMode,
+		AllowSubtitleReleaseFallback:      input.AllowSubtitleReleaseFallback,
 		PreferredProtocol:                 input.PreferredProtocol,
 		SeriesPackPreference:              input.SeriesPackPreference,
 	}
@@ -226,6 +230,8 @@ func mediaProfileFromRow(row storagegen.AppMediaProfile) MediaProfile {
 		RemoveUnwantedAudio:               row.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:         row.AudioLossyTranscodePolicy,
 		RemoveUnwantedSubtitles:           row.RemoveUnwantedSubtitles,
+		SubtitlePreferredMode:             row.SubtitlePreferredMode,
+		AllowSubtitleReleaseFallback:      row.AllowSubtitleReleaseFallback,
 		PreferredProtocol:                 row.PreferredProtocol,
 		SeriesPackPreference:              row.SeriesPackPreference,
 		CreatedAt:                         row.CreatedAt,

@@ -7,14 +7,15 @@ import (
 	"media-manager/internal/storage"
 )
 
-func TestSubtitleFulfillmentNeedsPreferProviderForAnySource(t *testing.T) {
+func TestSubtitleFulfillmentNeedsUseBothProvidersForMixedMode(t *testing.T) {
 	item := storage.MediaItem{
-		Type:      "movie",
-		Title:     "Scenario Movie",
-		FilePaths: []string{"/library/Scenario.Movie.mkv"},
+		Type:                         "movie",
+		Title:                        "Scenario Movie",
+		FilePaths:                    []string{"/library/Scenario.Movie.mkv"},
+		SubtitlePreferredMode:        "mixed",
+		AllowSubtitleReleaseFallback: true,
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
-			Source:     "any",
 			Formats:    []string{"vtt"},
 		}},
 	}
@@ -31,12 +32,12 @@ func TestSubtitleFulfillmentNeedsPreferProviderForAnySource(t *testing.T) {
 
 func TestSubtitleFulfillmentNeedsSkipSatisfiedExternalTarget(t *testing.T) {
 	item := storage.MediaItem{
-		Type:      "movie",
-		Title:     "Scenario Movie",
-		FilePaths: []string{"/library/Scenario.Movie.mkv"},
+		Type:                  "movie",
+		Title:                 "Scenario Movie",
+		FilePaths:             []string{"/library/Scenario.Movie.mkv"},
+		SubtitlePreferredMode: "external",
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
-			Source:     "external",
 		}},
 		ExternalSubtitles: []storage.MediaItemSubtitle{{
 			LanguageID: "english",
@@ -51,11 +52,11 @@ func TestSubtitleFulfillmentNeedsSkipSatisfiedExternalTarget(t *testing.T) {
 
 func TestSubtitleFulfillmentNeedsUseEmbeddedInventory(t *testing.T) {
 	item := storage.MediaItem{
-		Type:  "movie",
-		Title: "Scenario Movie",
+		Type:                  "movie",
+		Title:                 "Scenario Movie",
+		SubtitlePreferredMode: "embedded",
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
-			Source:     "embedded",
 			Formats:    []string{"ass"},
 		}},
 		ComponentSources: []storage.MediaComponentSource{{
@@ -70,11 +71,12 @@ func TestSubtitleFulfillmentNeedsUseEmbeddedInventory(t *testing.T) {
 
 func TestPlanSubtitleFulfillmentChoosesAlternateRelease(t *testing.T) {
 	item := storage.MediaItem{
-		Type:  "movie",
-		Title: "Scenario Movie",
+		Type:                         "movie",
+		Title:                        "Scenario Movie",
+		SubtitlePreferredMode:        "embedded",
+		AllowSubtitleReleaseFallback: true,
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
-			Source:     "embedded",
 			Formats:    []string{"ass"},
 		}},
 	}

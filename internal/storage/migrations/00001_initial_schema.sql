@@ -243,6 +243,8 @@ create table if not exists app.media_profiles (
     remove_unwanted_audio boolean not null default false,
     audio_lossy_transcode_policy text not null default 'disabled' check (audio_lossy_transcode_policy in ('disabled', 'losslessToLossy', 'lossyToLossy')),
     remove_unwanted_subtitles boolean not null default false,
+    subtitle_preferred_mode text not null default 'mixed' check (subtitle_preferred_mode in ('mixed', 'embedded', 'external')),
+    allow_subtitle_release_fallback boolean not null default false,
     preferred_protocol text not null default 'any' check (preferred_protocol in ('any', 'torrent', 'usenet')),
     series_pack_preference text not null default 'auto' check (series_pack_preference in ('auto', 'preferPacks', 'preferEpisodes')),
     created_at timestamptz not null default now(),
@@ -313,7 +315,6 @@ create table if not exists app.media_profile_subtitle_targets (
     profile_id text not null references app.media_profiles(id) on delete cascade,
     language_id text not null,
     score integer not null default 0,
-    source text not null default 'any' check (source in ('any', 'embedded', 'external')),
     formats text[] not null default '{}',
     sort_order integer not null default 0,
     primary key (profile_id, language_id)

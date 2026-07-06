@@ -18,29 +18,31 @@ type MediaItem struct {
 	Overview         *string
 	PosterPath       *string
 	MediaMetadataSnapshot
-	MonitorMode         string
-	SeriesType          *string
-	NumberingStrategy   *string
-	MinimumAvailability string
-	QualityProfileID    *string
-	QualityProfileName  *string
-	Status              string
-	LibraryFolderID     *uuid.UUID
-	LibraryFolderPath   *string
-	MediaFolderPath     *string
-	FilePaths           []string
-	MetadataFilePaths   []string
-	SubtitleTargets     []MediaProfileSubtitleTarget
-	ExternalSubtitles   []MediaItemSubtitle
-	ComponentSources    []MediaComponentSource
-	AssemblyRuns        []MediaComponentAssemblyRun
-	ComponentProvenance []MediaComponentProvenance
-	ProviderMappings    []MediaProviderMapping
-	Aliases             []MediaItemAlias
-	EpisodeNumbering    []MediaEpisodeNumbering
-	Tags                []string
-	CreatedAt           time.Time
-	UpdatedAt           time.Time
+	MonitorMode                  string
+	SeriesType                   *string
+	NumberingStrategy            *string
+	MinimumAvailability          string
+	QualityProfileID             *string
+	QualityProfileName           *string
+	Status                       string
+	LibraryFolderID              *uuid.UUID
+	LibraryFolderPath            *string
+	MediaFolderPath              *string
+	FilePaths                    []string
+	MetadataFilePaths            []string
+	SubtitleTargets              []MediaProfileSubtitleTarget
+	SubtitlePreferredMode        string
+	AllowSubtitleReleaseFallback bool
+	ExternalSubtitles            []MediaItemSubtitle
+	ComponentSources             []MediaComponentSource
+	AssemblyRuns                 []MediaComponentAssemblyRun
+	ComponentProvenance          []MediaComponentProvenance
+	ProviderMappings             []MediaProviderMapping
+	Aliases                      []MediaItemAlias
+	EpisodeNumbering             []MediaEpisodeNumbering
+	Tags                         []string
+	CreatedAt                    time.Time
+	UpdatedAt                    time.Time
 }
 
 type MediaItemInput struct {

@@ -75,6 +75,8 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
+		subtitlePreferredMode: 'mixed',
+		allowSubtitleReleaseFallback: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
 		videoTarget: {},
@@ -84,7 +86,7 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 				score: 0
 			}
 		],
-		subtitleTargets: [{ languageId: 'english', score: 0, source: 'any' }],
+		subtitleTargets: [{ languageId: 'english', score: 0 }],
 		customFormatScores: [],
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',

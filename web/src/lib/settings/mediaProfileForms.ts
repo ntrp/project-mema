@@ -14,6 +14,8 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
+		subtitlePreferredMode: 'mixed',
+		allowSubtitleReleaseFallback: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
 		videoTarget: defaultVideoTarget(),
@@ -38,6 +40,8 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		removeUnwantedAudio: profile.removeUnwantedAudio,
 		audioLossyTranscodePolicy: profile.audioLossyTranscodePolicy ?? 'disabled',
 		removeUnwantedSubtitles: profile.removeUnwantedSubtitles,
+		subtitlePreferredMode: profile.subtitlePreferredMode ?? 'mixed',
+		allowSubtitleReleaseFallback: profile.allowSubtitleReleaseFallback,
 		preferredProtocol: profile.preferredProtocol,
 		seriesPackPreference: profile.seriesPackPreference,
 		videoTarget: { ...defaultVideoTarget(), ...(profile.videoTarget ?? {}) },
@@ -69,6 +73,8 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 		removeUnwantedAudio: form.removeUnwantedAudio,
 		audioLossyTranscodePolicy: form.audioLossyTranscodePolicy ?? 'disabled',
 		removeUnwantedSubtitles: form.removeUnwantedSubtitles,
+		subtitlePreferredMode: form.subtitlePreferredMode ?? 'mixed',
+		allowSubtitleReleaseFallback: form.allowSubtitleReleaseFallback,
 		preferredProtocol: form.preferredProtocol ?? 'any',
 		seriesPackPreference: form.seriesPackPreference ?? 'auto',
 		videoTarget: videoTargetFromForm(form),
@@ -94,7 +100,6 @@ export function defaultSubtitleTarget(): MediaProfileRequest['subtitleTargets'][
 	return {
 		languageId: 'EN',
 		score: 0,
-		source: 'any',
 		formats: ['srt']
 	};
 }
@@ -152,7 +157,6 @@ function subtitleTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['s
 		targets.push({
 			languageId,
 			score: normalizedInteger(value.score),
-			source: value.source ?? 'any',
 			formats: uniqueTrimmed(value.formats ?? [])
 		});
 	}

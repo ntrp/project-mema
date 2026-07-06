@@ -19,6 +19,8 @@ type MediaProfile struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
+	SubtitlePreferredMode             string
+	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	VideoTarget                       MediaProfileVideoTarget
@@ -42,6 +44,8 @@ type MediaProfileInput struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
+	SubtitlePreferredMode             string
+	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	VideoTarget                       MediaProfileVideoTarget
@@ -80,6 +84,5 @@ type MediaProfileCustomFormatScore struct {
 type MediaProfileSubtitleTarget struct {
 	LanguageID string
 	Score      int32
-	Source     string
 	Formats    []string
 }

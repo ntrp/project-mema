@@ -53,11 +53,17 @@ func hydrateMediaItemProfile(
 	if item.QualityProfileID == nil {
 		return item, nil
 	}
+	profile, err := storagegen.New(q).GetMediaProfile(ctx, *item.QualityProfileID)
+	if err != nil {
+		return item, err
+	}
 	targets, err := loadMediaProfileSubtitleTargets(ctx, q, *item.QualityProfileID)
 	if err != nil {
 		return item, err
 	}
 	item.SubtitleTargets = targets
+	item.SubtitlePreferredMode = profile.SubtitlePreferredMode
+	item.AllowSubtitleReleaseFallback = profile.AllowSubtitleReleaseFallback
 	return item, nil
 }
 

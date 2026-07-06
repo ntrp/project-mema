@@ -11,6 +11,7 @@ export interface MediaFileDetailRow {
 	type: TrackType;
 	language: string;
 	description: string;
+	chapterSummary?: boolean;
 	missing?: boolean;
 	unwanted?: boolean;
 }
@@ -18,9 +19,37 @@ export interface MediaFileDetailRow {
 export function fileDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
 	const details = [
 		...row.tracks.map((track, index) => trackRow(row, track, index)),
-		...row.chapters.map(chapterRow)
+		...fileChapterDetailRows(row)
 	];
 	return [...details, ...missingLanguageRows(row, details)];
+}
+
+export function fileTrackDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
+	const details = row.tracks.map((track, index) => trackRow(row, track, index));
+	return [...details, ...missingLanguageRows(row, details)];
+}
+
+export function fileChapterDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
+	return row.chapters.map(chapterRow);
+}
+
+export function fileChapterSummaryRow(row: MediaFileRow): MediaFileDetailRow | undefined {
+	if (row.chapters.length === 0) return undefined;
+	const first = row.chapters[0];
+	const last = row.chapters[row.chapters.length - 1];
+	const firstTrackNumber = first.index + 1;
+	const lastTrackNumber = last.index + 1;
+	return {
+		key: 'chapter-summary',
+		trackNumber:
+			firstTrackNumber === lastTrackNumber
+				? String(firstTrackNumber)
+				: `${firstTrackNumber}-${lastTrackNumber}`,
+		type: 'chapter',
+		language: '-',
+		description: chapterCountLabel(row.chapters.length),
+		chapterSummary: true
+	};
 }
 
 function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): MediaFileDetailRow {
@@ -88,6 +117,10 @@ function missingLanguageRows(
 			description: 'Missing expected audio track',
 			missing: true
 		}));
+}
+
+function chapterCountLabel(count: number) {
+	return `${count} ${count === 1 ? 'chapter' : 'chapters'}`;
 }
 
 function trackDescription(row: MediaFileRow, track: MediaFileTrack) {

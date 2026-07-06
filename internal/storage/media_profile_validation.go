@@ -56,6 +56,7 @@ func normalizeMediaProfileInput(
 	normalized.PreferredProtocol = normalizePreferredProtocol(input.PreferredProtocol)
 	normalized.SeriesPackPreference = normalizeSeriesPackPreference(input.SeriesPackPreference)
 	normalized.AudioLossyTranscodePolicy = normalizeLossyPolicy(input.AudioLossyTranscodePolicy)
+	normalized.SubtitlePreferredMode = normalizeSubtitlePreferredMode(input.SubtitlePreferredMode)
 	normalized.QualityIDs = qualityIDs
 	normalized.VideoTarget = normalizeVideoTarget(input.VideoTarget)
 	normalized.AudioTargets = normalizeAudioTargets(input.AudioTargets)
@@ -147,7 +148,6 @@ func normalizeSubtitleTargets(values []MediaProfileSubtitleTarget) []MediaProfil
 		targets = append(targets, MediaProfileSubtitleTarget{
 			LanguageID: language,
 			Score:      value.Score,
-			Source:     normalizeSubtitleSource(value.Source),
 			Formats:    normalizedTextList(value.Formats),
 		})
 	}
@@ -158,12 +158,14 @@ func normalizeLanguageID(value string) string {
 	return strings.ToLower(strings.Join(strings.Fields(value), "-"))
 }
 
-func normalizeSubtitleSource(value string) string {
+func normalizeSubtitlePreferredMode(value string) string {
 	switch strings.TrimSpace(value) {
+	case "any", "mixed":
+		return "mixed"
 	case "embedded", "external":
 		return strings.TrimSpace(value)
 	default:
-		return "any"
+		return "mixed"
 	}
 }
 

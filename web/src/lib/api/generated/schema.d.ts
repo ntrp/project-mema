@@ -3204,6 +3204,8 @@ export interface components {
 			removeUnwantedAudio: boolean;
 			audioLossyTranscodePolicy: components['schemas']['MediaProfileLossyTranscodePolicy'];
 			removeUnwantedSubtitles: boolean;
+			subtitlePreferredMode: components['schemas']['MediaProfileSubtitlePreferredMode'];
+			allowSubtitleReleaseFallback: boolean;
 			/** @enum {string} */
 			preferredProtocol: 'any' | 'torrent' | 'usenet';
 			/** @enum {string} */
@@ -3230,7 +3232,7 @@ export interface components {
 		/** @enum {string} */
 		MediaProfileLossyTranscodePolicy: 'disabled' | 'losslessToLossy' | 'lossyToLossy';
 		/** @enum {string} */
-		MediaProfileSubtitleSource: 'any' | 'embedded' | 'external';
+		MediaProfileSubtitlePreferredMode: 'mixed' | 'embedded' | 'external';
 		MediaProfileAudioTarget: {
 			languageId: string;
 			/** Format: int32 */
@@ -3246,7 +3248,6 @@ export interface components {
 			languageId: string;
 			/** Format: int32 */
 			score: number;
-			source: components['schemas']['MediaProfileSubtitleSource'];
 			formats?: string[];
 		};
 		MediaProfileCustomFormatScore: {

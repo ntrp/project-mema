@@ -35,10 +35,12 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 			{LanguageID: "english", Score: 80},
 			{LanguageID: "Brazilian Portuguese", Score: 50},
 		},
+		SubtitlePreferredMode:        "embedded",
+		AllowSubtitleReleaseFallback: true,
 		SubtitleTargets: []MediaProfileSubtitleTarget{
-			{LanguageID: " English ", Score: 25, Source: "embedded", Formats: []string{" SRT "}},
-			{LanguageID: "english", Score: 10, Source: "external"},
-			{LanguageID: "German", Score: 5, Source: "not-real"},
+			{LanguageID: " English ", Score: 25, Formats: []string{" SRT "}},
+			{LanguageID: "english", Score: 10},
+			{LanguageID: "German", Score: 5},
 		},
 	}, []string{"webdl-1080p", "bluray-2160p"})
 	if err != nil {
@@ -57,6 +59,9 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if input.AudioLossyTranscodePolicy != "lossyToLossy" {
 		t.Fatalf("expected normalized lossy conversion policy, got %q", input.AudioLossyTranscodePolicy)
 	}
+	if input.SubtitlePreferredMode != "embedded" || !input.AllowSubtitleReleaseFallback {
+		t.Fatalf("unexpected subtitle settings: %#v", input)
+	}
 	if len(input.AudioTargets) != 2 {
 		t.Fatalf("expected deduped audio targets, got %#v", input.AudioTargets)
 	}
@@ -66,10 +71,10 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if len(input.SubtitleTargets) != 2 {
 		t.Fatalf("expected deduped subtitle targets, got %#v", input.SubtitleTargets)
 	}
-	if input.SubtitleTargets[0].LanguageID != "english" || input.SubtitleTargets[0].Source != "embedded" || len(input.SubtitleTargets[0].Formats) != 1 || input.SubtitleTargets[0].Formats[0] != "srt" {
+	if input.SubtitleTargets[0].LanguageID != "english" || len(input.SubtitleTargets[0].Formats) != 1 || input.SubtitleTargets[0].Formats[0] != "srt" {
 		t.Fatalf("unexpected first subtitle target: %#v", input.SubtitleTargets[0])
 	}
-	if input.SubtitleTargets[1].LanguageID != "german" || input.SubtitleTargets[1].Source != "any" || input.SubtitleTargets[1].Score != 5 {
+	if input.SubtitleTargets[1].LanguageID != "german" || input.SubtitleTargets[1].Score != 5 {
 		t.Fatalf("unexpected second subtitle target: %#v", input.SubtitleTargets[1])
 	}
 }

@@ -146,6 +146,8 @@ function mediaProfile(): MediaProfile {
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
+		subtitlePreferredMode: 'mixed',
+		allowSubtitleReleaseFallback: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
 		videoTarget: {},
