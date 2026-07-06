@@ -45,11 +45,12 @@ export function mediaFileUpgradeInfo(
 function qualityID(quality: string, formats: string[]) {
 	const normalizedQuality = quality.toLowerCase();
 	const normalizedFormats = formats.map((format) => format.toLowerCase());
-	const source = normalizedFormats.includes('web-dl') || normalizedQuality.startsWith('webdl-')
-		? 'webdl'
-		: normalizedFormats.includes('bluray') || normalizedQuality.startsWith('bluray-')
-			? 'bluray'
-			: '';
+	const source =
+		normalizedFormats.includes('web-dl') || normalizedQuality.startsWith('webdl-')
+			? 'webdl'
+			: normalizedFormats.includes('bluray') || normalizedQuality.startsWith('bluray-')
+				? 'bluray'
+				: '';
 	const resolution = normalizedQuality.match(/\b(2160p|1080p|720p|576p|480p)\b/)?.[1];
 	if (!source || !resolution) return undefined;
 	return `${source}-${resolution}`;

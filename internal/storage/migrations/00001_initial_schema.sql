@@ -355,6 +355,7 @@ on conflict (id) do nothing;
 create table if not exists app.media_items (
     id uuid primary key,
     media_type text not null check (media_type in ('movie', 'serie')),
+    content_kind text not null default 'standard' check (content_kind in ('standard', 'anime')),
     title text not null,
     year integer,
     monitored boolean not null default true,
@@ -368,6 +369,7 @@ create table if not exists app.media_items (
     metadata_status text,
     original_language text,
     series_type text check (series_type in ('standard', 'daily', 'absolute')),
+    numbering_strategy text check (numbering_strategy in ('tmdb_season_episode', 'tvdb_season_episode', 'anidb_absolute', 'manual')),
     release_date text,
     first_air_date text,
     runtime_minutes integer,
@@ -440,6 +442,88 @@ create index if not exists idx_media_episodes_media_item_id
 create index if not exists idx_media_episodes_season_id
     on app.media_episodes (season_id, episode_number);
 
+create table if not exists app.media_provider_mappings (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    season_id uuid references app.media_seasons(id) on delete cascade,
+    episode_id uuid references app.media_episodes(id) on delete cascade,
+    entity_type text not null check (entity_type in ('media_item', 'season', 'episode')),
+    provider_name text not null check (provider_name in ('tmdb', 'tvdb', 'anilist', 'anidb')),
+    provider_entity_type text not null,
+    external_id text not null,
+    canonical boolean not null default false,
+    confidence double precision,
+    source jsonb not null default '{}'::jsonb check (jsonb_typeof(source) = 'object'),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint media_provider_mapping_entity_check check (
+        (entity_type = 'media_item' and season_id is null and episode_id is null)
+        or (entity_type = 'season' and season_id is not null and episode_id is null)
+        or (entity_type = 'episode' and episode_id is not null)
+    )
+);
+
+create index if not exists idx_media_provider_mappings_media_item
+    on app.media_provider_mappings (media_item_id, provider_name, external_id);
+
+create unique index if not exists idx_media_provider_mappings_unique_entity
+    on app.media_provider_mappings (
+        media_item_id,
+        coalesce(season_id, '00000000-0000-0000-0000-000000000000'::uuid),
+        coalesce(episode_id, '00000000-0000-0000-0000-000000000000'::uuid),
+        provider_name,
+        provider_entity_type,
+        external_id
+    );
+
+create table if not exists app.media_item_aliases (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    alias text not null,
+    normalized_alias text not null,
+    language text,
+    alias_kind text not null check (alias_kind in ('canonical', 'romaji', 'english', 'native', 'synonym', 'release_title')),
+    provider_name text check (provider_name in ('tmdb', 'tvdb', 'anilist', 'anidb')),
+    provider_mapping_id uuid references app.media_provider_mappings(id) on delete set null,
+    source jsonb not null default '{}'::jsonb check (jsonb_typeof(source) = 'object'),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_media_item_aliases_media_item
+    on app.media_item_aliases (media_item_id, alias_kind);
+
+create unique index if not exists idx_media_item_aliases_unique_value
+    on app.media_item_aliases (
+        media_item_id,
+        normalized_alias,
+        alias_kind,
+        coalesce(language, ''),
+        coalesce(provider_name, '')
+    );
+
+create table if not exists app.media_episode_numbering (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    season_id uuid references app.media_seasons(id) on delete cascade,
+    episode_id uuid not null references app.media_episodes(id) on delete cascade,
+    provider_name text not null check (provider_name in ('tmdb', 'tvdb', 'anilist', 'anidb')),
+    numbering_scheme text not null check (numbering_scheme in ('season_episode', 'absolute')),
+    season_number integer check (season_number is null or season_number >= 0),
+    episode_number integer check (episode_number is null or episode_number >= 0),
+    absolute_number integer check (absolute_number is null or absolute_number >= 0),
+    source jsonb not null default '{}'::jsonb check (jsonb_typeof(source) = 'object'),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint media_episode_numbering_value_check check (
+        (numbering_scheme = 'season_episode' and season_number is not null and episode_number is not null)
+        or (numbering_scheme = 'absolute' and absolute_number is not null)
+    )
+);
+
+create unique index if not exists idx_media_episode_numbering_unique_scheme
+    on app.media_episode_numbering (episode_id, provider_name, numbering_scheme);
+
 create table if not exists app.tags (
     id uuid primary key,
     name text not null,
@@ -495,7 +579,7 @@ create table if not exists app.media_item_tags (
 create table if not exists app.metadata_providers (
     id uuid primary key,
     name text not null,
-    type text not null check (type in ('tmdb', 'tvdb')),
+    type text not null check (type in ('tmdb', 'tvdb', 'anilist', 'anidb')),
     base_url text not null,
     api_key text,
     pin text,
@@ -510,6 +594,15 @@ create table if not exists app.metadata_providers (
 
 create index if not exists idx_metadata_providers_priority
     on app.metadata_providers (priority, name);
+
+-- +goose StatementBegin
+do $$
+begin
+    alter table app.metadata_providers drop constraint if exists metadata_providers_type_check;
+    alter table app.metadata_providers
+        add constraint metadata_providers_type_check check (type in ('tmdb', 'tvdb', 'anilist', 'anidb'));
+end $$;
+-- +goose StatementEnd
 
 create table if not exists app.metadata_search_cache (
     provider_id uuid not null references app.metadata_providers(id) on delete cascade,
@@ -598,6 +691,12 @@ alter table app.media_items
     add column if not exists series_type text;
 
 alter table app.media_items
+    add column if not exists content_kind text not null default 'standard';
+
+alter table app.media_items
+    add column if not exists numbering_strategy text;
+
+alter table app.media_items
     add column if not exists keywords jsonb not null default '[]'::jsonb;
 
 alter table app.media_items
@@ -611,6 +710,8 @@ do $$
 begin
     alter table app.media_items drop constraint if exists media_items_monitor_mode_check;
     alter table app.media_items drop constraint if exists media_items_series_type_check;
+    alter table app.media_items drop constraint if exists media_items_content_kind_check;
+    alter table app.media_items drop constraint if exists media_items_numbering_strategy_check;
     alter table app.media_items drop constraint if exists media_items_keywords_check;
     alter table app.media_items drop constraint if exists media_items_recommendations_check;
     alter table app.media_items drop constraint if exists media_items_similar_media_check;
@@ -618,6 +719,10 @@ begin
         add constraint media_items_monitor_mode_check check (monitor_mode in ('none', 'only_media', 'collection', 'all_episodes', 'future_episodes', 'missing_episodes', 'existing_episodes', 'no_specials'));
     alter table app.media_items
         add constraint media_items_series_type_check check (series_type is null or series_type in ('standard', 'daily', 'absolute'));
+    alter table app.media_items
+        add constraint media_items_content_kind_check check (content_kind in ('standard', 'anime'));
+    alter table app.media_items
+        add constraint media_items_numbering_strategy_check check (numbering_strategy is null or numbering_strategy in ('tmdb_season_episode', 'tvdb_season_episode', 'anidb_absolute', 'manual'));
     alter table app.media_items
         add constraint media_items_keywords_check check (jsonb_typeof(keywords) = 'array');
     alter table app.media_items

@@ -427,6 +427,24 @@ func (e LibraryScanItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaContentKind.
+const (
+	MediaContentKindAnime    MediaContentKind = "anime"
+	MediaContentKindStandard MediaContentKind = "standard"
+)
+
+// Valid indicates whether the value is a known member of the MediaContentKind enum.
+func (e MediaContentKind) Valid() bool {
+	switch e {
+	case MediaContentKindAnime:
+		return true
+	case MediaContentKindStandard:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaDiscoverMediaType.
 const (
 	MediaDiscoverMediaTypeMixed MediaDiscoverMediaType = "mixed"
@@ -442,6 +460,24 @@ func (e MediaDiscoverMediaType) Valid() bool {
 	case MediaDiscoverMediaTypeMovie:
 		return true
 	case MediaDiscoverMediaTypeSerie:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaEpisodeNumberingNumberingScheme.
+const (
+	Absolute      MediaEpisodeNumberingNumberingScheme = "absolute"
+	SeasonEpisode MediaEpisodeNumberingNumberingScheme = "season_episode"
+)
+
+// Valid indicates whether the value is a known member of the MediaEpisodeNumberingNumberingScheme enum.
+func (e MediaEpisodeNumberingNumberingScheme) Valid() bool {
+	switch e {
+	case Absolute:
+		return true
+	case SeasonEpisode:
 		return true
 	default:
 		return false
@@ -646,6 +682,36 @@ func (e MediaFileTrackType) Valid() bool {
 	}
 }
 
+// Defines values for MediaItemAliasKind.
+const (
+	MediaItemAliasKindCanonical    MediaItemAliasKind = "canonical"
+	MediaItemAliasKindEnglish      MediaItemAliasKind = "english"
+	MediaItemAliasKindNative       MediaItemAliasKind = "native"
+	MediaItemAliasKindReleaseTitle MediaItemAliasKind = "release_title"
+	MediaItemAliasKindRomaji       MediaItemAliasKind = "romaji"
+	MediaItemAliasKindSynonym      MediaItemAliasKind = "synonym"
+)
+
+// Valid indicates whether the value is a known member of the MediaItemAliasKind enum.
+func (e MediaItemAliasKind) Valid() bool {
+	switch e {
+	case MediaItemAliasKindCanonical:
+		return true
+	case MediaItemAliasKindEnglish:
+		return true
+	case MediaItemAliasKindNative:
+		return true
+	case MediaItemAliasKindReleaseTitle:
+		return true
+	case MediaItemAliasKindRomaji:
+		return true
+	case MediaItemAliasKindSynonym:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaItemStatus.
 const (
 	Downloaded  MediaItemStatus = "downloaded"
@@ -697,6 +763,30 @@ func (e MediaMonitorMode) Valid() bool {
 	case None:
 		return true
 	case OnlyMedia:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaNumberingStrategy.
+const (
+	MediaNumberingStrategyAnidbAbsolute     MediaNumberingStrategy = "anidb_absolute"
+	MediaNumberingStrategyManual            MediaNumberingStrategy = "manual"
+	MediaNumberingStrategyTmdbSeasonEpisode MediaNumberingStrategy = "tmdb_season_episode"
+	MediaNumberingStrategyTvdbSeasonEpisode MediaNumberingStrategy = "tvdb_season_episode"
+)
+
+// Valid indicates whether the value is a known member of the MediaNumberingStrategy enum.
+func (e MediaNumberingStrategy) Valid() bool {
+	switch e {
+	case MediaNumberingStrategyAnidbAbsolute:
+		return true
+	case MediaNumberingStrategyManual:
+		return true
+	case MediaNumberingStrategyTmdbSeasonEpisode:
+		return true
+	case MediaNumberingStrategyTvdbSeasonEpisode:
 		return true
 	default:
 		return false
@@ -808,6 +898,27 @@ func (e MediaProfileSubtitleLanguageSubtitleType) Valid() bool {
 	}
 }
 
+// Defines values for MediaProviderMappingEntityType.
+const (
+	MediaProviderMappingEntityTypeEpisode   MediaProviderMappingEntityType = "episode"
+	MediaProviderMappingEntityTypeMediaItem MediaProviderMappingEntityType = "media_item"
+	MediaProviderMappingEntityTypeSeason    MediaProviderMappingEntityType = "season"
+)
+
+// Valid indicates whether the value is a known member of the MediaProviderMappingEntityType enum.
+func (e MediaProviderMappingEntityType) Valid() bool {
+	switch e {
+	case MediaProviderMappingEntityTypeEpisode:
+		return true
+	case MediaProviderMappingEntityTypeMediaItem:
+		return true
+	case MediaProviderMappingEntityTypeSeason:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaRenamePreviewRowStatus.
 const (
 	MediaRenamePreviewRowStatusApplied   MediaRenamePreviewRowStatus = "applied"
@@ -864,16 +975,16 @@ func (e MediaRequestStatus) Valid() bool {
 
 // Defines values for MediaSearchSourceType.
 const (
-	MediaSearchSourceTypeLibrary  MediaSearchSourceType = "library"
-	MediaSearchSourceTypeProvider MediaSearchSourceType = "provider"
+	Library  MediaSearchSourceType = "library"
+	Provider MediaSearchSourceType = "provider"
 )
 
 // Valid indicates whether the value is a known member of the MediaSearchSourceType enum.
 func (e MediaSearchSourceType) Valid() bool {
 	switch e {
-	case MediaSearchSourceTypeLibrary:
+	case Library:
 		return true
-	case MediaSearchSourceTypeProvider:
+	case Provider:
 		return true
 	default:
 		return false
@@ -921,13 +1032,19 @@ func (e MetadataCacheEntryCacheKind) Valid() bool {
 
 // Defines values for MetadataProviderType.
 const (
-	Tmdb MetadataProviderType = "tmdb"
-	Tvdb MetadataProviderType = "tvdb"
+	Anidb   MetadataProviderType = "anidb"
+	Anilist MetadataProviderType = "anilist"
+	Tmdb    MetadataProviderType = "tmdb"
+	Tvdb    MetadataProviderType = "tvdb"
 )
 
 // Valid indicates whether the value is a known member of the MetadataProviderType enum.
 func (e MetadataProviderType) Valid() bool {
 	switch e {
+	case Anidb:
+		return true
+	case Anilist:
+		return true
 	case Tmdb:
 		return true
 	case Tvdb:
@@ -1002,19 +1119,19 @@ func (e ReleaseCandidateMatchSeverity) Valid() bool {
 
 // Defines values for SeriesType.
 const (
-	Absolute SeriesType = "absolute"
-	Daily    SeriesType = "daily"
-	Standard SeriesType = "standard"
+	SeriesTypeAbsolute SeriesType = "absolute"
+	SeriesTypeDaily    SeriesType = "daily"
+	SeriesTypeStandard SeriesType = "standard"
 )
 
 // Valid indicates whether the value is a known member of the SeriesType enum.
 func (e SeriesType) Valid() bool {
 	switch e {
-	case Absolute:
+	case SeriesTypeAbsolute:
 		return true
-	case Daily:
+	case SeriesTypeDaily:
 		return true
-	case Standard:
+	case SeriesTypeStandard:
 		return true
 	default:
 		return false
@@ -1954,6 +2071,9 @@ type MediaCollection struct {
 	Results      []MediaSearchResult  `json:"results"`
 }
 
+// MediaContentKind defines model for MediaContentKind.
+type MediaContentKind string
+
 // MediaDiscoverMediaType defines model for MediaDiscoverMediaType.
 type MediaDiscoverMediaType string
 
@@ -1970,6 +2090,21 @@ type MediaDiscoverSection struct {
 	Results      []MediaSearchResult    `json:"results"`
 	Title        string                 `json:"title"`
 }
+
+// MediaEpisodeNumbering defines model for MediaEpisodeNumbering.
+type MediaEpisodeNumbering struct {
+	AbsoluteNumber  *int32                               `json:"absoluteNumber,omitempty"`
+	EpisodeId       openapi_types.UUID                   `json:"episodeId"`
+	EpisodeNumber   *int32                               `json:"episodeNumber,omitempty"`
+	Id              openapi_types.UUID                   `json:"id"`
+	NumberingScheme MediaEpisodeNumberingNumberingScheme `json:"numberingScheme"`
+	ProviderName    MetadataProviderType                 `json:"providerName"`
+	SeasonId        *openapi_types.UUID                  `json:"seasonId,omitempty"`
+	SeasonNumber    *int32                               `json:"seasonNumber,omitempty"`
+}
+
+// MediaEpisodeNumberingNumberingScheme defines model for MediaEpisodeNumbering.NumberingScheme.
+type MediaEpisodeNumberingNumberingScheme string
 
 // MediaFileChapter defines model for MediaFileChapter.
 type MediaFileChapter struct {
@@ -2092,68 +2227,88 @@ type MediaGroupedSearchResponse struct {
 
 // MediaItem defines model for MediaItem.
 type MediaItem struct {
-	BackdropPath        *string                `json:"backdropPath,omitempty"`
-	Cast                *[]MediaMetadataPerson `json:"cast,omitempty"`
-	CollectionId        *string                `json:"collectionId,omitempty"`
-	CollectionName      *string                `json:"collectionName,omitempty"`
-	CreatedAt           time.Time              `json:"createdAt"`
-	Crew                *[]MediaMetadataPerson `json:"crew,omitempty"`
-	EpisodeCount        *int32                 `json:"episodeCount,omitempty"`
-	ExternalId          *string                `json:"externalId,omitempty"`
-	ExternalProvider    *string                `json:"externalProvider,omitempty"`
-	Facts               *[]MediaMetadataFact   `json:"facts,omitempty"`
-	FilePaths           []string               `json:"filePaths"`
-	Files               *[]MediaFileInfo       `json:"files,omitempty"`
-	FirstAirDate        *string                `json:"firstAirDate,omitempty"`
-	Genres              *[]string              `json:"genres,omitempty"`
-	Id                  openapi_types.UUID     `json:"id"`
-	Keywords            *[]string              `json:"keywords,omitempty"`
-	LibraryFolderId     *openapi_types.UUID    `json:"libraryFolderId,omitempty"`
-	LibraryFolderPath   *string                `json:"libraryFolderPath,omitempty"`
-	MediaFolderPath     *string                `json:"mediaFolderPath,omitempty"`
-	MetadataFilePaths   []string               `json:"metadataFilePaths"`
-	MetadataStatus      *string                `json:"metadataStatus,omitempty"`
-	MinimumAvailability MinimumAvailability    `json:"minimumAvailability"`
-	MonitorMode         MediaMonitorMode       `json:"monitorMode"`
-	Monitored           bool                   `json:"monitored"`
-	OriginalLanguage    *string                `json:"originalLanguage,omitempty"`
-	Overview            *string                `json:"overview,omitempty"`
-	PosterPath          *string                `json:"posterPath,omitempty"`
-	QualityProfileId    *string                `json:"qualityProfileId,omitempty"`
-	QualityProfileName  *string                `json:"qualityProfileName,omitempty"`
-	Recommendations     *[]MediaSearchResult   `json:"recommendations,omitempty"`
-	ReleaseDate         *string                `json:"releaseDate,omitempty"`
-	RuntimeMinutes      *int32                 `json:"runtimeMinutes,omitempty"`
-	SeasonCount         *int32                 `json:"seasonCount,omitempty"`
-	Seasons             *[]MediaMetadataSeason `json:"seasons,omitempty"`
-	SeriesType          *SeriesType            `json:"seriesType,omitempty"`
-	Similar             *[]MediaSearchResult   `json:"similar,omitempty"`
-	Status              MediaItemStatus        `json:"status"`
-	Tags                *[]string              `json:"tags,omitempty"`
-	Title               string                 `json:"title"`
-	Type                MediaType              `json:"type"`
-	UpdatedAt           time.Time              `json:"updatedAt"`
-	VoteAverage         *float64               `json:"voteAverage,omitempty"`
-	Year                *int32                 `json:"year,omitempty"`
+	Aliases             *[]MediaItemAlias        `json:"aliases,omitempty"`
+	BackdropPath        *string                  `json:"backdropPath,omitempty"`
+	Cast                *[]MediaMetadataPerson   `json:"cast,omitempty"`
+	CollectionId        *string                  `json:"collectionId,omitempty"`
+	CollectionName      *string                  `json:"collectionName,omitempty"`
+	ContentKind         *MediaContentKind        `json:"contentKind,omitempty"`
+	CreatedAt           time.Time                `json:"createdAt"`
+	Crew                *[]MediaMetadataPerson   `json:"crew,omitempty"`
+	EpisodeCount        *int32                   `json:"episodeCount,omitempty"`
+	EpisodeNumbering    *[]MediaEpisodeNumbering `json:"episodeNumbering,omitempty"`
+	ExternalId          *string                  `json:"externalId,omitempty"`
+	ExternalProvider    *string                  `json:"externalProvider,omitempty"`
+	Facts               *[]MediaMetadataFact     `json:"facts,omitempty"`
+	FilePaths           []string                 `json:"filePaths"`
+	Files               *[]MediaFileInfo         `json:"files,omitempty"`
+	FirstAirDate        *string                  `json:"firstAirDate,omitempty"`
+	Genres              *[]string                `json:"genres,omitempty"`
+	Id                  openapi_types.UUID       `json:"id"`
+	Keywords            *[]string                `json:"keywords,omitempty"`
+	LibraryFolderId     *openapi_types.UUID      `json:"libraryFolderId,omitempty"`
+	LibraryFolderPath   *string                  `json:"libraryFolderPath,omitempty"`
+	MediaFolderPath     *string                  `json:"mediaFolderPath,omitempty"`
+	MetadataFilePaths   []string                 `json:"metadataFilePaths"`
+	MetadataStatus      *string                  `json:"metadataStatus,omitempty"`
+	MinimumAvailability MinimumAvailability      `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode         `json:"monitorMode"`
+	Monitored           bool                     `json:"monitored"`
+	NumberingStrategy   *MediaNumberingStrategy  `json:"numberingStrategy,omitempty"`
+	OriginalLanguage    *string                  `json:"originalLanguage,omitempty"`
+	Overview            *string                  `json:"overview,omitempty"`
+	PosterPath          *string                  `json:"posterPath,omitempty"`
+	ProviderMappings    *[]MediaProviderMapping  `json:"providerMappings,omitempty"`
+	QualityProfileId    *string                  `json:"qualityProfileId,omitempty"`
+	QualityProfileName  *string                  `json:"qualityProfileName,omitempty"`
+	Recommendations     *[]MediaSearchResult     `json:"recommendations,omitempty"`
+	ReleaseDate         *string                  `json:"releaseDate,omitempty"`
+	RuntimeMinutes      *int32                   `json:"runtimeMinutes,omitempty"`
+	SeasonCount         *int32                   `json:"seasonCount,omitempty"`
+	Seasons             *[]MediaMetadataSeason   `json:"seasons,omitempty"`
+	SeriesType          *SeriesType              `json:"seriesType,omitempty"`
+	Similar             *[]MediaSearchResult     `json:"similar,omitempty"`
+	Status              MediaItemStatus          `json:"status"`
+	Tags                *[]string                `json:"tags,omitempty"`
+	Title               string                   `json:"title"`
+	Type                MediaType                `json:"type"`
+	UpdatedAt           time.Time                `json:"updatedAt"`
+	VoteAverage         *float64                 `json:"voteAverage,omitempty"`
+	Year                *int32                   `json:"year,omitempty"`
 }
+
+// MediaItemAlias defines model for MediaItemAlias.
+type MediaItemAlias struct {
+	Alias           string                `json:"alias"`
+	Id              openapi_types.UUID    `json:"id"`
+	Kind            MediaItemAliasKind    `json:"kind"`
+	Language        *string               `json:"language,omitempty"`
+	NormalizedAlias string                `json:"normalizedAlias"`
+	ProviderName    *MetadataProviderType `json:"providerName,omitempty"`
+}
+
+// MediaItemAliasKind defines model for MediaItemAlias.Kind.
+type MediaItemAliasKind string
 
 // MediaItemCreateRequest defines model for MediaItemCreateRequest.
 type MediaItemCreateRequest struct {
-	ExternalId          *string             `json:"externalId,omitempty"`
-	ExternalProvider    *string             `json:"externalProvider,omitempty"`
-	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
-	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
-	Monitored           bool                `json:"monitored"`
-	Overview            *string             `json:"overview,omitempty"`
-	PosterPath          *string             `json:"posterPath,omitempty"`
-	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
-	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
-	StartSearch         bool                `json:"startSearch"`
-	Tags                *[]string           `json:"tags,omitempty"`
-	Title               string              `json:"title"`
-	Type                MediaType           `json:"type"`
-	Year                *int32              `json:"year,omitempty"`
+	ContentKind         *MediaContentKind       `json:"contentKind,omitempty"`
+	ExternalId          *string                 `json:"externalId,omitempty"`
+	ExternalProvider    *string                 `json:"externalProvider,omitempty"`
+	LibraryFolderId     *openapi_types.UUID     `json:"libraryFolderId,omitempty"`
+	MinimumAvailability MinimumAvailability     `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode        `json:"monitorMode"`
+	Monitored           bool                    `json:"monitored"`
+	NumberingStrategy   *MediaNumberingStrategy `json:"numberingStrategy,omitempty"`
+	Overview            *string                 `json:"overview,omitempty"`
+	PosterPath          *string                 `json:"posterPath,omitempty"`
+	QualityProfileId    *string                 `json:"qualityProfileId,omitempty"`
+	SeriesType          *SeriesType             `json:"seriesType,omitempty"`
+	StartSearch         bool                    `json:"startSearch"`
+	Tags                *[]string               `json:"tags,omitempty"`
+	Title               string                  `json:"title"`
+	Type                MediaType               `json:"type"`
+	Year                *int32                  `json:"year,omitempty"`
 }
 
 // MediaItemListResponse defines model for MediaItemListResponse.
@@ -2163,20 +2318,22 @@ type MediaItemListResponse struct {
 
 // MediaItemRequest defines model for MediaItemRequest.
 type MediaItemRequest struct {
-	ExternalId          *string             `json:"externalId,omitempty"`
-	ExternalProvider    *string             `json:"externalProvider,omitempty"`
-	LibraryFolderId     *openapi_types.UUID `json:"libraryFolderId,omitempty"`
-	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
-	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
-	Monitored           bool                `json:"monitored"`
-	Overview            *string             `json:"overview,omitempty"`
-	PosterPath          *string             `json:"posterPath,omitempty"`
-	QualityProfileId    *string             `json:"qualityProfileId,omitempty"`
-	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
-	Tags                *[]string           `json:"tags,omitempty"`
-	Title               string              `json:"title"`
-	Type                MediaType           `json:"type"`
-	Year                *int32              `json:"year,omitempty"`
+	ContentKind         *MediaContentKind       `json:"contentKind,omitempty"`
+	ExternalId          *string                 `json:"externalId,omitempty"`
+	ExternalProvider    *string                 `json:"externalProvider,omitempty"`
+	LibraryFolderId     *openapi_types.UUID     `json:"libraryFolderId,omitempty"`
+	MinimumAvailability MinimumAvailability     `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode        `json:"monitorMode"`
+	Monitored           bool                    `json:"monitored"`
+	NumberingStrategy   *MediaNumberingStrategy `json:"numberingStrategy,omitempty"`
+	Overview            *string                 `json:"overview,omitempty"`
+	PosterPath          *string                 `json:"posterPath,omitempty"`
+	QualityProfileId    *string                 `json:"qualityProfileId,omitempty"`
+	SeriesType          *SeriesType             `json:"seriesType,omitempty"`
+	Tags                *[]string               `json:"tags,omitempty"`
+	Title               string                  `json:"title"`
+	Type                MediaType               `json:"type"`
+	Year                *int32                  `json:"year,omitempty"`
 }
 
 // MediaItemStatus defines model for MediaItemStatus.
@@ -2267,6 +2424,9 @@ type MediaMetadataSeason struct {
 // MediaMonitorMode defines model for MediaMonitorMode.
 type MediaMonitorMode string
 
+// MediaNumberingStrategy defines model for MediaNumberingStrategy.
+type MediaNumberingStrategy string
+
 // MediaProfile defines model for MediaProfile.
 type MediaProfile struct {
 	CreatedAt                         time.Time                        `json:"createdAt"`
@@ -2350,6 +2510,22 @@ type MediaProfileSubtitleLanguage struct {
 
 // MediaProfileSubtitleLanguageSubtitleType defines model for MediaProfileSubtitleLanguage.SubtitleType.
 type MediaProfileSubtitleLanguageSubtitleType string
+
+// MediaProviderMapping defines model for MediaProviderMapping.
+type MediaProviderMapping struct {
+	Canonical          bool                           `json:"canonical"`
+	Confidence         *float64                       `json:"confidence,omitempty"`
+	EntityType         MediaProviderMappingEntityType `json:"entityType"`
+	EpisodeId          *openapi_types.UUID            `json:"episodeId,omitempty"`
+	ExternalId         string                         `json:"externalId"`
+	Id                 openapi_types.UUID             `json:"id"`
+	ProviderEntityType string                         `json:"providerEntityType"`
+	ProviderName       MetadataProviderType           `json:"providerName"`
+	SeasonId           *openapi_types.UUID            `json:"seasonId,omitempty"`
+}
+
+// MediaProviderMappingEntityType defines model for MediaProviderMapping.EntityType.
+type MediaProviderMappingEntityType string
 
 // MediaRenameApplyResponse defines model for MediaRenameApplyResponse.
 type MediaRenameApplyResponse struct {

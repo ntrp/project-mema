@@ -124,11 +124,7 @@
 		</div>
 		<div class="space-y-2">
 			<Label for="indexer-api-key">API key</Label>
-			<SecretInput
-				id="indexer-api-key"
-				bind:value={form.apiKey}
-				autocomplete="off"
-			/>
+			<SecretInput id="indexer-api-key" bind:value={form.apiKey} autocomplete="off" />
 		</div>
 		<div class="space-y-2">
 			<Label for="indexer-categories">Categories</Label>

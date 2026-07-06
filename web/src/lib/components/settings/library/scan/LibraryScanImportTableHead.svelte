@@ -27,6 +27,7 @@
 		<Table.Head class="w-px whitespace-nowrap">Quality profile</Table.Head>
 		<Table.Head class="w-px whitespace-nowrap">Monitor</Table.Head>
 		<Table.Head class="w-px whitespace-nowrap">Minimum Availability</Table.Head>
-		<Table.Head class="w-px whitespace-nowrap">{showSeriesControls ? 'Series type' : ''}</Table.Head>
+		<Table.Head class="w-px whitespace-nowrap">{showSeriesControls ? 'Series type' : ''}</Table.Head
+		>
 	</Table.Row>
 </Table.Header>

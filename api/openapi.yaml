@@ -4701,6 +4701,18 @@ components:
               type: string
             metadataStatus:
               type: string
+            providerMappings:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaProviderMapping"
+            aliases:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaItemAlias"
+            episodeNumbering:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaEpisodeNumbering"
             originalLanguage:
               type: string
             releaseDate:
@@ -4798,10 +4810,14 @@ components:
           maximum: 3000
         monitored:
           type: boolean
+        contentKind:
+          $ref: "#/components/schemas/MediaContentKind"
         monitorMode:
           $ref: "#/components/schemas/MediaMonitorMode"
         seriesType:
           $ref: "#/components/schemas/SeriesType"
+        numberingStrategy:
+          $ref: "#/components/schemas/MediaNumberingStrategy"
         minimumAvailability:
           $ref: "#/components/schemas/MinimumAvailability"
         externalProvider:
@@ -4828,6 +4844,118 @@ components:
             type: string
             minLength: 1
             maxLength: 80
+    MediaContentKind:
+      type: string
+      enum:
+        - standard
+        - anime
+    MediaNumberingStrategy:
+      type: string
+      enum:
+        - tmdb_season_episode
+        - tvdb_season_episode
+        - anidb_absolute
+        - manual
+    MediaProviderMapping:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - entityType
+        - providerName
+        - providerEntityType
+        - externalId
+        - canonical
+      properties:
+        id:
+          type: string
+          format: uuid
+        seasonId:
+          type: string
+          format: uuid
+        episodeId:
+          type: string
+          format: uuid
+        entityType:
+          type: string
+          enum:
+            - media_item
+            - season
+            - episode
+        providerName:
+          $ref: "#/components/schemas/MetadataProviderType"
+        providerEntityType:
+          type: string
+        externalId:
+          type: string
+        canonical:
+          type: boolean
+        confidence:
+          type: number
+          format: double
+    MediaItemAlias:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - alias
+        - normalizedAlias
+        - kind
+      properties:
+        id:
+          type: string
+          format: uuid
+        alias:
+          type: string
+        normalizedAlias:
+          type: string
+        language:
+          type: string
+        kind:
+          type: string
+          enum:
+            - canonical
+            - romaji
+            - english
+            - native
+            - synonym
+            - release_title
+        providerName:
+          $ref: "#/components/schemas/MetadataProviderType"
+    MediaEpisodeNumbering:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - episodeId
+        - providerName
+        - numberingScheme
+      properties:
+        id:
+          type: string
+          format: uuid
+        seasonId:
+          type: string
+          format: uuid
+        episodeId:
+          type: string
+          format: uuid
+        providerName:
+          $ref: "#/components/schemas/MetadataProviderType"
+        numberingScheme:
+          type: string
+          enum:
+            - season_episode
+            - absolute
+        seasonNumber:
+          type: integer
+          format: int32
+        episodeNumber:
+          type: integer
+          format: int32
+        absoluteNumber:
+          type: integer
+          format: int32
     MediaItemCreateRequest:
       allOf:
         - $ref: "#/components/schemas/MediaItemRequest"
@@ -7401,6 +7529,8 @@ components:
       enum:
         - tmdb
         - tvdb
+        - anilist
+        - anidb
     SubtitleProviderListResponse:
       type: object
       additionalProperties: false

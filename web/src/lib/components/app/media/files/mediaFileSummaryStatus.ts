@@ -21,7 +21,10 @@ export function subtitleSatisfaction(row: MediaFileRow): MediaFileSummaryStatus 
 		return { state: 'ignored', label: 'Ignored' };
 	}
 	if (satisfaction.state === 'satisfied') {
-		return { state: 'satisfied', label: `Satisfied: ${languageList(satisfaction.matchedLanguages)}` };
+		return {
+			state: 'satisfied',
+			label: `Satisfied: ${languageList(satisfaction.matchedLanguages)}`
+		};
 	}
 	return { state: 'missing', label: `Missing: ${languageList(satisfaction.missingLanguages)}` };
 }

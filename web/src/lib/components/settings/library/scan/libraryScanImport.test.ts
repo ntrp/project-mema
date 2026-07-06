@@ -86,10 +86,15 @@ describe('library scan import payloads', () => {
 		const drafts = {
 			'movie-1': movieDraft({ matched: match('movie-1', 'movie') }),
 			'series-1': movieDraft({ matched: match('series-1', 'serie'), monitorMode: 'all_episodes' }),
-				'unmatched-1': movieDraft({ matched: undefined, monitorMode: 'none' })
-			};
+			'unmatched-1': movieDraft({ matched: undefined, monitorMode: 'none' })
+		};
 		applyMovieOptions(matchedRowsByKind(rows, drafts, 'movie'), drafts, 'collection', 'announced');
-		applySeriesOptions(matchedRowsByKind(rows, drafts, 'series'), drafts, 'missing_episodes', 'daily');
+		applySeriesOptions(
+			matchedRowsByKind(rows, drafts, 'series'),
+			drafts,
+			'missing_episodes',
+			'daily'
+		);
 		expect(drafts['movie-1'].monitorMode).toBe('collection');
 		expect(drafts['movie-1'].minimumAvailability).toBe('announced');
 		expect(drafts['series-1'].monitorMode).toBe('missing_episodes');

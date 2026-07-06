@@ -40,68 +40,73 @@ const updateMediaItemMetadataRecord = `-- name: UpdateMediaItemMetadataRecord :e
 update app.media_items
 set
     media_type = $1,
-    title = $2,
-    year = $3,
-    external_provider = $4,
-    external_id = $5,
-    overview = $6,
-    poster_path = $7,
-    collection_id = $8,
-    collection_name = $9,
-    backdrop_path = $10,
-    metadata_status = $11,
-    original_language = $12,
-    release_date = $13,
-    first_air_date = $14,
-    runtime_minutes = $15,
-    season_count = $16,
-    episode_count = $17,
-    vote_average = $18,
-    genres = $19::jsonb,
-    keywords = $20::jsonb,
-    facts = $21::jsonb,
-    seasons = $22::jsonb,
-    cast_members = $23::jsonb,
-    crew_members = $24::jsonb,
-    recommendations = $25::jsonb,
-    similar_media = $26::jsonb,
+    content_kind = $2,
+    title = $3,
+    year = $4,
+    external_provider = $5,
+    external_id = $6,
+    overview = $7,
+    poster_path = $8,
+    collection_id = $9,
+    collection_name = $10,
+    backdrop_path = $11,
+    metadata_status = $12,
+    original_language = $13,
+    numbering_strategy = $14,
+    release_date = $15,
+    first_air_date = $16,
+    runtime_minutes = $17,
+    season_count = $18,
+    episode_count = $19,
+    vote_average = $20,
+    genres = $21::jsonb,
+    keywords = $22::jsonb,
+    facts = $23::jsonb,
+    seasons = $24::jsonb,
+    cast_members = $25::jsonb,
+    crew_members = $26::jsonb,
+    recommendations = $27::jsonb,
+    similar_media = $28::jsonb,
     updated_at = now()
-where id = $27
+where id = $29
 `
 
 type UpdateMediaItemMetadataRecordParams struct {
-	MediaType        string
-	Title            string
-	Year             pgtype.Int4
-	ExternalProvider pgtype.Text
-	ExternalID       pgtype.Text
-	Overview         pgtype.Text
-	PosterPath       pgtype.Text
-	CollectionID     pgtype.Text
-	CollectionName   pgtype.Text
-	BackdropPath     pgtype.Text
-	MetadataStatus   pgtype.Text
-	OriginalLanguage pgtype.Text
-	ReleaseDate      pgtype.Text
-	FirstAirDate     pgtype.Text
-	RuntimeMinutes   pgtype.Int4
-	SeasonCount      pgtype.Int4
-	EpisodeCount     pgtype.Int4
-	VoteAverage      pgtype.Float8
-	Genres           []byte
-	Keywords         []byte
-	Facts            []byte
-	Seasons          []byte
-	CastMembers      []byte
-	CrewMembers      []byte
-	Recommendations  []byte
-	SimilarMedia     []byte
-	ID               uuid.UUID
+	MediaType         string
+	ContentKind       string
+	Title             string
+	Year              pgtype.Int4
+	ExternalProvider  pgtype.Text
+	ExternalID        pgtype.Text
+	Overview          pgtype.Text
+	PosterPath        pgtype.Text
+	CollectionID      pgtype.Text
+	CollectionName    pgtype.Text
+	BackdropPath      pgtype.Text
+	MetadataStatus    pgtype.Text
+	OriginalLanguage  pgtype.Text
+	NumberingStrategy pgtype.Text
+	ReleaseDate       pgtype.Text
+	FirstAirDate      pgtype.Text
+	RuntimeMinutes    pgtype.Int4
+	SeasonCount       pgtype.Int4
+	EpisodeCount      pgtype.Int4
+	VoteAverage       pgtype.Float8
+	Genres            []byte
+	Keywords          []byte
+	Facts             []byte
+	Seasons           []byte
+	CastMembers       []byte
+	CrewMembers       []byte
+	Recommendations   []byte
+	SimilarMedia      []byte
+	ID                uuid.UUID
 }
 
 func (q *Queries) UpdateMediaItemMetadataRecord(ctx context.Context, arg UpdateMediaItemMetadataRecordParams) error {
 	_, err := q.db.Exec(ctx, updateMediaItemMetadataRecord,
 		arg.MediaType,
+		arg.ContentKind,
 		arg.Title,
 		arg.Year,
 		arg.ExternalProvider,
@@ -113,6 +118,7 @@ func (q *Queries) UpdateMediaItemMetadataRecord(ctx context.Context, arg UpdateM
 		arg.BackdropPath,
 		arg.MetadataStatus,
 		arg.OriginalLanguage,
+		arg.NumberingStrategy,
 		arg.ReleaseDate,
 		arg.FirstAirDate,
 		arg.RuntimeMinutes,

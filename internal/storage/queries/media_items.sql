@@ -352,6 +352,7 @@ limit 1;
 insert into app.media_items (
     id,
     media_type,
+    content_kind,
     title,
     year,
     monitored,
@@ -365,6 +366,7 @@ insert into app.media_items (
     metadata_status,
     original_language,
     series_type,
+    numbering_strategy,
     release_date,
     first_air_date,
     runtime_minutes,
@@ -388,6 +390,7 @@ insert into app.media_items (
 values (
     sqlc.arg(id),
     sqlc.arg(media_type),
+    sqlc.arg(content_kind),
     sqlc.arg(title),
     sqlc.narg(year),
     sqlc.arg(monitored),
@@ -401,6 +404,7 @@ values (
     sqlc.narg(metadata_status),
     sqlc.narg(original_language),
     sqlc.narg(series_type),
+    sqlc.narg(numbering_strategy),
     sqlc.narg(release_date),
     sqlc.narg(first_air_date),
     sqlc.narg(runtime_minutes),
@@ -441,6 +445,8 @@ set quality_profile_id = coalesce(quality_profile_id, sqlc.narg(quality_profile_
     minimum_availability = sqlc.arg(minimum_availability),
     monitored = sqlc.arg(monitored),
     series_type = coalesce(sqlc.narg(series_type)::text, series_type),
+    content_kind = sqlc.arg(content_kind),
+    numbering_strategy = coalesce(sqlc.narg(numbering_strategy)::text, numbering_strategy),
     updated_at = case
         when (quality_profile_id is null and sqlc.narg(quality_profile_id)::text is not null)
             or (library_folder_id is null and sqlc.narg(library_folder_id)::uuid is not null)
@@ -449,7 +455,14 @@ set quality_profile_id = coalesce(quality_profile_id, sqlc.narg(quality_profile_
             or minimum_availability <> sqlc.arg(minimum_availability)
             or monitored <> sqlc.arg(monitored)
             or (sqlc.narg(series_type)::text is not null and series_type is distinct from sqlc.narg(series_type)::text)
+            or content_kind <> sqlc.arg(content_kind)
+            or (sqlc.narg(numbering_strategy)::text is not null and numbering_strategy is distinct from sqlc.narg(numbering_strategy)::text)
         then now()
         else updated_at
     end
 where id = sqlc.arg(id);
+
+-- name: GetMediaItemAnimeState :one
+select content_kind, numbering_strategy
+from app.media_items
+where id = $1;

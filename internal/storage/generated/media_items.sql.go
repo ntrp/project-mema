@@ -17,6 +17,7 @@ const createMediaItemRecord = `-- name: CreateMediaItemRecord :one
 insert into app.media_items (
     id,
     media_type,
+    content_kind,
     title,
     year,
     monitored,
@@ -30,6 +31,7 @@ insert into app.media_items (
     metadata_status,
     original_language,
     series_type,
+    numbering_strategy,
     release_date,
     first_air_date,
     runtime_minutes,
@@ -84,7 +86,9 @@ values (
     $31,
     $32,
     $33,
-    $34
+    $34,
+    $35,
+    $36
 )
 returning id
 `
@@ -92,6 +96,7 @@ returning id
 type CreateMediaItemRecordParams struct {
 	ID                  uuid.UUID
 	MediaType           string
+	ContentKind         string
 	Title               string
 	Year                pgtype.Int4
 	Monitored           bool
@@ -105,6 +110,7 @@ type CreateMediaItemRecordParams struct {
 	MetadataStatus      pgtype.Text
 	OriginalLanguage    pgtype.Text
 	SeriesType          pgtype.Text
+	NumberingStrategy   pgtype.Text
 	ReleaseDate         pgtype.Text
 	FirstAirDate        pgtype.Text
 	RuntimeMinutes      pgtype.Int4
@@ -130,6 +136,7 @@ func (q *Queries) CreateMediaItemRecord(ctx context.Context, arg CreateMediaItem
 	row := q.db.QueryRow(ctx, createMediaItemRecord,
 		arg.ID,
 		arg.MediaType,
+		arg.ContentKind,
 		arg.Title,
 		arg.Year,
 		arg.Monitored,
@@ -143,6 +150,7 @@ func (q *Queries) CreateMediaItemRecord(ctx context.Context, arg CreateMediaItem
 		arg.MetadataStatus,
 		arg.OriginalLanguage,
 		arg.SeriesType,
+		arg.NumberingStrategy,
 		arg.ReleaseDate,
 		arg.FirstAirDate,
 		arg.RuntimeMinutes,
@@ -509,6 +517,24 @@ func (q *Queries) GetMediaItem(ctx context.Context, id uuid.UUID) (GetMediaItemR
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
+	return i, err
+}
+
+const getMediaItemAnimeState = `-- name: GetMediaItemAnimeState :one
+select content_kind, numbering_strategy
+from app.media_items
+where id = $1
+`
+
+type GetMediaItemAnimeStateRow struct {
+	ContentKind       string
+	NumberingStrategy pgtype.Text
+}
+
+func (q *Queries) GetMediaItemAnimeState(ctx context.Context, id uuid.UUID) (GetMediaItemAnimeStateRow, error) {
+	row := q.db.QueryRow(ctx, getMediaItemAnimeState, id)
+	var i GetMediaItemAnimeStateRow
+	err := row.Scan(&i.ContentKind, &i.NumberingStrategy)
 	return i, err
 }
 
@@ -1070,6 +1096,8 @@ set quality_profile_id = coalesce(quality_profile_id, $1::text),
     minimum_availability = $5,
     monitored = $6,
     series_type = coalesce($7::text, series_type),
+    content_kind = $8,
+    numbering_strategy = coalesce($9::text, numbering_strategy),
     updated_at = case
         when (quality_profile_id is null and $1::text is not null)
             or (library_folder_id is null and $2::uuid is not null)
@@ -1078,10 +1106,12 @@ set quality_profile_id = coalesce(quality_profile_id, $1::text),
             or minimum_availability <> $5
             or monitored <> $6
             or ($7::text is not null and series_type is distinct from $7::text)
+            or content_kind <> $8
+            or ($9::text is not null and numbering_strategy is distinct from $9::text)
         then now()
         else updated_at
     end
-where id = $8
+where id = $10
 `
 
 type UpdateExistingMediaItemParams struct {
@@ -1092,6 +1122,8 @@ type UpdateExistingMediaItemParams struct {
 	MinimumAvailability string
 	Monitored           bool
 	SeriesType          pgtype.Text
+	ContentKind         string
+	NumberingStrategy   pgtype.Text
 	ID                  uuid.UUID
 }
 
@@ -1104,6 +1136,8 @@ func (q *Queries) UpdateExistingMediaItem(ctx context.Context, arg UpdateExistin
 		arg.MinimumAvailability,
 		arg.Monitored,
 		arg.SeriesType,
+		arg.ContentKind,
+		arg.NumberingStrategy,
 		arg.ID,
 	)
 	return err

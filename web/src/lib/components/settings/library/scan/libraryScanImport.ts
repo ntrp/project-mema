@@ -9,10 +9,7 @@ import type {
 	SeriesType
 } from '$lib/settings/types';
 import type { QualityProfileOption } from '$lib/settings/types';
-import {
-	duplicateDraftStatesForRows,
-	duplicateSelectionValid
-} from './libraryScanDuplicates';
+import { duplicateDraftStatesForRows, duplicateSelectionValid } from './libraryScanDuplicates';
 
 export interface MatchDraft {
 	selected: boolean;
@@ -185,7 +182,9 @@ export function importPayloadForRows(
 			};
 		}),
 		removeDuplicatePaths: Object.entries(drafts)
-			.filter(([id, draft]) => draft.removeDuplicate && (!draft.matched || duplicateStates[id]?.duplicate))
+			.filter(
+				([id, draft]) => draft.removeDuplicate && (!draft.matched || duplicateStates[id]?.duplicate)
+			)
 			.map(([id]) => allRows.find((row) => row.id === id)?.path)
 			.filter((path): path is string => Boolean(path))
 	};

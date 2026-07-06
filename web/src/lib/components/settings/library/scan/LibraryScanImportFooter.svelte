@@ -98,9 +98,11 @@
 		const [section, monitorMode] = value.split(':') as ['movie' | 'series', MediaMonitorMode];
 		if (section === 'movie') {
 			movieMonitorMode = monitorMode;
+			void movieMonitorMode;
 			onApplyMovie();
 		} else if (section === 'series') {
 			seriesMonitorMode = monitorMode;
+			void seriesMonitorMode;
 			onApplySeries();
 		}
 	}

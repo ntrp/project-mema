@@ -60,6 +60,51 @@ func TestEvaluateReleaseMatchAcceptsExactSeriesTitle(t *testing.T) {
 	}
 }
 
+func TestEvaluateReleaseMatchAcceptsAnimeReleaseAlias(t *testing.T) {
+	season := int32(1)
+	episode := int32(1)
+	match := EvaluateReleaseMatch(
+		storage.MediaItem{
+			Type:  "serie",
+			Title: "Frieren: Beyond Journey's End",
+			Aliases: []storage.MediaItemAlias{{
+				Alias: "Sousou no Frieren",
+				Kind:  "romaji",
+			}},
+		},
+		storage.ReleaseCandidate{
+			Title:            "Sousou.no.Frieren.S01E01.1080p.WEBDL",
+			SearchKind:       "episode",
+			RequestedSeason:  &season,
+			RequestedEpisode: &episode,
+		},
+	)
+	if match.Severity != "info" {
+		t.Fatalf("expected alias match, got %q: %v", match.Severity, match.Details)
+	}
+}
+
+func TestEvaluateReleaseMatchAcceptsAnimeAbsoluteEpisode(t *testing.T) {
+	episode := int32(14)
+	strategy := "anidb_absolute"
+	match := EvaluateReleaseMatch(
+		storage.MediaItem{
+			Type:              "serie",
+			ContentKind:       "anime",
+			Title:             "Frieren",
+			NumberingStrategy: &strategy,
+		},
+		storage.ReleaseCandidate{
+			Title:            "Frieren - 14 - Privilege of the Young.1080p.WEBDL",
+			SearchKind:       "episode",
+			RequestedEpisode: &episode,
+		},
+	)
+	if match.Severity != "info" {
+		t.Fatalf("expected absolute episode match, got %q: %v", match.Severity, match.Details)
+	}
+}
+
 func TestEvaluateReleaseMatchRejectsSeriesTitleContainingExpectedTitle(t *testing.T) {
 	season := int32(1)
 	episode := int32(1)

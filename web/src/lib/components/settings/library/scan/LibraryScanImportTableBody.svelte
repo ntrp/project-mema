@@ -46,10 +46,10 @@
 				{onSearch}
 				{onSelect}
 			/>
-	{/if}
-{:else}
-	<Table.Row>
-		<Table.Cell colspan={7} class="text-muted-foreground">No files to import.</Table.Cell>
-	</Table.Row>
-{/each}
+		{/if}
+	{:else}
+		<Table.Row>
+			<Table.Cell colspan={7} class="text-muted-foreground">No files to import.</Table.Cell>
+		</Table.Row>
+	{/each}
 </Table.Body>

@@ -9,6 +9,7 @@ import (
 type MediaItem struct {
 	ID               uuid.UUID
 	Type             string
+	ContentKind      string
 	Title            string
 	Year             *int32
 	Monitored        bool
@@ -19,6 +20,7 @@ type MediaItem struct {
 	MediaMetadataSnapshot
 	MonitorMode         string
 	SeriesType          *string
+	NumberingStrategy   *string
 	MinimumAvailability string
 	QualityProfileID    *string
 	QualityProfileName  *string
@@ -30,6 +32,9 @@ type MediaItem struct {
 	MetadataFilePaths   []string
 	SubtitleLanguages   []MediaProfileSubtitleLanguage
 	ExternalSubtitles   []MediaItemSubtitle
+	ProviderMappings    []MediaProviderMapping
+	Aliases             []MediaItemAlias
+	EpisodeNumbering    []MediaEpisodeNumbering
 	Tags                []string
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
@@ -37,6 +42,7 @@ type MediaItem struct {
 
 type MediaItemInput struct {
 	Type             string
+	ContentKind      string
 	Title            string
 	Year             *int32
 	Monitored        bool
@@ -47,9 +53,13 @@ type MediaItemInput struct {
 	MediaMetadataSnapshot
 	MonitorMode         string
 	SeriesType          *string
+	NumberingStrategy   *string
 	MinimumAvailability string
 	QualityProfileID    *string
 	LibraryFolderID     *uuid.UUID
+	ProviderMappings    []MediaProviderMappingInput
+	Aliases             []MediaItemAliasInput
+	EpisodeNumbering    []MediaEpisodeNumberingInput
 	Tags                []string
 }
 

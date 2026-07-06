@@ -16,6 +16,7 @@ func mediaItemInput(request MediaItemCreateRequest) (storage.MediaItemInput, boo
 	}
 	return storage.MediaItemInput{
 		Type:                string(request.Type),
+		ContentKind:         optionalContentKind(request.ContentKind),
 		Title:               title,
 		Year:                request.Year,
 		Monitored:           request.Monitored,
@@ -25,6 +26,7 @@ func mediaItemInput(request MediaItemCreateRequest) (storage.MediaItemInput, boo
 		PosterPath:          optionalTrimmedString(request.PosterPath),
 		MonitorMode:         string(request.MonitorMode),
 		SeriesType:          optionalSeriesType(request.Type, request.SeriesType),
+		NumberingStrategy:   optionalNumberingStrategy(request.NumberingStrategy),
 		MinimumAvailability: string(request.MinimumAvailability),
 		QualityProfileID:    optionalTrimmedString(request.QualityProfileId),
 		LibraryFolderID:     optionalUUID(request.LibraryFolderId),
@@ -41,6 +43,10 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 	crew := mediaPersonResponses(item.Crew)
 	recommendations := mediaRelatedResponses(item.Recommendations)
 	similar := mediaRelatedResponses(item.Similar)
+	providerMappings := mediaProviderMappingResponses(item.ProviderMappings)
+	aliases := mediaAliasResponses(item.Aliases)
+	episodeNumbering := mediaEpisodeNumberingResponses(item.EpisodeNumbering)
+	contentKind := MediaContentKind(item.ContentKind)
 	return MediaItem{
 		Id:                  openapi_types.UUID(item.ID),
 		Type:                MediaType(item.Type),
@@ -48,6 +54,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		Status:              MediaItemStatus(item.Status),
 		Year:                item.Year,
 		Monitored:           item.Monitored,
+		ContentKind:         &contentKind,
 		ExternalProvider:    item.ExternalProvider,
 		ExternalId:          item.ExternalID,
 		Overview:            item.Overview,
@@ -73,6 +80,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		Similar:             &similar,
 		MonitorMode:         MediaMonitorMode(item.MonitorMode),
 		SeriesType:          optionalOpenAPISeriesType(item.SeriesType),
+		NumberingStrategy:   optionalOpenAPINumberingStrategy(item.NumberingStrategy),
 		MinimumAvailability: MinimumAvailability(item.MinimumAvailability),
 		QualityProfileId:    item.QualityProfileID,
 		QualityProfileName:  item.QualityProfileName,
@@ -81,6 +89,9 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		MediaFolderPath:     item.MediaFolderPath,
 		FilePaths:           item.FilePaths,
 		Files:               mediaFileInfoResponses(item.FilePaths, item.SubtitleLanguages, item.ExternalSubtitles),
+		ProviderMappings:    &providerMappings,
+		Aliases:             &aliases,
+		EpisodeNumbering:    &episodeNumbering,
 		MetadataFilePaths:   item.MetadataFilePaths,
 		Tags:                &item.Tags,
 		CreatedAt:           item.CreatedAt,
@@ -197,6 +208,29 @@ func optionalOpenAPISeriesType(value *string) *SeriesType {
 	return &seriesType
 }
 
+func optionalContentKind(value *MediaContentKind) string {
+	if value == nil {
+		return "standard"
+	}
+	return string(*value)
+}
+
+func optionalNumberingStrategy(value *MediaNumberingStrategy) *string {
+	if value == nil {
+		return nil
+	}
+	strategy := string(*value)
+	return &strategy
+}
+
+func optionalOpenAPINumberingStrategy(value *string) *MediaNumberingStrategy {
+	if value == nil {
+		return nil
+	}
+	strategy := MediaNumberingStrategy(*value)
+	return &strategy
+}
+
 func mediaPersonResponses(values []storage.MediaPerson) []MediaMetadataPerson {
 	items := make([]MediaMetadataPerson, 0, len(values))
 	for _, value := range values {
@@ -225,57 +259,4 @@ func mediaRelatedResponses(values []storage.MediaRelatedItem) []MediaSearchResul
 		})
 	}
 	return items
-}
-
-func downloadActivityResponse(activity storage.DownloadActivity) DownloadActivity {
-	return DownloadActivity{
-		Id:                 openapi_types.UUID(activity.ID),
-		MediaItemId:        openapi_types.UUID(activity.MediaItemID),
-		MediaTitle:         activity.MediaTitle,
-		MediaType:          MediaType(activity.MediaType),
-		MediaYear:          activity.MediaYear,
-		ReleaseTitle:       activity.ReleaseTitle,
-		IndexerName:        activity.IndexerName,
-		DownloadClientName: activity.DownloadClientName,
-		DownloadId:         activity.DownloadID,
-		DownloadUrl:        activity.DownloadURL,
-		Status:             DownloadActivityStatus(activity.Status),
-		ProgressPercent:    activity.ProgressPercent,
-		Error:              activity.Error,
-		FailureType:        downloadActivityFailureType(activity.FailureType),
-		CreatedAt:          activity.CreatedAt,
-		UpdatedAt:          activity.UpdatedAt,
-	}
-}
-
-func downloadActivityFailureType(value *string) *DownloadActivityFailureType {
-	if value == nil {
-		return nil
-	}
-	failureType := DownloadActivityFailureType(*value)
-	return &failureType
-}
-
-func optionalString(value string) *string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return nil
-	}
-	return &value
-}
-
-func optionalUUID(value *openapi_types.UUID) *uuid.UUID {
-	if value == nil {
-		return nil
-	}
-	converted := uuid.UUID(*value)
-	return &converted
-}
-
-func optionalOpenAPIUUID(value *uuid.UUID) *openapi_types.UUID {
-	if value == nil {
-		return nil
-	}
-	converted := openapi_types.UUID(*value)
-	return &converted
 }

@@ -20,7 +20,8 @@ export function fileProfileSettings(item: MediaItem, qualityProfiles: MediaFileP
 		profile,
 		expectedLanguages: profile?.targetLanguages ?? [],
 		expectedRequiredLanguages: requiredTargetLanguages(profile),
-		expectedSubtitleLanguages: profile?.subtitleLanguages?.map((language) => language.languageId) ?? [],
+		expectedSubtitleLanguages:
+			profile?.subtitleLanguages?.map((language) => language.languageId) ?? [],
 		removeNonEnabledLanguages: profile?.removeNonEnabledLanguages === true,
 		removeNonEnabledSubtitleLanguages: profile?.removeNonEnabledSubtitleLanguages === true
 	};

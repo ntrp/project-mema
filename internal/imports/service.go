@@ -173,10 +173,20 @@ func manualTargetFileName(item storage.MediaItem, input ManualImportInput, sourc
 	}
 	parts := []string{}
 	if item.Type == "serie" {
-		if input.SeasonNumber == nil || input.EpisodeNumber == nil {
-			return "", fmt.Errorf("season and episode are required for series imports")
+		if input.EpisodeNumber == nil {
+			if input.SeasonNumber == nil {
+				return "", fmt.Errorf("season and episode are required for series imports")
+			}
+			return "", fmt.Errorf("episode is required for series imports")
 		}
-		parts = append(parts, title, fmt.Sprintf("S%02dE%02d", *input.SeasonNumber, *input.EpisodeNumber))
+		if animeAbsoluteNumbering(item) {
+			parts = append(parts, title, fmt.Sprintf("E%03d", *input.EpisodeNumber))
+		} else {
+			if input.SeasonNumber == nil {
+				return "", fmt.Errorf("season and episode are required for series imports")
+			}
+			parts = append(parts, title, fmt.Sprintf("S%02dE%02d", *input.SeasonNumber, *input.EpisodeNumber))
+		}
 		if episodeTitle := strings.TrimSpace(input.EpisodeTitle); episodeTitle != "" {
 			parts = append(parts, episodeTitle)
 		}
@@ -199,6 +209,10 @@ func manualTargetFileName(item storage.MediaItem, input ManualImportInput, sourc
 		name = strings.TrimSuffix(filepath.Base(source), filepath.Ext(source))
 	}
 	return name + ext, nil
+}
+
+func animeAbsoluteNumbering(item storage.MediaItem) bool {
+	return item.ContentKind == "anime" && item.NumberingStrategy != nil && *item.NumberingStrategy == "anidb_absolute"
 }
 
 func appendNonEmpty(values []string, candidates ...string) []string {

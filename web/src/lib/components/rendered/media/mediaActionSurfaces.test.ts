@@ -110,7 +110,14 @@ function mediaItem(overrides: Partial<MediaItem> = {}): MediaItem {
 }
 
 function libraryFolder(overrides: Partial<LibraryFolder> = {}): LibraryFolder {
-	return { id: 'folder-1', path: '/library', kind: 'movie', createdAt: '', updatedAt: '', ...overrides };
+	return {
+		id: 'folder-1',
+		path: '/library',
+		kind: 'movie',
+		createdAt: '',
+		updatedAt: '',
+		...overrides
+	};
 }
 
 function qualityProfile(): QualityProfileOption {

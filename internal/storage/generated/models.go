@@ -287,6 +287,21 @@ type AppMediaEpisode struct {
 	UpdatedAt        time.Time
 }
 
+type AppMediaEpisodeNumbering struct {
+	ID              uuid.UUID
+	MediaItemID     uuid.UUID
+	SeasonID        *uuid.UUID
+	EpisodeID       uuid.UUID
+	ProviderName    string
+	NumberingScheme string
+	SeasonNumber    pgtype.Int4
+	EpisodeNumber   pgtype.Int4
+	AbsoluteNumber  pgtype.Int4
+	Source          []byte
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
 type AppMediaFileHistory struct {
 	ID              uuid.UUID
 	MediaItemID     *uuid.UUID
@@ -306,6 +321,7 @@ type AppMediaFileHistory struct {
 type AppMediaItem struct {
 	ID                  uuid.UUID
 	MediaType           string
+	ContentKind         string
 	Title               string
 	Year                pgtype.Int4
 	Monitored           bool
@@ -319,6 +335,7 @@ type AppMediaItem struct {
 	MetadataStatus      pgtype.Text
 	OriginalLanguage    pgtype.Text
 	SeriesType          pgtype.Text
+	NumberingStrategy   pgtype.Text
 	ReleaseDate         pgtype.Text
 	FirstAirDate        pgtype.Text
 	RuntimeMinutes      pgtype.Int4
@@ -340,6 +357,20 @@ type AppMediaItem struct {
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 	LibraryFolderID     *uuid.UUID
+}
+
+type AppMediaItemAlias struct {
+	ID                uuid.UUID
+	MediaItemID       uuid.UUID
+	Alias             string
+	NormalizedAlias   string
+	Language          pgtype.Text
+	AliasKind         string
+	ProviderName      pgtype.Text
+	ProviderMappingID *uuid.UUID
+	Source            []byte
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 type AppMediaItemSubtitle struct {
@@ -404,6 +435,22 @@ type AppMediaProfileSubtitleLanguage struct {
 	Score        int32
 	Required     bool
 	SubtitleType string
+}
+
+type AppMediaProviderMapping struct {
+	ID                 uuid.UUID
+	MediaItemID        uuid.UUID
+	SeasonID           *uuid.UUID
+	EpisodeID          *uuid.UUID
+	EntityType         string
+	ProviderName       string
+	ProviderEntityType string
+	ExternalID         string
+	Canonical          bool
+	Confidence         pgtype.Float8
+	Source             []byte
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type AppMediaReleaseCandidate struct {

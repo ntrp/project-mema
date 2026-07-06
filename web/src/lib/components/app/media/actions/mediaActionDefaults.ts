@@ -16,9 +16,11 @@ export function preselectLibraryFolderId(
 	candidate: MediaSearchResult,
 	libraryFolders: LibraryFolder[]
 ) {
-	return bestScored(matchingLibraryFolders(candidate.type, libraryFolders), (folder) =>
-		folderScore(candidate, folder)
-	)?.id ?? '';
+	return (
+		bestScored(matchingLibraryFolders(candidate.type, libraryFolders), (folder) =>
+			folderScore(candidate, folder)
+		)?.id ?? ''
+	);
 }
 
 export function matchingLibraryFolders(

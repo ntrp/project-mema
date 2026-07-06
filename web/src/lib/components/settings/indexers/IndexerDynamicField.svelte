@@ -55,7 +55,7 @@
 				value={textValue}
 				autocomplete="off"
 				placeholder={field.placeholder}
-				onValueChange={onValueChange}
+				{onValueChange}
 			/>
 		{:else}
 			<Input

@@ -23,7 +23,9 @@
 	let selectedLanguages = $derived(
 		new Map(form.subtitleLanguages.map((item) => [item.languageId, item]))
 	);
-	let sharedSubtitleType = $derived(form.subtitleLanguages[0]?.subtitleType ?? fallbackSubtitleType);
+	let sharedSubtitleType = $derived(
+		form.subtitleLanguages[0]?.subtitleType ?? fallbackSubtitleType
+	);
 	let options = $derived(
 		profileLanguageOptions(
 			languages,
@@ -54,7 +56,12 @@
 			}
 			next.splice(index, 1);
 		} else {
-			next.push({ languageId: language, score: 0, required: true, subtitleType: sharedSubtitleType });
+			next.push({
+				languageId: language,
+				score: 0,
+				required: true,
+				subtitleType: sharedSubtitleType
+			});
 		}
 		patch(next);
 	}
@@ -72,9 +79,7 @@
 			)
 		);
 	}
-	function updateType(
-		subtitleType: MediaProfileSubtitleLanguage['subtitleType']
-	) {
+	function updateType(subtitleType: MediaProfileSubtitleLanguage['subtitleType']) {
 		fallbackSubtitleType = subtitleType;
 		patch(form.subtitleLanguages.map((item) => ({ ...item, subtitleType })));
 	}

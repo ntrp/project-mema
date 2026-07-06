@@ -67,7 +67,6 @@
 		event.preventDefault();
 		toggleDetails();
 	}
-
 </script>
 
 <div

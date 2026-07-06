@@ -73,16 +73,28 @@ func insertMediaItem(ctx context.Context, q mediaItemQuerier, input MediaItemInp
 	if err := materializeMediaSeriesSnapshot(ctx, q, itemID, input); err != nil {
 		return MediaItem{}, err
 	}
+	if err := upsertAnimeMetadata(ctx, q, itemID, input); err != nil {
+		return MediaItem{}, err
+	}
 	return getMediaItem(ctx, q, itemID)
 }
 
 func mediaKindToMediaType(kind string) (string, bool) {
+	mediaType, _, ok := mediaKindToMediaTypeAndContent(kind)
+	return mediaType, ok
+}
+
+func mediaKindToMediaTypeAndContent(kind string) (string, string, bool) {
 	switch kind {
-	case "movie", "anime_movie":
-		return "movie", true
-	case "series", "anime_series":
-		return "serie", true
+	case "movie":
+		return "movie", "standard", true
+	case "anime_movie":
+		return "movie", "anime", true
+	case "series":
+		return "serie", "standard", true
+	case "anime_series":
+		return "serie", "anime", true
 	default:
-		return "", false
+		return "", "", false
 	}
 }

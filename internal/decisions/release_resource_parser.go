@@ -5,11 +5,16 @@ import (
 	"strings"
 )
 
-var seasonEpisodePattern = regexp.MustCompile(`(?i)\bs(\d{1,2})(?:e(\d{1,3}))?\b`)
+var (
+	seasonEpisodePattern   = regexp.MustCompile(`(?i)\bs(\d{1,2})(?:e(\d{1,3}))?\b`)
+	absoluteEpisodePattern = regexp.MustCompile(`(?i)(?:^|[\s._-])(?:e|ep|episode)?[\s._-]?(\d{1,3})(?:v\d+)?(?:[\s._-]|$)`)
+)
 
 func releaseSeriesTitle(title string) string {
 	index := len(title)
 	if match := seasonEpisodePattern.FindStringIndex(title); match != nil && match[0] > 0 {
+		index = match[0]
+	} else if match := absoluteEpisodePattern.FindStringIndex(title); match != nil && match[0] > 0 {
 		index = match[0]
 	} else if year := yearPattern.FindStringIndex(title); year != nil && year[0] > 0 {
 		index = year[0]
@@ -30,6 +35,14 @@ func detectSeasonEpisode(title string) (*int32, *int32) {
 		return season, nil
 	}
 	return season, parsePositiveInt32(match[2])
+}
+
+func detectAbsoluteEpisode(title string) *int32 {
+	match := absoluteEpisodePattern.FindStringSubmatch(title)
+	if len(match) < 2 {
+		return nil
+	}
+	return parsePositiveInt32(match[1])
 }
 
 func cleanReleaseResourceTitle(title string) string {

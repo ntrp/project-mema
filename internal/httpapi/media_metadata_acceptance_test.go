@@ -119,7 +119,7 @@ func createScenarioMetadataProvider(t *testing.T, client acceptanceClient, baseU
 func assertHasProviderGroup(t *testing.T, groups []MediaSearchGroup) {
 	t.Helper()
 	for _, group := range groups {
-		if group.SourceType == MediaSearchSourceTypeProvider {
+		if group.SourceType == Provider {
 			assertHasProviderResult(t, group.Results, "Example Movie")
 			return
 		}

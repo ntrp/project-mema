@@ -114,7 +114,9 @@
 							<label class="flex shrink-0 items-center justify-end gap-2 text-xs text-amber-500">
 								<Checkbox
 									checked={draft.removeDuplicate}
-									disabled={Boolean(draft.matched && duplicateState?.duplicate && !duplicateState.removalAllowed)}
+									disabled={Boolean(
+										draft.matched && duplicateState?.duplicate && !duplicateState.removalAllowed
+									)}
 									onCheckedChange={(checked) => setRemoveFile(checked === true)}
 								/>
 								<span>Remove file</span>

@@ -10,6 +10,7 @@ func mediaItemRecordParams(id uuid.UUID, input MediaItemInput, payloads mediaMet
 	return storagegen.CreateMediaItemRecordParams{
 		ID:                  id,
 		MediaType:           input.Type,
+		ContentKind:         input.ContentKind,
 		Title:               input.Title,
 		Year:                int4Value(input.Year),
 		Monitored:           input.Monitored,
@@ -23,6 +24,7 @@ func mediaItemRecordParams(id uuid.UUID, input MediaItemInput, payloads mediaMet
 		MetadataStatus:      textValue(input.MetadataStatus),
 		OriginalLanguage:    textValue(input.OriginalLanguage),
 		SeriesType:          textValue(input.SeriesType),
+		NumberingStrategy:   textValue(input.NumberingStrategy),
 		ReleaseDate:         textValue(input.ReleaseDate),
 		FirstAirDate:        textValue(input.FirstAirDate),
 		RuntimeMinutes:      int4Value(input.RuntimeMinutes),
@@ -65,6 +67,7 @@ func mediaItemFromGetRow(row storagegen.GetMediaItemRow) MediaItem {
 	item := MediaItem{
 		ID:                  row.ID,
 		Type:                row.MediaType,
+		ContentKind:         "standard",
 		Title:               row.Title,
 		Year:                int4Ptr(row.Year),
 		Monitored:           row.Monitored,

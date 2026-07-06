@@ -1,8 +1,10 @@
 package storage
 
 func normalizeMediaItemOptions(input MediaItemInput) MediaItemInput {
+	input.ContentKind = normalizeContentKind(input.ContentKind)
 	input.MonitorMode = normalizeMonitorMode(input.Type, input.MonitorMode)
 	input.SeriesType = normalizeSeriesType(input.Type, input.SeriesType)
+	input.NumberingStrategy = normalizeNumberingStrategy(input.Type, input.ContentKind, input.NumberingStrategy)
 	input.MinimumAvailability = normalizeMinimumAvailability(input.MinimumAvailability)
 	input.Monitored = input.MonitorMode != "none"
 	return input
@@ -43,6 +45,30 @@ func normalizeSeriesType(mediaType string, value *string) *string {
 		fallback := "standard"
 		return &fallback
 	}
+}
+
+func normalizeContentKind(value string) string {
+	if value == "anime" {
+		return "anime"
+	}
+	return "standard"
+}
+
+func normalizeNumberingStrategy(mediaType string, contentKind string, value *string) *string {
+	if mediaType != "serie" {
+		return nil
+	}
+	if value != nil {
+		switch *value {
+		case "tmdb_season_episode", "tvdb_season_episode", "anidb_absolute", "manual":
+			return value
+		}
+	}
+	fallback := "tmdb_season_episode"
+	if contentKind == "anime" {
+		fallback = "anidb_absolute"
+	}
+	return &fallback
 }
 
 func normalizeMinimumAvailability(value string) string {

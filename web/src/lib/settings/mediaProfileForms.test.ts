@@ -37,7 +37,9 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			seriesPackPreference: 'auto',
 			targetLanguages: ['english'],
 			targetLanguageScores: [{ languageId: 'english', score: 10, required: true }],
-			subtitleLanguages: [{ languageId: 'english', score: 25, required: true, subtitleType: 'embedded' }],
+			subtitleLanguages: [
+				{ languageId: 'english', score: 25, required: true, subtitleType: 'embedded' }
+			],
 			customFormatScores: [{ customFormatId: 'cf-1', score: 50 }]
 		} as MediaProfile;
 

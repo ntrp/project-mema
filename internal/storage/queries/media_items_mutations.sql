@@ -11,6 +11,7 @@ where id = $1;
 update app.media_items
 set
     media_type = sqlc.arg(media_type),
+    content_kind = sqlc.arg(content_kind),
     title = sqlc.arg(title),
     year = sqlc.narg(year),
     external_provider = sqlc.narg(external_provider),
@@ -22,6 +23,7 @@ set
     backdrop_path = sqlc.narg(backdrop_path),
     metadata_status = sqlc.narg(metadata_status),
     original_language = sqlc.narg(original_language),
+    numbering_strategy = sqlc.narg(numbering_strategy),
     release_date = sqlc.narg(release_date),
     first_air_date = sqlc.narg(first_air_date),
     runtime_minutes = sqlc.narg(runtime_minutes),

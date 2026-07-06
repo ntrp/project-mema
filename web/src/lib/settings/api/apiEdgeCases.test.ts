@@ -153,9 +153,7 @@ describe('UI API edge cases (SCN-SETTINGS-009)', () => {
 		).resolves.toEqual({
 			cacheEntries: []
 		});
-		await expect(
-			saveLibraryFolder({ path: ' /media ', kind: 'movie' } as never)
-		).resolves.toEqual({
+		await expect(saveLibraryFolder({ path: ' /media ', kind: 'movie' } as never)).resolves.toEqual({
 			id: 'created'
 		});
 		await expect(

@@ -27,7 +27,7 @@ func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UU
 		_ = tx.Rollback(ctx)
 	}()
 
-	mediaType, ok := mediaKindToMediaType(input.MediaKind)
+	mediaType, contentKind, ok := mediaKindToMediaTypeAndContent(input.MediaKind)
 	if !ok {
 		return LibraryScanItem{}, MediaItem{}, ErrNotFound
 	}
@@ -38,7 +38,7 @@ func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UU
 		}
 		return LibraryScanItem{}, MediaItem{}, err
 	}
-	item, err := matchedLibraryMediaItem(ctx, tx, folderID, mediaType, input)
+	item, err := matchedLibraryMediaItem(ctx, tx, folderID, mediaType, contentKind, input)
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
@@ -94,6 +94,7 @@ func matchedLibraryMediaItem(
 	q mediaItemQuerier,
 	folderID uuid.UUID,
 	mediaType string,
+	contentKind string,
 	input LibraryMatchInput,
 ) (MediaItem, error) {
 	if input.MediaItemID != nil {
@@ -108,6 +109,7 @@ func matchedLibraryMediaItem(
 	}
 	return createMediaItemIfMissing(ctx, q, MediaItemInput{
 		Type:                  mediaType,
+		ContentKind:           contentKind,
 		Title:                 input.Title,
 		Year:                  input.Year,
 		Monitored:             input.Monitored,

@@ -24,13 +24,19 @@
 	let queryBeforeEdit = '';
 
 	const badgeLabel = $derived(
-		draft.matched ? `${draft.matched.title}${draft.matched.year ? ` (${draft.matched.year})` : ''}` : 'No match'
+		draft.matched
+			? `${draft.matched.title}${draft.matched.year ? ` (${draft.matched.year})` : ''}`
+			: 'No match'
 	);
 
 	async function openSearch() {
 		queryBeforeEdit = draft.query;
 		draft.query = cleanMatchSearchTitle(
-			draft.matched?.title ?? item.matchedTitle ?? item.detectedTitle ?? item.fileName ?? draft.query
+			draft.matched?.title ??
+				item.matchedTitle ??
+				item.detectedTitle ??
+				item.fileName ??
+				draft.query
 		);
 		draft.results = [];
 		draft.searched = false;
@@ -50,9 +56,9 @@
 		editing = false;
 	}
 
-	function handleFocusOut(event: FocusEvent) {
-		const nextTarget = event.relatedTarget as Node | null;
-		if (nextTarget && (event.currentTarget as HTMLElement).contains(nextTarget)) return;
+	function handleFocusOut(event: { currentTarget: unknown; relatedTarget: unknown }) {
+		const container = event.currentTarget as { contains?: (target: unknown) => boolean };
+		if (event.relatedTarget && container.contains?.(event.relatedTarget)) return;
 		closeSearch();
 	}
 
@@ -113,7 +119,10 @@
 									loading="lazy"
 								/>
 							{:else}
-								<PosterPlaceholder label={result.title} class="min-h-0 rounded-none p-1 text-[10px]" />
+								<PosterPlaceholder
+									label={result.title}
+									class="min-h-0 rounded-none p-1 text-[10px]"
+								/>
 							{/if}
 						</span>
 						<span class="grid min-w-0 content-start gap-0.5 pt-0.5">

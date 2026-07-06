@@ -36,6 +36,7 @@ type ReleaseScoreContributor struct {
 type ReleaseSearchCriteria struct {
 	Kind          string
 	Title         string
+	Aliases       []string
 	Year          *int32
 	SeasonID      *uuid.UUID
 	EpisodeID     *uuid.UUID
@@ -44,16 +45,19 @@ type ReleaseSearchCriteria struct {
 }
 
 func SearchCriteriaForQuery(item storage.MediaItem, query string) ReleaseSearchCriteria {
-	criteria := ReleaseSearchCriteria{Title: item.Title, Year: item.Year}
+	criteria := ReleaseSearchCriteria{Title: item.Title, Aliases: releaseAliasTexts(item.Aliases), Year: item.Year}
 	if item.Type == "movie" {
 		criteria.Kind = "movie"
 		return criteria
 	}
 	season, episode := detectSeasonEpisode(query)
+	if item.ContentKind == "anime" && item.NumberingStrategy != nil && *item.NumberingStrategy == "anidb_absolute" && season == nil && episode == nil {
+		episode = detectAbsoluteEpisode(query)
+	}
 	criteria.SeasonNumber = season
 	criteria.EpisodeNumber = episode
 	switch {
-	case season != nil && episode != nil:
+	case episode != nil:
 		criteria.Kind = "episode"
 	case season != nil:
 		criteria.Kind = "season"
@@ -85,16 +89,30 @@ func SearchQueriesForCriteria(criteria ReleaseSearchCriteria, original string) [
 		queries = append(queries, value)
 	}
 	addQuery(original)
+	titles := append([]string{criteria.Title}, criteria.Aliases...)
 	switch criteria.Kind {
 	case "season":
 		if criteria.SeasonNumber != nil {
-			addQuery(fmt.Sprintf("%s s%d", criteria.Title, *criteria.SeasonNumber))
-			addQuery(fmt.Sprintf("%s S%s", criteria.Title, padded(*criteria.SeasonNumber, 2)))
+			for _, title := range titles {
+				addQuery(fmt.Sprintf("%s s%d", title, *criteria.SeasonNumber))
+				addQuery(fmt.Sprintf("%s S%s", title, padded(*criteria.SeasonNumber, 2)))
+			}
 		}
 	case "episode":
 		if criteria.SeasonNumber != nil && criteria.EpisodeNumber != nil {
-			addQuery(fmt.Sprintf("%s s%de%d", criteria.Title, *criteria.SeasonNumber, *criteria.EpisodeNumber))
-			addQuery(fmt.Sprintf("%s S%sE%s", criteria.Title, padded(*criteria.SeasonNumber, 2), padded(*criteria.EpisodeNumber, 2)))
+			for _, title := range titles {
+				addQuery(fmt.Sprintf("%s s%de%d", title, *criteria.SeasonNumber, *criteria.EpisodeNumber))
+				addQuery(fmt.Sprintf("%s S%sE%s", title, padded(*criteria.SeasonNumber, 2), padded(*criteria.EpisodeNumber, 2)))
+			}
+		} else if criteria.EpisodeNumber != nil {
+			for _, title := range titles {
+				addQuery(fmt.Sprintf("%s %d", title, *criteria.EpisodeNumber))
+				addQuery(fmt.Sprintf("%s - %s", title, padded(*criteria.EpisodeNumber, 2)))
+			}
+		}
+	default:
+		for _, title := range criteria.Aliases {
+			addQuery(title)
 		}
 	}
 	return queries
@@ -167,6 +185,9 @@ func evaluateParsedRelease(
 ) ReleaseMatch {
 	item := context.Item
 	parsed = applyLanguageCatalog(parsed, context.Languages)
+	if animeAbsoluteSearch(item, criteria) && parsed.SeasonNumber == nil && parsed.EpisodeNumber == nil {
+		parsed.EpisodeNumber = detectAbsoluteEpisode(meta.Title)
+	}
 	score := profileQualityScore(parsed.QualityID, context.Profile)
 	details := []string{}
 	matchedMedia := parsedResourceTitle(item.Type, parsed)
@@ -177,7 +198,7 @@ func evaluateParsedRelease(
 		context.Languages,
 	)
 
-	if !resourceTitleMatches(criteria.Title, matchedMedia, meta.Title) {
+	if !resourceTitleMatches(criteria, matchedMedia, meta.Title) {
 		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.")
 	}
 	if yearMismatch(criteria.Year, parsed.Year) {
@@ -248,22 +269,6 @@ func yearMismatch(expected *int32, actual string) bool {
 		return false
 	}
 	return strconv.Itoa(int(*expected)) != actual
-}
-
-func resourceTitleMatches(expected string, parsedTitle string, releaseTitle string) bool {
-	expectedTitle := normalizedResourceTitle(expected)
-	if expectedTitle == "" {
-		return false
-	}
-	candidateTitle := normalizedResourceTitle(parsedTitle)
-	if candidateTitle == "" {
-		candidateTitle = normalizedResourceTitle(releaseTitle)
-	}
-	return expectedTitle == candidateTitle
-}
-
-func normalizedResourceTitle(title string) string {
-	return normalizedToken(cleanReleaseResourceTitle(title))
 }
 
 func sameInt32(expected *int32, actual *int32) bool {

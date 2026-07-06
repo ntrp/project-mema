@@ -2410,6 +2410,9 @@ export interface components {
 			collectionName?: string;
 			backdropPath?: string;
 			metadataStatus?: string;
+			providerMappings?: components['schemas']['MediaProviderMapping'][];
+			aliases?: components['schemas']['MediaItemAlias'][];
+			episodeNumbering?: components['schemas']['MediaEpisodeNumbering'][];
 			originalLanguage?: string;
 			releaseDate?: string;
 			firstAirDate?: string;
@@ -2446,8 +2449,10 @@ export interface components {
 			/** Format: int32 */
 			year?: number;
 			monitored: boolean;
+			contentKind?: components['schemas']['MediaContentKind'];
 			monitorMode: components['schemas']['MediaMonitorMode'];
 			seriesType?: components['schemas']['SeriesType'];
+			numberingStrategy?: components['schemas']['MediaNumberingStrategy'];
 			minimumAvailability: components['schemas']['MinimumAvailability'];
 			externalProvider?: string;
 			externalId?: string;
@@ -2457,6 +2462,57 @@ export interface components {
 			/** Format: uuid */
 			libraryFolderId?: string;
 			tags?: string[];
+		};
+		/** @enum {string} */
+		MediaContentKind: 'standard' | 'anime';
+		/** @enum {string} */
+		MediaNumberingStrategy:
+			| 'tmdb_season_episode'
+			| 'tvdb_season_episode'
+			| 'anidb_absolute'
+			| 'manual';
+		MediaProviderMapping: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			seasonId?: string;
+			/** Format: uuid */
+			episodeId?: string;
+			/** @enum {string} */
+			entityType: 'media_item' | 'season' | 'episode';
+			providerName: components['schemas']['MetadataProviderType'];
+			providerEntityType: string;
+			externalId: string;
+			canonical: boolean;
+			/** Format: double */
+			confidence?: number;
+		};
+		MediaItemAlias: {
+			/** Format: uuid */
+			id: string;
+			alias: string;
+			normalizedAlias: string;
+			language?: string;
+			/** @enum {string} */
+			kind: 'canonical' | 'romaji' | 'english' | 'native' | 'synonym' | 'release_title';
+			providerName?: components['schemas']['MetadataProviderType'];
+		};
+		MediaEpisodeNumbering: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			seasonId?: string;
+			/** Format: uuid */
+			episodeId: string;
+			providerName: components['schemas']['MetadataProviderType'];
+			/** @enum {string} */
+			numberingScheme: 'season_episode' | 'absolute';
+			/** Format: int32 */
+			seasonNumber?: number;
+			/** Format: int32 */
+			episodeNumber?: number;
+			/** Format: int32 */
+			absoluteNumber?: number;
 		};
 		MediaItemCreateRequest: components['schemas']['MediaItemRequest'] & {
 			startSearch: boolean;
@@ -3409,7 +3465,7 @@ export interface components {
 			priority: number;
 		};
 		/** @enum {string} */
-		MetadataProviderType: 'tmdb' | 'tvdb';
+		MetadataProviderType: 'tmdb' | 'tvdb' | 'anilist' | 'anidb';
 		SubtitleProviderListResponse: {
 			providers: components['schemas']['SubtitleProvider'][];
 		};

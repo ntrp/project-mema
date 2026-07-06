@@ -87,6 +87,9 @@ func (s *SettingsStore) CreateMediaItem(ctx context.Context, input MediaItemInpu
 	if err := materializeMediaSeriesSnapshot(ctx, tx, itemID, input); err != nil {
 		return MediaItem{}, err
 	}
+	if err := upsertAnimeMetadata(ctx, tx, itemID, input); err != nil {
+		return MediaItem{}, err
+	}
 	item, err := getMediaItem(ctx, tx, itemID)
 	if err != nil {
 		return MediaItem{}, err

@@ -111,11 +111,7 @@
 			{:else}
 				<div class="space-y-2 sm:col-span-2">
 					<Label for="download-client-api-key">API key</Label>
-					<SecretInput
-						id="download-client-api-key"
-						bind:value={form.apiKey}
-						autocomplete="off"
-					/>
+					<SecretInput id="download-client-api-key" bind:value={form.apiKey} autocomplete="off" />
 				</div>
 				<div class="space-y-2">
 					<Label for="download-client-category">Category</Label>

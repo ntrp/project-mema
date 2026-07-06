@@ -48,7 +48,9 @@ describe('media action defaults (SCN-MEDIA-003)', () => {
 
 		expect(preselectQualityProfileId(anime, profiles)).toBe('anime-1080p');
 		expect(preselectLibraryFolderId(anime, folders)).toBe('anime-movies');
-		expect(preselectLibraryFolderId({ title: 'Show', type: 'serie' } as MediaSearchResult, folders)).toBe('series');
+		expect(
+			preselectLibraryFolderId({ title: 'Show', type: 'serie' } as MediaSearchResult, folders)
+		).toBe('series');
 		expect(matchingLibraryFolders('movie', folders).map((folder) => folder.id)).toEqual([
 			'movies',
 			'anime-movies'

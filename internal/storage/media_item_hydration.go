@@ -15,7 +15,11 @@ func hydrateMediaItem(ctx context.Context, q storagegen.DBTX, item MediaItem) (M
 	if err != nil {
 		return item, err
 	}
-	return hydrateMediaItemSubtitles(ctx, q, item)
+	item, err = hydrateMediaItemSubtitles(ctx, q, item)
+	if err != nil {
+		return item, err
+	}
+	return hydrateMediaItemAnime(ctx, q, item)
 }
 
 func hydrateMediaItems(ctx context.Context, q storagegen.DBTX, items []MediaItem) ([]MediaItem, error) {
