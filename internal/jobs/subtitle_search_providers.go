@@ -71,17 +71,26 @@ func subtitleRecord(
 	provider storage.SubtitleProvider,
 	candidate subtitles.Candidate,
 	request subtitles.SearchRequest,
-	path string,
+	artifact subtitleArtifact,
 	sourceURL string,
 ) storage.MediaItemSubtitleInput {
+	providerSubtitleID := ""
+	if candidate.FileID != 0 {
+		providerSubtitleID = strconv.FormatInt(candidate.FileID, 10)
+	}
 	return storage.MediaItemSubtitleInput{
-		MediaItemID:  item.ID,
-		ProviderID:   &provider.ID,
-		ProviderName: provider.Name,
-		LanguageID:   request.LanguageID,
-		FilePath:     path,
-		SourceURL:    optionalSubtitleString(firstNonEmpty(sourceURL, candidate.SourceURL)),
-		ReleaseName:  optionalSubtitleString(candidate.ReleaseName),
+		MediaItemID:        item.ID,
+		ProviderID:         &provider.ID,
+		ProviderName:       provider.Name,
+		LanguageID:         request.LanguageID,
+		Format:             firstNonEmpty(candidate.Format, artifact.Format),
+		FilePath:           artifact.Path,
+		SourceURL:          optionalSubtitleString(firstNonEmpty(sourceURL, candidate.SourceURL)),
+		SourceRef:          optionalSubtitleString(candidate.SourceRef),
+		ReleaseName:        optionalSubtitleString(candidate.ReleaseName),
+		ProviderSubtitleID: optionalSubtitleString(providerSubtitleID),
+		Checksum:           optionalSubtitleString(artifact.Checksum),
+		SizeBytes:          &artifact.SizeBytes,
 	}
 }
 

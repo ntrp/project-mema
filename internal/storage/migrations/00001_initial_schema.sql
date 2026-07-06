@@ -977,13 +977,37 @@ create table if not exists app.media_item_subtitles (
     provider_id uuid references app.subtitle_providers(id) on delete set null,
     provider_name text not null,
     language_id text not null,
+    format text not null default 'srt',
     file_path text not null,
     source_url text,
+    source_reference text,
     release_name text,
+    provider_subtitle_id text,
+    checksum text,
+    size_bytes bigint check (size_bytes is null or size_bytes >= 0),
+    downloaded_at timestamptz not null default now(),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     unique (media_item_id, language_id, file_path)
 );
+
+alter table app.media_item_subtitles
+    add column if not exists format text not null default 'srt';
+
+alter table app.media_item_subtitles
+    add column if not exists source_reference text;
+
+alter table app.media_item_subtitles
+    add column if not exists provider_subtitle_id text;
+
+alter table app.media_item_subtitles
+    add column if not exists checksum text;
+
+alter table app.media_item_subtitles
+    add column if not exists size_bytes bigint;
+
+alter table app.media_item_subtitles
+    add column if not exists downloaded_at timestamptz not null default now();
 
 create index if not exists idx_media_item_subtitles_media_item
     on app.media_item_subtitles (media_item_id, language_id);

@@ -374,18 +374,24 @@ type AppMediaItemAlias struct {
 }
 
 type AppMediaItemSubtitle struct {
-	ID           uuid.UUID
-	MediaItemID  uuid.UUID
-	SeasonID     *uuid.UUID
-	EpisodeID    *uuid.UUID
-	ProviderID   *uuid.UUID
-	ProviderName string
-	LanguageID   string
-	FilePath     string
-	SourceUrl    pgtype.Text
-	ReleaseName  pgtype.Text
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID                 uuid.UUID
+	MediaItemID        uuid.UUID
+	SeasonID           *uuid.UUID
+	EpisodeID          *uuid.UUID
+	ProviderID         *uuid.UUID
+	ProviderName       string
+	LanguageID         string
+	Format             string
+	FilePath           string
+	SourceUrl          pgtype.Text
+	SourceReference    pgtype.Text
+	ReleaseName        pgtype.Text
+	ProviderSubtitleID pgtype.Text
+	Checksum           pgtype.Text
+	SizeBytes          pgtype.Int8
+	DownloadedAt       time.Time
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type AppMediaItemTag struct {

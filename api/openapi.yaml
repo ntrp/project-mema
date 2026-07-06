@@ -1350,6 +1350,54 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/subtitles:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: listMediaItemSubtitles
+      tags:
+        - Media
+      summary: List external subtitles for a monitored item
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: External subtitles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItemSubtitleListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/subtitles/{subtitleId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: subtitleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: deleteMediaItemSubtitle
+      tags:
+        - Media
+      summary: Delete one managed external subtitle
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Subtitle deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/files/delete:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4777,6 +4825,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/MediaFileInfo"
+            externalSubtitles:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaItemSubtitle"
             metadataFilePaths:
               type: array
               items:
@@ -5060,6 +5112,64 @@ components:
           type: array
           items:
             type: string
+    MediaItemSubtitleListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - subtitles
+      properties:
+        subtitles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaItemSubtitle"
+    MediaItemSubtitle:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - languageId
+        - format
+        - filePath
+        - providerName
+        - downloadedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        seasonId:
+          type: string
+          format: uuid
+        episodeId:
+          type: string
+          format: uuid
+        providerId:
+          type: string
+          format: uuid
+        providerName:
+          type: string
+        languageId:
+          type: string
+        format:
+          type: string
+        filePath:
+          type: string
+        sourceUrl:
+          type: string
+        sourceReference:
+          type: string
+        releaseName:
+          type: string
+        providerSubtitleId:
+          type: string
+        checksum:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        downloadedAt:
+          type: string
+          format: date-time
     MediaFileHistoryResponse:
       type: object
       additionalProperties: false

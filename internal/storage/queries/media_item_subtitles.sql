@@ -13,9 +13,15 @@ insert into app.media_item_subtitles (
     provider_id,
     provider_name,
     language_id,
+    format,
     file_path,
     source_url,
-    release_name
+    source_reference,
+    release_name,
+    provider_subtitle_id,
+    checksum,
+    size_bytes,
+    downloaded_at
 )
 values (
     sqlc.arg(id),
@@ -25,14 +31,35 @@ values (
     sqlc.narg(provider_id),
     sqlc.arg(provider_name),
     sqlc.arg(language_id),
+    sqlc.arg(format),
     sqlc.arg(file_path),
     sqlc.narg(source_url),
-    sqlc.narg(release_name)
+    sqlc.narg(source_reference),
+    sqlc.narg(release_name),
+    sqlc.narg(provider_subtitle_id),
+    sqlc.narg(checksum),
+    sqlc.narg(size_bytes),
+    sqlc.arg(downloaded_at)
 )
 on conflict (media_item_id, language_id, file_path) do update
 set provider_id = excluded.provider_id,
     provider_name = excluded.provider_name,
+    format = excluded.format,
     source_url = excluded.source_url,
+    source_reference = excluded.source_reference,
     release_name = excluded.release_name,
+    provider_subtitle_id = excluded.provider_subtitle_id,
+    checksum = excluded.checksum,
+    size_bytes = excluded.size_bytes,
+    downloaded_at = excluded.downloaded_at,
     updated_at = now()
 returning *;
+
+-- name: GetMediaItemSubtitle :one
+select *
+from app.media_item_subtitles
+where media_item_id = $1 and id = $2;
+
+-- name: DeleteMediaItemSubtitle :execrows
+delete from app.media_item_subtitles
+where media_item_id = $1 and id = $2;

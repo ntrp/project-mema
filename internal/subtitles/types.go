@@ -36,9 +36,11 @@ type Candidate struct {
 	ProviderName  string
 	LanguageID    string
 	FileID        int64
+	Format        string
 	ReleaseName   string
 	DownloadCount int
 	SourceURL     string
+	SourceRef     string
 }
 
 type Download struct {

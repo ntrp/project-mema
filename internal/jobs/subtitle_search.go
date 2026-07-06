@@ -2,6 +2,8 @@ package jobs
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"os"
@@ -121,26 +123,44 @@ func subtitleSearchDownload(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "subtitles", "Subtitle download failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "languageId": request.LanguageID, "error": err.Error()})
 		return err
 	}
-	path, err := writeSubtitleFile(request, download.Content)
+	artifact, err := writeSubtitleFile(request, download.Content)
 	if err != nil {
 		return err
 	}
-	_, err = settings.UpsertMediaItemSubtitle(ctx, subtitleRecord(item, provider, candidate, request, path, download.URL))
+	_, err = settings.UpsertMediaItemSubtitle(ctx, subtitleRecord(item, provider, candidate, request, artifact, download.URL))
 	if err != nil {
 		return err
 	}
-	slog.Debug("subtitle downloaded", "mediaItemId", item.ID, "path", path, "languageId", request.LanguageID)
-	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "subtitles", "Subtitle downloaded", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "languageId": request.LanguageID, "path": path})
+	slog.Debug("subtitle downloaded", "mediaItemId", item.ID, "path", artifact.Path, "languageId", request.LanguageID)
+	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "subtitles", "Subtitle downloaded", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "languageId": request.LanguageID, "path": artifact.Path})
 	return nil
 }
 
-func writeSubtitleFile(request subtitles.SearchRequest, content []byte) (string, error) {
+type subtitleArtifact struct {
+	Path      string
+	Format    string
+	Checksum  string
+	SizeBytes int64
+}
+
+func writeSubtitleFile(request subtitles.SearchRequest, content []byte) (subtitleArtifact, error) {
 	target := subtitleSidecarPath(request.FilePath, request.LanguageID)
+	artifact := subtitleArtifact{
+		Path:      target,
+		Format:    strings.TrimPrefix(strings.ToLower(filepath.Ext(target)), "."),
+		Checksum:  subtitleChecksum(content),
+		SizeBytes: int64(len(content)),
+	}
 	if _, err := os.Stat(target); err == nil {
-		return target, nil
+		return artifact, nil
 	}
 	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-		return "", err
+		return subtitleArtifact{}, err
 	}
-	return target, os.WriteFile(target, content, 0o644)
+	return artifact, os.WriteFile(target, content, 0o644)
+}
+
+func subtitleChecksum(content []byte) string {
+	sum := sha256.Sum256(content)
+	return "sha256:" + hex.EncodeToString(sum[:])
 }

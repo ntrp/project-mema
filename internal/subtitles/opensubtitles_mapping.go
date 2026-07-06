@@ -107,13 +107,31 @@ func openSubtitlesCandidates(
 				ProviderName:  providerName,
 				LanguageID:    language,
 				FileID:        file.FileID,
+				Format:        subtitleFormat(file.FileName),
 				ReleaseName:   firstNonEmpty(file.FileName, item.Attributes.Feature.Title),
 				DownloadCount: item.Attributes.DownloadCount,
 				SourceURL:     item.Attributes.URL,
+				SourceRef:     item.Attributes.URL,
 			})
 		}
 	}
 	return candidates
+}
+
+func subtitleFormat(fileName string) string {
+	ext := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(pathExt(fileName))), ".")
+	if ext == "" {
+		return "srt"
+	}
+	return ext
+}
+
+func pathExt(fileName string) string {
+	index := strings.LastIndex(fileName, ".")
+	if index < 0 {
+		return ""
+	}
+	return fileName[index:]
 }
 
 func firstNonEmpty(values ...string) string {

@@ -202,33 +202,6 @@ type ReleaseSearchSnapshot struct {
 	Errors   []string
 }
 
-type MediaItemSubtitle struct {
-	ID           uuid.UUID
-	MediaItemID  uuid.UUID
-	SeasonID     *uuid.UUID
-	EpisodeID    *uuid.UUID
-	ProviderID   *uuid.UUID
-	ProviderName string
-	LanguageID   string
-	FilePath     string
-	SourceURL    *string
-	ReleaseName  *string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-}
-
-type MediaItemSubtitleInput struct {
-	MediaItemID  uuid.UUID
-	SeasonID     *uuid.UUID
-	EpisodeID    *uuid.UUID
-	ProviderID   *uuid.UUID
-	ProviderName string
-	LanguageID   string
-	FilePath     string
-	SourceURL    *string
-	ReleaseName  *string
-}
-
 type IndexerSearchSettings struct {
 	CacheDurationMinutes         int32
 	HistoryRetentionDays         int32

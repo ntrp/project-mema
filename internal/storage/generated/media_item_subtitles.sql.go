@@ -7,13 +7,69 @@ package storage
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteMediaItemSubtitle = `-- name: DeleteMediaItemSubtitle :execrows
+delete from app.media_item_subtitles
+where media_item_id = $1 and id = $2
+`
+
+type DeleteMediaItemSubtitleParams struct {
+	MediaItemID uuid.UUID
+	ID          uuid.UUID
+}
+
+func (q *Queries) DeleteMediaItemSubtitle(ctx context.Context, arg DeleteMediaItemSubtitleParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteMediaItemSubtitle, arg.MediaItemID, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const getMediaItemSubtitle = `-- name: GetMediaItemSubtitle :one
+select id, media_item_id, season_id, episode_id, provider_id, provider_name, language_id, format, file_path, source_url, source_reference, release_name, provider_subtitle_id, checksum, size_bytes, downloaded_at, created_at, updated_at
+from app.media_item_subtitles
+where media_item_id = $1 and id = $2
+`
+
+type GetMediaItemSubtitleParams struct {
+	MediaItemID uuid.UUID
+	ID          uuid.UUID
+}
+
+func (q *Queries) GetMediaItemSubtitle(ctx context.Context, arg GetMediaItemSubtitleParams) (AppMediaItemSubtitle, error) {
+	row := q.db.QueryRow(ctx, getMediaItemSubtitle, arg.MediaItemID, arg.ID)
+	var i AppMediaItemSubtitle
+	err := row.Scan(
+		&i.ID,
+		&i.MediaItemID,
+		&i.SeasonID,
+		&i.EpisodeID,
+		&i.ProviderID,
+		&i.ProviderName,
+		&i.LanguageID,
+		&i.Format,
+		&i.FilePath,
+		&i.SourceUrl,
+		&i.SourceReference,
+		&i.ReleaseName,
+		&i.ProviderSubtitleID,
+		&i.Checksum,
+		&i.SizeBytes,
+		&i.DownloadedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listMediaItemSubtitles = `-- name: ListMediaItemSubtitles :many
-select id, media_item_id, season_id, episode_id, provider_id, provider_name, language_id, file_path, source_url, release_name, created_at, updated_at
+select id, media_item_id, season_id, episode_id, provider_id, provider_name, language_id, format, file_path, source_url, source_reference, release_name, provider_subtitle_id, checksum, size_bytes, downloaded_at, created_at, updated_at
 from app.media_item_subtitles
 where media_item_id = $1
 order by language_id, created_at desc
@@ -36,9 +92,15 @@ func (q *Queries) ListMediaItemSubtitles(ctx context.Context, mediaItemID uuid.U
 			&i.ProviderID,
 			&i.ProviderName,
 			&i.LanguageID,
+			&i.Format,
 			&i.FilePath,
 			&i.SourceUrl,
+			&i.SourceReference,
 			&i.ReleaseName,
+			&i.ProviderSubtitleID,
+			&i.Checksum,
+			&i.SizeBytes,
+			&i.DownloadedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -61,9 +123,15 @@ insert into app.media_item_subtitles (
     provider_id,
     provider_name,
     language_id,
+    format,
     file_path,
     source_url,
-    release_name
+    source_reference,
+    release_name,
+    provider_subtitle_id,
+    checksum,
+    size_bytes,
+    downloaded_at
 )
 values (
     $1,
@@ -75,28 +143,46 @@ values (
     $7,
     $8,
     $9,
-    $10
+    $10,
+    $11,
+    $12,
+    $13,
+    $14,
+    $15,
+    $16
 )
 on conflict (media_item_id, language_id, file_path) do update
 set provider_id = excluded.provider_id,
     provider_name = excluded.provider_name,
+    format = excluded.format,
     source_url = excluded.source_url,
+    source_reference = excluded.source_reference,
     release_name = excluded.release_name,
+    provider_subtitle_id = excluded.provider_subtitle_id,
+    checksum = excluded.checksum,
+    size_bytes = excluded.size_bytes,
+    downloaded_at = excluded.downloaded_at,
     updated_at = now()
-returning id, media_item_id, season_id, episode_id, provider_id, provider_name, language_id, file_path, source_url, release_name, created_at, updated_at
+returning id, media_item_id, season_id, episode_id, provider_id, provider_name, language_id, format, file_path, source_url, source_reference, release_name, provider_subtitle_id, checksum, size_bytes, downloaded_at, created_at, updated_at
 `
 
 type UpsertMediaItemSubtitleParams struct {
-	ID           uuid.UUID
-	MediaItemID  uuid.UUID
-	SeasonID     *uuid.UUID
-	EpisodeID    *uuid.UUID
-	ProviderID   *uuid.UUID
-	ProviderName string
-	LanguageID   string
-	FilePath     string
-	SourceUrl    pgtype.Text
-	ReleaseName  pgtype.Text
+	ID                 uuid.UUID
+	MediaItemID        uuid.UUID
+	SeasonID           *uuid.UUID
+	EpisodeID          *uuid.UUID
+	ProviderID         *uuid.UUID
+	ProviderName       string
+	LanguageID         string
+	Format             string
+	FilePath           string
+	SourceUrl          pgtype.Text
+	SourceReference    pgtype.Text
+	ReleaseName        pgtype.Text
+	ProviderSubtitleID pgtype.Text
+	Checksum           pgtype.Text
+	SizeBytes          pgtype.Int8
+	DownloadedAt       time.Time
 }
 
 func (q *Queries) UpsertMediaItemSubtitle(ctx context.Context, arg UpsertMediaItemSubtitleParams) (AppMediaItemSubtitle, error) {
@@ -108,9 +194,15 @@ func (q *Queries) UpsertMediaItemSubtitle(ctx context.Context, arg UpsertMediaIt
 		arg.ProviderID,
 		arg.ProviderName,
 		arg.LanguageID,
+		arg.Format,
 		arg.FilePath,
 		arg.SourceUrl,
+		arg.SourceReference,
 		arg.ReleaseName,
+		arg.ProviderSubtitleID,
+		arg.Checksum,
+		arg.SizeBytes,
+		arg.DownloadedAt,
 	)
 	var i AppMediaItemSubtitle
 	err := row.Scan(
@@ -121,9 +213,15 @@ func (q *Queries) UpsertMediaItemSubtitle(ctx context.Context, arg UpsertMediaIt
 		&i.ProviderID,
 		&i.ProviderName,
 		&i.LanguageID,
+		&i.Format,
 		&i.FilePath,
 		&i.SourceUrl,
+		&i.SourceReference,
 		&i.ReleaseName,
+		&i.ProviderSubtitleID,
+		&i.Checksum,
+		&i.SizeBytes,
+		&i.DownloadedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

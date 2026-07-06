@@ -692,6 +692,45 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/subtitles': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** List external subtitles for a monitored item */
+		get: operations['listMediaItemSubtitles'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/subtitles/{subtitleId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				subtitleId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete one managed external subtitle */
+		delete: operations['deleteMediaItemSubtitle'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/delete': {
 		parameters: {
 			query?: never;
@@ -2437,6 +2476,7 @@ export interface components {
 			mediaFolderPath?: string;
 			filePaths: string[];
 			files?: components['schemas']['MediaFileInfo'][];
+			externalSubtitles?: components['schemas']['MediaItemSubtitle'][];
 			metadataFilePaths: string[];
 			/** Format: date-time */
 			createdAt: string;
@@ -2550,6 +2590,32 @@ export interface components {
 			wantedLanguages: string[];
 			matchedLanguages: string[];
 			missingLanguages: string[];
+		};
+		MediaItemSubtitleListResponse: {
+			subtitles: components['schemas']['MediaItemSubtitle'][];
+		};
+		MediaItemSubtitle: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			seasonId?: string;
+			/** Format: uuid */
+			episodeId?: string;
+			/** Format: uuid */
+			providerId?: string;
+			providerName: string;
+			languageId: string;
+			format: string;
+			filePath: string;
+			sourceUrl?: string;
+			sourceReference?: string;
+			releaseName?: string;
+			providerSubtitleId?: string;
+			checksum?: string;
+			/** Format: int64 */
+			sizeBytes?: number;
+			/** Format: date-time */
+			downloadedAt: string;
 		};
 		MediaFileHistoryResponse: {
 			entries: components['schemas']['MediaFileHistoryEntry'][];
@@ -5006,6 +5072,55 @@ export interface operations {
 				};
 			};
 			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listMediaItemSubtitles: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description External subtitles */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItemSubtitleListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteMediaItemSubtitle: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				subtitleId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Subtitle deleted */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
+				};
+			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};
