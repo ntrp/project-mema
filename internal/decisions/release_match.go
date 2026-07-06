@@ -23,6 +23,8 @@ type ReleaseMatch struct {
 	CustomFormatScore        int32
 	CustomFormatContributors []ReleaseScoreContributor
 	LanguageContributors     []ReleaseScoreContributor
+	TargetScore              int32
+	TargetContributors       []ReleaseScoreContributor
 	RankContributors         []ReleaseScoreContributor
 	MatchedSeasonID          *uuid.UUID
 	MatchedEpisodeID         *uuid.UUID
@@ -197,25 +199,29 @@ func evaluateParsedRelease(
 		context.Profile,
 		context.Languages,
 	)
+	targetScore, targetContributors, targetReject := videoTargetScore(parsed, context.Profile)
 
 	if !resourceTitleMatches(criteria, matchedMedia, meta.Title) {
-		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.")
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, "Does not match this series/movie.")
 	}
 	if yearMismatch(criteria.Year, parsed.Year) {
-		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.", fmt.Sprintf("Release year is %s.", parsed.Year))
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, "Does not match this series/movie.", fmt.Sprintf("Release year is %s.", parsed.Year))
 	}
 	if reason := criteriaMismatch(criteria, parsed); reason != "" {
-		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Does not match this series/movie.", reason)
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, "Does not match this series/movie.", reason)
 	}
 	if reason := qualityRejection(parsed, context.Profile); reason != "" {
-		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, reason)
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, reason)
 	}
 
 	if languageReject != "" {
-		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, languageReject)
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, languageReject)
+	}
+	if targetReject != "" {
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, targetReject)
 	}
 	if context.Profile != nil && customScore < context.Profile.MinimumCustomFormatScore {
-		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, "Custom format score is below the profile minimum.")
+		return scoredReleaseMatch("error", parsed, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, "Custom format score is below the profile minimum.")
 	}
 
 	details = append(details, "Matches the requested resource.")
@@ -229,16 +235,16 @@ func evaluateParsedRelease(
 	details = append(details, upgradeDetails...)
 	if criteria.Kind == "episode" && parsed.SeasonPack {
 		details = append(details, "This is a whole season release, but the search requested an episode.")
-		return decisionMatch("warning", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
+		return decisionMatch("warning", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, meta, details...)
 	}
 	if upgradeReject != "" {
 		severity := "error"
 		if context.Profile == nil {
 			severity = "warning"
 		}
-		return decisionMatch(severity, parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
+		return decisionMatch(severity, parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, meta, details...)
 	}
-	return decisionMatch("info", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
+	return decisionMatch("info", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, meta, details...)
 }
 
 func EvaluateReleaseCandidateInputMatch(

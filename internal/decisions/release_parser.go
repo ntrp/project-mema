@@ -25,6 +25,8 @@ type ParsedRelease struct {
 	Source        string
 	Resolution    string
 	VideoCodec    string
+	HDRFormat     string
+	PixelFormat   string
 	AudioCodec    string
 	AudioChannels string
 	Version       string
@@ -57,6 +59,8 @@ func ParseReleaseFileName(fileName string) ParsedRelease {
 		Source:       detectSource(title),
 		Resolution:   detectResolution(title),
 		VideoCodec:   detectVideoCodec(title),
+		HDRFormat:    detectHDRFormat(title),
+		PixelFormat:  detectPixelFormat(title),
 		AudioCodec:   detectAudioCodec(title),
 		Languages:    detectLanguages(title),
 		Edition:      detectEdition(title),
@@ -126,25 +130,6 @@ func detectSource(title string) string {
 		return "TELESYNC"
 	case containsAnyNormalized(title, "telecine"):
 		return "TELECINE"
-	default:
-		return ""
-	}
-}
-
-func detectVideoCodec(title string) string {
-	switch {
-	case containsAnyNormalized(title, "x266", "h266", "vvc"):
-		return "x266"
-	case containsAnyNormalized(title, "x265", "h265", "hevc"):
-		return "x265"
-	case containsAnyNormalized(title, "x264", "h264", "avc"):
-		return "x264"
-	case containsAnyNormalized(title, "av1"):
-		return "AV1"
-	case containsAnyNormalized(title, "xvid"):
-		return "Xvid"
-	case containsAnyNormalized(title, "vp9"):
-		return "VP9"
 	default:
 		return ""
 	}

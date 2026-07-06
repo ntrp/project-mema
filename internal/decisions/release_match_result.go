@@ -65,15 +65,20 @@ func scoredReleaseMatch(
 	customContributors []ReleaseScoreContributor,
 	languageScore int32,
 	languageContributors []ReleaseScoreContributor,
+	targetScore int32,
+	targetContributors []ReleaseScoreContributor,
 	details ...string,
 ) ReleaseMatch {
-	match := releaseMatch(severity, parsed, customScore+languageScore, details...)
+	match := releaseMatch(severity, parsed, customScore+languageScore+targetScore, details...)
 	match.MatchedMedia = matchedMedia
 	match.CustomFormatScore = customScore
 	match.CustomFormatContributors = customContributors
 	match.LanguageContributors = languageContributors
+	match.TargetScore = targetScore
+	match.TargetContributors = targetContributors
 	match.ScoreContributors = append([]ReleaseScoreContributor{}, customContributors...)
 	match.ScoreContributors = append(match.ScoreContributors, languageContributors...)
+	match.ScoreContributors = append(match.ScoreContributors, targetContributors...)
 	return match
 }
 
@@ -86,6 +91,8 @@ func decisionMatch(
 	customContributors []ReleaseScoreContributor,
 	languageScore int32,
 	languageContributors []ReleaseScoreContributor,
+	targetScore int32,
+	targetContributors []ReleaseScoreContributor,
 	meta releaseMeta,
 	details ...string,
 ) ReleaseMatch {
@@ -97,9 +104,11 @@ func decisionMatch(
 		customContributors,
 		languageScore,
 		languageContributors,
+		targetScore,
+		targetContributors,
 		details...,
 	)
-	match.RankContributors = rankContributors(parsed, score, customScore, languageScore, meta)
+	match.RankContributors = rankContributors(parsed, score, customScore, languageScore, targetScore, meta)
 	return match
 }
 

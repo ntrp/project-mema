@@ -136,12 +136,14 @@ func rankContributors(
 	qualityScore int32,
 	customScore int32,
 	languageScore int32,
+	targetScore int32,
 	meta releaseMeta,
 ) []ReleaseScoreContributor {
 	contributors := []ReleaseScoreContributor{
 		{Label: fmt.Sprintf("Quality rank: %s", parsed.Quality), Score: qualityScore},
 		{Label: "Custom formats", Score: customScore},
 		{Label: "Languages", Score: languageScore},
+		{Label: "Profile targets", Score: targetScore},
 		{Label: fmt.Sprintf("Protocol: %s", meta.IndexerProtocol), Score: 0},
 		{Label: "Size bytes", Score: int32(clampInt64(meta.SizeBytes))},
 	}
