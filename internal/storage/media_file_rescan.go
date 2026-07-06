@@ -96,7 +96,7 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 		}
 		status := "auto_added"
 		var sourcePath *string
-		if source := movedSourceCandidate(existing, path, usedMovedSources); source != nil {
+		if source := movedSourceCandidate(existing, path, currentPaths, usedMovedSources); source != nil {
 			status = "moved_candidate"
 			sourcePath = &source.Path
 			usedMovedSources[source.ID] = struct{}{}
@@ -154,11 +154,22 @@ func updateMediaFileRecordStatus(ctx context.Context, q *storagegen.Queries, rec
 	})
 }
 
-func movedSourceCandidate(records []storagegen.AppLibraryScanItem, path string, used map[uuid.UUID]struct{}) *storagegen.AppLibraryScanItem {
+func movedSourceCandidate(
+	records []storagegen.AppLibraryScanItem,
+	path string,
+	currentPaths map[string]struct{},
+	used map[uuid.UUID]struct{},
+) *storagegen.AppLibraryScanItem {
 	name := filepath.Base(path)
 	for index := range records {
 		record := &records[index]
-		if record.Status != "missing" || record.FileName != name {
+		if record.FileName != name || record.Path == path {
+			continue
+		}
+		if _, exists := currentPaths[record.Path]; exists {
+			continue
+		}
+		if record.Status != "missing" && !activeMediaFileStatus(record.Status) {
 			continue
 		}
 		if _, ok := used[record.ID]; ok {

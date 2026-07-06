@@ -23,8 +23,8 @@ func (s *SettingsStore) CreateImportAttempt(ctx context.Context, input ImportAtt
 		Status:                 input.Status,
 		FailureStage:           textValue(input.FailureStage),
 		ErrorMessage:           textValue(input.ErrorMessage),
-		CreatedTargets:         input.CreatedTargets,
-		InsertedMediaFilePaths: input.InsertedMediaFilePaths,
+		CreatedTargets:         stringSliceValue(input.CreatedTargets),
+		InsertedMediaFilePaths: stringSliceValue(input.InsertedMediaFilePaths),
 	})
 	return importAttemptFromRow(row), err
 }
@@ -57,4 +57,11 @@ func importAttemptFromRow(row storagegen.AppImportAttempt) ImportAttempt {
 		CreatedAt:              row.CreatedAt,
 		UpdatedAt:              row.UpdatedAt,
 	}
+}
+
+func stringSliceValue(values []string) []string {
+	if values == nil {
+		return []string{}
+	}
+	return values
 }

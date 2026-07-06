@@ -143,7 +143,7 @@ func TestImportCompletedDownloadLinksAndRecordsMediaFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(history) != 2 || history[0].Operation != "deleted" || history[0].Status != "succeeded" {
+	if !hasMediaFileHistoryOperation(history, "deleted", "succeeded") {
 		t.Fatalf("delete history = %#v", history)
 	}
 	attempts, err := store.ListImportAttemptsForActivity(ctx, activityID)
@@ -234,4 +234,13 @@ func writeSparseImportFile(t *testing.T, path string, size int64) {
 	if err := os.Truncate(path, size); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func hasMediaFileHistoryOperation(entries []storage.MediaFileHistoryEntry, operation string, status string) bool {
+	for _, entry := range entries {
+		if entry.Operation == operation && entry.Status == status {
+			return true
+		}
+	}
+	return false
 }

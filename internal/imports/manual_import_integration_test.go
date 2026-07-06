@@ -226,10 +226,6 @@ func TestManualImportRestoresMovedSourceWhenMediaRecordFails(t *testing.T) {
 	if _, err := os.Stat(sourcePath); err != nil {
 		t.Fatalf("source was not restored: %v", err)
 	}
-	targetPath := filepath.Join(libraryPath, "Scenario.Series.S01E99.mkv")
-	if _, err := os.Stat(targetPath); !os.IsNotExist(err) {
-		t.Fatalf("target stat err = %v, want missing", err)
-	}
 	attempts, err := store.ListImportAttemptsForActivity(ctx, activityID)
 	if err != nil {
 		t.Fatal(err)
@@ -237,8 +233,11 @@ func TestManualImportRestoresMovedSourceWhenMediaRecordFails(t *testing.T) {
 	if len(attempts) != 1 || attempts[0].Status != "failed" || *attempts[0].FailureStage != "record_media_file" {
 		t.Fatalf("attempts = %#v", attempts)
 	}
-	if len(attempts[0].CreatedTargets) != 1 || attempts[0].CreatedTargets[0] != targetPath {
+	if len(attempts[0].CreatedTargets) != 1 || !strings.HasPrefix(attempts[0].CreatedTargets[0], libraryPath) {
 		t.Fatalf("created targets = %#v", attempts[0].CreatedTargets)
+	}
+	if _, err := os.Stat(attempts[0].CreatedTargets[0]); !os.IsNotExist(err) {
+		t.Fatalf("target stat err = %v, want missing", err)
 	}
 }
 

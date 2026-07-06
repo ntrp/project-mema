@@ -11,7 +11,7 @@ describe('rendered media action surfaces (SCN-MEDIA-004)', () => {
 			props: {
 				mediaType: 'serie',
 				isAdmin: true,
-				libraryFolders: [libraryFolder()],
+				libraryFolders: [libraryFolder({ kind: 'series' })],
 				qualityProfiles: [qualityProfile()],
 				qualityProfileId: 'profile-1',
 				libraryFolderId: 'folder-1',
@@ -109,8 +109,8 @@ function mediaItem(overrides: Partial<MediaItem> = {}): MediaItem {
 	} as MediaItem;
 }
 
-function libraryFolder(): LibraryFolder {
-	return { id: 'folder-1', path: '/library', kind: 'movie', createdAt: '', updatedAt: '' };
+function libraryFolder(overrides: Partial<LibraryFolder> = {}): LibraryFolder {
+	return { id: 'folder-1', path: '/library', kind: 'movie', createdAt: '', updatedAt: '', ...overrides };
 }
 
 function qualityProfile(): QualityProfileOption {

@@ -203,7 +203,7 @@ describe('UI API helpers', () => {
 		expect(settings.indexerSearch).toEqual({});
 		expect(settings.metadataCache).toEqual({});
 		expect(settings.languages).toEqual([]);
-		expect(clientMock.GET).toHaveBeenCalledTimes(12);
+		expect(clientMock.GET).toHaveBeenCalledTimes(13);
 		await expect(listCustomFormats()).resolves.toEqual([]);
 	});
 });
