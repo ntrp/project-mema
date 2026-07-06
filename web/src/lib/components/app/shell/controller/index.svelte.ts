@@ -63,7 +63,8 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 	});
 	const settingsSave = createSettingsSaveActions(state, {
 		...notices,
-		loadSettings: loads.loadSettings
+		loadSettings: loads.loadSettings,
+		loadMediaItems: loads.loadMediaItems
 	});
 	const settingsDelete = createSettingsDeleteActions(state, {
 		...notices,

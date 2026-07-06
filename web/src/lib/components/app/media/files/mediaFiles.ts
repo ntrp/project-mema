@@ -118,6 +118,7 @@ export function fileRow(
 		formats,
 		tracks: info?.tracks ?? [],
 		chapters: info?.chapters ?? [],
+		otherFiles: info?.otherFiles ?? [],
 		subtitleSatisfaction: info?.subtitleSatisfaction,
 		externalSubtitles: externalSubtitlesForPath(item.externalSubtitles ?? [], path),
 		upgrade,
@@ -151,9 +152,11 @@ export function missingRow(
 		formats: [],
 		tracks: [],
 		chapters: [],
+		otherFiles: [],
 		externalSubtitles: [],
 		subtitleSatisfaction: {
 			state: 'missing',
+			preferredMode: 'mixed',
 			wantedLanguages: [],
 			matchedLanguages: [],
 			missingLanguages: []

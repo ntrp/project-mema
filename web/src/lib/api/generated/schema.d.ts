@@ -2725,11 +2725,23 @@ export interface components {
 			sizeBytes?: number;
 			tracks?: components['schemas']['MediaFileTrack'][];
 			chapters?: components['schemas']['MediaFileChapter'][];
+			otherFiles?: components['schemas']['MediaFileOtherFile'][];
 			subtitleSatisfaction?: components['schemas']['MediaFileSubtitleSatisfaction'];
 		};
+		MediaFileOtherFile: {
+			type: components['schemas']['MediaFileOtherFileType'];
+			path: string;
+			status: components['schemas']['MediaFileOtherFileStatus'];
+			language?: string;
+		};
+		/** @enum {string} */
+		MediaFileOtherFileType: 'subtitle' | 'metadata' | 'unknown';
+		/** @enum {string} */
+		MediaFileOtherFileStatus: 'available' | 'missing';
 		MediaFileSubtitleSatisfaction: {
 			/** @enum {string} */
 			state: 'satisfied' | 'missing' | 'ignored';
+			preferredMode: components['schemas']['MediaProfileSubtitlePreferredMode'];
 			wantedLanguages: string[];
 			matchedLanguages: string[];
 			missingLanguages: string[];
@@ -3040,6 +3052,31 @@ export interface components {
 			channels?: number;
 			channelLayout?: string;
 			bitRate?: string;
+			provenance?: components['schemas']['MediaFileTrackProvenance'];
+		};
+		MediaFileTrackProvenance: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId: string;
+			componentType: string;
+			componentKey: string;
+			releaseGroup: string;
+			releaseName: string;
+			releaseId?: string;
+			sourceProvider?: string;
+			sourceFilePath?: string;
+			/** Format: uuid */
+			retainedSourceId?: string;
+			/** Format: int32 */
+			sourceStreamId?: number;
+			transformationChain: {
+				[key: string]: unknown;
+			}[];
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
 		};
 		/** @enum {string} */
 		MediaFilePreviewMode: 'direct' | 'remux' | 'transcode';

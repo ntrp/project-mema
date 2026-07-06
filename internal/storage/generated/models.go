@@ -474,6 +474,18 @@ type AppMediaItemAlias struct {
 	UpdatedAt         time.Time
 }
 
+type AppMediaItemSidecar struct {
+	ID            uuid.UUID
+	MediaItemID   uuid.UUID
+	MediaFilePath string
+	FilePath      string
+	SidecarType   string
+	LanguageID    pgtype.Text
+	Format        pgtype.Text
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
 type AppMediaItemSubtitle struct {
 	ID                 uuid.UUID
 	MediaItemID        uuid.UUID

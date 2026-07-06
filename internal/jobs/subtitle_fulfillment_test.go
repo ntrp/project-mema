@@ -69,6 +69,33 @@ func TestSubtitleFulfillmentNeedsUseEmbeddedInventory(t *testing.T) {
 	}
 }
 
+func TestSubtitleFulfillmentNeedsUseMuxableExternalSubtitle(t *testing.T) {
+	item := storage.MediaItem{
+		Type:                  "movie",
+		Title:                 "Scenario Movie",
+		FilePaths:             []string{"/library/Scenario.Movie.mkv"},
+		SubtitlePreferredMode: "embedded",
+		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
+			LanguageID: "english",
+		}},
+		ExternalSubtitles: []storage.MediaItemSubtitle{{
+			LanguageID:    "english",
+			FilePath:      "/library/English.srt",
+			RetentionMode: storage.SubtitleRetentionMux,
+		}},
+		Sidecars: []storage.MediaItemSidecar{{
+			MediaFilePath: "/library/Scenario.Movie.mkv",
+			FilePath:      "/library/English.srt",
+			SidecarType:   storage.MediaSidecarSubtitle,
+			LanguageID:    stringPtr("english"),
+		}},
+	}
+
+	if needs := SubtitleFulfillmentNeeds(item); len(needs) != 0 {
+		t.Fatalf("needs = %#v", needs)
+	}
+}
+
 func TestPlanSubtitleFulfillmentChoosesAlternateRelease(t *testing.T) {
 	item := storage.MediaItem{
 		Type:                         "movie",

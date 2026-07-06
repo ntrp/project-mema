@@ -91,7 +91,15 @@ func subtitleRecord(
 		ProviderSubtitleID: optionalSubtitleString(providerSubtitleID),
 		Checksum:           optionalSubtitleString(artifact.Checksum),
 		SizeBytes:          &artifact.SizeBytes,
+		RetentionMode:      subtitleRetentionModeForProfile(item.SubtitlePreferredMode),
 	}
+}
+
+func subtitleRetentionModeForProfile(subtitlePreferredMode string) storage.SubtitleRetentionMode {
+	if subtitlePreferredMode == "embedded" {
+		return storage.SubtitleRetentionMux
+	}
+	return storage.SubtitleRetentionExternal
 }
 
 func optionalSubtitleString(value string) *string {

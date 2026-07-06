@@ -85,7 +85,8 @@ func subtitleSearchTargetSatisfied(
 
 func subtitleSearchLanguageSatisfied(item storage.MediaItem, languageID string, filePath string) bool {
 	if subtitlePreferredMode(item.SubtitlePreferredMode) == "embedded" {
-		return embeddedSubtitleExists(item, storage.MediaProfileSubtitleTarget{LanguageID: languageID})
+		return embeddedSubtitleExists(item, storage.MediaProfileSubtitleTarget{LanguageID: languageID}) ||
+			externalSubtitleExists(item, languageID, filePath)
 	}
 	return externalSubtitleExists(item, languageID, filePath)
 }
@@ -98,6 +99,15 @@ func externalSubtitleExists(item storage.MediaItem, languageID string, filePath 
 		if sameMediaBase(subtitle.FilePath, filePath) {
 			return true
 		}
+	}
+	for _, sidecar := range item.Sidecars {
+		if sidecar.MediaFilePath != filePath ||
+			sidecar.SidecarType != storage.MediaSidecarSubtitle ||
+			sidecar.LanguageID == nil ||
+			languageMatchKey(*sidecar.LanguageID) != languageMatchKey(languageID) {
+			continue
+		}
+		return true
 	}
 	return false
 }

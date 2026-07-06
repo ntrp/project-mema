@@ -24,7 +24,15 @@ func (s *SettingsStore) UpsertMediaItemSubtitle(
 	ctx context.Context,
 	input MediaItemSubtitleInput,
 ) (MediaItemSubtitle, error) {
-	row, err := storagegen.New(s.pool).UpsertMediaItemSubtitle(ctx, subtitleParams(input))
+	return upsertMediaItemSubtitle(ctx, s.pool, input)
+}
+
+func upsertMediaItemSubtitle(
+	ctx context.Context,
+	q storagegen.DBTX,
+	input MediaItemSubtitleInput,
+) (MediaItemSubtitle, error) {
+	row, err := storagegen.New(q).UpsertMediaItemSubtitle(ctx, subtitleParams(input))
 	return mediaItemSubtitleFromRow(row), err
 }
 
@@ -137,7 +145,7 @@ func (s *SettingsStore) ListSelectedSubtitleArtifacts(
 func SelectedSubtitleArtifacts(item MediaItem) []SubtitleAssemblyArtifact {
 	artifacts := []SubtitleAssemblyArtifact{}
 	for _, subtitle := range item.ExternalSubtitles {
-		if !subtitle.Selected || subtitle.RetentionMode == SubtitleRetentionIgnore {
+		if !subtitle.Selected || subtitle.RetentionMode != SubtitleRetentionMux {
 			continue
 		}
 		artifacts = append(artifacts, SubtitleAssemblyArtifact{

@@ -19,6 +19,34 @@ describe('media subtitle state mapping', () => {
 			['French', 'Downloading']
 		]);
 	});
+
+	it('renders backend subtitle satisfaction without deriving missing state from sidecars', () => {
+		const row = {
+			...fileRow(),
+			tracks: [],
+			externalSubtitles: [],
+			otherFiles: [
+				{
+					type: 'subtitle' as const,
+					path: '/library/Scenario/Scenario.Movie.2026.en.srt',
+					status: 'available' as const,
+					language: 'english'
+				}
+			],
+			subtitleSatisfaction: {
+				state: 'satisfied' as const,
+				preferredMode: 'mixed' as const,
+				wantedLanguages: ['english', 'italian'],
+				matchedLanguages: ['english', 'italian'],
+				missingLanguages: []
+			}
+		};
+
+		expect(subtitleStateRows(row).map((item) => [item.language, item.label])).toEqual([
+			['English', 'Satisfied'],
+			['Italian', 'Satisfied']
+		]);
+	});
 });
 
 function fileRow(): MediaFileRow {
@@ -36,8 +64,10 @@ function fileRow(): MediaFileRow {
 		formats: [],
 		tracks: [{ type: 'subtitle', index: 2, codec: 'SRT', language: 'eng' }],
 		chapters: [],
+		otherFiles: [],
 		subtitleSatisfaction: {
 			state: 'missing',
+			preferredMode: 'mixed',
 			wantedLanguages: ['english', 'german', 'french'],
 			matchedLanguages: ['english', 'german'],
 			missingLanguages: ['french']

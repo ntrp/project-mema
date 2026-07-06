@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
+import MediaFileOtherFilesPanel from '$lib/components/app/media/files/other-files/MediaFileOtherFilesPanel.svelte';
 import MediaFileSummary from '$lib/components/app/media/files/MediaFileSummary.svelte';
+import { provenanceFields } from '$lib/components/app/media/files/provenance/mediaFileTrackProvenance';
 import { missingRow, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import { renderWithTooltip } from '$lib/components/rendered/renderHelpers';
 
@@ -23,6 +25,8 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Missing file');
 		expect(body).toContain('No matched file for this movie');
 		expect(body).toContain('Subtitles');
+		expect(body).toContain('Other files');
+		expect(body).toContain('No other files present.');
 		expect(body).toContain('Missing');
 		expect(body).toContain('Automatic search');
 		expect(body).toContain('Manual search');
@@ -34,13 +38,18 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		const { body } = renderWithTooltip(MediaFileDetailsAccordion, { row: detailedFileRow() });
 
 		expect(body).toContain('Track Nr.');
-		expect(body).toContain('Video');
+		expect(body).toContain('Provenance');
+		expect(body).toContain('Video track');
 		expect(body).toContain('h264');
 		expect(body).toContain('1920x1080');
-		expect(body).toContain('Audio');
+		expect(body).toContain('Audio track');
 		expect(body).toContain('English');
 		expect(body).toContain('DTS');
-		expect(body).toContain('Subtitle');
+		expect(body).toContain('Track provenance');
+		expect(body.match(/aria-label="Track provenance"/g) ?? []).toHaveLength(4);
+		expect(body).toContain('Subtitle track');
+		expect(body).toContain('Japanese');
+		expect(body).toContain('Missing expected subtitle track');
 		expect(body).toContain('Signs');
 		expect(body).toContain('Chapter');
 		expect(body).toContain('2-21');
@@ -51,6 +60,59 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('border-t-4');
 	});
 
+	it('renders other files with path, type, and status', () => {
+		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
+			row: detailedFileRow(),
+			canManage: true,
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Other files');
+		expect(body).toContain('Type');
+		expect(body).toContain('Language');
+		expect(body).toContain('Status');
+		expect(body).toContain('Subtitle');
+		expect(body).toContain('Metadata');
+		expect(body).toContain('Unknown');
+		expect(body).toContain('Japanese');
+		expect(body).toContain('Scenario.Movie.2026.1080p.japanese.srt');
+		expect(body).toContain('poster.jpg');
+		expect(body).toContain('notes.bin');
+		expect(body).toContain('Missing');
+		expect(otherFilesOrder(body)).toEqual(['Other files', 'Type', 'Language', 'Status']);
+		expect(body.match(/Delete other file/g) ?? []).toHaveLength(2);
+	});
+
+	it('renders an empty other files state', () => {
+		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
+			row: { ...detailedFileRow(), otherFiles: [] },
+			canManage: true,
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Other files');
+		expect(body).toContain('No other files present.');
+	});
+
+	it('formats all track provenance fields for the tooltip', () => {
+		const fields = provenanceFields(detailedFileRow().tracks[1].provenance!);
+		const values = fields.map((field) => `${field.label}: ${field.value}`);
+
+		expect(values).toContain('ID: 11111111-1111-1111-1111-111111111111');
+		expect(values).toContain('Media item: 22222222-2222-2222-2222-222222222222');
+		expect(values).toContain('Component type: audio');
+		expect(values).toContain('Component key: audio-source-1');
+		expect(values).toContain('Release group: ARR');
+		expect(values).toContain('Release name: Scenario.Release');
+		expect(values).toContain('Source provider: Scenario Indexer');
+		expect(values).toContain('Source file: /downloads/Scenario.Release.mkv');
+		expect(values).toContain('Retained source: 33333333-3333-3333-3333-333333333333');
+		expect(values).toContain('Source stream: 1');
+		expect(values).toContain('Created: 2026-01-02T03:04:05Z');
+		expect(values).toContain('Updated: 2026-01-02T04:05:06Z');
+		expect(values.join('\n')).toContain('componentAssembly');
+	});
+
 	it('renders satisfied subtitle state in file summaries', () => {
 		const { body } = renderWithTooltip(MediaFileSummary, {
 			mediaItemId: 'media-1',
@@ -59,6 +121,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 				...detailedFileRow(),
 				subtitleSatisfaction: {
 					state: 'satisfied' as const,
+					preferredMode: 'mixed' as const,
 					wantedLanguages: ['english'],
 					matchedLanguages: ['english'],
 					missingLanguages: []
@@ -74,10 +137,12 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		});
 
 		expect(body).toContain('Subtitles');
-		expect(body).toContain('Satisfied');
+		expect(body).toContain('Satisfied: English');
 		expect(body).toContain('Audio');
+		expect(body).toContain('Other files');
+		expect(body).toContain('poster.jpg');
 		expect(body).toContain('Missing: German');
-		expect(body).toContain('English');
+		expect(body).not.toContain('Other File');
 		expect(body).not.toContain('Formats');
 		expect(summaryOrder(body)).toEqual([
 			'File',
@@ -93,6 +158,12 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 
 function summaryOrder(body: string) {
 	return ['File', 'Audio', 'Subtitles', 'Size', 'Quality', 'Score', 'Status'].sort(
+		(left, right) => body.indexOf(left) - body.indexOf(right)
+	);
+}
+
+function otherFilesOrder(body: string) {
+	return ['Other files', 'Type', 'Language', 'Status'].sort(
 		(left, right) => body.indexOf(left) - body.indexOf(right)
 	);
 }
@@ -119,7 +190,28 @@ function detailedFileRow(): MediaFileRow {
 		score: 120,
 		tracks: [
 			{ type: 'video', index: 0, codec: 'h264', width: 1920, height: 1080 },
-			{ type: 'audio', index: 1, codec: 'DTS', language: 'eng', channels: 6 },
+			{
+				type: 'audio',
+				index: 1,
+				codec: 'DTS',
+				language: 'eng',
+				channels: 6,
+				provenance: {
+					id: '11111111-1111-1111-1111-111111111111',
+					mediaItemId: '22222222-2222-2222-2222-222222222222',
+					componentType: 'audio',
+					componentKey: 'audio-source-1',
+					releaseGroup: 'ARR',
+					releaseName: 'Scenario.Release',
+					sourceProvider: 'Scenario Indexer',
+					sourceFilePath: '/downloads/Scenario.Release.mkv',
+					retainedSourceId: '33333333-3333-3333-3333-333333333333',
+					sourceStreamId: 1,
+					transformationChain: [{ kind: 'componentAssembly', inputPath: '/downloads/audio.mka' }],
+					createdAt: '2026-01-02T03:04:05Z',
+					updatedAt: '2026-01-02T04:05:06Z'
+				}
+			},
 			{ type: 'subtitle', index: 2, codec: 'SRT', language: 'eng', title: 'Signs' },
 			{ type: 'subtitle', index: 3, codec: 'SRT', language: 'spa', title: 'Spanish' }
 		],
@@ -128,6 +220,31 @@ function detailedFileRow(): MediaFileRow {
 			title: index === 0 ? 'Opening' : `Chapter ${index + 1}`,
 			startTime: `00:${String(index).padStart(2, '0')}:00`,
 			endTime: `00:${String(index + 1).padStart(2, '0')}:00`
-		}))
+		})),
+		otherFiles: [
+			{
+				type: 'subtitle',
+				path: '/library/Scenario Movie/Scenario.Movie.2026.1080p.japanese.srt',
+				status: 'missing',
+				language: 'japanese'
+			},
+			{
+				type: 'metadata',
+				path: '/library/Scenario Movie/poster.jpg',
+				status: 'available'
+			},
+			{
+				type: 'unknown',
+				path: '/library/Scenario Movie/notes.bin',
+				status: 'available'
+			}
+		],
+		subtitleSatisfaction: {
+			state: 'missing',
+			preferredMode: 'mixed',
+			wantedLanguages: ['english', 'japanese'],
+			matchedLanguages: ['english'],
+			missingLanguages: ['japanese']
+		}
 	};
 }

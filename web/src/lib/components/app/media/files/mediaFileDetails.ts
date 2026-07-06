@@ -1,4 +1,8 @@
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
+import {
+	missingAudioRows,
+	rowsWithMissingSubtitles
+} from '$lib/components/app/media/files/details/mediaFileMissingRows';
 import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay';
 
 type MediaFileTrack = MediaFileRow['tracks'][number];
@@ -11,21 +15,19 @@ export interface MediaFileDetailRow {
 	type: TrackType;
 	language: string;
 	description: string;
+	provenance?: MediaFileTrack['provenance'];
 	chapterSummary?: boolean;
 	missing?: boolean;
 	unwanted?: boolean;
 }
 
 export function fileDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
-	const details = [
-		...row.tracks.map((track, index) => trackRow(row, track, index)),
-		...fileChapterDetailRows(row)
-	];
+	const details = [...trackRowsWithMissingSubtitles(row), ...fileChapterDetailRows(row)];
 	return [...details, ...missingLanguageRows(row, details)];
 }
 
 export function fileTrackDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
-	const details = row.tracks.map((track, index) => trackRow(row, track, index));
+	const details = trackRowsWithMissingSubtitles(row);
 	return [...details, ...missingLanguageRows(row, details)];
 }
 
@@ -59,8 +61,14 @@ function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): Medi
 		type: track.type,
 		language: displayLanguage(track.language),
 		description: trackDescription(row, track),
+		provenance: track.provenance,
 		unwanted: unwantedTrack(row, track)
 	};
+}
+
+function trackRowsWithMissingSubtitles(row: MediaFileRow): MediaFileDetailRow[] {
+	const rows = row.tracks.map((track, index) => trackRow(row, track, index));
+	return rowsWithMissingSubtitles(row, rows);
 }
 
 function unwantedTrack(row: MediaFileRow, track: MediaFileTrack) {
@@ -100,23 +108,7 @@ function missingLanguageRows(
 	row: MediaFileRow,
 	existingRows: MediaFileDetailRow[]
 ): MediaFileDetailRow[] {
-	if (row.expectedRequiredLanguages.length === 0) return [];
-	const audioLanguages = new Set(
-		existingRows
-			.filter((track) => track.type === 'audio')
-			.map((track) => languageMatchKey(track.language))
-			.filter(Boolean)
-	);
-	return row.expectedRequiredLanguages
-		.filter((language) => !audioLanguages.has(languageMatchKey(language)))
-		.map((language) => ({
-			key: `missing-audio-${languageMatchKey(language)}`,
-			trackNumber: '-',
-			type: 'audio' as const,
-			language: displayLanguage(language),
-			description: 'Missing expected audio track',
-			missing: true
-		}));
+	return missingAudioRows(row, existingRows);
 }
 
 function chapterCountLabel(count: number) {

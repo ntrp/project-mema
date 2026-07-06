@@ -79,6 +79,14 @@ func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UU
 	if err := storagegen.New(tx).RefreshLibraryScanManualCount(ctx, scanID); err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
+	if imported {
+		if err := recordImportedFileProvenance(ctx, tx, item.ID, "", itemPath, "libraryScanImport"); err != nil {
+			return LibraryScanItem{}, MediaItem{}, err
+		}
+		if err := recordImportedFileSidecars(ctx, tx, item.ID, itemPath, seasonID, episodeID, item.SubtitlePreferredMode); err != nil {
+			return LibraryScanItem{}, MediaItem{}, err
+		}
+	}
 	item, err = getMediaItem(ctx, tx, item.ID)
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err

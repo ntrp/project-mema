@@ -5,9 +5,9 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
 	import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
+	import MediaFileOtherFilesPanel from '$lib/components/app/media/files/other-files/MediaFileOtherFilesPanel.svelte';
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
-	import MediaSubtitlePanel from '$lib/components/app/media/subtitles/MediaSubtitlePanel.svelte';
 	import {
 		audioSatisfaction,
 		subtitleSatisfaction
@@ -24,11 +24,8 @@
 		fileLabel = 'Episode file',
 		missingLabel = 'No matched file for this episode',
 		showSearchActions = true,
-		subtitleSearching = false,
 		onAutoSearch,
 		onManualSearch,
-		onSearchSubtitle = () => {},
-		onDeleteSubtitle = () => {},
 		onDelete
 	}: Props = $props();
 	let detailsOpen = $state(false);
@@ -168,13 +165,7 @@
 	{#if row.exists && detailsOpen}
 		<MediaFileDetailsAccordion {row} />
 	{/if}
-	<MediaSubtitlePanel
-		{row}
-		{canManage}
-		searching={subtitleSearching}
-		onSearch={(languageId) => onSearchSubtitle(row, languageId)}
-		onDelete={onDeleteSubtitle}
-	/>
+	<MediaFileOtherFilesPanel {row} {canManage} {onDelete} />
 </div>
 
 {#if row.exists && row.path && previewOpen}

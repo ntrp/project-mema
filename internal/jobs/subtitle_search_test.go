@@ -45,6 +45,25 @@ func TestSubtitleSearchRequestBuildsEpisodeContext(t *testing.T) {
 	}
 }
 
+func TestSubtitleRecordMuxesProviderSubtitleForEmbeddedProfile(t *testing.T) {
+	item := storage.MediaItem{
+		ID:                    uuid.New(),
+		SubtitlePreferredMode: "embedded",
+	}
+	record := subtitleRecord(
+		item,
+		storage.SubtitleProvider{ID: uuid.New(), Name: "Scenario Subtitles"},
+		subtitles.Candidate{Format: "srt"},
+		subtitles.SearchRequest{LanguageID: "english"},
+		subtitleArtifact{Path: "/library/Scenario.Movie.english.srt", Format: "srt"},
+		"",
+	)
+
+	if record.RetentionMode != storage.SubtitleRetentionMux {
+		t.Fatalf("expected mux retention, got %#v", record.RetentionMode)
+	}
+}
+
 func TestSubtitleSearchDownloadsAndRecordsSubtitle(t *testing.T) {
 	ctx, store := jobsTestStore(t)
 	tmp := t.TempDir()

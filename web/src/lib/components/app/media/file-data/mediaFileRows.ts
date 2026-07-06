@@ -6,6 +6,9 @@ type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['cha
 type MediaFileSubtitleSatisfaction = NonNullable<
 	NonNullable<MediaItem['files']>[number]['subtitleSatisfaction']
 >;
+type MediaFileOtherFile = NonNullable<
+	NonNullable<MediaItem['files']>[number]['otherFiles']
+>[number];
 
 export interface MediaFileRow {
 	key: string;
@@ -24,6 +27,7 @@ export interface MediaFileRow {
 	formats: string[];
 	tracks: MediaFileTrack[];
 	chapters: MediaFileChapter[];
+	otherFiles: MediaFileOtherFile[];
 	subtitleSatisfaction?: MediaFileSubtitleSatisfaction;
 	externalSubtitles?: MediaItemSubtitle[];
 	upgrade: MediaFileUpgradeInfo;

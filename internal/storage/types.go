@@ -34,6 +34,7 @@ type MediaItem struct {
 	SubtitlePreferredMode        string
 	AllowSubtitleReleaseFallback bool
 	ExternalSubtitles            []MediaItemSubtitle
+	Sidecars                     []MediaItemSidecar
 	ComponentSources             []MediaComponentSource
 	AssemblyRuns                 []MediaComponentAssemblyRun
 	ComponentProvenance          []MediaComponentProvenance

@@ -113,6 +113,7 @@ function playbackRow(): MediaFileRow {
 			{ index: 0, title: 'Opening', startTime: '0', endTime: '300' },
 			{ index: 1, title: 'Middle', startTime: '00:05:00', endTime: '600' }
 		],
+		otherFiles: [],
 		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
 		expectedLanguages: [],
 		expectedRequiredLanguages: [],

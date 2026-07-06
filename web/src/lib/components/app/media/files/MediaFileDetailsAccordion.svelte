@@ -1,15 +1,12 @@
 <script lang="ts">
-	import CaptionsIcon from '@lucide/svelte/icons/captions';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-	import ClapperboardIcon from '@lucide/svelte/icons/clapperboard';
-	import FileTextIcon from '@lucide/svelte/icons/file-text';
-	import MusicIcon from '@lucide/svelte/icons/music';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
-	import VideoIcon from '@lucide/svelte/icons/video';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
+	import MediaFileTrackProvenanceIcon from '$lib/components/app/media/files/provenance/MediaFileTrackProvenanceIcon.svelte';
+	import MediaFileTrackTypeIcon from '$lib/components/app/media/files/track-icons/MediaFileTrackTypeIcon.svelte';
 	import {
 		fileChapterDetailRows,
 		fileChapterSummaryRow,
@@ -52,6 +49,7 @@
 				<Table.Head class="w-20">Type</Table.Head>
 				<Table.Head class="w-36">Language</Table.Head>
 				<Table.Head>Track description</Table.Head>
+				<Table.Head class="w-24">Provenance</Table.Head>
 			</Table.Row>
 		</Table.Header>
 		<Table.Body>
@@ -61,7 +59,7 @@
 						index > 0 && track.type !== rows[index - 1]?.type && 'border-t-4 border-border',
 						track.missing && 'bg-destructive/10 text-destructive',
 						track.unwanted && 'bg-secondary/40',
-						track.chapterSummary && 'cursor-pointer'
+						track.chapterSummary && 'cursor-pointer border-t-4 border-border'
 					)}
 					role={track.chapterSummary ? 'button' : undefined}
 					tabindex={track.chapterSummary ? 0 : undefined}
@@ -89,19 +87,7 @@
 						{/if}
 					</Table.Cell>
 					<Table.Cell>
-						<span class="inline-flex items-center">
-							{#if track.type === 'video'}
-								<VideoIcon aria-label="Video" />
-							{:else if track.type === 'audio'}
-								<MusicIcon aria-label="Audio" />
-							{:else if track.type === 'subtitle'}
-								<CaptionsIcon aria-label="Subtitle" />
-							{:else if track.type === 'chapter'}
-								<ClapperboardIcon aria-label="Chapter" />
-							{:else}
-								<FileTextIcon aria-label="Track" />
-							{/if}
-						</span>
+						<MediaFileTrackTypeIcon type={track.type} />
 					</Table.Cell>
 					<Table.Cell>{track.language}</Table.Cell>
 					<Table.Cell class="whitespace-normal">
@@ -128,10 +114,15 @@
 							{/if}
 						</span>
 					</Table.Cell>
+					<Table.Cell class="justify-end">
+						{#if !track.missing && track.type !== 'chapter'}
+							<MediaFileTrackProvenanceIcon provenance={track.provenance} />
+						{/if}
+					</Table.Cell>
 				</Table.Row>
 			{:else}
 				<Table.Row>
-					<Table.Cell colspan={4} class="text-muted-foreground">No track details found.</Table.Cell>
+					<Table.Cell colspan={5} class="text-muted-foreground">No track details found.</Table.Cell>
 				</Table.Row>
 			{/each}
 		</Table.Body>

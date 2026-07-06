@@ -778,6 +778,45 @@ func (e MediaFileInfoStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaFileOtherFileStatus.
+const (
+	MediaFileOtherFileStatusAvailable MediaFileOtherFileStatus = "available"
+	MediaFileOtherFileStatusMissing   MediaFileOtherFileStatus = "missing"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileOtherFileStatus enum.
+func (e MediaFileOtherFileStatus) Valid() bool {
+	switch e {
+	case MediaFileOtherFileStatusAvailable:
+		return true
+	case MediaFileOtherFileStatusMissing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaFileOtherFileType.
+const (
+	MediaFileOtherFileTypeMetadata MediaFileOtherFileType = "metadata"
+	MediaFileOtherFileTypeSubtitle MediaFileOtherFileType = "subtitle"
+	MediaFileOtherFileTypeUnknown  MediaFileOtherFileType = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileOtherFileType enum.
+func (e MediaFileOtherFileType) Valid() bool {
+	switch e {
+	case MediaFileOtherFileTypeMetadata:
+		return true
+	case MediaFileOtherFileTypeSubtitle:
+		return true
+	case MediaFileOtherFileTypeUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaFilePreviewClientProfile.
 const (
 	Browser MediaFilePreviewClientProfile = "browser"
@@ -2601,6 +2640,7 @@ type MediaFileHistoryResponse struct {
 // MediaFileInfo defines model for MediaFileInfo.
 type MediaFileInfo struct {
 	Chapters             *[]MediaFileChapter            `json:"chapters,omitempty"`
+	OtherFiles           *[]MediaFileOtherFile          `json:"otherFiles,omitempty"`
 	Path                 string                         `json:"path"`
 	SizeBytes            *int64                         `json:"sizeBytes,omitempty"`
 	Status               MediaFileInfoStatus            `json:"status"`
@@ -2610,6 +2650,20 @@ type MediaFileInfo struct {
 
 // MediaFileInfoStatus defines model for MediaFileInfo.Status.
 type MediaFileInfoStatus string
+
+// MediaFileOtherFile defines model for MediaFileOtherFile.
+type MediaFileOtherFile struct {
+	Language *string                  `json:"language,omitempty"`
+	Path     string                   `json:"path"`
+	Status   MediaFileOtherFileStatus `json:"status"`
+	Type     MediaFileOtherFileType   `json:"type"`
+}
+
+// MediaFileOtherFileStatus defines model for MediaFileOtherFileStatus.
+type MediaFileOtherFileStatus string
+
+// MediaFileOtherFileType defines model for MediaFileOtherFileType.
+type MediaFileOtherFileType string
 
 // MediaFilePreviewClientProfile defines model for MediaFilePreviewClientProfile.
 type MediaFilePreviewClientProfile string
@@ -2641,6 +2695,7 @@ type MediaFilePreviewMode string
 type MediaFileSubtitleSatisfaction struct {
 	MatchedLanguages []string                           `json:"matchedLanguages"`
 	MissingLanguages []string                           `json:"missingLanguages"`
+	PreferredMode    MediaProfileSubtitlePreferredMode  `json:"preferredMode"`
 	State            MediaFileSubtitleSatisfactionState `json:"state"`
 	WantedLanguages  []string                           `json:"wantedLanguages"`
 }
@@ -2650,23 +2705,42 @@ type MediaFileSubtitleSatisfactionState string
 
 // MediaFileTrack defines model for MediaFileTrack.
 type MediaFileTrack struct {
-	BitRate       *string            `json:"bitRate,omitempty"`
-	ChannelLayout *string            `json:"channelLayout,omitempty"`
-	Channels      *int32             `json:"channels,omitempty"`
-	Codec         *string            `json:"codec,omitempty"`
-	FrameRate     *string            `json:"frameRate,omitempty"`
-	Height        *int32             `json:"height,omitempty"`
-	Index         *int32             `json:"index,omitempty"`
-	Language      *string            `json:"language,omitempty"`
-	PixelFormat   *string            `json:"pixelFormat,omitempty"`
-	Profile       *string            `json:"profile,omitempty"`
-	Title         *string            `json:"title,omitempty"`
-	Type          MediaFileTrackType `json:"type"`
-	Width         *int32             `json:"width,omitempty"`
+	BitRate       *string                   `json:"bitRate,omitempty"`
+	ChannelLayout *string                   `json:"channelLayout,omitempty"`
+	Channels      *int32                    `json:"channels,omitempty"`
+	Codec         *string                   `json:"codec,omitempty"`
+	FrameRate     *string                   `json:"frameRate,omitempty"`
+	Height        *int32                    `json:"height,omitempty"`
+	Index         *int32                    `json:"index,omitempty"`
+	Language      *string                   `json:"language,omitempty"`
+	PixelFormat   *string                   `json:"pixelFormat,omitempty"`
+	Profile       *string                   `json:"profile,omitempty"`
+	Provenance    *MediaFileTrackProvenance `json:"provenance,omitempty"`
+	Title         *string                   `json:"title,omitempty"`
+	Type          MediaFileTrackType        `json:"type"`
+	Width         *int32                    `json:"width,omitempty"`
 }
 
 // MediaFileTrackType defines model for MediaFileTrack.Type.
 type MediaFileTrackType string
+
+// MediaFileTrackProvenance defines model for MediaFileTrackProvenance.
+type MediaFileTrackProvenance struct {
+	ComponentKey        string                   `json:"componentKey"`
+	ComponentType       string                   `json:"componentType"`
+	CreatedAt           time.Time                `json:"createdAt"`
+	Id                  openapi_types.UUID       `json:"id"`
+	MediaItemId         openapi_types.UUID       `json:"mediaItemId"`
+	ReleaseGroup        string                   `json:"releaseGroup"`
+	ReleaseId           *string                  `json:"releaseId,omitempty"`
+	ReleaseName         string                   `json:"releaseName"`
+	RetainedSourceId    *openapi_types.UUID      `json:"retainedSourceId,omitempty"`
+	SourceFilePath      *string                  `json:"sourceFilePath,omitempty"`
+	SourceProvider      *string                  `json:"sourceProvider,omitempty"`
+	SourceStreamId      *int32                   `json:"sourceStreamId,omitempty"`
+	TransformationChain []map[string]interface{} `json:"transformationChain"`
+	UpdatedAt           time.Time                `json:"updatedAt"`
+}
 
 // MediaGroupedSearchResponse defines model for MediaGroupedSearchResponse.
 type MediaGroupedSearchResponse struct {

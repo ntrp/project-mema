@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"media-manager/internal/storage"
 )
 
 func TestSCNMedia007StorageMediaSeasonsMapsNestedMonitorState(t *testing.T) {
@@ -68,8 +70,26 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 	if err := os.WriteFile(filePath, []byte("scenario"), 0o600); err != nil {
 		t.Fatalf("write fixture: %v", err)
 	}
+	if err := os.WriteFile(filepath.Join(dir, "poster.jpg"), []byte("poster"), 0o600); err != nil {
+		t.Fatalf("write poster fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "notes.bin"), []byte("notes"), 0o600); err != nil {
+		t.Fatalf("write unknown fixture: %v", err)
+	}
+	missingPoster := filepath.Join(dir, "Scenario.Movie.2026-fanart.jpg")
 
-	files := mediaFileInfoResponses([]string{filePath, missingPath}, nil, "", nil)
+	files := mediaFileInfoResponses(
+		[]string{filePath, missingPath},
+		[]storage.MediaProfileSubtitleTarget{{LanguageID: "german", Formats: []string{"srt"}}},
+		"external",
+		nil,
+		nil,
+		[]storage.MediaItemSidecar{{
+			MediaFilePath: filePath,
+			FilePath:      missingPoster,
+			SidecarType:   storage.MediaSidecarMetadata,
+		}},
+	)
 
 	if files == nil || len(*files) != 2 {
 		t.Fatalf("files = %#v", files)
@@ -80,4 +100,31 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 	if (*files)[1].Path != missingPath || (*files)[1].Status != MediaFileInfoStatusMissing || (*files)[1].SizeBytes != nil {
 		t.Fatalf("missing file response = %#v", (*files)[1])
 	}
+	otherFiles := *(*files)[0].OtherFiles
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeSubtitle, filepath.Join(dir, "Scenario.Movie.2026.german.srt"), MediaFileOtherFileStatusMissing) {
+		t.Fatalf("missing subtitle file not derived: %#v", otherFiles)
+	}
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeMetadata, filepath.Join(dir, "poster.jpg"), MediaFileOtherFileStatusAvailable) {
+		t.Fatalf("metadata file not listed: %#v", otherFiles)
+	}
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeUnknown, filepath.Join(dir, "notes.bin"), MediaFileOtherFileStatusAvailable) {
+		t.Fatalf("unknown file not listed: %#v", otherFiles)
+	}
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeMetadata, missingPoster, MediaFileOtherFileStatusMissing) {
+		t.Fatalf("missing metadata sidecar not listed: %#v", otherFiles)
+	}
+}
+
+func hasOtherFile(
+	files []MediaFileOtherFile,
+	fileType MediaFileOtherFileType,
+	path string,
+	status MediaFileOtherFileStatus,
+) bool {
+	for _, file := range files {
+		if file.Type == fileType && file.Path == path && file.Status == status {
+			return true
+		}
+	}
+	return false
 }

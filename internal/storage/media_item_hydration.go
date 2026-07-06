@@ -19,6 +19,10 @@ func hydrateMediaItem(ctx context.Context, q storagegen.DBTX, item MediaItem) (M
 	if err != nil {
 		return item, err
 	}
+	item, err = hydrateMediaItemSidecars(ctx, q, item)
+	if err != nil {
+		return item, err
+	}
 	item, err = hydrateMediaItemComponentSources(ctx, q, item)
 	if err != nil {
 		return item, err
@@ -79,6 +83,43 @@ func hydrateMediaItemSubtitles(
 	item.ExternalSubtitles = subtitles
 	item.MetadataFilePaths = append(item.MetadataFilePaths, subtitleFilePaths(subtitles)...)
 	return item, nil
+}
+
+func hydrateMediaItemSidecars(
+	ctx context.Context,
+	q storagegen.DBTX,
+	item MediaItem,
+) (MediaItem, error) {
+	sidecars, err := listMediaItemSidecars(ctx, q, item.ID)
+	if err != nil {
+		return item, err
+	}
+	item.Sidecars = sidecars
+	item.MetadataFilePaths = mergedStringSet(item.MetadataFilePaths, metadataSidecarFilePaths(sidecars))
+	return item, nil
+}
+
+func metadataSidecarFilePaths(sidecars []MediaItemSidecar) []string {
+	paths := make([]string, 0, len(sidecars))
+	for _, sidecar := range sidecars {
+		if sidecar.SidecarType == MediaSidecarMetadata {
+			paths = append(paths, sidecar.FilePath)
+		}
+	}
+	return paths
+}
+
+func mergedStringSet(left []string, right []string) []string {
+	seen := map[string]struct{}{}
+	merged := make([]string, 0, len(left)+len(right))
+	for _, value := range append(left, right...) {
+		if _, ok := seen[value]; ok {
+			continue
+		}
+		seen[value] = struct{}{}
+		merged = append(merged, value)
+	}
+	return merged
 }
 
 func hydrateMediaItemComponentSources(

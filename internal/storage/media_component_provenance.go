@@ -29,7 +29,15 @@ func (s *SettingsStore) UpsertMediaComponentProvenance(
 	ctx context.Context,
 	input MediaComponentProvenanceInput,
 ) (MediaComponentProvenance, error) {
-	row, err := storagegen.New(s.pool).UpsertMediaComponentProvenance(ctx, mediaComponentProvenanceParams(input))
+	return upsertMediaComponentProvenance(ctx, s.pool, input)
+}
+
+func upsertMediaComponentProvenance(
+	ctx context.Context,
+	q storagegen.DBTX,
+	input MediaComponentProvenanceInput,
+) (MediaComponentProvenance, error) {
+	row, err := storagegen.New(q).UpsertMediaComponentProvenance(ctx, mediaComponentProvenanceParams(input))
 	return mediaComponentProvenanceFromRow(row), err
 }
 

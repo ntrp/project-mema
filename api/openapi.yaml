@@ -5358,13 +5358,52 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaFileChapter"
+        otherFiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaFileOtherFile"
         subtitleSatisfaction:
           $ref: "#/components/schemas/MediaFileSubtitleSatisfaction"
+    MediaFileOtherFile:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - path
+        - status
+      properties:
+        type:
+          $ref: "#/components/schemas/MediaFileOtherFileType"
+        path:
+          type: string
+        status:
+          $ref: "#/components/schemas/MediaFileOtherFileStatus"
+        language:
+          type: string
+    MediaFileOtherFileType:
+      type: string
+      enum:
+        - subtitle
+        - metadata
+        - unknown
+      x-enum-varnames:
+        - MediaFileOtherFileTypeSubtitle
+        - MediaFileOtherFileTypeMetadata
+        - MediaFileOtherFileTypeUnknown
+    MediaFileOtherFileStatus:
+      type: string
+      enum:
+        - available
+        - missing
+      x-enum-varnames:
+        - MediaFileOtherFileStatusAvailable
+        - MediaFileOtherFileStatusMissing
     MediaFileSubtitleSatisfaction:
       type: object
       additionalProperties: false
       required:
         - state
+        - preferredMode
         - wantedLanguages
         - matchedLanguages
         - missingLanguages
@@ -5375,6 +5414,8 @@ components:
             - satisfied
             - missing
             - ignored
+        preferredMode:
+          $ref: "#/components/schemas/MediaProfileSubtitlePreferredMode"
         wantedLanguages:
           type: array
           items:
@@ -6137,6 +6178,60 @@ components:
           type: string
         bitRate:
           type: string
+        provenance:
+          $ref: "#/components/schemas/MediaFileTrackProvenance"
+    MediaFileTrackProvenance:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mediaItemId
+        - componentType
+        - componentKey
+        - releaseGroup
+        - releaseName
+        - transformationChain
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
+        componentType:
+          type: string
+        componentKey:
+          type: string
+        releaseGroup:
+          type: string
+        releaseName:
+          type: string
+        releaseId:
+          type: string
+        sourceProvider:
+          type: string
+        sourceFilePath:
+          type: string
+        retainedSourceId:
+          type: string
+          format: uuid
+        sourceStreamId:
+          type: integer
+          format: int32
+          minimum: 0
+        transformationChain:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     MediaFilePreviewMode:
       type: string
       enum:

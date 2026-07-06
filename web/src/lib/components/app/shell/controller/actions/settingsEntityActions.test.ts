@@ -52,6 +52,7 @@ function shellState(overrides: Record<string, unknown> = {}) {
 		indexerTests: { 'indexer-1': { status: 'success' } },
 		languages: [{ code: 'de' }, { code: 'en' }],
 		mediaProfiles: [{ id: 'profile-1' }],
+		mediaItems: [],
 		tags: [{ id: 'tag-1' }],
 		customFormats: [{ id: 'format-1' }],
 		users: [],
@@ -137,6 +138,29 @@ describe('settings entity save actions (SCN-SETTINGS-009)', () => {
 		expect(state.savingLanguage).toBe(false);
 		expect(state.savingMediaProfile).toBe(false);
 		expect(state.savingCustomFormat).toBe(false);
+	});
+
+	it('reloads media items using the saved profile so track status is recalculated', async () => {
+		const state = shellState({
+			mediaItems: [
+				{ id: 'media-1', qualityProfileId: 'profile-1' },
+				{ id: 'media-2', qualityProfileId: 'profile-2' }
+			]
+		});
+		const loadSettings = vi.fn();
+		const loadMediaItems = vi.fn();
+		const actions = createSettingsSaveActions(state, {
+			clearNotice: vi.fn(),
+			loadSettings,
+			loadMediaItems
+		});
+		apiMock.saveMediaProfile.mockResolvedValue(undefined);
+
+		await actions.saveMediaProfile(submitEvent());
+
+		expect(apiMock.saveMediaProfile).toHaveBeenCalledWith({ id: 'profile-1', name: 'HD' });
+		expect(loadSettings).toHaveBeenCalledOnce();
+		expect(loadMediaItems).toHaveBeenCalledOnce();
 	});
 
 	it('rethrows failed custom format imports after recording the error', async () => {

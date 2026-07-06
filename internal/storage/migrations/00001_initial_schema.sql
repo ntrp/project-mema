@@ -1188,3 +1188,19 @@ create index if not exists idx_media_file_history_media_item
 
 create index if not exists idx_media_file_history_file_path
     on app.media_file_history (file_path, created_at desc);
+
+create table if not exists app.media_item_sidecars (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    media_file_path text not null,
+    file_path text not null,
+    sidecar_type text not null check (sidecar_type in ('metadata', 'subtitle')),
+    language_id text,
+    format text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (media_item_id, file_path)
+);
+
+create index if not exists idx_media_item_sidecars_media
+    on app.media_item_sidecars (media_item_id, media_file_path, sidecar_type);

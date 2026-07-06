@@ -134,6 +134,15 @@ func TestMediaItemSubtitleSelectionAndAssemblyArtifacts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	external, err := store.UpsertMediaItemSubtitle(ctx, MediaItemSubtitleInput{
+		MediaItemID:  item.ID,
+		ProviderName: "OpenSubtitles",
+		LanguageID:   "french",
+		FilePath:     filepath.Join(*item.MediaFolderPath, "Selection.Movie.french.srt"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if !selected.Selected || selected.RetentionMode != SubtitleRetentionExternal {
 		t.Fatalf("expected default active external subtitle, got %#v", selected)
 	}
@@ -158,7 +167,7 @@ func TestMediaItemSubtitleSelectionAndAssemblyArtifacts(t *testing.T) {
 		t.Fatalf("expected invalid retention mode, got %v", err)
 	}
 	artifacts := SelectedSubtitleArtifacts(item)
-	if len(artifacts) != 1 || artifacts[0].ID != selected.ID {
+	if len(artifacts) != 1 || artifacts[0].ID != selected.ID || artifacts[0].ID == external.ID {
 		t.Fatalf("expected only selected subtitle artifact, got %#v", artifacts)
 	}
 	if artifacts[0].RetentionMode != SubtitleRetentionMux || artifacts[0].Checksum == nil {

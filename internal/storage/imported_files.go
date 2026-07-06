@@ -47,6 +47,16 @@ func (s *SettingsStore) RecordImportedMediaFileWithHistory(
 		return err
 	}
 	if exists {
+		if err := recordImportedFileProvenance(ctx, tx, mediaItemID, sourcePath, filePath, "diskImport"); err != nil {
+			return err
+		}
+		seasonID, episodeID, err := importedFileEpisodeReference(ctx, queries, mediaItemID, filePath)
+		if err != nil {
+			return err
+		}
+		if err := recordImportedFileSidecars(ctx, tx, mediaItemID, filePath, seasonID, episodeID, item.SubtitlePreferredMode); err != nil {
+			return err
+		}
 		return tx.Commit(ctx)
 	}
 
@@ -92,7 +102,29 @@ func (s *SettingsStore) RecordImportedMediaFileWithHistory(
 	}); err != nil {
 		return err
 	}
+	if err := recordImportedFileProvenance(ctx, tx, mediaItemID, sourcePath, filePath, "diskImport"); err != nil {
+		return err
+	}
+	if err := recordImportedFileSidecars(ctx, tx, mediaItemID, filePath, seasonID, episodeID, item.SubtitlePreferredMode); err != nil {
+		return err
+	}
 	return tx.Commit(ctx)
+}
+
+func importedFileEpisodeReference(
+	ctx context.Context,
+	q *storagegen.Queries,
+	mediaItemID uuid.UUID,
+	filePath string,
+) (*uuid.UUID, *uuid.UUID, error) {
+	row, err := q.GetImportedFileEpisodeReference(ctx, storagegen.GetImportedFileEpisodeReferenceParams{
+		MediaItemID: &mediaItemID,
+		Path:        filePath,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return row.SeasonID, row.EpisodeID, nil
 }
 
 func (s *SettingsStore) ImportedMediaFileEpisodeID(ctx context.Context, mediaItemID uuid.UUID, filePath string) (*uuid.UUID, error) {
