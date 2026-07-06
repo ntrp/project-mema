@@ -219,21 +219,24 @@ func evaluateParsedRelease(
 	}
 
 	details = append(details, "Matches the requested resource.")
-	currentScore := currentQualityScore(item)
-	switch {
-	case score > currentScore:
-		details = append(details, "Score is higher than the current file.")
-	case currentScore > 0:
-		details = append(details, "Score is lower than or equal to the current file.")
-	default:
-		details = append(details, "No current file score is available.")
-	}
+	upgradeDetails, upgradeReject := upgradeDecisionDetails(
+		item,
+		context.Profile,
+		context.Formats,
+		score,
+		customScore,
+	)
+	details = append(details, upgradeDetails...)
 	if criteria.Kind == "episode" && parsed.SeasonPack {
 		details = append(details, "This is a whole season release, but the search requested an episode.")
 		return decisionMatch("warning", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
 	}
-	if score <= currentScore && currentScore > 0 {
-		return decisionMatch("warning", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
+	if upgradeReject != "" {
+		severity := "error"
+		if context.Profile == nil {
+			severity = "warning"
+		}
+		return decisionMatch(severity, parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
 	}
 	return decisionMatch("info", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, meta, details...)
 }
@@ -243,16 +246,6 @@ func EvaluateReleaseCandidateInputMatch(
 	release storage.ReleaseCandidateInput,
 ) ReleaseMatch {
 	return EvaluateReleaseCandidateInputMatchWithContext(item, release, nil, nil)
-}
-
-func currentQualityScore(item storage.MediaItem) int32 {
-	var best int32
-	for _, path := range item.FilePaths {
-		if score := releaseQualityScore(ParseReleaseFileName(path).QualityID); score > best {
-			best = score
-		}
-	}
-	return best
 }
 
 func releaseQualityScore(qualityID string) int32 {
