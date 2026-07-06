@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LibraryScanMatchCell from '$lib/components/settings/library/scan/LibraryScanMatchCell.svelte';
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import { Badge } from '$lib/components/ui/badge';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Table from '$lib/components/ui/table';
 	import {
@@ -24,6 +25,7 @@
 
 	interface Props {
 		item: LibraryScanItem;
+		folderPath: string;
 		draft: MatchDraft;
 		qualityProfiles: QualityProfileOption[];
 		metadataProviders: MetadataProvider[];
@@ -34,6 +36,7 @@
 
 	let {
 		item,
+		folderPath,
 		draft = $bindable(),
 		qualityProfiles,
 		metadataProviders,
@@ -48,6 +51,7 @@
 	const importable = $derived(
 		Boolean(draft.matched) && item.status === 'pending' && !item.imported && !draft.removeDuplicate
 	);
+	const displayPath = $derived(relativeScanPath(item.path, folderPath));
 	const qualityProfileOptions = $derived([
 		{ value: '', label: 'Select profile' },
 		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
@@ -63,6 +67,24 @@
 		draft.removeDuplicate = checked;
 		if (checked) draft.selected = false;
 	}
+
+	function relativeScanPath(path: string, root: string) {
+		const normalizedPath = normalizePath(path);
+		const normalizedRoot = normalizePath(root);
+		const comparablePath = comparablePathValue(normalizedPath);
+		const comparableRoot = comparablePathValue(normalizedRoot);
+		if (!normalizedRoot || comparablePath === comparableRoot) return normalizedPath;
+		if (!comparablePath.startsWith(`${comparableRoot}/`)) return normalizedPath;
+		return normalizedPath.slice(normalizedRoot.length + 1) || normalizedPath;
+	}
+
+	function normalizePath(path: string) {
+		return path.replaceAll('\\', '/').replace(/\/+$/g, '');
+	}
+
+	function comparablePathValue(path: string) {
+		return /^[a-z]:\//i.test(path) ? path.toLowerCase() : path;
+	}
 </script>
 
 <Table.Row class={duplicateState?.duplicate ? 'bg-amber-500/5' : undefined}>
@@ -73,9 +95,21 @@
 		<div class="grid gap-2">
 			<div class="flex items-end justify-between gap-3">
 				<div class="min-w-0">
-					<LibraryScanMatchCell {item} bind:draft {onSearch} {onSelect} />
+					<div class="flex min-w-0 items-start gap-2">
+						<div class="min-w-0 flex-1">
+							<LibraryScanMatchCell {item} bind:draft {onSearch} {onSelect} />
+						</div>
+						{#if item.imported}
+							<Badge
+								variant="outline"
+								class="mt-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+							>
+								Imported
+							</Badge>
+						{/if}
+					</div>
 					<div class="flex ml-3 mt-1 min-w-0 items-start justify-end gap-3">
-						<span class="block truncate text-xs text-muted-foreground">{item.path}</span>
+						<span class="block truncate text-xs text-muted-foreground">{displayPath}</span>
 						{#if canRemoveFile}
 							<label class="flex shrink-0 items-center justify-end gap-2 text-xs text-amber-500">
 								<Checkbox
@@ -87,9 +121,6 @@
 							</label>
 						{/if}
 					</div>
-					{#if item.imported}
-						<span class="text-xs font-bold text-muted-foreground">Imported</span>
-					{/if}
 				</div>
 			</div>
 		</div>

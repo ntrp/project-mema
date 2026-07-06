@@ -56,6 +56,7 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 			props: {
 				scan: {
 					id: 'scan-1',
+					folderPath: '/downloads',
 					status: 'completed',
 					totalFiles: 1,
 					items: [item]
@@ -70,6 +71,7 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 		const row = render(LibraryScanImportRow, {
 			props: {
 				item,
+				folderPath: '/downloads',
 				draft,
 				qualityProfiles: profiles,
 				metadataProviders: providers,
@@ -80,6 +82,7 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 		const unmatchedRow = render(LibraryScanImportRow, {
 			props: {
 				item,
+				folderPath: '/downloads',
 				draft: { ...draft, matched: undefined, selected: false, searched: false },
 				qualityProfiles: profiles,
 				metadataProviders: providers,
@@ -92,7 +95,8 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 		expect(table.body).toContain('Directory / File');
 		expect(table.body).toContain('Metadata provider');
 		expect(table.body).toContain('Import Selected');
-		expect(row.body).toContain('/downloads');
+		expect(row.body).toContain('Scenario.Movie.2026/Scenario.Movie.2026.mkv');
+		expect(row.body).not.toContain('/downloads');
 		expect(row.body).toContain('Scenario Movie (2026)');
 		expect(unmatchedRow.body).toContain('No match');
 		expect(unmatchedRow.body).toContain('text-amber-500');

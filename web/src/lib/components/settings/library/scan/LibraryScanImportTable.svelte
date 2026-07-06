@@ -156,7 +156,16 @@
 			<col span={5} class="w-[1%]" />
 		</colgroup>
 		<LibraryScanImportTableHead checked={allVisibleChecked} disabled={importableRows.length === 0} {showSeriesControls} onToggle={toggleVisibleRows} />
-		<LibraryScanImportTableBody {rows} bind:drafts {duplicateStates} {qualityProfiles} {metadataProviders} onSearch={scheduleSearch} onSelect={selectResult} />
+		<LibraryScanImportTableBody
+			{rows}
+			folderPath={scan.folderPath}
+			bind:drafts
+			{duplicateStates}
+			{qualityProfiles}
+			{metadataProviders}
+			onSearch={scheduleSearch}
+			onSelect={selectResult}
+		/>
 		<LibraryScanImportFooter
 			{checkedRowsMatched}
 			{canImport}

@@ -12,6 +12,7 @@
 
 	interface Props {
 		rows: LibraryScanItem[];
+		folderPath: string;
 		drafts: Record<string, MatchDraft>;
 		duplicateStates: Record<string, DuplicateDraftState>;
 		qualityProfiles: QualityProfileOption[];
@@ -22,6 +23,7 @@
 
 	let {
 		rows,
+		folderPath,
 		drafts = $bindable(),
 		duplicateStates,
 		qualityProfiles,
@@ -36,6 +38,7 @@
 		{#if drafts[item.id]}
 			<LibraryScanImportRow
 				{item}
+				{folderPath}
 				bind:draft={drafts[item.id]}
 				{qualityProfiles}
 				{metadataProviders}
