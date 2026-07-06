@@ -3,6 +3,7 @@
 	import MediaDetailActions from '$lib/components/app/media/actions/MediaDetailActions.svelte';
 	import MediaDetailSkeleton from '$lib/components/app/media/detail/MediaDetailSkeleton.svelte';
 	import MediaFilesTable from '$lib/components/app/media/files/MediaFilesTable.svelte';
+	import MediaComponentAssemblySection from '$lib/components/app/media/detail/assembly/MediaComponentAssemblySection.svelte';
 	import MediaMetadataCore from '$lib/components/app/media/metadata/MediaMetadataCore.svelte';
 	import MediaMetadataHero from '$lib/components/app/media/metadata/MediaMetadataHero.svelte';
 	import MediaMetadataShell from '$lib/components/app/media/metadata/MediaMetadataShell.svelte';
@@ -35,6 +36,8 @@
 		searchingItemId,
 		refreshingMetadataItemId,
 		savingMediaItemOptionsId,
+		assemblingMediaItemId,
+		reviewingComponentDecisionId,
 		grabbingKey,
 		addingKey,
 		deletingMediaItemId,
@@ -46,6 +49,8 @@
 		onRefreshMediaMetadata,
 		onSaveMediaItemOptions,
 		onDeleteMediaFile,
+		onAssembleMediaComponents = () => {},
+		onReviewComponentCompatibility = () => {},
 		onDeleteMedia,
 		onGrabRelease,
 		onAddMedia
@@ -149,6 +154,14 @@
 						{/if}
 					{/snippet}
 				</MediaMetadataCore>
+				<MediaComponentAssemblySection
+					{item}
+					{canManage}
+					{assemblingMediaItemId}
+					{reviewingComponentDecisionId}
+					onAssemble={onAssembleMediaComponents}
+					onReview={onReviewComponentCompatibility}
+				/>
 				<MediaRelatedSections {detail} {mediaItems} {addingKey} {actionLabel} onAdd={onAddMedia} />
 			</main>
 		</div>

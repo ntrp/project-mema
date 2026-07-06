@@ -12,6 +12,7 @@ import { createDiscoveryActions } from './discoveryActions';
 import { createEventActions } from './events';
 import { createLoadActions } from './loaders';
 import { createMediaActions } from './mediaActions';
+import { createMediaComponentActions } from './mediaComponentActions';
 import { createMediaMetadataActions } from './mediaMetadataActions';
 import { createMediaSubtitleActions } from './mediaSubtitleActions';
 import { createNavigationActions } from './navigationActions';
@@ -43,6 +44,10 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		...notices,
 		loadMediaItems: loads.loadMediaItems,
 		loadSettings: loads.loadSettings
+	});
+	const mediaComponents = createMediaComponentActions(state, {
+		...notices,
+		loadMediaItems: loads.loadMediaItems
 	});
 	const mediaMetadata = createMediaMetadataActions(state, notices);
 	const mediaSubtitles = createMediaSubtitleActions(state, notices);
@@ -137,6 +142,7 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		discovery,
 		search,
 		media,
+		mediaComponents,
 		mediaMetadata,
 		mediaSubtitles,
 		releases,

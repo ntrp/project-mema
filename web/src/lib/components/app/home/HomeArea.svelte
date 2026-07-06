@@ -34,6 +34,8 @@
 		savingMediaItemOptionsId,
 		grabbingKey,
 		deletingMediaItemId,
+		assemblingMediaItemId,
+		reviewingComponentDecisionId,
 		cancellingActivityId,
 		deletingActivityId,
 		deletingReleaseBlocklistId,
@@ -51,6 +53,8 @@
 		onRefreshMediaMetadata,
 		onSaveMediaItemOptions,
 		onDeleteMediaFile,
+		onAssembleMediaComponents = () => {},
+		onReviewComponentCompatibility = () => {},
 		onDeleteMedia,
 		onGrabRelease,
 		onRefreshActivity,
@@ -124,6 +128,8 @@
 				{grabbingKey}
 				{addingKey}
 				{deletingMediaItemId}
+				{assemblingMediaItemId}
+				{reviewingComponentDecisionId}
 				{canManage}
 				actionLabel={canManage ? 'Add' : 'Request'}
 				{onAutoSearchMedia}
@@ -132,6 +138,8 @@
 				{onRefreshMediaMetadata}
 				{onSaveMediaItemOptions}
 				{onDeleteMediaFile}
+				{onAssembleMediaComponents}
+				{onReviewComponentCompatibility}
 				{onDeleteMedia}
 				{onGrabRelease}
 				{onAddMedia}

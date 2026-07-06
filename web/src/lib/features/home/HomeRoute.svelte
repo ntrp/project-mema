@@ -45,6 +45,8 @@
 	savingMediaItemOptionsId={app.savingMediaItemOptionsId}
 	grabbingKey={app.grabbingKey}
 	deletingMediaItemId={app.deletingMediaItemId}
+	assemblingMediaItemId={app.assemblingMediaItemId}
+	reviewingComponentDecisionId={app.reviewingComponentDecisionId}
 	cancellingActivityId={app.cancellingActivityId}
 	deletingActivityId={app.deletingActivityId}
 	deletingReleaseBlocklistId={app.deletingReleaseBlocklistId}
@@ -62,6 +64,8 @@
 	onRefreshMediaMetadata={app.refreshMediaMetadata}
 	onSaveMediaItemOptions={app.saveMediaItemOptions}
 	onDeleteMediaFile={app.deleteMediaFile}
+	onAssembleMediaComponents={app.assembleMediaComponents}
+	onReviewComponentCompatibility={app.reviewComponentCompatibility}
 	onDeleteMedia={app.deleteMediaItem}
 	onGrabRelease={app.grabRelease}
 	onRefreshActivity={app.loadDownloadActivity}

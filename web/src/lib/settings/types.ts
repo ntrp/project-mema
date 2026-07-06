@@ -107,6 +107,14 @@ export type MediaComponentSourceRetainRequest =
 export type MediaComponentSourceRetentionState =
 	components['schemas']['MediaComponentSourceRetentionState'];
 export type MediaComponentSourceRole = components['schemas']['MediaComponentSourceRole'];
+export type MediaComponentArtifact = components['schemas']['MediaComponentArtifact'];
+export type MediaComponentAssemblyRun = components['schemas']['MediaComponentAssemblyRun'];
+export type MediaComponentAssemblyInput = components['schemas']['MediaComponentAssemblyInput'];
+export type MediaComponentAssemblyRequest = components['schemas']['MediaComponentAssemblyRequest'];
+export type MediaComponentCompatibilityDecision =
+	components['schemas']['MediaComponentCompatibilityDecision'];
+export type MediaComponentCompatibilityReviewState =
+	components['schemas']['MediaComponentCompatibilityReviewState'];
 export type MediaItemCreateRequest = components['schemas']['MediaItemCreateRequest'];
 export type MediaItemUpdateRequest = components['schemas']['MediaItemUpdateRequest'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];

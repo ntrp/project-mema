@@ -30,7 +30,7 @@ export function connectAppEvents(state: AppShellState, deps: EventConnectionDeps
 	});
 	source.addEventListener('system.event.created', (event) => {
 		const systemEvent = deps.parseEventData<SystemEvent>(event);
-		if (systemEvent?.category === 'subtitles') {
+		if (systemEvent?.category === 'subtitles' || systemEvent?.category === 'media') {
 			void deps.loadMediaItems();
 		}
 	});

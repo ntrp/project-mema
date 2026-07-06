@@ -38,13 +38,14 @@ describe('app shell event connection (SCN-SYSTEM-008)', () => {
 		source.emit('indexer.search.cache.updated', { data: { entry: { query: 'movie' }, stats: {} } });
 		source.emit('metadata.cache.updated', { data: { entry: { query: 'movie' }, stats: {} } });
 		source.emit('metadata.search.history.created', { data: { id: 'metadata-history-1' } });
+		source.emit('system.event.created', { data: { category: 'media' } });
 
 		expect(dependencies.upsertActivity).toHaveBeenCalledWith({
 			id: 'activity-1',
 			status: 'completed'
 		});
 		expect(dependencies.updateMediaStatusFromActivity).toHaveBeenCalled();
-		expect(dependencies.loadMediaItems).toHaveBeenCalled();
+		expect(dependencies.loadMediaItems).toHaveBeenCalledTimes(2);
 		expect(dependencies.appendIndexerSearchHistory).toHaveBeenCalledWith({ id: 'history-1' });
 		expect(dependencies.upsertIndexerSearchCache).toHaveBeenCalledWith({
 			entry: { query: 'movie' },

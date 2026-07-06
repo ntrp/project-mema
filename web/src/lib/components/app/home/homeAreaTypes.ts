@@ -14,7 +14,9 @@ import type {
 	QualityProfileOption,
 	ReleaseBlocklistItem,
 	ReleaseCandidate,
-	ReleaseOverrideDetails
+	ReleaseOverrideDetails,
+	MediaComponentCompatibilityReviewState,
+	MediaComponentSource
 } from '$lib/settings/types';
 
 export interface HomeAreaProps {
@@ -43,6 +45,8 @@ export interface HomeAreaProps {
 	savingMediaItemOptionsId?: string;
 	grabbingKey?: string;
 	deletingMediaItemId?: string;
+	assemblingMediaItemId?: string;
+	reviewingComponentDecisionId?: string;
 	cancellingActivityId?: string;
 	deletingActivityId?: string;
 	deletingReleaseBlocklistId?: string;
@@ -63,6 +67,17 @@ export interface HomeAreaProps {
 	onRefreshMediaMetadata: (_item: MediaItem) => void;
 	onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 	onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
+	onAssembleMediaComponents?: (
+		_item: MediaItem,
+		_baseSourceId: string,
+		_artifactIds: string[]
+	) => void;
+	onReviewComponentCompatibility?: (
+		_item: MediaItem,
+		_source: MediaComponentSource,
+		_decisionId: string,
+		_reviewState: MediaComponentCompatibilityReviewState
+	) => void;
 	onDeleteMedia: (_item: MediaItem) => void;
 	onGrabRelease: (
 		_item: MediaItem,

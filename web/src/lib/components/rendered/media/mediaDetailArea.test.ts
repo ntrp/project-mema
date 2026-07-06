@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import MediaDetail from '$lib/components/app/media/detail/MediaDetail.svelte';
 import RenderWithTooltip from '$lib/components/rendered/RenderWithTooltip.svelte';
+import { assemblyRun, componentSources } from './mediaComponentAssemblyTestData';
 import type {
 	Language,
 	LibraryFolder,
@@ -77,6 +78,44 @@ describe('rendered media detail area (SCN-MEDIA-004)', () => {
 
 		expect(body).toContain('Season 1');
 		expect(body).toContain('5.00 GiB');
+	});
+
+	it('renders retained, blocked, running, failed, and completed component assembly states', () => {
+		const retainedBody = renderDetail({
+			item: mediaItem({ componentSources: componentSources('pending') })
+		}).body;
+		expect(retainedBody).toContain('Components');
+		expect(retainedBody).toContain('2 retained');
+		expect(retainedBody).toContain('1 blocked');
+		expect(retainedBody).toContain('review needed');
+		expect(retainedBody).toContain('Approve compatibility');
+
+		const runningBody = renderDetail({
+			item: mediaItem({
+				componentSources: componentSources('approved'),
+				assemblyRuns: [assemblyRun({ status: 'running' })]
+			})
+		}).body;
+		expect(runningBody).toContain('Mux job running');
+
+		const failedBody = renderDetail({
+			item: mediaItem({
+				componentSources: componentSources('approved'),
+				assemblyRuns: [assemblyRun({ status: 'failed', errorMessage: 'mkvmerge failed' })]
+			})
+		}).body;
+		expect(failedBody).toContain('Retry assembly');
+		expect(failedBody).toContain('mkvmerge failed');
+
+		const completedBody = renderDetail({
+			item: mediaItem({
+				componentSources: componentSources('approved'),
+				assemblyRuns: [assemblyRun({ status: 'succeeded' })]
+			})
+		}).body;
+		expect(completedBody).toContain('assembled.mkv');
+		expect(completedBody).toContain('Provenance');
+		expect(completedBody).toContain('stream 1');
 	});
 });
 

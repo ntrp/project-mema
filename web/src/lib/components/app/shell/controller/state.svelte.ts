@@ -163,6 +163,8 @@ export class AppShellState {
 	savingMediaItemOptionsId = $state<string | undefined>();
 	grabbingKey = $state<string | undefined>();
 	deletingMediaItemId = $state<string | undefined>();
+	assemblingMediaItemId = $state<string | undefined>();
+	reviewingComponentDecisionId = $state<string | undefined>();
 	cancellingActivityId = $state<string | undefined>();
 	deletingActivityId = $state<string | undefined>();
 	deletingReleaseBlocklistId = $state<string | undefined>();
