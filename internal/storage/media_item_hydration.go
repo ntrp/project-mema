@@ -49,11 +49,11 @@ func hydrateMediaItemProfile(
 	if item.QualityProfileID == nil {
 		return item, nil
 	}
-	languages, err := loadMediaProfileSubtitleLanguages(ctx, q, *item.QualityProfileID)
+	targets, err := loadMediaProfileSubtitleTargets(ctx, q, *item.QualityProfileID)
 	if err != nil {
 		return item, err
 	}
-	item.SubtitleLanguages = languages
+	item.SubtitleTargets = targets
 	return item, nil
 }
 

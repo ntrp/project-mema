@@ -55,13 +55,13 @@ func languageScore(
 	profile *storage.MediaProfile,
 	languageCatalog []storage.Language,
 ) (int32, []ReleaseScoreContributor, string) {
-	if profile == nil || (len(profile.TargetLanguageScores) == 0 && len(profile.SubtitleLanguages) == 0) {
+	if profile == nil || (len(profile.AudioTargets) == 0 && len(profile.SubtitleTargets) == 0) {
 		return 0, nil, ""
 	}
 	releaseLanguages := normalizedLanguages(parsed.Languages)
 	var total int32
 	contributors := []ReleaseScoreContributor{}
-	for _, target := range profile.TargetLanguageScores {
+	for _, target := range profile.AudioTargets {
 		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
 		if _, ok := releaseLanguages[target.LanguageID]; !ok {
 			if target.Required {
@@ -75,7 +75,7 @@ func languageScore(
 			Score: target.Score,
 		})
 	}
-	for _, target := range profile.SubtitleLanguages {
+	for _, target := range profile.SubtitleTargets {
 		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
 		if _, ok := releaseLanguages[target.LanguageID]; !ok {
 			if target.Required {
@@ -89,9 +89,9 @@ func languageScore(
 			Score: target.Score,
 		})
 	}
-	if profile.RemoveNonEnabledLanguages {
+	if profile.RemoveUnwantedAudio {
 		targets := map[string]struct{}{}
-		for _, target := range profile.TargetLanguageScores {
+		for _, target := range profile.AudioTargets {
 			targets[target.LanguageID] = struct{}{}
 		}
 		for language := range releaseLanguages {

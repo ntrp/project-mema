@@ -13,6 +13,9 @@ type MediaComponentSource struct {
 	SourceFilePath  string
 	RetainedPath    string
 	ReleaseTitle    *string
+	ReleaseGroup    *string
+	ReleaseName     *string
+	ReleaseID       *string
 	SourceMetadata  *string
 	StreamInventory string
 	Checksum        *string
@@ -30,6 +33,9 @@ type MediaComponentSourceInput struct {
 	SourceRole      string
 	SourceFilePath  string
 	ReleaseTitle    *string
+	ReleaseGroup    *string
+	ReleaseName     *string
+	ReleaseID       *string
 	SourceMetadata  *string
 	StreamInventory string
 	Checksum        *string

@@ -20,14 +20,14 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 	if created.Name != "Scenario Profile" || len(created.QualityIds) != len(qualityIDs) {
 		t.Fatalf("created media profile = %#v", created)
 	}
-	if len(created.SubtitleLanguages) != 1 || created.SubtitleLanguages[0].SubtitleType != MediaProfileSubtitleLanguageSubtitleTypeAny {
-		t.Fatalf("created media profile subtitles = %#v", created.SubtitleLanguages)
+	if len(created.SubtitleTargets) != 1 || created.SubtitleTargets[0].Source != MediaProfileSubtitleSourceAny {
+		t.Fatalf("created media profile subtitles = %#v", created.SubtitleTargets)
 	}
-	if !created.RemoveNonEnabledSubtitleLanguages {
+	if !created.RemoveUnwantedSubtitles {
 		t.Fatalf("created media profile did not preserve subtitle removal setting: %#v", created)
 	}
-	if len(created.ComponentTargets) != 2 || created.ComponentTargets[0].ComponentType != MediaProfileComponentTypeVideo {
-		t.Fatalf("created media profile components = %#v", created.ComponentTargets)
+	if created.FinalContainer != MediaProfileFinalContainerMkv || len(created.AudioTargets) != 1 {
+		t.Fatalf("created media profile targets = %#v", created)
 	}
 
 	var updated MediaProfile
@@ -71,45 +71,33 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 	return MediaProfileRequest{
 		Name:                              name,
 		IsDefault:                         false,
+		FinalContainer:                    MediaProfileRequestFinalContainerMkv,
 		QualityIds:                        append([]string(nil), qualityIDs...),
 		UpgradesAllowed:                   true,
 		UpgradeUntilQualityId:             stringPtr(qualityIDs[len(qualityIDs)-1]),
 		MinimumCustomFormatScore:          0,
 		UpgradeUntilCustomFormatScore:     50,
 		MinimumCustomFormatScoreIncrement: 1,
-		RemoveNonEnabledLanguages:         true,
-		RemoveNonEnabledSubtitleLanguages: true,
-		PreferredProtocol:                 MediaProfileRequestPreferredProtocolUsenet,
+		RemoveUnwantedAudio:               true,
+		RemoveUnwantedSubtitles:           true,
+		PreferredProtocol:                 Usenet,
 		SeriesPackPreference:              MediaProfileRequestSeriesPackPreferencePreferPacks,
-		TargetLanguages:                   []string{"en"},
-		TargetLanguageScores: []MediaProfileLanguageScore{{
+		VideoTarget:                       MediaProfileVideoTarget{},
+		AudioTargets: []MediaProfileAudioTarget{{
+			LanguageId:           "en",
+			Score:                100,
+			Required:             true,
+			Codecs:               &[]string{"aac"},
+			Channels:             &[]string{"5.1"},
+			LossyTranscodePolicy: MediaProfileLossyTranscodePolicyDisabled,
+		}},
+		SubtitleTargets: []MediaProfileSubtitleTarget{{
 			LanguageId: "en",
-			Score:      100,
+			Score:      25,
 			Required:   true,
+			Source:     MediaProfileSubtitleSourceAny,
+			Formats:    &[]string{"srt"},
 		}},
-		SubtitleLanguages: []MediaProfileSubtitleLanguage{{
-			LanguageId:   "en",
-			Score:        25,
-			Required:     true,
-			SubtitleType: MediaProfileSubtitleLanguageSubtitleTypeAny,
-		}},
-		ComponentTargets: []MediaProfileComponentTarget{
-			{
-				ComponentType:    MediaProfileComponentTypeVideo,
-				Required:         true,
-				Source:           MediaProfileComponentSourceRelease,
-				FallbackBehavior: MediaProfileComponentFallbackStrict,
-			},
-			{
-				ComponentType:    MediaProfileComponentTypeAudio,
-				Required:         true,
-				LanguageId:       stringPtr("en"),
-				Codec:            stringPtr("aac"),
-				Channels:         stringPtr("5.1"),
-				Source:           MediaProfileComponentSourceRelease,
-				FallbackBehavior: MediaProfileComponentFallbackPreferExisting,
-			},
-		},
 		CustomFormatScores: []MediaProfileCustomFormatScore{},
 	}
 }

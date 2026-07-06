@@ -234,13 +234,14 @@ create table if not exists app.media_profiles (
     id text primary key,
     name text not null,
     is_default boolean not null default false,
+    final_container text not null default 'mkv' check (final_container in ('mkv', 'mp4')),
     upgrades_allowed boolean not null default true,
     upgrade_until_quality_id text,
     minimum_custom_format_score integer not null default 0,
     upgrade_until_custom_format_score integer not null default 0,
     minimum_custom_format_score_increment integer not null default 1 check (minimum_custom_format_score_increment >= 0),
-    remove_non_enabled_languages boolean not null default false,
-    remove_non_enabled_subtitle_languages boolean not null default false,
+    remove_unwanted_audio boolean not null default false,
+    remove_unwanted_subtitles boolean not null default false,
     preferred_protocol text not null default 'any' check (preferred_protocol in ('any', 'torrent', 'usenet')),
     series_pack_preference text not null default 'auto' check (series_pack_preference in ('auto', 'preferPacks', 'preferEpisodes')),
     created_at timestamptz not null default now(),
@@ -279,50 +280,49 @@ create table if not exists app.media_profile_custom_formats (
 create index if not exists idx_media_profile_custom_formats_profile
     on app.media_profile_custom_formats (profile_id, custom_format_id);
 
-create table if not exists app.media_profile_languages (
+create table if not exists app.media_profile_video_targets (
+    profile_id text primary key references app.media_profiles(id) on delete cascade,
+    codecs text[] not null default '{}',
+    codec_required boolean not null default false,
+    codec_score integer not null default 0,
+    hdr_formats text[] not null default '{}',
+    hdr_required boolean not null default false,
+    hdr_score integer not null default 0,
+    pixel_formats text[] not null default '{}',
+    pixel_format_required boolean not null default false,
+    pixel_format_score integer not null default 0
+);
+
+create table if not exists app.media_profile_audio_targets (
+    profile_id text not null references app.media_profiles(id) on delete cascade,
+    language_id text not null,
+    score integer not null default 0,
+    required boolean not null default true,
+    codecs text[] not null default '{}',
+    channels text[] not null default '{}',
+    minimum_bitrate_kbps integer check (minimum_bitrate_kbps is null or minimum_bitrate_kbps > 0),
+    preferred_bitrate_kbps integer check (preferred_bitrate_kbps is null or preferred_bitrate_kbps > 0),
+    lossy_transcode_policy text not null default 'disabled' check (lossy_transcode_policy in ('disabled', 'losslessToLossy', 'lossyToLossy')),
+    sort_order integer not null default 0,
+    primary key (profile_id, language_id)
+);
+
+create index if not exists idx_media_profile_audio_targets_profile
+    on app.media_profile_audio_targets (profile_id, sort_order, language_id);
+
+create table if not exists app.media_profile_subtitle_targets (
     profile_id text not null references app.media_profiles(id) on delete cascade,
     language_id text not null,
     score integer not null default 0,
     required boolean not null default false,
-    primary key (profile_id, language_id)
-);
-
-create index if not exists idx_media_profile_languages_profile
-    on app.media_profile_languages (profile_id, language_id);
-
-create table if not exists app.media_profile_subtitle_languages (
-    profile_id text not null references app.media_profiles(id) on delete cascade,
-    language_id text not null,
-    score integer not null default 0,
-    required boolean not null default true,
-    subtitle_type text not null default 'any' check (subtitle_type in ('any', 'embedded', 'external')),
-    primary key (profile_id, language_id)
-);
-
-create index if not exists idx_media_profile_subtitle_languages_profile
-    on app.media_profile_subtitle_languages (profile_id, language_id);
-
-create table if not exists app.media_profile_component_targets (
-    id uuid primary key,
-    profile_id text not null references app.media_profiles(id) on delete cascade,
-    component_type text not null check (component_type in ('video', 'audio', 'subtitle')),
-    required boolean not null default true,
-    language_id text,
-    codec text,
-    channels text,
-    source text not null default 'release' check (source in ('release', 'subtitleProvider', 'existing')),
-    fallback_behavior text not null default 'strict' check (fallback_behavior in ('strict', 'preferExisting', 'allowMissing')),
+    source text not null default 'any' check (source in ('any', 'embedded', 'external')),
+    formats text[] not null default '{}',
     sort_order integer not null default 0,
-    constraint media_profile_component_target_video_check check (
-        component_type <> 'video' or (language_id is null and channels is null)
-    ),
-    constraint media_profile_component_target_audio_check check (
-        component_type = 'audio' or channels is null
-    )
+    primary key (profile_id, language_id)
 );
 
-create index if not exists idx_media_profile_component_targets_profile
-    on app.media_profile_component_targets (profile_id, sort_order, component_type);
+create index if not exists idx_media_profile_subtitle_targets_profile
+    on app.media_profile_subtitle_targets (profile_id, sort_order, language_id);
 
 create table if not exists app.languages (
     code text primary key,
@@ -1054,6 +1054,9 @@ create table if not exists app.media_component_sources (
     source_file_path text not null,
     retained_path text not null,
     release_title text,
+    release_group text,
+    release_name text,
+    release_id text,
     source_metadata text,
     stream_inventory text not null default '',
     checksum text,
@@ -1067,6 +1070,27 @@ create table if not exists app.media_component_sources (
 
 create index if not exists idx_media_component_sources_media
     on app.media_component_sources (media_item_id, retained_at desc);
+
+create table if not exists app.media_component_provenance (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    component_type text not null check (component_type in ('container', 'video', 'audio', 'subtitle', 'chapter', 'attachment', 'sidecar')),
+    component_key text not null,
+    release_group text not null,
+    release_name text not null,
+    release_id text,
+    source_provider text,
+    source_file_path text,
+    retained_source_id uuid references app.media_component_sources(id) on delete set null,
+    source_stream_id integer,
+    transformation_chain jsonb not null default '[]'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint media_component_provenance_chain_array_check check (jsonb_typeof(transformation_chain) = 'array')
+);
+
+create unique index if not exists idx_media_component_provenance_component
+    on app.media_component_provenance (media_item_id, component_type, component_key);
 
 create table if not exists app.media_component_artifacts (
     id uuid primary key,

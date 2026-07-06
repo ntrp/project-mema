@@ -13,15 +13,15 @@ func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *Media
 	if err != nil {
 		return err
 	}
-	languageScores, err := loadMediaProfileLanguages(ctx, s.pool, profile.ID)
+	videoTarget, err := loadMediaProfileVideoTarget(ctx, s.pool, profile.ID)
 	if err != nil {
 		return err
 	}
-	subtitleLanguages, err := loadMediaProfileSubtitleLanguages(ctx, s.pool, profile.ID)
+	audioTargets, err := loadMediaProfileAudioTargets(ctx, s.pool, profile.ID)
 	if err != nil {
 		return err
 	}
-	componentTargets, err := loadMediaProfileComponentTargets(ctx, s.pool, profile.ID)
+	subtitleTargets, err := loadMediaProfileSubtitleTargets(ctx, s.pool, profile.ID)
 	if err != nil {
 		return err
 	}
@@ -30,10 +30,9 @@ func (s *SettingsStore) populateMediaProfile(ctx context.Context, profile *Media
 		return err
 	}
 	profile.QualityIDs = qualities
-	profile.TargetLanguageScores = languageScores
-	profile.TargetLanguages = languageIDsFromScores(languageScores)
-	profile.SubtitleLanguages = subtitleLanguages
-	profile.ComponentTargets = componentTargets
+	profile.VideoTarget = videoTarget
+	profile.AudioTargets = audioTargets
+	profile.SubtitleTargets = subtitleTargets
 	profile.CustomFormatScores = scores
 	return nil
 }
@@ -46,45 +45,73 @@ func loadMediaProfileQualities(
 	return storagegen.New(q).ListMediaProfileQualities(ctx, profileID)
 }
 
-func loadMediaProfileLanguages(
+func loadMediaProfileVideoTarget(
 	ctx context.Context,
 	q storagegen.DBTX,
 	profileID string,
-) ([]MediaProfileLanguageScore, error) {
-	rows, err := storagegen.New(q).ListMediaProfileLanguages(ctx, profileID)
+) (MediaProfileVideoTarget, error) {
+	row, err := storagegen.New(q).GetMediaProfileVideoTarget(ctx, profileID)
+	if err != nil {
+		return MediaProfileVideoTarget{}, nil
+	}
+	return MediaProfileVideoTarget{
+		Codecs:              row.Codecs,
+		CodecRequired:       row.CodecRequired,
+		CodecScore:          row.CodecScore,
+		HDRFormats:          row.HdrFormats,
+		HDRRequired:         row.HdrRequired,
+		HDRScore:            row.HdrScore,
+		PixelFormats:        row.PixelFormats,
+		PixelFormatRequired: row.PixelFormatRequired,
+		PixelFormatScore:    row.PixelFormatScore,
+	}, nil
+}
+
+func loadMediaProfileAudioTargets(
+	ctx context.Context,
+	q storagegen.DBTX,
+	profileID string,
+) ([]MediaProfileAudioTarget, error) {
+	rows, err := storagegen.New(q).ListMediaProfileAudioTargets(ctx, profileID)
 	if err != nil {
 		return nil, err
 	}
-	scores := make([]MediaProfileLanguageScore, 0, len(rows))
+	targets := make([]MediaProfileAudioTarget, 0, len(rows))
 	for _, row := range rows {
-		scores = append(scores, MediaProfileLanguageScore{
+		targets = append(targets, MediaProfileAudioTarget{
+			LanguageID:           row.LanguageID,
+			Score:                row.Score,
+			Required:             row.Required,
+			Codecs:               row.Codecs,
+			Channels:             row.Channels,
+			MinimumBitrateKbps:   int4Ptr(row.MinimumBitrateKbps),
+			PreferredBitrateKbps: int4Ptr(row.PreferredBitrateKbps),
+			LossyTranscodePolicy: row.LossyTranscodePolicy,
+		})
+	}
+	return targets, nil
+}
+
+func loadMediaProfileSubtitleTargets(
+	ctx context.Context,
+	q storagegen.DBTX,
+	profileID string,
+) ([]MediaProfileSubtitleTarget, error) {
+	rows, err := storagegen.New(q).ListMediaProfileSubtitleTargets(ctx, profileID)
+	if err != nil {
+		return nil, err
+	}
+	targets := make([]MediaProfileSubtitleTarget, 0, len(rows))
+	for _, row := range rows {
+		targets = append(targets, MediaProfileSubtitleTarget{
 			LanguageID: row.LanguageID,
 			Score:      row.Score,
 			Required:   row.Required,
+			Source:     row.Source,
+			Formats:    row.Formats,
 		})
 	}
-	return scores, nil
-}
-
-func loadMediaProfileSubtitleLanguages(
-	ctx context.Context,
-	q storagegen.DBTX,
-	profileID string,
-) ([]MediaProfileSubtitleLanguage, error) {
-	rows, err := storagegen.New(q).ListMediaProfileSubtitleLanguages(ctx, profileID)
-	if err != nil {
-		return nil, err
-	}
-	languages := make([]MediaProfileSubtitleLanguage, 0, len(rows))
-	for _, row := range rows {
-		languages = append(languages, MediaProfileSubtitleLanguage{
-			LanguageID:   row.LanguageID,
-			Score:        row.Score,
-			Required:     row.Required,
-			SubtitleType: row.SubtitleType,
-		})
-	}
-	return languages, nil
+	return targets, nil
 }
 
 func loadMediaProfileCustomFormats(
@@ -106,53 +133,58 @@ func loadMediaProfileCustomFormats(
 	return scores, nil
 }
 
-func loadMediaProfileComponentTargets(
-	ctx context.Context,
-	q storagegen.DBTX,
-	profileID string,
-) ([]MediaProfileComponentTarget, error) {
-	rows, err := storagegen.New(q).ListMediaProfileComponentTargets(ctx, profileID)
-	if err != nil {
-		return nil, err
-	}
-	targets := make([]MediaProfileComponentTarget, 0, len(rows))
-	for _, row := range rows {
-		targets = append(targets, MediaProfileComponentTarget{
-			ID:               row.ID,
-			ComponentType:    row.ComponentType,
-			Required:         row.Required,
-			LanguageID:       textPtr(row.LanguageID),
-			Codec:            textPtr(row.Codec),
-			Channels:         textPtr(row.Channels),
-			Source:           row.Source,
-			FallbackBehavior: row.FallbackBehavior,
-		})
-	}
-	return targets, nil
-}
-
-func replaceMediaProfileComponentTargets(
+func replaceMediaProfileTargets(
 	ctx context.Context,
 	q mediaProfileQuerier,
 	profileID string,
-	targets []MediaProfileComponentTarget,
+	input MediaProfileInput,
 ) error {
 	queries := storagegen.New(q)
-	if err := queries.ClearMediaProfileComponentTargets(ctx, profileID); err != nil {
+	if err := queries.UpsertMediaProfileVideoTarget(ctx, storagegen.UpsertMediaProfileVideoTargetParams{
+		ProfileID:           profileID,
+		Codecs:              input.VideoTarget.Codecs,
+		CodecRequired:       input.VideoTarget.CodecRequired,
+		CodecScore:          input.VideoTarget.CodecScore,
+		HdrFormats:          input.VideoTarget.HDRFormats,
+		HdrRequired:         input.VideoTarget.HDRRequired,
+		HdrScore:            input.VideoTarget.HDRScore,
+		PixelFormats:        input.VideoTarget.PixelFormats,
+		PixelFormatRequired: input.VideoTarget.PixelFormatRequired,
+		PixelFormatScore:    input.VideoTarget.PixelFormatScore,
+	}); err != nil {
 		return err
 	}
-	for index, target := range targets {
-		if err := queries.AddMediaProfileComponentTarget(ctx, storagegen.AddMediaProfileComponentTargetParams{
-			ID:               target.ID,
-			ProfileID:        profileID,
-			ComponentType:    target.ComponentType,
-			Required:         target.Required,
-			LanguageID:       textValue(target.LanguageID),
-			Codec:            textValue(target.Codec),
-			Channels:         textValue(target.Channels),
-			Source:           target.Source,
-			FallbackBehavior: target.FallbackBehavior,
-			SortOrder:        int32(index),
+	if err := queries.ClearMediaProfileAudioTargets(ctx, profileID); err != nil {
+		return err
+	}
+	for index, target := range input.AudioTargets {
+		if err := queries.AddMediaProfileAudioTarget(ctx, storagegen.AddMediaProfileAudioTargetParams{
+			ProfileID:            profileID,
+			LanguageID:           target.LanguageID,
+			Score:                target.Score,
+			Required:             target.Required,
+			Codecs:               target.Codecs,
+			Channels:             target.Channels,
+			MinimumBitrateKbps:   int4Value(target.MinimumBitrateKbps),
+			PreferredBitrateKbps: int4Value(target.PreferredBitrateKbps),
+			LossyTranscodePolicy: target.LossyTranscodePolicy,
+			SortOrder:            int32(index),
+		}); err != nil {
+			return normalizeMediaProfileWriteError(err)
+		}
+	}
+	if err := queries.ClearMediaProfileSubtitleTargets(ctx, profileID); err != nil {
+		return err
+	}
+	for index, target := range input.SubtitleTargets {
+		if err := queries.AddMediaProfileSubtitleTarget(ctx, storagegen.AddMediaProfileSubtitleTargetParams{
+			ProfileID:  profileID,
+			LanguageID: target.LanguageID,
+			Score:      target.Score,
+			Required:   target.Required,
+			Source:     target.Source,
+			Formats:    target.Formats,
+			SortOrder:  int32(index),
 		}); err != nil {
 			return normalizeMediaProfileWriteError(err)
 		}
@@ -175,53 +207,6 @@ func replaceMediaProfileCustomFormats(
 			ProfileID:      profileID,
 			CustomFormatID: score.CustomFormatID,
 			Score:          score.Score,
-		}); err != nil {
-			return normalizeMediaProfileWriteError(err)
-		}
-	}
-	return nil
-}
-
-func replaceMediaProfileLanguages(
-	ctx context.Context,
-	q mediaProfileQuerier,
-	profileID string,
-	scores []MediaProfileLanguageScore,
-) error {
-	queries := storagegen.New(q)
-	if err := queries.ClearMediaProfileLanguages(ctx, profileID); err != nil {
-		return err
-	}
-	for _, score := range scores {
-		if err := queries.AddMediaProfileLanguage(ctx, storagegen.AddMediaProfileLanguageParams{
-			ProfileID:  profileID,
-			LanguageID: score.LanguageID,
-			Score:      score.Score,
-			Required:   score.Required,
-		}); err != nil {
-			return normalizeMediaProfileWriteError(err)
-		}
-	}
-	return nil
-}
-
-func replaceMediaProfileSubtitleLanguages(
-	ctx context.Context,
-	q mediaProfileQuerier,
-	profileID string,
-	languages []MediaProfileSubtitleLanguage,
-) error {
-	queries := storagegen.New(q)
-	if err := queries.ClearMediaProfileSubtitleLanguages(ctx, profileID); err != nil {
-		return err
-	}
-	for _, language := range languages {
-		if err := queries.AddMediaProfileSubtitleLanguage(ctx, storagegen.AddMediaProfileSubtitleLanguageParams{
-			ProfileID:    profileID,
-			LanguageID:   language.LanguageID,
-			Score:        language.Score,
-			Required:     language.Required,
-			SubtitleType: language.SubtitleType,
 		}); err != nil {
 			return normalizeMediaProfileWriteError(err)
 		}

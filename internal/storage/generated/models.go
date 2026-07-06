@@ -331,6 +331,23 @@ type AppMediaComponentCompatibilityDecision struct {
 	UpdatedAt         time.Time
 }
 
+type AppMediaComponentProvenance struct {
+	ID                  uuid.UUID
+	MediaItemID         uuid.UUID
+	ComponentType       string
+	ComponentKey        string
+	ReleaseGroup        string
+	ReleaseName         string
+	ReleaseID           pgtype.Text
+	SourceProvider      pgtype.Text
+	SourceFilePath      pgtype.Text
+	RetainedSourceID    *uuid.UUID
+	SourceStreamID      pgtype.Int4
+	TransformationChain []byte
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
 type AppMediaComponentSource struct {
 	ID              uuid.UUID
 	MediaItemID     uuid.UUID
@@ -338,6 +355,9 @@ type AppMediaComponentSource struct {
 	SourceFilePath  string
 	RetainedPath    string
 	ReleaseTitle    pgtype.Text
+	ReleaseGroup    pgtype.Text
+	ReleaseName     pgtype.Text
+	ReleaseID       pgtype.Text
 	SourceMetadata  pgtype.Text
 	StreamInventory string
 	Checksum        pgtype.Text
@@ -486,30 +506,31 @@ type AppMediaProfile struct {
 	ID                                string
 	Name                              string
 	IsDefault                         bool
+	FinalContainer                    string
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             pgtype.Text
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
-	RemoveNonEnabledLanguages         bool
-	RemoveNonEnabledSubtitleLanguages bool
+	RemoveUnwantedAudio               bool
+	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	CreatedAt                         time.Time
 	UpdatedAt                         time.Time
 }
 
-type AppMediaProfileComponentTarget struct {
-	ID               uuid.UUID
-	ProfileID        string
-	ComponentType    string
-	Required         bool
-	LanguageID       pgtype.Text
-	Codec            pgtype.Text
-	Channels         pgtype.Text
-	Source           string
-	FallbackBehavior string
-	SortOrder        int32
+type AppMediaProfileAudioTarget struct {
+	ProfileID            string
+	LanguageID           string
+	Score                int32
+	Required             bool
+	Codecs               []string
+	Channels             []string
+	MinimumBitrateKbps   pgtype.Int4
+	PreferredBitrateKbps pgtype.Int4
+	LossyTranscodePolicy string
+	SortOrder            int32
 }
 
 type AppMediaProfileCustomFormat struct {
@@ -518,25 +539,33 @@ type AppMediaProfileCustomFormat struct {
 	Score          int32
 }
 
-type AppMediaProfileLanguage struct {
-	ProfileID  string
-	LanguageID string
-	Score      int32
-	Required   bool
-}
-
 type AppMediaProfileQuality struct {
 	ProfileID string
 	QualityID string
 	SortOrder int32
 }
 
-type AppMediaProfileSubtitleLanguage struct {
-	ProfileID    string
-	LanguageID   string
-	Score        int32
-	Required     bool
-	SubtitleType string
+type AppMediaProfileSubtitleTarget struct {
+	ProfileID  string
+	LanguageID string
+	Score      int32
+	Required   bool
+	Source     string
+	Formats    []string
+	SortOrder  int32
+}
+
+type AppMediaProfileVideoTarget struct {
+	ProfileID           string
+	Codecs              []string
+	CodecRequired       bool
+	CodecScore          int32
+	HdrFormats          []string
+	HdrRequired         bool
+	HdrScore            int32
+	PixelFormats        []string
+	PixelFormatRequired bool
+	PixelFormatScore    int32
 }
 
 type AppMediaProviderMapping struct {

@@ -24,7 +24,7 @@ func (s *Server) EnqueueMediaSubtitleSearch(w http.ResponseWriter, r *http.Reque
 	}
 	languageID := subtitleSearchValue(body.LanguageId)
 	filePath := subtitleSearchValue(body.FilePath)
-	if languageID == "" && len(item.SubtitleLanguages) == 0 {
+	if languageID == "" && len(item.SubtitleTargets) == 0 {
 		writeError(w, http.StatusBadRequest, "subtitle_language_missing", "No wanted subtitle language is configured")
 		return
 	}

@@ -53,36 +53,46 @@ insert into app.media_profiles (
     id,
     name,
     is_default,
+    final_container,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference
 )
 values
-    ('any', 'Any acceptable release', false, true, 'raw-hd', 0, 0, 1, false, 'any', 'auto'),
-    ('hd-1080p', 'HD 1080p', true, true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto'),
-    ('uhd-4k', 'UHD 4K', false, true, 'remux-2160p', 0, 10000, 1, false, 'any', 'auto'),
-    ('anime-1080p', 'Anime 1080p', false, true, 'bluray-1080p', 0, 10000, 1, false, 'any', 'auto')
+    ('any', 'Any acceptable release', false, 'mkv', true, 'raw-hd', 0, 0, 1, false, false, 'any', 'auto'),
+    ('hd-1080p', 'HD 1080p', true, 'mkv', true, 'bluray-1080p', 0, 10000, 1, false, false, 'any', 'auto'),
+    ('uhd-4k', 'UHD 4K', false, 'mkv', true, 'remux-2160p', 0, 10000, 1, false, false, 'any', 'auto'),
+    ('anime-1080p', 'Anime 1080p', false, 'mkv', true, 'bluray-1080p', 0, 10000, 1, false, false, 'any', 'auto')
 on conflict (id) do nothing;
 
-insert into app.media_profile_languages (profile_id, language_id, score)
+insert into app.media_profile_video_targets (profile_id)
 values
-    ('any', 'english', 0),
-    ('hd-1080p', 'english', 0),
-    ('uhd-4k', 'english', 0),
-    ('anime-1080p', 'japanese', 0),
-    ('anime-1080p', 'english', 0)
+    ('any'),
+    ('hd-1080p'),
+    ('uhd-4k'),
+    ('anime-1080p')
+on conflict (profile_id) do nothing;
+
+insert into app.media_profile_audio_targets (profile_id, language_id, score, required, sort_order)
+values
+    ('any', 'english', 0, true, 0),
+    ('hd-1080p', 'english', 0, true, 0),
+    ('uhd-4k', 'english', 0, true, 0),
+    ('anime-1080p', 'japanese', 0, true, 0),
+    ('anime-1080p', 'english', 0, false, 1)
 on conflict (profile_id, language_id) do nothing;
 
-insert into app.media_profile_subtitle_languages (profile_id, language_id, score, required, subtitle_type)
+insert into app.media_profile_subtitle_targets (profile_id, language_id, score, required, source, formats, sort_order)
 values
-    ('hd-1080p', 'english', 0, false, 'any'),
-    ('uhd-4k', 'english', 0, false, 'any'),
-    ('anime-1080p', 'english', 0, false, 'any')
+    ('hd-1080p', 'english', 0, false, 'any', array['srt'], 0),
+    ('uhd-4k', 'english', 0, false, 'any', array['srt'], 0),
+    ('anime-1080p', 'english', 0, false, 'any', array['srt'], 0)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)

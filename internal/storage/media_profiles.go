@@ -120,13 +120,7 @@ func (s *SettingsStore) saveMediaProfile(
 	if err := replaceMediaProfileQualities(ctx, tx, id, qualityIDs); err != nil {
 		return MediaProfile{}, err
 	}
-	if err := replaceMediaProfileLanguages(ctx, tx, id, input.TargetLanguageScores); err != nil {
-		return MediaProfile{}, normalizeMediaProfileWriteError(err)
-	}
-	if err := replaceMediaProfileSubtitleLanguages(ctx, tx, id, input.SubtitleLanguages); err != nil {
-		return MediaProfile{}, normalizeMediaProfileWriteError(err)
-	}
-	if err := replaceMediaProfileComponentTargets(ctx, tx, id, input.ComponentTargets); err != nil {
+	if err := replaceMediaProfileTargets(ctx, tx, id, input); err != nil {
 		return MediaProfile{}, normalizeMediaProfileWriteError(err)
 	}
 	if err := replaceMediaProfileCustomFormats(ctx, tx, id, input.CustomFormatScores); err != nil {
@@ -185,13 +179,14 @@ func mediaProfileParams(id string, name string, input MediaProfileInput) storage
 		ID:                                id,
 		Name:                              name,
 		IsDefault:                         input.IsDefault,
+		FinalContainer:                    input.FinalContainer,
 		UpgradesAllowed:                   input.UpgradesAllowed,
 		UpgradeUntilQualityID:             textValue(input.UpgradeUntilQualityID),
 		MinimumCustomFormatScore:          input.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     input.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: input.MinimumCustomFormatScoreIncrement,
-		RemoveNonEnabledLanguages:         input.RemoveNonEnabledLanguages,
-		RemoveNonEnabledSubtitleLanguages: input.RemoveNonEnabledSubtitleLanguages,
+		RemoveUnwantedAudio:               input.RemoveUnwantedAudio,
+		RemoveUnwantedSubtitles:           input.RemoveUnwantedSubtitles,
 		PreferredProtocol:                 input.PreferredProtocol,
 		SeriesPackPreference:              input.SeriesPackPreference,
 	}
@@ -202,13 +197,14 @@ func mediaProfileUpdateParams(id string, name string, input MediaProfileInput) s
 		ID:                                id,
 		Name:                              name,
 		IsDefault:                         input.IsDefault,
+		FinalContainer:                    input.FinalContainer,
 		UpgradesAllowed:                   input.UpgradesAllowed,
 		UpgradeUntilQualityID:             textValue(input.UpgradeUntilQualityID),
 		MinimumCustomFormatScore:          input.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     input.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: input.MinimumCustomFormatScoreIncrement,
-		RemoveNonEnabledLanguages:         input.RemoveNonEnabledLanguages,
-		RemoveNonEnabledSubtitleLanguages: input.RemoveNonEnabledSubtitleLanguages,
+		RemoveUnwantedAudio:               input.RemoveUnwantedAudio,
+		RemoveUnwantedSubtitles:           input.RemoveUnwantedSubtitles,
 		PreferredProtocol:                 input.PreferredProtocol,
 		SeriesPackPreference:              input.SeriesPackPreference,
 	}
@@ -219,13 +215,14 @@ func mediaProfileFromRow(row storagegen.AppMediaProfile) MediaProfile {
 		ID:                                row.ID,
 		Name:                              row.Name,
 		IsDefault:                         row.IsDefault,
+		FinalContainer:                    row.FinalContainer,
 		UpgradesAllowed:                   row.UpgradesAllowed,
 		UpgradeUntilQualityID:             textPtr(row.UpgradeUntilQualityID),
 		MinimumCustomFormatScore:          row.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     row.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: row.MinimumCustomFormatScoreIncrement,
-		RemoveNonEnabledLanguages:         row.RemoveNonEnabledLanguages,
-		RemoveNonEnabledSubtitleLanguages: row.RemoveNonEnabledSubtitleLanguages,
+		RemoveUnwantedAudio:               row.RemoveUnwantedAudio,
+		RemoveUnwantedSubtitles:           row.RemoveUnwantedSubtitles,
 		PreferredProtocol:                 row.PreferredProtocol,
 		SeriesPackPreference:              row.SeriesPackPreference,
 		CreatedAt:                         row.CreatedAt,

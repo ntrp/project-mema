@@ -1009,6 +1009,24 @@ func (e MediaNumberingStrategy) Valid() bool {
 	}
 }
 
+// Defines values for MediaProfileFinalContainer.
+const (
+	MediaProfileFinalContainerMkv MediaProfileFinalContainer = "mkv"
+	MediaProfileFinalContainerMp4 MediaProfileFinalContainer = "mp4"
+)
+
+// Valid indicates whether the value is a known member of the MediaProfileFinalContainer enum.
+func (e MediaProfileFinalContainer) Valid() bool {
+	switch e {
+	case MediaProfileFinalContainerMkv:
+		return true
+	case MediaProfileFinalContainerMp4:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaProfilePreferredProtocol.
 const (
 	MediaProfilePreferredProtocolAny     MediaProfilePreferredProtocol = "any"
@@ -1051,63 +1069,39 @@ func (e MediaProfileSeriesPackPreference) Valid() bool {
 	}
 }
 
-// Defines values for MediaProfileComponentFallback.
+// Defines values for MediaProfileLossyTranscodePolicy.
 const (
-	MediaProfileComponentFallbackAllowMissing   MediaProfileComponentFallback = "allowMissing"
-	MediaProfileComponentFallbackPreferExisting MediaProfileComponentFallback = "preferExisting"
-	MediaProfileComponentFallbackStrict         MediaProfileComponentFallback = "strict"
+	MediaProfileLossyTranscodePolicyDisabled        MediaProfileLossyTranscodePolicy = "disabled"
+	MediaProfileLossyTranscodePolicyLosslessToLossy MediaProfileLossyTranscodePolicy = "losslessToLossy"
+	MediaProfileLossyTranscodePolicyLossyToLossy    MediaProfileLossyTranscodePolicy = "lossyToLossy"
 )
 
-// Valid indicates whether the value is a known member of the MediaProfileComponentFallback enum.
-func (e MediaProfileComponentFallback) Valid() bool {
+// Valid indicates whether the value is a known member of the MediaProfileLossyTranscodePolicy enum.
+func (e MediaProfileLossyTranscodePolicy) Valid() bool {
 	switch e {
-	case MediaProfileComponentFallbackAllowMissing:
+	case MediaProfileLossyTranscodePolicyDisabled:
 		return true
-	case MediaProfileComponentFallbackPreferExisting:
+	case MediaProfileLossyTranscodePolicyLosslessToLossy:
 		return true
-	case MediaProfileComponentFallbackStrict:
+	case MediaProfileLossyTranscodePolicyLossyToLossy:
 		return true
 	default:
 		return false
 	}
 }
 
-// Defines values for MediaProfileComponentSource.
+// Defines values for MediaProfileRequestFinalContainer.
 const (
-	MediaProfileComponentSourceExisting         MediaProfileComponentSource = "existing"
-	MediaProfileComponentSourceRelease          MediaProfileComponentSource = "release"
-	MediaProfileComponentSourceSubtitleProvider MediaProfileComponentSource = "subtitleProvider"
+	MediaProfileRequestFinalContainerMkv MediaProfileRequestFinalContainer = "mkv"
+	MediaProfileRequestFinalContainerMp4 MediaProfileRequestFinalContainer = "mp4"
 )
 
-// Valid indicates whether the value is a known member of the MediaProfileComponentSource enum.
-func (e MediaProfileComponentSource) Valid() bool {
+// Valid indicates whether the value is a known member of the MediaProfileRequestFinalContainer enum.
+func (e MediaProfileRequestFinalContainer) Valid() bool {
 	switch e {
-	case MediaProfileComponentSourceExisting:
+	case MediaProfileRequestFinalContainerMkv:
 		return true
-	case MediaProfileComponentSourceRelease:
-		return true
-	case MediaProfileComponentSourceSubtitleProvider:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for MediaProfileComponentType.
-const (
-	MediaProfileComponentTypeAudio    MediaProfileComponentType = "audio"
-	MediaProfileComponentTypeSubtitle MediaProfileComponentType = "subtitle"
-	MediaProfileComponentTypeVideo    MediaProfileComponentType = "video"
-)
-
-// Valid indicates whether the value is a known member of the MediaProfileComponentType enum.
-func (e MediaProfileComponentType) Valid() bool {
-	switch e {
-	case MediaProfileComponentTypeAudio:
-		return true
-	case MediaProfileComponentTypeSubtitle:
-		return true
-	case MediaProfileComponentTypeVideo:
+	case MediaProfileRequestFinalContainerMp4:
 		return true
 	default:
 		return false
@@ -1116,19 +1110,19 @@ func (e MediaProfileComponentType) Valid() bool {
 
 // Defines values for MediaProfileRequestPreferredProtocol.
 const (
-	MediaProfileRequestPreferredProtocolAny     MediaProfileRequestPreferredProtocol = "any"
-	MediaProfileRequestPreferredProtocolTorrent MediaProfileRequestPreferredProtocol = "torrent"
-	MediaProfileRequestPreferredProtocolUsenet  MediaProfileRequestPreferredProtocol = "usenet"
+	Any     MediaProfileRequestPreferredProtocol = "any"
+	Torrent MediaProfileRequestPreferredProtocol = "torrent"
+	Usenet  MediaProfileRequestPreferredProtocol = "usenet"
 )
 
 // Valid indicates whether the value is a known member of the MediaProfileRequestPreferredProtocol enum.
 func (e MediaProfileRequestPreferredProtocol) Valid() bool {
 	switch e {
-	case MediaProfileRequestPreferredProtocolAny:
+	case Any:
 		return true
-	case MediaProfileRequestPreferredProtocolTorrent:
+	case Torrent:
 		return true
-	case MediaProfileRequestPreferredProtocolUsenet:
+	case Usenet:
 		return true
 	default:
 		return false
@@ -1156,21 +1150,21 @@ func (e MediaProfileRequestSeriesPackPreference) Valid() bool {
 	}
 }
 
-// Defines values for MediaProfileSubtitleLanguageSubtitleType.
+// Defines values for MediaProfileSubtitleSource.
 const (
-	MediaProfileSubtitleLanguageSubtitleTypeAny      MediaProfileSubtitleLanguageSubtitleType = "any"
-	MediaProfileSubtitleLanguageSubtitleTypeEmbedded MediaProfileSubtitleLanguageSubtitleType = "embedded"
-	MediaProfileSubtitleLanguageSubtitleTypeExternal MediaProfileSubtitleLanguageSubtitleType = "external"
+	MediaProfileSubtitleSourceAny      MediaProfileSubtitleSource = "any"
+	MediaProfileSubtitleSourceEmbedded MediaProfileSubtitleSource = "embedded"
+	MediaProfileSubtitleSourceExternal MediaProfileSubtitleSource = "external"
 )
 
-// Valid indicates whether the value is a known member of the MediaProfileSubtitleLanguageSubtitleType enum.
-func (e MediaProfileSubtitleLanguageSubtitleType) Valid() bool {
+// Valid indicates whether the value is a known member of the MediaProfileSubtitleSource enum.
+func (e MediaProfileSubtitleSource) Valid() bool {
 	switch e {
-	case MediaProfileSubtitleLanguageSubtitleTypeAny:
+	case MediaProfileSubtitleSourceAny:
 		return true
-	case MediaProfileSubtitleLanguageSubtitleTypeEmbedded:
+	case MediaProfileSubtitleSourceEmbedded:
 		return true
-	case MediaProfileSubtitleLanguageSubtitleTypeExternal:
+	case MediaProfileSubtitleSourceExternal:
 		return true
 	default:
 		return false
@@ -2485,6 +2479,9 @@ type MediaComponentSource struct {
 	CreatedAt       time.Time                              `json:"createdAt"`
 	Id              openapi_types.UUID                     `json:"id"`
 	MediaItemId     openapi_types.UUID                     `json:"mediaItemId"`
+	ReleaseGroup    *string                                `json:"releaseGroup,omitempty"`
+	ReleaseId       *string                                `json:"releaseId,omitempty"`
+	ReleaseName     *string                                `json:"releaseName,omitempty"`
 	ReleaseTitle    *string                                `json:"releaseTitle,omitempty"`
 	ReleasedAt      *time.Time                             `json:"releasedAt,omitempty"`
 	RetainedAt      time.Time                              `json:"retainedAt"`
@@ -2506,6 +2503,9 @@ type MediaComponentSourceListResponse struct {
 // MediaComponentSourceRetainRequest defines model for MediaComponentSourceRetainRequest.
 type MediaComponentSourceRetainRequest struct {
 	Checksum        *string                  `json:"checksum,omitempty"`
+	ReleaseGroup    *string                  `json:"releaseGroup,omitempty"`
+	ReleaseId       *string                  `json:"releaseId,omitempty"`
+	ReleaseName     *string                  `json:"releaseName,omitempty"`
 	ReleaseTitle    *string                  `json:"releaseTitle,omitempty"`
 	SourceFilePath  string                   `json:"sourceFilePath"`
 	SourceMetadata  *string                  `json:"sourceMetadata,omitempty"`
@@ -2915,9 +2915,10 @@ type MediaNumberingStrategy string
 
 // MediaProfile defines model for MediaProfile.
 type MediaProfile struct {
-	ComponentTargets                  []MediaProfileComponentTarget    `json:"componentTargets"`
+	AudioTargets                      []MediaProfileAudioTarget        `json:"audioTargets"`
 	CreatedAt                         time.Time                        `json:"createdAt"`
 	CustomFormatScores                []MediaProfileCustomFormatScore  `json:"customFormatScores"`
+	FinalContainer                    MediaProfileFinalContainer       `json:"finalContainer"`
 	Id                                string                           `json:"id"`
 	IsDefault                         bool                             `json:"isDefault"`
 	MinimumCustomFormatScore          int32                            `json:"minimumCustomFormatScore"`
@@ -2925,17 +2926,19 @@ type MediaProfile struct {
 	Name                              string                           `json:"name"`
 	PreferredProtocol                 MediaProfilePreferredProtocol    `json:"preferredProtocol"`
 	QualityIds                        []string                         `json:"qualityIds"`
-	RemoveNonEnabledLanguages         bool                             `json:"removeNonEnabledLanguages"`
-	RemoveNonEnabledSubtitleLanguages bool                             `json:"removeNonEnabledSubtitleLanguages"`
+	RemoveUnwantedAudio               bool                             `json:"removeUnwantedAudio"`
+	RemoveUnwantedSubtitles           bool                             `json:"removeUnwantedSubtitles"`
 	SeriesPackPreference              MediaProfileSeriesPackPreference `json:"seriesPackPreference"`
-	SubtitleLanguages                 []MediaProfileSubtitleLanguage   `json:"subtitleLanguages"`
-	TargetLanguageScores              []MediaProfileLanguageScore      `json:"targetLanguageScores"`
-	TargetLanguages                   []string                         `json:"targetLanguages"`
+	SubtitleTargets                   []MediaProfileSubtitleTarget     `json:"subtitleTargets"`
 	UpdatedAt                         time.Time                        `json:"updatedAt"`
 	UpgradeUntilCustomFormatScore     int32                            `json:"upgradeUntilCustomFormatScore"`
 	UpgradeUntilQualityId             *string                          `json:"upgradeUntilQualityId,omitempty"`
 	UpgradesAllowed                   bool                             `json:"upgradesAllowed"`
+	VideoTarget                       MediaProfileVideoTarget          `json:"videoTarget"`
 }
+
+// MediaProfileFinalContainer defines model for MediaProfile.FinalContainer.
+type MediaProfileFinalContainer string
 
 // MediaProfilePreferredProtocol defines model for MediaProfile.PreferredProtocol.
 type MediaProfilePreferredProtocol string
@@ -2943,26 +2946,17 @@ type MediaProfilePreferredProtocol string
 // MediaProfileSeriesPackPreference defines model for MediaProfile.SeriesPackPreference.
 type MediaProfileSeriesPackPreference string
 
-// MediaProfileComponentFallback defines model for MediaProfileComponentFallback.
-type MediaProfileComponentFallback string
-
-// MediaProfileComponentSource defines model for MediaProfileComponentSource.
-type MediaProfileComponentSource string
-
-// MediaProfileComponentTarget defines model for MediaProfileComponentTarget.
-type MediaProfileComponentTarget struct {
-	Channels         *string                       `json:"channels,omitempty"`
-	Codec            *string                       `json:"codec,omitempty"`
-	ComponentType    MediaProfileComponentType     `json:"componentType"`
-	FallbackBehavior MediaProfileComponentFallback `json:"fallbackBehavior"`
-	Id               *openapi_types.UUID           `json:"id,omitempty"`
-	LanguageId       *string                       `json:"languageId,omitempty"`
-	Required         bool                          `json:"required"`
-	Source           MediaProfileComponentSource   `json:"source"`
+// MediaProfileAudioTarget defines model for MediaProfileAudioTarget.
+type MediaProfileAudioTarget struct {
+	Channels             *[]string                        `json:"channels,omitempty"`
+	Codecs               *[]string                        `json:"codecs,omitempty"`
+	LanguageId           string                           `json:"languageId"`
+	LossyTranscodePolicy MediaProfileLossyTranscodePolicy `json:"lossyTranscodePolicy"`
+	MinimumBitrateKbps   *int32                           `json:"minimumBitrateKbps,omitempty"`
+	PreferredBitrateKbps *int32                           `json:"preferredBitrateKbps,omitempty"`
+	Required             bool                             `json:"required"`
+	Score                int32                            `json:"score"`
 }
-
-// MediaProfileComponentType defines model for MediaProfileComponentType.
-type MediaProfileComponentType string
 
 // MediaProfileCustomFormatScore defines model for MediaProfileCustomFormatScore.
 type MediaProfileCustomFormatScore struct {
@@ -2970,38 +2964,37 @@ type MediaProfileCustomFormatScore struct {
 	Score          int32              `json:"score"`
 }
 
-// MediaProfileLanguageScore defines model for MediaProfileLanguageScore.
-type MediaProfileLanguageScore struct {
-	LanguageId string `json:"languageId"`
-	Required   bool   `json:"required"`
-	Score      int32  `json:"score"`
-}
-
 // MediaProfileListResponse defines model for MediaProfileListResponse.
 type MediaProfileListResponse struct {
 	Profiles []MediaProfile `json:"profiles"`
 }
 
+// MediaProfileLossyTranscodePolicy defines model for MediaProfileLossyTranscodePolicy.
+type MediaProfileLossyTranscodePolicy string
+
 // MediaProfileRequest defines model for MediaProfileRequest.
 type MediaProfileRequest struct {
-	ComponentTargets                  []MediaProfileComponentTarget           `json:"componentTargets"`
+	AudioTargets                      []MediaProfileAudioTarget               `json:"audioTargets"`
 	CustomFormatScores                []MediaProfileCustomFormatScore         `json:"customFormatScores"`
+	FinalContainer                    MediaProfileRequestFinalContainer       `json:"finalContainer"`
 	IsDefault                         bool                                    `json:"isDefault"`
 	MinimumCustomFormatScore          int32                                   `json:"minimumCustomFormatScore"`
 	MinimumCustomFormatScoreIncrement int32                                   `json:"minimumCustomFormatScoreIncrement"`
 	Name                              string                                  `json:"name"`
 	PreferredProtocol                 MediaProfileRequestPreferredProtocol    `json:"preferredProtocol"`
 	QualityIds                        []string                                `json:"qualityIds"`
-	RemoveNonEnabledLanguages         bool                                    `json:"removeNonEnabledLanguages"`
-	RemoveNonEnabledSubtitleLanguages bool                                    `json:"removeNonEnabledSubtitleLanguages"`
+	RemoveUnwantedAudio               bool                                    `json:"removeUnwantedAudio"`
+	RemoveUnwantedSubtitles           bool                                    `json:"removeUnwantedSubtitles"`
 	SeriesPackPreference              MediaProfileRequestSeriesPackPreference `json:"seriesPackPreference"`
-	SubtitleLanguages                 []MediaProfileSubtitleLanguage          `json:"subtitleLanguages"`
-	TargetLanguageScores              []MediaProfileLanguageScore             `json:"targetLanguageScores"`
-	TargetLanguages                   []string                                `json:"targetLanguages"`
+	SubtitleTargets                   []MediaProfileSubtitleTarget            `json:"subtitleTargets"`
 	UpgradeUntilCustomFormatScore     int32                                   `json:"upgradeUntilCustomFormatScore"`
 	UpgradeUntilQualityId             *string                                 `json:"upgradeUntilQualityId,omitempty"`
 	UpgradesAllowed                   bool                                    `json:"upgradesAllowed"`
+	VideoTarget                       MediaProfileVideoTarget                 `json:"videoTarget"`
 }
+
+// MediaProfileRequestFinalContainer defines model for MediaProfileRequest.FinalContainer.
+type MediaProfileRequestFinalContainer string
 
 // MediaProfileRequestPreferredProtocol defines model for MediaProfileRequest.PreferredProtocol.
 type MediaProfileRequestPreferredProtocol string
@@ -3009,16 +3002,30 @@ type MediaProfileRequestPreferredProtocol string
 // MediaProfileRequestSeriesPackPreference defines model for MediaProfileRequest.SeriesPackPreference.
 type MediaProfileRequestSeriesPackPreference string
 
-// MediaProfileSubtitleLanguage defines model for MediaProfileSubtitleLanguage.
-type MediaProfileSubtitleLanguage struct {
-	LanguageId   string                                   `json:"languageId"`
-	Required     bool                                     `json:"required"`
-	Score        int32                                    `json:"score"`
-	SubtitleType MediaProfileSubtitleLanguageSubtitleType `json:"subtitleType"`
+// MediaProfileSubtitleSource defines model for MediaProfileSubtitleSource.
+type MediaProfileSubtitleSource string
+
+// MediaProfileSubtitleTarget defines model for MediaProfileSubtitleTarget.
+type MediaProfileSubtitleTarget struct {
+	Formats    *[]string                  `json:"formats,omitempty"`
+	LanguageId string                     `json:"languageId"`
+	Required   bool                       `json:"required"`
+	Score      int32                      `json:"score"`
+	Source     MediaProfileSubtitleSource `json:"source"`
 }
 
-// MediaProfileSubtitleLanguageSubtitleType defines model for MediaProfileSubtitleLanguage.SubtitleType.
-type MediaProfileSubtitleLanguageSubtitleType string
+// MediaProfileVideoTarget defines model for MediaProfileVideoTarget.
+type MediaProfileVideoTarget struct {
+	CodecRequired       *bool     `json:"codecRequired,omitempty"`
+	CodecScore          *int32    `json:"codecScore,omitempty"`
+	Codecs              *[]string `json:"codecs,omitempty"`
+	HdrFormats          *[]string `json:"hdrFormats,omitempty"`
+	HdrRequired         *bool     `json:"hdrRequired,omitempty"`
+	HdrScore            *int32    `json:"hdrScore,omitempty"`
+	PixelFormatRequired *bool     `json:"pixelFormatRequired,omitempty"`
+	PixelFormatScore    *int32    `json:"pixelFormatScore,omitempty"`
+	PixelFormats        *[]string `json:"pixelFormats,omitempty"`
+}
 
 // MediaProviderMapping defines model for MediaProviderMapping.
 type MediaProviderMapping struct {

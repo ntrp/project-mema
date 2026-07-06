@@ -148,12 +148,12 @@ export type QualitySizeSettingsUpdateRequest =
 	components['schemas']['QualitySizeSettingsUpdateRequest'];
 export type MediaProfile = components['schemas']['MediaProfile'];
 export type MediaProfileRequest = components['schemas']['MediaProfileRequest'];
-export type MediaProfileLanguageScore = components['schemas']['MediaProfileLanguageScore'];
-export type MediaProfileSubtitleLanguage = components['schemas']['MediaProfileSubtitleLanguage'];
-export type MediaProfileComponentTarget = components['schemas']['MediaProfileComponentTarget'];
-export type MediaProfileComponentType = components['schemas']['MediaProfileComponentType'];
-export type MediaProfileComponentSource = components['schemas']['MediaProfileComponentSource'];
-export type MediaProfileComponentFallback = components['schemas']['MediaProfileComponentFallback'];
+export type MediaProfileVideoTarget = components['schemas']['MediaProfileVideoTarget'];
+export type MediaProfileAudioTarget = components['schemas']['MediaProfileAudioTarget'];
+export type MediaProfileSubtitleTarget = components['schemas']['MediaProfileSubtitleTarget'];
+export type MediaProfileLossyTranscodePolicy =
+	components['schemas']['MediaProfileLossyTranscodePolicy'];
+export type MediaProfileSubtitleSource = components['schemas']['MediaProfileSubtitleSource'];
 export type MediaProfileCustomFormatScore = components['schemas']['MediaProfileCustomFormatScore'];
 export type FileNamingSettings = components['schemas']['FileNamingSettings'];
 export type FileNamingSettingsRequest = components['schemas']['FileNamingSettingsRequest'];

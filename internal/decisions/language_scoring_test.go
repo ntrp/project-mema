@@ -10,7 +10,7 @@ import (
 func TestSCNMedia002LanguageCatalogAddsAliasesToReleaseMatch(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
-		TargetLanguageScores: []storage.MediaProfileLanguageScore{
+		AudioTargets: []storage.MediaProfileAudioTarget{
 			{LanguageID: "japanese", Score: 100, Required: true},
 		},
 	}
@@ -45,7 +45,7 @@ func TestSCNMedia002LanguageCatalogAddsAliasesToReleaseMatch(t *testing.T) {
 func TestSCNMedia002RequiredLanguageRejectsMissingReleaseLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
-		TargetLanguageScores: []storage.MediaProfileLanguageScore{
+		AudioTargets: []storage.MediaProfileAudioTarget{
 			{LanguageID: "japanese", Score: 100, Required: true},
 		},
 	}
@@ -69,8 +69,8 @@ func TestSCNMedia002RequiredLanguageRejectsMissingReleaseLanguage(t *testing.T) 
 func TestSCNMedia002SubtitleLanguageScoreContributesToReleaseMatch(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
-		SubtitleLanguages: []storage.MediaProfileSubtitleLanguage{
-			{LanguageID: "english", Score: 25, Required: false, SubtitleType: "any"},
+		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
+			{LanguageID: "english", Score: 25, Required: false, Source: "any"},
 		},
 	}
 
@@ -96,8 +96,8 @@ func TestSCNMedia002SubtitleLanguageScoreContributesToReleaseMatch(t *testing.T)
 func TestSCNMedia002RequiredSubtitleLanguageRejectsMissingReleaseLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
-		SubtitleLanguages: []storage.MediaProfileSubtitleLanguage{
-			{LanguageID: "japanese", Score: 25, Required: true, SubtitleType: "any"},
+		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
+			{LanguageID: "japanese", Score: 25, Required: true, Source: "any"},
 		},
 	}
 
@@ -117,11 +117,11 @@ func TestSCNMedia002RequiredSubtitleLanguageRejectsMissingReleaseLanguage(t *tes
 	}
 }
 
-func TestSCNMedia002RemoveNonEnabledLanguagesRejectsExtraLanguage(t *testing.T) {
+func TestSCNMedia002RemoveUnwantedAudioRejectsExtraLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs:                    []string{"webdl-1080p"},
-		RemoveNonEnabledLanguages:     true,
-		TargetLanguageScores:          []storage.MediaProfileLanguageScore{{LanguageID: "english", Score: 10}},
+		RemoveUnwantedAudio:           true,
+		AudioTargets:                  []storage.MediaProfileAudioTarget{{LanguageID: "english", Score: 10}},
 		MinimumCustomFormatScore:      0,
 		PreferredProtocol:             "any",
 		SeriesPackPreference:          "auto",
@@ -144,10 +144,9 @@ func TestSCNMedia002RemoveNonEnabledLanguagesRejectsExtraLanguage(t *testing.T) 
 
 func TestSCNMedia002ProtocolPreferenceBreaksReleaseTie(t *testing.T) {
 	profile := storage.MediaProfile{
-		QualityIDs:           []string{"webdl-1080p"},
-		PreferredProtocol:    "usenet",
-		TargetLanguages:      []string{},
-		TargetLanguageScores: []storage.MediaProfileLanguageScore{},
+		QualityIDs:        []string{"webdl-1080p"},
+		PreferredProtocol: "usenet",
+		AudioTargets:      []storage.MediaProfileAudioTarget{},
 	}
 	decision, ok := NewEngine().ChooseReleaseWithProfile(
 		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},

@@ -34,7 +34,9 @@
 	}
 
 	function languageSummary(profile: MediaProfile) {
-		return (profile.targetLanguages ?? []).map(languageLabel).join(', ') || 'Any';
+		return (profile.audioTargets ?? [])
+			.map((target) => languageLabel(target.languageId))
+			.join(', ');
 	}
 
 	function scoreSummary(profile: MediaProfile) {

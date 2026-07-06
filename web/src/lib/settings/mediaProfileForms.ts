@@ -1,30 +1,23 @@
-import type {
-	MediaProfile,
-	MediaProfileComponentFallback,
-	MediaProfileComponentSource,
-	MediaProfileComponentType,
-	MediaProfileForm,
-	MediaProfileRequest
-} from './types';
+import type { MediaProfile, MediaProfileForm, MediaProfileRequest } from './types';
 
 export function emptyMediaProfileForm(): MediaProfileForm {
 	return {
 		name: '',
 		isDefault: false,
+		finalContainer: 'mkv',
 		qualityIds: [],
 		upgradesAllowed: true,
 		upgradeUntilQualityId: undefined,
 		minimumCustomFormatScore: 0,
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
-		removeNonEnabledLanguages: false,
-		removeNonEnabledSubtitleLanguages: false,
+		removeUnwantedAudio: false,
+		removeUnwantedSubtitles: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
-		targetLanguages: ['EN'],
-		targetLanguageScores: [{ languageId: 'EN', score: 0, required: false }],
-		subtitleLanguages: [{ languageId: 'EN', score: 0, required: false, subtitleType: 'embedded' }],
-		componentTargets: [],
+		videoTarget: defaultVideoTarget(),
+		audioTargets: [defaultAudioTarget()],
+		subtitleTargets: [],
 		customFormatScores: []
 	};
 }
@@ -34,38 +27,31 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		id: profile.id,
 		name: profile.name,
 		isDefault: profile.isDefault,
+		finalContainer: profile.finalContainer,
 		qualityIds: [...(profile.qualityIds ?? [])],
 		upgradesAllowed: profile.upgradesAllowed,
 		upgradeUntilQualityId: profile.upgradeUntilQualityId,
 		minimumCustomFormatScore: profile.minimumCustomFormatScore,
 		upgradeUntilCustomFormatScore: profile.upgradeUntilCustomFormatScore,
 		minimumCustomFormatScoreIncrement: profile.minimumCustomFormatScoreIncrement,
-		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
-		removeNonEnabledSubtitleLanguages: profile.removeNonEnabledSubtitleLanguages,
+		removeUnwantedAudio: profile.removeUnwantedAudio,
+		removeUnwantedSubtitles: profile.removeUnwantedSubtitles,
 		preferredProtocol: profile.preferredProtocol,
 		seriesPackPreference: profile.seriesPackPreference,
-		targetLanguages: [...(profile.targetLanguages ?? [])],
-		targetLanguageScores: languageScoresFromProfile(profile),
-		subtitleLanguages: (profile.subtitleLanguages ?? []).map((language) => ({ ...language })),
-		componentTargets: (profile.componentTargets ?? []).map((target) => ({ ...target })),
+		videoTarget: { ...defaultVideoTarget(), ...(profile.videoTarget ?? {}) },
+		audioTargets: (profile.audioTargets ?? []).map((target) => ({ ...target })),
+		subtitleTargets: (profile.subtitleTargets ?? []).map((target) => ({ ...target })),
 		customFormatScores: (profile.customFormatScores ?? []).map((score) => ({ ...score }))
 	};
 }
 
 export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileRequest {
-	const qualityIds = [...new Set(form.qualityIds.map((id) => id.trim()).filter(Boolean))];
-	const customFormatScores = form.customFormatScores
-		.filter((score) => score.customFormatId)
-		.map((score) => ({
-			customFormatId: score.customFormatId,
-			score: normalizedInteger(score.score)
-		}));
-	const targetLanguageScores = languageScoresFromForm(form);
-	const subtitleLanguages = subtitleLanguagesFromForm(form);
-	const componentTargets = componentTargetsFromForm(form);
+	const qualityIds = uniqueTrimmed(form.qualityIds);
+	const audioTargets = audioTargetsFromForm(form);
 	return {
 		name: form.name.trim(),
 		isDefault: form.isDefault,
+		finalContainer: form.finalContainer ?? 'mkv',
 		qualityIds,
 		upgradesAllowed: form.upgradesAllowed,
 		upgradeUntilQualityId:
@@ -78,115 +64,123 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 			0,
 			normalizedInteger(form.minimumCustomFormatScoreIncrement)
 		),
-		removeNonEnabledLanguages: form.removeNonEnabledLanguages,
-		removeNonEnabledSubtitleLanguages: form.removeNonEnabledSubtitleLanguages,
+		removeUnwantedAudio: form.removeUnwantedAudio,
+		removeUnwantedSubtitles: form.removeUnwantedSubtitles,
 		preferredProtocol: form.preferredProtocol ?? 'any',
 		seriesPackPreference: form.seriesPackPreference ?? 'auto',
-		targetLanguages: targetLanguageScores.map((score) => score.languageId),
-		targetLanguageScores,
-		subtitleLanguages,
-		componentTargets,
-		customFormatScores
+		videoTarget: videoTargetFromForm(form),
+		audioTargets,
+		subtitleTargets: subtitleTargetsFromForm(form),
+		customFormatScores: (form.customFormatScores ?? [])
+			.filter((score) => score.customFormatId)
+			.map((score) => ({
+				customFormatId: score.customFormatId,
+				score: normalizedInteger(score.score)
+			}))
 	};
 }
 
-function languageScoresFromProfile(profile: MediaProfile) {
-	if (profile.targetLanguageScores?.length) {
-		return profile.targetLanguageScores.map((score) => ({ ...score }));
-	}
-	return (profile.targetLanguages ?? []).map((languageId) => ({
-		languageId,
+export function defaultAudioTarget(): MediaProfileRequest['audioTargets'][number] {
+	return {
+		languageId: 'EN',
 		score: 0,
-		required: false
-	}));
+		required: true,
+		lossyTranscodePolicy: 'disabled'
+	};
 }
 
-function languageScoresFromForm(form: MediaProfileForm) {
-	const seen = new Set<string>();
-	const source = form.targetLanguageScores?.length
-		? form.targetLanguageScores
-		: form.targetLanguages.map((languageId) => ({ languageId, score: 0, required: false }));
-	const scores = [];
-	for (const value of source) {
-		const languageId = value.languageId.trim();
-		if (!languageId || seen.has(languageId)) {
-			continue;
-		}
-		seen.add(languageId);
-		scores.push({ languageId, score: normalizedInteger(value.score), required: value.required });
-	}
-	return scores;
+export function defaultSubtitleTarget(): MediaProfileRequest['subtitleTargets'][number] {
+	return {
+		languageId: 'EN',
+		score: 0,
+		required: true,
+		source: 'any',
+		formats: ['srt']
+	};
 }
 
-function subtitleLanguagesFromForm(form: MediaProfileForm) {
+function defaultVideoTarget(): MediaProfileRequest['videoTarget'] {
+	return {
+		codecRequired: false,
+		codecScore: 0,
+		hdrRequired: false,
+		hdrScore: 0,
+		pixelFormatRequired: false,
+		pixelFormatScore: 0
+	};
+}
+
+function videoTargetFromForm(form: MediaProfileForm): MediaProfileRequest['videoTarget'] {
+	const target = { ...defaultVideoTarget(), ...(form.videoTarget ?? {}) };
+	return {
+		...target,
+		codecs: uniqueTrimmed(target.codecs ?? []),
+		hdrFormats: uniqueTrimmed(target.hdrFormats ?? []),
+		pixelFormats: uniqueTrimmed(target.pixelFormats ?? []),
+		codecScore: normalizedInteger(target.codecScore),
+		hdrScore: normalizedInteger(target.hdrScore),
+		pixelFormatScore: normalizedInteger(target.pixelFormatScore)
+	};
+}
+
+function audioTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['audioTargets'] {
 	const seen = new Set<string>();
-	const languages = [];
-	for (const value of form.subtitleLanguages ?? []) {
+	const targets = [];
+	for (const value of form.audioTargets ?? []) {
 		const languageId = value.languageId.trim();
-		if (!languageId || seen.has(languageId)) {
-			continue;
-		}
+		if (!languageId || seen.has(languageId)) continue;
 		seen.add(languageId);
-		languages.push({
+		targets.push({
 			languageId,
 			score: normalizedInteger(value.score),
-			required: value.required,
-			subtitleType: value.subtitleType ?? 'any'
-		});
-	}
-	return languages;
-}
-
-function componentTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['componentTargets'] {
-	const targets = [];
-	for (const value of form.componentTargets ?? []) {
-		const componentType = componentTypeFrom(value.componentType);
-		const languageId = trimmedValue(value.languageId);
-		const codec = trimmedValue(value.codec);
-		const channels = componentType === 'audio' ? trimmedValue(value.channels) : undefined;
-		if (componentType === 'audio' && !languageId && !codec && !channels) continue;
-		if (componentType === 'subtitle' && !languageId && !codec) continue;
-		targets.push({
-			id: value.id,
-			componentType,
-			required: value.required,
-			languageId: componentType === 'video' ? undefined : languageId,
-			codec,
-			channels,
-			source: componentSourceFrom(value.source, componentType),
-			fallbackBehavior: componentFallbackFrom(value.fallbackBehavior)
+			required: true,
+			codecs: uniqueTrimmed(value.codecs ?? []),
+			channels: uniqueTrimmed(value.channels ?? []),
+			minimumBitrateKbps: positiveInteger(value.minimumBitrateKbps),
+			preferredBitrateKbps: positiveInteger(value.preferredBitrateKbps),
+			lossyTranscodePolicy: value.lossyTranscodePolicy ?? 'disabled'
 		});
 	}
 	return targets;
 }
 
-function componentTypeFrom(value: string | undefined): MediaProfileComponentType {
-	return value === 'audio' || value === 'subtitle' ? value : 'video';
+function subtitleTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['subtitleTargets'] {
+	const seen = new Set<string>();
+	const targets = [];
+	for (const value of form.subtitleTargets ?? []) {
+		const languageId = value.languageId.trim();
+		if (!languageId || seen.has(languageId)) continue;
+		seen.add(languageId);
+		targets.push({
+			languageId,
+			score: normalizedInteger(value.score),
+			required: true,
+			source: value.source ?? 'any',
+			formats: uniqueTrimmed(value.formats ?? [])
+		});
+	}
+	return targets;
 }
 
-function componentSourceFrom(
-	value: string | undefined,
-	componentType: MediaProfileComponentType
-): MediaProfileComponentSource {
-	if (value === 'existing') return 'existing';
-	if (componentType === 'subtitle') return 'subtitleProvider';
-	return 'release';
+function uniqueTrimmed(values: string[]) {
+	const seen = new Set<string>();
+	const result = [];
+	for (const value of values) {
+		const trimmed = value.trim();
+		const key = trimmed.toLowerCase();
+		if (!trimmed || seen.has(key)) continue;
+		seen.add(key);
+		result.push(trimmed);
+	}
+	return result;
 }
 
-function componentFallbackFrom(value: string | undefined): MediaProfileComponentFallback {
-	if (value === 'preferExisting' || value === 'allowMissing') return value;
-	return 'strict';
-}
-
-function trimmedValue(value: string | undefined) {
-	const trimmed = value?.trim();
-	return trimmed ? trimmed : undefined;
+function positiveInteger(value: number | undefined) {
+	const parsed = normalizedInteger(value);
+	return parsed > 0 ? parsed : undefined;
 }
 
 function normalizedInteger(value: number | string | undefined) {
 	const parsed = Number(value ?? 0);
-	if (!Number.isFinite(parsed)) {
-		return 0;
-	}
-	return Math.trunc(parsed);
+	return Number.isFinite(parsed) ? Math.trunc(parsed) : 0;
 }

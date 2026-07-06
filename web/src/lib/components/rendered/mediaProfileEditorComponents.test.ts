@@ -5,7 +5,7 @@ import MediaProfileCustomFormatScores from '$lib/components/settings/profiles/Me
 import MediaProfileQualitySelector from '$lib/components/settings/profiles/MediaProfileQualitySelector.svelte';
 import MediaProfileRules from '$lib/components/settings/profiles/MediaProfileRules.svelte';
 import { emptyMediaProfileForm } from '$lib/settings/forms';
-import type { CustomFormat, Language, QualitySizeSetting } from '$lib/settings/types';
+import type { CustomFormat, QualitySizeSetting } from '$lib/settings/types';
 
 describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 	it('renders grouped quality choices and loading errors', () => {
@@ -44,18 +44,29 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 			upgradeUntilQualityId: 'webdl-1080p',
 			preferredProtocol: 'usenet' as const,
 			seriesPackPreference: 'preferPacks' as const,
-			removeNonEnabledLanguages: true,
-			removeNonEnabledSubtitleLanguages: true,
-			targetLanguageScores: [{ languageId: 'japanese', score: 100, required: true }],
-			subtitleLanguages: [
-				{ languageId: 'english', score: 25, required: false, subtitleType: 'any' as const }
+			removeUnwantedAudio: true,
+			removeUnwantedSubtitles: true,
+			audioTargets: [
+				{
+					languageId: 'japanese',
+					score: 100,
+					required: true,
+					lossyTranscodePolicy: 'disabled' as const
+				}
+			],
+			subtitleTargets: [
+				{
+					languageId: 'english',
+					score: 25,
+					required: false,
+					source: 'any' as const
+				}
 			]
 		};
 		const { body } = render(MediaProfileRules, {
 			props: {
 				form,
 				qualities: qualities(),
-				languages: [{ code: 'japanese', displayName: 'Japanese', aliases: ['JPN'] }] as Language[],
 				onChange: vi.fn()
 			}
 		});
@@ -64,12 +75,6 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 		expect(body).toContain('WEB-DL 1080p');
 		expect(body).toContain('Prefer Usenet');
 		expect(body).toContain('Prefer season packs');
-		expect(body).toContain('Target languages');
-		expect(body).toContain('Subtitle languages');
-		expect(body).toContain('Japanese');
-		expect(body).toContain('Remove audio tracks that are not wanted');
-		expect(body).toContain('Remove subtitle tracks that are not wanted');
-		expect(body).toContain('25');
 	});
 
 	it('renders custom format scores and empty state', () => {

@@ -10,6 +10,7 @@
 - Always use a tooltip component for showing tooltips, never use a browser tooltip
 - This project is not released yet; do not create new database migrations. Apply database schema changes directly to `internal/storage/migrations/00001_initial_schema.sql`, then reset the development database.
 - never touch the dev.local.sql seed unless explicitly asked to update it
+- keep coverage more than 60% on every file, only data objects and non business logic code can be excluded
 
 ## Dev workflow
 

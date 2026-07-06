@@ -13,12 +13,12 @@ import (
 var subtitleEpisodePattern = regexp.MustCompile(`(?i)s(\d{1,2})e(\d{1,3})`)
 
 func subtitleSearchRequestsForItem(item storage.MediaItem) []SubtitleSearchArgs {
-	if !item.Monitored || len(item.FilePaths) == 0 || len(item.SubtitleLanguages) == 0 {
+	if !item.Monitored || len(item.FilePaths) == 0 || len(item.SubtitleTargets) == 0 {
 		return nil
 	}
 	items := []SubtitleSearchArgs{}
-	for _, target := range item.SubtitleLanguages {
-		if target.SubtitleType == "embedded" || !target.Required {
+	for _, target := range item.SubtitleTargets {
+		if target.Source == "embedded" || !target.Required {
 			continue
 		}
 		for _, path := range item.FilePaths {
@@ -66,12 +66,12 @@ func subtitleSearchRequest(
 }
 
 func firstMissingSubtitleLanguage(item storage.MediaItem, filePath string) string {
-	targets := append([]storage.MediaProfileSubtitleLanguage(nil), item.SubtitleLanguages...)
+	targets := append([]storage.MediaProfileSubtitleTarget(nil), item.SubtitleTargets...)
 	sort.SliceStable(targets, func(i, j int) bool {
 		return targets[i].LanguageID < targets[j].LanguageID
 	})
 	for _, target := range targets {
-		if target.SubtitleType == "embedded" || !target.Required {
+		if target.Source == "embedded" || !target.Required {
 			continue
 		}
 		if !externalSubtitleExists(item, target.LanguageID, filePath) {

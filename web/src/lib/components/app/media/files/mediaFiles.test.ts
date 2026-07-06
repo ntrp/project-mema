@@ -35,11 +35,10 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 				qualityIds: ['webdl-720p', 'webdl-1080p', 'bluray-1080p'],
 				upgradesAllowed: true,
 				upgradeUntilQualityId: 'bluray-1080p',
-				targetLanguages: ['english'],
-				targetLanguageScores: [{ languageId: 'english', score: 0, required: true }],
-				subtitleLanguages: [{ languageId: 'english' }],
-				removeNonEnabledLanguages: true,
-				removeNonEnabledSubtitleLanguages: true
+				audioTargets: [{ languageId: 'english', required: true }],
+				subtitleTargets: [{ languageId: 'english' }],
+				removeUnwantedAudio: true,
+				removeUnwantedSubtitles: true
 			}
 		]);
 
@@ -61,8 +60,8 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 			expectedLanguages: ['english'],
 			expectedRequiredLanguages: ['english'],
 			expectedSubtitleLanguages: ['english'],
-			removeNonEnabledLanguages: true,
-			removeNonEnabledSubtitleLanguages: true
+			removeUnwantedAudio: true,
+			removeUnwantedSubtitles: true
 		});
 		expect(row.tracks).toHaveLength(1);
 		expect(row.chapters).toHaveLength(1);

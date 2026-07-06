@@ -8,69 +8,37 @@ import {
 import type { MediaProfile, MediaProfileForm } from './types';
 
 describe('media profile forms (SCN-SETTINGS-012)', () => {
-	it('starts with an English target language score', () => {
+	it('starts with required video, audio, and container targets', () => {
 		expect(emptyMediaProfileForm()).toMatchObject({
 			name: '',
 			isDefault: false,
+			finalContainer: 'mkv',
 			qualityIds: [],
-			targetLanguages: ['EN'],
-			targetLanguageScores: [{ languageId: 'EN', score: 0, required: false }],
-			removeNonEnabledSubtitleLanguages: false,
-			subtitleLanguages: [
-				{ languageId: 'EN', score: 0, required: false, subtitleType: 'embedded' }
+			audioTargets: [
+				{
+					languageId: 'EN',
+					score: 0,
+					required: true,
+					lossyTranscodePolicy: 'disabled'
+				}
 			],
-			componentTargets: []
+			subtitleTargets: []
 		});
 	});
 
 	it('copies arrays from an existing profile', () => {
-		const profile = {
-			id: 'profile-1',
-			name: 'Main',
-			isDefault: true,
-			qualityIds: ['webdl-1080p'],
-			upgradesAllowed: true,
-			upgradeUntilQualityId: 'webdl-1080p',
-			minimumCustomFormatScore: 0,
-			upgradeUntilCustomFormatScore: 100,
-			minimumCustomFormatScoreIncrement: 1,
-			removeNonEnabledLanguages: false,
-			removeNonEnabledSubtitleLanguages: true,
-			preferredProtocol: 'any',
-			seriesPackPreference: 'auto',
-			targetLanguages: ['english'],
-			targetLanguageScores: [{ languageId: 'english', score: 10, required: true }],
-			subtitleLanguages: [
-				{ languageId: 'english', score: 25, required: true, subtitleType: 'embedded' }
-			],
-			componentTargets: [
-				{
-					id: '00000000-0000-0000-0000-000000000001',
-					componentType: 'audio',
-					required: true,
-					languageId: 'english',
-					codec: 'aac',
-					channels: '5.1',
-					source: 'release',
-					fallbackBehavior: 'preferExisting'
-				}
-			],
-			customFormatScores: [{ customFormatId: 'cf-1', score: 50 }]
-		} as MediaProfile;
+		const profile = mediaProfile();
 
 		const form = mediaProfileFormFromProfile(profile);
 		form.qualityIds.push('bluray-2160p');
-		form.targetLanguageScores[0].score = 20;
-		form.subtitleLanguages[0].score = 30;
-		form.subtitleLanguages[0].subtitleType = 'external';
+		form.audioTargets[0].score = 20;
+		form.subtitleTargets[0].score = 30;
 
 		expect(profile.qualityIds).toEqual(['webdl-1080p']);
-		expect(profile.targetLanguageScores?.[0].score).toBe(10);
-		expect(profile.subtitleLanguages?.[0].score).toBe(25);
-		expect(profile.subtitleLanguages?.[0].subtitleType).toBe('embedded');
-		expect(profile.componentTargets?.[0].codec).toBe('aac');
+		expect(profile.audioTargets?.[0].score).toBe(10);
+		expect(profile.subtitleTargets?.[0].score).toBe(25);
 		expect(form.isDefault).toBe(true);
-		expect(form.removeNonEnabledSubtitleLanguages).toBe(true);
+		expect(form.removeUnwantedSubtitles).toBe(true);
 	});
 
 	it('normalizes profile request payloads', () => {
@@ -78,6 +46,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			...emptyMediaProfileForm(),
 			name: '  Main  ',
 			isDefault: true,
+			finalContainer: 'mp4',
 			qualityIds: [' webdl-1080p ', 'webdl-1080p', 'bluray-2160p'],
 			upgradeUntilQualityId: 'raw-hd',
 			minimumCustomFormatScore: '10',
@@ -85,31 +54,41 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			minimumCustomFormatScoreIncrement: '-5',
 			preferredProtocol: undefined,
 			seriesPackPreference: undefined,
-			targetLanguageScores: [
-				{ languageId: 'english', score: '100', required: true },
-				{ languageId: 'english', score: 50, required: false },
-				{ languageId: ' german ', score: Number.NaN, required: false }
-			],
-			subtitleLanguages: [
-				{ languageId: 'english', score: '25', required: true, subtitleType: 'embedded' },
-				{ languageId: 'english', score: 10, required: false, subtitleType: 'external' }
-			],
-			componentTargets: [
+			videoTarget: {
+				codecs: [' h265 ', 'h265', 'av1'],
+				codecScore: '15',
+				hdrFormats: [' HDR10 ']
+			},
+			audioTargets: [
 				{
-					componentType: 'audio',
+					languageId: 'english',
+					score: '100',
 					required: true,
-					languageId: ' english ',
-					codec: ' AAC ',
-					channels: '5.1',
-					source: 'existing',
-					fallbackBehavior: 'preferExisting'
+					codecs: [' AAC ', 'aac', 'dts'],
+					channels: ['5.1', '7.1'],
+					minimumBitrateKbps: '384',
+					lossyTranscodePolicy: 'disabled'
 				},
 				{
-					componentType: 'subtitle',
+					languageId: 'english',
+					score: 50,
 					required: false,
-					languageId: ' german ',
-					source: 'release',
-					fallbackBehavior: 'allowMissing'
+					lossyTranscodePolicy: 'disabled'
+				}
+			],
+			subtitleTargets: [
+				{
+					languageId: 'english',
+					score: '25',
+					required: true,
+					source: 'external',
+					formats: [' srt ', 'srt', 'ass']
+				},
+				{
+					languageId: 'english',
+					score: 10,
+					required: false,
+					source: 'embedded'
 				}
 			],
 			customFormatScores: [
@@ -121,6 +100,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 		expect(normalizeMediaProfileForm(form)).toMatchObject({
 			name: 'Main',
 			isDefault: true,
+			finalContainer: 'mp4',
 			qualityIds: ['webdl-1080p', 'bluray-2160p'],
 			upgradeUntilQualityId: undefined,
 			minimumCustomFormatScore: 10,
@@ -128,34 +108,66 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			minimumCustomFormatScoreIncrement: 0,
 			preferredProtocol: 'any',
 			seriesPackPreference: 'auto',
-			removeNonEnabledSubtitleLanguages: false,
-			targetLanguages: ['english', 'german'],
-			targetLanguageScores: [
-				{ languageId: 'english', score: 100, required: true },
-				{ languageId: 'german', score: 0, required: false }
-			],
-			subtitleLanguages: [
-				{ languageId: 'english', score: 25, required: true, subtitleType: 'embedded' }
-			],
-			componentTargets: [
+			videoTarget: { codecs: ['h265', 'av1'], codecScore: 15, hdrFormats: ['HDR10'] },
+			audioTargets: [
 				{
-					componentType: 'audio',
-					required: true,
 					languageId: 'english',
-					codec: 'AAC',
-					channels: '5.1',
-					source: 'existing',
-					fallbackBehavior: 'preferExisting'
-				},
+					score: 100,
+					required: true,
+					codecs: ['AAC', 'dts'],
+					channels: ['5.1', '7.1'],
+					minimumBitrateKbps: 384
+				}
+			],
+			subtitleTargets: [
 				{
-					componentType: 'subtitle',
-					required: false,
-					languageId: 'german',
-					source: 'subtitleProvider',
-					fallbackBehavior: 'allowMissing'
+					languageId: 'english',
+					score: 25,
+					required: true,
+					source: 'external',
+					formats: ['srt', 'ass']
 				}
 			],
 			customFormatScores: [{ customFormatId: 'cf-1', score: 25 }]
 		});
 	});
 });
+
+function mediaProfile(): MediaProfile {
+	return {
+		id: 'profile-1',
+		name: 'Main',
+		isDefault: true,
+		finalContainer: 'mkv',
+		qualityIds: ['webdl-1080p'],
+		upgradesAllowed: true,
+		upgradeUntilQualityId: 'webdl-1080p',
+		minimumCustomFormatScore: 0,
+		upgradeUntilCustomFormatScore: 100,
+		minimumCustomFormatScoreIncrement: 1,
+		removeUnwantedAudio: false,
+		removeUnwantedSubtitles: true,
+		preferredProtocol: 'any',
+		seriesPackPreference: 'auto',
+		videoTarget: {},
+		audioTargets: [
+			{
+				languageId: 'english',
+				score: 10,
+				required: true,
+				lossyTranscodePolicy: 'disabled'
+			}
+		],
+		subtitleTargets: [
+			{
+				languageId: 'english',
+				score: 25,
+				required: true,
+				source: 'embedded'
+			}
+		],
+		customFormatScores: [{ customFormatId: 'cf-1', score: 50 }],
+		createdAt: '2026-07-03T00:00:00Z',
+		updatedAt: '2026-07-03T00:00:00Z'
+	};
+}

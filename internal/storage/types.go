@@ -30,7 +30,7 @@ type MediaItem struct {
 	MediaFolderPath     *string
 	FilePaths           []string
 	MetadataFilePaths   []string
-	SubtitleLanguages   []MediaProfileSubtitleLanguage
+	SubtitleTargets     []MediaProfileSubtitleTarget
 	ExternalSubtitles   []MediaItemSubtitle
 	ComponentSources    []MediaComponentSource
 	AssemblyRuns        []MediaComponentAssemblyRun

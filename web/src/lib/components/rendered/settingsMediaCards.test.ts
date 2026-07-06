@@ -142,10 +142,32 @@ function mediaProfile(): MediaProfile {
 		qualityIds: ['q-1080p', 'q-2160p'],
 		upgradesAllowed: true,
 		upgradeUntilQualityId: 'q-2160p',
-		targetLanguages: ['eng', 'deu'],
+		finalContainer: 'mkv',
+		removeUnwantedAudio: false,
+		removeUnwantedSubtitles: false,
+		preferredProtocol: 'any',
+		seriesPackPreference: 'auto',
+		videoTarget: {},
+		audioTargets: [
+			{
+				languageId: 'eng',
+				score: 0,
+				required: true,
+				lossyTranscodePolicy: 'disabled'
+			},
+			{
+				languageId: 'deu',
+				score: 0,
+				required: false,
+				lossyTranscodePolicy: 'disabled'
+			}
+		],
+		subtitleTargets: [],
 		minimumCustomFormatScore: 10,
 		upgradeUntilCustomFormatScore: 50,
+		minimumCustomFormatScoreIncrement: 1,
 		customFormatScores: [{ customFormatId: 'format-1', score: 10 }],
+		createdAt: '2026-07-03T01:02:03Z',
 		updatedAt: '2026-07-03T01:02:03Z'
 	} as MediaProfile;
 }

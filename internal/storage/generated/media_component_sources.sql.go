@@ -20,6 +20,9 @@ insert into app.media_component_sources (
     source_file_path,
     retained_path,
     release_title,
+    release_group,
+    release_name,
+    release_id,
     source_metadata,
     stream_inventory,
     checksum,
@@ -35,9 +38,12 @@ values (
     $7,
     $8,
     $9,
-    $10
+    $10,
+    $11,
+    $12,
+    $13
 )
-returning id, media_item_id, source_role, source_file_path, retained_path, release_title, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
+returning id, media_item_id, source_role, source_file_path, retained_path, release_title, release_group, release_name, release_id, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
 `
 
 type CreateMediaComponentSourceParams struct {
@@ -47,6 +53,9 @@ type CreateMediaComponentSourceParams struct {
 	SourceFilePath  string
 	RetainedPath    string
 	ReleaseTitle    pgtype.Text
+	ReleaseGroup    pgtype.Text
+	ReleaseName     pgtype.Text
+	ReleaseID       pgtype.Text
 	SourceMetadata  pgtype.Text
 	StreamInventory string
 	Checksum        pgtype.Text
@@ -61,6 +70,9 @@ func (q *Queries) CreateMediaComponentSource(ctx context.Context, arg CreateMedi
 		arg.SourceFilePath,
 		arg.RetainedPath,
 		arg.ReleaseTitle,
+		arg.ReleaseGroup,
+		arg.ReleaseName,
+		arg.ReleaseID,
 		arg.SourceMetadata,
 		arg.StreamInventory,
 		arg.Checksum,
@@ -74,6 +86,9 @@ func (q *Queries) CreateMediaComponentSource(ctx context.Context, arg CreateMedi
 		&i.SourceFilePath,
 		&i.RetainedPath,
 		&i.ReleaseTitle,
+		&i.ReleaseGroup,
+		&i.ReleaseName,
+		&i.ReleaseID,
 		&i.SourceMetadata,
 		&i.StreamInventory,
 		&i.Checksum,
@@ -88,7 +103,7 @@ func (q *Queries) CreateMediaComponentSource(ctx context.Context, arg CreateMedi
 }
 
 const getMediaComponentSource = `-- name: GetMediaComponentSource :one
-select id, media_item_id, source_role, source_file_path, retained_path, release_title, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
+select id, media_item_id, source_role, source_file_path, retained_path, release_title, release_group, release_name, release_id, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
 from app.media_component_sources
 where media_item_id = $1 and id = $2
 `
@@ -108,6 +123,9 @@ func (q *Queries) GetMediaComponentSource(ctx context.Context, arg GetMediaCompo
 		&i.SourceFilePath,
 		&i.RetainedPath,
 		&i.ReleaseTitle,
+		&i.ReleaseGroup,
+		&i.ReleaseName,
+		&i.ReleaseID,
 		&i.SourceMetadata,
 		&i.StreamInventory,
 		&i.Checksum,
@@ -122,7 +140,7 @@ func (q *Queries) GetMediaComponentSource(ctx context.Context, arg GetMediaCompo
 }
 
 const listMediaComponentSources = `-- name: ListMediaComponentSources :many
-select id, media_item_id, source_role, source_file_path, retained_path, release_title, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
+select id, media_item_id, source_role, source_file_path, retained_path, release_title, release_group, release_name, release_id, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
 from app.media_component_sources
 where media_item_id = $1
 order by retained_at desc, source_role
@@ -144,6 +162,9 @@ func (q *Queries) ListMediaComponentSources(ctx context.Context, mediaItemID uui
 			&i.SourceFilePath,
 			&i.RetainedPath,
 			&i.ReleaseTitle,
+			&i.ReleaseGroup,
+			&i.ReleaseName,
+			&i.ReleaseID,
 			&i.SourceMetadata,
 			&i.StreamInventory,
 			&i.Checksum,
@@ -170,7 +191,7 @@ set retention_state = 'released',
     released_at = now(),
     updated_at = now()
 where media_item_id = $1 and id = $2
-returning id, media_item_id, source_role, source_file_path, retained_path, release_title, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
+returning id, media_item_id, source_role, source_file_path, retained_path, release_title, release_group, release_name, release_id, source_metadata, stream_inventory, checksum, size_bytes, retention_state, retained_at, released_at, created_at, updated_at
 `
 
 type ReleaseMediaComponentSourceParams struct {
@@ -188,6 +209,9 @@ func (q *Queries) ReleaseMediaComponentSource(ctx context.Context, arg ReleaseMe
 		&i.SourceFilePath,
 		&i.RetainedPath,
 		&i.ReleaseTitle,
+		&i.ReleaseGroup,
+		&i.ReleaseName,
+		&i.ReleaseID,
 		&i.SourceMetadata,
 		&i.StreamInventory,
 		&i.Checksum,

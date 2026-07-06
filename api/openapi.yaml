@@ -5496,6 +5496,12 @@ components:
           minLength: 1
         releaseTitle:
           type: string
+        releaseGroup:
+          type: string
+        releaseName:
+          type: string
+        releaseId:
+          type: string
         sourceMetadata:
           type: string
         streamInventory:
@@ -5530,6 +5536,12 @@ components:
         retainedPath:
           type: string
         releaseTitle:
+          type: string
+        releaseGroup:
+          type: string
+        releaseName:
+          type: string
+        releaseId:
           type: string
         sourceMetadata:
           type: string
@@ -6523,19 +6535,19 @@ components:
       required:
         - name
         - isDefault
+        - finalContainer
         - qualityIds
         - upgradesAllowed
         - minimumCustomFormatScore
         - upgradeUntilCustomFormatScore
         - minimumCustomFormatScoreIncrement
-        - removeNonEnabledLanguages
-        - removeNonEnabledSubtitleLanguages
+        - removeUnwantedAudio
+        - removeUnwantedSubtitles
         - preferredProtocol
         - seriesPackPreference
-        - targetLanguages
-        - targetLanguageScores
-        - subtitleLanguages
-        - componentTargets
+        - videoTarget
+        - audioTargets
+        - subtitleTargets
         - customFormatScores
       properties:
         name:
@@ -6544,6 +6556,11 @@ components:
           maxLength: 200
         isDefault:
           type: boolean
+        finalContainer:
+          type: string
+          enum:
+            - mkv
+            - mp4
         qualityIds:
           type: array
           items:
@@ -6567,9 +6584,9 @@ components:
           type: integer
           format: int32
           minimum: 0
-        removeNonEnabledLanguages:
+        removeUnwantedAudio:
           type: boolean
-        removeNonEnabledSubtitleLanguages:
+        removeUnwantedSubtitles:
           type: boolean
         preferredProtocol:
           type: string
@@ -6583,131 +6600,144 @@ components:
             - auto
             - preferPacks
             - preferEpisodes
-        targetLanguages:
+        videoTarget:
+          $ref: "#/components/schemas/MediaProfileVideoTarget"
+        audioTargets:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/MediaProfileAudioTarget"
+        subtitleTargets:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaProfileSubtitleTarget"
+        customFormatScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaProfileCustomFormatScore"
+    MediaProfileVideoTarget:
+      type: object
+      additionalProperties: false
+      properties:
+        codecs:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+        codecRequired:
+          type: boolean
+        codecScore:
+          type: integer
+          format: int32
+        hdrFormats:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 50
+        hdrRequired:
+          type: boolean
+        hdrScore:
+          type: integer
+          format: int32
+        pixelFormats:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+        pixelFormatRequired:
+          type: boolean
+        pixelFormatScore:
+          type: integer
+          format: int32
+    MediaProfileLossyTranscodePolicy:
+      type: string
+      enum:
+        - disabled
+        - losslessToLossy
+        - lossyToLossy
+      x-enum-varnames:
+        - MediaProfileLossyTranscodePolicyDisabled
+        - MediaProfileLossyTranscodePolicyLosslessToLossy
+        - MediaProfileLossyTranscodePolicyLossyToLossy
+    MediaProfileSubtitleSource:
+      type: string
+      enum:
+        - any
+        - embedded
+        - external
+      x-enum-varnames:
+        - MediaProfileSubtitleSourceAny
+        - MediaProfileSubtitleSourceEmbedded
+        - MediaProfileSubtitleSourceExternal
+    MediaProfileAudioTarget:
+      type: object
+      additionalProperties: false
+      required:
+        - languageId
+        - score
+        - required
+        - lossyTranscodePolicy
+      properties:
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 40
+        score:
+          type: integer
+          format: int32
+        required:
+          type: boolean
+        codecs:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+        channels:
           type: array
           items:
             type: string
             minLength: 1
             maxLength: 40
-        targetLanguageScores:
-          type: array
-          items:
-            $ref: "#/components/schemas/MediaProfileLanguageScore"
-        subtitleLanguages:
-          type: array
-          items:
-            $ref: "#/components/schemas/MediaProfileSubtitleLanguage"
-        componentTargets:
-          type: array
-          items:
-            $ref: "#/components/schemas/MediaProfileComponentTarget"
-        customFormatScores:
-          type: array
-          items:
-            $ref: "#/components/schemas/MediaProfileCustomFormatScore"
-    MediaProfileComponentTarget:
+        minimumBitrateKbps:
+          type: integer
+          format: int32
+          minimum: 1
+        preferredBitrateKbps:
+          type: integer
+          format: int32
+          minimum: 1
+        lossyTranscodePolicy:
+          $ref: "#/components/schemas/MediaProfileLossyTranscodePolicy"
+    MediaProfileSubtitleTarget:
       type: object
       additionalProperties: false
       required:
-        - componentType
+        - languageId
+        - score
         - required
         - source
-        - fallbackBehavior
       properties:
-        id:
-          type: string
-          format: uuid
-        componentType:
-          $ref: "#/components/schemas/MediaProfileComponentType"
-        required:
-          type: boolean
         languageId:
           type: string
           minLength: 1
-          maxLength: 50
-        codec:
-          type: string
-          minLength: 1
-          maxLength: 80
-        channels:
-          type: string
-          minLength: 1
           maxLength: 40
+        score:
+          type: integer
+          format: int32
+        required:
+          type: boolean
         source:
-          $ref: "#/components/schemas/MediaProfileComponentSource"
-        fallbackBehavior:
-          $ref: "#/components/schemas/MediaProfileComponentFallback"
-    MediaProfileComponentType:
-      type: string
-      enum:
-        - video
-        - audio
-        - subtitle
-      x-enum-varnames:
-        - MediaProfileComponentTypeVideo
-        - MediaProfileComponentTypeAudio
-        - MediaProfileComponentTypeSubtitle
-    MediaProfileComponentSource:
-      type: string
-      enum:
-        - release
-        - subtitleProvider
-        - existing
-      x-enum-varnames:
-        - MediaProfileComponentSourceRelease
-        - MediaProfileComponentSourceSubtitleProvider
-        - MediaProfileComponentSourceExisting
-    MediaProfileComponentFallback:
-      type: string
-      enum:
-        - strict
-        - preferExisting
-        - allowMissing
-      x-enum-varnames:
-        - MediaProfileComponentFallbackStrict
-        - MediaProfileComponentFallbackPreferExisting
-        - MediaProfileComponentFallbackAllowMissing
-    MediaProfileLanguageScore:
-      type: object
-      additionalProperties: false
-      required:
-        - languageId
-        - score
-        - required
-      properties:
-        languageId:
-          type: string
-          minLength: 1
-          maxLength: 40
-        score:
-          type: integer
-          format: int32
-        required:
-          type: boolean
-    MediaProfileSubtitleLanguage:
-      type: object
-      additionalProperties: false
-      required:
-        - languageId
-        - score
-        - required
-        - subtitleType
-      properties:
-        languageId:
-          type: string
-          minLength: 1
-          maxLength: 40
-        score:
-          type: integer
-          format: int32
-        required:
-          type: boolean
-        subtitleType:
-          type: string
-          enum:
-            - any
-            - embedded
-            - external
+          $ref: "#/components/schemas/MediaProfileSubtitleSource"
+        formats:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 40
     MediaProfileCustomFormatScore:
       type: object
       additionalProperties: false

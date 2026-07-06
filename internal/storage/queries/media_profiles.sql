@@ -2,13 +2,14 @@
 select id,
     name,
     is_default,
+    final_container,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
-    remove_non_enabled_subtitle_languages,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -24,13 +25,14 @@ insert into app.media_profiles (
     id,
     name,
     is_default,
+    final_container,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
-    remove_non_enabled_subtitle_languages,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference
 )
@@ -38,13 +40,14 @@ values (
     sqlc.arg(id),
     sqlc.arg(name),
     sqlc.arg(is_default),
+    sqlc.arg(final_container),
     sqlc.arg(upgrades_allowed),
     sqlc.narg(upgrade_until_quality_id),
     sqlc.arg(minimum_custom_format_score),
     sqlc.arg(upgrade_until_custom_format_score),
     sqlc.arg(minimum_custom_format_score_increment),
-    sqlc.arg(remove_non_enabled_languages),
-    sqlc.arg(remove_non_enabled_subtitle_languages),
+    sqlc.arg(remove_unwanted_audio),
+    sqlc.arg(remove_unwanted_subtitles),
     sqlc.arg(preferred_protocol),
     sqlc.arg(series_pack_preference)
 );
@@ -53,13 +56,14 @@ values (
 update app.media_profiles
 set name = sqlc.arg(name),
     is_default = sqlc.arg(is_default),
+    final_container = sqlc.arg(final_container),
     upgrades_allowed = sqlc.arg(upgrades_allowed),
     upgrade_until_quality_id = sqlc.narg(upgrade_until_quality_id),
     minimum_custom_format_score = sqlc.arg(minimum_custom_format_score),
     upgrade_until_custom_format_score = sqlc.arg(upgrade_until_custom_format_score),
     minimum_custom_format_score_increment = sqlc.arg(minimum_custom_format_score_increment),
-    remove_non_enabled_languages = sqlc.arg(remove_non_enabled_languages),
-    remove_non_enabled_subtitle_languages = sqlc.arg(remove_non_enabled_subtitle_languages),
+    remove_unwanted_audio = sqlc.arg(remove_unwanted_audio),
+    remove_unwanted_subtitles = sqlc.arg(remove_unwanted_subtitles),
     preferred_protocol = sqlc.arg(preferred_protocol),
     series_pack_preference = sqlc.arg(series_pack_preference),
     updated_at = now()
@@ -73,13 +77,14 @@ where id = $1;
 select id,
     name,
     is_default,
+    final_container,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
-    remove_non_enabled_subtitle_languages,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -99,31 +104,42 @@ from app.media_profile_qualities
 where profile_id = $1
 order by sort_order, quality_id;
 
--- name: ListMediaProfileLanguages :many
-select language_id, score, required
-from app.media_profile_languages
+-- name: GetMediaProfileVideoTarget :one
+select codecs,
+    codec_required,
+    codec_score,
+    hdr_formats,
+    hdr_required,
+    hdr_score,
+    pixel_formats,
+    pixel_format_required,
+    pixel_format_score
+from app.media_profile_video_targets
 where profile_id = $1
-order by language_id;
+limit 1;
 
--- name: ListMediaProfileSubtitleLanguages :many
-select language_id, score, required, subtitle_type
-from app.media_profile_subtitle_languages
-where profile_id = $1
-order by language_id;
-
--- name: ListMediaProfileComponentTargets :many
-select id,
-    component_type,
+-- name: ListMediaProfileAudioTargets :many
+select language_id,
+    score,
     required,
-    language_id,
-    codec,
+    codecs,
     channels,
-    source,
-    fallback_behavior,
-    sort_order
-from app.media_profile_component_targets
+    minimum_bitrate_kbps,
+    preferred_bitrate_kbps,
+    lossy_transcode_policy
+from app.media_profile_audio_targets
 where profile_id = $1
-order by sort_order, component_type, language_id, codec, channels;
+order by sort_order, language_id;
+
+-- name: ListMediaProfileSubtitleTargets :many
+select language_id,
+    score,
+    required,
+    source,
+    formats
+from app.media_profile_subtitle_targets
+where profile_id = $1
+order by sort_order, language_id;
 
 -- name: ListMediaProfileCustomFormats :many
 select pcf.custom_format_id, pcf.score
@@ -140,49 +156,93 @@ where profile_id = $1;
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)
 values (sqlc.arg(profile_id), sqlc.arg(quality_id), sqlc.arg(sort_order));
 
--- name: ClearMediaProfileLanguages :exec
-delete from app.media_profile_languages
-where profile_id = $1;
-
--- name: AddMediaProfileLanguage :exec
-insert into app.media_profile_languages (profile_id, language_id, score, required)
-values (sqlc.arg(profile_id), sqlc.arg(language_id), sqlc.arg(score), sqlc.arg(required));
-
--- name: ClearMediaProfileSubtitleLanguages :exec
-delete from app.media_profile_subtitle_languages
-where profile_id = $1;
-
--- name: AddMediaProfileSubtitleLanguage :exec
-insert into app.media_profile_subtitle_languages (profile_id, language_id, score, required, subtitle_type)
-values (sqlc.arg(profile_id), sqlc.arg(language_id), sqlc.arg(score), sqlc.arg(required), sqlc.arg(subtitle_type));
-
--- name: ClearMediaProfileComponentTargets :exec
-delete from app.media_profile_component_targets
-where profile_id = $1;
-
--- name: AddMediaProfileComponentTarget :exec
-insert into app.media_profile_component_targets (
-    id,
+-- name: UpsertMediaProfileVideoTarget :exec
+insert into app.media_profile_video_targets (
     profile_id,
-    component_type,
-    required,
+    codecs,
+    codec_required,
+    codec_score,
+    hdr_formats,
+    hdr_required,
+    hdr_score,
+    pixel_formats,
+    pixel_format_required,
+    pixel_format_score
+)
+values (
+    sqlc.arg(profile_id),
+    sqlc.arg(codecs),
+    sqlc.arg(codec_required),
+    sqlc.arg(codec_score),
+    sqlc.arg(hdr_formats),
+    sqlc.arg(hdr_required),
+    sqlc.arg(hdr_score),
+    sqlc.arg(pixel_formats),
+    sqlc.arg(pixel_format_required),
+    sqlc.arg(pixel_format_score)
+)
+on conflict (profile_id) do update
+set codecs = excluded.codecs,
+    codec_required = excluded.codec_required,
+    codec_score = excluded.codec_score,
+    hdr_formats = excluded.hdr_formats,
+    hdr_required = excluded.hdr_required,
+    hdr_score = excluded.hdr_score,
+    pixel_formats = excluded.pixel_formats,
+    pixel_format_required = excluded.pixel_format_required,
+    pixel_format_score = excluded.pixel_format_score;
+
+-- name: ClearMediaProfileAudioTargets :exec
+delete from app.media_profile_audio_targets
+where profile_id = $1;
+
+-- name: AddMediaProfileAudioTarget :exec
+insert into app.media_profile_audio_targets (
+    profile_id,
     language_id,
-    codec,
+    score,
+    required,
+    codecs,
     channels,
-    source,
-    fallback_behavior,
+    minimum_bitrate_kbps,
+    preferred_bitrate_kbps,
+    lossy_transcode_policy,
     sort_order
 )
 values (
-    sqlc.arg(id),
     sqlc.arg(profile_id),
-    sqlc.arg(component_type),
+    sqlc.arg(language_id),
+    sqlc.arg(score),
     sqlc.arg(required),
-    sqlc.narg(language_id),
-    sqlc.narg(codec),
-    sqlc.narg(channels),
+    sqlc.arg(codecs),
+    sqlc.arg(channels),
+    sqlc.narg(minimum_bitrate_kbps),
+    sqlc.narg(preferred_bitrate_kbps),
+    sqlc.arg(lossy_transcode_policy),
+    sqlc.arg(sort_order)
+);
+
+-- name: ClearMediaProfileSubtitleTargets :exec
+delete from app.media_profile_subtitle_targets
+where profile_id = $1;
+
+-- name: AddMediaProfileSubtitleTarget :exec
+insert into app.media_profile_subtitle_targets (
+    profile_id,
+    language_id,
+    score,
+    required,
+    source,
+    formats,
+    sort_order
+)
+values (
+    sqlc.arg(profile_id),
+    sqlc.arg(language_id),
+    sqlc.arg(score),
+    sqlc.arg(required),
     sqlc.arg(source),
-    sqlc.arg(fallback_behavior),
+    sqlc.arg(formats),
     sqlc.arg(sort_order)
 );
 

@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 
 	"media-manager/internal/storage"
@@ -16,89 +15,115 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		writeError(w, http.StatusBadRequest, "invalid_name", "Name is required")
 		return storage.MediaProfileInput{}, false
 	}
-
-	qualityIDs := make([]string, 0, len(request.QualityIds))
-	seen := map[string]struct{}{}
-	for _, value := range request.QualityIds {
-		qualityID := strings.TrimSpace(value)
-		if qualityID == "" {
-			continue
-		}
-		if _, ok := seen[qualityID]; ok {
-			continue
-		}
-		seen[qualityID] = struct{}{}
-		qualityIDs = append(qualityIDs, qualityID)
-	}
+	qualityIDs := compactUnique(request.QualityIds)
 	if len(qualityIDs) == 0 {
 		writeError(w, http.StatusBadRequest, "quality_required", "Select at least one quality")
 		return storage.MediaProfileInput{}, false
 	}
-
-	targetLanguages := make([]string, 0, len(request.TargetLanguages))
-	for _, value := range request.TargetLanguages {
-		language := strings.TrimSpace(value)
-		if language != "" {
-			targetLanguages = append(targetLanguages, language)
-		}
+	audioTargets := mediaProfileAudioTargets(request.AudioTargets)
+	if len(audioTargets) == 0 {
+		writeError(w, http.StatusBadRequest, "audio_required", "Add at least one audio language")
+		return storage.MediaProfileInput{}, false
 	}
-	targetLanguageScores := make([]storage.MediaProfileLanguageScore, 0, len(request.TargetLanguageScores))
-	for _, value := range request.TargetLanguageScores {
-		targetLanguageScores = append(targetLanguageScores, storage.MediaProfileLanguageScore{
-			LanguageID: value.LanguageId,
-			Score:      value.Score,
-			Required:   value.Required,
-		})
-	}
-	subtitleLanguages := make([]storage.MediaProfileSubtitleLanguage, 0, len(request.SubtitleLanguages))
-	for _, value := range request.SubtitleLanguages {
-		subtitleLanguages = append(subtitleLanguages, storage.MediaProfileSubtitleLanguage{
-			LanguageID:   value.LanguageId,
-			Score:        value.Score,
-			Required:     value.Required,
-			SubtitleType: string(value.SubtitleType),
-		})
-	}
-	componentTargets := make([]storage.MediaProfileComponentTarget, 0, len(request.ComponentTargets))
-	for _, value := range request.ComponentTargets {
-		componentTargets = append(componentTargets, storage.MediaProfileComponentTarget{
-			ID:               optionalUUIDValue(value.Id),
-			ComponentType:    string(value.ComponentType),
-			Required:         value.Required,
-			LanguageID:       value.LanguageId,
-			Codec:            value.Codec,
-			Channels:         value.Channels,
-			Source:           string(value.Source),
-			FallbackBehavior: string(value.FallbackBehavior),
-		})
-	}
-	customFormatScores := make([]storage.MediaProfileCustomFormatScore, 0, len(request.CustomFormatScores))
-	for _, value := range request.CustomFormatScores {
-		customFormatScores = append(customFormatScores, storage.MediaProfileCustomFormatScore{
-			CustomFormatID: value.CustomFormatId,
-			Score:          value.Score,
-		})
-	}
-
 	return storage.MediaProfileInput{
 		Name:                              name,
 		IsDefault:                         request.IsDefault,
+		FinalContainer:                    string(request.FinalContainer),
 		QualityIDs:                        qualityIDs,
 		UpgradesAllowed:                   request.UpgradesAllowed,
 		UpgradeUntilQualityID:             request.UpgradeUntilQualityId,
 		MinimumCustomFormatScore:          request.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     request.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: request.MinimumCustomFormatScoreIncrement,
-		RemoveNonEnabledLanguages:         request.RemoveNonEnabledLanguages,
-		RemoveNonEnabledSubtitleLanguages: request.RemoveNonEnabledSubtitleLanguages,
+		RemoveUnwantedAudio:               request.RemoveUnwantedAudio,
+		RemoveUnwantedSubtitles:           request.RemoveUnwantedSubtitles,
 		PreferredProtocol:                 string(request.PreferredProtocol),
 		SeriesPackPreference:              string(request.SeriesPackPreference),
-		TargetLanguages:                   targetLanguages,
-		TargetLanguageScores:              targetLanguageScores,
-		SubtitleLanguages:                 subtitleLanguages,
-		ComponentTargets:                  componentTargets,
-		CustomFormatScores:                customFormatScores,
+		VideoTarget:                       mediaProfileVideoTarget(request.VideoTarget),
+		AudioTargets:                      audioTargets,
+		SubtitleTargets:                   mediaProfileSubtitleTargets(request.SubtitleTargets),
+		CustomFormatScores:                mediaProfileCustomFormatScores(request.CustomFormatScores),
 	}, true
+}
+
+func compactUnique(values []string) []string {
+	result := make([]string, 0, len(values))
+	seen := map[string]struct{}{}
+	for _, value := range values {
+		item := strings.TrimSpace(value)
+		if item == "" {
+			continue
+		}
+		if _, ok := seen[item]; ok {
+			continue
+		}
+		seen[item] = struct{}{}
+		result = append(result, item)
+	}
+	return result
+}
+
+func mediaProfileVideoTarget(value MediaProfileVideoTarget) storage.MediaProfileVideoTarget {
+	return storage.MediaProfileVideoTarget{
+		Codecs:              compactUniquePtr(value.Codecs),
+		CodecRequired:       boolValueOrFalse(value.CodecRequired),
+		CodecScore:          int32ValueOrZero(value.CodecScore),
+		HDRFormats:          compactUniquePtr(value.HdrFormats),
+		HDRRequired:         boolValueOrFalse(value.HdrRequired),
+		HDRScore:            int32ValueOrZero(value.HdrScore),
+		PixelFormats:        compactUniquePtr(value.PixelFormats),
+		PixelFormatRequired: boolValueOrFalse(value.PixelFormatRequired),
+		PixelFormatScore:    int32ValueOrZero(value.PixelFormatScore),
+	}
+}
+
+func compactUniquePtr(values *[]string) []string {
+	if values == nil {
+		return nil
+	}
+	return compactUnique(*values)
+}
+
+func mediaProfileAudioTargets(values []MediaProfileAudioTarget) []storage.MediaProfileAudioTarget {
+	targets := make([]storage.MediaProfileAudioTarget, 0, len(values))
+	for _, value := range values {
+		targets = append(targets, storage.MediaProfileAudioTarget{
+			LanguageID:           value.LanguageId,
+			Score:                value.Score,
+			Required:             value.Required,
+			Codecs:               compactUniquePtr(value.Codecs),
+			Channels:             compactUniquePtr(value.Channels),
+			MinimumBitrateKbps:   value.MinimumBitrateKbps,
+			PreferredBitrateKbps: value.PreferredBitrateKbps,
+			LossyTranscodePolicy: string(value.LossyTranscodePolicy),
+		})
+	}
+	return targets
+}
+
+func mediaProfileSubtitleTargets(values []MediaProfileSubtitleTarget) []storage.MediaProfileSubtitleTarget {
+	targets := make([]storage.MediaProfileSubtitleTarget, 0, len(values))
+	for _, value := range values {
+		targets = append(targets, storage.MediaProfileSubtitleTarget{
+			LanguageID: value.LanguageId,
+			Score:      value.Score,
+			Required:   value.Required,
+			Source:     string(value.Source),
+			Formats:    compactUniquePtr(value.Formats),
+		})
+	}
+	return targets
+}
+
+func mediaProfileCustomFormatScores(values []MediaProfileCustomFormatScore) []storage.MediaProfileCustomFormatScore {
+	scores := make([]storage.MediaProfileCustomFormatScore, 0, len(values))
+	for _, value := range values {
+		scores = append(scores, storage.MediaProfileCustomFormatScore{
+			CustomFormatID: value.CustomFormatId,
+			Score:          value.Score,
+		})
+	}
+	return scores
 }
 
 func mediaProfileListResponse(profiles []storage.MediaProfile) MediaProfileListResponse {
@@ -114,76 +139,72 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		Id:                                profile.ID,
 		Name:                              profile.Name,
 		IsDefault:                         profile.IsDefault,
+		FinalContainer:                    MediaProfileFinalContainer(profile.FinalContainer),
 		QualityIds:                        profile.QualityIDs,
 		UpgradesAllowed:                   profile.UpgradesAllowed,
 		UpgradeUntilQualityId:             profile.UpgradeUntilQualityID,
 		MinimumCustomFormatScore:          profile.MinimumCustomFormatScore,
 		UpgradeUntilCustomFormatScore:     profile.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: profile.MinimumCustomFormatScoreIncrement,
-		RemoveNonEnabledLanguages:         profile.RemoveNonEnabledLanguages,
-		RemoveNonEnabledSubtitleLanguages: profile.RemoveNonEnabledSubtitleLanguages,
+		RemoveUnwantedAudio:               profile.RemoveUnwantedAudio,
+		RemoveUnwantedSubtitles:           profile.RemoveUnwantedSubtitles,
 		PreferredProtocol:                 MediaProfilePreferredProtocol(profile.PreferredProtocol),
 		SeriesPackPreference:              MediaProfileSeriesPackPreference(profile.SeriesPackPreference),
-		TargetLanguages:                   profile.TargetLanguages,
-		TargetLanguageScores:              mediaProfileLanguageScoreResponses(profile.TargetLanguageScores),
-		SubtitleLanguages:                 mediaProfileSubtitleLanguageResponses(profile.SubtitleLanguages),
-		ComponentTargets:                  mediaProfileComponentTargetResponses(profile.ComponentTargets),
+		VideoTarget:                       mediaProfileVideoTargetResponse(profile.VideoTarget),
+		AudioTargets:                      mediaProfileAudioTargetResponses(profile.AudioTargets),
+		SubtitleTargets:                   mediaProfileSubtitleTargetResponses(profile.SubtitleTargets),
 		CustomFormatScores:                mediaProfileCustomFormatScoreResponses(profile.CustomFormatScores),
 		CreatedAt:                         profile.CreatedAt,
 		UpdatedAt:                         profile.UpdatedAt,
 	}
 }
 
-func mediaProfileComponentTargetResponses(
-	targets []storage.MediaProfileComponentTarget,
-) []MediaProfileComponentTarget {
-	response := make([]MediaProfileComponentTarget, 0, len(targets))
+func mediaProfileVideoTargetResponse(target storage.MediaProfileVideoTarget) MediaProfileVideoTarget {
+	return MediaProfileVideoTarget{
+		Codecs:              &target.Codecs,
+		CodecRequired:       &target.CodecRequired,
+		CodecScore:          &target.CodecScore,
+		HdrFormats:          &target.HDRFormats,
+		HdrRequired:         &target.HDRRequired,
+		HdrScore:            &target.HDRScore,
+		PixelFormats:        &target.PixelFormats,
+		PixelFormatRequired: &target.PixelFormatRequired,
+		PixelFormatScore:    &target.PixelFormatScore,
+	}
+}
+
+func mediaProfileAudioTargetResponses(targets []storage.MediaProfileAudioTarget) []MediaProfileAudioTarget {
+	response := make([]MediaProfileAudioTarget, 0, len(targets))
 	for _, target := range targets {
-		id := openapi_types.UUID(target.ID)
-		response = append(response, MediaProfileComponentTarget{
-			Id:               &id,
-			ComponentType:    MediaProfileComponentType(target.ComponentType),
-			Required:         target.Required,
-			LanguageId:       target.LanguageID,
-			Codec:            target.Codec,
-			Channels:         target.Channels,
-			Source:           MediaProfileComponentSource(target.Source),
-			FallbackBehavior: MediaProfileComponentFallback(target.FallbackBehavior),
+		response = append(response, MediaProfileAudioTarget{
+			LanguageId:           target.LanguageID,
+			Score:                target.Score,
+			Required:             target.Required,
+			Codecs:               &target.Codecs,
+			Channels:             &target.Channels,
+			MinimumBitrateKbps:   target.MinimumBitrateKbps,
+			PreferredBitrateKbps: target.PreferredBitrateKbps,
+			LossyTranscodePolicy: MediaProfileLossyTranscodePolicy(target.LossyTranscodePolicy),
 		})
 	}
 	return response
 }
 
-func mediaProfileLanguageScoreResponses(scores []storage.MediaProfileLanguageScore) []MediaProfileLanguageScore {
-	response := make([]MediaProfileLanguageScore, 0, len(scores))
-	for _, score := range scores {
-		response = append(response, MediaProfileLanguageScore{
-			LanguageId: score.LanguageID,
-			Score:      score.Score,
-			Required:   score.Required,
+func mediaProfileSubtitleTargetResponses(targets []storage.MediaProfileSubtitleTarget) []MediaProfileSubtitleTarget {
+	response := make([]MediaProfileSubtitleTarget, 0, len(targets))
+	for _, target := range targets {
+		response = append(response, MediaProfileSubtitleTarget{
+			LanguageId: target.LanguageID,
+			Score:      target.Score,
+			Required:   target.Required,
+			Source:     MediaProfileSubtitleSource(target.Source),
+			Formats:    &target.Formats,
 		})
 	}
 	return response
 }
 
-func mediaProfileSubtitleLanguageResponses(
-	languages []storage.MediaProfileSubtitleLanguage,
-) []MediaProfileSubtitleLanguage {
-	response := make([]MediaProfileSubtitleLanguage, 0, len(languages))
-	for _, language := range languages {
-		response = append(response, MediaProfileSubtitleLanguage{
-			LanguageId:   language.LanguageID,
-			Score:        language.Score,
-			Required:     language.Required,
-			SubtitleType: MediaProfileSubtitleLanguageSubtitleType(language.SubtitleType),
-		})
-	}
-	return response
-}
-
-func mediaProfileCustomFormatScoreResponses(
-	scores []storage.MediaProfileCustomFormatScore,
-) []MediaProfileCustomFormatScore {
+func mediaProfileCustomFormatScoreResponses(scores []storage.MediaProfileCustomFormatScore) []MediaProfileCustomFormatScore {
 	response := make([]MediaProfileCustomFormatScore, 0, len(scores))
 	for _, score := range scores {
 		response = append(response, MediaProfileCustomFormatScore{
@@ -194,9 +215,13 @@ func mediaProfileCustomFormatScoreResponses(
 	return response
 }
 
-func optionalUUIDValue(value *openapi_types.UUID) uuid.UUID {
+func boolValueOrFalse(value *bool) bool {
+	return value != nil && *value
+}
+
+func int32ValueOrZero(value *int32) int32 {
 	if value == nil {
-		return uuid.Nil
+		return 0
 	}
-	return uuid.UUID(*value)
+	return *value
 }

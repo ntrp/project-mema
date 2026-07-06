@@ -2775,6 +2775,9 @@ export interface components {
 			sourceRole: components['schemas']['MediaComponentSourceRole'];
 			sourceFilePath: string;
 			releaseTitle?: string;
+			releaseGroup?: string;
+			releaseName?: string;
+			releaseId?: string;
 			sourceMetadata?: string;
 			streamInventory?: string;
 			checksum?: string;
@@ -2788,6 +2791,9 @@ export interface components {
 			sourceFilePath: string;
 			retainedPath: string;
 			releaseTitle?: string;
+			releaseGroup?: string;
+			releaseName?: string;
+			releaseId?: string;
 			sourceMetadata?: string;
 			streamInventory: string;
 			checksum?: string;
@@ -3184,6 +3190,8 @@ export interface components {
 		MediaProfileRequest: {
 			name: string;
 			isDefault: boolean;
+			/** @enum {string} */
+			finalContainer: 'mkv' | 'mp4';
 			qualityIds: string[];
 			upgradesAllowed: boolean;
 			upgradeUntilQualityId?: string | null;
@@ -3193,48 +3201,55 @@ export interface components {
 			upgradeUntilCustomFormatScore: number;
 			/** Format: int32 */
 			minimumCustomFormatScoreIncrement: number;
-			removeNonEnabledLanguages: boolean;
-			removeNonEnabledSubtitleLanguages: boolean;
+			removeUnwantedAudio: boolean;
+			removeUnwantedSubtitles: boolean;
 			/** @enum {string} */
 			preferredProtocol: 'any' | 'torrent' | 'usenet';
 			/** @enum {string} */
 			seriesPackPreference: 'auto' | 'preferPacks' | 'preferEpisodes';
-			targetLanguages: string[];
-			targetLanguageScores: components['schemas']['MediaProfileLanguageScore'][];
-			subtitleLanguages: components['schemas']['MediaProfileSubtitleLanguage'][];
-			componentTargets: components['schemas']['MediaProfileComponentTarget'][];
+			videoTarget: components['schemas']['MediaProfileVideoTarget'];
+			audioTargets: components['schemas']['MediaProfileAudioTarget'][];
+			subtitleTargets: components['schemas']['MediaProfileSubtitleTarget'][];
 			customFormatScores: components['schemas']['MediaProfileCustomFormatScore'][];
 		};
-		MediaProfileComponentTarget: {
-			/** Format: uuid */
-			id?: string;
-			componentType: components['schemas']['MediaProfileComponentType'];
-			required: boolean;
-			languageId?: string;
-			codec?: string;
-			channels?: string;
-			source: components['schemas']['MediaProfileComponentSource'];
-			fallbackBehavior: components['schemas']['MediaProfileComponentFallback'];
+		MediaProfileVideoTarget: {
+			codecs?: string[];
+			codecRequired?: boolean;
+			/** Format: int32 */
+			codecScore?: number;
+			hdrFormats?: string[];
+			hdrRequired?: boolean;
+			/** Format: int32 */
+			hdrScore?: number;
+			pixelFormats?: string[];
+			pixelFormatRequired?: boolean;
+			/** Format: int32 */
+			pixelFormatScore?: number;
 		};
 		/** @enum {string} */
-		MediaProfileComponentType: 'video' | 'audio' | 'subtitle';
+		MediaProfileLossyTranscodePolicy: 'disabled' | 'losslessToLossy' | 'lossyToLossy';
 		/** @enum {string} */
-		MediaProfileComponentSource: 'release' | 'subtitleProvider' | 'existing';
-		/** @enum {string} */
-		MediaProfileComponentFallback: 'strict' | 'preferExisting' | 'allowMissing';
-		MediaProfileLanguageScore: {
+		MediaProfileSubtitleSource: 'any' | 'embedded' | 'external';
+		MediaProfileAudioTarget: {
 			languageId: string;
 			/** Format: int32 */
 			score: number;
 			required: boolean;
+			codecs?: string[];
+			channels?: string[];
+			/** Format: int32 */
+			minimumBitrateKbps?: number;
+			/** Format: int32 */
+			preferredBitrateKbps?: number;
+			lossyTranscodePolicy: components['schemas']['MediaProfileLossyTranscodePolicy'];
 		};
-		MediaProfileSubtitleLanguage: {
+		MediaProfileSubtitleTarget: {
 			languageId: string;
 			/** Format: int32 */
 			score: number;
 			required: boolean;
-			/** @enum {string} */
-			subtitleType: 'any' | 'embedded' | 'external';
+			source: components['schemas']['MediaProfileSubtitleSource'];
+			formats?: string[];
 		};
 		MediaProfileCustomFormatScore: {
 			/** Format: uuid */

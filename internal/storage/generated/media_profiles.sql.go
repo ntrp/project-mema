@@ -12,17 +12,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const addMediaProfileComponentTarget = `-- name: AddMediaProfileComponentTarget :exec
-insert into app.media_profile_component_targets (
-    id,
+const addMediaProfileAudioTarget = `-- name: AddMediaProfileAudioTarget :exec
+insert into app.media_profile_audio_targets (
     profile_id,
-    component_type,
-    required,
     language_id,
-    codec,
+    score,
+    required,
+    codecs,
     channels,
-    source,
-    fallback_behavior,
+    minimum_bitrate_kbps,
+    preferred_bitrate_kbps,
+    lossy_transcode_policy,
     sort_order
 )
 values (
@@ -39,30 +39,30 @@ values (
 )
 `
 
-type AddMediaProfileComponentTargetParams struct {
-	ID               uuid.UUID
-	ProfileID        string
-	ComponentType    string
-	Required         bool
-	LanguageID       pgtype.Text
-	Codec            pgtype.Text
-	Channels         pgtype.Text
-	Source           string
-	FallbackBehavior string
-	SortOrder        int32
+type AddMediaProfileAudioTargetParams struct {
+	ProfileID            string
+	LanguageID           string
+	Score                int32
+	Required             bool
+	Codecs               []string
+	Channels             []string
+	MinimumBitrateKbps   pgtype.Int4
+	PreferredBitrateKbps pgtype.Int4
+	LossyTranscodePolicy string
+	SortOrder            int32
 }
 
-func (q *Queries) AddMediaProfileComponentTarget(ctx context.Context, arg AddMediaProfileComponentTargetParams) error {
-	_, err := q.db.Exec(ctx, addMediaProfileComponentTarget,
-		arg.ID,
+func (q *Queries) AddMediaProfileAudioTarget(ctx context.Context, arg AddMediaProfileAudioTargetParams) error {
+	_, err := q.db.Exec(ctx, addMediaProfileAudioTarget,
 		arg.ProfileID,
-		arg.ComponentType,
-		arg.Required,
 		arg.LanguageID,
-		arg.Codec,
+		arg.Score,
+		arg.Required,
+		arg.Codecs,
 		arg.Channels,
-		arg.Source,
-		arg.FallbackBehavior,
+		arg.MinimumBitrateKbps,
+		arg.PreferredBitrateKbps,
+		arg.LossyTranscodePolicy,
 		arg.SortOrder,
 	)
 	return err
@@ -84,28 +84,6 @@ func (q *Queries) AddMediaProfileCustomFormat(ctx context.Context, arg AddMediaP
 	return err
 }
 
-const addMediaProfileLanguage = `-- name: AddMediaProfileLanguage :exec
-insert into app.media_profile_languages (profile_id, language_id, score, required)
-values ($1, $2, $3, $4)
-`
-
-type AddMediaProfileLanguageParams struct {
-	ProfileID  string
-	LanguageID string
-	Score      int32
-	Required   bool
-}
-
-func (q *Queries) AddMediaProfileLanguage(ctx context.Context, arg AddMediaProfileLanguageParams) error {
-	_, err := q.db.Exec(ctx, addMediaProfileLanguage,
-		arg.ProfileID,
-		arg.LanguageID,
-		arg.Score,
-		arg.Required,
-	)
-	return err
-}
-
 const addMediaProfileQuality = `-- name: AddMediaProfileQuality :exec
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)
 values ($1, $2, $3)
@@ -122,26 +100,46 @@ func (q *Queries) AddMediaProfileQuality(ctx context.Context, arg AddMediaProfil
 	return err
 }
 
-const addMediaProfileSubtitleLanguage = `-- name: AddMediaProfileSubtitleLanguage :exec
-insert into app.media_profile_subtitle_languages (profile_id, language_id, score, required, subtitle_type)
-values ($1, $2, $3, $4, $5)
+const addMediaProfileSubtitleTarget = `-- name: AddMediaProfileSubtitleTarget :exec
+insert into app.media_profile_subtitle_targets (
+    profile_id,
+    language_id,
+    score,
+    required,
+    source,
+    formats,
+    sort_order
+)
+values (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7
+)
 `
 
-type AddMediaProfileSubtitleLanguageParams struct {
-	ProfileID    string
-	LanguageID   string
-	Score        int32
-	Required     bool
-	SubtitleType string
+type AddMediaProfileSubtitleTargetParams struct {
+	ProfileID  string
+	LanguageID string
+	Score      int32
+	Required   bool
+	Source     string
+	Formats    []string
+	SortOrder  int32
 }
 
-func (q *Queries) AddMediaProfileSubtitleLanguage(ctx context.Context, arg AddMediaProfileSubtitleLanguageParams) error {
-	_, err := q.db.Exec(ctx, addMediaProfileSubtitleLanguage,
+func (q *Queries) AddMediaProfileSubtitleTarget(ctx context.Context, arg AddMediaProfileSubtitleTargetParams) error {
+	_, err := q.db.Exec(ctx, addMediaProfileSubtitleTarget,
 		arg.ProfileID,
 		arg.LanguageID,
 		arg.Score,
 		arg.Required,
-		arg.SubtitleType,
+		arg.Source,
+		arg.Formats,
+		arg.SortOrder,
 	)
 	return err
 }
@@ -158,13 +156,13 @@ func (q *Queries) ClearDefaultMediaProfiles(ctx context.Context) error {
 	return err
 }
 
-const clearMediaProfileComponentTargets = `-- name: ClearMediaProfileComponentTargets :exec
-delete from app.media_profile_component_targets
+const clearMediaProfileAudioTargets = `-- name: ClearMediaProfileAudioTargets :exec
+delete from app.media_profile_audio_targets
 where profile_id = $1
 `
 
-func (q *Queries) ClearMediaProfileComponentTargets(ctx context.Context, profileID string) error {
-	_, err := q.db.Exec(ctx, clearMediaProfileComponentTargets, profileID)
+func (q *Queries) ClearMediaProfileAudioTargets(ctx context.Context, profileID string) error {
+	_, err := q.db.Exec(ctx, clearMediaProfileAudioTargets, profileID)
 	return err
 }
 
@@ -178,16 +176,6 @@ func (q *Queries) ClearMediaProfileCustomFormats(ctx context.Context, profileID 
 	return err
 }
 
-const clearMediaProfileLanguages = `-- name: ClearMediaProfileLanguages :exec
-delete from app.media_profile_languages
-where profile_id = $1
-`
-
-func (q *Queries) ClearMediaProfileLanguages(ctx context.Context, profileID string) error {
-	_, err := q.db.Exec(ctx, clearMediaProfileLanguages, profileID)
-	return err
-}
-
 const clearMediaProfileQualities = `-- name: ClearMediaProfileQualities :exec
 delete from app.media_profile_qualities
 where profile_id = $1
@@ -198,13 +186,13 @@ func (q *Queries) ClearMediaProfileQualities(ctx context.Context, profileID stri
 	return err
 }
 
-const clearMediaProfileSubtitleLanguages = `-- name: ClearMediaProfileSubtitleLanguages :exec
-delete from app.media_profile_subtitle_languages
+const clearMediaProfileSubtitleTargets = `-- name: ClearMediaProfileSubtitleTargets :exec
+delete from app.media_profile_subtitle_targets
 where profile_id = $1
 `
 
-func (q *Queries) ClearMediaProfileSubtitleLanguages(ctx context.Context, profileID string) error {
-	_, err := q.db.Exec(ctx, clearMediaProfileSubtitleLanguages, profileID)
+func (q *Queries) ClearMediaProfileSubtitleTargets(ctx context.Context, profileID string) error {
+	_, err := q.db.Exec(ctx, clearMediaProfileSubtitleTargets, profileID)
 	return err
 }
 
@@ -213,13 +201,14 @@ insert into app.media_profiles (
     id,
     name,
     is_default,
+    final_container,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
-    remove_non_enabled_subtitle_languages,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference
 )
@@ -235,7 +224,8 @@ values (
     $9,
     $10,
     $11,
-    $12
+    $12,
+    $13
 )
 `
 
@@ -243,13 +233,14 @@ type CreateMediaProfileParams struct {
 	ID                                string
 	Name                              string
 	IsDefault                         bool
+	FinalContainer                    string
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             pgtype.Text
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
-	RemoveNonEnabledLanguages         bool
-	RemoveNonEnabledSubtitleLanguages bool
+	RemoveUnwantedAudio               bool
+	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 }
@@ -259,13 +250,14 @@ func (q *Queries) CreateMediaProfile(ctx context.Context, arg CreateMediaProfile
 		arg.ID,
 		arg.Name,
 		arg.IsDefault,
+		arg.FinalContainer,
 		arg.UpgradesAllowed,
 		arg.UpgradeUntilQualityID,
 		arg.MinimumCustomFormatScore,
 		arg.UpgradeUntilCustomFormatScore,
 		arg.MinimumCustomFormatScoreIncrement,
-		arg.RemoveNonEnabledLanguages,
-		arg.RemoveNonEnabledSubtitleLanguages,
+		arg.RemoveUnwantedAudio,
+		arg.RemoveUnwantedSubtitles,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
 	)
@@ -289,13 +281,14 @@ const getMediaProfile = `-- name: GetMediaProfile :one
 select id,
     name,
     is_default,
+    final_container,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
-    remove_non_enabled_subtitle_languages,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -311,13 +304,14 @@ func (q *Queries) GetMediaProfile(ctx context.Context, id string) (AppMediaProfi
 		&i.ID,
 		&i.Name,
 		&i.IsDefault,
+		&i.FinalContainer,
 		&i.UpgradesAllowed,
 		&i.UpgradeUntilQualityID,
 		&i.MinimumCustomFormatScore,
 		&i.UpgradeUntilCustomFormatScore,
 		&i.MinimumCustomFormatScoreIncrement,
-		&i.RemoveNonEnabledLanguages,
-		&i.RemoveNonEnabledSubtitleLanguages,
+		&i.RemoveUnwantedAudio,
+		&i.RemoveUnwantedSubtitles,
 		&i.PreferredProtocol,
 		&i.SeriesPackPreference,
 		&i.CreatedAt,
@@ -326,52 +320,93 @@ func (q *Queries) GetMediaProfile(ctx context.Context, id string) (AppMediaProfi
 	return i, err
 }
 
-const listMediaProfileComponentTargets = `-- name: ListMediaProfileComponentTargets :many
-select id,
-    component_type,
-    required,
-    language_id,
-    codec,
-    channels,
-    source,
-    fallback_behavior,
-    sort_order
-from app.media_profile_component_targets
+const getMediaProfileVideoTarget = `-- name: GetMediaProfileVideoTarget :one
+select codecs,
+    codec_required,
+    codec_score,
+    hdr_formats,
+    hdr_required,
+    hdr_score,
+    pixel_formats,
+    pixel_format_required,
+    pixel_format_score
+from app.media_profile_video_targets
 where profile_id = $1
-order by sort_order, component_type, language_id, codec, channels
+limit 1
 `
 
-type ListMediaProfileComponentTargetsRow struct {
-	ID               uuid.UUID
-	ComponentType    string
-	Required         bool
-	LanguageID       pgtype.Text
-	Codec            pgtype.Text
-	Channels         pgtype.Text
-	Source           string
-	FallbackBehavior string
-	SortOrder        int32
+type GetMediaProfileVideoTargetRow struct {
+	Codecs              []string
+	CodecRequired       bool
+	CodecScore          int32
+	HdrFormats          []string
+	HdrRequired         bool
+	HdrScore            int32
+	PixelFormats        []string
+	PixelFormatRequired bool
+	PixelFormatScore    int32
 }
 
-func (q *Queries) ListMediaProfileComponentTargets(ctx context.Context, profileID string) ([]ListMediaProfileComponentTargetsRow, error) {
-	rows, err := q.db.Query(ctx, listMediaProfileComponentTargets, profileID)
+func (q *Queries) GetMediaProfileVideoTarget(ctx context.Context, profileID string) (GetMediaProfileVideoTargetRow, error) {
+	row := q.db.QueryRow(ctx, getMediaProfileVideoTarget, profileID)
+	var i GetMediaProfileVideoTargetRow
+	err := row.Scan(
+		&i.Codecs,
+		&i.CodecRequired,
+		&i.CodecScore,
+		&i.HdrFormats,
+		&i.HdrRequired,
+		&i.HdrScore,
+		&i.PixelFormats,
+		&i.PixelFormatRequired,
+		&i.PixelFormatScore,
+	)
+	return i, err
+}
+
+const listMediaProfileAudioTargets = `-- name: ListMediaProfileAudioTargets :many
+select language_id,
+    score,
+    required,
+    codecs,
+    channels,
+    minimum_bitrate_kbps,
+    preferred_bitrate_kbps,
+    lossy_transcode_policy
+from app.media_profile_audio_targets
+where profile_id = $1
+order by sort_order, language_id
+`
+
+type ListMediaProfileAudioTargetsRow struct {
+	LanguageID           string
+	Score                int32
+	Required             bool
+	Codecs               []string
+	Channels             []string
+	MinimumBitrateKbps   pgtype.Int4
+	PreferredBitrateKbps pgtype.Int4
+	LossyTranscodePolicy string
+}
+
+func (q *Queries) ListMediaProfileAudioTargets(ctx context.Context, profileID string) ([]ListMediaProfileAudioTargetsRow, error) {
+	rows, err := q.db.Query(ctx, listMediaProfileAudioTargets, profileID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListMediaProfileComponentTargetsRow
+	var items []ListMediaProfileAudioTargetsRow
 	for rows.Next() {
-		var i ListMediaProfileComponentTargetsRow
+		var i ListMediaProfileAudioTargetsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.ComponentType,
-			&i.Required,
 			&i.LanguageID,
-			&i.Codec,
+			&i.Score,
+			&i.Required,
+			&i.Codecs,
 			&i.Channels,
-			&i.Source,
-			&i.FallbackBehavior,
-			&i.SortOrder,
+			&i.MinimumBitrateKbps,
+			&i.PreferredBitrateKbps,
+			&i.LossyTranscodePolicy,
 		); err != nil {
 			return nil, err
 		}
@@ -416,39 +451,6 @@ func (q *Queries) ListMediaProfileCustomFormats(ctx context.Context, profileID s
 	return items, nil
 }
 
-const listMediaProfileLanguages = `-- name: ListMediaProfileLanguages :many
-select language_id, score, required
-from app.media_profile_languages
-where profile_id = $1
-order by language_id
-`
-
-type ListMediaProfileLanguagesRow struct {
-	LanguageID string
-	Score      int32
-	Required   bool
-}
-
-func (q *Queries) ListMediaProfileLanguages(ctx context.Context, profileID string) ([]ListMediaProfileLanguagesRow, error) {
-	rows, err := q.db.Query(ctx, listMediaProfileLanguages, profileID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListMediaProfileLanguagesRow
-	for rows.Next() {
-		var i ListMediaProfileLanguagesRow
-		if err := rows.Scan(&i.LanguageID, &i.Score, &i.Required); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listMediaProfileQualities = `-- name: ListMediaProfileQualities :many
 select quality_id
 from app.media_profile_qualities
@@ -476,34 +478,40 @@ func (q *Queries) ListMediaProfileQualities(ctx context.Context, profileID strin
 	return items, nil
 }
 
-const listMediaProfileSubtitleLanguages = `-- name: ListMediaProfileSubtitleLanguages :many
-select language_id, score, required, subtitle_type
-from app.media_profile_subtitle_languages
+const listMediaProfileSubtitleTargets = `-- name: ListMediaProfileSubtitleTargets :many
+select language_id,
+    score,
+    required,
+    source,
+    formats
+from app.media_profile_subtitle_targets
 where profile_id = $1
-order by language_id
+order by sort_order, language_id
 `
 
-type ListMediaProfileSubtitleLanguagesRow struct {
-	LanguageID   string
-	Score        int32
-	Required     bool
-	SubtitleType string
+type ListMediaProfileSubtitleTargetsRow struct {
+	LanguageID string
+	Score      int32
+	Required   bool
+	Source     string
+	Formats    []string
 }
 
-func (q *Queries) ListMediaProfileSubtitleLanguages(ctx context.Context, profileID string) ([]ListMediaProfileSubtitleLanguagesRow, error) {
-	rows, err := q.db.Query(ctx, listMediaProfileSubtitleLanguages, profileID)
+func (q *Queries) ListMediaProfileSubtitleTargets(ctx context.Context, profileID string) ([]ListMediaProfileSubtitleTargetsRow, error) {
+	rows, err := q.db.Query(ctx, listMediaProfileSubtitleTargets, profileID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListMediaProfileSubtitleLanguagesRow
+	var items []ListMediaProfileSubtitleTargetsRow
 	for rows.Next() {
-		var i ListMediaProfileSubtitleLanguagesRow
+		var i ListMediaProfileSubtitleTargetsRow
 		if err := rows.Scan(
 			&i.LanguageID,
 			&i.Score,
 			&i.Required,
-			&i.SubtitleType,
+			&i.Source,
+			&i.Formats,
 		); err != nil {
 			return nil, err
 		}
@@ -519,13 +527,14 @@ const listMediaProfiles = `-- name: ListMediaProfiles :many
 select id,
     name,
     is_default,
+    final_container,
     upgrades_allowed,
     upgrade_until_quality_id,
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
-    remove_non_enabled_subtitle_languages,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
     created_at,
@@ -547,13 +556,14 @@ func (q *Queries) ListMediaProfiles(ctx context.Context) ([]AppMediaProfile, err
 			&i.ID,
 			&i.Name,
 			&i.IsDefault,
+			&i.FinalContainer,
 			&i.UpgradesAllowed,
 			&i.UpgradeUntilQualityID,
 			&i.MinimumCustomFormatScore,
 			&i.UpgradeUntilCustomFormatScore,
 			&i.MinimumCustomFormatScoreIncrement,
-			&i.RemoveNonEnabledLanguages,
-			&i.RemoveNonEnabledSubtitleLanguages,
+			&i.RemoveUnwantedAudio,
+			&i.RemoveUnwantedSubtitles,
 			&i.PreferredProtocol,
 			&i.SeriesPackPreference,
 			&i.CreatedAt,
@@ -584,29 +594,31 @@ const updateMediaProfile = `-- name: UpdateMediaProfile :execrows
 update app.media_profiles
 set name = $1,
     is_default = $2,
-    upgrades_allowed = $3,
-    upgrade_until_quality_id = $4,
-    minimum_custom_format_score = $5,
-    upgrade_until_custom_format_score = $6,
-    minimum_custom_format_score_increment = $7,
-    remove_non_enabled_languages = $8,
-    remove_non_enabled_subtitle_languages = $9,
-    preferred_protocol = $10,
-    series_pack_preference = $11,
+    final_container = $3,
+    upgrades_allowed = $4,
+    upgrade_until_quality_id = $5,
+    minimum_custom_format_score = $6,
+    upgrade_until_custom_format_score = $7,
+    minimum_custom_format_score_increment = $8,
+    remove_unwanted_audio = $9,
+    remove_unwanted_subtitles = $10,
+    preferred_protocol = $11,
+    series_pack_preference = $12,
     updated_at = now()
-where id = $12
+where id = $13
 `
 
 type UpdateMediaProfileParams struct {
 	Name                              string
 	IsDefault                         bool
+	FinalContainer                    string
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             pgtype.Text
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
-	RemoveNonEnabledLanguages         bool
-	RemoveNonEnabledSubtitleLanguages bool
+	RemoveUnwantedAudio               bool
+	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
 	ID                                string
@@ -616,13 +628,14 @@ func (q *Queries) UpdateMediaProfile(ctx context.Context, arg UpdateMediaProfile
 	result, err := q.db.Exec(ctx, updateMediaProfile,
 		arg.Name,
 		arg.IsDefault,
+		arg.FinalContainer,
 		arg.UpgradesAllowed,
 		arg.UpgradeUntilQualityID,
 		arg.MinimumCustomFormatScore,
 		arg.UpgradeUntilCustomFormatScore,
 		arg.MinimumCustomFormatScoreIncrement,
-		arg.RemoveNonEnabledLanguages,
-		arg.RemoveNonEnabledSubtitleLanguages,
+		arg.RemoveUnwantedAudio,
+		arg.RemoveUnwantedSubtitles,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
 		arg.ID,
@@ -631,4 +644,70 @@ func (q *Queries) UpdateMediaProfile(ctx context.Context, arg UpdateMediaProfile
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const upsertMediaProfileVideoTarget = `-- name: UpsertMediaProfileVideoTarget :exec
+insert into app.media_profile_video_targets (
+    profile_id,
+    codecs,
+    codec_required,
+    codec_score,
+    hdr_formats,
+    hdr_required,
+    hdr_score,
+    pixel_formats,
+    pixel_format_required,
+    pixel_format_score
+)
+values (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10
+)
+on conflict (profile_id) do update
+set codecs = excluded.codecs,
+    codec_required = excluded.codec_required,
+    codec_score = excluded.codec_score,
+    hdr_formats = excluded.hdr_formats,
+    hdr_required = excluded.hdr_required,
+    hdr_score = excluded.hdr_score,
+    pixel_formats = excluded.pixel_formats,
+    pixel_format_required = excluded.pixel_format_required,
+    pixel_format_score = excluded.pixel_format_score
+`
+
+type UpsertMediaProfileVideoTargetParams struct {
+	ProfileID           string
+	Codecs              []string
+	CodecRequired       bool
+	CodecScore          int32
+	HdrFormats          []string
+	HdrRequired         bool
+	HdrScore            int32
+	PixelFormats        []string
+	PixelFormatRequired bool
+	PixelFormatScore    int32
+}
+
+func (q *Queries) UpsertMediaProfileVideoTarget(ctx context.Context, arg UpsertMediaProfileVideoTargetParams) error {
+	_, err := q.db.Exec(ctx, upsertMediaProfileVideoTarget,
+		arg.ProfileID,
+		arg.Codecs,
+		arg.CodecRequired,
+		arg.CodecScore,
+		arg.HdrFormats,
+		arg.HdrRequired,
+		arg.HdrScore,
+		arg.PixelFormats,
+		arg.PixelFormatRequired,
+		arg.PixelFormatScore,
+	)
+	return err
 }

@@ -1,11 +1,20 @@
 <script lang="ts">
+	import TrashIcon from '@lucide/svelte/icons/trash-2';
+	import MusicIcon from '@lucide/svelte/icons/music';
+	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Card from '$lib/components/ui/card';
-	import { profileLanguageOptions } from '$lib/settings/languageCatalog';
-	import type { Language, MediaProfileForm } from '$lib/settings/types';
-	import MediaProfileLanguageRow from './MediaProfileLanguageRow.svelte';
+	import * as Select from '$lib/components/ui/select';
+	import * as Table from '$lib/components/ui/table';
+	import ProfileLanguageAutocomplete from './ProfileLanguageAutocomplete.svelte';
+	import ProfileTargetMultiSelect from './ProfileTargetMultiSelect.svelte';
+	import { defaultAudioTarget } from '$lib/settings/forms';
+	import { languageLabelFromCatalog } from '$lib/settings/languageCatalog';
+	import { audioChannelOptions, audioCodecOptions } from './profileTargetOptions';
+	import type { Language, MediaProfileAudioTarget, MediaProfileForm } from '$lib/settings/types';
+	import type { MediaProfileLossyTranscodePolicy } from '$lib/settings/types';
 
 	interface Props {
 		form: MediaProfileForm;
@@ -14,96 +23,143 @@
 	}
 
 	let { form, languages, onChange }: Props = $props();
-	let languageFilter = $state('');
-	let activeLanguageScores = $derived(
-		form.targetLanguageScores?.length
-			? form.targetLanguageScores
-			: form.targetLanguages.map((languageId) => ({ languageId, score: 0, required: false }))
-	);
-	let selectedScores = $derived(
-		new Map(activeLanguageScores.map((score) => [score.languageId, score]))
-	);
-	let options = $derived(
-		profileLanguageOptions(
-			languages,
-			activeLanguageScores.map((score) => score.languageId)
-		)
-	);
-	let filteredOptions = $derived(
-		options
-			.filter((option) =>
-				option.displayLabel.toLowerCase().includes(languageFilter.trim().toLowerCase())
-			)
-			.toSorted((left, right) => {
-				const selected = Number(selectedScores.has(right.id)) - Number(selectedScores.has(left.id));
-				return selected || left.displayLabel.localeCompare(right.displayLabel);
-			})
-	);
+	let targets = $derived(form.audioTargets ?? []);
+	let selected = $derived(new Set(targets.map((target) => target.languageId)));
 
-	function patch(scores: MediaProfileForm['targetLanguageScores']) {
-		onChange({
-			...form,
-			targetLanguages: scores.map((score) => score.languageId),
-			targetLanguageScores: scores
-		});
+	function patch(audioTargets: MediaProfileAudioTarget[]) {
+		onChange({ ...form, audioTargets });
 	}
-	function toggleLanguage(language: string) {
-		const nextScores = [...activeLanguageScores];
-		const index = nextScores.findIndex((score) => score.languageId === language);
-		if (index >= 0) nextScores.splice(index, 1);
-		else nextScores.push({ languageId: language, score: 0, required: false });
-		patch(nextScores);
+	function add(languageId: string) {
+		if (selected.has(languageId)) return;
+		patch([...targets, { ...defaultAudioTarget(), languageId }]);
 	}
-	function updateLanguageScore(language: string, score: number) {
-		patch(
-			activeLanguageScores.map((value) =>
-				value.languageId === language
-					? { ...value, score: Number.isFinite(score) ? score : 0 }
-					: value
-			)
-		);
+	function update(index: number, value: Partial<MediaProfileAudioTarget>) {
+		patch(targets.map((target, row) => (row === index ? { ...target, ...value } : target)));
 	}
-	function updateLanguageRequired(language: string, required: boolean) {
-		patch(
-			activeLanguageScores.map((value) =>
-				value.languageId === language ? { ...value, required } : value
-			)
-		);
+	function remove(index: number) {
+		if (targets.length <= 1) return;
+		patch(targets.filter((_, row) => row !== index));
 	}
 </script>
 
-<Card.Root class="md:col-span-2">
-	<Card.Header><Card.Title>Target languages</Card.Title></Card.Header>
-	<Card.Content class="grid gap-4 mt-2">
-		<div class="grid gap-2 text-sm">
-			<span class="flex items-center gap-2 text-muted-foreground">
+<Card.Root>
+	<Card.Header>
+		<Card.Title class="flex items-center gap-2">
+			<MusicIcon aria-hidden="true" />
+			<span>Audio targets</span>
+		</Card.Title>
+	</Card.Header>
+	<Card.Content class="mt-2 grid gap-4">
+		<div class="grid gap-3">
+			<Label class="flex items-center gap-2 text-sm text-muted-foreground">
 				<Checkbox
-					checked={form.removeNonEnabledLanguages}
+					checked={form.removeUnwantedAudio}
 					onCheckedChange={(checked) =>
-						onChange({ ...form, removeNonEnabledLanguages: checked === true })}
+						onChange({ ...form, removeUnwantedAudio: checked === true })}
 				/>
 				Remove audio tracks that are not wanted
-			</span>
+			</Label>
+
+			<ProfileLanguageAutocomplete
+				id="audio-target-add-language"
+				label="Add language"
+				placeholder="Search languages"
+				{languages}
+				selectedIds={[...selected]}
+				onSelect={add}
+			/>
 		</div>
-		<div class="grid gap-2 text-sm">
-			<Label>Quick filter</Label>
-			<Input bind:value={languageFilter} type="search" placeholder="Filter languages" />
-		</div>
-		<div class="mt-4 grid max-h-80 gap-2 overflow-auto rounded-md bg-muted/30 p-2">
-			{#each filteredOptions as option (option.id)}
-				<MediaProfileLanguageRow
-					id={option.id}
-					label={option.displayLabel}
-					score={selectedScores.get(option.id)}
-					onToggle={toggleLanguage}
-					onScoreChange={updateLanguageScore}
-					onRequiredChange={updateLanguageRequired}
-				/>
-			{:else}
-				<p class="m-0 p-4 text-center text-sm text-muted-foreground">
-					No languages match the filter.
-				</p>
-			{/each}
-		</div>
+
+		<Table.Root class="min-w-[760px] table-fixed">
+			<Table.Header>
+				<Table.Row>
+					<Table.Head class="w-36">Language</Table.Head>
+					<Table.Head class="w-16">Score</Table.Head>
+					<Table.Head>Codec</Table.Head>
+					<Table.Head>Channels</Table.Head>
+					<Table.Head class="w-20">Min kbps</Table.Head>
+					<Table.Head class="w-32">Lossy</Table.Head>
+					<Table.Head class="w-9"><span class="sr-only">Actions</span></Table.Head>
+				</Table.Row>
+			</Table.Header>
+			<Table.Body>
+				{#each targets as target, index (target.languageId)}
+					<Table.Row>
+						<Table.Cell>
+							<span class="font-medium"
+								>{languageLabelFromCatalog(target.languageId, languages)}</span
+							>
+						</Table.Cell>
+						<Table.Cell>
+							<Input
+								aria-label="Audio score"
+								type="number"
+								value={target.score}
+								oninput={(event) => update(index, { score: event.currentTarget.valueAsNumber })}
+							/>
+						</Table.Cell>
+						<Table.Cell>
+							<ProfileTargetMultiSelect
+								id={`audio-target-codecs-${target.languageId}`}
+								label="Codec"
+								labelClass="sr-only"
+								values={target.codecs ?? []}
+								options={audioCodecOptions}
+								placeholder="Any codec"
+								onChange={(values) => update(index, { codecs: values })}
+							/>
+						</Table.Cell>
+						<Table.Cell>
+							<ProfileTargetMultiSelect
+								id={`audio-target-channels-${target.languageId}`}
+								label="Channels"
+								labelClass="sr-only"
+								values={target.channels ?? []}
+								options={audioChannelOptions}
+								placeholder="Any channels"
+								onChange={(values) => update(index, { channels: values })}
+							/>
+						</Table.Cell>
+						<Table.Cell>
+							<Input
+								aria-label="Minimum bitrate kbps"
+								type="number"
+								value={target.minimumBitrateKbps ?? ''}
+								oninput={(event) =>
+									update(index, { minimumBitrateKbps: event.currentTarget.valueAsNumber })}
+							/>
+						</Table.Cell>
+						<Table.Cell>
+							<Select.Root
+								type="single"
+								value={target.lossyTranscodePolicy}
+								onValueChange={(value) =>
+									update(index, {
+										lossyTranscodePolicy: value as MediaProfileLossyTranscodePolicy
+									})}
+							>
+								<Select.Trigger>{target.lossyTranscodePolicy}</Select.Trigger>
+								<Select.Content>
+									<Select.Item value="disabled" label="Disabled" />
+									<Select.Item value="losslessToLossy" label="Lossless to lossy" />
+									<Select.Item value="lossyToLossy" label="Lossy to lossy" />
+								</Select.Content>
+							</Select.Root>
+						</Table.Cell>
+						<Table.Cell class="text-right">
+							<Button
+								type="button"
+								variant="destructive"
+								size="icon-sm"
+								disabled={targets.length <= 1}
+								onclick={() => remove(index)}
+							>
+								<TrashIcon aria-label="Remove audio target" />
+							</Button>
+						</Table.Cell>
+					</Table.Row>
+				{/each}
+			</Table.Body>
+		</Table.Root>
 	</Card.Content>
 </Card.Root>

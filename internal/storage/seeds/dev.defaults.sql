@@ -7,17 +7,24 @@ insert into app.media_profiles (
     minimum_custom_format_score,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
-    remove_non_enabled_languages,
+    final_container,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference
 )
 values
-    ('low-quality-demo', 'Low Quality Demo', false, true, 'webdl-480p', 0, 100, 1, false, 'any', 'preferEpisodes')
+    ('low-quality-demo', 'Low Quality Demo', false, true, 'webdl-480p', 0, 100, 1, 'mkv', false, false, 'any', 'preferEpisodes')
 on conflict (id) do nothing;
 
-insert into app.media_profile_languages (profile_id, language_id, score)
+insert into app.media_profile_video_targets (profile_id)
 values
-    ('low-quality-demo', 'english', 0)
+    ('low-quality-demo')
+on conflict (profile_id) do nothing;
+
+insert into app.media_profile_audio_targets (profile_id, language_id, score, required, sort_order)
+values
+    ('low-quality-demo', 'english', 0, true, 0)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)

@@ -201,7 +201,18 @@ function searchResult(overrides: Partial<MediaSearchResult> = {}): MediaSearchRe
 }
 
 function qualityProfile(): QualityProfileOption {
-	return { id: 'profile-1', name: 'HD Profile', targetLanguages: ['english'] };
+	return {
+		id: 'profile-1',
+		name: 'HD Profile',
+		audioTargets: [
+			{
+				languageId: 'english',
+				score: 0,
+				required: true,
+				lossyTranscodePolicy: 'disabled'
+			}
+		]
+	};
 }
 
 function libraryFolder(): LibraryFolder {

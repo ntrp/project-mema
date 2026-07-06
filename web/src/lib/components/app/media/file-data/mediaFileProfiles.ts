@@ -5,11 +5,10 @@ export interface MediaFileProfileOption {
 	qualityIds?: string[];
 	upgradesAllowed?: boolean;
 	upgradeUntilQualityId?: string;
-	targetLanguages?: string[];
-	targetLanguageScores?: { languageId: string; score?: number; required?: boolean }[];
-	subtitleLanguages?: { languageId: string }[];
-	removeNonEnabledLanguages?: boolean;
-	removeNonEnabledSubtitleLanguages?: boolean;
+	audioTargets?: { languageId: string; required?: boolean }[];
+	subtitleTargets?: { languageId: string }[];
+	removeUnwantedAudio?: boolean;
+	removeUnwantedSubtitles?: boolean;
 }
 
 export function fileProfileSettings(item: MediaItem, qualityProfiles: MediaFileProfileOption[]) {
@@ -18,12 +17,12 @@ export function fileProfileSettings(item: MediaItem, qualityProfiles: MediaFileP
 		: undefined;
 	return {
 		profile,
-		expectedLanguages: profile?.targetLanguages ?? [],
+		expectedLanguages: profile?.audioTargets?.map((target) => target.languageId) ?? [],
 		expectedRequiredLanguages: requiredTargetLanguages(profile),
 		expectedSubtitleLanguages:
-			profile?.subtitleLanguages?.map((language) => language.languageId) ?? [],
-		removeNonEnabledLanguages: profile?.removeNonEnabledLanguages === true,
-		removeNonEnabledSubtitleLanguages: profile?.removeNonEnabledSubtitleLanguages === true
+			profile?.subtitleTargets?.map((language) => language.languageId) ?? [],
+		removeNonEnabledLanguages: profile?.removeUnwantedAudio === true,
+		removeNonEnabledSubtitleLanguages: profile?.removeUnwantedSubtitles === true
 	};
 }
 
@@ -31,10 +30,10 @@ function requiredTargetLanguages(profile: MediaFileProfileOption | undefined) {
 	if (!profile) {
 		return [];
 	}
-	if (!profile.targetLanguageScores?.length) {
+	if (!profile.audioTargets?.length) {
 		return [];
 	}
-	return profile.targetLanguageScores
+	return profile.audioTargets
 		.filter((language) => language.required)
 		.map((language) => language.languageId);
 }

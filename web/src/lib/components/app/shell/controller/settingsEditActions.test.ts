@@ -77,16 +77,26 @@ describe('settings edit actions (SCN-SETTINGS-002)', () => {
 		actions.editMediaProfile({
 			id: 'profile-1',
 			name: 'HD',
+			finalContainer: 'mkv',
 			qualityIds: ['q-1080p'],
 			upgradesAllowed: true,
 			minimumCustomFormatScore: 0,
 			upgradeUntilCustomFormatScore: 0,
 			minimumCustomFormatScoreIncrement: 1,
-			removeNonEnabledLanguages: false,
-			removeNonEnabledSubtitleLanguages: false,
+			removeUnwantedAudio: false,
+			removeUnwantedSubtitles: false,
 			preferredProtocol: 'any',
 			seriesPackPreference: 'auto',
-			targetLanguages: ['english'],
+			videoTarget: {},
+			audioTargets: [
+				{
+					languageId: 'english',
+					score: 0,
+					required: true,
+					lossyTranscodePolicy: 'disabled'
+				}
+			],
+			subtitleTargets: [],
 			customFormatScores: []
 		} as never);
 		expect(state.activeSettingsSection).toBe('profiles');

@@ -9,8 +9,8 @@ import (
 func TestMediaFileSubtitleSatisfactionUsesEmbeddedTracks(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction([]MediaFileTrack{
 		{Type: Subtitle, Language: stringPtr("eng")},
-	}, []storage.MediaProfileSubtitleLanguage{
-		{LanguageID: "english", Required: true, SubtitleType: "any"},
+	}, []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Required: true, Source: "any"},
 	}, nil)
 
 	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {
@@ -24,8 +24,8 @@ func TestMediaFileSubtitleSatisfactionUsesEmbeddedTracks(t *testing.T) {
 func TestMediaFileSubtitleSatisfactionReportsMissingTargets(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction([]MediaFileTrack{
 		{Type: Subtitle, Language: stringPtr("jpn")},
-	}, []storage.MediaProfileSubtitleLanguage{
-		{LanguageID: "english", Required: true, SubtitleType: "embedded"},
+	}, []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Required: true, Source: "embedded"},
 	}, nil)
 
 	if result.State != MediaFileSubtitleSatisfactionStateMissing {
@@ -37,8 +37,8 @@ func TestMediaFileSubtitleSatisfactionReportsMissingTargets(t *testing.T) {
 }
 
 func TestMediaFileSubtitleSatisfactionUsesExternalRecords(t *testing.T) {
-	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleLanguage{
-		{LanguageID: "english", Required: true, SubtitleType: "external"},
+	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Required: true, Source: "external"},
 	}, []string{"eng"})
 
 	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {
@@ -47,8 +47,8 @@ func TestMediaFileSubtitleSatisfactionUsesExternalRecords(t *testing.T) {
 }
 
 func TestMediaFileSubtitleSatisfactionOnlyMissingWhenRequired(t *testing.T) {
-	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleLanguage{
-		{LanguageID: "english", Required: false, SubtitleType: "external"},
+	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Required: false, Source: "external"},
 	}, nil)
 
 	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {

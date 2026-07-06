@@ -71,14 +71,21 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 		minimumCustomFormatScore: 0,
 		upgradeUntilCustomFormatScore: 50,
 		minimumCustomFormatScoreIncrement: 1,
-		removeNonEnabledLanguages: false,
-		removeNonEnabledSubtitleLanguages: false,
+		finalContainer: 'mkv',
+		removeUnwantedAudio: false,
+		removeUnwantedSubtitles: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
-		targetLanguages: ['english'],
-		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
-		subtitleLanguages: [{ languageId: 'english', score: 0, required: true, subtitleType: 'any' }],
-		componentTargets: [],
+		videoTarget: {},
+		audioTargets: [
+			{
+				languageId: 'english',
+				score: 0,
+				required: false,
+				lossyTranscodePolicy: 'disabled'
+			}
+		],
+		subtitleTargets: [{ languageId: 'english', score: 0, required: true, source: 'any' }],
 		customFormatScores: [],
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',

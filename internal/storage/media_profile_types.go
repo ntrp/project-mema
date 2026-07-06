@@ -10,20 +10,20 @@ type MediaProfile struct {
 	ID                                string
 	Name                              string
 	IsDefault                         bool
-	QualityIDs                        []string
+	FinalContainer                    string
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             *string
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
-	RemoveNonEnabledLanguages         bool
-	RemoveNonEnabledSubtitleLanguages bool
+	RemoveUnwantedAudio               bool
+	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
-	TargetLanguages                   []string
-	TargetLanguageScores              []MediaProfileLanguageScore
-	SubtitleLanguages                 []MediaProfileSubtitleLanguage
-	ComponentTargets                  []MediaProfileComponentTarget
+	VideoTarget                       MediaProfileVideoTarget
+	AudioTargets                      []MediaProfileAudioTarget
+	SubtitleTargets                   []MediaProfileSubtitleTarget
+	QualityIDs                        []string
 	CustomFormatScores                []MediaProfileCustomFormatScore
 	CreatedAt                         time.Time
 	UpdatedAt                         time.Time
@@ -32,27 +32,44 @@ type MediaProfile struct {
 type MediaProfileInput struct {
 	Name                              string
 	IsDefault                         bool
-	QualityIDs                        []string
+	FinalContainer                    string
 	UpgradesAllowed                   bool
 	UpgradeUntilQualityID             *string
 	MinimumCustomFormatScore          int32
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
-	RemoveNonEnabledLanguages         bool
-	RemoveNonEnabledSubtitleLanguages bool
+	RemoveUnwantedAudio               bool
+	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
-	TargetLanguages                   []string
-	TargetLanguageScores              []MediaProfileLanguageScore
-	SubtitleLanguages                 []MediaProfileSubtitleLanguage
-	ComponentTargets                  []MediaProfileComponentTarget
+	VideoTarget                       MediaProfileVideoTarget
+	AudioTargets                      []MediaProfileAudioTarget
+	SubtitleTargets                   []MediaProfileSubtitleTarget
+	QualityIDs                        []string
 	CustomFormatScores                []MediaProfileCustomFormatScore
 }
 
-type MediaProfileLanguageScore struct {
-	LanguageID string
-	Score      int32
-	Required   bool
+type MediaProfileVideoTarget struct {
+	Codecs              []string
+	CodecRequired       bool
+	CodecScore          int32
+	HDRFormats          []string
+	HDRRequired         bool
+	HDRScore            int32
+	PixelFormats        []string
+	PixelFormatRequired bool
+	PixelFormatScore    int32
+}
+
+type MediaProfileAudioTarget struct {
+	LanguageID           string
+	Score                int32
+	Required             bool
+	Codecs               []string
+	Channels             []string
+	MinimumBitrateKbps   *int32
+	PreferredBitrateKbps *int32
+	LossyTranscodePolicy string
 }
 
 type MediaProfileCustomFormatScore struct {
@@ -60,20 +77,10 @@ type MediaProfileCustomFormatScore struct {
 	Score          int32
 }
 
-type MediaProfileSubtitleLanguage struct {
-	LanguageID   string
-	Score        int32
-	Required     bool
-	SubtitleType string
-}
-
-type MediaProfileComponentTarget struct {
-	ID               uuid.UUID
-	ComponentType    string
-	Required         bool
-	LanguageID       *string
-	Codec            *string
-	Channels         *string
-	Source           string
-	FallbackBehavior string
+type MediaProfileSubtitleTarget struct {
+	LanguageID string
+	Score      int32
+	Required   bool
+	Source     string
+	Formats    []string
 }

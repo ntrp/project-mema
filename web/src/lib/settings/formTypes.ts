@@ -41,12 +41,10 @@ export interface QualityProfileOption {
 	id: string;
 	name: string;
 	isDefault?: boolean;
-	targetLanguages?: string[];
-	targetLanguageScores?: Schemas['MediaProfileLanguageScore'][];
-	subtitleLanguages?: Schemas['MediaProfileSubtitleLanguage'][];
-	componentTargets?: Schemas['MediaProfileComponentTarget'][];
-	removeNonEnabledLanguages?: boolean;
-	removeNonEnabledSubtitleLanguages?: boolean;
+	audioTargets?: Schemas['MediaProfileAudioTarget'][];
+	subtitleTargets?: Schemas['MediaProfileSubtitleTarget'][];
+	removeUnwantedAudio?: boolean;
+	removeUnwantedSubtitles?: boolean;
 }
 
 export type AppView =

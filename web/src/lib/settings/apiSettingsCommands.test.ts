@@ -162,13 +162,19 @@ function mediaProfileForm() {
 		minimumCustomFormatScore: 0,
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
-		removeNonEnabledLanguages: false,
-		removeNonEnabledSubtitleLanguages: false,
+		removeUnwantedAudio: false,
+		removeUnwantedSubtitles: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
-		targetLanguages: ['english'],
-		targetLanguageScores: [{ languageId: 'english', score: 0, required: false }],
-		subtitleLanguages: [{ languageId: 'english', score: 0, required: true, subtitleType: 'any' }],
+		audioTargets: [
+			{
+				languageId: 'english',
+				score: 0,
+				required: false,
+				lossyTranscodePolicy: 'disabled'
+			}
+		],
+		subtitleTargets: [{ languageId: 'english', score: 0, required: true, source: 'any' }],
 		customFormatScores: []
 	} as const;
 }

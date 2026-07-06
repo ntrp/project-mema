@@ -91,7 +91,10 @@ func TestSCNMedia002ReleaseCandidateResponsePreservesIndexerAndMatchDetails(t *t
 				},
 			},
 		},
-		&storage.MediaProfile{QualityIDs: []string{"webdl-1080p"}, TargetLanguages: []string{"de"}},
+		&storage.MediaProfile{
+			QualityIDs:   []string{"webdl-1080p"},
+			AudioTargets: []storage.MediaProfileAudioTarget{{LanguageID: "de"}},
+		},
 		nil,
 		[]storage.Language{{Code: "de", DisplayName: "German", Aliases: []string{"ger", "german"}}},
 	)

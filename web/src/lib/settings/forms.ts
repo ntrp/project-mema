@@ -17,6 +17,8 @@ export {
 	normalizeLanguageUpdateForm
 } from './languageForms';
 export {
+	defaultAudioTarget,
+	defaultSubtitleTarget,
 	emptyMediaProfileForm,
 	mediaProfileFormFromProfile,
 	normalizeMediaProfileForm

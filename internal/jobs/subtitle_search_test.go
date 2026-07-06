@@ -22,8 +22,8 @@ func TestSubtitleSearchRequestBuildsEpisodeContext(t *testing.T) {
 		Title:     "Scenario Series",
 		Year:      &year,
 		FilePaths: []string{"/library/Scenario.Series.S01E02.mkv"},
-		SubtitleLanguages: []storage.MediaProfileSubtitleLanguage{
-			{LanguageID: "english", Required: true, SubtitleType: "any"},
+		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
+			{LanguageID: "english", Required: true, Source: "any"},
 		},
 	}
 
@@ -72,8 +72,8 @@ func TestSubtitleSearchDownloadsAndRecordsSubtitle(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
-	item.SubtitleLanguages = []storage.MediaProfileSubtitleLanguage{
-		{LanguageID: "english", Required: true, SubtitleType: "any"},
+	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Required: true, Source: "any"},
 	}
 
 	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
