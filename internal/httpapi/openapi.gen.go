@@ -427,6 +427,48 @@ func (e LibraryScanItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaComponentArtifactStatus.
+const (
+	MediaComponentArtifactStatusFailed    MediaComponentArtifactStatus = "failed"
+	MediaComponentArtifactStatusQueued    MediaComponentArtifactStatus = "queued"
+	MediaComponentArtifactStatusRunning   MediaComponentArtifactStatus = "running"
+	MediaComponentArtifactStatusSucceeded MediaComponentArtifactStatus = "succeeded"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentArtifactStatus enum.
+func (e MediaComponentArtifactStatus) Valid() bool {
+	switch e {
+	case MediaComponentArtifactStatusFailed:
+		return true
+	case MediaComponentArtifactStatusQueued:
+		return true
+	case MediaComponentArtifactStatusRunning:
+		return true
+	case MediaComponentArtifactStatusSucceeded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaComponentArtifactStreamType.
+const (
+	MediaComponentArtifactStreamTypeAudio    MediaComponentArtifactStreamType = "audio"
+	MediaComponentArtifactStreamTypeSubtitle MediaComponentArtifactStreamType = "subtitle"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentArtifactStreamType enum.
+func (e MediaComponentArtifactStreamType) Valid() bool {
+	switch e {
+	case MediaComponentArtifactStreamTypeAudio:
+		return true
+	case MediaComponentArtifactStreamTypeSubtitle:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaComponentSourceRetentionState.
 const (
 	MediaComponentSourceRetentionStateReleased MediaComponentSourceRetentionState = "released"
@@ -2197,8 +2239,49 @@ type MediaCollection struct {
 	Results      []MediaSearchResult  `json:"results"`
 }
 
+// MediaComponentArtifact defines model for MediaComponentArtifact.
+type MediaComponentArtifact struct {
+	CompletedAt  *time.Time                       `json:"completedAt,omitempty"`
+	CreatedAt    time.Time                        `json:"createdAt"`
+	ErrorMessage *string                          `json:"errorMessage,omitempty"`
+	Id           openapi_types.UUID               `json:"id"`
+	JobId        *string                          `json:"jobId,omitempty"`
+	Language     *string                          `json:"language,omitempty"`
+	MediaItemId  openapi_types.UUID               `json:"mediaItemId"`
+	OutputPath   string                           `json:"outputPath"`
+	SizeBytes    *int64                           `json:"sizeBytes,omitempty"`
+	SourceId     openapi_types.UUID               `json:"sourceId"`
+	Status       MediaComponentArtifactStatus     `json:"status"`
+	StreamId     int32                            `json:"streamId"`
+	StreamType   MediaComponentArtifactStreamType `json:"streamType"`
+	ToolName     string                           `json:"toolName"`
+	ToolSummary  string                           `json:"toolSummary"`
+	UpdatedAt    time.Time                        `json:"updatedAt"`
+}
+
+// MediaComponentArtifactStatus defines model for MediaComponentArtifactStatus.
+type MediaComponentArtifactStatus string
+
+// MediaComponentArtifactStreamType defines model for MediaComponentArtifactStreamType.
+type MediaComponentArtifactStreamType string
+
+// MediaComponentExtractionEnqueueResponse defines model for MediaComponentExtractionEnqueueResponse.
+type MediaComponentExtractionEnqueueResponse struct {
+	Artifact MediaComponentArtifact `json:"artifact"`
+	JobId    int64                  `json:"jobId"`
+	Message  string                 `json:"message"`
+}
+
+// MediaComponentExtractionRequest defines model for MediaComponentExtractionRequest.
+type MediaComponentExtractionRequest struct {
+	Language   *string                          `json:"language,omitempty"`
+	StreamId   int32                            `json:"streamId"`
+	StreamType MediaComponentArtifactStreamType `json:"streamType"`
+}
+
 // MediaComponentSource defines model for MediaComponentSource.
 type MediaComponentSource struct {
+	Artifacts       *[]MediaComponentArtifact          `json:"artifacts,omitempty"`
 	Checksum        *string                            `json:"checksum,omitempty"`
 	CreatedAt       time.Time                          `json:"createdAt"`
 	Id              openapi_types.UUID                 `json:"id"`
@@ -3693,6 +3776,9 @@ type UpdateMediaItemJSONRequestBody = MediaItemUpdateRequest
 // RetainMediaComponentSourceJSONRequestBody defines body for RetainMediaComponentSource for application/json ContentType.
 type RetainMediaComponentSourceJSONRequestBody = MediaComponentSourceRetainRequest
 
+// EnqueueMediaComponentExtractionJSONRequestBody defines body for EnqueueMediaComponentExtraction for application/json ContentType.
+type EnqueueMediaComponentExtractionJSONRequestBody = MediaComponentExtractionRequest
+
 // DeleteMediaItemFileJSONRequestBody defines body for DeleteMediaItemFile for application/json ContentType.
 type DeleteMediaItemFileJSONRequestBody = MediaFileDeleteRequest
 
@@ -3932,6 +4018,9 @@ type ServerInterface interface {
 	// Inspect one retained component source
 	// (GET /media/items/{id}/component-sources/{sourceId})
 	GetMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
+	// Extract one stream from a retained component source
+	// (POST /media/items/{id}/component-sources/{sourceId}/extractions)
+	EnqueueMediaComponentExtraction(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
 	// Release one retained component source
 	// (POST /media/items/{id}/component-sources/{sourceId}/release)
 	ReleaseMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
@@ -4511,6 +4600,12 @@ func (_ Unimplemented) RetainMediaComponentSource(w http.ResponseWriter, r *http
 // Inspect one retained component source
 // (GET /media/items/{id}/component-sources/{sourceId})
 func (_ Unimplemented) GetMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Extract one stream from a retained component source
+// (POST /media/items/{id}/component-sources/{sourceId}/extractions)
+func (_ Unimplemented) EnqueueMediaComponentExtraction(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6665,6 +6760,47 @@ func (siw *ServerInterfaceWrapper) GetMediaComponentSource(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetMediaComponentSource(w, r, id, sourceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnqueueMediaComponentExtraction operation middleware
+func (siw *ServerInterfaceWrapper) EnqueueMediaComponentExtraction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sourceId" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sourceId", chi.URLParam(r, "sourceId"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sourceId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnqueueMediaComponentExtraction(w, r, id, sourceId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10794,6 +10930,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}", wrapper.GetMediaComponentSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}/extractions", wrapper.EnqueueMediaComponentExtraction)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}/release", wrapper.ReleaseMediaComponentSource)

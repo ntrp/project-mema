@@ -24,8 +24,9 @@ import (
 )
 
 const (
-	queueMediaSearch = "media_search"
-	queueDownloads   = "downloads"
+	queueMediaSearch   = "media_search"
+	queueDownloads     = "downloads"
+	queueMediaAssembly = "media_assembly"
 )
 
 type Client struct {
@@ -190,8 +191,9 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 
 	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
-			queueMediaSearch: {MaxWorkers: 2},
-			queueDownloads:   {MaxWorkers: 2},
+			queueMediaSearch:   {MaxWorkers: 2},
+			queueDownloads:     {MaxWorkers: 2},
+			queueMediaAssembly: {MaxWorkers: 2},
 		},
 		PeriodicJobs:    periodicJobs(),
 		SoftStopTimeout: 10 * time.Second,

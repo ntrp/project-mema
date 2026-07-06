@@ -1068,6 +1068,28 @@ create table if not exists app.media_component_sources (
 create index if not exists idx_media_component_sources_media
     on app.media_component_sources (media_item_id, retained_at desc);
 
+create table if not exists app.media_component_artifacts (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    source_id uuid not null references app.media_component_sources(id) on delete cascade,
+    stream_id integer not null check (stream_id >= 0),
+    stream_type text not null check (stream_type in ('audio', 'subtitle')),
+    language text,
+    output_path text not null,
+    status text not null default 'queued' check (status in ('queued', 'running', 'succeeded', 'failed')),
+    tool_name text not null default 'mkvextract',
+    tool_summary text not null default '',
+    error_message text,
+    job_id text,
+    size_bytes bigint check (size_bytes is null or size_bytes >= 0),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    completed_at timestamptz
+);
+
+create index if not exists idx_media_component_artifacts_source
+    on app.media_component_artifacts (source_id, created_at desc);
+
 create table if not exists app.media_file_history (
     id uuid primary key,
     media_item_id uuid references app.media_items(id) on delete set null,

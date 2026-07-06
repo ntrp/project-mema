@@ -40,6 +40,7 @@ import {
 	updateSystemLogLevel
 } from '../api';
 import {
+	enqueueMediaComponentExtraction,
 	getMediaComponentSource,
 	listMediaComponentSources,
 	releaseMediaComponentSource,
@@ -135,7 +136,11 @@ describe('additional UI API command helpers (SCN-SETTINGS-009)', () => {
 		clientMock.GET.mockResolvedValueOnce({
 			data: { sources: [{ id: 'source-1' }] }
 		}).mockResolvedValueOnce({ data: { id: 'source-1' } });
-		clientMock.POST.mockResolvedValue({ data: { id: 'source-1' } });
+		clientMock.POST.mockResolvedValueOnce({ data: { id: 'source-1' } })
+			.mockResolvedValueOnce({ data: { id: 'source-1' } })
+			.mockResolvedValueOnce({
+				data: { jobId: 42, message: 'queued', artifact: { id: 'artifact-1' } }
+			});
 
 		await expect(listMediaComponentSources('media-1')).resolves.toEqual({
 			sources: [{ id: 'source-1' }]
@@ -152,10 +157,24 @@ describe('additional UI API command helpers (SCN-SETTINGS-009)', () => {
 		await expect(releaseMediaComponentSource('media-1', 'source-1')).resolves.toEqual({
 			id: 'source-1'
 		});
-		expect(clientMock.POST).toHaveBeenLastCalledWith(
+		await expect(
+			enqueueMediaComponentExtraction('media-1', 'source-1', {
+				streamId: 2,
+				streamType: 'audio'
+			})
+		).resolves.toEqual({ jobId: 42, message: 'queued', artifact: { id: 'artifact-1' } });
+		expect(clientMock.POST).toHaveBeenNthCalledWith(
+			2,
 			'/media/items/{id}/component-sources/{sourceId}/release',
 			{
 				params: { path: { id: 'media-1', sourceId: 'source-1' } }
+			}
+		);
+		expect(clientMock.POST).toHaveBeenLastCalledWith(
+			'/media/items/{id}/component-sources/{sourceId}/extractions',
+			{
+				params: { path: { id: 'media-1', sourceId: 'source-1' } },
+				body: { streamId: 2, streamType: 'audio' }
 			}
 		);
 	});

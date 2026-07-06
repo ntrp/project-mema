@@ -268,6 +268,25 @@ type AppLogFileSetting struct {
 	UpdatedAt     time.Time
 }
 
+type AppMediaComponentArtifact struct {
+	ID           uuid.UUID
+	MediaItemID  uuid.UUID
+	SourceID     uuid.UUID
+	StreamID     int32
+	StreamType   string
+	Language     pgtype.Text
+	OutputPath   string
+	Status       string
+	ToolName     string
+	ToolSummary  string
+	ErrorMessage pgtype.Text
+	JobID        pgtype.Text
+	SizeBytes    pgtype.Int8
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	CompletedAt  *time.Time
+}
+
 type AppMediaComponentSource struct {
 	ID              uuid.UUID
 	MediaItemID     uuid.UUID

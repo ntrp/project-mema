@@ -76,6 +76,13 @@ func hydrateMediaItemComponentSources(
 	if err != nil {
 		return item, err
 	}
+	for index := range sources {
+		artifacts, err := listMediaComponentArtifactsForSource(ctx, q, sources[index].ID)
+		if err != nil {
+			return item, err
+		}
+		sources[index].Artifacts = artifacts
+	}
 	item.ComponentSources = sources
 	return item, nil
 }

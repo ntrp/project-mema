@@ -22,6 +22,7 @@ type MediaComponentSource struct {
 	ReleasedAt      *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
+	Artifacts       []MediaComponentArtifact
 }
 
 type MediaComponentSourceInput struct {

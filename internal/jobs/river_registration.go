@@ -55,6 +55,7 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &ReleaseBlocklistCleanupWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &SubtitleSearchWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
 	river.AddWorker(workers, &SubtitleRetryWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
+	river.AddWorker(workers, &ComponentExtractionWorker{settings: deps.settings, events: deps.events})
 }
 
 func periodicJobs() []*river.PeriodicJob {

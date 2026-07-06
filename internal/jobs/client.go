@@ -76,3 +76,17 @@ func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (
 	publishJobUpdated(c.events, result.Job, "")
 	return result.Job.ID, nil
 }
+
+func (c *Client) EnqueueMediaComponentExtraction(ctx context.Context, artifactID uuid.UUID) (int64, error) {
+	result, err := c.river.Insert(ctx, MediaComponentExtractionArgs{ArtifactID: artifactID.String()}, &river.InsertOpts{
+		Queue: queueMediaAssembly,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	publishJobUpdated(c.events, result.Job, "")
+	return result.Job.ID, nil
+}

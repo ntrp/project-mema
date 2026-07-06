@@ -792,6 +792,26 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/component-sources/{sourceId}/extractions': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Extract one stream from a retained component source */
+		post: operations['enqueueMediaComponentExtraction'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/delete': {
 		parameters: {
 			query?: never;
@@ -2721,11 +2741,54 @@ export interface components {
 			createdAt: string;
 			/** Format: date-time */
 			updatedAt: string;
+			artifacts?: components['schemas']['MediaComponentArtifact'][];
 		};
 		/** @enum {string} */
 		MediaComponentSourceRole: 'baseVideo' | 'audio' | 'subtitle' | 'other';
 		/** @enum {string} */
 		MediaComponentSourceRetentionState: 'retained' | 'released';
+		MediaComponentExtractionRequest: {
+			/** Format: int32 */
+			streamId: number;
+			streamType: components['schemas']['MediaComponentArtifactStreamType'];
+			language?: string;
+		};
+		MediaComponentExtractionEnqueueResponse: {
+			/** Format: int64 */
+			jobId: number;
+			message: string;
+			artifact: components['schemas']['MediaComponentArtifact'];
+		};
+		MediaComponentArtifact: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId: string;
+			/** Format: uuid */
+			sourceId: string;
+			/** Format: int32 */
+			streamId: number;
+			streamType: components['schemas']['MediaComponentArtifactStreamType'];
+			language?: string;
+			outputPath: string;
+			status: components['schemas']['MediaComponentArtifactStatus'];
+			toolName: string;
+			toolSummary: string;
+			errorMessage?: string;
+			jobId?: string;
+			/** Format: int64 */
+			sizeBytes?: number;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+			/** Format: date-time */
+			completedAt?: string;
+		};
+		/** @enum {string} */
+		MediaComponentArtifactStreamType: 'audio' | 'subtitle';
+		/** @enum {string} */
+		MediaComponentArtifactStatus: 'queued' | 'running' | 'succeeded' | 'failed';
 		MediaFileHistoryResponse: {
 			entries: components['schemas']['MediaFileHistoryEntry'][];
 		};
@@ -5381,6 +5444,36 @@ export interface operations {
 					'application/json': components['schemas']['MediaComponentSource'];
 				};
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	enqueueMediaComponentExtraction: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaComponentExtractionRequest'];
+			};
+		};
+		responses: {
+			/** @description Component extraction queued */
+			202: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentExtractionEnqueueResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};
