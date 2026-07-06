@@ -1047,6 +1047,27 @@ create index if not exists idx_media_item_subtitles_episode
     on app.media_item_subtitles (episode_id)
     where episode_id is not null;
 
+create table if not exists app.media_component_sources (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    source_role text not null check (source_role in ('baseVideo', 'audio', 'subtitle', 'other')),
+    source_file_path text not null,
+    retained_path text not null,
+    release_title text,
+    source_metadata text,
+    stream_inventory text not null default '',
+    checksum text,
+    size_bytes bigint check (size_bytes is null or size_bytes >= 0),
+    retention_state text not null default 'retained' check (retention_state in ('retained', 'released')),
+    retained_at timestamptz not null default now(),
+    released_at timestamptz,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_media_component_sources_media
+    on app.media_component_sources (media_item_id, retained_at desc);
+
 create table if not exists app.media_file_history (
     id uuid primary key,
     media_item_id uuid references app.media_items(id) on delete set null,

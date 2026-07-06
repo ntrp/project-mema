@@ -1424,6 +1424,107 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/component-sources:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      operationId: listMediaComponentSources
+      tags:
+        - Media
+      summary: List retained component sources
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Retained component sources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaComponentSourceListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: retainMediaComponentSource
+      tags:
+        - Media
+      summary: Retain one component source file
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaComponentSourceRetainRequest"
+      responses:
+        "201":
+          description: Component source retained
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaComponentSource"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/component-sources/{sourceId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: sourceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getMediaComponentSource
+      tags:
+        - Media
+      summary: Inspect one retained component source
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Retained component source
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaComponentSource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/component-sources/{sourceId}/release:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: sourceId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: releaseMediaComponentSource
+      tags:
+        - Media
+      summary: Release one retained component source
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Component source released
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaComponentSource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/files/delete:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -4855,6 +4956,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/MediaItemSubtitle"
+            componentSources:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaComponentSource"
             metadataFilePaths:
               type: array
               items:
@@ -5223,6 +5328,109 @@ components:
           type: boolean
         retentionMode:
           $ref: "#/components/schemas/MediaItemSubtitleRetentionMode"
+    MediaComponentSourceListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - sources
+      properties:
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaComponentSource"
+    MediaComponentSourceRetainRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - sourceRole
+        - sourceFilePath
+      properties:
+        sourceRole:
+          $ref: "#/components/schemas/MediaComponentSourceRole"
+        sourceFilePath:
+          type: string
+          minLength: 1
+        releaseTitle:
+          type: string
+        sourceMetadata:
+          type: string
+        streamInventory:
+          type: string
+        checksum:
+          type: string
+    MediaComponentSource:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mediaItemId
+        - sourceRole
+        - sourceFilePath
+        - retainedPath
+        - streamInventory
+        - retentionState
+        - retainedAt
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
+        sourceRole:
+          $ref: "#/components/schemas/MediaComponentSourceRole"
+        sourceFilePath:
+          type: string
+        retainedPath:
+          type: string
+        releaseTitle:
+          type: string
+        sourceMetadata:
+          type: string
+        streamInventory:
+          type: string
+        checksum:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        retentionState:
+          $ref: "#/components/schemas/MediaComponentSourceRetentionState"
+        retainedAt:
+          type: string
+          format: date-time
+        releasedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    MediaComponentSourceRole:
+      type: string
+      enum:
+        - baseVideo
+        - audio
+        - subtitle
+        - other
+      x-enum-varnames:
+        - MediaComponentSourceRoleBaseVideo
+        - MediaComponentSourceRoleAudio
+        - MediaComponentSourceRoleSubtitle
+        - MediaComponentSourceRoleOther
+    MediaComponentSourceRetentionState:
+      type: string
+      enum:
+        - retained
+        - released
+      x-enum-varnames:
+        - MediaComponentSourceRetentionStateRetained
+        - MediaComponentSourceRetentionStateReleased
     MediaFileHistoryResponse:
       type: object
       additionalProperties: false

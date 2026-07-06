@@ -427,6 +427,48 @@ func (e LibraryScanItemStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaComponentSourceRetentionState.
+const (
+	MediaComponentSourceRetentionStateReleased MediaComponentSourceRetentionState = "released"
+	MediaComponentSourceRetentionStateRetained MediaComponentSourceRetentionState = "retained"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentSourceRetentionState enum.
+func (e MediaComponentSourceRetentionState) Valid() bool {
+	switch e {
+	case MediaComponentSourceRetentionStateReleased:
+		return true
+	case MediaComponentSourceRetentionStateRetained:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaComponentSourceRole.
+const (
+	MediaComponentSourceRoleAudio     MediaComponentSourceRole = "audio"
+	MediaComponentSourceRoleBaseVideo MediaComponentSourceRole = "baseVideo"
+	MediaComponentSourceRoleOther     MediaComponentSourceRole = "other"
+	MediaComponentSourceRoleSubtitle  MediaComponentSourceRole = "subtitle"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentSourceRole enum.
+func (e MediaComponentSourceRole) Valid() bool {
+	switch e {
+	case MediaComponentSourceRoleAudio:
+		return true
+	case MediaComponentSourceRoleBaseVideo:
+		return true
+	case MediaComponentSourceRoleOther:
+		return true
+	case MediaComponentSourceRoleSubtitle:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaContentKind.
 const (
 	MediaContentKindAnime    MediaContentKind = "anime"
@@ -2155,6 +2197,46 @@ type MediaCollection struct {
 	Results      []MediaSearchResult  `json:"results"`
 }
 
+// MediaComponentSource defines model for MediaComponentSource.
+type MediaComponentSource struct {
+	Checksum        *string                            `json:"checksum,omitempty"`
+	CreatedAt       time.Time                          `json:"createdAt"`
+	Id              openapi_types.UUID                 `json:"id"`
+	MediaItemId     openapi_types.UUID                 `json:"mediaItemId"`
+	ReleaseTitle    *string                            `json:"releaseTitle,omitempty"`
+	ReleasedAt      *time.Time                         `json:"releasedAt,omitempty"`
+	RetainedAt      time.Time                          `json:"retainedAt"`
+	RetainedPath    string                             `json:"retainedPath"`
+	RetentionState  MediaComponentSourceRetentionState `json:"retentionState"`
+	SizeBytes       *int64                             `json:"sizeBytes,omitempty"`
+	SourceFilePath  string                             `json:"sourceFilePath"`
+	SourceMetadata  *string                            `json:"sourceMetadata,omitempty"`
+	SourceRole      MediaComponentSourceRole           `json:"sourceRole"`
+	StreamInventory string                             `json:"streamInventory"`
+	UpdatedAt       time.Time                          `json:"updatedAt"`
+}
+
+// MediaComponentSourceListResponse defines model for MediaComponentSourceListResponse.
+type MediaComponentSourceListResponse struct {
+	Sources []MediaComponentSource `json:"sources"`
+}
+
+// MediaComponentSourceRetainRequest defines model for MediaComponentSourceRetainRequest.
+type MediaComponentSourceRetainRequest struct {
+	Checksum        *string                  `json:"checksum,omitempty"`
+	ReleaseTitle    *string                  `json:"releaseTitle,omitempty"`
+	SourceFilePath  string                   `json:"sourceFilePath"`
+	SourceMetadata  *string                  `json:"sourceMetadata,omitempty"`
+	SourceRole      MediaComponentSourceRole `json:"sourceRole"`
+	StreamInventory *string                  `json:"streamInventory,omitempty"`
+}
+
+// MediaComponentSourceRetentionState defines model for MediaComponentSourceRetentionState.
+type MediaComponentSourceRetentionState string
+
+// MediaComponentSourceRole defines model for MediaComponentSourceRole.
+type MediaComponentSourceRole string
+
 // MediaContentKind defines model for MediaContentKind.
 type MediaContentKind string
 
@@ -2316,6 +2398,7 @@ type MediaItem struct {
 	Cast                *[]MediaMetadataPerson   `json:"cast,omitempty"`
 	CollectionId        *string                  `json:"collectionId,omitempty"`
 	CollectionName      *string                  `json:"collectionName,omitempty"`
+	ComponentSources    *[]MediaComponentSource  `json:"componentSources,omitempty"`
 	ContentKind         *MediaContentKind        `json:"contentKind,omitempty"`
 	CreatedAt           time.Time                `json:"createdAt"`
 	Crew                *[]MediaMetadataPerson   `json:"crew,omitempty"`
@@ -3607,6 +3690,9 @@ type CreateMediaItemJSONRequestBody = MediaItemCreateRequest
 // UpdateMediaItemJSONRequestBody defines body for UpdateMediaItem for application/json ContentType.
 type UpdateMediaItemJSONRequestBody = MediaItemUpdateRequest
 
+// RetainMediaComponentSourceJSONRequestBody defines body for RetainMediaComponentSource for application/json ContentType.
+type RetainMediaComponentSourceJSONRequestBody = MediaComponentSourceRetainRequest
+
 // DeleteMediaItemFileJSONRequestBody defines body for DeleteMediaItemFile for application/json ContentType.
 type DeleteMediaItemFileJSONRequestBody = MediaFileDeleteRequest
 
@@ -3837,6 +3923,18 @@ type ServerInterface interface {
 	// Enqueue an automatic search and grab for a monitored item
 	// (POST /media/items/{id}/automatic-searches)
 	EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// List retained component sources
+	// (GET /media/items/{id}/component-sources)
+	ListMediaComponentSources(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Retain one component source file
+	// (POST /media/items/{id}/component-sources)
+	RetainMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Inspect one retained component source
+	// (GET /media/items/{id}/component-sources/{sourceId})
+	GetMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
+	// Release one retained component source
+	// (POST /media/items/{id}/component-sources/{sourceId}/release)
+	ReleaseMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID)
 	// List file history and provenance records for a media item
 	// (GET /media/items/{id}/file-history)
 	ListMediaFileHistory(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -4395,6 +4493,30 @@ func (_ Unimplemented) UpdateMediaItem(w http.ResponseWriter, r *http.Request, i
 // Enqueue an automatic search and grab for a monitored item
 // (POST /media/items/{id}/automatic-searches)
 func (_ Unimplemented) EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List retained component sources
+// (GET /media/items/{id}/component-sources)
+func (_ Unimplemented) ListMediaComponentSources(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Retain one component source file
+// (POST /media/items/{id}/component-sources)
+func (_ Unimplemented) RetainMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Inspect one retained component source
+// (GET /media/items/{id}/component-sources/{sourceId})
+func (_ Unimplemented) GetMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Release one retained component source
+// (POST /media/items/{id}/component-sources/{sourceId}/release)
+func (_ Unimplemented) ReleaseMediaComponentSource(w http.ResponseWriter, r *http.Request, id ResourceId, sourceId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6438,6 +6560,152 @@ func (siw *ServerInterfaceWrapper) EnqueueMediaAutomaticSearch(w http.ResponseWr
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.EnqueueMediaAutomaticSearch(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMediaComponentSources operation middleware
+func (siw *ServerInterfaceWrapper) ListMediaComponentSources(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMediaComponentSources(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RetainMediaComponentSource operation middleware
+func (siw *ServerInterfaceWrapper) RetainMediaComponentSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RetainMediaComponentSource(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMediaComponentSource operation middleware
+func (siw *ServerInterfaceWrapper) GetMediaComponentSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sourceId" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sourceId", chi.URLParam(r, "sourceId"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sourceId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMediaComponentSource(w, r, id, sourceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReleaseMediaComponentSource operation middleware
+func (siw *ServerInterfaceWrapper) ReleaseMediaComponentSource(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "sourceId" -------------
+	var sourceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "sourceId", chi.URLParam(r, "sourceId"), &sourceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sourceId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReleaseMediaComponentSource(w, r, id, sourceId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10517,6 +10785,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/automatic-searches", wrapper.EnqueueMediaAutomaticSearch)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/component-sources", wrapper.ListMediaComponentSources)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/component-sources", wrapper.RetainMediaComponentSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}", wrapper.GetMediaComponentSource)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/component-sources/{sourceId}/release", wrapper.ReleaseMediaComponentSource)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/file-history", wrapper.ListMediaFileHistory)

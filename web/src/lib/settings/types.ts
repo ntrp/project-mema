@@ -99,6 +99,14 @@ export type MediaItemSubtitleRetentionMode =
 	components['schemas']['MediaItemSubtitleRetentionMode'];
 export type MediaItemSubtitleSelectionRequest =
 	components['schemas']['MediaItemSubtitleSelectionRequest'];
+export type MediaComponentSource = components['schemas']['MediaComponentSource'];
+export type MediaComponentSourceListResponse =
+	components['schemas']['MediaComponentSourceListResponse'];
+export type MediaComponentSourceRetainRequest =
+	components['schemas']['MediaComponentSourceRetainRequest'];
+export type MediaComponentSourceRetentionState =
+	components['schemas']['MediaComponentSourceRetentionState'];
+export type MediaComponentSourceRole = components['schemas']['MediaComponentSourceRole'];
 export type MediaItemCreateRequest = components['schemas']['MediaItemCreateRequest'];
 export type MediaItemUpdateRequest = components['schemas']['MediaItemUpdateRequest'];
 export type MediaItemRequest = components['schemas']['MediaItemRequest'];

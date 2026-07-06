@@ -732,6 +732,66 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/component-sources': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		/** List retained component sources */
+		get: operations['listMediaComponentSources'];
+		put?: never;
+		/** Retain one component source file */
+		post: operations['retainMediaComponentSource'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/component-sources/{sourceId}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		/** Inspect one retained component source */
+		get: operations['getMediaComponentSource'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/component-sources/{sourceId}/release': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Release one retained component source */
+		post: operations['releaseMediaComponentSource'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/delete': {
 		parameters: {
 			query?: never;
@@ -2478,6 +2538,7 @@ export interface components {
 			filePaths: string[];
 			files?: components['schemas']['MediaFileInfo'][];
 			externalSubtitles?: components['schemas']['MediaItemSubtitle'][];
+			componentSources?: components['schemas']['MediaComponentSource'][];
 			metadataFilePaths: string[];
 			/** Format: date-time */
 			createdAt: string;
@@ -2626,6 +2687,45 @@ export interface components {
 			selected: boolean;
 			retentionMode: components['schemas']['MediaItemSubtitleRetentionMode'];
 		};
+		MediaComponentSourceListResponse: {
+			sources: components['schemas']['MediaComponentSource'][];
+		};
+		MediaComponentSourceRetainRequest: {
+			sourceRole: components['schemas']['MediaComponentSourceRole'];
+			sourceFilePath: string;
+			releaseTitle?: string;
+			sourceMetadata?: string;
+			streamInventory?: string;
+			checksum?: string;
+		};
+		MediaComponentSource: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId: string;
+			sourceRole: components['schemas']['MediaComponentSourceRole'];
+			sourceFilePath: string;
+			retainedPath: string;
+			releaseTitle?: string;
+			sourceMetadata?: string;
+			streamInventory: string;
+			checksum?: string;
+			/** Format: int64 */
+			sizeBytes?: number;
+			retentionState: components['schemas']['MediaComponentSourceRetentionState'];
+			/** Format: date-time */
+			retainedAt: string;
+			/** Format: date-time */
+			releasedAt?: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		/** @enum {string} */
+		MediaComponentSourceRole: 'baseVideo' | 'audio' | 'subtitle' | 'other';
+		/** @enum {string} */
+		MediaComponentSourceRetentionState: 'retained' | 'released';
 		MediaFileHistoryResponse: {
 			entries: components['schemas']['MediaFileHistoryEntry'][];
 		};
@@ -5176,6 +5276,109 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listMediaComponentSources: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Retained component sources */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentSourceListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	retainMediaComponentSource: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaComponentSourceRetainRequest'];
+			};
+		};
+		responses: {
+			/** @description Component source retained */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentSource'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	getMediaComponentSource: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Retained component source */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentSource'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	releaseMediaComponentSource: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				sourceId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Component source released */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentSource'];
 				};
 			};
 			401: components['responses']['Unauthorized'];

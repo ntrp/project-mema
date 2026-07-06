@@ -19,6 +19,10 @@ func hydrateMediaItem(ctx context.Context, q storagegen.DBTX, item MediaItem) (M
 	if err != nil {
 		return item, err
 	}
+	item, err = hydrateMediaItemComponentSources(ctx, q, item)
+	if err != nil {
+		return item, err
+	}
 	return hydrateMediaItemAnime(ctx, q, item)
 }
 
@@ -60,5 +64,18 @@ func hydrateMediaItemSubtitles(
 	}
 	item.ExternalSubtitles = subtitles
 	item.MetadataFilePaths = append(item.MetadataFilePaths, subtitleFilePaths(subtitles)...)
+	return item, nil
+}
+
+func hydrateMediaItemComponentSources(
+	ctx context.Context,
+	q storagegen.DBTX,
+	item MediaItem,
+) (MediaItem, error) {
+	sources, err := listMediaComponentSources(ctx, q, item.ID)
+	if err != nil {
+		return item, err
+	}
+	item.ComponentSources = sources
 	return item, nil
 }

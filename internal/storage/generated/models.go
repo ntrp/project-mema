@@ -268,6 +268,24 @@ type AppLogFileSetting struct {
 	UpdatedAt     time.Time
 }
 
+type AppMediaComponentSource struct {
+	ID              uuid.UUID
+	MediaItemID     uuid.UUID
+	SourceRole      string
+	SourceFilePath  string
+	RetainedPath    string
+	ReleaseTitle    pgtype.Text
+	SourceMetadata  pgtype.Text
+	StreamInventory string
+	Checksum        pgtype.Text
+	SizeBytes       pgtype.Int8
+	RetentionState  string
+	RetainedAt      time.Time
+	ReleasedAt      *time.Time
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
 type AppMediaEpisode struct {
 	ID               uuid.UUID
 	SeasonID         uuid.UUID

@@ -39,6 +39,12 @@ import {
 	updateSystemLogFileSettings,
 	updateSystemLogLevel
 } from '../api';
+import {
+	getMediaComponentSource,
+	listMediaComponentSources,
+	releaseMediaComponentSource,
+	retainMediaComponentSource
+} from './mediaComponentSources';
 
 describe('additional UI API command helpers (SCN-SETTINGS-009)', () => {
 	beforeEach(() => {
@@ -123,5 +129,34 @@ describe('additional UI API command helpers (SCN-SETTINGS-009)', () => {
 		).resolves.toEqual({
 			id: 'result-1'
 		});
+	});
+
+	it('maps media component source commands', async () => {
+		clientMock.GET.mockResolvedValueOnce({
+			data: { sources: [{ id: 'source-1' }] }
+		}).mockResolvedValueOnce({ data: { id: 'source-1' } });
+		clientMock.POST.mockResolvedValue({ data: { id: 'source-1' } });
+
+		await expect(listMediaComponentSources('media-1')).resolves.toEqual({
+			sources: [{ id: 'source-1' }]
+		});
+		await expect(
+			retainMediaComponentSource('media-1', {
+				sourceRole: 'baseVideo',
+				sourceFilePath: '/library/Movie/Base.mkv'
+			})
+		).resolves.toEqual({ id: 'source-1' });
+		await expect(getMediaComponentSource('media-1', 'source-1')).resolves.toEqual({
+			id: 'source-1'
+		});
+		await expect(releaseMediaComponentSource('media-1', 'source-1')).resolves.toEqual({
+			id: 'source-1'
+		});
+		expect(clientMock.POST).toHaveBeenLastCalledWith(
+			'/media/items/{id}/component-sources/{sourceId}/release',
+			{
+				params: { path: { id: 'media-1', sourceId: 'source-1' } }
+			}
+		);
 	});
 });

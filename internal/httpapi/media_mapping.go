@@ -47,6 +47,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 	aliases := mediaAliasResponses(item.Aliases)
 	episodeNumbering := mediaEpisodeNumberingResponses(item.EpisodeNumbering)
 	externalSubtitles := mediaSubtitleResponses(item.ExternalSubtitles)
+	componentSources := mediaComponentSourceResponses(item.ComponentSources)
 	contentKind := MediaContentKind(item.ContentKind)
 	return MediaItem{
 		Id:                  openapi_types.UUID(item.ID),
@@ -91,6 +92,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		FilePaths:           item.FilePaths,
 		Files:               mediaFileInfoResponses(item.FilePaths, item.SubtitleLanguages, item.ExternalSubtitles),
 		ExternalSubtitles:   &externalSubtitles,
+		ComponentSources:    &componentSources,
 		ProviderMappings:    &providerMappings,
 		Aliases:             &aliases,
 		EpisodeNumbering:    &episodeNumbering,

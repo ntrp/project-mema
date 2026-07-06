@@ -32,6 +32,7 @@ type MediaItem struct {
 	MetadataFilePaths   []string
 	SubtitleLanguages   []MediaProfileSubtitleLanguage
 	ExternalSubtitles   []MediaItemSubtitle
+	ComponentSources    []MediaComponentSource
 	ProviderMappings    []MediaProviderMapping
 	Aliases             []MediaItemAlias
 	EpisodeNumbering    []MediaEpisodeNumbering
