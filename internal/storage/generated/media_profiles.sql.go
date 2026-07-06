@@ -18,11 +18,10 @@ insert into app.media_profile_audio_targets (
     language_id,
     score,
     required,
-    codecs,
-    channels,
+    target_codec,
+    target_channels,
     minimum_bitrate_kbps,
     preferred_bitrate_kbps,
-    lossy_transcode_policy,
     sort_order
 )
 values (
@@ -34,8 +33,7 @@ values (
     $6,
     $7,
     $8,
-    $9,
-    $10
+    $9
 )
 `
 
@@ -44,11 +42,10 @@ type AddMediaProfileAudioTargetParams struct {
 	LanguageID           string
 	Score                int32
 	Required             bool
-	Codecs               []string
-	Channels             []string
+	TargetCodec          pgtype.Text
+	TargetChannels       []string
 	MinimumBitrateKbps   pgtype.Int4
 	PreferredBitrateKbps pgtype.Int4
-	LossyTranscodePolicy string
 	SortOrder            int32
 }
 
@@ -58,11 +55,10 @@ func (q *Queries) AddMediaProfileAudioTarget(ctx context.Context, arg AddMediaPr
 		arg.LanguageID,
 		arg.Score,
 		arg.Required,
-		arg.Codecs,
-		arg.Channels,
+		arg.TargetCodec,
+		arg.TargetChannels,
 		arg.MinimumBitrateKbps,
 		arg.PreferredBitrateKbps,
-		arg.LossyTranscodePolicy,
 		arg.SortOrder,
 	)
 	return err
@@ -208,6 +204,7 @@ insert into app.media_profiles (
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_unwanted_audio,
+    audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference
@@ -225,7 +222,8 @@ values (
     $10,
     $11,
     $12,
-    $13
+    $13,
+    $14
 )
 `
 
@@ -240,6 +238,7 @@ type CreateMediaProfileParams struct {
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveUnwantedAudio               bool
+	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -257,6 +256,7 @@ func (q *Queries) CreateMediaProfile(ctx context.Context, arg CreateMediaProfile
 		arg.UpgradeUntilCustomFormatScore,
 		arg.MinimumCustomFormatScoreIncrement,
 		arg.RemoveUnwantedAudio,
+		arg.AudioLossyTranscodePolicy,
 		arg.RemoveUnwantedSubtitles,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
@@ -288,6 +288,7 @@ select id,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_unwanted_audio,
+    audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
@@ -311,6 +312,7 @@ func (q *Queries) GetMediaProfile(ctx context.Context, id string) (AppMediaProfi
 		&i.UpgradeUntilCustomFormatScore,
 		&i.MinimumCustomFormatScoreIncrement,
 		&i.RemoveUnwantedAudio,
+		&i.AudioLossyTranscodePolicy,
 		&i.RemoveUnwantedSubtitles,
 		&i.PreferredProtocol,
 		&i.SeriesPackPreference,
@@ -368,11 +370,10 @@ const listMediaProfileAudioTargets = `-- name: ListMediaProfileAudioTargets :man
 select language_id,
     score,
     required,
-    codecs,
-    channels,
+    target_codec,
+    target_channels,
     minimum_bitrate_kbps,
-    preferred_bitrate_kbps,
-    lossy_transcode_policy
+    preferred_bitrate_kbps
 from app.media_profile_audio_targets
 where profile_id = $1
 order by sort_order, language_id
@@ -382,11 +383,10 @@ type ListMediaProfileAudioTargetsRow struct {
 	LanguageID           string
 	Score                int32
 	Required             bool
-	Codecs               []string
-	Channels             []string
+	TargetCodec          pgtype.Text
+	TargetChannels       []string
 	MinimumBitrateKbps   pgtype.Int4
 	PreferredBitrateKbps pgtype.Int4
-	LossyTranscodePolicy string
 }
 
 func (q *Queries) ListMediaProfileAudioTargets(ctx context.Context, profileID string) ([]ListMediaProfileAudioTargetsRow, error) {
@@ -402,11 +402,10 @@ func (q *Queries) ListMediaProfileAudioTargets(ctx context.Context, profileID st
 			&i.LanguageID,
 			&i.Score,
 			&i.Required,
-			&i.Codecs,
-			&i.Channels,
+			&i.TargetCodec,
+			&i.TargetChannels,
 			&i.MinimumBitrateKbps,
 			&i.PreferredBitrateKbps,
-			&i.LossyTranscodePolicy,
 		); err != nil {
 			return nil, err
 		}
@@ -534,6 +533,7 @@ select id,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_unwanted_audio,
+    audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
@@ -563,6 +563,7 @@ func (q *Queries) ListMediaProfiles(ctx context.Context) ([]AppMediaProfile, err
 			&i.UpgradeUntilCustomFormatScore,
 			&i.MinimumCustomFormatScoreIncrement,
 			&i.RemoveUnwantedAudio,
+			&i.AudioLossyTranscodePolicy,
 			&i.RemoveUnwantedSubtitles,
 			&i.PreferredProtocol,
 			&i.SeriesPackPreference,
@@ -601,11 +602,12 @@ set name = $1,
     upgrade_until_custom_format_score = $7,
     minimum_custom_format_score_increment = $8,
     remove_unwanted_audio = $9,
-    remove_unwanted_subtitles = $10,
-    preferred_protocol = $11,
-    series_pack_preference = $12,
+    audio_lossy_transcode_policy = $10,
+    remove_unwanted_subtitles = $11,
+    preferred_protocol = $12,
+    series_pack_preference = $13,
     updated_at = now()
-where id = $13
+where id = $14
 `
 
 type UpdateMediaProfileParams struct {
@@ -618,6 +620,7 @@ type UpdateMediaProfileParams struct {
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveUnwantedAudio               bool
+	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -635,6 +638,7 @@ func (q *Queries) UpdateMediaProfile(ctx context.Context, arg UpdateMediaProfile
 		arg.UpgradeUntilCustomFormatScore,
 		arg.MinimumCustomFormatScoreIncrement,
 		arg.RemoveUnwantedAudio,
+		arg.AudioLossyTranscodePolicy,
 		arg.RemoveUnwantedSubtitles,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,

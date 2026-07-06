@@ -2915,6 +2915,7 @@ type MediaNumberingStrategy string
 
 // MediaProfile defines model for MediaProfile.
 type MediaProfile struct {
+	AudioLossyTranscodePolicy         MediaProfileLossyTranscodePolicy `json:"audioLossyTranscodePolicy"`
 	AudioTargets                      []MediaProfileAudioTarget        `json:"audioTargets"`
 	CreatedAt                         time.Time                        `json:"createdAt"`
 	CustomFormatScores                []MediaProfileCustomFormatScore  `json:"customFormatScores"`
@@ -2948,14 +2949,13 @@ type MediaProfileSeriesPackPreference string
 
 // MediaProfileAudioTarget defines model for MediaProfileAudioTarget.
 type MediaProfileAudioTarget struct {
-	Channels             *[]string                        `json:"channels,omitempty"`
-	Codecs               *[]string                        `json:"codecs,omitempty"`
-	LanguageId           string                           `json:"languageId"`
-	LossyTranscodePolicy MediaProfileLossyTranscodePolicy `json:"lossyTranscodePolicy"`
-	MinimumBitrateKbps   *int32                           `json:"minimumBitrateKbps,omitempty"`
-	PreferredBitrateKbps *int32                           `json:"preferredBitrateKbps,omitempty"`
-	Required             bool                             `json:"required"`
-	Score                int32                            `json:"score"`
+	LanguageId           string    `json:"languageId"`
+	MinimumBitrateKbps   *int32    `json:"minimumBitrateKbps,omitempty"`
+	PreferredBitrateKbps *int32    `json:"preferredBitrateKbps,omitempty"`
+	Required             bool      `json:"required"`
+	Score                int32     `json:"score"`
+	TargetChannels       *[]string `json:"targetChannels,omitempty"`
+	TargetCodec          *string   `json:"targetCodec,omitempty"`
 }
 
 // MediaProfileCustomFormatScore defines model for MediaProfileCustomFormatScore.
@@ -2974,6 +2974,7 @@ type MediaProfileLossyTranscodePolicy string
 
 // MediaProfileRequest defines model for MediaProfileRequest.
 type MediaProfileRequest struct {
+	AudioLossyTranscodePolicy         MediaProfileLossyTranscodePolicy        `json:"audioLossyTranscodePolicy"`
 	AudioTargets                      []MediaProfileAudioTarget               `json:"audioTargets"`
 	CustomFormatScores                []MediaProfileCustomFormatScore         `json:"customFormatScores"`
 	FinalContainer                    MediaProfileRequestFinalContainer       `json:"finalContainer"`

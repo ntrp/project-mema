@@ -237,6 +237,7 @@ function mediaProfileForm() {
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
 		removeUnwantedAudio: false,
+		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
@@ -244,8 +245,7 @@ function mediaProfileForm() {
 			{
 				languageId: 'english',
 				score: 0,
-				required: false,
-				lossyTranscodePolicy: 'disabled'
+				required: false
 			}
 		],
 		subtitleTargets: [{ languageId: 'english', score: 0, required: true, source: 'any' }],

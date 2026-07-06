@@ -6542,6 +6542,7 @@ components:
         - upgradeUntilCustomFormatScore
         - minimumCustomFormatScoreIncrement
         - removeUnwantedAudio
+        - audioLossyTranscodePolicy
         - removeUnwantedSubtitles
         - preferredProtocol
         - seriesPackPreference
@@ -6586,6 +6587,8 @@ components:
           minimum: 0
         removeUnwantedAudio:
           type: boolean
+        audioLossyTranscodePolicy:
+          $ref: "#/components/schemas/MediaProfileLossyTranscodePolicy"
         removeUnwantedSubtitles:
           type: boolean
         preferredProtocol:
@@ -6679,7 +6682,6 @@ components:
         - languageId
         - score
         - required
-        - lossyTranscodePolicy
       properties:
         languageId:
           type: string
@@ -6690,13 +6692,11 @@ components:
           format: int32
         required:
           type: boolean
-        codecs:
-          type: array
-          items:
-            type: string
-            minLength: 1
-            maxLength: 80
-        channels:
+        targetCodec:
+          type: string
+          minLength: 1
+          maxLength: 80
+        targetChannels:
           type: array
           items:
             type: string
@@ -6710,8 +6710,6 @@ components:
           type: integer
           format: int32
           minimum: 1
-        lossyTranscodePolicy:
-          $ref: "#/components/schemas/MediaProfileLossyTranscodePolicy"
     MediaProfileSubtitleTarget:
       type: object
       additionalProperties: false

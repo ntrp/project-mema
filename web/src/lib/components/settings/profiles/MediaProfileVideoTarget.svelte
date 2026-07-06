@@ -32,7 +32,7 @@
 			<span>Video Target</span>
 		</Card.Title>
 	</Card.Header>
-	<Card.Content class="grid gap-3">
+	<Card.Content class="grid gap-3 mt-3">
 		<div class="grid gap-3 rounded-md bg-muted/30 p-3 text-sm md:grid-cols-3">
 			<ProfileTargetMultiSelect
 				id="video-target-codecs"
@@ -60,12 +60,23 @@
 			/>
 		</div>
 
-		<MediaProfileQualitySelector
-			{form}
-			{qualities}
-			loading={loadingQualities}
-			error={qualityError}
-			onChange={(value) => onChange(value)}
-		/>
+		<details class="group rounded-md border border-border bg-background">
+			<summary
+				class="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-sm font-bold text-muted-foreground [&::-webkit-details-marker]:hidden"
+			>
+				<span>Qualities</span>
+				<span>{form.qualityIds.length} selected</span>
+			</summary>
+			<div class="grid gap-3 border-t border-border p-3">
+				<MediaProfileQualitySelector
+					{form}
+					{qualities}
+					loading={loadingQualities}
+					error={qualityError}
+					showHeader={false}
+					onChange={(value) => onChange(value)}
+				/>
+			</div>
+		</details>
 	</Card.Content>
 </Card.Root>

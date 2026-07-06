@@ -28,9 +28,10 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 		FinalContainer:                    "mp4",
 		PreferredProtocol:                 " torrent ",
 		SeriesPackPreference:              "preferPacks",
+		AudioLossyTranscodePolicy:         "lossyToLossy",
 		MinimumCustomFormatScoreIncrement: 5,
 		AudioTargets: []MediaProfileAudioTarget{
-			{LanguageID: " English ", Score: 100, Required: true, Codecs: []string{" AAC ", "aac"}, Channels: []string{"5.1"}},
+			{LanguageID: " English ", Score: 100, Required: true, TargetCodec: stringPtr(" AAC "), TargetChannels: []string{"5.1"}},
 			{LanguageID: "english", Score: 80},
 			{LanguageID: "Brazilian Portuguese", Score: 50},
 		},
@@ -53,10 +54,13 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if input.FinalContainer != "mp4" {
 		t.Fatalf("expected normalized container, got %q", input.FinalContainer)
 	}
+	if input.AudioLossyTranscodePolicy != "lossyToLossy" {
+		t.Fatalf("expected normalized lossy conversion policy, got %q", input.AudioLossyTranscodePolicy)
+	}
 	if len(input.AudioTargets) != 2 {
 		t.Fatalf("expected deduped audio targets, got %#v", input.AudioTargets)
 	}
-	if !input.AudioTargets[0].Required || input.AudioTargets[0].Score != 100 || len(input.AudioTargets[0].Codecs) != 1 || input.AudioTargets[0].Codecs[0] != "aac" {
+	if !input.AudioTargets[0].Required || input.AudioTargets[0].Score != 100 || input.AudioTargets[0].TargetCodec == nil || *input.AudioTargets[0].TargetCodec != "aac" {
 		t.Fatalf("expected first audio target to retain fields: %#v", input.AudioTargets[0])
 	}
 	if len(input.SubtitleTargets) != 2 {

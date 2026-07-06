@@ -144,6 +144,7 @@ function mediaProfile(): MediaProfile {
 		upgradeUntilQualityId: 'q-2160p',
 		finalContainer: 'mkv',
 		removeUnwantedAudio: false,
+		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
@@ -152,14 +153,12 @@ function mediaProfile(): MediaProfile {
 			{
 				languageId: 'eng',
 				score: 0,
-				required: true,
-				lossyTranscodePolicy: 'disabled'
+				required: true
 			},
 			{
 				languageId: 'deu',
 				score: 0,
-				required: false,
-				lossyTranscodePolicy: 'disabled'
+				required: false
 			}
 		],
 		subtitleTargets: [],

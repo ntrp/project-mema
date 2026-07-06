@@ -17,6 +17,7 @@ type MediaProfile struct {
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveUnwantedAudio               bool
+	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -39,6 +40,7 @@ type MediaProfileInput struct {
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveUnwantedAudio               bool
+	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -65,11 +67,10 @@ type MediaProfileAudioTarget struct {
 	LanguageID           string
 	Score                int32
 	Required             bool
-	Codecs               []string
-	Channels             []string
+	TargetCodec          *string
+	TargetChannels       []string
 	MinimumBitrateKbps   *int32
 	PreferredBitrateKbps *int32
-	LossyTranscodePolicy string
 }
 
 type MediaProfileCustomFormatScore struct {

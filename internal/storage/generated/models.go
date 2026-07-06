@@ -513,6 +513,7 @@ type AppMediaProfile struct {
 	UpgradeUntilCustomFormatScore     int32
 	MinimumCustomFormatScoreIncrement int32
 	RemoveUnwantedAudio               bool
+	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -525,11 +526,10 @@ type AppMediaProfileAudioTarget struct {
 	LanguageID           string
 	Score                int32
 	Required             bool
-	Codecs               []string
-	Channels             []string
+	TargetCodec          pgtype.Text
+	TargetChannels       []string
 	MinimumBitrateKbps   pgtype.Int4
 	PreferredBitrateKbps pgtype.Int4
-	LossyTranscodePolicy string
 	SortOrder            int32
 }
 

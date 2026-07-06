@@ -12,10 +12,11 @@
 		qualities: QualitySizeSetting[];
 		loading: boolean;
 		error: string;
+		showHeader?: boolean;
 		onChange: (_form: MediaProfileForm) => void;
 	}
 
-	let { form, qualities, loading, error, onChange }: Props = $props();
+	let { form, qualities, loading, error, showHeader = true, onChange }: Props = $props();
 	let qualityGroups = $derived(groupQualitiesByResolution(qualities));
 
 	function updateQualityIds(qualityIds: string[]) {
@@ -58,15 +59,24 @@
 	}
 </script>
 
-<div class="flex items-center justify-between gap-3">
-	<span class="text-sm font-bold text-muted-foreground">Qualities</span>
-	<div class="flex gap-2">
+{#if showHeader}
+	<div class="flex items-center justify-between gap-3">
+		<span class="text-sm font-bold text-muted-foreground">Qualities</span>
+		<div class="flex gap-2">
+			<Button type="button" variant="outline" size="sm" onclick={selectAllQualities}
+				>Select all</Button
+			>
+			<Button type="button" variant="outline" size="sm" onclick={clearQualities}>Clear</Button>
+		</div>
+	</div>
+{:else}
+	<div class="flex justify-end gap-2">
 		<Button type="button" variant="outline" size="sm" onclick={selectAllQualities}
 			>Select all</Button
 		>
 		<Button type="button" variant="outline" size="sm" onclick={clearQualities}>Clear</Button>
 	</div>
-</div>
+{/if}
 
 {#if error}
 	<p

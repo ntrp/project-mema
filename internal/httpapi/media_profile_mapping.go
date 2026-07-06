@@ -36,6 +36,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		UpgradeUntilCustomFormatScore:     request.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: request.MinimumCustomFormatScoreIncrement,
 		RemoveUnwantedAudio:               request.RemoveUnwantedAudio,
+		AudioLossyTranscodePolicy:         string(request.AudioLossyTranscodePolicy),
 		RemoveUnwantedSubtitles:           request.RemoveUnwantedSubtitles,
 		PreferredProtocol:                 string(request.PreferredProtocol),
 		SeriesPackPreference:              string(request.SeriesPackPreference),
@@ -91,11 +92,10 @@ func mediaProfileAudioTargets(values []MediaProfileAudioTarget) []storage.MediaP
 			LanguageID:           value.LanguageId,
 			Score:                value.Score,
 			Required:             value.Required,
-			Codecs:               compactUniquePtr(value.Codecs),
-			Channels:             compactUniquePtr(value.Channels),
+			TargetCodec:          value.TargetCodec,
+			TargetChannels:       compactUniquePtr(value.TargetChannels),
 			MinimumBitrateKbps:   value.MinimumBitrateKbps,
 			PreferredBitrateKbps: value.PreferredBitrateKbps,
-			LossyTranscodePolicy: string(value.LossyTranscodePolicy),
 		})
 	}
 	return targets
@@ -147,6 +147,7 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		UpgradeUntilCustomFormatScore:     profile.UpgradeUntilCustomFormatScore,
 		MinimumCustomFormatScoreIncrement: profile.MinimumCustomFormatScoreIncrement,
 		RemoveUnwantedAudio:               profile.RemoveUnwantedAudio,
+		AudioLossyTranscodePolicy:         MediaProfileLossyTranscodePolicy(profile.AudioLossyTranscodePolicy),
 		RemoveUnwantedSubtitles:           profile.RemoveUnwantedSubtitles,
 		PreferredProtocol:                 MediaProfilePreferredProtocol(profile.PreferredProtocol),
 		SeriesPackPreference:              MediaProfileSeriesPackPreference(profile.SeriesPackPreference),
@@ -180,11 +181,10 @@ func mediaProfileAudioTargetResponses(targets []storage.MediaProfileAudioTarget)
 			LanguageId:           target.LanguageID,
 			Score:                target.Score,
 			Required:             target.Required,
-			Codecs:               &target.Codecs,
-			Channels:             &target.Channels,
+			TargetCodec:          target.TargetCodec,
+			TargetChannels:       &target.TargetChannels,
 			MinimumBitrateKbps:   target.MinimumBitrateKbps,
 			PreferredBitrateKbps: target.PreferredBitrateKbps,
-			LossyTranscodePolicy: MediaProfileLossyTranscodePolicy(target.LossyTranscodePolicy),
 		})
 	}
 	return response

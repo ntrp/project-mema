@@ -45,13 +45,13 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 			preferredProtocol: 'usenet' as const,
 			seriesPackPreference: 'preferPacks' as const,
 			removeUnwantedAudio: true,
+			audioLossyTranscodePolicy: 'disabled' as const,
 			removeUnwantedSubtitles: true,
 			audioTargets: [
 				{
 					languageId: 'japanese',
 					score: 100,
-					required: true,
-					lossyTranscodePolicy: 'disabled' as const
+					required: true
 				}
 			],
 			subtitleTargets: [

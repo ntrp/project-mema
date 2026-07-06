@@ -3202,6 +3202,7 @@ export interface components {
 			/** Format: int32 */
 			minimumCustomFormatScoreIncrement: number;
 			removeUnwantedAudio: boolean;
+			audioLossyTranscodePolicy: components['schemas']['MediaProfileLossyTranscodePolicy'];
 			removeUnwantedSubtitles: boolean;
 			/** @enum {string} */
 			preferredProtocol: 'any' | 'torrent' | 'usenet';
@@ -3235,13 +3236,12 @@ export interface components {
 			/** Format: int32 */
 			score: number;
 			required: boolean;
-			codecs?: string[];
-			channels?: string[];
+			targetCodec?: string;
+			targetChannels?: string[];
 			/** Format: int32 */
 			minimumBitrateKbps?: number;
 			/** Format: int32 */
 			preferredBitrateKbps?: number;
-			lossyTranscodePolicy: components['schemas']['MediaProfileLossyTranscodePolicy'];
 		};
 		MediaProfileSubtitleTarget: {
 			languageId: string;

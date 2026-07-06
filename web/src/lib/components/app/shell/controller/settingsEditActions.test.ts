@@ -84,6 +84,7 @@ describe('settings edit actions (SCN-SETTINGS-002)', () => {
 			upgradeUntilCustomFormatScore: 0,
 			minimumCustomFormatScoreIncrement: 1,
 			removeUnwantedAudio: false,
+			audioLossyTranscodePolicy: 'disabled',
 			removeUnwantedSubtitles: false,
 			preferredProtocol: 'any',
 			seriesPackPreference: 'auto',
@@ -92,8 +93,7 @@ describe('settings edit actions (SCN-SETTINGS-002)', () => {
 				{
 					languageId: 'english',
 					score: 0,
-					required: true,
-					lossyTranscodePolicy: 'disabled'
+					required: true
 				}
 			],
 			subtitleTargets: [],

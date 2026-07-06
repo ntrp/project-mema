@@ -55,6 +55,7 @@ func normalizeMediaProfileInput(
 	normalized.FinalContainer = normalizeContainer(input.FinalContainer)
 	normalized.PreferredProtocol = normalizePreferredProtocol(input.PreferredProtocol)
 	normalized.SeriesPackPreference = normalizeSeriesPackPreference(input.SeriesPackPreference)
+	normalized.AudioLossyTranscodePolicy = normalizeLossyPolicy(input.AudioLossyTranscodePolicy)
 	normalized.QualityIDs = qualityIDs
 	normalized.VideoTarget = normalizeVideoTarget(input.VideoTarget)
 	normalized.AudioTargets = normalizeAudioTargets(input.AudioTargets)
@@ -123,11 +124,10 @@ func normalizeAudioTargets(values []MediaProfileAudioTarget) []MediaProfileAudio
 			LanguageID:           language,
 			Score:                value.Score,
 			Required:             value.Required,
-			Codecs:               normalizedTextList(value.Codecs),
-			Channels:             normalizedTextList(value.Channels),
+			TargetCodec:          normalizedTextPtr(value.TargetCodec),
+			TargetChannels:       normalizedTextList(value.TargetChannels),
 			MinimumBitrateKbps:   positiveInt32Ptr(value.MinimumBitrateKbps),
 			PreferredBitrateKbps: positiveInt32Ptr(value.PreferredBitrateKbps),
-			LossyTranscodePolicy: normalizeLossyPolicy(value.LossyTranscodePolicy),
 		})
 	}
 	return targets

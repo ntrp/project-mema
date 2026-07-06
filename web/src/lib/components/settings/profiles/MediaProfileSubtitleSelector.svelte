@@ -1,6 +1,7 @@
 <script lang="ts">
 	import CaptionsIcon from '@lucide/svelte/icons/captions';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
+	import PlusIcon from '@lucide/svelte/icons/plus';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Card from '$lib/components/ui/card';
@@ -8,11 +9,16 @@
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
 	import * as Table from '$lib/components/ui/table';
-	import ProfileLanguageAutocomplete from './ProfileLanguageAutocomplete.svelte';
 	import ProfileTargetMultiSelect from './ProfileTargetMultiSelect.svelte';
 	import { defaultSubtitleTarget } from '$lib/settings/forms';
-	import { languageLabelFromCatalog } from '$lib/settings/languageCatalog';
 	import { subtitleFormatOptions } from './profileTargetOptions';
+	import {
+		nextTargetLanguageId,
+		targetLanguageChoices,
+		targetLanguageDisplayLabel,
+		targetLanguageKey,
+		targetLanguageValue
+	} from './profileTargetLanguages';
 	import type { Language, MediaProfileForm, MediaProfileSubtitleTarget } from '$lib/settings/types';
 	import type { MediaProfileSubtitleSource } from '$lib/settings/types';
 
@@ -24,14 +30,17 @@
 
 	let { form, languages, onChange }: Props = $props();
 	let targets = $derived(form.subtitleTargets ?? []);
-	let selected = $derived(new Set(targets.map((target) => target.languageId)));
+	let selected = $derived(
+		new Set(targets.map((target) => targetLanguageKey(target.languageId, languages)))
+	);
+	let nextLanguageId = $derived(nextTargetLanguageId(languages, selected));
 
 	function patch(subtitleTargets: MediaProfileSubtitleTarget[]) {
 		onChange({ ...form, subtitleTargets });
 	}
-	function add(languageId: string) {
-		if (selected.has(languageId)) return;
-		patch([...targets, { ...defaultSubtitleTarget(), languageId }]);
+	function add() {
+		if (!nextLanguageId) return;
+		patch([...targets, { ...defaultSubtitleTarget(), languageId: nextLanguageId }]);
 	}
 	function update(index: number, value: Partial<MediaProfileSubtitleTarget>) {
 		patch(targets.map((target, row) => (row === index ? { ...target, ...value } : target)));
@@ -42,11 +51,21 @@
 </script>
 
 <Card.Root>
-	<Card.Header>
+	<Card.Header class="flex flex-row items-center justify-between gap-3">
 		<Card.Title class="flex items-center gap-2">
 			<CaptionsIcon aria-hidden="true" />
 			<span>Subtitle targets</span>
 		</Card.Title>
+		<Button
+			type="button"
+			size="sm"
+			class="bg-accent text-accent-foreground hover:bg-accent/80"
+			disabled={!nextLanguageId}
+			onclick={add}
+		>
+			<PlusIcon aria-hidden="true" />
+			<span>Add</span>
+		</Button>
 	</Card.Header>
 	<Card.Content class="mt-2 grid gap-4">
 		<div class="grid gap-3">
@@ -58,41 +77,36 @@
 				/>
 				Remove subtitle tracks that are not wanted
 			</Label>
-			<ProfileLanguageAutocomplete
-				id="subtitle-target-add-language"
-				label="Add subtitle language"
-				placeholder="Search subtitle languages"
-				{languages}
-				selectedIds={[...selected]}
-				onSelect={add}
-			/>
 		</div>
 
-		<Table.Root class="min-w-[680px] table-fixed">
+		<Table.Root class="w-full table-fixed">
 			<Table.Header>
 				<Table.Row>
-					<Table.Head class="w-40">Language</Table.Head>
-					<Table.Head class="w-18">Score</Table.Head>
-					<Table.Head class="w-32">Source</Table.Head>
-					<Table.Head>Format</Table.Head>
-					<Table.Head class="w-10"><span class="sr-only">Actions</span></Table.Head>
+					<Table.Head class="w-60 text-left">Language</Table.Head>
+					<Table.Head class="w-32 text-left">Source</Table.Head>
+					<Table.Head class="w-44 text-left">Format</Table.Head>
+					<Table.Head class="w-20 text-right">Score</Table.Head>
+					<Table.Head class="w-14 text-right"><span class="sr-only">Actions</span></Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
 				{#each targets as target, index (target.languageId)}
 					<Table.Row>
 						<Table.Cell>
-							<span class="font-medium"
-								>{languageLabelFromCatalog(target.languageId, languages)}</span
+							<Select.Root
+								type="single"
+								value={targetLanguageValue(target.languageId, languages)}
+								onValueChange={(value) => update(index, { languageId: value })}
 							>
-						</Table.Cell>
-						<Table.Cell>
-							<Input
-								aria-label="Subtitle score"
-								type="number"
-								value={target.score}
-								oninput={(event) => update(index, { score: event.currentTarget.valueAsNumber })}
-							/>
+								<Select.Trigger class="w-full"
+									>{targetLanguageDisplayLabel(target.languageId, languages)}</Select.Trigger
+								>
+								<Select.Content>
+									{#each targetLanguageChoices(languages, target.languageId, selected) as option (option.id)}
+										<Select.Item value={option.id} label={option.displayLabel} />
+									{/each}
+								</Select.Content>
+							</Select.Root>
 						</Table.Cell>
 						<Table.Cell>
 							<Select.Root
@@ -101,7 +115,7 @@
 								onValueChange={(value) =>
 									update(index, { source: value as MediaProfileSubtitleSource })}
 							>
-								<Select.Trigger>{target.source}</Select.Trigger>
+								<Select.Trigger class="w-full">{target.source}</Select.Trigger>
 								<Select.Content>
 									<Select.Item value="any" label="Any" />
 									<Select.Item value="embedded" label="Embedded" />
@@ -121,6 +135,15 @@
 							/>
 						</Table.Cell>
 						<Table.Cell class="text-right">
+							<Input
+								aria-label="Subtitle score"
+								class="ml-auto w-20 text-right"
+								type="number"
+								value={target.score}
+								oninput={(event) => update(index, { score: event.currentTarget.valueAsNumber })}
+							/>
+						</Table.Cell>
+						<Table.Cell class="pl-3 text-right">
 							<Button
 								type="button"
 								variant="destructive"

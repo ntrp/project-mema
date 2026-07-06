@@ -58,23 +58,32 @@
 				{saveError}
 			</p>
 		{/if}
-		<div class="grid min-w-0 items-start gap-3.5 xl:grid-cols-2">
-			<div class="flex min-w-0 flex-col gap-3.5">
+		<div class="grid min-w-0 grid-cols-1 gap-3.5">
+			<div class="col-span-full min-w-0">
 				<MediaProfileRules {form} {qualities} onChange={(value) => (form = value)} />
+			</div>
+			<div class="col-span-full min-w-0">
+				<MediaProfileVideoTarget
+					{form}
+					{qualities}
+					{loadingQualities}
+					{qualityError}
+					onChange={(value) => (form = value)}
+				/>
+			</div>
+			<div class="col-span-full min-w-0">
 				<MediaProfileLanguageSelector {form} {languages} onChange={(value) => (form = value)} />
+			</div>
+			<div class="col-span-full min-w-0">
 				<MediaProfileSubtitleSelector {form} {languages} onChange={(value) => (form = value)} />
 			</div>
-			<MediaProfileVideoTarget
-				{form}
-				{qualities}
-				{loadingQualities}
-				{qualityError}
-				onChange={(value) => (form = value)}
-			/>
-		</div>
-
-		<div class="grid min-w-0 gap-3.5">
-			<MediaProfileCustomFormatScores {form} {customFormats} onChange={(value) => (form = value)} />
+			<div class="col-span-full min-w-0">
+				<MediaProfileCustomFormatScores
+					{form}
+					{customFormats}
+					onChange={(value) => (form = value)}
+				/>
+			</div>
 		</div>
 
 		<div class="flex items-center justify-end gap-3">

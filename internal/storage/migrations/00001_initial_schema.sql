@@ -241,6 +241,7 @@ create table if not exists app.media_profiles (
     upgrade_until_custom_format_score integer not null default 0,
     minimum_custom_format_score_increment integer not null default 1 check (minimum_custom_format_score_increment >= 0),
     remove_unwanted_audio boolean not null default false,
+    audio_lossy_transcode_policy text not null default 'disabled' check (audio_lossy_transcode_policy in ('disabled', 'losslessToLossy', 'lossyToLossy')),
     remove_unwanted_subtitles boolean not null default false,
     preferred_protocol text not null default 'any' check (preferred_protocol in ('any', 'torrent', 'usenet')),
     series_pack_preference text not null default 'auto' check (series_pack_preference in ('auto', 'preferPacks', 'preferEpisodes')),
@@ -298,11 +299,10 @@ create table if not exists app.media_profile_audio_targets (
     language_id text not null,
     score integer not null default 0,
     required boolean not null default true,
-    codecs text[] not null default '{}',
-    channels text[] not null default '{}',
+    target_codec text,
+    target_channels text[] not null default '{}',
     minimum_bitrate_kbps integer check (minimum_bitrate_kbps is null or minimum_bitrate_kbps > 0),
     preferred_bitrate_kbps integer check (preferred_bitrate_kbps is null or preferred_bitrate_kbps > 0),
-    lossy_transcode_policy text not null default 'disabled' check (lossy_transcode_policy in ('disabled', 'losslessToLossy', 'lossyToLossy')),
     sort_order integer not null default 0,
     primary key (profile_id, language_id)
 );

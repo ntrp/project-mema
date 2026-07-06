@@ -14,12 +14,12 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			isDefault: false,
 			finalContainer: 'mkv',
 			qualityIds: [],
+			audioLossyTranscodePolicy: 'disabled',
 			audioTargets: [
 				{
 					languageId: 'EN',
 					score: 0,
-					required: true,
-					lossyTranscodePolicy: 'disabled'
+					required: true
 				}
 			],
 			subtitleTargets: []
@@ -64,16 +64,14 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 					languageId: 'english',
 					score: '100',
 					required: true,
-					codecs: [' AAC ', 'aac', 'dts'],
-					channels: ['5.1', '7.1'],
-					minimumBitrateKbps: '384',
-					lossyTranscodePolicy: 'disabled'
+					targetCodec: ' AAC ',
+					targetChannels: ['5.1', '7.1'],
+					minimumBitrateKbps: '384'
 				},
 				{
 					languageId: 'english',
 					score: 50,
-					required: false,
-					lossyTranscodePolicy: 'disabled'
+					required: false
 				}
 			],
 			subtitleTargets: [
@@ -108,14 +106,15 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			minimumCustomFormatScoreIncrement: 0,
 			preferredProtocol: 'any',
 			seriesPackPreference: 'auto',
+			audioLossyTranscodePolicy: 'disabled',
 			videoTarget: { codecs: ['h265', 'av1'], codecScore: 15, hdrFormats: ['HDR10'] },
 			audioTargets: [
 				{
 					languageId: 'english',
 					score: 100,
 					required: true,
-					codecs: ['AAC', 'dts'],
-					channels: ['5.1', '7.1'],
+					targetCodec: 'AAC',
+					targetChannels: ['5.1', '7.1'],
 					minimumBitrateKbps: 384
 				}
 			],
@@ -146,6 +145,7 @@ function mediaProfile(): MediaProfile {
 		upgradeUntilCustomFormatScore: 100,
 		minimumCustomFormatScoreIncrement: 1,
 		removeUnwantedAudio: false,
+		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: true,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
@@ -154,8 +154,7 @@ function mediaProfile(): MediaProfile {
 			{
 				languageId: 'english',
 				score: 10,
-				required: true,
-				lossyTranscodePolicy: 'disabled'
+				required: true
 			}
 		],
 		subtitleTargets: [

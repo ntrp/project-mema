@@ -73,6 +73,7 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 		minimumCustomFormatScoreIncrement: 1,
 		finalContainer: 'mkv',
 		removeUnwantedAudio: false,
+		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
@@ -81,8 +82,7 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 			{
 				languageId: 'english',
 				score: 0,
-				required: false,
-				lossyTranscodePolicy: 'disabled'
+				required: false
 			}
 		],
 		subtitleTargets: [{ languageId: 'english', score: 0, required: true, source: 'any' }],

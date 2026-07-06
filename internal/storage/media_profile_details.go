@@ -82,11 +82,10 @@ func loadMediaProfileAudioTargets(
 			LanguageID:           row.LanguageID,
 			Score:                row.Score,
 			Required:             row.Required,
-			Codecs:               row.Codecs,
-			Channels:             row.Channels,
+			TargetCodec:          textPtr(row.TargetCodec),
+			TargetChannels:       row.TargetChannels,
 			MinimumBitrateKbps:   int4Ptr(row.MinimumBitrateKbps),
 			PreferredBitrateKbps: int4Ptr(row.PreferredBitrateKbps),
-			LossyTranscodePolicy: row.LossyTranscodePolicy,
 		})
 	}
 	return targets, nil
@@ -163,11 +162,10 @@ func replaceMediaProfileTargets(
 			LanguageID:           target.LanguageID,
 			Score:                target.Score,
 			Required:             target.Required,
-			Codecs:               target.Codecs,
-			Channels:             target.Channels,
+			TargetCodec:          textValue(target.TargetCodec),
+			TargetChannels:       target.TargetChannels,
 			MinimumBitrateKbps:   int4Value(target.MinimumBitrateKbps),
 			PreferredBitrateKbps: int4Value(target.PreferredBitrateKbps),
-			LossyTranscodePolicy: target.LossyTranscodePolicy,
 			SortOrder:            int32(index),
 		}); err != nil {
 			return normalizeMediaProfileWriteError(err)

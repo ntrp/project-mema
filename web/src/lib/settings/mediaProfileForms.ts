@@ -12,6 +12,7 @@ export function emptyMediaProfileForm(): MediaProfileForm {
 		upgradeUntilCustomFormatScore: 0,
 		minimumCustomFormatScoreIncrement: 1,
 		removeUnwantedAudio: false,
+		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',
@@ -35,6 +36,7 @@ export function mediaProfileFormFromProfile(profile: MediaProfile): MediaProfile
 		upgradeUntilCustomFormatScore: profile.upgradeUntilCustomFormatScore,
 		minimumCustomFormatScoreIncrement: profile.minimumCustomFormatScoreIncrement,
 		removeUnwantedAudio: profile.removeUnwantedAudio,
+		audioLossyTranscodePolicy: profile.audioLossyTranscodePolicy ?? 'disabled',
 		removeUnwantedSubtitles: profile.removeUnwantedSubtitles,
 		preferredProtocol: profile.preferredProtocol,
 		seriesPackPreference: profile.seriesPackPreference,
@@ -65,6 +67,7 @@ export function normalizeMediaProfileForm(form: MediaProfileForm): MediaProfileR
 			normalizedInteger(form.minimumCustomFormatScoreIncrement)
 		),
 		removeUnwantedAudio: form.removeUnwantedAudio,
+		audioLossyTranscodePolicy: form.audioLossyTranscodePolicy ?? 'disabled',
 		removeUnwantedSubtitles: form.removeUnwantedSubtitles,
 		preferredProtocol: form.preferredProtocol ?? 'any',
 		seriesPackPreference: form.seriesPackPreference ?? 'auto',
@@ -84,8 +87,7 @@ export function defaultAudioTarget(): MediaProfileRequest['audioTargets'][number
 	return {
 		languageId: 'EN',
 		score: 0,
-		required: true,
-		lossyTranscodePolicy: 'disabled'
+		required: true
 	};
 }
 
@@ -134,11 +136,10 @@ function audioTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['audi
 			languageId,
 			score: normalizedInteger(value.score),
 			required: true,
-			codecs: uniqueTrimmed(value.codecs ?? []),
-			channels: uniqueTrimmed(value.channels ?? []),
+			targetCodec: trimmedValue(value.targetCodec),
+			targetChannels: uniqueTrimmed(value.targetChannels ?? []),
 			minimumBitrateKbps: positiveInteger(value.minimumBitrateKbps),
-			preferredBitrateKbps: positiveInteger(value.preferredBitrateKbps),
-			lossyTranscodePolicy: value.lossyTranscodePolicy ?? 'disabled'
+			preferredBitrateKbps: positiveInteger(value.preferredBitrateKbps)
 		});
 	}
 	return targets;
@@ -173,6 +174,11 @@ function uniqueTrimmed(values: string[]) {
 		result.push(trimmed);
 	}
 	return result;
+}
+
+function trimmedValue(value: string | undefined) {
+	const trimmed = value?.trim();
+	return trimmed ? trimmed : undefined;
 }
 
 function positiveInteger(value: number | undefined) {

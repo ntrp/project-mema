@@ -9,6 +9,7 @@ select id,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_unwanted_audio,
+    audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
@@ -32,6 +33,7 @@ insert into app.media_profiles (
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_unwanted_audio,
+    audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference
@@ -47,6 +49,7 @@ values (
     sqlc.arg(upgrade_until_custom_format_score),
     sqlc.arg(minimum_custom_format_score_increment),
     sqlc.arg(remove_unwanted_audio),
+    sqlc.arg(audio_lossy_transcode_policy),
     sqlc.arg(remove_unwanted_subtitles),
     sqlc.arg(preferred_protocol),
     sqlc.arg(series_pack_preference)
@@ -63,6 +66,7 @@ set name = sqlc.arg(name),
     upgrade_until_custom_format_score = sqlc.arg(upgrade_until_custom_format_score),
     minimum_custom_format_score_increment = sqlc.arg(minimum_custom_format_score_increment),
     remove_unwanted_audio = sqlc.arg(remove_unwanted_audio),
+    audio_lossy_transcode_policy = sqlc.arg(audio_lossy_transcode_policy),
     remove_unwanted_subtitles = sqlc.arg(remove_unwanted_subtitles),
     preferred_protocol = sqlc.arg(preferred_protocol),
     series_pack_preference = sqlc.arg(series_pack_preference),
@@ -84,6 +88,7 @@ select id,
     upgrade_until_custom_format_score,
     minimum_custom_format_score_increment,
     remove_unwanted_audio,
+    audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
     preferred_protocol,
     series_pack_preference,
@@ -122,11 +127,10 @@ limit 1;
 select language_id,
     score,
     required,
-    codecs,
-    channels,
+    target_codec,
+    target_channels,
     minimum_bitrate_kbps,
-    preferred_bitrate_kbps,
-    lossy_transcode_policy
+    preferred_bitrate_kbps
 from app.media_profile_audio_targets
 where profile_id = $1
 order by sort_order, language_id;
@@ -202,11 +206,10 @@ insert into app.media_profile_audio_targets (
     language_id,
     score,
     required,
-    codecs,
-    channels,
+    target_codec,
+    target_channels,
     minimum_bitrate_kbps,
     preferred_bitrate_kbps,
-    lossy_transcode_policy,
     sort_order
 )
 values (
@@ -214,11 +217,10 @@ values (
     sqlc.arg(language_id),
     sqlc.arg(score),
     sqlc.arg(required),
-    sqlc.arg(codecs),
-    sqlc.arg(channels),
+    sqlc.narg(target_codec),
+    sqlc.arg(target_channels),
     sqlc.narg(minimum_bitrate_kbps),
     sqlc.narg(preferred_bitrate_kbps),
-    sqlc.arg(lossy_transcode_policy),
     sqlc.arg(sort_order)
 );
 

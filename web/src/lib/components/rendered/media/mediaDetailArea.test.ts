@@ -208,8 +208,7 @@ function qualityProfile(): QualityProfileOption {
 			{
 				languageId: 'english',
 				score: 0,
-				required: true,
-				lossyTranscodePolicy: 'disabled'
+				required: true
 			}
 		]
 	};
