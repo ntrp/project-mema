@@ -853,6 +853,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/assemblies': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Queue a mux job for selected component artifacts */
+		post: operations['enqueueMediaComponentAssembly'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/files/delete': {
 		parameters: {
 			query?: never;
@@ -2600,6 +2619,7 @@ export interface components {
 			files?: components['schemas']['MediaFileInfo'][];
 			externalSubtitles?: components['schemas']['MediaItemSubtitle'][];
 			componentSources?: components['schemas']['MediaComponentSource'][];
+			assemblyRuns?: components['schemas']['MediaComponentAssemblyRun'][];
 			metadataFilePaths: string[];
 			/** Format: date-time */
 			createdAt: string;
@@ -2871,6 +2891,61 @@ export interface components {
 		MediaComponentCompatibilityAutomationState: 'allowed' | 'blocked';
 		/** @enum {string} */
 		MediaComponentCompatibilityReviewState: 'notRequired' | 'pending' | 'approved' | 'rejected';
+		MediaComponentAssemblyRequest: {
+			/** Format: uuid */
+			baseSourceId: string;
+			artifactIds: string[];
+		};
+		MediaComponentAssemblyEnqueueResponse: {
+			/** Format: int64 */
+			jobId: number;
+			message: string;
+			run: components['schemas']['MediaComponentAssemblyRun'];
+		};
+		MediaComponentAssemblyRun: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			mediaItemId: string;
+			/** Format: uuid */
+			baseSourceId: string;
+			outputPath: string;
+			status: components['schemas']['MediaComponentAssemblyStatus'];
+			toolName: string;
+			toolSummary: string;
+			errorMessage?: string;
+			jobId?: string;
+			/** Format: int64 */
+			sizeBytes?: number;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+			/** Format: date-time */
+			completedAt?: string;
+			inputs: components['schemas']['MediaComponentAssemblyInput'][];
+		};
+		MediaComponentAssemblyInput: {
+			/** Format: uuid */
+			id: string;
+			/** Format: uuid */
+			runId: string;
+			/** Format: uuid */
+			sourceId?: string;
+			/** Format: uuid */
+			artifactId?: string;
+			streamType: components['schemas']['MediaComponentAssemblyStreamType'];
+			inputPath: string;
+			provenance: {
+				[key: string]: unknown;
+			};
+			/** Format: date-time */
+			createdAt: string;
+		};
+		/** @enum {string} */
+		MediaComponentAssemblyStatus: 'queued' | 'running' | 'succeeded' | 'failed';
+		/** @enum {string} */
+		MediaComponentAssemblyStreamType: 'video' | 'audio' | 'subtitle';
 		MediaFileHistoryResponse: {
 			entries: components['schemas']['MediaFileHistoryEntry'][];
 		};
@@ -5614,6 +5689,35 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['MediaComponentCompatibilityDecision'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	enqueueMediaComponentAssembly: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaComponentAssemblyRequest'];
+			};
+		};
+		responses: {
+			/** @description Component assembly queued */
+			202: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaComponentAssemblyEnqueueResponse'];
 				};
 			};
 			400: components['responses']['BadRequest'];

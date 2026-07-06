@@ -1111,6 +1111,39 @@ create table if not exists app.media_component_compatibility_decisions (
 create index if not exists idx_media_component_compatibility_component
     on app.media_component_compatibility_decisions (component_source_id, created_at desc);
 
+create table if not exists app.media_component_assembly_runs (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    base_source_id uuid not null references app.media_component_sources(id) on delete cascade,
+    output_path text not null,
+    status text not null default 'queued' check (status in ('queued', 'running', 'succeeded', 'failed')),
+    tool_name text not null default 'mkvmerge',
+    tool_summary text not null default '',
+    error_message text,
+    job_id text,
+    size_bytes bigint check (size_bytes is null or size_bytes >= 0),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    completed_at timestamptz
+);
+
+create table if not exists app.media_component_assembly_inputs (
+    id uuid primary key,
+    run_id uuid not null references app.media_component_assembly_runs(id) on delete cascade,
+    source_id uuid references app.media_component_sources(id) on delete set null,
+    artifact_id uuid references app.media_component_artifacts(id) on delete set null,
+    stream_type text not null check (stream_type in ('video', 'audio', 'subtitle')),
+    input_path text not null,
+    provenance jsonb not null default '{}'::jsonb check (jsonb_typeof(provenance) = 'object'),
+    created_at timestamptz not null default now()
+);
+
+create index if not exists idx_media_component_assembly_runs_media
+    on app.media_component_assembly_runs (media_item_id, created_at desc);
+
+create index if not exists idx_media_component_assembly_inputs_run
+    on app.media_component_assembly_inputs (run_id, created_at);
+
 create table if not exists app.media_file_history (
     id uuid primary key,
     media_item_id uuid references app.media_items(id) on delete set null,

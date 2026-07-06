@@ -287,6 +287,33 @@ type AppMediaComponentArtifact struct {
 	CompletedAt  *time.Time
 }
 
+type AppMediaComponentAssemblyInput struct {
+	ID         uuid.UUID
+	RunID      uuid.UUID
+	SourceID   *uuid.UUID
+	ArtifactID *uuid.UUID
+	StreamType string
+	InputPath  string
+	Provenance []byte
+	CreatedAt  time.Time
+}
+
+type AppMediaComponentAssemblyRun struct {
+	ID           uuid.UUID
+	MediaItemID  uuid.UUID
+	BaseSourceID uuid.UUID
+	OutputPath   string
+	Status       string
+	ToolName     string
+	ToolSummary  string
+	ErrorMessage pgtype.Text
+	JobID        pgtype.Text
+	SizeBytes    pgtype.Int8
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	CompletedAt  *time.Time
+}
+
 type AppMediaComponentCompatibilityDecision struct {
 	ID                uuid.UUID
 	MediaItemID       uuid.UUID

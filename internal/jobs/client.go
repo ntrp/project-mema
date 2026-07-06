@@ -90,3 +90,17 @@ func (c *Client) EnqueueMediaComponentExtraction(ctx context.Context, artifactID
 	publishJobUpdated(c.events, result.Job, "")
 	return result.Job.ID, nil
 }
+
+func (c *Client) EnqueueMediaComponentMux(ctx context.Context, runID uuid.UUID) (int64, error) {
+	result, err := c.river.Insert(ctx, MediaComponentMuxArgs{RunID: runID.String()}, &river.InsertOpts{
+		Queue: queueMediaAssembly,
+		UniqueOpts: river.UniqueOpts{
+			ByArgs: true,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	publishJobUpdated(c.events, result.Job, "")
+	return result.Job.ID, nil
+}

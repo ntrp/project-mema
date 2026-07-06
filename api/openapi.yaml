@@ -1636,6 +1636,35 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/assemblies:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: enqueueMediaComponentAssembly
+      tags:
+        - Media
+      summary: Queue a mux job for selected component artifacts
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaComponentAssemblyRequest"
+      responses:
+        "202":
+          description: Component assembly queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaComponentAssemblyEnqueueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/files/delete:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -5071,6 +5100,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/MediaComponentSource"
+            assemblyRuns:
+              type: array
+              items:
+                $ref: "#/components/schemas/MediaComponentAssemblyRun"
             metadataFilePaths:
               type: array
               items:
@@ -5763,6 +5796,145 @@ components:
         - MediaComponentCompatibilityReviewPending
         - MediaComponentCompatibilityReviewApproved
         - MediaComponentCompatibilityReviewRejected
+    MediaComponentAssemblyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - baseSourceId
+        - artifactIds
+      properties:
+        baseSourceId:
+          type: string
+          format: uuid
+        artifactIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+    MediaComponentAssemblyEnqueueResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - jobId
+        - message
+        - run
+      properties:
+        jobId:
+          type: integer
+          format: int64
+        message:
+          type: string
+        run:
+          $ref: "#/components/schemas/MediaComponentAssemblyRun"
+    MediaComponentAssemblyRun:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - mediaItemId
+        - baseSourceId
+        - outputPath
+        - status
+        - toolName
+        - toolSummary
+        - createdAt
+        - updatedAt
+        - inputs
+      properties:
+        id:
+          type: string
+          format: uuid
+        mediaItemId:
+          type: string
+          format: uuid
+        baseSourceId:
+          type: string
+          format: uuid
+        outputPath:
+          type: string
+        status:
+          $ref: "#/components/schemas/MediaComponentAssemblyStatus"
+        toolName:
+          type: string
+        toolSummary:
+          type: string
+        errorMessage:
+          type: string
+        jobId:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        inputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaComponentAssemblyInput"
+    MediaComponentAssemblyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - runId
+        - streamType
+        - inputPath
+        - provenance
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        sourceId:
+          type: string
+          format: uuid
+        artifactId:
+          type: string
+          format: uuid
+        streamType:
+          $ref: "#/components/schemas/MediaComponentAssemblyStreamType"
+        inputPath:
+          type: string
+        provenance:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+    MediaComponentAssemblyStatus:
+      type: string
+      enum:
+        - queued
+        - running
+        - succeeded
+        - failed
+      x-enum-varnames:
+        - MediaComponentAssemblyStatusQueued
+        - MediaComponentAssemblyStatusRunning
+        - MediaComponentAssemblyStatusSucceeded
+        - MediaComponentAssemblyStatusFailed
+    MediaComponentAssemblyStreamType:
+      type: string
+      enum:
+        - video
+        - audio
+        - subtitle
+      x-enum-varnames:
+        - MediaComponentAssemblyStreamVideo
+        - MediaComponentAssemblyStreamAudio
+        - MediaComponentAssemblyStreamSubtitle
     MediaFileHistoryResponse:
       type: object
       additionalProperties: false

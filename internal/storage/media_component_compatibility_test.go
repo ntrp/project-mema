@@ -92,12 +92,18 @@ func retainCompatibilitySource(
 	t.Helper()
 	path := filepath.Join(*item.MediaFolderPath, name)
 	writeTestFile(t, path)
+	streamID := "0"
+	streamType := "video"
+	if role != "baseVideo" {
+		streamID = "1"
+		streamType = "audio"
+	}
 	source, err := store.RetainMediaComponentSource(ctx, item.ID, MediaComponentSourceInput{
 		SourceRole:     role,
 		SourceFilePath: path,
 		ReleaseTitle:   stringPtr(title),
 		StreamInventory: `{"format":{"duration":"` +
-			formatDurationSeconds(durationMs) + `"},"streams":[{"id":0,"type":"video"}]}`,
+			formatDurationSeconds(durationMs) + `"},"streams":[{"id":` + streamID + `,"type":"` + streamType + `"}]}`,
 	})
 	if err != nil {
 		t.Fatal(err)

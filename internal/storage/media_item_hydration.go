@@ -23,7 +23,11 @@ func hydrateMediaItem(ctx context.Context, q storagegen.DBTX, item MediaItem) (M
 	if err != nil {
 		return item, err
 	}
-	return hydrateMediaItemAnime(ctx, q, item)
+	item, err = hydrateMediaItemAnime(ctx, q, item)
+	if err != nil {
+		return item, err
+	}
+	return hydrateMediaItemAssemblyRuns(ctx, q, item)
 }
 
 func hydrateMediaItems(ctx context.Context, q storagegen.DBTX, items []MediaItem) ([]MediaItem, error) {
@@ -89,5 +93,18 @@ func hydrateMediaItemComponentSources(
 		sources[index].Compatibility = compatibility
 	}
 	item.ComponentSources = sources
+	return item, nil
+}
+
+func hydrateMediaItemAssemblyRuns(
+	ctx context.Context,
+	q storagegen.DBTX,
+	item MediaItem,
+) (MediaItem, error) {
+	runs, err := listMediaComponentAssemblyRuns(ctx, q, item.ID)
+	if err != nil {
+		return item, err
+	}
+	item.AssemblyRuns = runs
 	return item, nil
 }

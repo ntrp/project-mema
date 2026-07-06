@@ -469,6 +469,51 @@ func (e MediaComponentArtifactStreamType) Valid() bool {
 	}
 }
 
+// Defines values for MediaComponentAssemblyStatus.
+const (
+	MediaComponentAssemblyStatusFailed    MediaComponentAssemblyStatus = "failed"
+	MediaComponentAssemblyStatusQueued    MediaComponentAssemblyStatus = "queued"
+	MediaComponentAssemblyStatusRunning   MediaComponentAssemblyStatus = "running"
+	MediaComponentAssemblyStatusSucceeded MediaComponentAssemblyStatus = "succeeded"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentAssemblyStatus enum.
+func (e MediaComponentAssemblyStatus) Valid() bool {
+	switch e {
+	case MediaComponentAssemblyStatusFailed:
+		return true
+	case MediaComponentAssemblyStatusQueued:
+		return true
+	case MediaComponentAssemblyStatusRunning:
+		return true
+	case MediaComponentAssemblyStatusSucceeded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaComponentAssemblyStreamType.
+const (
+	MediaComponentAssemblyStreamAudio    MediaComponentAssemblyStreamType = "audio"
+	MediaComponentAssemblyStreamSubtitle MediaComponentAssemblyStreamType = "subtitle"
+	MediaComponentAssemblyStreamVideo    MediaComponentAssemblyStreamType = "video"
+)
+
+// Valid indicates whether the value is a known member of the MediaComponentAssemblyStreamType enum.
+func (e MediaComponentAssemblyStreamType) Valid() bool {
+	switch e {
+	case MediaComponentAssemblyStreamAudio:
+		return true
+	case MediaComponentAssemblyStreamSubtitle:
+		return true
+	case MediaComponentAssemblyStreamVideo:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaComponentCompatibilityAutomationState.
 const (
 	MediaComponentCompatibilityAutomationAllowed MediaComponentCompatibilityAutomationState = "allowed"
@@ -2331,6 +2376,55 @@ type MediaComponentArtifactStatus string
 // MediaComponentArtifactStreamType defines model for MediaComponentArtifactStreamType.
 type MediaComponentArtifactStreamType string
 
+// MediaComponentAssemblyEnqueueResponse defines model for MediaComponentAssemblyEnqueueResponse.
+type MediaComponentAssemblyEnqueueResponse struct {
+	JobId   int64                     `json:"jobId"`
+	Message string                    `json:"message"`
+	Run     MediaComponentAssemblyRun `json:"run"`
+}
+
+// MediaComponentAssemblyInput defines model for MediaComponentAssemblyInput.
+type MediaComponentAssemblyInput struct {
+	ArtifactId *openapi_types.UUID              `json:"artifactId,omitempty"`
+	CreatedAt  time.Time                        `json:"createdAt"`
+	Id         openapi_types.UUID               `json:"id"`
+	InputPath  string                           `json:"inputPath"`
+	Provenance map[string]interface{}           `json:"provenance"`
+	RunId      openapi_types.UUID               `json:"runId"`
+	SourceId   *openapi_types.UUID              `json:"sourceId,omitempty"`
+	StreamType MediaComponentAssemblyStreamType `json:"streamType"`
+}
+
+// MediaComponentAssemblyRequest defines model for MediaComponentAssemblyRequest.
+type MediaComponentAssemblyRequest struct {
+	ArtifactIds  []openapi_types.UUID `json:"artifactIds"`
+	BaseSourceId openapi_types.UUID   `json:"baseSourceId"`
+}
+
+// MediaComponentAssemblyRun defines model for MediaComponentAssemblyRun.
+type MediaComponentAssemblyRun struct {
+	BaseSourceId openapi_types.UUID            `json:"baseSourceId"`
+	CompletedAt  *time.Time                    `json:"completedAt,omitempty"`
+	CreatedAt    time.Time                     `json:"createdAt"`
+	ErrorMessage *string                       `json:"errorMessage,omitempty"`
+	Id           openapi_types.UUID            `json:"id"`
+	Inputs       []MediaComponentAssemblyInput `json:"inputs"`
+	JobId        *string                       `json:"jobId,omitempty"`
+	MediaItemId  openapi_types.UUID            `json:"mediaItemId"`
+	OutputPath   string                        `json:"outputPath"`
+	SizeBytes    *int64                        `json:"sizeBytes,omitempty"`
+	Status       MediaComponentAssemblyStatus  `json:"status"`
+	ToolName     string                        `json:"toolName"`
+	ToolSummary  string                        `json:"toolSummary"`
+	UpdatedAt    time.Time                     `json:"updatedAt"`
+}
+
+// MediaComponentAssemblyStatus defines model for MediaComponentAssemblyStatus.
+type MediaComponentAssemblyStatus string
+
+// MediaComponentAssemblyStreamType defines model for MediaComponentAssemblyStreamType.
+type MediaComponentAssemblyStreamType string
+
 // MediaComponentCompatibilityAutomationState defines model for MediaComponentCompatibilityAutomationState.
 type MediaComponentCompatibilityAutomationState string
 
@@ -2581,56 +2675,57 @@ type MediaGroupedSearchResponse struct {
 
 // MediaItem defines model for MediaItem.
 type MediaItem struct {
-	Aliases             *[]MediaItemAlias        `json:"aliases,omitempty"`
-	BackdropPath        *string                  `json:"backdropPath,omitempty"`
-	Cast                *[]MediaMetadataPerson   `json:"cast,omitempty"`
-	CollectionId        *string                  `json:"collectionId,omitempty"`
-	CollectionName      *string                  `json:"collectionName,omitempty"`
-	ComponentSources    *[]MediaComponentSource  `json:"componentSources,omitempty"`
-	ContentKind         *MediaContentKind        `json:"contentKind,omitempty"`
-	CreatedAt           time.Time                `json:"createdAt"`
-	Crew                *[]MediaMetadataPerson   `json:"crew,omitempty"`
-	EpisodeCount        *int32                   `json:"episodeCount,omitempty"`
-	EpisodeNumbering    *[]MediaEpisodeNumbering `json:"episodeNumbering,omitempty"`
-	ExternalId          *string                  `json:"externalId,omitempty"`
-	ExternalProvider    *string                  `json:"externalProvider,omitempty"`
-	ExternalSubtitles   *[]MediaItemSubtitle     `json:"externalSubtitles,omitempty"`
-	Facts               *[]MediaMetadataFact     `json:"facts,omitempty"`
-	FilePaths           []string                 `json:"filePaths"`
-	Files               *[]MediaFileInfo         `json:"files,omitempty"`
-	FirstAirDate        *string                  `json:"firstAirDate,omitempty"`
-	Genres              *[]string                `json:"genres,omitempty"`
-	Id                  openapi_types.UUID       `json:"id"`
-	Keywords            *[]string                `json:"keywords,omitempty"`
-	LibraryFolderId     *openapi_types.UUID      `json:"libraryFolderId,omitempty"`
-	LibraryFolderPath   *string                  `json:"libraryFolderPath,omitempty"`
-	MediaFolderPath     *string                  `json:"mediaFolderPath,omitempty"`
-	MetadataFilePaths   []string                 `json:"metadataFilePaths"`
-	MetadataStatus      *string                  `json:"metadataStatus,omitempty"`
-	MinimumAvailability MinimumAvailability      `json:"minimumAvailability"`
-	MonitorMode         MediaMonitorMode         `json:"monitorMode"`
-	Monitored           bool                     `json:"monitored"`
-	NumberingStrategy   *MediaNumberingStrategy  `json:"numberingStrategy,omitempty"`
-	OriginalLanguage    *string                  `json:"originalLanguage,omitempty"`
-	Overview            *string                  `json:"overview,omitempty"`
-	PosterPath          *string                  `json:"posterPath,omitempty"`
-	ProviderMappings    *[]MediaProviderMapping  `json:"providerMappings,omitempty"`
-	QualityProfileId    *string                  `json:"qualityProfileId,omitempty"`
-	QualityProfileName  *string                  `json:"qualityProfileName,omitempty"`
-	Recommendations     *[]MediaSearchResult     `json:"recommendations,omitempty"`
-	ReleaseDate         *string                  `json:"releaseDate,omitempty"`
-	RuntimeMinutes      *int32                   `json:"runtimeMinutes,omitempty"`
-	SeasonCount         *int32                   `json:"seasonCount,omitempty"`
-	Seasons             *[]MediaMetadataSeason   `json:"seasons,omitempty"`
-	SeriesType          *SeriesType              `json:"seriesType,omitempty"`
-	Similar             *[]MediaSearchResult     `json:"similar,omitempty"`
-	Status              MediaItemStatus          `json:"status"`
-	Tags                *[]string                `json:"tags,omitempty"`
-	Title               string                   `json:"title"`
-	Type                MediaType                `json:"type"`
-	UpdatedAt           time.Time                `json:"updatedAt"`
-	VoteAverage         *float64                 `json:"voteAverage,omitempty"`
-	Year                *int32                   `json:"year,omitempty"`
+	Aliases             *[]MediaItemAlias            `json:"aliases,omitempty"`
+	AssemblyRuns        *[]MediaComponentAssemblyRun `json:"assemblyRuns,omitempty"`
+	BackdropPath        *string                      `json:"backdropPath,omitempty"`
+	Cast                *[]MediaMetadataPerson       `json:"cast,omitempty"`
+	CollectionId        *string                      `json:"collectionId,omitempty"`
+	CollectionName      *string                      `json:"collectionName,omitempty"`
+	ComponentSources    *[]MediaComponentSource      `json:"componentSources,omitempty"`
+	ContentKind         *MediaContentKind            `json:"contentKind,omitempty"`
+	CreatedAt           time.Time                    `json:"createdAt"`
+	Crew                *[]MediaMetadataPerson       `json:"crew,omitempty"`
+	EpisodeCount        *int32                       `json:"episodeCount,omitempty"`
+	EpisodeNumbering    *[]MediaEpisodeNumbering     `json:"episodeNumbering,omitempty"`
+	ExternalId          *string                      `json:"externalId,omitempty"`
+	ExternalProvider    *string                      `json:"externalProvider,omitempty"`
+	ExternalSubtitles   *[]MediaItemSubtitle         `json:"externalSubtitles,omitempty"`
+	Facts               *[]MediaMetadataFact         `json:"facts,omitempty"`
+	FilePaths           []string                     `json:"filePaths"`
+	Files               *[]MediaFileInfo             `json:"files,omitempty"`
+	FirstAirDate        *string                      `json:"firstAirDate,omitempty"`
+	Genres              *[]string                    `json:"genres,omitempty"`
+	Id                  openapi_types.UUID           `json:"id"`
+	Keywords            *[]string                    `json:"keywords,omitempty"`
+	LibraryFolderId     *openapi_types.UUID          `json:"libraryFolderId,omitempty"`
+	LibraryFolderPath   *string                      `json:"libraryFolderPath,omitempty"`
+	MediaFolderPath     *string                      `json:"mediaFolderPath,omitempty"`
+	MetadataFilePaths   []string                     `json:"metadataFilePaths"`
+	MetadataStatus      *string                      `json:"metadataStatus,omitempty"`
+	MinimumAvailability MinimumAvailability          `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode             `json:"monitorMode"`
+	Monitored           bool                         `json:"monitored"`
+	NumberingStrategy   *MediaNumberingStrategy      `json:"numberingStrategy,omitempty"`
+	OriginalLanguage    *string                      `json:"originalLanguage,omitempty"`
+	Overview            *string                      `json:"overview,omitempty"`
+	PosterPath          *string                      `json:"posterPath,omitempty"`
+	ProviderMappings    *[]MediaProviderMapping      `json:"providerMappings,omitempty"`
+	QualityProfileId    *string                      `json:"qualityProfileId,omitempty"`
+	QualityProfileName  *string                      `json:"qualityProfileName,omitempty"`
+	Recommendations     *[]MediaSearchResult         `json:"recommendations,omitempty"`
+	ReleaseDate         *string                      `json:"releaseDate,omitempty"`
+	RuntimeMinutes      *int32                       `json:"runtimeMinutes,omitempty"`
+	SeasonCount         *int32                       `json:"seasonCount,omitempty"`
+	Seasons             *[]MediaMetadataSeason       `json:"seasons,omitempty"`
+	SeriesType          *SeriesType                  `json:"seriesType,omitempty"`
+	Similar             *[]MediaSearchResult         `json:"similar,omitempty"`
+	Status              MediaItemStatus              `json:"status"`
+	Tags                *[]string                    `json:"tags,omitempty"`
+	Title               string                       `json:"title"`
+	Type                MediaType                    `json:"type"`
+	UpdatedAt           time.Time                    `json:"updatedAt"`
+	VoteAverage         *float64                     `json:"voteAverage,omitempty"`
+	Year                *int32                       `json:"year,omitempty"`
 }
 
 // MediaItemAlias defines model for MediaItemAlias.
@@ -3878,6 +3973,9 @@ type CreateMediaItemJSONRequestBody = MediaItemCreateRequest
 // UpdateMediaItemJSONRequestBody defines body for UpdateMediaItem for application/json ContentType.
 type UpdateMediaItemJSONRequestBody = MediaItemUpdateRequest
 
+// EnqueueMediaComponentAssemblyJSONRequestBody defines body for EnqueueMediaComponentAssembly for application/json ContentType.
+type EnqueueMediaComponentAssemblyJSONRequestBody = MediaComponentAssemblyRequest
+
 // RetainMediaComponentSourceJSONRequestBody defines body for RetainMediaComponentSource for application/json ContentType.
 type RetainMediaComponentSourceJSONRequestBody = MediaComponentSourceRetainRequest
 
@@ -4117,6 +4215,9 @@ type ServerInterface interface {
 	// Update monitored media item settings
 	// (PUT /media/items/{id})
 	UpdateMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Queue a mux job for selected component artifacts
+	// (POST /media/items/{id}/assemblies)
+	EnqueueMediaComponentAssembly(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue an automatic search and grab for a monitored item
 	// (POST /media/items/{id}/automatic-searches)
 	EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -4693,6 +4794,12 @@ func (_ Unimplemented) DeleteMediaItem(w http.ResponseWriter, r *http.Request, i
 // Update monitored media item settings
 // (PUT /media/items/{id})
 func (_ Unimplemented) UpdateMediaItem(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Queue a mux job for selected component artifacts
+// (POST /media/items/{id}/assemblies)
+func (_ Unimplemented) EnqueueMediaComponentAssembly(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -6752,6 +6859,38 @@ func (siw *ServerInterfaceWrapper) UpdateMediaItem(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateMediaItem(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnqueueMediaComponentAssembly operation middleware
+func (siw *ServerInterfaceWrapper) EnqueueMediaComponentAssembly(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnqueueMediaComponentAssembly(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11138,6 +11277,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/media/items/{id}", wrapper.UpdateMediaItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/assemblies", wrapper.EnqueueMediaComponentAssembly)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/automatic-searches", wrapper.EnqueueMediaAutomaticSearch)
