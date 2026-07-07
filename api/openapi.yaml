@@ -2842,6 +2842,25 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/dlna/restart:
+    post:
+      operationId: restartDLNA
+      tags:
+        - Settings
+      summary: Restart DLNA server
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: DLNA settings after restart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNASettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/profiles:
     get:
       operationId: listMediaProfiles
@@ -7425,6 +7444,9 @@ components:
         - running
         - boundInterfaces
         - advertisedUrls
+        - recentClients
+        - activeStreams
+        - activeTranscodes
       properties:
         running:
           type: boolean
@@ -7438,6 +7460,66 @@ components:
             type: string
         lastError:
           type: string
+        lastSsdpEvent:
+          type: string
+        lastSoapAction:
+          type: string
+        recentClients:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAClientDiagnostic"
+        activeStreams:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAStreamDiagnostic"
+        activeTranscodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAStreamDiagnostic"
+    DLNAClientDiagnostic:
+      type: object
+      additionalProperties: false
+      required:
+        - ip
+        - userAgent
+        - profileId
+        - lastSoapAction
+        - lastSeen
+      properties:
+        ip:
+          type: string
+        userAgent:
+          type: string
+        profileId:
+          type: string
+        lastSoapAction:
+          type: string
+        lastError:
+          type: string
+        lastSeen:
+          type: string
+          format: date-time
+    DLNAStreamDiagnostic:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - clientIp
+        - path
+        - profileId
+        - startedAt
+      properties:
+        id:
+          type: string
+        clientIp:
+          type: string
+        path:
+          type: string
+        profileId:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
     DLNASettings:
       allOf:
         - $ref: "#/components/schemas/DLNASettingsRequest"

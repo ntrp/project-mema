@@ -49,3 +49,21 @@ func (s *Server) UpdateDLNASettings(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, s.dlnaSettingsResponse(settings))
 }
+
+func (s *Server) RestartDLNA(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	settings, err := s.settings.GetDLNASettings(r.Context())
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "settings_load_failed", "Could not load DLNA settings")
+		return
+	}
+	if s.dlna != nil {
+		if err := s.dlna.ApplySettings(r.Context(), settings); err != nil {
+			writeError(w, http.StatusBadRequest, "dlna_start_failed", "Could not restart DLNA")
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, s.dlnaSettingsResponse(settings))
+}

@@ -29,6 +29,8 @@ func (m *Manager) resource(w http.ResponseWriter, r *http.Request) {
 		m.resourcePlaylist(w, r, id, object.FilePath)
 		return
 	}
+	done := m.beginStream(r, object.FilePath, false)
+	defer done()
 	writeFileError(w, delivery.ServeFile(w, r, object.FilePath))
 }
 
@@ -40,6 +42,8 @@ func (m *Manager) resourcePlaylist(w http.ResponseWriter, r *http.Request, id st
 	if r.Method == http.MethodHead {
 		return
 	}
+	done := m.beginStream(r, target, true)
+	defer done()
 	probe := delivery.Probe(target)
 	duration := 0.0
 	if probe.DurationSeconds != nil {
@@ -68,6 +72,8 @@ func (m *Manager) resourceSegment(w http.ResponseWriter, r *http.Request, target
 	if r.Method == http.MethodHead {
 		return
 	}
+	done := m.beginStream(r, target, true)
+	defer done()
 	if !acquireTranscodeSlot(w, r) {
 		return
 	}

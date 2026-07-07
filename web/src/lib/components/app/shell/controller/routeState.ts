@@ -46,6 +46,7 @@ const settingsSections = new Set<SettingsSection>([
 	'custom-formats',
 	'metadata',
 	'subtitles',
+	'dlna',
 	'languages',
 	'tags',
 	'users'

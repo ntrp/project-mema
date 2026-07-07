@@ -26,6 +26,7 @@ func (m *Manager) Handler() http.Handler {
 		mux.HandleFunc(prefix+"/events/content-directory", m.eventHandler)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		m.recordHTTPClient(r)
 		applyRendererHeaders(w, m.RendererProfileFromRequest(r))
 		mux.ServeHTTP(w, r)
 	})

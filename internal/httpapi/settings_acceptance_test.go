@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"media-manager/internal/acceptance"
+	"media-manager/internal/dlna"
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/indexers"
 	"media-manager/internal/metadata"
@@ -178,6 +179,41 @@ func TestScenarioSCNSettings005AdminValidatesDownloadClientConfig(t *testing.T) 
 	}
 	if result.Message == "" {
 		t.Fatalf("expected validation failure message: %#v", result)
+	}
+}
+
+func TestDLNASettingsDiagnosticsAndRestart(t *testing.T) {
+	store := testSettingsStore(t)
+	manager := dlna.NewManager(store, "http://127.0.0.1:18080")
+	server := NewServer(
+		testConfig(),
+		store,
+		downloadclients.NewService(http.DefaultClient),
+		indexers.NewService(http.DefaultClient),
+		metadata.NewService(http.DefaultClient, nil),
+		nil,
+		nil,
+	)
+	server.SetDLNAManager(manager)
+	router := chi.NewRouter()
+	HandlerFromMux(server, router)
+
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, loginRequest("admin", "admin"))
+	if response.Code != http.StatusOK || len(response.Result().Cookies()) == 0 {
+		t.Fatalf("login status = %d body=%q", response.Code, response.Body.String())
+	}
+	client := acceptanceClient{router: router, cookie: response.Result().Cookies()[0]}
+
+	var settings DLNASettings
+	client.doJSON(t, http.MethodGet, "/settings/dlna", nil, http.StatusOK, &settings)
+	if settings.Status.RecentClients == nil || settings.Status.ActiveStreams == nil || settings.Status.ActiveTranscodes == nil {
+		t.Fatalf("diagnostic arrays should be present: %#v", settings.Status)
+	}
+
+	client.doJSON(t, http.MethodPost, "/settings/dlna/restart", nil, http.StatusOK, &settings)
+	if settings.Status.LastSsdpEvent == nil || *settings.Status.LastSsdpEvent != "stopped" {
+		t.Fatalf("restart status = %#v", settings.Status)
 	}
 }
 

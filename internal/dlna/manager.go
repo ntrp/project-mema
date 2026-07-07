@@ -13,34 +13,46 @@ import (
 )
 
 type Status struct {
-	Running         bool
-	BoundInterfaces []string
-	AdvertisedURLs  []string
-	LastError       *string
+	Running          bool
+	BoundInterfaces  []string
+	AdvertisedURLs   []string
+	LastError        *string
+	LastSSDPEvent    *string
+	LastSOAPAction   *string
+	RecentClients    []ClientStatus
+	ActiveStreams    []StreamStatus
+	ActiveTranscodes []StreamStatus
 }
 
 type Manager struct {
-	store     *storage.SettingsStore
-	source    content.LibrarySource
-	baseURL   string
-	httpPort  string
-	thumbDir  string
-	events    *EventManager
+	store            *storage.SettingsStore
+	source           content.LibrarySource
+	baseURL          string
+	httpPort         string
+	thumbDir         string
+	events           *EventManager
 	profileOverrides map[string]string
-	startSSDP func(context.Context, ssdp.Config) (ssdpRuntime, error)
-	ssdp      ssdpRuntime
-	mu        sync.Mutex
-	status    Status
+	recentClients    map[string]ClientStatus
+	activeStreams    map[string]StreamStatus
+	activeTranscodes map[string]StreamStatus
+	nextStreamID     int
+	startSSDP        func(context.Context, ssdp.Config) (ssdpRuntime, error)
+	ssdp             ssdpRuntime
+	mu               sync.Mutex
+	status           Status
 }
 
 func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
 	return &Manager{
-		store:     store,
-		baseURL:   strings.TrimRight(baseURL, "/"),
-		httpPort:  portFromBaseURL(baseURL),
-		thumbDir:  ".data/dlna-thumbnails",
-		events:    NewEventManager(),
-		startSSDP: startSSDPRuntime,
+		store:            store,
+		baseURL:          strings.TrimRight(baseURL, "/"),
+		httpPort:         portFromBaseURL(baseURL),
+		thumbDir:         ".data/dlna-thumbnails",
+		events:           NewEventManager(),
+		recentClients:    map[string]ClientStatus{},
+		activeStreams:    map[string]StreamStatus{},
+		activeTranscodes: map[string]StreamStatus{},
+		startSSDP:        startSSDPRuntime,
 	}
 }
 
@@ -58,7 +70,9 @@ func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettin
 	defer m.mu.Unlock()
 	m.stopSSDP(ctx)
 	if !settings.Enabled {
+		event := "stopped"
 		m.status = Status{}
+		m.status.LastSSDPEvent = &event
 		return nil
 	}
 	runtime, err := m.startSSDP(ctx, ssdp.Config{
@@ -99,6 +113,9 @@ func (m *Manager) Status() Status {
 	status := m.status
 	status.BoundInterfaces = append([]string{}, status.BoundInterfaces...)
 	status.AdvertisedURLs = append([]string{}, status.AdvertisedURLs...)
+	status.RecentClients = sortedClients(m.recentClients)
+	status.ActiveStreams = sortedStreams(m.activeStreams)
+	status.ActiveTranscodes = sortedStreams(m.activeTranscodes)
 	return status
 }
 
@@ -117,7 +134,8 @@ func (m *Manager) statusForSettings(settings storage.DLNASettings, ifaces []ssdp
 	if len(urls) == 0 && m.baseURL != "" {
 		urls = append(urls, m.baseURL+"/dlna/rootDesc.xml")
 	}
-	return Status{Running: true, BoundInterfaces: append([]string{}, names...), AdvertisedURLs: urls}
+	event := "started"
+	return Status{Running: true, BoundInterfaces: append([]string{}, names...), AdvertisedURLs: urls, LastSSDPEvent: &event}
 }
 
 func (m *Manager) stopSSDP(ctx context.Context) {

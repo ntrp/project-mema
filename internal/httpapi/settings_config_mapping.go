@@ -58,11 +58,45 @@ func (s *Server) currentDLNAStatus() dlna.Status {
 
 func dlnaStatusResponse(status dlna.Status) DLNAStatus {
 	return DLNAStatus{
-		Running:         status.Running,
-		BoundInterfaces: append([]string{}, status.BoundInterfaces...),
-		AdvertisedUrls:  append([]string{}, status.AdvertisedURLs...),
-		LastError:       status.LastError,
+		Running:          status.Running,
+		BoundInterfaces:  append([]string{}, status.BoundInterfaces...),
+		AdvertisedUrls:   append([]string{}, status.AdvertisedURLs...),
+		LastError:        status.LastError,
+		LastSsdpEvent:    status.LastSSDPEvent,
+		LastSoapAction:   status.LastSOAPAction,
+		RecentClients:    dlnaClientDiagnostics(status.RecentClients),
+		ActiveStreams:    dlnaStreamDiagnostics(status.ActiveStreams),
+		ActiveTranscodes: dlnaStreamDiagnostics(status.ActiveTranscodes),
 	}
+}
+
+func dlnaClientDiagnostics(clients []dlna.ClientStatus) []DLNAClientDiagnostic {
+	values := make([]DLNAClientDiagnostic, 0, len(clients))
+	for _, client := range clients {
+		values = append(values, DLNAClientDiagnostic{
+			Ip:             client.IP,
+			UserAgent:      client.UserAgent,
+			ProfileId:      client.ProfileID,
+			LastSoapAction: client.LastSOAPAction,
+			LastError:      client.LastError,
+			LastSeen:       client.LastSeen,
+		})
+	}
+	return values
+}
+
+func dlnaStreamDiagnostics(streams []dlna.StreamStatus) []DLNAStreamDiagnostic {
+	values := make([]DLNAStreamDiagnostic, 0, len(streams))
+	for _, stream := range streams {
+		values = append(values, DLNAStreamDiagnostic{
+			Id:        stream.ID,
+			ClientIp:  stream.ClientIP,
+			Path:      stream.Path,
+			ProfileId: stream.ProfileID,
+			StartedAt: stream.StartedAt,
+		})
+	}
+	return values
 }
 
 func downloadClientConfig(client storage.DownloadClient) downloadclients.Config {

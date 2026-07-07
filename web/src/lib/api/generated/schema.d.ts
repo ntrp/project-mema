@@ -1587,6 +1587,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/dlna/restart': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Restart DLNA server */
+		post: operations['restartDLNA'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/profiles': {
 		parameters: {
 			query?: never;
@@ -3537,6 +3554,28 @@ export interface components {
 			boundInterfaces: string[];
 			advertisedUrls: string[];
 			lastError?: string;
+			lastSsdpEvent?: string;
+			lastSoapAction?: string;
+			recentClients: components['schemas']['DLNAClientDiagnostic'][];
+			activeStreams: components['schemas']['DLNAStreamDiagnostic'][];
+			activeTranscodes: components['schemas']['DLNAStreamDiagnostic'][];
+		};
+		DLNAClientDiagnostic: {
+			ip: string;
+			userAgent: string;
+			profileId: string;
+			lastSoapAction: string;
+			lastError?: string;
+			/** Format: date-time */
+			lastSeen: string;
+		};
+		DLNAStreamDiagnostic: {
+			id: string;
+			clientIp: string;
+			path: string;
+			profileId: string;
+			/** Format: date-time */
+			startedAt: string;
 		};
 		DLNASettings: components['schemas']['DLNASettingsRequest'] & {
 			/** Format: date-time */
@@ -7258,6 +7297,28 @@ export interface operations {
 		};
 		responses: {
 			/** @description DLNA settings updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNASettings'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	restartDLNA: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA settings after restart */
 			200: {
 				headers: {
 					[name: string]: unknown;

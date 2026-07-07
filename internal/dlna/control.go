@@ -15,11 +15,25 @@ func (m *Manager) SOAPDispatcher() *soap.Dispatcher {
 	dispatcher := soap.NewDispatcher()
 	tree := m.contentTree()
 	for _, prefix := range []string{"", "/dlna"} {
-		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree, m.baseURL, m.events.UpdateID))
-		dispatcher.Register(prefix+"/control/connection-manager", ssdp.Connection, connectionManagerActions(m.rendererProfileFromContext))
-		dispatcher.Register(prefix+"/control/media-receiver-registrar", "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", registrarActions())
+		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, m.diagnosticActions(contentDirectoryActions(tree, m.baseURL, m.events.UpdateID)))
+		dispatcher.Register(prefix+"/control/connection-manager", ssdp.Connection, m.diagnosticActions(connectionManagerActions(m.rendererProfileFromContext)))
+		dispatcher.Register(prefix+"/control/media-receiver-registrar", "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", m.diagnosticActions(registrarActions()))
 	}
 	return dispatcher
+}
+
+func (m *Manager) diagnosticActions(actions map[string]soap.HandlerFunc) map[string]soap.HandlerFunc {
+	wrapped := make(map[string]soap.HandlerFunc, len(actions))
+	for name, handler := range actions {
+		actionName := name
+		next := handler
+		wrapped[actionName] = func(ctx context.Context, args map[string]string) (map[string]string, error) {
+			values, err := next(ctx, args)
+			m.recordSOAPAction(ctx, actionName, err)
+			return values, err
+		}
+	}
+	return wrapped
 }
 
 func contentDirectoryActions(tree *content.Tree, baseURL string, updateID func() int) map[string]soap.HandlerFunc {

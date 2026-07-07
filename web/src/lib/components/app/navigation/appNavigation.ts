@@ -10,6 +10,7 @@ export type SettingsHref =
 	| '/settings/custom-formats'
 	| '/settings/metadata'
 	| '/settings/subtitles'
+	| '/settings/dlna'
 	| '/settings/languages'
 	| '/settings/tags'
 	| '/settings/users';
@@ -58,6 +59,7 @@ export const settingsItems = [
 	{ value: 'custom-formats', label: 'Custom formats', href: '/settings/custom-formats' },
 	{ value: 'metadata', label: 'Metadata', href: '/settings/metadata' },
 	{ value: 'subtitles', label: 'Subtitles', href: '/settings/subtitles' },
+	{ value: 'dlna', label: 'DLNA', href: '/settings/dlna' },
 	{ value: 'languages', label: 'Languages', href: '/settings/languages' },
 	{ value: 'tags', label: 'Tags', href: '/settings/tags' },
 	{ value: 'users', label: 'Users', href: '/settings/users' }
@@ -173,6 +175,8 @@ export function settingsSectionHref(section: SettingsSection): SettingsHref {
 			return '/settings/metadata';
 		case 'subtitles':
 			return '/settings/subtitles';
+		case 'dlna':
+			return '/settings/dlna';
 		case 'languages':
 			return '/settings/languages';
 		case 'tags':

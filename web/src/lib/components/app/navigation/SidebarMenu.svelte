@@ -37,6 +37,7 @@
 		| '/settings/custom-formats'
 		| '/settings/metadata'
 		| '/settings/subtitles'
+		| '/settings/dlna'
 		| '/settings/languages'
 		| '/settings/tags'
 		| '/settings/users'

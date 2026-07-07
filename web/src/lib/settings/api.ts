@@ -21,6 +21,8 @@ import type {
 	DiscoverMovieSearchResponse,
 	DiscoverBlacklistItem,
 	DiscoverBlacklistRequest,
+	DLNASettings,
+	DLNASettingsRequest,
 	DownloadClientForm,
 	FileDeleteSettings,
 	FileDeleteSettingsRequest,
@@ -281,6 +283,42 @@ export async function updateSystemEventSettings(
 	}
 	if (!data) {
 		throw new Error('Event settings update did not return a result');
+	}
+	return data;
+}
+
+export async function getDLNASettings(): Promise<DLNASettings> {
+	const { data, error } = await client.GET('/settings/dlna');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('DLNA settings request did not return a result');
+	}
+	return data;
+}
+
+export async function updateDLNASettings(request: DLNASettingsRequest): Promise<DLNASettings> {
+	const { data, error } = await client.PUT('/settings/dlna', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('DLNA settings update did not return a result');
+	}
+	return data;
+}
+
+export async function restartDLNA(): Promise<DLNASettings> {
+	const { data, error } = await client.POST('/settings/dlna/restart');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('DLNA restart did not return a result');
 	}
 	return data;
 }

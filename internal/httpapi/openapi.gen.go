@@ -1712,6 +1712,16 @@ type CustomFormatSpec struct {
 // CustomFormatSpecType defines model for CustomFormatSpecType.
 type CustomFormatSpecType string
 
+// DLNAClientDiagnostic defines model for DLNAClientDiagnostic.
+type DLNAClientDiagnostic struct {
+	Ip             string    `json:"ip"`
+	LastError      *string   `json:"lastError,omitempty"`
+	LastSeen       time.Time `json:"lastSeen"`
+	LastSoapAction string    `json:"lastSoapAction"`
+	ProfileId      string    `json:"profileId"`
+	UserAgent      string    `json:"userAgent"`
+}
+
 // DLNASettings defines model for DLNASettings.
 type DLNASettings struct {
 	AllowedCidrs            []string   `json:"allowedCidrs"`
@@ -1743,10 +1753,24 @@ type DLNASettingsRequest struct {
 
 // DLNAStatus defines model for DLNAStatus.
 type DLNAStatus struct {
-	AdvertisedUrls  []string `json:"advertisedUrls"`
-	BoundInterfaces []string `json:"boundInterfaces"`
-	LastError       *string  `json:"lastError,omitempty"`
-	Running         bool     `json:"running"`
+	ActiveStreams    []DLNAStreamDiagnostic `json:"activeStreams"`
+	ActiveTranscodes []DLNAStreamDiagnostic `json:"activeTranscodes"`
+	AdvertisedUrls   []string               `json:"advertisedUrls"`
+	BoundInterfaces  []string               `json:"boundInterfaces"`
+	LastError        *string                `json:"lastError,omitempty"`
+	LastSoapAction   *string                `json:"lastSoapAction,omitempty"`
+	LastSsdpEvent    *string                `json:"lastSsdpEvent,omitempty"`
+	RecentClients    []DLNAClientDiagnostic `json:"recentClients"`
+	Running          bool                   `json:"running"`
+}
+
+// DLNAStreamDiagnostic defines model for DLNAStreamDiagnostic.
+type DLNAStreamDiagnostic struct {
+	ClientIp  string    `json:"clientIp"`
+	Id        string    `json:"id"`
+	Path      string    `json:"path"`
+	ProfileId string    `json:"profileId"`
+	StartedAt time.Time `json:"startedAt"`
 }
 
 // DiscoverBlacklistItem defines model for DiscoverBlacklistItem.
@@ -4636,6 +4660,9 @@ type ServerInterface interface {
 	// Update DLNA server settings
 	// (PUT /settings/dlna)
 	UpdateDLNASettings(w http.ResponseWriter, r *http.Request)
+	// Restart DLNA server
+	// (POST /settings/dlna/restart)
+	RestartDLNA(w http.ResponseWriter, r *http.Request)
 	// List configured download clients
 	// (GET /settings/download-clients)
 	ListDownloadClients(w http.ResponseWriter, r *http.Request)
@@ -5377,6 +5404,12 @@ func (_ Unimplemented) GetDLNASettings(w http.ResponseWriter, r *http.Request) {
 // Update DLNA server settings
 // (PUT /settings/dlna)
 func (_ Unimplemented) UpdateDLNASettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Restart DLNA server
+// (POST /settings/dlna/restart)
+func (_ Unimplemented) RestartDLNA(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8982,6 +9015,26 @@ func (siw *ServerInterfaceWrapper) UpdateDLNASettings(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// RestartDLNA operation middleware
+func (siw *ServerInterfaceWrapper) RestartDLNA(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestartDLNA(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListDownloadClients operation middleware
 func (siw *ServerInterfaceWrapper) ListDownloadClients(w http.ResponseWriter, r *http.Request) {
 
@@ -11929,6 +11982,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/dlna", wrapper.UpdateDLNASettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/restart", wrapper.RestartDLNA)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/download-clients", wrapper.ListDownloadClients)

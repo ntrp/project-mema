@@ -6,6 +6,7 @@ import { createAppShell } from '$lib/components/rendered/appShellTestData';
 import RenderWithAppShell from '$lib/components/rendered/RenderWithAppShell.svelte';
 import type { AppShellController } from '$lib/features/app/appShellContext';
 import CustomFormatsSettingsRoute from '$lib/features/settings/routes/CustomFormatsSettingsRoute.svelte';
+import DLNASettingsRoute from '$lib/features/settings/routes/DLNASettingsRoute.svelte';
 import DownloadClientsSettingsRoute from '$lib/features/settings/routes/DownloadClientsSettingsRoute.svelte';
 import GeneralSettingsRoute from '$lib/features/settings/routes/GeneralSettingsRoute.svelte';
 import IndexersSettingsRoute from '$lib/features/settings/routes/IndexersSettingsRoute.svelte';
@@ -122,6 +123,18 @@ describe('settings route wrappers (SCN-SETTINGS-024)', () => {
 		expect(body).toContain('OpenSubtitles');
 		expect(body).toContain('type="password"');
 		expect(body).toContain('Show secret');
+	});
+});
+
+describe('settings route wrappers (SCN-SETTINGS-025)', () => {
+	it('renders DLNA diagnostics route content for admins', () => {
+		const { body } = renderRoute(DLNASettingsRoute, createAppShell());
+
+		expect(body).toContain('DLNA');
+		expect(body).toContain('Server');
+		expect(body).toContain('Enable DLNA');
+		expect(body).toContain('Recent clients');
+		expect(body).toContain('Restart');
 	});
 });
 

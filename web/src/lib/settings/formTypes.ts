@@ -81,6 +81,7 @@ export type SettingsSection =
 	| 'custom-formats'
 	| 'metadata'
 	| 'subtitles'
+	| 'dlna'
 	| 'languages'
 	| 'tags'
 	| 'users';
