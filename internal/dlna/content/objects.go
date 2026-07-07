@@ -88,6 +88,7 @@ func episodeObject(parentID string, episode storage.MediaEpisode, childCount int
 		Class:      "object.item.videoItem.episode",
 		Kind:       ObjectItem,
 		ChildCount: childCount,
+		Date:       episode.AirDate,
 		EpisodeID:  &episodeID,
 	}
 }

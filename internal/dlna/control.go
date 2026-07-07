@@ -25,7 +25,7 @@ func (m *Manager) SOAPDispatcher() *soap.Dispatcher {
 func contentDirectoryActions(tree *content.Tree) map[string]soap.HandlerFunc {
 	return map[string]soap.HandlerFunc{
 		"GetSearchCapabilities": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			return map[string]string{"SearchCaps": "dc:title,upnp:class,upnp:genre,dc:creator"}, nil
+			return map[string]string{"SearchCaps": "dc:title,upnp:class,upnp:genre,dc:creator,dc:date"}, nil
 		},
 		"GetSortCapabilities": func(ctx context.Context, args map[string]string) (map[string]string, error) {
 			return map[string]string{"SortCaps": "dc:title,dc:date"}, nil
@@ -57,7 +57,27 @@ func contentDirectoryActions(tree *content.Tree) map[string]soap.HandlerFunc {
 			}, nil
 		},
 		"Search": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			return nil, soap.Error{Code: 501, Description: "Action Failed"}
+			request, err := content.ParseSearchRequest(args)
+			if err != nil {
+				return nil, soap.InvalidArgs(err.Error())
+			}
+			response, err := tree.Search(ctx, request)
+			if errors.Is(err, content.ErrObjectNotFound) {
+				return nil, soap.Error{Code: 701, Description: "No Such Object"}
+			}
+			if err != nil {
+				return nil, soap.InvalidArgs(err.Error())
+			}
+			payload, err := content.RenderDIDL(response.Objects, nil)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{
+				"Result":         string(payload),
+				"NumberReturned": strconv.Itoa(response.NumberReturned),
+				"TotalMatches":   strconv.Itoa(response.TotalMatches),
+				"UpdateID":       strconv.Itoa(response.UpdateID),
+			}, nil
 		},
 	}
 }
