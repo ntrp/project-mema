@@ -1569,6 +1569,24 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/dlna': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get DLNA server settings */
+		get: operations['getDLNASettings'];
+		/** Update DLNA server settings */
+		put: operations['updateDLNASettings'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/profiles': {
 		parameters: {
 			query?: never;
@@ -3513,6 +3531,31 @@ export interface components {
 		FileDeleteSettingsRequest: {
 			mode: components['schemas']['FileDeleteMode'];
 			recycleFolder: string;
+		};
+		DLNAStatus: {
+			running: boolean;
+			boundInterfaces: string[];
+			advertisedUrls: string[];
+			lastError?: string;
+		};
+		DLNASettings: components['schemas']['DLNASettingsRequest'] & {
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+			status: components['schemas']['DLNAStatus'];
+		};
+		DLNASettingsRequest: {
+			enabled: boolean;
+			friendlyName: string;
+			interfaces: string[];
+			allowedCidrs: string[];
+			/** Format: int32 */
+			announceIntervalSeconds: number;
+			transcodeEnabled: boolean;
+			thumbnailsEnabled: boolean;
+			subtitlesEnabled: boolean;
+			defaultRendererProfile: string;
 		};
 		MediaRequestApproveRequest: {
 			qualityProfileId: string;
@@ -7174,6 +7217,53 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['FileDeleteSettings'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	getDLNASettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA settings */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNASettings'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	updateDLNASettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNASettingsRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA settings updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNASettings'];
 				};
 			};
 			400: components['responses']['BadRequest'];

@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"media-manager/internal/dlna"
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/indexers"
 	"media-manager/internal/metadata"
@@ -28,6 +29,39 @@ func fileDeleteSettingsResponse(settings storage.FileDeleteSettings) FileDeleteS
 		RecycleFolder: settings.RecycleFolder,
 		CreatedAt:     settings.CreatedAt,
 		UpdatedAt:     settings.UpdatedAt,
+	}
+}
+
+func (s *Server) dlnaSettingsResponse(settings storage.DLNASettings) DLNASettings {
+	return DLNASettings{
+		Enabled:                 settings.Enabled,
+		FriendlyName:            settings.FriendlyName,
+		Interfaces:              append([]string{}, settings.Interfaces...),
+		AllowedCidrs:            append([]string{}, settings.AllowedCIDRs...),
+		AnnounceIntervalSeconds: settings.AnnounceIntervalSeconds,
+		TranscodeEnabled:        settings.TranscodeEnabled,
+		ThumbnailsEnabled:       settings.ThumbnailsEnabled,
+		SubtitlesEnabled:        settings.SubtitlesEnabled,
+		DefaultRendererProfile:  settings.DefaultRendererProfile,
+		CreatedAt:               settings.CreatedAt,
+		UpdatedAt:               settings.UpdatedAt,
+		Status:                  dlnaStatusResponse(s.currentDLNAStatus()),
+	}
+}
+
+func (s *Server) currentDLNAStatus() dlna.Status {
+	if s.dlna == nil {
+		return dlna.Status{}
+	}
+	return s.dlna.Status()
+}
+
+func dlnaStatusResponse(status dlna.Status) DLNAStatus {
+	return DLNAStatus{
+		Running:         status.Running,
+		BoundInterfaces: append([]string{}, status.BoundInterfaces...),
+		AdvertisedUrls:  append([]string{}, status.AdvertisedURLs...),
+		LastError:       status.LastError,
 	}
 }
 

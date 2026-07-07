@@ -25,8 +25,8 @@ describe('media people helpers', () => {
 			}
 		]);
 
-		expect(groups.find((group) => group.title === 'Crew')?.people.map((person) => person.name)).toEqual(
-			['Andrew Stanton', 'Other Person']
-		);
+		expect(
+			groups.find((group) => group.title === 'Crew')?.people.map((person) => person.name)
+		).toEqual(['Andrew Stanton', 'Other Person']);
 	});
 });

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"media-manager/internal/config"
+	"media-manager/internal/dlna"
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/events"
 	"media-manager/internal/indexers"
@@ -22,6 +23,7 @@ type Server struct {
 	subtitles       *subtitles.Service
 	jobs            *jobs.Client
 	events          *events.Broker
+	dlna            *dlna.Manager
 	streamSecret    []byte
 	now             func() time.Time
 }
@@ -42,4 +44,8 @@ func NewServer(cfg config.Config, settings *storage.SettingsStore, downloadClien
 		streamSecret:    newStreamTokenSecret(),
 		now:             time.Now,
 	}
+}
+
+func (s *Server) SetDLNAManager(dlnaManager *dlna.Manager) {
+	s.dlna = dlnaManager
 }

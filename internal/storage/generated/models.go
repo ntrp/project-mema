@@ -33,6 +33,21 @@ type AppDiscoverBlacklist struct {
 	CreatedAt        time.Time
 }
 
+type AppDlnaSetting struct {
+	ID                      bool
+	Enabled                 bool
+	FriendlyName            string
+	Interfaces              []string
+	AllowedCidrs            []string
+	AnnounceIntervalSeconds int32
+	TranscodeEnabled        bool
+	ThumbnailsEnabled       bool
+	SubtitlesEnabled        bool
+	DefaultRendererProfile  string
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+}
+
 type AppDownloadActivity struct {
 	ID                 uuid.UUID
 	MediaItemID        uuid.UUID

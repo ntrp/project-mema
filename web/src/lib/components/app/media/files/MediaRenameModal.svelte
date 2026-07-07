@@ -119,21 +119,21 @@
 
 		<div class="max-h-[52vh] overflow-auto rounded-md border">
 			<Table.Root class="min-w-180 text-sm">
-					<Table.Header>
-						<Table.Row>
-							<Table.Head class="w-12">
+				<Table.Header>
+					<Table.Row>
+						<Table.Head class="w-12">
 							<Checkbox
 								aria-label="Select all safe rename rows"
 								checked={allSafeSelected}
 								disabled={safeRows.length === 0 || loading || applying}
-									onCheckedChange={toggleAll}
-								/>
-							</Table.Head>
-							<Table.Head>Relative path</Table.Head>
-							<Table.Head class="w-28">Status</Table.Head>
-							<Table.Head>Reason</Table.Head>
-						</Table.Row>
-					</Table.Header>
+								onCheckedChange={toggleAll}
+							/>
+						</Table.Head>
+						<Table.Head>Relative path</Table.Head>
+						<Table.Head class="w-28">Status</Table.Head>
+						<Table.Head>Reason</Table.Head>
+					</Table.Row>
+				</Table.Header>
 				<Table.Body>
 					{#each rows as row (row.currentPath)}
 						<Table.Row>

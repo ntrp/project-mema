@@ -2801,6 +2801,47 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/dlna:
+    get:
+      operationId: getDLNASettings
+      tags:
+        - Settings
+      summary: Get DLNA server settings
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: DLNA settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNASettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateDLNASettings
+      tags:
+        - Settings
+      summary: Update DLNA server settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNASettingsRequest"
+      responses:
+        "200":
+          description: DLNA settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNASettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/profiles:
     get:
       operationId: listMediaProfiles
@@ -7377,6 +7418,87 @@ components:
           type: string
           minLength: 1
           maxLength: 500
+    DLNAStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - running
+        - boundInterfaces
+        - advertisedUrls
+      properties:
+        running:
+          type: boolean
+        boundInterfaces:
+          type: array
+          items:
+            type: string
+        advertisedUrls:
+          type: array
+          items:
+            type: string
+        lastError:
+          type: string
+    DLNASettings:
+      allOf:
+        - $ref: "#/components/schemas/DLNASettingsRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - createdAt
+            - updatedAt
+            - status
+          properties:
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+            status:
+              $ref: "#/components/schemas/DLNAStatus"
+    DLNASettingsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - enabled
+        - friendlyName
+        - interfaces
+        - allowedCidrs
+        - announceIntervalSeconds
+        - transcodeEnabled
+        - thumbnailsEnabled
+        - subtitlesEnabled
+        - defaultRendererProfile
+      properties:
+        enabled:
+          type: boolean
+        friendlyName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        interfaces:
+          type: array
+          items:
+            type: string
+        allowedCidrs:
+          type: array
+          items:
+            type: string
+        announceIntervalSeconds:
+          type: integer
+          format: int32
+          minimum: 60
+          maximum: 86400
+        transcodeEnabled:
+          type: boolean
+        thumbnailsEnabled:
+          type: boolean
+        subtitlesEnabled:
+          type: boolean
+        defaultRendererProfile:
+          type: string
+          minLength: 1
+          maxLength: 80
     MediaRequestApproveRequest:
       type: object
       additionalProperties: false

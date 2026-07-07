@@ -1712,6 +1712,43 @@ type CustomFormatSpec struct {
 // CustomFormatSpecType defines model for CustomFormatSpecType.
 type CustomFormatSpecType string
 
+// DLNASettings defines model for DLNASettings.
+type DLNASettings struct {
+	AllowedCidrs            []string   `json:"allowedCidrs"`
+	AnnounceIntervalSeconds int32      `json:"announceIntervalSeconds"`
+	CreatedAt               time.Time  `json:"createdAt"`
+	DefaultRendererProfile  string     `json:"defaultRendererProfile"`
+	Enabled                 bool       `json:"enabled"`
+	FriendlyName            string     `json:"friendlyName"`
+	Interfaces              []string   `json:"interfaces"`
+	Status                  DLNAStatus `json:"status"`
+	SubtitlesEnabled        bool       `json:"subtitlesEnabled"`
+	ThumbnailsEnabled       bool       `json:"thumbnailsEnabled"`
+	TranscodeEnabled        bool       `json:"transcodeEnabled"`
+	UpdatedAt               time.Time  `json:"updatedAt"`
+}
+
+// DLNASettingsRequest defines model for DLNASettingsRequest.
+type DLNASettingsRequest struct {
+	AllowedCidrs            []string `json:"allowedCidrs"`
+	AnnounceIntervalSeconds int32    `json:"announceIntervalSeconds"`
+	DefaultRendererProfile  string   `json:"defaultRendererProfile"`
+	Enabled                 bool     `json:"enabled"`
+	FriendlyName            string   `json:"friendlyName"`
+	Interfaces              []string `json:"interfaces"`
+	SubtitlesEnabled        bool     `json:"subtitlesEnabled"`
+	ThumbnailsEnabled       bool     `json:"thumbnailsEnabled"`
+	TranscodeEnabled        bool     `json:"transcodeEnabled"`
+}
+
+// DLNAStatus defines model for DLNAStatus.
+type DLNAStatus struct {
+	AdvertisedUrls  []string `json:"advertisedUrls"`
+	BoundInterfaces []string `json:"boundInterfaces"`
+	LastError       *string  `json:"lastError,omitempty"`
+	Running         bool     `json:"running"`
+}
+
 // DiscoverBlacklistItem defines model for DiscoverBlacklistItem.
 type DiscoverBlacklistItem struct {
 	CreatedAt        time.Time          `json:"createdAt"`
@@ -4261,6 +4298,9 @@ type TestCustomFormatParsingJSONRequestBody = CustomFormatParsingRequest
 // UpdateCustomFormatJSONRequestBody defines body for UpdateCustomFormat for application/json ContentType.
 type UpdateCustomFormatJSONRequestBody = CustomFormatRequest
 
+// UpdateDLNASettingsJSONRequestBody defines body for UpdateDLNASettings for application/json ContentType.
+type UpdateDLNASettingsJSONRequestBody = DLNASettingsRequest
+
 // CreateDownloadClientJSONRequestBody defines body for CreateDownloadClient for application/json ContentType.
 type CreateDownloadClientJSONRequestBody = DownloadClientRequest
 
@@ -4590,6 +4630,12 @@ type ServerInterface interface {
 	// Update a custom format
 	// (PUT /settings/custom-formats/{id})
 	UpdateCustomFormat(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Get DLNA server settings
+	// (GET /settings/dlna)
+	GetDLNASettings(w http.ResponseWriter, r *http.Request)
+	// Update DLNA server settings
+	// (PUT /settings/dlna)
+	UpdateDLNASettings(w http.ResponseWriter, r *http.Request)
 	// List configured download clients
 	// (GET /settings/download-clients)
 	ListDownloadClients(w http.ResponseWriter, r *http.Request)
@@ -5319,6 +5365,18 @@ func (_ Unimplemented) DeleteCustomFormat(w http.ResponseWriter, r *http.Request
 // Update a custom format
 // (PUT /settings/custom-formats/{id})
 func (_ Unimplemented) UpdateCustomFormat(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get DLNA server settings
+// (GET /settings/dlna)
+func (_ Unimplemented) GetDLNASettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update DLNA server settings
+// (PUT /settings/dlna)
+func (_ Unimplemented) UpdateDLNASettings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8884,6 +8942,46 @@ func (siw *ServerInterfaceWrapper) UpdateCustomFormat(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetDLNASettings operation middleware
+func (siw *ServerInterfaceWrapper) GetDLNASettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDLNASettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDLNASettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDLNASettings(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDLNASettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListDownloadClients operation middleware
 func (siw *ServerInterfaceWrapper) ListDownloadClients(w http.ResponseWriter, r *http.Request) {
 
@@ -11825,6 +11923,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/custom-formats/{id}", wrapper.UpdateCustomFormat)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/dlna", wrapper.GetDLNASettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/dlna", wrapper.UpdateDLNASettings)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/download-clients", wrapper.ListDownloadClients)

@@ -373,6 +373,55 @@ insert into app.file_delete_settings (id, mode, recycle_folder)
 values (true, 'permanent', '.recycle')
 on conflict (id) do nothing;
 
+create table if not exists app.dlna_settings (
+    id boolean primary key default true check (id),
+    enabled boolean not null default false,
+    friendly_name text not null default 'Mema',
+    interfaces text[] not null default '{}',
+    allowed_cidrs text[] not null default array[
+        '10.0.0.0/8',
+        '172.16.0.0/12',
+        '192.168.0.0/16',
+        '127.0.0.0/8',
+        '::1/128',
+        'fc00::/7',
+        'fe80::/10'
+    ],
+    announce_interval_seconds integer not null default 1800,
+    transcode_enabled boolean not null default true,
+    thumbnails_enabled boolean not null default true,
+    subtitles_enabled boolean not null default true,
+    default_renderer_profile text not null default 'generic',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+insert into app.dlna_settings (
+    id,
+    enabled,
+    friendly_name,
+    interfaces,
+    allowed_cidrs,
+    announce_interval_seconds,
+    transcode_enabled,
+    thumbnails_enabled,
+    subtitles_enabled,
+    default_renderer_profile
+)
+values (
+    true,
+    false,
+    'Mema',
+    '{}',
+    array['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '::1/128', 'fc00::/7', 'fe80::/10'],
+    1800,
+    true,
+    true,
+    true,
+    'generic'
+)
+on conflict (id) do nothing;
+
 create table if not exists app.media_items (
     id uuid primary key,
     media_type text not null check (media_type in ('movie', 'serie')),

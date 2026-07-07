@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"media-manager/internal/config"
+	"media-manager/internal/dlna"
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/events"
 	"media-manager/internal/httpapi"
@@ -41,12 +42,15 @@ func Run(ctx context.Context) error {
 		return err
 	}
 
-	server, jobClient, err := newHTTPServer(cfg, pool)
+	server, jobClient, dlnaManager, err := newHTTPServer(cfg, pool)
 	if err != nil {
 		return err
 	}
 	if err := jobClient.Start(ctx); err != nil {
 		return fmt.Errorf("job client start failed: %w", err)
+	}
+	if err := dlnaManager.Start(ctx); err != nil {
+		return fmt.Errorf("dlna start failed: %w", err)
 	}
 	errCh := make(chan error, 1)
 	go func() {
@@ -60,8 +64,9 @@ func Run(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		return shutdown(server, jobClient)
+		return shutdown(server, jobClient, dlnaManager)
 	case err := <-errCh:
+		_ = dlnaManager.Stop(context.Background())
 		if stopErr := stopJobs(jobClient); stopErr != nil {
 			return stopErr
 		}
@@ -111,7 +116,7 @@ func openDatabase(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error)
 	return pool, nil
 }
 
-func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.Client, error) {
+func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.Client, *dlna.Manager, error) {
 	apiRouter := chi.NewRouter()
 	apiRouter.Use(middleware.Recoverer)
 	settingsStore := storage.NewSettingsStore(pool)
@@ -122,9 +127,12 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 	eventBroker := events.NewBroker()
 	jobClient, err := jobs.NewClient(pool, settingsStore, indexerService, downloadClientService, eventBroker)
 	if err != nil {
-		return nil, nil, fmt.Errorf("job client setup failed: %w", err)
+		return nil, nil, nil, fmt.Errorf("job client setup failed: %w", err)
 	}
-	httpapi.HandlerFromMux(httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, metadataService, jobClient, eventBroker), apiRouter)
+	dlnaManager := dlna.NewManager(settingsStore, "http://"+cfg.Addr)
+	apiServer := httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, metadataService, jobClient, eventBroker)
+	apiServer.SetDLNAManager(dlnaManager)
+	httpapi.HandlerFromMux(apiServer, apiRouter)
 
 	router := chi.NewRouter()
 	router.Mount("/api", apiRouter)
@@ -134,12 +142,17 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 		Addr:              cfg.Addr,
 		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
-	}, jobClient, nil
+	}, jobClient, dlnaManager, nil
 }
 
-func shutdown(server *http.Server, jobClient *jobs.Client) error {
+func shutdown(server *http.Server, jobClient *jobs.Client, dlnaManager *dlna.Manager) error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	if dlnaManager != nil {
+		if err := dlnaManager.Stop(shutdownCtx); err != nil {
+			return fmt.Errorf("dlna shutdown failed: %w", err)
+		}
+	}
 	if err := server.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("server shutdown failed: %w", err)
 	}
