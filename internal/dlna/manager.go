@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"media-manager/internal/dlna/content"
 	"media-manager/internal/dlna/ssdp"
 	"media-manager/internal/storage"
 )
@@ -20,6 +21,7 @@ type Status struct {
 
 type Manager struct {
 	store     *storage.SettingsStore
+	source    content.LibrarySource
 	baseURL   string
 	httpPort  string
 	startSSDP func(context.Context, ssdp.Config) (ssdpRuntime, error)

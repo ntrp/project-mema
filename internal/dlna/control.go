@@ -63,6 +63,9 @@ func contentDirectoryActions(tree *content.Tree) map[string]soap.HandlerFunc {
 }
 
 func (m *Manager) contentTree() *content.Tree {
+	if m.source != nil {
+		return content.NewTree(m.source)
+	}
 	if m.store == nil {
 		return content.NewTree(emptyLibrarySource{})
 	}

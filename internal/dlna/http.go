@@ -20,6 +20,7 @@ func (m *Manager) Handler() http.Handler {
 		mux.Handle(prefix+"/control/content-directory", dispatcher)
 		mux.Handle(prefix+"/control/connection-manager", dispatcher)
 		mux.Handle(prefix+"/control/media-receiver-registrar", dispatcher)
+		mux.HandleFunc(prefix+"/resource/", m.resource)
 	}
 	return mux
 }
