@@ -19,6 +19,7 @@ func TestMatchRendererProfileKnownClients(t *testing.T) {
 		{name: "samsung", request: RendererRequest{UserAgent: "Samsung Tizen DLNADOC"}, want: "samsung"},
 		{name: "lg", request: RendererRequest{UserAgent: "LG webOS TV"}, want: "lg"},
 		{name: "sony", request: RendererRequest{UserAgent: "Sony BRAVIA"}, want: "sony"},
+		{name: "bubbleupnp", request: RendererRequest{UserAgent: "BubbleUPnP/4.3"}, want: "bubbleupnp"},
 		{name: "chromecast", request: RendererRequest{Headers: http.Header{"X-Device": []string{"Google Cast"}}}, want: "chromecast"},
 	}
 	for _, test := range tests {

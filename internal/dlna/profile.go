@@ -35,6 +35,7 @@ func DefaultRendererProfiles() []RendererProfile {
 		{ID: "samsung", Name: "Samsung TV", MatchTokens: []string{"samsung", "tizen"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "lg", Name: "LG TV", MatchTokens: []string{"lg", "webos"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "sony", Name: "Sony TV", MatchTokens: []string{"sony", "bravia"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "bubbleupnp", Name: "BubbleUPnP", MatchTokens: []string{"bubbleupnp"}, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "chromecast", Name: "Chromecast", MatchTokens: []string{"chromecast", "google cast"}, PreferHLS: true, DisableEventing: true, SubtitleFormats: []string{"vtt"}, ResponseHeaders: streamingHeaders()},
 	}
 }

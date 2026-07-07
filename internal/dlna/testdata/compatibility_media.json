@@ -1,0 +1,31 @@
+{
+  "cases": [
+    {
+      "name": "baseline-mp4-h264-aac",
+      "delivery": "direct",
+      "container": "mp4",
+      "videoCodec": "h264",
+      "audioCodec": "aac"
+    },
+    {
+      "name": "matroska-remux-target",
+      "delivery": "remux",
+      "container": "mkv",
+      "videoCodec": "h264",
+      "audioCodec": "aac"
+    },
+    {
+      "name": "webkit-hls-transcode-target",
+      "delivery": "transcode",
+      "container": "mkv",
+      "videoCodec": "hevc",
+      "audioCodec": "opus"
+    },
+    {
+      "name": "external-subtitle-sidecar",
+      "delivery": "subtitle",
+      "container": "srt",
+      "language": "eng"
+    }
+  ]
+}
