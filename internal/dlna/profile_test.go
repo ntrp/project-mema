@@ -76,6 +76,7 @@ func TestConnectionManagerUsesRequestProfile(t *testing.T) {
 func TestHandlerAppliesProfileHeadersAndDisablesEventing(t *testing.T) {
 	handler := NewManager(nil, "http://127.0.0.1:18080").Handler()
 	request := httptest.NewRequest("SUBSCRIBE", "/dlna/events/content-directory", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 	request.Header.Set("User-Agent", "Chromecast")
 	response := httptest.NewRecorder()
 

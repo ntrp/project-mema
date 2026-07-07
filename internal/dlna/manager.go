@@ -35,6 +35,7 @@ type Manager struct {
 	recentClients    map[string]ClientStatus
 	activeStreams    map[string]StreamStatus
 	activeTranscodes map[string]StreamStatus
+	allowedNets      []*net.IPNet
 	nextStreamID     int
 	startSSDP        func(context.Context, ssdp.Config) (ssdpRuntime, error)
 	ssdp             ssdpRuntime
@@ -52,6 +53,7 @@ func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
 		recentClients:    map[string]ClientStatus{},
 		activeStreams:    map[string]StreamStatus{},
 		activeTranscodes: map[string]StreamStatus{},
+		allowedNets:      parseAllowedCIDRs(storage.DefaultDLNAAllowedCIDRs),
 		startSSDP:        startSSDPRuntime,
 	}
 }
@@ -68,6 +70,7 @@ func (m *Manager) Start(ctx context.Context) error {
 func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettings) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.allowedNets = parseAllowedCIDRs(settings.AllowedCIDRs)
 	m.stopSSDP(ctx)
 	if !settings.Enabled {
 		event := "stopped"

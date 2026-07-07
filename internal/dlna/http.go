@@ -26,6 +26,10 @@ func (m *Manager) Handler() http.Handler {
 		mux.HandleFunc(prefix+"/events/content-directory", m.eventHandler)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !m.allowRequest(r) {
+			http.Error(w, "DLNA client is not allowed", http.StatusForbidden)
+			return
+		}
 		m.recordHTTPClient(r)
 		applyRendererHeaders(w, m.RendererProfileFromRequest(r))
 		mux.ServeHTTP(w, r)

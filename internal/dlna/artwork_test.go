@@ -19,6 +19,7 @@ func TestArtworkServesFallbackIcon(t *testing.T) {
 	manager, objectID := artworkTestManager(t, "")
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/dlna/artwork/"+url.PathEscape(objectID), nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 
 	manager.Handler().ServeHTTP(response, request)
 
@@ -39,6 +40,7 @@ func TestArtworkServesLocalMetadataArtwork(t *testing.T) {
 	manager, objectID := artworkTestManager(t, poster)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/dlna/artwork/"+url.PathEscape(objectID), nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 
 	manager.Handler().ServeHTTP(response, request)
 
@@ -51,6 +53,7 @@ func TestThumbnailHeadDoesNotGenerate(t *testing.T) {
 	manager, resourceID := resourceTestManager(t, "0123456789")
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("HEAD", "/dlna/artwork/"+url.PathEscape(resourceID)+"?kind=thumbnail", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 
 	manager.Handler().ServeHTTP(response, request)
 

@@ -29,7 +29,11 @@ func (m *Manager) resource(w http.ResponseWriter, r *http.Request) {
 		m.resourcePlaylist(w, r, id, object.FilePath)
 		return
 	}
-	done := m.beginStream(r, object.FilePath, false)
+	done, ok := m.beginStream(r, id, "direct", false)
+	if !ok {
+		http.Error(w, "too many DLNA streams", http.StatusTooManyRequests)
+		return
+	}
 	defer done()
 	writeFileError(w, delivery.ServeFile(w, r, object.FilePath))
 }
@@ -42,7 +46,11 @@ func (m *Manager) resourcePlaylist(w http.ResponseWriter, r *http.Request, id st
 	if r.Method == http.MethodHead {
 		return
 	}
-	done := m.beginStream(r, target, true)
+	done, ok := m.beginStream(r, id, "hls_playlist", true)
+	if !ok {
+		http.Error(w, "too many DLNA streams", http.StatusTooManyRequests)
+		return
+	}
 	defer done()
 	probe := delivery.Probe(target)
 	duration := 0.0
@@ -72,7 +80,11 @@ func (m *Manager) resourceSegment(w http.ResponseWriter, r *http.Request, target
 	if r.Method == http.MethodHead {
 		return
 	}
-	done := m.beginStream(r, target, true)
+	done, ok := m.beginStream(r, r.URL.Path, "hls_segment", true)
+	if !ok {
+		http.Error(w, "too many DLNA streams", http.StatusTooManyRequests)
+		return
+	}
 	defer done()
 	if !acquireTranscodeSlot(w, r) {
 		return

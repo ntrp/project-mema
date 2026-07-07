@@ -18,6 +18,7 @@ func TestSubtitleRouteServesExternalSRT(t *testing.T) {
 	manager, resourceID := subtitleTestManager(t)
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("GET", "/dlna/subtitle/"+url.PathEscape(resourceID)+"/0", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 
 	manager.Handler().ServeHTTP(response, request)
 
@@ -36,6 +37,7 @@ func TestSubtitleConvertHeadDoesNotStartConversion(t *testing.T) {
 	manager, resourceID := subtitleTestManagerWithFormat(t, "ass")
 	response := httptest.NewRecorder()
 	request := httptest.NewRequest("HEAD", "/dlna/subtitle/"+url.PathEscape(resourceID)+"/0", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 
 	manager.Handler().ServeHTTP(response, request)
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"media-manager/internal/dlna/soap"
+	"media-manager/internal/storage"
 )
 
 type ClientStatus struct {
@@ -71,20 +72,37 @@ func (m *Manager) recordClient(r *http.Request, action string, err error) {
 	}
 	if action != "" {
 		m.status.LastSOAPAction = &action
+		m.audit(r.Context(), "DLNA SOAP action", map[string]any{
+			"clientIP": status.IP,
+			"profile":  status.ProfileID,
+			"action":   action,
+			"result":   auditResult(err),
+		})
 	}
 	m.recentClients[status.IP] = status
 }
 
-func (m *Manager) beginStream(r *http.Request, path string, transcode bool) func() {
+func (m *Manager) beginStream(r *http.Request, objectID string, delivery string, transcode bool) (func(), bool) {
 	request := RendererRequestFromHTTP(r)
 	profile := m.RendererProfile(request)
 
 	m.mu.Lock()
+	if len(m.activeStreams) >= maxActiveStreams {
+		m.mu.Unlock()
+		m.audit(r.Context(), "DLNA stream rejected", map[string]any{
+			"clientIP": request.ClientIP,
+			"profile":  profile.ID,
+			"objectID": objectID,
+			"delivery": delivery,
+			"result":   "limit",
+		})
+		return nil, false
+	}
 	m.nextStreamID++
 	stream := StreamStatus{
 		ID:        strconv.Itoa(m.nextStreamID),
 		ClientIP:  request.ClientIP,
-		Path:      path,
+		Path:      objectID,
 		ProfileID: profile.ID,
 		StartedAt: time.Now().UTC(),
 	}
@@ -93,13 +111,46 @@ func (m *Manager) beginStream(r *http.Request, path string, transcode bool) func
 		m.activeTranscodes[stream.ID] = stream
 	}
 	m.mu.Unlock()
+	m.audit(r.Context(), "DLNA stream started", map[string]any{
+		"clientIP": request.ClientIP,
+		"profile":  profile.ID,
+		"objectID": objectID,
+		"delivery": delivery,
+		"result":   "started",
+	})
 
 	return func() {
 		m.mu.Lock()
 		delete(m.activeStreams, stream.ID)
 		delete(m.activeTranscodes, stream.ID)
 		m.mu.Unlock()
+		m.audit(r.Context(), "DLNA stream finished", map[string]any{
+			"clientIP": request.ClientIP,
+			"profile":  profile.ID,
+			"objectID": objectID,
+			"delivery": delivery,
+			"result":   "finished",
+		})
+	}, true
+}
+
+func (m *Manager) audit(ctx context.Context, message string, data map[string]any) {
+	if m.store == nil {
+		return
 	}
+	_, _ = m.store.CreateSystemEvent(ctx, storage.SystemEventInput{
+		Severity: "info",
+		Category: "dlna",
+		Message:  message,
+		Data:     data,
+	})
+}
+
+func auditResult(err error) string {
+	if err != nil {
+		return "error"
+	}
+	return "ok"
 }
 
 func sortedClients(values map[string]ClientStatus) []ClientStatus {

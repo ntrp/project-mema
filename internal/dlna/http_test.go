@@ -9,6 +9,7 @@ import (
 
 func TestRequestBaseURLHonorsForwardedHeaders(t *testing.T) {
 	request := httptest.NewRequest("GET", "http://internal/dlna/rootDesc.xml", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 	request.Host = "127.0.0.1:18080"
 	request.Header.Set("X-Forwarded-Proto", "https")
 	request.Header.Set("X-Forwarded-Host", "mema.local")
@@ -22,6 +23,7 @@ func TestHandlerServesSOAPControlAction(t *testing.T) {
 	manager := NewManager(nil, "http://127.0.0.1:18080")
 	body := `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><u:GetSystemUpdateID xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1"/></s:Body></s:Envelope>`
 	request := httptest.NewRequest("POST", "http://internal/dlna/control/content-directory", strings.NewReader(body))
+	request.RemoteAddr = "127.0.0.1:1234"
 	request.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#GetSystemUpdateID"`)
 	response := httptest.NewRecorder()
 
@@ -38,6 +40,7 @@ func TestHandlerServesSOAPControlAction(t *testing.T) {
 func TestHandlerServesMountedDLNARoutes(t *testing.T) {
 	manager := NewManager(nil, "http://127.0.0.1:18080")
 	request := httptest.NewRequest("GET", "http://internal/dlna/rootDesc.xml", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 	response := httptest.NewRecorder()
 
 	manager.Handler().ServeHTTP(response, request)

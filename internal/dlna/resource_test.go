@@ -19,6 +19,7 @@ import (
 func TestResourceServesDirectFileRanges(t *testing.T) {
 	manager, resourceID := resourceTestManager(t, "0123456789")
 	request := httptest.NewRequest("GET", "/dlna/resource/"+url.PathEscape(resourceID), nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 	request.Header.Set("Range", "bytes=0-3")
 	response := httptest.NewRecorder()
 
@@ -38,6 +39,7 @@ func TestResourceServesDirectFileRanges(t *testing.T) {
 func TestResourceHLSHeadDoesNotStartTranscode(t *testing.T) {
 	manager, resourceID := resourceTestManager(t, "0123456789")
 	request := httptest.NewRequest("HEAD", "/dlna/resource/"+url.PathEscape(resourceID)+"?mode=hls", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 	response := httptest.NewRecorder()
 
 	manager.Handler().ServeHTTP(response, request)
@@ -58,6 +60,7 @@ func TestResourceSegmentHeadDoesNotStartTranscode(t *testing.T) {
 	target := "/dlna/resource/" + url.PathEscape(resourceID) +
 		"/segment?segmentStartSeconds=0&segmentDurationSeconds=6"
 	request := httptest.NewRequest("HEAD", target, nil)
+	request.RemoteAddr = "127.0.0.1:1234"
 	response := httptest.NewRecorder()
 
 	manager.Handler().ServeHTTP(response, request)
