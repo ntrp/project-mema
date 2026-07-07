@@ -49,6 +49,11 @@ func mediaObject(parentID string, item storage.MediaItem, childCount int) Object
 		ChildCount:  childCount,
 		MediaType:   item.Type,
 		Year:        item.Year,
+		Date:        mediaDate(item),
+		Genres:      append([]string{}, item.Genres...),
+		Artists:     mediaArtists(item),
+		Album:       item.CollectionName,
+		Artwork:     item.PosterPath,
 		CreatedAt:   item.CreatedAt,
 		UpdatedAt:   item.UpdatedAt,
 		MediaItemID: &id,
@@ -105,6 +110,23 @@ func mediaTitle(item storage.MediaItem) string {
 		return item.Title
 	}
 	return fmt.Sprintf("%s (%d)", item.Title, *item.Year)
+}
+
+func mediaDate(item storage.MediaItem) *string {
+	if item.ReleaseDate != nil {
+		return item.ReleaseDate
+	}
+	return item.FirstAirDate
+}
+
+func mediaArtists(item storage.MediaItem) []string {
+	artists := make([]string, 0, len(item.Cast))
+	for _, person := range item.Cast {
+		if person.Name != "" {
+			artists = append(artists, person.Name)
+		}
+	}
+	return artists
 }
 
 func seasonTitle(season storage.MediaSeason) string {

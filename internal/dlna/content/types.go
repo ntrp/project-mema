@@ -38,6 +38,11 @@ type Object struct {
 
 	MediaType string
 	Year      *int32
+	Date      *string
+	Genres    []string
+	Artists   []string
+	Album     *string
+	Artwork   *string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
