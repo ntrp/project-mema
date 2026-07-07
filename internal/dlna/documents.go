@@ -156,13 +156,29 @@ func ConnectionManagerSCPDXML() ([]byte, error) {
 		Actions: []SCPDAction{
 			action("GetProtocolInfo", outArg("Source", "SourceProtocolInfo"), outArg("Sink", "SinkProtocolInfo")),
 			action("GetCurrentConnectionIDs", outArg("ConnectionIDs", "CurrentConnectionIDs")),
-			action("GetCurrentConnectionInfo", inArg("ConnectionID", "A_ARG_TYPE_ConnectionID")),
+			action(
+				"GetCurrentConnectionInfo",
+				inArg("ConnectionID", "A_ARG_TYPE_ConnectionID"),
+				outArg("RcsID", "A_ARG_TYPE_RcsID"),
+				outArg("AVTransportID", "A_ARG_TYPE_AVTransportID"),
+				outArg("ProtocolInfo", "A_ARG_TYPE_ProtocolInfo"),
+				outArg("PeerConnectionManager", "A_ARG_TYPE_ConnectionManager"),
+				outArg("PeerConnectionID", "A_ARG_TYPE_ConnectionID"),
+				outArg("Direction", "A_ARG_TYPE_Direction"),
+				outArg("Status", "A_ARG_TYPE_ConnectionStatus"),
+			),
 		},
 		State: []StateVariable{
 			{SendEvents: "yes", Name: "SourceProtocolInfo", DataType: "string"},
 			{SendEvents: "yes", Name: "SinkProtocolInfo", DataType: "string"},
 			{SendEvents: "yes", Name: "CurrentConnectionIDs", DataType: "string"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_ConnectionID", DataType: "i4"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_RcsID", DataType: "i4"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_AVTransportID", DataType: "i4"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_ProtocolInfo", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_ConnectionManager", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_Direction", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_ConnectionStatus", DataType: "string"},
 		},
 	}, "", "  ")
 }

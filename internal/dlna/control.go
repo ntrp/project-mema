@@ -78,16 +78,21 @@ func (emptyLibrarySource) ListMediaItems(context.Context) ([]storage.MediaItem, 
 func connectionManagerActions() map[string]soap.HandlerFunc {
 	return map[string]soap.HandlerFunc{
 		"GetProtocolInfo": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			return map[string]string{"Source": "", "Sink": ""}, nil
+			return map[string]string{"Source": SourceProtocolInfo(), "Sink": ""}, nil
 		},
 		"GetCurrentConnectionIDs": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			return map[string]string{"ConnectionIDs": ""}, nil
+			return map[string]string{"ConnectionIDs": "0"}, nil
 		},
 		"GetCurrentConnectionInfo": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			if _, err := soap.RequiredArg(args, "ConnectionID"); err != nil {
+			connectionID, err := soap.RequiredArg(args, "ConnectionID")
+			if err != nil {
 				return nil, err
 			}
-			return nil, soap.Error{Code: 706, Description: "No Such Connection"}
+			response, err := CurrentConnectionInfo(connectionID)
+			if connectionErr, ok := err.(connectionError); ok {
+				return nil, soap.Error{Code: connectionErr.code, Description: connectionErr.description}
+			}
+			return response, err
 		},
 	}
 }
