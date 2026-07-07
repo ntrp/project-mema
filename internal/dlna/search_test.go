@@ -74,6 +74,6 @@ func searchEnvelope(containerID string, criteria string, start string, count str
 
 func soapDispatcherWithContent(tree *content.Tree) *soap.Dispatcher {
 	dispatcher := soap.NewDispatcher()
-	dispatcher.Register("/dlna/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree))
+	dispatcher.Register("/dlna/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree, "http://127.0.0.1:18080"))
 	return dispatcher
 }

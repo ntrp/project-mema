@@ -15,14 +15,14 @@ func (m *Manager) SOAPDispatcher() *soap.Dispatcher {
 	dispatcher := soap.NewDispatcher()
 	tree := m.contentTree()
 	for _, prefix := range []string{"", "/dlna"} {
-		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree))
+		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree, m.baseURL))
 		dispatcher.Register(prefix+"/control/connection-manager", ssdp.Connection, connectionManagerActions())
 		dispatcher.Register(prefix+"/control/media-receiver-registrar", "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", registrarActions())
 	}
 	return dispatcher
 }
 
-func contentDirectoryActions(tree *content.Tree) map[string]soap.HandlerFunc {
+func contentDirectoryActions(tree *content.Tree, baseURL string) map[string]soap.HandlerFunc {
 	return map[string]soap.HandlerFunc{
 		"GetSearchCapabilities": func(ctx context.Context, args map[string]string) (map[string]string, error) {
 			return map[string]string{"SearchCaps": "dc:title,upnp:class,upnp:genre,dc:creator,dc:date"}, nil
@@ -45,7 +45,7 @@ func contentDirectoryActions(tree *content.Tree) map[string]soap.HandlerFunc {
 			if err != nil {
 				return nil, soap.InvalidArgs(err.Error())
 			}
-			payload, err := content.RenderDIDL(response.Objects, nil)
+			payload, err := content.RenderDIDL(content.ApplyArtworkURLs(baseURL, response.Objects), nil)
 			if err != nil {
 				return nil, err
 			}
@@ -68,7 +68,7 @@ func contentDirectoryActions(tree *content.Tree) map[string]soap.HandlerFunc {
 			if err != nil {
 				return nil, soap.InvalidArgs(err.Error())
 			}
-			payload, err := content.RenderDIDL(response.Objects, nil)
+			payload, err := content.RenderDIDL(content.ApplyArtworkURLs(baseURL, response.Objects), nil)
 			if err != nil {
 				return nil, err
 			}
