@@ -11,11 +11,15 @@ import (
 
 func (m *Manager) Handler() http.Handler {
 	mux := http.NewServeMux()
+	dispatcher := SOAPDispatcher()
 	for _, prefix := range []string{"", "/dlna"} {
 		mux.HandleFunc(prefix+"/rootDesc.xml", m.rootDescription)
 		mux.HandleFunc(prefix+"/contentDirectory.xml", serveXML(ContentDirectorySCPDXML))
 		mux.HandleFunc(prefix+"/connectionManager.xml", serveXML(ConnectionManagerSCPDXML))
 		mux.HandleFunc(prefix+"/mediaReceiverRegistrar.xml", serveXML(MediaReceiverRegistrarSCPDXML))
+		mux.Handle(prefix+"/control/content-directory", dispatcher)
+		mux.Handle(prefix+"/control/connection-manager", dispatcher)
+		mux.Handle(prefix+"/control/media-receiver-registrar", dispatcher)
 	}
 	return mux
 }

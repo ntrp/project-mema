@@ -18,6 +18,23 @@ func TestRequestBaseURLHonorsForwardedHeaders(t *testing.T) {
 	}
 }
 
+func TestHandlerServesSOAPControlAction(t *testing.T) {
+	manager := NewManager(nil, "http://127.0.0.1:18080")
+	body := `<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><u:GetSystemUpdateID xmlns:u="urn:schemas-upnp-org:service:ContentDirectory:1"/></s:Body></s:Envelope>`
+	request := httptest.NewRequest("POST", "http://internal/dlna/control/content-directory", strings.NewReader(body))
+	request.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#GetSystemUpdateID"`)
+	response := httptest.NewRecorder()
+
+	manager.Handler().ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d body=%s", response.Code, response.Body.String())
+	}
+	if !strings.Contains(response.Body.String(), "<Id>0</Id>") {
+		t.Fatalf("SOAP response missing update id:\n%s", response.Body.String())
+	}
+}
+
 func TestHandlerServesMountedDLNARoutes(t *testing.T) {
 	manager := NewManager(nil, "http://127.0.0.1:18080")
 	request := httptest.NewRequest("GET", "http://internal/dlna/rootDesc.xml", nil)
