@@ -26,6 +26,7 @@ type Manager struct {
 	httpPort  string
 	thumbDir  string
 	events    *EventManager
+	profileOverrides map[string]string
 	startSSDP func(context.Context, ssdp.Config) (ssdpRuntime, error)
 	ssdp      ssdpRuntime
 	mu        sync.Mutex

@@ -23,9 +23,20 @@ func (m *Manager) Handler() http.Handler {
 		mux.HandleFunc(prefix+"/resource/", m.resource)
 		mux.HandleFunc(prefix+"/artwork/", m.artwork)
 		mux.HandleFunc(prefix+"/subtitle/", m.subtitle)
-		mux.HandleFunc(prefix+"/events/content-directory", m.events.Handle)
+		mux.HandleFunc(prefix+"/events/content-directory", m.eventHandler)
 	}
-	return mux
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		applyRendererHeaders(w, m.RendererProfileFromRequest(r))
+		mux.ServeHTTP(w, r)
+	})
+}
+
+func (m *Manager) eventHandler(w http.ResponseWriter, r *http.Request) {
+	if m.RendererProfileFromRequest(r).DisableEventing {
+		http.Error(w, "renderer profile disables eventing", http.StatusForbidden)
+		return
+	}
+	m.events.Handle(w, r)
 }
 
 func (m *Manager) rootDescription(w http.ResponseWriter, r *http.Request) {

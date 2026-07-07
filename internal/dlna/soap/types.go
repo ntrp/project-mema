@@ -61,12 +61,23 @@ func (d *Dispatcher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		WriteFault(w, Error{Code: 401, Description: "Invalid Action"})
 		return
 	}
-	values, err := handler(r.Context(), action.Args)
+	values, err := handler(ContextWithRequest(r.Context(), r), action.Args)
 	if err != nil {
 		WriteFault(w, asSOAPError(err, 501, "Action Failed"))
 		return
 	}
 	WriteResponse(w, service.Type, action.Name, values)
+}
+
+type requestContextKey struct{}
+
+func ContextWithRequest(ctx context.Context, r *http.Request) context.Context {
+	return context.WithValue(ctx, requestContextKey{}, r)
+}
+
+func RequestFromContext(ctx context.Context) (*http.Request, bool) {
+	r, ok := ctx.Value(requestContextKey{}).(*http.Request)
+	return r, ok
 }
 
 func ParseSOAPAction(value string) (string, string, bool) {

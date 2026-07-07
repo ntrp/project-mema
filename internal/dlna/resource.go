@@ -45,7 +45,7 @@ func (m *Manager) resourcePlaylist(w http.ResponseWriter, r *http.Request, id st
 	if probe.DurationSeconds != nil {
 		duration = *probe.DurationSeconds
 	}
-	decision := delivery.DecisionFromTracks(target, probe.Tracks, nil, delivery.ClientBrowser)
+	decision := delivery.DecisionFromTracks(target, probe.Tracks, nil, DeliveryClientProfile(m.RendererProfileFromRequest(r)))
 	request := delivery.PlaylistRequest{
 		Path:        r.URL.Path,
 		FilePath:    target,
@@ -77,7 +77,7 @@ func (m *Manager) resourceSegment(w http.ResponseWriter, r *http.Request, target
 		return
 	}
 	probe := delivery.Probe(target)
-	decision := delivery.DecisionFromTracks(target, probe.Tracks, nil, delivery.ClientBrowser)
+	decision := delivery.DecisionFromTracks(target, probe.Tracks, nil, DeliveryClientProfile(m.RendererProfileFromRequest(r)))
 	args := delivery.SegmentArgs(target, nil, start, duration, decision)
 	writer := flushWriter{w: w}
 	err := mediatools.RunStream(r.Context(), "ffmpeg", args, &writer, 64*1024)

@@ -16,7 +16,7 @@ func (m *Manager) SOAPDispatcher() *soap.Dispatcher {
 	tree := m.contentTree()
 	for _, prefix := range []string{"", "/dlna"} {
 		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree, m.baseURL, m.events.UpdateID))
-		dispatcher.Register(prefix+"/control/connection-manager", ssdp.Connection, connectionManagerActions())
+		dispatcher.Register(prefix+"/control/connection-manager", ssdp.Connection, connectionManagerActions(m.rendererProfileFromContext))
 		dispatcher.Register(prefix+"/control/media-receiver-registrar", "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", registrarActions())
 	}
 	return dispatcher
@@ -102,10 +102,10 @@ func (emptyLibrarySource) ListMediaItems(context.Context) ([]storage.MediaItem, 
 	return []storage.MediaItem{}, nil
 }
 
-func connectionManagerActions() map[string]soap.HandlerFunc {
+func connectionManagerActions(profileForContext func(context.Context) RendererProfile) map[string]soap.HandlerFunc {
 	return map[string]soap.HandlerFunc{
 		"GetProtocolInfo": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			return map[string]string{"Source": SourceProtocolInfo(), "Sink": ""}, nil
+			return map[string]string{"Source": SourceProtocolInfoForProfile(profileForContext(ctx)), "Sink": ""}, nil
 		},
 		"GetCurrentConnectionIDs": func(ctx context.Context, args map[string]string) (map[string]string, error) {
 			return map[string]string{"ConnectionIDs": "0"}, nil
