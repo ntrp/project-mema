@@ -1,4 +1,4 @@
-package httpapi
+package delivery
 
 import (
 	"context"
@@ -46,25 +46,12 @@ type ffprobeChapter struct {
 	Tags      map[string]string `json:"tags"`
 }
 
-type mediaFileProbeResult struct {
-	container       mediaFileContainer
-	tracks          []MediaFileTrack
-	chapters        []MediaFileChapter
-	durationSeconds *float64
-}
-
-type mediaFileContainer struct {
-	bitRate    *string
-	format     *string
-	formatName *string
-}
-
-func mediaFileProbe(path string) mediaFileProbeResult {
+func Probe(path string) ProbeResult {
 	if _, err := mediatools.LookPath("ffprobe"); err != nil {
-		return mediaFileProbeResult{}
+		return ProbeResult{}
 	}
 	if err := mediatools.SafePathArg(path); err != nil {
-		return mediaFileProbeResult{}
+		return ProbeResult{}
 	}
 	output, err := mediatools.RunOutput(context.Background(), mediatools.CommandSpec{
 		Name: "ffprobe",
@@ -81,32 +68,32 @@ func mediaFileProbe(path string) mediaFileProbeResult {
 		MaxStderrBytes: 64 * 1024,
 	})
 	if err != nil {
-		return mediaFileProbeResult{}
+		return ProbeResult{}
 	}
 	var payload ffprobeOutput
 	if err := json.Unmarshal(output, &payload); err != nil {
-		return mediaFileProbeResult{}
+		return ProbeResult{}
 	}
-	return mediaFileProbeResult{
-		container:       mediaFileContainerInfo(payload.Format),
-		tracks:          mediaFileTracks(payload.Streams),
-		chapters:        mediaFileChapters(payload.Chapters),
-		durationSeconds: optionalProbeDuration(payload.Format.Duration),
-	}
-}
-
-func mediaFileContainerInfo(format ffprobeFormat) mediaFileContainer {
-	return mediaFileContainer{
-		bitRate:    optionalProbeString(format.BitRate),
-		format:     optionalProbeString(format.Format),
-		formatName: optionalProbeString(format.FormatName),
+	return ProbeResult{
+		Container:       containerInfo(payload.Format),
+		Tracks:          tracks(payload.Streams),
+		Chapters:        chapters(payload.Chapters),
+		DurationSeconds: OptionalDuration(payload.Format.Duration),
 	}
 }
 
-func mediaFileTracks(streams []ffprobeStream) []MediaFileTrack {
-	tracks := []MediaFileTrack{}
+func containerInfo(format ffprobeFormat) Container {
+	return Container{
+		BitRate:    optionalString(format.BitRate),
+		Format:     optionalString(format.Format),
+		FormatName: optionalString(format.FormatName),
+	}
+}
+
+func tracks(streams []ffprobeStream) []Track {
+	tracks := []Track{}
 	for _, stream := range streams {
-		track, ok := mediaFileTrack(stream)
+		track, ok := trackFromStream(stream)
 		if ok {
 			tracks = append(tracks, track)
 		}
@@ -114,51 +101,50 @@ func mediaFileTracks(streams []ffprobeStream) []MediaFileTrack {
 	return tracks
 }
 
-func mediaFileChapters(chapters []ffprobeChapter) []MediaFileChapter {
-	results := make([]MediaFileChapter, 0, len(chapters))
+func chapters(chapters []ffprobeChapter) []Chapter {
+	results := make([]Chapter, 0, len(chapters))
 	for index, chapter := range chapters {
 		number := chapter.ID
 		if number <= 0 {
 			number = int32(index)
 		}
-		results = append(results, MediaFileChapter{
+		results = append(results, Chapter{
 			Index:     number,
-			Title:     optionalProbeString(chapter.Tags["title"]),
-			StartTime: optionalProbeString(chapter.StartTime),
-			EndTime:   optionalProbeString(chapter.EndTime),
+			Title:     optionalString(chapter.Tags["title"]),
+			StartTime: optionalString(chapter.StartTime),
+			EndTime:   optionalString(chapter.EndTime),
 		})
 	}
 	return results
 }
 
-func mediaFileTrack(stream ffprobeStream) (MediaFileTrack, bool) {
-	trackType, ok := mediaFileTrackType(stream.CodecType)
+func trackFromStream(stream ffprobeStream) (Track, bool) {
+	trackType, ok := trackTypeFromCodec(stream.CodecType)
 	if !ok {
-		return MediaFileTrack{}, false
+		return Track{}, false
 	}
-	track := MediaFileTrack{
+	return Track{
 		Type:          trackType,
-		Index:         optionalProbeIndex(stream.Index),
-		Codec:         optionalProbeString(stream.CodecName),
-		Language:      optionalProbeString(languageTag(stream.Tags)),
-		Title:         optionalProbeString(stream.Tags["title"]),
+		Index:         optionalIndex(stream.Index),
+		Codec:         optionalString(stream.CodecName),
+		Language:      optionalString(languageTag(stream.Tags)),
+		Title:         optionalString(stream.Tags["title"]),
 		BitRate:       streamBitRate(stream),
-		ChannelLayout: optionalProbeString(stream.ChannelLayout),
-		FrameRate:     optionalProbeString(normalFrameRate(stream.FrameRate)),
-		Height:        optionalProbeInt(stream.Height),
-		Width:         optionalProbeInt(stream.Width),
-		PixelFormat:   optionalProbeString(stream.PixelFormat),
-		Profile:       optionalProbeString(stream.Profile),
-		Channels:      optionalProbeInt(stream.Channels),
-	}
-	return track, true
+		ChannelLayout: optionalString(stream.ChannelLayout),
+		FrameRate:     optionalString(normalFrameRate(stream.FrameRate)),
+		Height:        optionalInt(stream.Height),
+		Width:         optionalInt(stream.Width),
+		PixelFormat:   optionalString(stream.PixelFormat),
+		Profile:       optionalString(stream.Profile),
+		Channels:      optionalInt(stream.Channels),
+	}, true
 }
 
 func streamBitRate(stream ffprobeStream) *string {
-	if bitRate := optionalProbeString(stream.BitRate); bitRate != nil {
+	if bitRate := optionalString(stream.BitRate); bitRate != nil {
 		return bitRate
 	}
-	if bitRate := optionalProbeString(probeTag(stream.Tags, "BPS")); bitRate != nil {
+	if bitRate := optionalString(probeTag(stream.Tags, "BPS")); bitRate != nil {
 		return bitRate
 	}
 	bytes, err := strconv.ParseFloat(probeTag(stream.Tags, "NUMBER_OF_BYTES"), 64)
@@ -171,7 +157,7 @@ func streamBitRate(stream ffprobeStream) *string {
 }
 
 func streamDurationSeconds(stream ffprobeStream) float64 {
-	if duration := optionalProbeDuration(stream.Duration); duration != nil {
+	if duration := OptionalDuration(stream.Duration); duration != nil {
 		return *duration
 	}
 	return probeDurationTagSeconds(probeTag(stream.Tags, "DURATION"))
@@ -202,14 +188,14 @@ func probeDurationTagSeconds(value string) float64 {
 	return hours*3600 + minutes*60 + seconds
 }
 
-func mediaFileTrackType(value string) (MediaFileTrackType, bool) {
+func trackTypeFromCodec(value string) (TrackType, bool) {
 	switch strings.ToLower(value) {
 	case "video":
-		return Video, true
+		return TrackVideo, true
 	case "audio":
-		return Audio, true
+		return TrackAudio, true
 	case "subtitle":
-		return Subtitle, true
+		return TrackSubtitle, true
 	default:
 		return "", false
 	}

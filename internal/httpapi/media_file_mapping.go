@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"media-manager/internal/delivery"
 	"media-manager/internal/storage"
 )
 
@@ -23,16 +24,18 @@ func mediaFileInfoResponses(
 			file.Status = MediaFileInfoStatusAvailable
 			size := stat.Size()
 			file.SizeBytes = &size
-			probe := mediaFileProbe(mediaFileProbePath(path))
-			hydrateTrackProvenance(path, probe.tracks, componentProvenance)
-			if len(probe.tracks) > 0 {
-				file.Tracks = &probe.tracks
+			probe := delivery.Probe(mediaFileProbePath(path))
+			tracks := mediaFileTracksFromDelivery(probe.Tracks)
+			chapters := mediaFileChaptersFromDelivery(probe.Chapters)
+			hydrateTrackProvenance(path, tracks, componentProvenance)
+			if len(tracks) > 0 {
+				file.Tracks = &tracks
 			}
-			if len(probe.chapters) > 0 {
-				file.Chapters = &probe.chapters
+			if len(chapters) > 0 {
+				file.Chapters = &chapters
 			}
 			file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(
-				probe.tracks,
+				tracks,
 				subtitleTargets,
 				subtitleMode,
 				externalSubtitleLanguagesForPath(externalSubtitles, sidecars, path),

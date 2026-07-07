@@ -1,32 +1,32 @@
-package httpapi
+package delivery
 
 import "testing"
 
 func TestSCNMedia001ProbeStringNormalization(t *testing.T) {
-	for _, value := range []string{"", " ", "0/0", "unknown", "UNKNOWN"} {
-		if optionalProbeString(value) != nil {
+	for _, value := range []string{"", " ", "unknown", "UNKNOWN", "n/a"} {
+		if optionalString(value) != nil {
 			t.Fatalf("expected %q to normalize to nil", value)
 		}
 	}
 
-	got := optionalProbeString(" eng ")
+	got := optionalString(" eng ")
 	if got == nil || *got != "eng" {
-		t.Fatalf("optionalProbeString = %#v, want eng", got)
+		t.Fatalf("optionalString = %#v, want eng", got)
 	}
 }
 
 func TestSCNMedia001ProbeNumberNormalization(t *testing.T) {
-	if optionalProbeInt(0) != nil || optionalProbeInt(-1) != nil {
+	if optionalInt(0) != nil || optionalInt(-1) != nil {
 		t.Fatal("expected non-positive probe integers to normalize to nil")
 	}
-	if optionalProbeIndex(-1) != nil {
+	if optionalIndex(-1) != nil {
 		t.Fatal("expected negative probe index to normalize to nil")
 	}
-	if got := optionalProbeInt(24); got == nil || *got != 24 {
-		t.Fatalf("optionalProbeInt = %#v, want 24", got)
+	if got := optionalInt(24); got == nil || *got != 24 {
+		t.Fatalf("optionalInt = %#v, want 24", got)
 	}
-	if got := optionalProbeIndex(0); got == nil || *got != 0 {
-		t.Fatalf("optionalProbeIndex = %#v, want 0", got)
+	if got := optionalIndex(0); got == nil || *got != 0 {
+		t.Fatalf("optionalIndex = %#v, want 0", got)
 	}
 }
 
@@ -43,13 +43,10 @@ func TestSCNMedia001ProbeLanguageAndFrameRateNormalization(t *testing.T) {
 	if normalFrameRate("0/0") != "" {
 		t.Fatal("expected zero frame rate to normalize to empty string")
 	}
-	if firstString("", "  ", "fallback") != "fallback" {
-		t.Fatal("expected firstString to return first non-blank raw value")
-	}
 }
 
 func TestSCNMedia001ProbeTracksAndChapters(t *testing.T) {
-	tracks := mediaFileTracks([]ffprobeStream{
+	tracks := tracks([]ffprobeStream{
 		{
 			Index:         0,
 			CodecName:     "h264",
@@ -77,20 +74,21 @@ func TestSCNMedia001ProbeTracksAndChapters(t *testing.T) {
 	if len(tracks) != 2 {
 		t.Fatalf("tracks = %#v, want 2 supported tracks", tracks)
 	}
-	if tracks[0].Type != Video || tracks[0].Codec == nil || *tracks[0].Codec != "h264" {
+	if tracks[0].Type != TrackVideo || tracks[0].Codec == nil || *tracks[0].Codec != "h264" {
 		t.Fatalf("video track = %#v", tracks[0])
 	}
-	if tracks[0].Language == nil || *tracks[0].Language != "eng" || tracks[0].Height == nil || *tracks[0].Height != 1080 {
+	if tracks[0].Language == nil || *tracks[0].Language != "eng" ||
+		tracks[0].Height == nil || *tracks[0].Height != 1080 {
 		t.Fatalf("video track details = %#v", tracks[0])
 	}
-	if tracks[1].Type != Audio || tracks[1].Language == nil || *tracks[1].Language != "deu" {
+	if tracks[1].Type != TrackAudio || tracks[1].Language == nil || *tracks[1].Language != "deu" {
 		t.Fatalf("audio track = %#v", tracks[1])
 	}
 	if tracks[1].BitRate == nil || *tracks[1].BitRate != "640000" {
 		t.Fatalf("audio bitrate = %#v", tracks[1].BitRate)
 	}
 
-	chapters := mediaFileChapters([]ffprobeChapter{
+	chapters := chapters([]ffprobeChapter{
 		{ID: 0, StartTime: "0.0", EndTime: "60.0", Tags: map[string]string{"title": "Intro"}},
 		{ID: 3, StartTime: "60.0", EndTime: "120.0", Tags: map[string]string{}},
 	})
@@ -103,7 +101,7 @@ func TestSCNMedia001ProbeTracksAndChapters(t *testing.T) {
 }
 
 func TestSCNMedia001ProbeTrackBitRateFromByteTags(t *testing.T) {
-	track, ok := mediaFileTrack(ffprobeStream{
+	track, ok := trackFromStream(ffprobeStream{
 		Index:     1,
 		CodecName: "flac",
 		CodecType: "audio",
@@ -122,17 +120,17 @@ func TestSCNMedia001ProbeTrackBitRateFromByteTags(t *testing.T) {
 }
 
 func TestSCNMedia001ProbeTrackTypeMapping(t *testing.T) {
-	for input, want := range map[string]MediaFileTrackType{
-		"VIDEO":    Video,
-		"audio":    Audio,
-		"Subtitle": Subtitle,
+	for input, want := range map[string]TrackType{
+		"VIDEO":    TrackVideo,
+		"audio":    TrackAudio,
+		"Subtitle": TrackSubtitle,
 	} {
-		got, ok := mediaFileTrackType(input)
+		got, ok := trackTypeFromCodec(input)
 		if !ok || got != want {
-			t.Fatalf("mediaFileTrackType(%q) = %q, %v; want %q, true", input, got, ok, want)
+			t.Fatalf("trackTypeFromCodec(%q) = %q, %v; want %q, true", input, got, ok, want)
 		}
 	}
-	if _, ok := mediaFileTrackType("data"); ok {
+	if _, ok := trackTypeFromCodec("data"); ok {
 		t.Fatal("expected unsupported track type to be rejected")
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"media-manager/internal/delivery"
 )
 
 func (s *Server) StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id ResourceId, params StreamMediaItemFileParams) {
@@ -43,7 +44,7 @@ func (s *Server) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, 
 	w.Header().Set("Content-Type", "audio/x-mpegurl; charset=utf-8")
 	w.Header().Set("Content-Disposition", playlistDisposition(name))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", playlistTitle(name), streamURL(r, params.Path, expires, token))
+	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", delivery.PlaylistTitle(name), streamURL(r, params.Path, expires, token))
 }
 
 func (s *Server) authorizeMediaFileStream(w http.ResponseWriter, r *http.Request, mediaID uuid.UUID, params StreamMediaItemFileParams) bool {
@@ -55,48 +56,26 @@ func (s *Server) authorizeMediaFileStream(w http.ResponseWriter, r *http.Request
 }
 
 func serveMediaFile(w http.ResponseWriter, r *http.Request, target string) {
-	file, err := os.Open(target)
-	if err != nil {
-		writeFileOpenError(w, err)
-		return
-	}
-	defer file.Close()
-	info, ok := statOpenMediaFile(w, file)
-	if !ok {
-		return
-	}
-	w.Header().Set("Accept-Ranges", "bytes")
-	w.Header().Set("Content-Type", mediaContentType(target))
-	http.ServeContent(w, r, info.Name(), info.ModTime(), file)
+	writeFileError(w, delivery.ServeFile(w, r, target))
 }
 
 func statMediaFile(w http.ResponseWriter, target string) (os.FileInfo, bool) {
-	info, err := os.Stat(target)
+	info, err := delivery.StatFile(target)
 	if err != nil {
-		writeFileOpenError(w, err)
-		return nil, false
-	}
-	if info.IsDir() {
-		writeError(w, http.StatusBadRequest, "invalid_input", "Media file path points to a directory")
+		writeFileError(w, err)
 		return nil, false
 	}
 	return info, true
 }
 
-func statOpenMediaFile(w http.ResponseWriter, file *os.File) (os.FileInfo, bool) {
-	info, err := file.Stat()
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, "media_file_stat_failed", "Could not inspect media file")
-		return nil, false
+func writeFileError(w http.ResponseWriter, err error) {
+	if err == nil {
+		return
 	}
-	if info.IsDir() {
+	if err == delivery.ErrDirectory {
 		writeError(w, http.StatusBadRequest, "invalid_input", "Media file path points to a directory")
-		return nil, false
+		return
 	}
-	return info, true
-}
-
-func writeFileOpenError(w http.ResponseWriter, err error) {
 	if os.IsNotExist(err) {
 		writeError(w, http.StatusNotFound, "not_found", "Could not find media file")
 		return
@@ -105,19 +84,7 @@ func writeFileOpenError(w http.ResponseWriter, err error) {
 }
 
 func mediaContentType(path string) string {
-	if value := mime.TypeByExtension(strings.ToLower(filepath.Ext(path))); value != "" {
-		return value
-	}
-	switch strings.ToLower(filepath.Ext(path)) {
-	case ".mkv":
-		return "video/x-matroska"
-	case ".m4v":
-		return "video/x-m4v"
-	case ".ts":
-		return "video/mp2t"
-	default:
-		return "application/octet-stream"
-	}
+	return delivery.ContentType(path)
 }
 
 func streamURL(r *http.Request, filePath string, expires int64, token string) string {
@@ -160,17 +127,9 @@ func forwardedHeader(r *http.Request, name string) string {
 }
 
 func playlistFilename(name string) string {
-	base := strings.TrimSpace(strings.TrimSuffix(name, filepath.Ext(name)))
-	if base == "" || base == "." {
-		base = "media-stream"
-	}
-	return base + ".m3u"
+	return delivery.PlaylistFilename(name)
 }
 
 func playlistDisposition(name string) string {
 	return mime.FormatMediaType("inline", map[string]string{"filename": playlistFilename(name)})
-}
-
-func playlistTitle(name string) string {
-	return strings.NewReplacer("\r", " ", "\n", " ").Replace(name)
 }

@@ -18,3 +18,12 @@ func TestSCNMedia013SubtitlePreviewArgsSelectRequestedStream(t *testing.T) {
 		t.Fatalf("expected ffmpeg args to stream to stdout, got %#v", args)
 	}
 }
+
+func hasArgPair(args []string, key string, value string) bool {
+	for index := 0; index < len(args)-1; index += 1 {
+		if args[index] == key && args[index+1] == value {
+			return true
+		}
+	}
+	return false
+}

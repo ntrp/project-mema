@@ -2,9 +2,9 @@ package httpapi
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/google/uuid"
+	"media-manager/internal/delivery"
 )
 
 func (s *Server) GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Request, id ResourceId, params GetMediaItemFilePreviewInfoParams) {
@@ -24,12 +24,12 @@ func (s *Server) GetMediaItemFilePreviewInfo(w http.ResponseWriter, r *http.Requ
 }
 
 func mediaPreviewInfo(target string, audioTrackIndex *int32, clientProfile MediaFilePreviewClientProfile) MediaFilePreviewInfo {
-	probe := mediaFileProbe(target)
-	info := mediaPreviewInfoFromTracks(target, probe.tracks, audioTrackIndex, clientProfile)
-	info.ContainerBitRate = probe.container.bitRate
-	info.ContainerFormat = probe.container.format
-	info.ContainerFormatName = probe.container.formatName
-	info.DurationSeconds = probe.durationSeconds
+	probe := delivery.Probe(target)
+	info := mediaPreviewInfoFromTracks(target, mediaFileTracksFromDelivery(probe.Tracks), audioTrackIndex, clientProfile)
+	info.ContainerBitRate = probe.Container.BitRate
+	info.ContainerFormat = probe.Container.Format
+	info.ContainerFormatName = probe.Container.FormatName
+	info.DurationSeconds = probe.DurationSeconds
 	return info
 }
 
@@ -39,44 +39,26 @@ func mediaPreviewInfoFromTracks(
 	audioTrackIndex *int32,
 	clientProfile MediaFilePreviewClientProfile,
 ) MediaFilePreviewInfo {
-	video := firstTrackByType(tracks, Video, nil)
-	audio := firstTrackByType(tracks, Audio, audioTrackIndex)
-	decision := mediaPreviewDecisionFromTracks(target, tracks, audioTrackIndex, clientProfile)
-	reasons := append([]string{}, decision.reasons...)
-	sourceBitRate := selectedBitRate(video, audio)
+	deliveryTrackList := deliveryTracks(tracks)
+	video := delivery.FirstTrackByType(deliveryTrackList, delivery.TrackVideo, nil)
+	audio := delivery.FirstTrackByType(deliveryTrackList, delivery.TrackAudio, audioTrackIndex)
+	decision := delivery.DecisionFromTracks(target, deliveryTrackList, audioTrackIndex, deliveryClientProfile(clientProfile))
+	reasons := append([]string{}, decision.Reasons...)
+	sourceBitRate := delivery.SelectedBitRate(video, audio)
 	info := MediaFilePreviewInfo{
-		StreamingMode:    decision.mode,
-		DeliveryProtocol: decision.deliveryProtocol,
-		OutputVideoCodec: decision.plan.videoCodec,
-		OutputAudioCodec: decision.plan.audioCodec,
+		StreamingMode:    mediaPreviewMode(decision.Mode),
+		DeliveryProtocol: mediaPreviewProtocol(decision.DeliveryProtocol),
+		OutputVideoCodec: decision.Plan.VideoCodec,
+		OutputAudioCodec: decision.Plan.AudioCodec,
 		SourceBitRate:    sourceBitRate,
 		LiveBitRate:      sourceBitRate,
 		TranscodeReasons: &reasons,
 	}
 	if video != nil {
-		info.VideoTrack = video
+		info.VideoTrack = mediaFileTrackFromDelivery(video)
 	}
 	if audio != nil {
-		info.AudioTrack = audio
+		info.AudioTrack = mediaFileTrackFromDelivery(audio)
 	}
 	return info
-}
-
-func selectedBitRate(tracks ...*MediaFileTrack) *string {
-	var total int64
-	for _, track := range tracks {
-		if track == nil || track.BitRate == nil {
-			continue
-		}
-		value, err := strconv.ParseInt(*track.BitRate, 10, 64)
-		if err != nil || value <= 0 {
-			continue
-		}
-		total += value
-	}
-	if total <= 0 {
-		return nil
-	}
-	formatted := strconv.FormatInt(total, 10)
-	return &formatted
 }

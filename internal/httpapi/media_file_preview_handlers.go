@@ -1,10 +1,10 @@
 package httpapi
 
 import (
-	"math"
 	"net/http"
 
 	"github.com/google/uuid"
+	"media-manager/internal/delivery"
 	mediatools "media-manager/internal/tools"
 )
 
@@ -20,10 +20,10 @@ func (s *Server) PreviewMediaItemFile(w http.ResponseWriter, r *http.Request, id
 	if _, ok := statMediaFile(w, target); !ok {
 		return
 	}
-	probe := mediaFileProbe(target)
+	probe := delivery.Probe(target)
 	clientProfile := mediaPreviewClientProfile(params.ClientProfile, r.UserAgent())
-	decision := mediaPreviewDecisionFromTracks(target, probe.tracks, params.AudioTrackIndex, clientProfile)
-	if decision.deliveryProtocol == mediaPreviewDeliveryFile {
+	decision := delivery.DecisionFromTracks(target, probe.Tracks, params.AudioTrackIndex, deliveryClientProfile(clientProfile))
+	if decision.DeliveryProtocol == delivery.ProtocolFile {
 		serveMediaFile(w, r, target)
 		return
 	}
@@ -37,7 +37,7 @@ func (s *Server) PreviewMediaItemFileSegment(w http.ResponseWriter, r *http.Requ
 	if _, ok := s.requireSession(w, r); !ok {
 		return
 	}
-	if !validPreviewSegment(params.SegmentStartSeconds, params.SegmentDurationSeconds) {
+	if !delivery.ValidSegment(params.SegmentStartSeconds, params.SegmentDurationSeconds) {
 		writeError(w, http.StatusBadRequest, "invalid_input", "Preview segment range is invalid")
 		return
 	}
@@ -56,10 +56,10 @@ func (s *Server) PreviewMediaItemFileSegment(w http.ResponseWriter, r *http.Requ
 		writeError(w, http.StatusBadRequest, "invalid_media_path", "Media file path is invalid")
 		return
 	}
-	probe := mediaFileProbe(target)
+	probe := delivery.Probe(target)
 	clientProfile := mediaPreviewClientProfile(params.ClientProfile, r.UserAgent())
-	decision := mediaPreviewDecisionFromTracks(target, probe.tracks, params.AudioTrackIndex, clientProfile)
-	args := mediaPreviewHLSSegmentArgs(target, params.AudioTrackIndex, params.SegmentStartSeconds, params.SegmentDurationSeconds, decision)
+	decision := delivery.DecisionFromTracks(target, probe.Tracks, params.AudioTrackIndex, deliveryClientProfile(clientProfile))
+	args := delivery.SegmentArgs(target, params.AudioTrackIndex, params.SegmentStartSeconds, params.SegmentDurationSeconds, decision)
 	w.Header().Set("Content-Type", "video/mp2t")
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Accel-Buffering", "no")
@@ -81,14 +81,6 @@ func runMediaPreviewCommand(r *http.Request, w http.ResponseWriter, args []strin
 	writer := &flushWriter{w: w}
 	err := mediatools.RunStream(r.Context(), "ffmpeg", args, writer, 64*1024)
 	return writer.wrote, err
-}
-
-func validPreviewSegment(start, duration float64) bool {
-	return validPreviewSeconds(start) && validPreviewSeconds(duration) && duration > 0 && duration <= 60
-}
-
-func validPreviewSeconds(value float64) bool {
-	return value >= 0 && !math.IsInf(value, 0) && !math.IsNaN(value)
 }
 
 type flushWriter struct {

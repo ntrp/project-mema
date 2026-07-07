@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"media-manager/internal/delivery"
 	mediatools "media-manager/internal/tools"
 )
 
@@ -126,10 +127,11 @@ func trackDeleteOutput(path string) (string, func(), error) {
 }
 
 func chapterMetadataWithout(path string, chapterIndex int32) (string, error) {
-	probe := mediaFileProbe(path)
-	chapters := make([]MediaFileChapter, 0, len(probe.chapters))
+	probe := delivery.Probe(path)
+	probeChapters := mediaFileChaptersFromDelivery(probe.Chapters)
+	chapters := make([]MediaFileChapter, 0, len(probeChapters))
 	found := false
-	for _, chapter := range probe.chapters {
+	for _, chapter := range probeChapters {
 		if chapter.Index == chapterIndex {
 			found = true
 			continue
