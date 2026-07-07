@@ -80,6 +80,9 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('notes.bin');
 		expect(body).toContain('Missing');
 		expect(otherFilesOrder(body)).toEqual(['Other files', 'Type', 'Language', 'Status']);
+		expect(body.match(/>Type</g) ?? []).toHaveLength(1);
+		expect(body.match(/>Language</g) ?? []).toHaveLength(1);
+		expect(body.match(/>Status</g) ?? []).toHaveLength(1);
 		expect(body.match(/Delete other file/g) ?? []).toHaveLength(2);
 	});
 
@@ -113,7 +116,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(values.join('\n')).toContain('componentAssembly');
 	});
 
-	it('renders satisfied subtitle state in file summaries', () => {
+	it('renders compact requirement states in file summaries', () => {
 		const { body } = renderWithTooltip(MediaFileSummary, {
 			mediaItemId: 'media-1',
 			mediaTitle: 'Scenario Movie',
@@ -137,11 +140,12 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		});
 
 		expect(body).toContain('Subtitles');
-		expect(body).toContain('Satisfied: English');
+		expect(body).toContain('Ok');
 		expect(body).toContain('Audio');
 		expect(body).toContain('Other files');
 		expect(body).toContain('poster.jpg');
-		expect(body).toContain('Missing: German');
+		expect(body).toContain('Missing');
+		expect(body).toContain('Missing required audio: German');
 		expect(body).not.toContain('Other File');
 		expect(body).not.toContain('Formats');
 		expect(summaryOrder(body)).toEqual([

@@ -4,6 +4,7 @@
 	import MediaRenameApplyModal from '$lib/components/app/media/files/MediaRenameApplyModal.svelte';
 	import MediaRenamePreviewPanel from '$lib/components/app/media/files/MediaRenamePreviewPanel.svelte';
 	import MediaFileSearchModal from '$lib/components/app/media/files/MediaFileSearchModal.svelte';
+	import SubtitleSearchModal from '$lib/components/app/media/subtitle-search/SubtitleSearchModal.svelte';
 	import MediaRootPanel from '$lib/components/app/media/collection/MediaRootPanel.svelte';
 	import { activityForMovie } from '$lib/components/app/activity/activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
@@ -23,6 +24,7 @@
 		onSaveOptions,
 		onAutoSearch,
 		onSearchSubtitle,
+		onGrabSubtitle,
 		onDeleteSubtitle,
 		onDeleteFile,
 		onGrabRelease
@@ -30,6 +32,7 @@
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
+	let subtitleSearch = $state<{ row: MediaFileRow; languageId: string } | undefined>();
 	let subtitleSearchKey = $state<string | undefined>();
 	let previewRows = $state<MediaRenamePreviewRow[]>([]);
 	let previewLoading = $state(false);
@@ -71,6 +74,13 @@
 
 	function deleteSubtitle(subtitleId: string) {
 		return onDeleteSubtitle(item, subtitleId);
+	}
+
+	function openSubtitleSearch(row: MediaFileRow, languageId?: string) {
+		subtitleSearch = {
+			row,
+			languageId: languageId ?? row.expectedSubtitleLanguages[0] ?? 'english'
+		};
 	}
 
 	async function loadRenamePreview() {
@@ -131,6 +141,7 @@
 						onManualSearch={() => (searchOpen = true)}
 						subtitleSearching={subtitleSearchKey?.startsWith(`${row.key}:`) === true}
 						onSearchSubtitle={searchSubtitle}
+						onManualSubtitleSearch={openSubtitleSearch}
 						onDeleteSubtitle={(subtitle) => deleteSubtitle(subtitle.id)}
 						onDelete={requestDelete}
 					/>
@@ -145,6 +156,17 @@
 		row={deleteRow}
 		onCancel={() => (deleteRow = undefined)}
 		onConfirm={confirmDelete}
+	/>
+{/if}
+
+{#if subtitleSearch}
+	<SubtitleSearchModal
+		{item}
+		row={subtitleSearch.row}
+		languageId={subtitleSearch.languageId}
+		{canManage}
+		onGrab={onGrabSubtitle}
+		onClose={() => (subtitleSearch = undefined)}
 	/>
 {/if}
 

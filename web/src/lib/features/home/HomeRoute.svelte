@@ -60,6 +60,7 @@
 	onFindReleases={app.findReleases}
 	onAutoSearchMedia={app.autoSearchMedia}
 	onSearchMediaSubtitle={app.searchMediaSubtitle}
+	onGrabMediaSubtitle={app.grabMediaSubtitle}
 	onDeleteMediaSubtitle={app.deleteMediaSubtitle}
 	onRefreshMediaMetadata={app.refreshMediaMetadata}
 	onSaveMediaItemOptions={app.saveMediaItemOptions}

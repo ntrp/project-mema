@@ -220,6 +220,111 @@ func TestSubtitleSearchDownloadsMockProviderSubtitle(t *testing.T) {
 	}
 }
 
+func TestManualSubtitleSearchReturnsMockProviderCandidate(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	tmp := t.TempDir()
+	mediaPath := filepath.Join(tmp, "Scenario.Movie.2026.mkv")
+	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	provider, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
+		Name:    "Mock Subtitles",
+		Type:    "mock",
+		BaseURL: "mock://subtitles",
+		Enabled: true,
+		MockSubtitles: []storage.MockSubtitleProviderRowInput{{
+			Title:      "Scenario Movie",
+			LanguageID: "english",
+			Format:     "srt",
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
+		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item.FilePaths = []string{mediaPath}
+
+	results, logs, err := SearchManualSubtitles(ctx, store, subtitles.NewService(nil), item, "Scenario Movie", "english", mediaPath)
+
+	if err != nil {
+		t.Fatalf("SearchManualSubtitles returned error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("results = %#v logs = %#v", results, logs)
+	}
+	result := results[0]
+	if result.Provider.ID != provider.ID || result.Protocol != "HTTP" || result.Candidate.Format != "srt" {
+		t.Fatalf("result = %#v", result)
+	}
+	if result.Match.Severity != "success" || !strings.Contains(result.Match.Details[0], "english") {
+		t.Fatalf("match = %#v", result.Match)
+	}
+}
+
+func TestManualSubtitleGrabDownloadsSelectedMockCandidate(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	tmp := t.TempDir()
+	mediaPath := filepath.Join(tmp, "Scenario.Movie.2026.mkv")
+	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	provider, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
+		Name:    "Mock Subtitles",
+		Type:    "mock",
+		BaseURL: "mock://subtitles",
+		Enabled: true,
+		MockSubtitles: []storage.MockSubtitleProviderRowInput{{
+			Title:      "Scenario Movie",
+			LanguageID: "english",
+			Format:     "vtt",
+		}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
+		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item.FilePaths = []string{mediaPath}
+	item.SubtitlePreferredMode = "mixed"
+	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{{LanguageID: "english"}}
+
+	err = GrabManualSubtitle(ctx, store, subtitles.NewService(nil), item, ManualSubtitleGrabInput{
+		ProviderID: provider.ID,
+		FilePath:   mediaPath,
+		LanguageID: "english",
+		Title:      "Scenario Movie",
+		Format:     "vtt",
+	})
+
+	if err != nil {
+		t.Fatalf("GrabManualSubtitle returned error: %v", err)
+	}
+	subtitlePath := filepath.Join(tmp, "Scenario.Movie.2026.english.vtt")
+	content, err := os.ReadFile(subtitlePath)
+	if err != nil {
+		t.Fatalf("read subtitle: %v", err)
+	}
+	if !strings.Contains(string(content), "00:00:03.000 --> 00:00:04.000\nmock") {
+		t.Fatalf("subtitle content = %q", content)
+	}
+	records, err := store.ListMediaItemSubtitles(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(records) != 1 || records[0].ProviderID == nil || *records[0].ProviderID != provider.ID || records[0].FilePath != subtitlePath {
+		t.Fatalf("records = %#v", records)
+	}
+}
+
 func TestSubtitleSearchRejectsUnsupportedBitmapTargetFormat(t *testing.T) {
 	ctx, store := jobsTestStore(t)
 	tmp := t.TempDir()

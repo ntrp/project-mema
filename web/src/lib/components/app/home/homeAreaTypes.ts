@@ -1,6 +1,7 @@
 import type {
 	DownloadActivity,
 	DiscoverBlacklistItem,
+	GrabSubtitleRequest,
 	HomeSection,
 	ActivitySection,
 	Language,
@@ -63,6 +64,7 @@ export interface HomeAreaProps {
 		_item: MediaItem,
 		_request: { languageId?: string; filePath?: string }
 	) => void | Promise<void>;
+	onGrabMediaSubtitle?: (_item: MediaItem, _request: GrabSubtitleRequest) => void | Promise<void>;
 	onDeleteMediaSubtitle?: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;
 	onRefreshMediaMetadata: (_item: MediaItem) => void;
 	onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;

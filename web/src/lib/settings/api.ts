@@ -44,6 +44,8 @@ import type {
 	MediaItemCreateRequest,
 	MediaItemSubtitleListResponse,
 	MediaItemSubtitleSelectionRequest,
+	ManualSubtitleSearchRequest,
+	GrabSubtitleRequest,
 	MediaItemUpdateRequest,
 	MediaProfile,
 	MediaProfileForm,
@@ -1011,6 +1013,36 @@ export async function enqueueMediaSubtitleSearch(id: string, request: SubtitleSe
 	}
 	if (!data) {
 		throw new Error('Subtitle search job was not returned');
+	}
+	return data;
+}
+
+export async function searchMediaSubtitles(id: string, request: ManualSubtitleSearchRequest) {
+	const { data, error } = await client.POST('/media/items/{id}/subtitle-search-results', {
+		params: { path: { id } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Subtitle search results were not returned');
+	}
+	return data;
+}
+
+export async function grabMediaSubtitle(id: string, request: GrabSubtitleRequest) {
+	const { data, error } = await client.POST('/media/items/{id}/subtitle-grabs', {
+		params: { path: { id } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media item was not returned');
 	}
 	return data;
 }

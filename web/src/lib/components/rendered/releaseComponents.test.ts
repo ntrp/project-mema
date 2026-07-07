@@ -5,9 +5,10 @@ import ReleaseSearchFilters from '$lib/components/app/media/release-search/Relea
 import ReleaseSearchQueryInput from '$lib/components/app/media/release-search/ReleaseSearchQueryInput.svelte';
 import ReleaseSearchResultsTable from '$lib/components/app/media/release-search/ReleaseSearchResultsTable.svelte';
 import ReleaseSearchStatusLog from '$lib/components/app/media/release-search/ReleaseSearchStatusLog.svelte';
+import SubtitleSearchResultsTable from '$lib/components/app/media/subtitle-search/SubtitleSearchResultsTable.svelte';
 import { defaultReleaseFilters } from '$lib/components/app/media/release-display/releaseSearchResults';
 import type { ReleaseSort } from '$lib/components/app/media/release-display/releaseSearchResults';
-import type { MediaItem, ReleaseCandidate } from '$lib/settings/types';
+import type { MediaItem, ReleaseCandidate, SubtitleCandidate } from '$lib/settings/types';
 import { renderWithTooltip } from './renderHelpers';
 
 const mediaItem = {
@@ -50,6 +51,24 @@ function release(overrides: Partial<ReleaseCandidate> = {}): ReleaseCandidate {
 		},
 		...overrides
 	} as ReleaseCandidate;
+}
+
+function subtitleCandidate(overrides: Partial<SubtitleCandidate> = {}): SubtitleCandidate {
+	return {
+		id: 'subtitle-1',
+		protocol: 'HTTP',
+		providerId: 'provider-1',
+		providerName: 'Mock Subtitles',
+		title: 'Scenario.Movie.2026.english.srt',
+		languageId: 'english',
+		format: 'srt',
+		match: {
+			severity: 'success',
+			label: 'Match',
+			details: ['Language matches english']
+		},
+		...overrides
+	} as SubtitleCandidate;
 }
 
 describe('rendered release components (SCN-MEDIA-002)', () => {
@@ -106,6 +125,26 @@ describe('rendered release components (SCN-MEDIA-002)', () => {
 
 		expect(body).toContain('Searching releases');
 		expect(body).not.toContain('Sort by Title');
+	});
+
+	it('renders subtitle search result headers with language after title', () => {
+		const { body } = renderWithTooltip(SubtitleSearchResultsTable, {
+			candidates: [subtitleCandidate()],
+			searching: false,
+			canManage: true,
+			onGrab: vi.fn()
+		});
+
+		expect(body).toContain('Protocol');
+		expect(body).toContain('Provider');
+		expect(body).toContain('Title / filename');
+		expect(body).toContain('Language');
+		expect(body.indexOf('Title / filename')).toBeLessThan(body.indexOf('Language'));
+		expect(body).toContain('HTTP');
+		expect(body).toContain('Mock Subtitles');
+		expect(body).toContain('Scenario.Movie.2026.english.srt');
+		expect(body).toContain('English');
+		expect(body).toContain('Grab subtitle');
 	});
 
 	it('renders release filter controls with selected values and quality options', () => {

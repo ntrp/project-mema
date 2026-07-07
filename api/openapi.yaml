@@ -1350,6 +1350,64 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/subtitle-search-results:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: searchMediaSubtitles
+      tags:
+        - Media
+      summary: Search subtitle providers for manual subtitle candidates
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ManualSubtitleSearchRequest"
+      responses:
+        "200":
+          description: Manual subtitle search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManualSubtitleSearchResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /media/items/{id}/subtitle-grabs:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: grabMediaSubtitle
+      tags:
+        - Media
+      summary: Download a selected subtitle candidate
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrabSubtitleRequest"
+      responses:
+        "200":
+          description: Subtitle downloaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/subtitles:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -7557,6 +7615,133 @@ components:
         filePath:
           type: string
           minLength: 1
+    ManualSubtitleSearchRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - query
+        - languageId
+        - filePath
+      properties:
+        query:
+          type: string
+          maxLength: 500
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 100
+        filePath:
+          type: string
+          minLength: 1
+    ManualSubtitleSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - candidates
+        - errors
+        - logs
+      properties:
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubtitleCandidate"
+        errors:
+          type: array
+          items:
+            type: string
+        logs:
+          type: array
+          items:
+            type: string
+    SubtitleCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - protocol
+        - providerId
+        - providerName
+        - title
+        - languageId
+        - format
+        - match
+      properties:
+        id:
+          type: string
+        protocol:
+          type: string
+        providerId:
+          type: string
+          format: uuid
+        providerName:
+          type: string
+        title:
+          type: string
+        languageId:
+          type: string
+        format:
+          type: string
+        fileId:
+          type: integer
+          format: int64
+        sourceUrl:
+          type: string
+        sourceReference:
+          type: string
+        match:
+          $ref: "#/components/schemas/SubtitleCandidateMatch"
+    SubtitleCandidateMatch:
+      type: object
+      additionalProperties: false
+      required:
+        - severity
+        - label
+        - details
+      properties:
+        severity:
+          type: string
+          enum:
+            - success
+            - warning
+            - error
+        label:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+    GrabSubtitleRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - providerId
+        - title
+        - languageId
+        - format
+        - filePath
+      properties:
+        providerId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+        languageId:
+          type: string
+          minLength: 1
+        format:
+          type: string
+          minLength: 1
+        filePath:
+          type: string
+          minLength: 1
+        fileId:
+          type: integer
+          format: int64
+        sourceUrl:
+          type: string
+        sourceReference:
+          type: string
     SystemJobListResponse:
       type: object
       additionalProperties: false

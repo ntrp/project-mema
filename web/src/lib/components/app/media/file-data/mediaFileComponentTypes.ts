@@ -7,6 +7,7 @@ import type {
 	MediaItem,
 	MediaItemSubtitle,
 	MediaItemUpdateRequest,
+	GrabSubtitleRequest,
 	QualityProfileOption,
 	ReleaseCandidate,
 	ReleaseOverrideDetails
@@ -28,6 +29,7 @@ export interface MediaFileSummaryProps {
 	onAutoSearch: () => void;
 	onManualSearch: () => void;
 	onSearchSubtitle?: (_row: MediaFileRow, _languageId?: string) => void | Promise<void>;
+	onManualSubtitleSearch?: (_row: MediaFileRow, _languageId?: string) => void;
 	onDeleteSubtitle?: (_subtitle: MediaItemSubtitle) => void | Promise<void>;
 	onDelete: (_row: MediaFileRow) => void;
 }
@@ -44,6 +46,7 @@ export interface MediaFilesTableProps {
 	onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 	onAutoSearch: (_item: MediaItem) => void;
 	onSearchSubtitle: (_item: MediaItem, _request: SubtitleSearchRequest) => void | Promise<void>;
+	onGrabSubtitle: (_item: MediaItem, _request: GrabSubtitleRequest) => void | Promise<void>;
 	onDeleteSubtitle: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;
 	onDeleteFile: (_item: MediaItem, _path: string) => void;
 	onGrabRelease: (

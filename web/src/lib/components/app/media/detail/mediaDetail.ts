@@ -1,5 +1,6 @@
 import type {
 	DownloadActivity,
+	GrabSubtitleRequest,
 	Language,
 	LibraryFolder,
 	MediaItem,
@@ -39,6 +40,7 @@ export interface MediaDetailProps {
 		_item: MediaItem,
 		_request: { languageId?: string; filePath?: string }
 	) => void | Promise<void>;
+	onGrabMediaSubtitle?: (_item: MediaItem, _request: GrabSubtitleRequest) => void | Promise<void>;
 	onDeleteMediaSubtitle?: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;
 	onRefreshMediaMetadata: (_item: MediaItem) => void;
 	onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;

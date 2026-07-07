@@ -1450,6 +1450,27 @@ func (e SeriesType) Valid() bool {
 	}
 }
 
+// Defines values for SubtitleCandidateMatchSeverity.
+const (
+	SubtitleCandidateMatchSeverityError   SubtitleCandidateMatchSeverity = "error"
+	SubtitleCandidateMatchSeveritySuccess SubtitleCandidateMatchSeverity = "success"
+	SubtitleCandidateMatchSeverityWarning SubtitleCandidateMatchSeverity = "warning"
+)
+
+// Valid indicates whether the value is a known member of the SubtitleCandidateMatchSeverity enum.
+func (e SubtitleCandidateMatchSeverity) Valid() bool {
+	switch e {
+	case SubtitleCandidateMatchSeverityError:
+		return true
+	case SubtitleCandidateMatchSeveritySuccess:
+		return true
+	case SubtitleCandidateMatchSeverityWarning:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SubtitleProviderType.
 const (
 	Mock          SubtitleProviderType = "mock"
@@ -1491,22 +1512,22 @@ func (e SystemEventSeverity) Valid() bool {
 
 // Defines values for SystemLogLevel.
 const (
-	SystemLogLevelDebug SystemLogLevel = "debug"
-	SystemLogLevelError SystemLogLevel = "error"
-	SystemLogLevelInfo  SystemLogLevel = "info"
-	SystemLogLevelWarn  SystemLogLevel = "warn"
+	Debug SystemLogLevel = "debug"
+	Error SystemLogLevel = "error"
+	Info  SystemLogLevel = "info"
+	Warn  SystemLogLevel = "warn"
 )
 
 // Valid indicates whether the value is a known member of the SystemLogLevel enum.
 func (e SystemLogLevel) Valid() bool {
 	switch e {
-	case SystemLogLevelDebug:
+	case Debug:
 		return true
-	case SystemLogLevelError:
+	case Error:
 		return true
-	case SystemLogLevelInfo:
+	case Info:
 		return true
-	case SystemLogLevelWarn:
+	case Warn:
 		return true
 	default:
 		return false
@@ -1847,6 +1868,18 @@ type GrabReleaseResponse struct {
 	Activity DownloadActivity `json:"activity"`
 	JobId    int64            `json:"jobId"`
 	Message  string           `json:"message"`
+}
+
+// GrabSubtitleRequest defines model for GrabSubtitleRequest.
+type GrabSubtitleRequest struct {
+	FileId          *int64             `json:"fileId,omitempty"`
+	FilePath        string             `json:"filePath"`
+	Format          string             `json:"format"`
+	LanguageId      string             `json:"languageId"`
+	ProviderId      openapi_types.UUID `json:"providerId"`
+	SourceReference *string            `json:"sourceReference,omitempty"`
+	SourceUrl       *string            `json:"sourceUrl,omitempty"`
+	Title           string             `json:"title"`
 }
 
 // HealthResponse defines model for HealthResponse.
@@ -2362,6 +2395,20 @@ type ManualImportRequest struct {
 	SourcePath     string      `json:"sourcePath"`
 	TargetFileName *string     `json:"targetFileName,omitempty"`
 	Year           *int32      `json:"year,omitempty"`
+}
+
+// ManualSubtitleSearchRequest defines model for ManualSubtitleSearchRequest.
+type ManualSubtitleSearchRequest struct {
+	FilePath   string `json:"filePath"`
+	LanguageId string `json:"languageId"`
+	Query      string `json:"query"`
+}
+
+// ManualSubtitleSearchResponse defines model for ManualSubtitleSearchResponse.
+type ManualSubtitleSearchResponse struct {
+	Candidates []SubtitleCandidate `json:"candidates"`
+	Errors     []string            `json:"errors"`
+	Logs       []string            `json:"logs"`
 }
 
 // MediaAdvancedSearchRequest defines model for MediaAdvancedSearchRequest.
@@ -3631,6 +3678,31 @@ type SessionResponse struct {
 	User          *UserSummary `json:"user,omitempty"`
 }
 
+// SubtitleCandidate defines model for SubtitleCandidate.
+type SubtitleCandidate struct {
+	FileId          *int64                 `json:"fileId,omitempty"`
+	Format          string                 `json:"format"`
+	Id              string                 `json:"id"`
+	LanguageId      string                 `json:"languageId"`
+	Match           SubtitleCandidateMatch `json:"match"`
+	Protocol        string                 `json:"protocol"`
+	ProviderId      openapi_types.UUID     `json:"providerId"`
+	ProviderName    string                 `json:"providerName"`
+	SourceReference *string                `json:"sourceReference,omitempty"`
+	SourceUrl       *string                `json:"sourceUrl,omitempty"`
+	Title           string                 `json:"title"`
+}
+
+// SubtitleCandidateMatch defines model for SubtitleCandidateMatch.
+type SubtitleCandidateMatch struct {
+	Details  []string                       `json:"details"`
+	Label    string                         `json:"label"`
+	Severity SubtitleCandidateMatchSeverity `json:"severity"`
+}
+
+// SubtitleCandidateMatchSeverity defines model for SubtitleCandidateMatch.Severity.
+type SubtitleCandidateMatchSeverity string
+
 // SubtitleProvider defines model for SubtitleProvider.
 type SubtitleProvider struct {
 	ApiKey        *string                   `json:"apiKey,omitempty"`
@@ -4100,6 +4172,12 @@ type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
 // EnqueueMediaReleaseSearchJSONRequestBody defines body for EnqueueMediaReleaseSearch for application/json ContentType.
 type EnqueueMediaReleaseSearchJSONRequestBody = ReleaseSearchRequest
 
+// GrabMediaSubtitleJSONRequestBody defines body for GrabMediaSubtitle for application/json ContentType.
+type GrabMediaSubtitleJSONRequestBody = GrabSubtitleRequest
+
+// SearchMediaSubtitlesJSONRequestBody defines body for SearchMediaSubtitles for application/json ContentType.
+type SearchMediaSubtitlesJSONRequestBody = ManualSubtitleSearchRequest
+
 // EnqueueMediaSubtitleSearchJSONRequestBody defines body for EnqueueMediaSubtitleSearch for application/json ContentType.
 type EnqueueMediaSubtitleSearchJSONRequestBody = SubtitleSearchRequest
 
@@ -4393,6 +4471,12 @@ type ServerInterface interface {
 	// Preview safe rename/reorganize paths for media files
 	// (GET /media/items/{id}/rename-preview)
 	PreviewMediaRename(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Download a selected subtitle candidate
+	// (POST /media/items/{id}/subtitle-grabs)
+	GrabMediaSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Search subtitle providers for manual subtitle candidates
+	// (POST /media/items/{id}/subtitle-search-results)
+	SearchMediaSubtitles(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a subtitle search and download for a monitored item
 	// (POST /media/items/{id}/subtitle-searches)
 	EnqueueMediaSubtitleSearch(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -5047,6 +5131,18 @@ func (_ Unimplemented) ApplyMediaRename(w http.ResponseWriter, r *http.Request, 
 // Preview safe rename/reorganize paths for media files
 // (GET /media/items/{id}/rename-preview)
 func (_ Unimplemented) PreviewMediaRename(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Download a selected subtitle candidate
+// (POST /media/items/{id}/subtitle-grabs)
+func (_ Unimplemented) GrabMediaSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Search subtitle providers for manual subtitle candidates
+// (POST /media/items/{id}/subtitle-search-results)
+func (_ Unimplemented) SearchMediaSubtitles(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8084,6 +8180,70 @@ func (siw *ServerInterfaceWrapper) PreviewMediaRename(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PreviewMediaRename(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GrabMediaSubtitle operation middleware
+func (siw *ServerInterfaceWrapper) GrabMediaSubtitle(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GrabMediaSubtitle(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SearchMediaSubtitles operation middleware
+func (siw *ServerInterfaceWrapper) SearchMediaSubtitles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchMediaSubtitles(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11455,6 +11615,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/rename-preview", wrapper.PreviewMediaRename)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/subtitle-grabs", wrapper.GrabMediaSubtitle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/subtitle-search-results", wrapper.SearchMediaSubtitles)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/subtitle-searches", wrapper.EnqueueMediaSubtitleSearch)

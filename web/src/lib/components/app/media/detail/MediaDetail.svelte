@@ -45,6 +45,7 @@
 		actionLabel,
 		onAutoSearchMedia,
 		onSearchMediaSubtitle = () => {},
+		onGrabMediaSubtitle = () => {},
 		onDeleteMediaSubtitle = () => {},
 		onRefreshMediaMetadata,
 		onSaveMediaItemOptions,
@@ -127,6 +128,7 @@
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
 								onSearchSubtitle={onSearchMediaSubtitle}
+								onGrabSubtitle={onGrabMediaSubtitle}
 								onDeleteSubtitle={onDeleteMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
 								{onGrabRelease}
@@ -147,6 +149,7 @@
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
 								onSearchSubtitle={onSearchMediaSubtitle}
+								onGrabSubtitle={onGrabMediaSubtitle}
 								onDeleteSubtitle={onDeleteMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
 								{onGrabRelease}

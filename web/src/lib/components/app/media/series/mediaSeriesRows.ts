@@ -5,6 +5,7 @@ import {
 	seasonNumberFromName,
 	type MediaFileRow
 } from '$lib/components/app/media/files/mediaFiles';
+import type { ReleaseSearchContext } from '$lib/components/app/media/release-search/releaseSearchQuery';
 import type { SeasonEpisodeFile } from '$lib/components/app/media/series/mediaSeasonSummary';
 import type {
 	DownloadActivity,
@@ -22,6 +23,17 @@ export function episodeTitle(episode: MediaMetadataEpisode) {
 
 export function seasonMonitored(season: MediaMetadataSeason) {
 	return (season.episodes ?? []).some((episode) => episode.monitored) || season.monitored === true;
+}
+
+export function seasonReleaseSearchContext(
+	season: MediaMetadataSeason,
+	index: number
+): ReleaseSearchContext {
+	return { type: 'season', seasonNumber: seasonNumberFromName(season.name) ?? index + 1 };
+}
+
+export function episodeReleaseSearchContext(row: MediaFileRow): ReleaseSearchContext {
+	return { type: 'episode', seasonNumber: row.seasonNumber, episodeNumber: row.episodeNumber };
 }
 
 export function seasonEpisodeRows(

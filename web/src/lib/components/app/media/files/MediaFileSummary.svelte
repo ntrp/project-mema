@@ -7,7 +7,9 @@
 	import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
 	import MediaFileOtherFilesPanel from '$lib/components/app/media/files/other-files/MediaFileOtherFilesPanel.svelte';
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
+	import MediaFileRequirementBadge from '$lib/components/app/media/files/MediaFileRequirementBadge.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
+	import MediaSubtitlePanel from '$lib/components/app/media/subtitles/MediaSubtitlePanel.svelte';
 	import {
 		audioSatisfaction,
 		subtitleSatisfaction
@@ -26,6 +28,10 @@
 		showSearchActions = true,
 		onAutoSearch,
 		onManualSearch,
+		subtitleSearching,
+		onSearchSubtitle = async () => {},
+		onManualSubtitleSearch = () => {},
+		onDeleteSubtitle = async () => {},
 		onDelete
 	}: Props = $props();
 	let detailsOpen = $state(false);
@@ -82,25 +88,11 @@
 		</div>
 		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Audio</strong>
-			<Badge
-				variant={audioStatus.state === 'missing' ? 'destructive' : 'secondary'}
-				class="justify-self-start"
-			>
-				{audioStatus.label}
-			</Badge>
+			<MediaFileRequirementBadge status={audioStatus} />
 		</span>
 		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Subtitles</strong>
-			{#if subtitleStatus.state !== 'ignored'}
-				<Badge
-					variant={subtitleStatus.state === 'missing' ? 'destructive' : 'secondary'}
-					class="justify-self-start"
-				>
-					{subtitleStatus.label}
-				</Badge>
-			{:else}
-				<span class="text-sm">{subtitleStatus.label}</span>
-			{/if}
+			<MediaFileRequirementBadge status={subtitleStatus} />
 		</span>
 		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Size</strong>
@@ -165,6 +157,14 @@
 	{#if row.exists && detailsOpen}
 		<MediaFileDetailsAccordion {row} />
 	{/if}
+	<MediaSubtitlePanel
+		{row}
+		{canManage}
+		searching={subtitleSearching}
+		onSearch={(languageId) => onSearchSubtitle(row, languageId)}
+		onManualSearch={(languageId) => onManualSubtitleSearch(row, languageId)}
+		onDelete={onDeleteSubtitle}
+	/>
 	<MediaFileOtherFilesPanel {row} {canManage} {onDelete} />
 </div>
 

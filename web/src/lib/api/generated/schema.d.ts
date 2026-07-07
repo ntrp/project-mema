@@ -692,6 +692,44 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/subtitle-search-results': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Search subtitle providers for manual subtitle candidates */
+		post: operations['searchMediaSubtitles'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/media/items/{id}/subtitle-grabs': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Download a selected subtitle candidate */
+		post: operations['grabMediaSubtitle'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/subtitles': {
 		parameters: {
 			query?: never;
@@ -3553,6 +3591,49 @@ export interface components {
 			languageId?: string;
 			filePath?: string;
 		};
+		ManualSubtitleSearchRequest: {
+			query: string;
+			languageId: string;
+			filePath: string;
+		};
+		ManualSubtitleSearchResponse: {
+			candidates: components['schemas']['SubtitleCandidate'][];
+			errors: string[];
+			logs: string[];
+		};
+		SubtitleCandidate: {
+			id: string;
+			protocol: string;
+			/** Format: uuid */
+			providerId: string;
+			providerName: string;
+			title: string;
+			languageId: string;
+			format: string;
+			/** Format: int64 */
+			fileId?: number;
+			sourceUrl?: string;
+			sourceReference?: string;
+			match: components['schemas']['SubtitleCandidateMatch'];
+		};
+		SubtitleCandidateMatch: {
+			/** @enum {string} */
+			severity: 'success' | 'warning' | 'error';
+			label: string;
+			details: string[];
+		};
+		GrabSubtitleRequest: {
+			/** Format: uuid */
+			providerId: string;
+			title: string;
+			languageId: string;
+			format: string;
+			filePath: string;
+			/** Format: int64 */
+			fileId?: number;
+			sourceUrl?: string;
+			sourceReference?: string;
+		};
 		SystemJobListResponse: {
 			jobs: components['schemas']['SystemJob'][];
 		};
@@ -5481,6 +5562,64 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['JobEnqueueResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	searchMediaSubtitles: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['ManualSubtitleSearchRequest'];
+			};
+		};
+		responses: {
+			/** @description Manual subtitle search results */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ManualSubtitleSearchResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	grabMediaSubtitle: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['GrabSubtitleRequest'];
+			};
+		};
+		responses: {
+			/** @description Subtitle downloaded */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
 				};
 			};
 			400: components['responses']['BadRequest'];

@@ -49,6 +49,7 @@
 		onFindReleases,
 		onAutoSearchMedia,
 		onSearchMediaSubtitle = () => {},
+		onGrabMediaSubtitle = () => {},
 		onDeleteMediaSubtitle = () => {},
 		onRefreshMediaMetadata,
 		onSaveMediaItemOptions,
@@ -134,6 +135,7 @@
 				actionLabel={canManage ? 'Add' : 'Request'}
 				{onAutoSearchMedia}
 				{onSearchMediaSubtitle}
+				{onGrabMediaSubtitle}
 				{onDeleteMediaSubtitle}
 				{onRefreshMediaMetadata}
 				{onSaveMediaItemOptions}

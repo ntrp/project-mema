@@ -99,6 +99,10 @@ export type MediaItemSubtitleRetentionMode =
 	components['schemas']['MediaItemSubtitleRetentionMode'];
 export type MediaItemSubtitleSelectionRequest =
 	components['schemas']['MediaItemSubtitleSelectionRequest'];
+export type ManualSubtitleSearchRequest = components['schemas']['ManualSubtitleSearchRequest'];
+export type ManualSubtitleSearchResponse = components['schemas']['ManualSubtitleSearchResponse'];
+export type SubtitleCandidate = components['schemas']['SubtitleCandidate'];
+export type GrabSubtitleRequest = components['schemas']['GrabSubtitleRequest'];
 export type MediaComponentSource = components['schemas']['MediaComponentSource'];
 export type MediaComponentSourceListResponse =
 	components['schemas']['MediaComponentSourceListResponse'];

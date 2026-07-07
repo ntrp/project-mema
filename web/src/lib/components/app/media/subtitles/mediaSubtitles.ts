@@ -15,6 +15,7 @@ export interface SubtitleStateRow {
 
 export interface EmbeddedSubtitleRow {
 	key: string;
+	languageId: string;
 	language: string;
 	description: string;
 }
@@ -40,6 +41,7 @@ export function subtitleStateRows(row: MediaFileRow, downloading = false): Subti
 export function embeddedSubtitleRows(row: MediaFileRow): EmbeddedSubtitleRow[] {
 	return row.tracks.filter(isSubtitleTrack).map((track, index) => ({
 		key: `embedded-${track.index ?? index}`,
+		languageId: track.language ?? '',
 		language: displayLanguage(track.language),
 		description: compactParts([track.codec, track.title])
 	}));

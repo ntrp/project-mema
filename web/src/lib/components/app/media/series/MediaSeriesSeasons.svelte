@@ -2,6 +2,7 @@
 	import MediaFileSummary from '$lib/components/app/media/files/MediaFileSummary.svelte';
 	import MediaFileDeleteModal from '$lib/components/app/media/files/MediaFileDeleteModal.svelte';
 	import MediaFileSearchModal from '$lib/components/app/media/files/MediaFileSearchModal.svelte';
+	import SubtitleSearchModal from '$lib/components/app/media/subtitle-search/SubtitleSearchModal.svelte';
 	import MediaEpisodeRow from '$lib/components/app/media/series/MediaEpisodeRow.svelte';
 	import MediaRootPanel from '$lib/components/app/media/collection/MediaRootPanel.svelte';
 	import MediaSeasonActions from '$lib/components/app/media/series/MediaSeasonActions.svelte';
@@ -12,14 +13,12 @@
 		toggledEpisodeMonitor,
 		toggledSeasonMonitor
 	} from '$lib/components/app/media/series/mediaMonitoring';
-	import {
-		fileRow,
-		seasonNumberFromName,
-		type MediaFileRow
-	} from '$lib/components/app/media/files/mediaFiles';
+	import { fileRow, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import { seasonFileSummary } from '$lib/components/app/media/series/mediaSeasonSummary';
 	import {
+		episodeReleaseSearchContext,
 		episodeTitle,
+		seasonReleaseSearchContext,
 		seasonEpisodeRows,
 		seasonMonitored
 	} from '$lib/components/app/media/series/mediaSeriesRows';
@@ -39,6 +38,7 @@
 		onSaveOptions,
 		onAutoSearch,
 		onSearchSubtitle,
+		onGrabSubtitle,
 		onDeleteSubtitle,
 		onDeleteFile,
 		onGrabRelease
@@ -46,6 +46,7 @@
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchContext = $state<ReleaseSearchContext | undefined>();
+	let subtitleSearch = $state<{ row: MediaFileRow; languageId: string } | undefined>();
 	let subtitleSearchKey = $state<string | undefined>();
 	const seasons = $derived(item.seasons ?? []);
 	const mediaRows = $derived(item.filePaths.map((path) => fileRow(item, path, qualityProfiles)));
@@ -69,14 +70,6 @@
 		deleteRow = undefined;
 	}
 
-	function seasonSearchContext(season: MediaMetadataSeason, index: number): ReleaseSearchContext {
-		return { type: 'season', seasonNumber: seasonNumberFromName(season.name) ?? index + 1 };
-	}
-
-	function episodeSearchContext(row: MediaFileRow): ReleaseSearchContext {
-		return { type: 'episode', seasonNumber: row.seasonNumber, episodeNumber: row.episodeNumber };
-	}
-
 	async function searchSubtitle(row: MediaFileRow, languageId?: string) {
 		if (!row.path) return;
 		subtitleSearchKey = `${row.key}:${languageId ?? 'all'}`;
@@ -89,6 +82,13 @@
 
 	function deleteSubtitle(subtitleId: string) {
 		return onDeleteSubtitle(item, subtitleId);
+	}
+
+	function openSubtitleSearch(row: MediaFileRow, languageId?: string) {
+		subtitleSearch = {
+			row,
+			languageId: languageId ?? row.expectedSubtitleLanguages[0] ?? 'english'
+		};
 	}
 </script>
 
@@ -119,7 +119,7 @@
 							{canManage}
 							busy={searchingItemId === item.id || summary.hasActive}
 							onAutoSearch={() => onAutoSearch(item)}
-							onManualSearch={() => (searchContext = seasonSearchContext(season, index))}
+							onManualSearch={() => (searchContext = seasonReleaseSearchContext(season, index))}
 						/>
 					{/snippet}
 					{#if seasonRows.length > 0}
@@ -143,9 +143,10 @@
 										{canManage}
 										searching={searchingItemId === item.id}
 										onAutoSearch={() => onAutoSearch(item)}
-										onManualSearch={() => (searchContext = episodeSearchContext(file.row))}
+										onManualSearch={() => (searchContext = episodeReleaseSearchContext(file.row))}
 										subtitleSearching={subtitleSearchKey?.startsWith(`${file.row.key}:`) === true}
 										onSearchSubtitle={searchSubtitle}
+										onManualSubtitleSearch={openSubtitleSearch}
 										onDeleteSubtitle={(subtitle) => deleteSubtitle(subtitle.id)}
 										onDelete={requestDelete}
 									/>
@@ -159,6 +160,17 @@
 			{/each}
 		</div>
 	</section>
+{/if}
+
+{#if subtitleSearch}
+	<SubtitleSearchModal
+		{item}
+		row={subtitleSearch.row}
+		languageId={subtitleSearch.languageId}
+		{canManage}
+		onGrab={onGrabSubtitle}
+		onClose={() => (subtitleSearch = undefined)}
+	/>
 {/if}
 
 {#if deleteRow}
