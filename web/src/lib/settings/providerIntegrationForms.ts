@@ -20,16 +20,20 @@ export function emptyMetadataProviderForm(): MetadataProviderForm {
 	};
 }
 
-export function emptySubtitleProviderForm(): SubtitleProviderForm {
+export function emptySubtitleProviderForm(
+	type: SubtitleProviderRequest['type'] = 'opensubtitles'
+): SubtitleProviderForm {
+	const mock = type === 'mock';
 	return {
-		name: 'OpenSubtitles',
-		type: 'opensubtitles',
-		baseUrl: 'https://api.opensubtitles.com',
+		name: mock ? 'Mock Subtitles' : 'OpenSubtitles',
+		type,
+		baseUrl: mock ? 'mock://subtitles' : 'https://api.opensubtitles.com',
 		username: '',
 		password: '',
 		apiKey: '',
 		enabled: true,
-		priority: 100
+		priority: mock ? 900 : 100,
+		mockSubtitles: []
 	};
 }
 
@@ -60,7 +64,12 @@ export function subtitleProviderFormFromProvider(provider: SubtitleProvider): Su
 		password: provider.password ?? '',
 		apiKey: provider.apiKey ?? '',
 		enabled: provider.enabled,
-		priority: provider.priority
+		priority: provider.priority,
+		mockSubtitles: provider.mockSubtitles.map(({ title, languageId, format }) => ({
+			title,
+			languageId,
+			format
+		}))
 	};
 }
 
@@ -86,8 +95,21 @@ export function normalizeSubtitleProviderForm(form: SubtitleProviderForm): Subti
 		password: optionalString(form.password),
 		apiKey: optionalString(form.apiKey),
 		enabled: form.enabled,
-		priority: form.priority
+		priority: form.priority,
+		mockSubtitles: form.type === 'mock' ? normalizedMockSubtitles(form) : undefined
 	};
+}
+
+function normalizedMockSubtitles(
+	form: SubtitleProviderForm
+): SubtitleProviderRequest['mockSubtitles'] {
+	return (form.mockSubtitles ?? [])
+		.map((row) => ({
+			title: row.title.trim(),
+			languageId: row.languageId.trim(),
+			format: row.format.trim()
+		}))
+		.filter((row) => row.title !== '' && row.languageId !== '' && row.format !== '');
 }
 
 function optionalString(value: string | undefined) {

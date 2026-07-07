@@ -140,15 +140,20 @@ func subtitleProviderInput(w http.ResponseWriter, request SubtitleProviderReques
 		writeError(w, http.StatusBadRequest, "invalid_priority", "Priority must be between 0 and 1000")
 		return storage.SubtitleProviderInput{}, false
 	}
+	mockRows, ok := subtitleProviderMockRowsInput(w, request)
+	if !ok {
+		return storage.SubtitleProviderInput{}, false
+	}
 	return storage.SubtitleProviderInput{
-		Name:     name,
-		Type:     string(request.Type),
-		BaseURL:  baseURL,
-		Username: optionalTrimmedString(request.Username),
-		Password: optionalTrimmedString(request.Password),
-		APIKey:   optionalTrimmedString(request.ApiKey),
-		Enabled:  request.Enabled,
-		Priority: request.Priority,
+		Name:          name,
+		Type:          string(request.Type),
+		BaseURL:       baseURL,
+		Username:      optionalTrimmedString(request.Username),
+		Password:      optionalTrimmedString(request.Password),
+		APIKey:        optionalTrimmedString(request.ApiKey),
+		Enabled:       request.Enabled,
+		Priority:      request.Priority,
+		MockSubtitles: mockRows,
 	}, true
 }
 
@@ -165,18 +170,93 @@ func subtitleProviderResponse(provider storage.SubtitleProvider) SubtitleProvide
 		Priority:    provider.Priority,
 		ApiKeySet:   provider.APIKey != nil,
 		PasswordSet: provider.Password != nil,
-		CreatedAt:   provider.CreatedAt,
-		UpdatedAt:   provider.UpdatedAt,
+		MockSubtitles: subtitleProviderMockRowsResponse(
+			provider.MockSubtitles,
+		),
+		CreatedAt: provider.CreatedAt,
+		UpdatedAt: provider.UpdatedAt,
 	}
 }
 
 func subtitleProviderConfig(provider storage.SubtitleProvider) subtitles.Config {
 	return subtitles.Config{
-		Name:     provider.Name,
-		Type:     provider.Type,
-		BaseURL:  provider.BaseURL,
-		Username: provider.Username,
-		Password: provider.Password,
-		APIKey:   provider.APIKey,
+		Name:          provider.Name,
+		Type:          provider.Type,
+		BaseURL:       provider.BaseURL,
+		Username:      provider.Username,
+		Password:      provider.Password,
+		APIKey:        provider.APIKey,
+		MockSubtitles: subtitleProviderMockConfig(provider.MockSubtitles),
+	}
+}
+
+func subtitleProviderMockConfig(rows []storage.MockSubtitleProviderRow) []subtitles.MockSubtitle {
+	items := make([]subtitles.MockSubtitle, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, subtitles.MockSubtitle{
+			Title:      row.Title,
+			LanguageID: row.LanguageID,
+			Format:     row.Format,
+		})
+	}
+	return items
+}
+
+func subtitleProviderMockRowsInput(
+	w http.ResponseWriter,
+	request SubtitleProviderRequest,
+) ([]storage.MockSubtitleProviderRowInput, bool) {
+	if request.MockSubtitles == nil {
+		return nil, true
+	}
+	if request.Type != Mock {
+		writeError(w, http.StatusBadRequest, "invalid_mock_subtitles", "Mock subtitles are only supported by mock providers")
+		return nil, false
+	}
+	rows := make([]storage.MockSubtitleProviderRowInput, 0, len(*request.MockSubtitles))
+	for _, row := range *request.MockSubtitles {
+		title := strings.TrimSpace(row.Title)
+		languageID := strings.TrimSpace(row.LanguageId)
+		format := subtitleProviderMockFormat(row.Format)
+		if title == "" || languageID == "" {
+			writeError(w, http.StatusBadRequest, "invalid_mock_subtitle", "Mock subtitle title and language are required")
+			return nil, false
+		}
+		if format == "" {
+			writeError(w, http.StatusBadRequest, "invalid_mock_subtitle_format", "Mock subtitle format is not supported")
+			return nil, false
+		}
+		rows = append(rows, storage.MockSubtitleProviderRowInput{
+			Title:      title,
+			LanguageID: languageID,
+			Format:     format,
+		})
+	}
+	return rows, true
+}
+
+func subtitleProviderMockRowsResponse(rows []storage.MockSubtitleProviderRow) []MockSubtitleProviderRow {
+	response := make([]MockSubtitleProviderRow, 0, len(rows))
+	for _, row := range rows {
+		response = append(response, MockSubtitleProviderRow{
+			Id:         openapi_types.UUID(row.ID),
+			Title:      row.Title,
+			LanguageId: row.LanguageID,
+			Format:     row.Format,
+		})
+	}
+	return response
+}
+
+func subtitleProviderMockFormat(value string) string {
+	switch strings.TrimPrefix(strings.ToLower(strings.TrimSpace(value)), ".") {
+	case "", "srt", "subrip":
+		return "srt"
+	case "vtt", "webvtt":
+		return "vtt"
+	case "ass", "ssa":
+		return strings.TrimPrefix(strings.ToLower(strings.TrimSpace(value)), ".")
+	default:
+		return ""
 	}
 }

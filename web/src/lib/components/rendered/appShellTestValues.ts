@@ -123,6 +123,7 @@ export function subtitleProvider(overrides: Partial<SubtitleProvider> = {}): Sub
 		apiKeySet: true,
 		passwordSet: true,
 		priority: 100,
+		mockSubtitles: [],
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:00:00Z',
 		...overrides

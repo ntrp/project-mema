@@ -18,7 +18,7 @@ func subtitleTargetFormat(item storage.MediaItem, languageID string) string {
 			}
 		}
 	}
-	return "srt"
+	return ""
 }
 
 func convertSubtitleContent(content []byte, targetFormat string) ([]byte, string, error) {
@@ -29,12 +29,20 @@ func convertSubtitleContent(content []byte, targetFormat string) ([]byte, string
 	case "vtt":
 		return srtToVTT(content), format, nil
 	case "ass", "ssa":
+		if assSubtitleContent(content) {
+			return content, format, nil
+		}
 		return srtToASS(content, format), format, nil
 	case "pgs":
 		return nil, "", fmt.Errorf("subtitle format pgs requires bitmap subtitle extraction and cannot be converted from provider text")
 	default:
 		return nil, "", fmt.Errorf("subtitle format %q is unsupported", targetFormat)
 	}
+}
+
+func assSubtitleContent(content []byte) bool {
+	body := strings.TrimSpace(string(content))
+	return strings.HasPrefix(body, "[Script Info]") && strings.Contains(body, "[Events]")
 }
 
 func normalizeSubtitleFormat(value string) string {

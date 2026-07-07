@@ -12,6 +12,57 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createMockSubtitleProviderRow = `-- name: CreateMockSubtitleProviderRow :one
+insert into app.mock_subtitle_provider_rows (
+    id,
+    provider_id,
+    title,
+    language_id,
+    format,
+    sort_order
+) values (
+    $1,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6
+)
+returning id, provider_id, title, language_id, format, sort_order, created_at, updated_at
+`
+
+type CreateMockSubtitleProviderRowParams struct {
+	ID         uuid.UUID
+	ProviderID uuid.UUID
+	Title      string
+	LanguageID string
+	Format     string
+	SortOrder  int32
+}
+
+func (q *Queries) CreateMockSubtitleProviderRow(ctx context.Context, arg CreateMockSubtitleProviderRowParams) (AppMockSubtitleProviderRow, error) {
+	row := q.db.QueryRow(ctx, createMockSubtitleProviderRow,
+		arg.ID,
+		arg.ProviderID,
+		arg.Title,
+		arg.LanguageID,
+		arg.Format,
+		arg.SortOrder,
+	)
+	var i AppMockSubtitleProviderRow
+	err := row.Scan(
+		&i.ID,
+		&i.ProviderID,
+		&i.Title,
+		&i.LanguageID,
+		&i.Format,
+		&i.SortOrder,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const createSubtitleProvider = `-- name: CreateSubtitleProvider :one
 insert into app.subtitle_providers (
     id,
@@ -78,6 +129,16 @@ func (q *Queries) CreateSubtitleProvider(ctx context.Context, arg CreateSubtitle
 	return i, err
 }
 
+const deleteMockSubtitleProviderRows = `-- name: DeleteMockSubtitleProviderRows :exec
+delete from app.mock_subtitle_provider_rows
+where provider_id = $1
+`
+
+func (q *Queries) DeleteMockSubtitleProviderRows(ctx context.Context, providerID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteMockSubtitleProviderRows, providerID)
+	return err
+}
+
 const deleteSubtitleProvider = `-- name: DeleteSubtitleProvider :execrows
 delete from app.subtitle_providers
 where id = $1
@@ -114,6 +175,42 @@ func (q *Queries) GetSubtitleProvider(ctx context.Context, id uuid.UUID) (AppSub
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listMockSubtitleProviderRows = `-- name: ListMockSubtitleProviderRows :many
+select id, provider_id, title, language_id, format, sort_order, created_at, updated_at
+from app.mock_subtitle_provider_rows
+where provider_id = $1
+order by sort_order asc, lower(title) asc, language_id asc, format asc
+`
+
+func (q *Queries) ListMockSubtitleProviderRows(ctx context.Context, providerID uuid.UUID) ([]AppMockSubtitleProviderRow, error) {
+	rows, err := q.db.Query(ctx, listMockSubtitleProviderRows, providerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AppMockSubtitleProviderRow
+	for rows.Next() {
+		var i AppMockSubtitleProviderRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProviderID,
+			&i.Title,
+			&i.LanguageID,
+			&i.Format,
+			&i.SortOrder,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listSubtitleProviders = `-- name: ListSubtitleProviders :many

@@ -7,12 +7,19 @@ import (
 )
 
 type Config struct {
-	Name     string
-	Type     string
-	BaseURL  string
-	Username *string
-	Password *string
-	APIKey   *string
+	Name          string
+	Type          string
+	BaseURL       string
+	Username      *string
+	Password      *string
+	APIKey        *string
+	MockSubtitles []MockSubtitle
+}
+
+type MockSubtitle struct {
+	Title      string
+	LanguageID string
+	Format     string
 }
 
 type TestResult struct {
@@ -61,7 +68,7 @@ func NewService(client *http.Client) *Service {
 
 func (s *Service) Test(ctx context.Context, config Config) TestResult {
 	start := time.Now()
-	err := s.testOpenSubtitles(ctx, config)
+	err := s.testProvider(ctx, config)
 	latency := time.Since(start)
 	if err != nil {
 		return TestResult{
@@ -84,9 +91,34 @@ func (s *Service) Search(
 	config Config,
 	request SearchRequest,
 ) ([]Candidate, error) {
-	return s.searchOpenSubtitles(ctx, config, request)
+	switch config.Type {
+	case "opensubtitles":
+		return s.searchOpenSubtitles(ctx, config, request)
+	case "mock":
+		return s.searchMock(config, request), nil
+	default:
+		return nil, ErrUnsupportedProvider
+	}
 }
 
 func (s *Service) Download(ctx context.Context, config Config, candidate Candidate) (Download, error) {
-	return s.downloadOpenSubtitles(ctx, config, candidate)
+	switch config.Type {
+	case "opensubtitles":
+		return s.downloadOpenSubtitles(ctx, config, candidate)
+	case "mock":
+		return s.downloadMock(candidate), nil
+	default:
+		return Download{}, ErrUnsupportedProvider
+	}
+}
+
+func (s *Service) testProvider(ctx context.Context, config Config) error {
+	switch config.Type {
+	case "opensubtitles":
+		return s.testOpenSubtitles(ctx, config)
+	case "mock":
+		return nil
+	default:
+		return ErrUnsupportedProvider
+	}
 }

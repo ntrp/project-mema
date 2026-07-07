@@ -175,6 +175,51 @@ func TestSubtitleSearchConvertsDownloadedSubtitleToTargetFormat(t *testing.T) {
 	}
 }
 
+func TestSubtitleSearchDownloadsMockProviderSubtitle(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	tmp := t.TempDir()
+	mediaPath := filepath.Join(tmp, "Scenario.Movie.2026.mkv")
+	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
+		Name:    "Mock Subtitles",
+		Type:    "mock",
+		BaseURL: "mock://subtitles",
+		Enabled: true,
+		MockSubtitles: []storage.MockSubtitleProviderRowInput{{
+			Title:      "Scenario Movie",
+			LanguageID: "english",
+			Format:     "vtt",
+		}},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
+		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	item.FilePaths = []string{mediaPath}
+	item.SubtitlePreferredMode = "mixed"
+	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{{LanguageID: "english"}}
+
+	err = subtitleSearchDownload(ctx, store, subtitles.NewService(nil), nil, item, SubtitleSearchArgs{LanguageID: "english"})
+
+	if err != nil {
+		t.Fatalf("subtitleSearchDownload returned error: %v", err)
+	}
+	subtitlePath := filepath.Join(tmp, "Scenario.Movie.2026.english.vtt")
+	content, err := os.ReadFile(subtitlePath)
+	if err != nil {
+		t.Fatalf("read subtitle: %v", err)
+	}
+	if !strings.Contains(string(content), "00:00:03.000 --> 00:00:04.000\nmock") {
+		t.Fatalf("subtitle content = %q", content)
+	}
+}
+
 func TestSubtitleSearchRejectsUnsupportedBitmapTargetFormat(t *testing.T) {
 	ctx, store := jobsTestStore(t)
 	tmp := t.TempDir()

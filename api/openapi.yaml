@@ -8615,6 +8615,7 @@ components:
         - priority
         - apiKeySet
         - passwordSet
+        - mockSubtitles
         - createdAt
         - updatedAt
       properties:
@@ -8642,6 +8643,10 @@ components:
           type: boolean
         passwordSet:
           type: boolean
+        mockSubtitles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MockSubtitleProviderRow"
         createdAt:
           type: string
           format: date-time
@@ -8684,10 +8689,53 @@ components:
           format: int32
           minimum: 0
           maximum: 1000
+        mockSubtitles:
+          type: array
+          items:
+            $ref: "#/components/schemas/MockSubtitleProviderRowRequest"
     SubtitleProviderType:
       type: string
       enum:
         - opensubtitles
+        - mock
+    MockSubtitleProviderRow:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - languageId
+        - format
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        languageId:
+          type: string
+        format:
+          type: string
+    MockSubtitleProviderRowRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - languageId
+        - format
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 100
+        format:
+          type: string
+          minLength: 1
+          maxLength: 20
     MetadataCacheResponse:
       type: object
       additionalProperties: false

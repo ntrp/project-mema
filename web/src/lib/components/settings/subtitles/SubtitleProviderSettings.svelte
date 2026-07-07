@@ -17,19 +17,33 @@
 	}
 
 	let { providers, onSave, onDelete, onTest, testingId, savingId, testResults }: Props = $props();
-	const provider = $derived(providers.find((item) => item.type === 'opensubtitles'));
+	const openSubtitlesProvider = $derived(providers.find((item) => item.type === 'opensubtitles'));
+	const mockProvider = $derived(providers.find((item) => item.type === 'mock'));
 </script>
 
 <div class="grid items-start gap-[18px] md:grid-cols-2">
-	{#key provider?.id ?? 'opensubtitles'}
+	{#key openSubtitlesProvider?.id ?? 'opensubtitles'}
 		<SubtitleProviderCard
-			{provider}
+			provider={openSubtitlesProvider}
+			providerType="opensubtitles"
 			{onSave}
 			{onDelete}
 			{onTest}
 			{testingId}
 			{savingId}
-			testResult={provider ? testResults[provider.id] : undefined}
+			testResult={openSubtitlesProvider ? testResults[openSubtitlesProvider.id] : undefined}
+		/>
+	{/key}
+	{#key mockProvider?.id ?? 'mock'}
+		<SubtitleProviderCard
+			provider={mockProvider}
+			providerType="mock"
+			{onSave}
+			{onDelete}
+			{onTest}
+			{testingId}
+			{savingId}
+			testResult={mockProvider ? testResults[mockProvider.id] : undefined}
 		/>
 	{/key}
 </div>

@@ -123,7 +123,7 @@ func subtitleSearchDownload(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventError, "subtitles", "Subtitle download failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "languageId": request.LanguageID, "error": err.Error()})
 		return err
 	}
-	targetFormat := subtitleTargetFormat(item, request.LanguageID)
+	targetFormat := firstNonEmpty(subtitleTargetFormat(item, request.LanguageID), candidate.Format, "srt")
 	artifact, err := writeSubtitleFile(request, download.Content, targetFormat)
 	if err != nil {
 		return err

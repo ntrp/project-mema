@@ -49,3 +49,31 @@ returning *;
 -- name: DeleteSubtitleProvider :execrows
 delete from app.subtitle_providers
 where id = $1;
+
+-- name: ListMockSubtitleProviderRows :many
+select *
+from app.mock_subtitle_provider_rows
+where provider_id = $1
+order by sort_order asc, lower(title) asc, language_id asc, format asc;
+
+-- name: CreateMockSubtitleProviderRow :one
+insert into app.mock_subtitle_provider_rows (
+    id,
+    provider_id,
+    title,
+    language_id,
+    format,
+    sort_order
+) values (
+    sqlc.arg(id),
+    sqlc.arg(provider_id),
+    sqlc.arg(title),
+    sqlc.arg(language_id),
+    sqlc.arg(format),
+    sqlc.arg(sort_order)
+)
+returning *;
+
+-- name: DeleteMockSubtitleProviderRows :exec
+delete from app.mock_subtitle_provider_rows
+where provider_id = $1;

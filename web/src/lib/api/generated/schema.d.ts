@@ -3947,6 +3947,7 @@ export interface components {
 			priority: number;
 			apiKeySet: boolean;
 			passwordSet: boolean;
+			mockSubtitles: components['schemas']['MockSubtitleProviderRow'][];
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
@@ -3962,9 +3963,22 @@ export interface components {
 			enabled: boolean;
 			/** Format: int32 */
 			priority: number;
+			mockSubtitles?: components['schemas']['MockSubtitleProviderRowRequest'][];
 		};
 		/** @enum {string} */
-		SubtitleProviderType: 'opensubtitles';
+		SubtitleProviderType: 'opensubtitles' | 'mock';
+		MockSubtitleProviderRow: {
+			/** Format: uuid */
+			id: string;
+			title: string;
+			languageId: string;
+			format: string;
+		};
+		MockSubtitleProviderRowRequest: {
+			title: string;
+			languageId: string;
+			format: string;
+		};
 		MetadataCacheResponse: {
 			stats: components['schemas']['MetadataCacheStats'];
 			entries: components['schemas']['MetadataCacheEntry'][];

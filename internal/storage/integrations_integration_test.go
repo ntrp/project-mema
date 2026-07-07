@@ -214,3 +214,49 @@ func TestSubtitleProviderLifecycle(t *testing.T) {
 		t.Fatalf("expected deleted provider to be missing, got %v", err)
 	}
 }
+
+func TestMockSubtitleProviderRowsLifecycle(t *testing.T) {
+	ctx, store := testDBStore(t)
+	suffix := uuid.NewString()
+	provider, err := store.CreateSubtitleProvider(ctx, SubtitleProviderInput{
+		Name:    "Mock Subtitles " + suffix,
+		Type:    "mock",
+		BaseURL: "mock://subtitles",
+		Enabled: true,
+		MockSubtitles: []MockSubtitleProviderRowInput{{
+			Title:      "Scenario Movie",
+			LanguageID: "english",
+			Format:     "vtt",
+		}},
+	})
+	if err != nil {
+		t.Fatalf("create subtitle provider: %v", err)
+	}
+	if len(provider.MockSubtitles) != 1 || provider.MockSubtitles[0].Format != "vtt" {
+		t.Fatalf("created provider = %#v", provider)
+	}
+	found, err := store.GetSubtitleProvider(ctx, provider.ID)
+	if err != nil {
+		t.Fatalf("get subtitle provider: %v", err)
+	}
+	if len(found.MockSubtitles) != 1 || found.MockSubtitles[0].Title != "Scenario Movie" {
+		t.Fatalf("found provider = %#v", found)
+	}
+	updated, err := store.UpdateSubtitleProvider(ctx, provider.ID, SubtitleProviderInput{
+		Name:    "Mock Subtitles " + suffix,
+		Type:    "mock",
+		BaseURL: "mock://subtitles",
+		Enabled: true,
+		MockSubtitles: []MockSubtitleProviderRowInput{{
+			Title:      "Scenario Movie",
+			LanguageID: "german",
+			Format:     "srt",
+		}},
+	})
+	if err != nil {
+		t.Fatalf("update subtitle provider: %v", err)
+	}
+	if len(updated.MockSubtitles) != 1 || updated.MockSubtitles[0].LanguageID != "german" {
+		t.Fatalf("updated provider = %#v", updated)
+	}
+}

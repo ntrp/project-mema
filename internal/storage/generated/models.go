@@ -714,6 +714,17 @@ type AppMetadataSearchHistory struct {
 	CreatedAt    time.Time
 }
 
+type AppMockSubtitleProviderRow struct {
+	ID         uuid.UUID
+	ProviderID uuid.UUID
+	Title      string
+	LanguageID string
+	Format     string
+	SortOrder  int32
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
 type AppPathMapping struct {
 	ID         uuid.UUID
 	ClientPath string

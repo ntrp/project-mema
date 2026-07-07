@@ -672,7 +672,7 @@ create index if not exists idx_metadata_search_history_created_at
 create table if not exists app.subtitle_providers (
     id uuid primary key,
     name text not null,
-    type text not null check (type in ('opensubtitles')),
+    type text not null check (type in ('opensubtitles', 'mock')),
     base_url text not null,
     username text,
     password text,
@@ -685,6 +685,20 @@ create table if not exists app.subtitle_providers (
 
 create unique index if not exists idx_subtitle_providers_type_name_lower
     on app.subtitle_providers (type, lower(name));
+
+create table if not exists app.mock_subtitle_provider_rows (
+    id uuid primary key,
+    provider_id uuid not null references app.subtitle_providers(id) on delete cascade,
+    title text not null,
+    language_id text not null,
+    format text not null default 'srt',
+    sort_order integer not null default 0,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_mock_subtitle_provider_rows_provider
+    on app.mock_subtitle_provider_rows (provider_id, sort_order, lower(title), language_id);
 
 create table if not exists app.library_folders (
     id uuid primary key,

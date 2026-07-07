@@ -1452,12 +1452,15 @@ func (e SeriesType) Valid() bool {
 
 // Defines values for SubtitleProviderType.
 const (
+	Mock          SubtitleProviderType = "mock"
 	Opensubtitles SubtitleProviderType = "opensubtitles"
 )
 
 // Valid indicates whether the value is a known member of the SubtitleProviderType enum.
 func (e SubtitleProviderType) Valid() bool {
 	switch e {
+	case Mock:
+		return true
 	case Opensubtitles:
 		return true
 	default:
@@ -3361,6 +3364,21 @@ type MetadataSearchHistoryEntryCacheKind string
 // MinimumAvailability defines model for MinimumAvailability.
 type MinimumAvailability string
 
+// MockSubtitleProviderRow defines model for MockSubtitleProviderRow.
+type MockSubtitleProviderRow struct {
+	Format     string             `json:"format"`
+	Id         openapi_types.UUID `json:"id"`
+	LanguageId string             `json:"languageId"`
+	Title      string             `json:"title"`
+}
+
+// MockSubtitleProviderRowRequest defines model for MockSubtitleProviderRowRequest.
+type MockSubtitleProviderRowRequest struct {
+	Format     string `json:"format"`
+	LanguageId string `json:"languageId"`
+	Title      string `json:"title"`
+}
+
 // ParsedQualityInfo defines model for ParsedQualityInfo.
 type ParsedQualityInfo struct {
 	AudioChannels string `json:"audioChannels"`
@@ -3615,19 +3633,20 @@ type SessionResponse struct {
 
 // SubtitleProvider defines model for SubtitleProvider.
 type SubtitleProvider struct {
-	ApiKey      *string              `json:"apiKey,omitempty"`
-	ApiKeySet   bool                 `json:"apiKeySet"`
-	BaseUrl     string               `json:"baseUrl"`
-	CreatedAt   time.Time            `json:"createdAt"`
-	Enabled     bool                 `json:"enabled"`
-	Id          openapi_types.UUID   `json:"id"`
-	Name        string               `json:"name"`
-	Password    *string              `json:"password,omitempty"`
-	PasswordSet bool                 `json:"passwordSet"`
-	Priority    int32                `json:"priority"`
-	Type        SubtitleProviderType `json:"type"`
-	UpdatedAt   time.Time            `json:"updatedAt"`
-	Username    *string              `json:"username,omitempty"`
+	ApiKey        *string                   `json:"apiKey,omitempty"`
+	ApiKeySet     bool                      `json:"apiKeySet"`
+	BaseUrl       string                    `json:"baseUrl"`
+	CreatedAt     time.Time                 `json:"createdAt"`
+	Enabled       bool                      `json:"enabled"`
+	Id            openapi_types.UUID        `json:"id"`
+	MockSubtitles []MockSubtitleProviderRow `json:"mockSubtitles"`
+	Name          string                    `json:"name"`
+	Password      *string                   `json:"password,omitempty"`
+	PasswordSet   bool                      `json:"passwordSet"`
+	Priority      int32                     `json:"priority"`
+	Type          SubtitleProviderType      `json:"type"`
+	UpdatedAt     time.Time                 `json:"updatedAt"`
+	Username      *string                   `json:"username,omitempty"`
 }
 
 // SubtitleProviderListResponse defines model for SubtitleProviderListResponse.
@@ -3637,14 +3656,15 @@ type SubtitleProviderListResponse struct {
 
 // SubtitleProviderRequest defines model for SubtitleProviderRequest.
 type SubtitleProviderRequest struct {
-	ApiKey   *string              `json:"apiKey,omitempty"`
-	BaseUrl  string               `json:"baseUrl"`
-	Enabled  bool                 `json:"enabled"`
-	Name     string               `json:"name"`
-	Password *string              `json:"password,omitempty"`
-	Priority int32                `json:"priority"`
-	Type     SubtitleProviderType `json:"type"`
-	Username *string              `json:"username,omitempty"`
+	ApiKey        *string                           `json:"apiKey,omitempty"`
+	BaseUrl       string                            `json:"baseUrl"`
+	Enabled       bool                              `json:"enabled"`
+	MockSubtitles *[]MockSubtitleProviderRowRequest `json:"mockSubtitles,omitempty"`
+	Name          string                            `json:"name"`
+	Password      *string                           `json:"password,omitempty"`
+	Priority      int32                             `json:"priority"`
+	Type          SubtitleProviderType              `json:"type"`
+	Username      *string                           `json:"username,omitempty"`
 }
 
 // SubtitleProviderType defines model for SubtitleProviderType.
