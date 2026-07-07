@@ -23,6 +23,7 @@ func (m *Manager) Handler() http.Handler {
 		mux.HandleFunc(prefix+"/resource/", m.resource)
 		mux.HandleFunc(prefix+"/artwork/", m.artwork)
 		mux.HandleFunc(prefix+"/subtitle/", m.subtitle)
+		mux.HandleFunc(prefix+"/events/content-directory", m.events.Handle)
 	}
 	return mux
 }

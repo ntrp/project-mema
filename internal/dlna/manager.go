@@ -25,6 +25,7 @@ type Manager struct {
 	baseURL   string
 	httpPort  string
 	thumbDir  string
+	events    *EventManager
 	startSSDP func(context.Context, ssdp.Config) (ssdpRuntime, error)
 	ssdp      ssdpRuntime
 	mu        sync.Mutex
@@ -37,6 +38,7 @@ func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
 		baseURL:   strings.TrimRight(baseURL, "/"),
 		httpPort:  portFromBaseURL(baseURL),
 		thumbDir:  ".data/dlna-thumbnails",
+		events:    NewEventManager(),
 		startSSDP: startSSDPRuntime,
 	}
 }

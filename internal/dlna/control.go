@@ -15,14 +15,14 @@ func (m *Manager) SOAPDispatcher() *soap.Dispatcher {
 	dispatcher := soap.NewDispatcher()
 	tree := m.contentTree()
 	for _, prefix := range []string{"", "/dlna"} {
-		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree, m.baseURL))
+		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree, m.baseURL, m.events.UpdateID))
 		dispatcher.Register(prefix+"/control/connection-manager", ssdp.Connection, connectionManagerActions())
 		dispatcher.Register(prefix+"/control/media-receiver-registrar", "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", registrarActions())
 	}
 	return dispatcher
 }
 
-func contentDirectoryActions(tree *content.Tree, baseURL string) map[string]soap.HandlerFunc {
+func contentDirectoryActions(tree *content.Tree, baseURL string, updateID func() int) map[string]soap.HandlerFunc {
 	return map[string]soap.HandlerFunc{
 		"GetSearchCapabilities": func(ctx context.Context, args map[string]string) (map[string]string, error) {
 			return map[string]string{"SearchCaps": "dc:title,upnp:class,upnp:genre,dc:creator,dc:date"}, nil
@@ -31,7 +31,7 @@ func contentDirectoryActions(tree *content.Tree, baseURL string) map[string]soap
 			return map[string]string{"SortCaps": "dc:title,dc:date"}, nil
 		},
 		"GetSystemUpdateID": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			return map[string]string{"Id": "0"}, nil
+			return map[string]string{"Id": strconv.Itoa(updateID())}, nil
 		},
 		"Browse": func(ctx context.Context, args map[string]string) (map[string]string, error) {
 			request, err := content.ParseBrowseRequest(args)
@@ -46,6 +46,7 @@ func contentDirectoryActions(tree *content.Tree, baseURL string) map[string]soap
 				return nil, soap.InvalidArgs(err.Error())
 			}
 			objects := content.ApplySubtitleURLs(baseURL, content.ApplyArtworkURLs(baseURL, response.Objects))
+			response.UpdateID = updateID()
 			payload, err := content.RenderDIDL(objects, nil)
 			if err != nil {
 				return nil, err
@@ -70,6 +71,7 @@ func contentDirectoryActions(tree *content.Tree, baseURL string) map[string]soap
 				return nil, soap.InvalidArgs(err.Error())
 			}
 			objects := content.ApplySubtitleURLs(baseURL, content.ApplyArtworkURLs(baseURL, response.Objects))
+			response.UpdateID = updateID()
 			payload, err := content.RenderDIDL(objects, nil)
 			if err != nil {
 				return nil, err

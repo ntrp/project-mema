@@ -35,7 +35,7 @@ func TestContentDirectoryBrowseSOAPReturnsDIDLAndCounts(t *testing.T) {
 		FilePaths: []string{path},
 	}}}).WithStat(controlFakeStat(path))
 	dispatcher := soap.NewDispatcher()
-	dispatcher.Register("/control", ssdp.ContentDir, contentDirectoryActions(tree, "http://127.0.0.1:18080"))
+	dispatcher.Register("/control", ssdp.ContentDir, contentDirectoryActions(tree, "http://127.0.0.1:18080", func() int { return 0 }))
 	body := browseEnvelope(content.EncodeID(content.RootContainerRef("movies")), string(content.BrowseDirectChildren), "0", "1")
 	request := httptest.NewRequest("POST", "/control", strings.NewReader(body))
 	request.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
@@ -61,7 +61,7 @@ func TestContentDirectoryBrowseSOAPReturnsDIDLAndCounts(t *testing.T) {
 func TestContentDirectoryBrowseInvalidObjectReturns701(t *testing.T) {
 	tree := content.NewTree(contentFakeSource{})
 	dispatcher := soap.NewDispatcher()
-	dispatcher.Register("/control", ssdp.ContentDir, contentDirectoryActions(tree, "http://127.0.0.1:18080"))
+	dispatcher.Register("/control", ssdp.ContentDir, contentDirectoryActions(tree, "http://127.0.0.1:18080", func() int { return 0 }))
 	body := browseEnvelope("bad-object", string(content.BrowseDirectChildren), "0", "0")
 	request := httptest.NewRequest("POST", "/control", strings.NewReader(body))
 	request.Header.Set("SOAPACTION", `"urn:schemas-upnp-org:service:ContentDirectory:1#Browse"`)
