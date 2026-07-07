@@ -93,7 +93,7 @@ func episodeObject(parentID string, episode storage.MediaEpisode, childCount int
 	}
 }
 
-func fileObject(parentID string, mediaID uuid.UUID, file File) Object {
+func fileObject(parentID string, mediaID uuid.UUID, file File, subtitles []Subtitle) Object {
 	return Object{
 		ID:          EncodeID(FileRef(mediaID, file.Path)),
 		ParentID:    parentID,
@@ -103,6 +103,7 @@ func fileObject(parentID string, mediaID uuid.UUID, file File) Object {
 		MediaItemID: &mediaID,
 		FileHash:    file.Hash,
 		FilePath:    file.Path,
+		Subtitles:   subtitles,
 	}
 }
 

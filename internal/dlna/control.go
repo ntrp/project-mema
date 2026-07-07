@@ -45,7 +45,8 @@ func contentDirectoryActions(tree *content.Tree, baseURL string) map[string]soap
 			if err != nil {
 				return nil, soap.InvalidArgs(err.Error())
 			}
-			payload, err := content.RenderDIDL(content.ApplyArtworkURLs(baseURL, response.Objects), nil)
+			objects := content.ApplySubtitleURLs(baseURL, content.ApplyArtworkURLs(baseURL, response.Objects))
+			payload, err := content.RenderDIDL(objects, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -68,7 +69,8 @@ func contentDirectoryActions(tree *content.Tree, baseURL string) map[string]soap
 			if err != nil {
 				return nil, soap.InvalidArgs(err.Error())
 			}
-			payload, err := content.RenderDIDL(content.ApplyArtworkURLs(baseURL, response.Objects), nil)
+			objects := content.ApplySubtitleURLs(baseURL, content.ApplyArtworkURLs(baseURL, response.Objects))
+			payload, err := content.RenderDIDL(objects, nil)
 			if err != nil {
 				return nil, err
 			}

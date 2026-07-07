@@ -43,6 +43,7 @@ type Object struct {
 	Artists   []string
 	Album     *string
 	Artwork   *string
+	Subtitles []Subtitle
 	CreatedAt time.Time
 	UpdatedAt time.Time
 

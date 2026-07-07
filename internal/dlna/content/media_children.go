@@ -17,7 +17,7 @@ func (t *Tree) mediaChildren(parentID string, mediaID string, items []storage.Me
 		if item.Type == "serie" {
 			return t.seriesChildren(parentID, item)
 		}
-		return t.fileChildren(parentID, item.ID, t.availableFiles(item))
+		return t.fileChildrenForItem(parentID, item, t.availableFiles(item))
 	}
 	return nil
 }
@@ -63,7 +63,7 @@ func (t *Tree) episodeChildren(parentID string, episodeID string, items []storag
 					continue
 				}
 				matched := filesForEpisode(files, season.SeasonNumber, episode.EpisodeNumber)
-				return t.fileChildren(parentID, item.ID, matched)
+				return t.fileChildrenForItem(parentID, item, matched)
 			}
 		}
 	}
@@ -91,7 +91,18 @@ func (t *Tree) episodeObjects(parentID string, season storage.MediaSeason, files
 func (t *Tree) fileChildren(parentID string, mediaID uuid.UUID, files []File) []Object {
 	objects := make([]Object, 0, len(files))
 	for _, file := range files {
-		objects = append(objects, fileObject(parentID, mediaID, file))
+		objects = append(objects, fileObject(parentID, mediaID, file, nil))
+	}
+	sort.SliceStable(objects, func(i, j int) bool {
+		return objects[i].Title < objects[j].Title
+	})
+	return objects
+}
+
+func (t *Tree) fileChildrenForItem(parentID string, item storage.MediaItem, files []File) []Object {
+	objects := make([]Object, 0, len(files))
+	for _, file := range files {
+		objects = append(objects, fileObject(parentID, item.ID, file, SubtitlesForFile(item, file.Path)))
 	}
 	sort.SliceStable(objects, func(i, j int) bool {
 		return objects[i].Title < objects[j].Title

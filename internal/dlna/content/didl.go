@@ -86,6 +86,7 @@ func didlContainerFromObject(object Object) didlContainer {
 }
 
 func didlItemFromObject(object Object, resources []Resource) didlItem {
+	resources = append(resources, subtitleResources(object.Subtitles)...)
 	return didlItem{
 		ID:         object.ID,
 		ParentID:   object.ParentID,
@@ -99,6 +100,17 @@ func didlItemFromObject(object Object, resources []Resource) didlItem {
 		Artwork:    object.Artwork,
 		Resources:  didlResources(resources),
 	}
+}
+
+func subtitleResources(subtitles []Subtitle) []Resource {
+	resources := make([]Resource, 0, len(subtitles))
+	for _, subtitle := range subtitles {
+		resources = append(resources, Resource{
+			URL:          subtitle.URL,
+			ProtocolInfo: SubtitleProtocolInfo(subtitle.Format),
+		})
+	}
+	return resources
 }
 
 func didlResources(resources []Resource) []didlRes {
