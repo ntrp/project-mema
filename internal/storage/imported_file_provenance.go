@@ -21,23 +21,39 @@ func recordImportedFileProvenance(
 	filePath string,
 	importKind string,
 ) error {
+	return recordImportedFileProvenanceWithOriginalName(ctx, q, mediaItemID, sourcePath, filePath, importKind, "")
+}
+
+func recordImportedFileProvenanceWithOriginalName(
+	ctx context.Context,
+	q storagegen.DBTX,
+	mediaItemID uuid.UUID,
+	sourcePath string,
+	filePath string,
+	importKind string,
+	originalFileName string,
+) error {
 	releaseTitle, releaseGroup := importedReleaseTitleAndGroup(filePath)
 	if releaseGroup == "" {
 		return nil
 	}
 	originalPath := strings.TrimSpace(sourcePath)
+	transformation := map[string]any{
+		"kind":         importKind,
+		"originalPath": originalPath,
+		"targetPath":   filePath,
+	}
+	if name := strings.TrimSpace(originalFileName); name != "" {
+		transformation["originalFileName"] = name
+	}
 	_, err := upsertMediaComponentProvenance(ctx, q, MediaComponentProvenanceInput{
-		MediaItemID:    mediaItemID,
-		ComponentType:  "container",
-		ComponentKey:   importedContainerComponentKey(filePath),
-		ReleaseGroup:   releaseGroup,
-		ReleaseName:    releaseTitle,
-		SourceFilePath: &filePath,
-		TransformationChain: []map[string]any{{
-			"kind":         importKind,
-			"originalPath": originalPath,
-			"targetPath":   filePath,
-		}},
+		MediaItemID:         mediaItemID,
+		ComponentType:       "container",
+		ComponentKey:        importedContainerComponentKey(filePath),
+		ReleaseGroup:        releaseGroup,
+		ReleaseName:         releaseTitle,
+		SourceFilePath:      &filePath,
+		TransformationChain: []map[string]any{transformation},
 	})
 	return err
 }

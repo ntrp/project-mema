@@ -23,7 +23,7 @@ func mediaFileInfoResponses(
 			file.Status = MediaFileInfoStatusAvailable
 			size := stat.Size()
 			file.SizeBytes = &size
-			probe := mediaFileProbe(path)
+			probe := mediaFileProbe(mediaFileProbePath(path))
 			hydrateTrackProvenance(path, probe.tracks, componentProvenance)
 			if len(probe.tracks) > 0 {
 				file.Tracks = &probe.tracks
@@ -45,6 +45,17 @@ func mediaFileInfoResponses(
 		files = append(files, file)
 	}
 	return &files
+}
+
+func mediaFileProbePath(path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+	return absolute
 }
 
 func mediaFileSubtitleSatisfaction(

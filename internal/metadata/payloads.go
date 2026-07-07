@@ -238,6 +238,7 @@ type tvdbSearchResult struct {
 	ID                 string   `json:"id"`
 	ObjectID           string   `json:"objectID"`
 	TVDBID             string   `json:"tvdb_id"`
+	Slug               string   `json:"slug"`
 	Type               string   `json:"type"`
 	Name               string   `json:"name"`
 	Title              string   `json:"title"`

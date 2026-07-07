@@ -2387,6 +2387,13 @@ type LibraryScanItemMatchResponse struct {
 // LibraryScanItemMatchSource defines model for LibraryScanItemMatchSource.
 type LibraryScanItemMatchSource string
 
+// LibraryScanItemResetResponse defines model for LibraryScanItemResetResponse.
+type LibraryScanItemResetResponse struct {
+	Item               LibraryScanItem     `json:"item"`
+	RemovedMediaItemId *openapi_types.UUID `json:"removedMediaItemId,omitempty"`
+	Scan               LibraryScan         `json:"scan"`
+}
+
 // LibraryScanItemStatus defines model for LibraryScanItemStatus.
 type LibraryScanItemStatus string
 
@@ -2849,6 +2856,7 @@ type MediaItem struct {
 	ExternalId          *string                      `json:"externalId,omitempty"`
 	ExternalProvider    *string                      `json:"externalProvider,omitempty"`
 	ExternalSubtitles   *[]MediaItemSubtitle         `json:"externalSubtitles,omitempty"`
+	ExternalUrl         *string                      `json:"externalUrl,omitempty"`
 	Facts               *[]MediaMetadataFact         `json:"facts,omitempty"`
 	FilePaths           []string                     `json:"filePaths"`
 	Files               *[]MediaFileInfo             `json:"files,omitempty"`
@@ -3008,6 +3016,7 @@ type MediaMetadataDetails struct {
 	EpisodeCount     *int32                 `json:"episodeCount,omitempty"`
 	ExternalId       string                 `json:"externalId"`
 	ExternalProvider string                 `json:"externalProvider"`
+	ExternalUrl      *string                `json:"externalUrl,omitempty"`
 	Facts            *[]MediaMetadataFact   `json:"facts,omitempty"`
 	FirstAirDate     *string                `json:"firstAirDate,omitempty"`
 	Genres           *[]string              `json:"genres,omitempty"`
@@ -3204,6 +3213,11 @@ type MediaProviderMapping struct {
 // MediaProviderMappingEntityType defines model for MediaProviderMapping.EntityType.
 type MediaProviderMappingEntityType string
 
+// MediaRenameApplyRequest defines model for MediaRenameApplyRequest.
+type MediaRenameApplyRequest struct {
+	CurrentPaths []string `json:"currentPaths"`
+}
+
 // MediaRenameApplyResponse defines model for MediaRenameApplyResponse.
 type MediaRenameApplyResponse struct {
 	AppliedCount int32                   `json:"appliedCount"`
@@ -3317,6 +3331,7 @@ type MediaSearchResult struct {
 	ContentRating    *string             `json:"contentRating,omitempty"`
 	ExternalId       *string             `json:"externalId,omitempty"`
 	ExternalProvider *string             `json:"externalProvider,omitempty"`
+	ExternalUrl      *string             `json:"externalUrl,omitempty"`
 	Genres           *[]string           `json:"genres,omitempty"`
 	Id               *openapi_types.UUID `json:"id,omitempty"`
 	Keywords         *[]string           `json:"keywords,omitempty"`
@@ -4210,6 +4225,9 @@ type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
 // EnqueueMediaReleaseSearchJSONRequestBody defines body for EnqueueMediaReleaseSearch for application/json ContentType.
 type EnqueueMediaReleaseSearchJSONRequestBody = ReleaseSearchRequest
 
+// ApplyMediaRenameJSONRequestBody defines body for ApplyMediaRename for application/json ContentType.
+type ApplyMediaRenameJSONRequestBody = MediaRenameApplyRequest
+
 // GrabMediaSubtitleJSONRequestBody defines body for GrabMediaSubtitle for application/json ContentType.
 type GrabMediaSubtitleJSONRequestBody = GrabSubtitleRequest
 
@@ -4716,6 +4734,9 @@ type ServerInterface interface {
 	// Manually match a discovered file to a movie, series, or anime item
 	// (POST /settings/library/scans/{id}/items/{itemId}/match)
 	MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID)
+	// Reset an imported library scan item without touching files
+	// (POST /settings/library/scans/{id}/items/{itemId}/reset)
+	ResetLibraryScanItemImport(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID)
 	// Clear all metadata provider cache entries
 	// (DELETE /settings/metadata-cache)
 	ClearMetadataCache(w http.ResponseWriter, r *http.Request)
@@ -5586,6 +5607,12 @@ func (_ Unimplemented) ImportLibraryScanItems(w http.ResponseWriter, r *http.Req
 // Manually match a discovered file to a movie, series, or anime item
 // (POST /settings/library/scans/{id}/items/{itemId}/match)
 func (_ Unimplemented) MatchLibraryScanItem(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Reset an imported library scan item without touching files
+// (POST /settings/library/scans/{id}/items/{itemId}/reset)
+func (_ Unimplemented) ResetLibraryScanItemImport(w http.ResponseWriter, r *http.Request, id ResourceId, itemId openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -10150,6 +10177,47 @@ func (siw *ServerInterfaceWrapper) MatchLibraryScanItem(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// ResetLibraryScanItemImport operation middleware
+func (siw *ServerInterfaceWrapper) ResetLibraryScanItemImport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", chi.URLParam(r, "itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetLibraryScanItemImport(w, r, id, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ClearMetadataCache operation middleware
 func (siw *ServerInterfaceWrapper) ClearMetadataCache(w http.ResponseWriter, r *http.Request) {
 
@@ -11901,6 +11969,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/library/scans/{id}/items/{itemId}/match", wrapper.MatchLibraryScanItem)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/library/scans/{id}/items/{itemId}/reset", wrapper.ResetLibraryScanItemImport)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/metadata-cache", wrapper.ClearMetadataCache)

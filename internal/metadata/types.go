@@ -49,6 +49,7 @@ type SearchResult struct {
 	Year             *int32   `json:"year,omitempty"`
 	ExternalProvider string   `json:"externalProvider"`
 	ExternalID       string   `json:"externalId"`
+	ExternalURL      *string  `json:"externalUrl,omitempty"`
 	Overview         *string  `json:"overview,omitempty"`
 	PosterPath       *string  `json:"posterPath,omitempty"`
 	Popularity       *float64 `json:"popularity,omitempty"`
@@ -123,6 +124,7 @@ type Details struct {
 	Year             *int32
 	ExternalProvider string
 	ExternalID       string
+	ExternalURL      *string
 	Overview         *string
 	PosterPath       *string
 	CollectionID     *string

@@ -2,6 +2,38 @@
 delete from app.media_items
 where id = $1;
 
+-- name: DeleteMediaItemsForLibraryFolder :execrows
+with folder_root as (
+    select id,
+        case when path = '/' then '/' else rtrim(path, '/') end as path
+    from app.library_folders
+    where app.library_folders.id = $1
+),
+media_to_delete as (
+    select m.id
+    from app.media_items m
+    join folder_root f on true
+    where m.library_folder_id = f.id
+        or (
+            m.media_folder_path is not null
+            and (
+                m.media_folder_path = f.path
+                or (f.path = '/' and m.media_folder_path like '/%')
+                or (f.path <> '/' and m.media_folder_path like f.path || '/%')
+            )
+        )
+),
+deleted_import_attempts as (
+    delete from app.import_attempts
+    where media_item_id in (select id from media_to_delete)
+),
+deleted_file_history as (
+    delete from app.media_file_history
+    where media_item_id in (select id from media_to_delete)
+)
+delete from app.media_items
+where id in (select id from media_to_delete);
+
 -- name: TouchMediaItem :exec
 update app.media_items
 set updated_at = now()

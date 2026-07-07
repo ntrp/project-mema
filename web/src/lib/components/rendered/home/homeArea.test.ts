@@ -80,6 +80,7 @@ function baseProps(): HomeAreaProps {
 		onApproveMediaRequest: vi.fn(),
 		onFindReleases: vi.fn(),
 		onAutoSearchMedia: vi.fn(),
+		onRescanMediaFiles: vi.fn(),
 		onRefreshMediaMetadata: vi.fn(),
 		onSaveMediaItemOptions: vi.fn(),
 		onDeleteMediaFile: vi.fn(),

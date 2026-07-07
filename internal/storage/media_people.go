@@ -68,6 +68,7 @@ type MediaRelatedItem struct {
 	Year             *int32  `json:"year,omitempty"`
 	ExternalProvider string  `json:"externalProvider"`
 	ExternalID       string  `json:"externalId"`
+	ExternalURL      *string `json:"externalUrl,omitempty"`
 	Overview         *string `json:"overview,omitempty"`
 	PosterPath       *string `json:"posterPath,omitempty"`
 }

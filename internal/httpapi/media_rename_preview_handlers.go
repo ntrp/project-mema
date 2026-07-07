@@ -24,7 +24,17 @@ func (s *Server) ApplyMediaRename(w http.ResponseWriter, r *http.Request, id Res
 	if _, ok := s.requireSession(w, r); !ok {
 		return
 	}
-	result, err := s.settings.ApplyMediaItemRename(r.Context(), uuid.UUID(id))
+	var body MediaRenameApplyRequest
+	if r.Body != nil && r.ContentLength != 0 {
+		if !decodeJSON(w, r, &body) {
+			return
+		}
+	}
+	result, err := s.settings.ApplySelectedMediaItemRename(
+		r.Context(),
+		uuid.UUID(id),
+		body.CurrentPaths,
+	)
 	if err != nil {
 		writeSettingsError(w, err, "Could not apply file rename")
 		return

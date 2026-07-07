@@ -41,9 +41,12 @@ describe('rendered media detail area (SCN-MEDIA-004)', () => {
 		expect(body).toContain('/movies/media-1/cast');
 		expect(body).toContain('Quality Profile');
 		expect(body).toContain('Min. Availability');
+		expect(body).toContain('TMDB');
+		expect(body).toContain('https://www.themoviedb.org/movie/scenario-1');
 		expect(body).toContain('Refresh metadata');
 		expect(body).toContain('Delete media');
 		expect(body).toContain('Files');
+		expect(body).toContain('Refresh file metadata');
 		expect(body).toContain('Media root');
 		expect(body).toContain('/library/Scenario Movie');
 		expect(body).toContain('Scenario.Movie.2026.1080p.WEB-DL.DDP5.1.EN.mkv');
@@ -78,6 +81,15 @@ describe('rendered media detail area (SCN-MEDIA-004)', () => {
 
 		expect(body).toContain('Season 1');
 		expect(body).toContain('5.00 GiB');
+	});
+
+	it('shows the stored media root instead of the templated root', () => {
+		const { body } = renderDetail({
+			item: mediaItem({ mediaFolderPath: '/library/Legacy Folder' })
+		});
+
+		expect(body).toContain('/library/Legacy Folder');
+		expect(body).not.toContain('/library/Scenario Movie</span>');
 	});
 
 	it('renders retained, blocked, running, failed, and completed component assembly states', () => {
@@ -136,6 +148,7 @@ function renderDetail(overrides: Partial<DetailProps> = {}) {
 		actionLabel: 'Add to library',
 		onAutoSearchMedia: vi.fn(),
 		onRefreshMediaMetadata: vi.fn(),
+		onRescanMediaFiles: vi.fn(),
 		onSaveMediaItemOptions: vi.fn(),
 		onDeleteMediaFile: vi.fn(),
 		onDeleteMedia: vi.fn(),

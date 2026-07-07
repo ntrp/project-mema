@@ -51,6 +51,7 @@ type MediaItemInput struct {
 	ContentKind      string
 	Title            string
 	Year             *int32
+	QualityFull      string
 	Monitored        bool
 	ExternalProvider *string
 	ExternalID       *string

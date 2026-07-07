@@ -101,6 +101,18 @@ type LibraryMatchInput struct {
 	MediaMetadataSnapshot
 }
 
+type LibraryScanItemResetResult struct {
+	Item               LibraryScanItem
+	RemovedMediaItemID *uuid.UUID
+}
+
+type ActiveImportedPath struct {
+	MediaItemID   uuid.UUID
+	MatchedTitle  string
+	MatchedYear   *int32
+	MatchedSource string
+}
+
 func (s *SettingsStore) ListLibraryFolders(ctx context.Context) ([]LibraryFolder, error) {
 	rows, err := storagegen.New(s.pool).ListLibraryFolders(ctx)
 	if err != nil {
@@ -115,6 +127,10 @@ func (s *SettingsStore) ListLibraryFolders(ctx context.Context) ([]LibraryFolder
 }
 
 func (s *SettingsStore) CreateLibraryFolder(ctx context.Context, path string, kind string) (LibraryFolder, error) {
+	path, err := absoluteCleanPath(path)
+	if err != nil {
+		return LibraryFolder{}, err
+	}
 	row, err := storagegen.New(s.pool).UpsertLibraryFolder(ctx, storagegen.UpsertLibraryFolderParams{
 		ID:   uuid.New(),
 		Path: path,
@@ -127,14 +143,25 @@ func (s *SettingsStore) CreateLibraryFolder(ctx context.Context, path string, ki
 }
 
 func (s *SettingsStore) DeleteLibraryFolder(ctx context.Context, id uuid.UUID) error {
-	rowsAffected, err := storagegen.New(s.pool).DeleteLibraryFolder(ctx, id)
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+	queries := storagegen.New(tx)
+	if _, err := queries.DeleteMediaItemsForLibraryFolder(ctx, id); err != nil {
+		return err
+	}
+	rowsAffected, err := queries.DeleteLibraryFolder(ctx, id)
 	if err != nil {
 		return err
 	}
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}
-	return nil
+	return tx.Commit(ctx)
 }
 
 func (s *SettingsStore) LibraryFolderExists(ctx context.Context, id uuid.UUID) (bool, error) {
@@ -221,14 +248,19 @@ func (s *SettingsStore) GetLibraryScan(ctx context.Context, id uuid.UUID) (Libra
 	return scan, nil
 }
 
-func (s *SettingsStore) ActiveImportedPathsForLibraryFolder(ctx context.Context, folderID uuid.UUID) (map[string]struct{}, error) {
-	paths, err := storagegen.New(s.pool).ListActiveImportedPathsForLibraryFolder(ctx, folderID)
+func (s *SettingsStore) ActiveImportedPathsForLibraryFolder(ctx context.Context, folderID uuid.UUID) (map[string]ActiveImportedPath, error) {
+	rows, err := storagegen.New(s.pool).ListActiveImportedPathsForLibraryFolder(ctx, folderID)
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[string]struct{}, len(paths))
-	for _, path := range paths {
-		result[path] = struct{}{}
+	result := make(map[string]ActiveImportedPath, len(rows))
+	for _, row := range rows {
+		result[row.Path] = ActiveImportedPath{
+			MediaItemID:   row.MediaItemID,
+			MatchedTitle:  row.MatchedTitle,
+			MatchedYear:   int4Ptr(row.MatchedYear),
+			MatchedSource: "library",
+		}
 	}
 	return result, nil
 }

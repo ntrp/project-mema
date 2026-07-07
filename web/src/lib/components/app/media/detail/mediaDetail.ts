@@ -28,6 +28,7 @@ export interface MediaDetailProps {
 	requestedItemId: string;
 	activities: DownloadActivity[];
 	searchingItemId?: string;
+	scanningMediaItemId?: string;
 	refreshingMetadataItemId?: string;
 	savingMediaItemOptionsId?: string;
 	grabbingKey?: string;
@@ -50,6 +51,7 @@ export interface MediaDetailProps {
 		_request: MediaItemSubtitleSelectionRequest
 	) => void | Promise<void>;
 	onRefreshMediaMetadata: (_item: MediaItem) => void;
+	onRescanMediaFiles: (_item: MediaItem) => void;
 	onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 	onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
 	onDeleteMediaFileTrack?: (
@@ -92,6 +94,7 @@ export function mediaMetadataDetail(mediaItem: MediaItem): MediaMetadataDetails 
 		seriesType: mediaItem.seriesType,
 		externalProvider: mediaItem.externalProvider ?? 'local',
 		externalId: mediaItem.externalId ?? mediaItem.id,
+		externalUrl: mediaItem.externalUrl,
 		overview: mediaItem.overview,
 		posterPath: mediaItem.posterPath,
 		collectionId: mediaItem.collectionId,

@@ -12,6 +12,7 @@ vi.mock('$lib/api/client', () => ({ client: clientMock }));
 import {
 	addDiscoverBlacklistItem,
 	advancedSearchMedia,
+	applyMediaRename,
 	approveMediaRequest,
 	clearSystemEvents,
 	createMediaItem,
@@ -90,6 +91,11 @@ describe('UI API command helpers (SCN-SETTINGS-009)', () => {
 		await expect(createMediaRequest({ title: 'Scenario Movie' } as never)).resolves.toEqual({});
 		await expect(approveMediaRequest('request-1', {} as never)).resolves.toEqual({});
 		await expect(rescanMediaItemFiles('media-1')).resolves.toEqual({});
+		await expect(applyMediaRename('media-1', ['/library/old.mkv'])).resolves.toEqual({});
+		expect(clientMock.POST).toHaveBeenLastCalledWith('/media/items/{id}/rename-apply', {
+			params: { path: { id: 'media-1' } },
+			body: { currentPaths: ['/library/old.mkv'] }
+		});
 		await expect(deleteMediaItemFile('media-1', 'Movie.mkv')).resolves.toEqual({});
 		await expect(enqueueMediaReleaseSearch('media-1', 'custom')).resolves.toEqual({});
 		await expect(enqueueMediaAutomaticSearch('media-1')).resolves.toEqual({});

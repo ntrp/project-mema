@@ -34,6 +34,7 @@
 		requestedItemId,
 		activities,
 		searchingItemId,
+		scanningMediaItemId,
 		refreshingMetadataItemId,
 		savingMediaItemOptionsId,
 		assemblingMediaItemId,
@@ -49,6 +50,7 @@
 		onDeleteMediaSubtitle = () => {},
 		onUpdateMediaSubtitle = () => {},
 		onRefreshMediaMetadata,
+		onRescanMediaFiles,
 		onSaveMediaItemOptions,
 		onDeleteMediaFile,
 		onDeleteMediaFileTrack = () => {},
@@ -148,10 +150,12 @@
 								{languages}
 								{qualityProfiles}
 								{searchingItemId}
+								{scanningMediaItemId}
 								{grabbingKey}
 								{canManage}
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
+								{onRescanMediaFiles}
 								onSearchSubtitle={onSearchMediaSubtitle}
 								onGrabSubtitle={onGrabMediaSubtitle}
 								onDeleteSubtitle={onDeleteMediaSubtitle}

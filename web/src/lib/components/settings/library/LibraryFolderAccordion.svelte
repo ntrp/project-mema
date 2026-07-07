@@ -33,6 +33,7 @@
 			_providerId?: string
 		) => Promise<MediaSearchResult[]>;
 		onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
+		onResetImport: (_scan: LibraryScan, _itemId: string) => Promise<void>;
 	}
 
 	let {
@@ -45,7 +46,8 @@
 		onScan,
 		onDelete,
 		onSearchMatch,
-		onImport
+		onImport,
+		onResetImport
 	}: Props = $props();
 
 	let opened = $state<Record<string, boolean>>({});
@@ -103,7 +105,7 @@
 						icon="delete"
 						variant="destructive"
 						confirmTitle="Delete library folder"
-						confirmDescription={`Delete library folder "${folder.path}" from settings?`}
+						confirmDescription={`Delete library folder "${folder.path}" from settings and remove detected media, metadata, tracks, and history for that root? Files on disk are not removed.`}
 						confirmLabel="Delete folder"
 						onclick={() => onDelete(folder.id)}
 					/>
@@ -123,6 +125,7 @@
 							loading={scanningFolderId === folder.id}
 							{onSearchMatch}
 							{onImport}
+							{onResetImport}
 						/>
 					{:else}
 						<p class="m-0 text-sm leading-6 text-muted-foreground">

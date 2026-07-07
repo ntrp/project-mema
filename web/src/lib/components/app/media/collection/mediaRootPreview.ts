@@ -12,6 +12,18 @@ export function mediaRootPreview(
 	return `${folder.path}/${segment}`;
 }
 
+export function mediaRootWarning(
+	item: MediaItem,
+	folder: LibraryFolder | undefined,
+	settings: FileNamingSettings | undefined
+) {
+	const current = item.mediaFolderPath?.trim();
+	if (!current || !folder) return undefined;
+	const expected = mediaRootPreview(item, folder, settings);
+	if (expected === '-' || normalizedRoot(current) === normalizedRoot(expected)) return undefined;
+	return { expected };
+}
+
 function folderTemplate(item: MediaItem, settings: FileNamingSettings | undefined) {
 	if (item.type === 'movie') {
 		return settings?.movieFolderFormat ?? defaultFileNamingTemplates.movieFolderFormat;
@@ -52,4 +64,9 @@ function sanitizePathSegment(value: string) {
 		.trim()
 		.replace(/^\.+|\.+$/g, '');
 	return sanitized || 'Untitled';
+}
+
+function normalizedRoot(path: string) {
+	const normalized = path.trim().replace(/[/\\]+$/g, '');
+	return normalized || path.trim();
 }

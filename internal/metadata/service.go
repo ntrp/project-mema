@@ -21,31 +21,42 @@ func (e ProviderHTTPError) Error() string {
 }
 
 func (s *Service) Search(ctx context.Context, config Config, request SearchRequest) ([]SearchResult, error) {
-	switch config.Type {
-	case "tmdb":
-		if request.MediaType != "movie" && request.MediaType != "serie" {
-			return nil, nil
-		}
-		return s.searchTMDB(ctx, config, request)
-	case "tvdb":
-		return s.searchTVDB(ctx, config, request)
-	default:
-		return nil, ErrUnsupportedProvider
+	provider, err := s.provider(config)
+	if err != nil {
+		return nil, err
 	}
+	return provider.Search(ctx, request)
 }
 
 func (s *Service) Discover(ctx context.Context, config Config, request DiscoverRequest) ([]SearchResult, error) {
-	if config.Type != "tmdb" {
+	provider, err := s.provider(config)
+	if err != nil {
+		return nil, err
+	}
+	discoverProvider, ok := provider.(DiscoverProvider)
+	if !ok {
 		return nil, ErrUnsupportedProvider
 	}
-	return s.discoverTMDB(ctx, config, request)
+	return discoverProvider.Discover(ctx, request)
 }
 
 func (s *Service) Details(ctx context.Context, config Config, request DetailsRequest) (Details, error) {
-	if config.Type != "tmdb" {
-		return Details{}, ErrUnsupportedProvider
+	provider, err := s.provider(config)
+	if err != nil {
+		return Details{}, err
 	}
-	return s.detailsTMDB(ctx, config, request)
+	return provider.Details(ctx, request)
+}
+
+func (s *Service) provider(config Config) (Provider, error) {
+	switch config.Type {
+	case "tmdb":
+		return tmdbProvider{service: s, config: config}, nil
+	case "tvdb":
+		return tvdbProvider{service: s, config: config}, nil
+	default:
+		return nil, ErrUnsupportedProvider
+	}
 }
 
 func (s *Service) Test(ctx context.Context, config Config) TestResult {

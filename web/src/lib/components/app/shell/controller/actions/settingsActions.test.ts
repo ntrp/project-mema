@@ -140,9 +140,10 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 			openLibraryFolderId: 'old-folder',
 			libraryScansByFolder: { 'old-folder': { folderId: 'old-folder' } }
 		});
+		const loadSettings = vi.fn();
 		const actions = createSettingsDeleteActions(state, {
 			clearNotice: vi.fn(),
-			loadSettings: vi.fn()
+			loadSettings
 		});
 
 		await actions.deleteLibraryFolder('old-folder');
@@ -152,6 +153,7 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 		expect(state.libraryScansByFolder).toEqual({});
 		expect(state.openLibraryFolderId).toBeUndefined();
 		expect(state.pathMappings).toEqual([]);
+		expect(loadSettings).toHaveBeenCalledOnce();
 		expect(state.message).toBe('Path mapping deleted');
 	});
 
@@ -190,11 +192,13 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 			loadSettings: vi.fn()
 		});
 		apiMock.advancedSearchMedia.mockResolvedValue([
-			{ sourceType: 'provider', sourceName: 'TMDB', results: [{ title: 'Scenario Series' }] }
+			{ sourceType: 'provider', sourceName: 'TMDB', results: [{ title: 'Provider Series' }] },
+			{ sourceType: 'library', sourceName: 'Library', results: [{ title: 'Library Series' }] }
 		]);
 
 		await expect(actions.searchLibraryMatch('anime_series', '  Scenario  ')).resolves.toEqual([
-			{ title: 'Scenario Series' }
+			{ title: 'Library Series' },
+			{ title: 'Provider Series' }
 		]);
 		expect(apiMock.advancedSearchMedia).toHaveBeenCalledWith({
 			type: 'serie',

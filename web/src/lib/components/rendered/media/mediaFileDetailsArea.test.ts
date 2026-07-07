@@ -60,6 +60,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
 		expect(body).toContain('border-t-4');
+		expect(body).toContain('[&amp;>td]:border-t-4');
 	});
 
 	it('renders other files with path, type, and status', () => {

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	storagegen "media-manager/internal/storage/generated"
 
@@ -28,6 +29,10 @@ func (s *SettingsStore) RecordImportedMediaFileWithHistory(
 ) error {
 	if item.LibraryFolderID == nil {
 		return ErrNotFound
+	}
+	filePath = absoluteCleanPathOrClean(filePath)
+	if strings.TrimSpace(sourcePath) != "" {
+		sourcePath = absoluteCleanPathOrClean(sourcePath)
 	}
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {

@@ -18,9 +18,11 @@
 		qualityProfiles: QualityProfileOption[];
 		metadataProviders: MetadataProvider[];
 		importingItemId: string;
+		resettingItemId: string;
 		onSearch: (_item: LibraryScanItem) => void;
 		onSelect: (_item: LibraryScanItem, _result: MediaSearchResult) => void;
 		onProviderChange: (_item: LibraryScanItem, _providerId: string) => void;
+		onResetImport: (_item: LibraryScanItem) => void | Promise<void>;
 	}
 
 	let {
@@ -31,9 +33,11 @@
 		qualityProfiles,
 		metadataProviders,
 		importingItemId,
+		resettingItemId,
 		onSearch,
 		onSelect,
-		onProviderChange
+		onProviderChange,
+		onResetImport
 	}: Props = $props();
 </script>
 
@@ -48,9 +52,11 @@
 				{metadataProviders}
 				duplicateState={duplicateStates[item.id]}
 				importing={importingItemId === item.id}
+				resetting={resettingItemId === item.id}
 				{onSearch}
 				{onSelect}
 				{onProviderChange}
+				{onResetImport}
 			/>
 		{/if}
 	{:else}

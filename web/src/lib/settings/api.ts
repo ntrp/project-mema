@@ -964,9 +964,13 @@ export async function previewMediaRename(id: string): Promise<MediaRenamePreview
 	return data ?? { rows: [] };
 }
 
-export async function applyMediaRename(id: string): Promise<MediaRenameApplyResponse> {
+export async function applyMediaRename(
+	id: string,
+	currentPaths?: string[]
+): Promise<MediaRenameApplyResponse> {
 	const { data, error } = await client.POST('/media/items/{id}/rename-apply', {
-		params: { path: { id } }
+		params: { path: { id } },
+		body: currentPaths ? { currentPaths } : undefined
 	});
 
 	if (error) {
@@ -1771,6 +1775,20 @@ export async function importLibraryScanItems(scanId: string, request: LibrarySca
 	}
 	if (!data) {
 		throw new Error('Library import result was not returned');
+	}
+	return data;
+}
+
+export async function resetLibraryScanItemImport(scanId: string, itemId: string) {
+	const { data, error } = await client.POST('/settings/library/scans/{id}/items/{itemId}/reset', {
+		params: { path: { id: scanId, itemId } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Library import reset result was not returned');
 	}
 	return data;
 }

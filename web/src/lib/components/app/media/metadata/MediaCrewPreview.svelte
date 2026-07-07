@@ -30,7 +30,7 @@
 			<div class="grid min-w-0 content-start gap-1">
 				<strong class="wrap-anywhere text-foreground">{group.title}</strong>
 				<span class="wrap-anywhere text-muted-foreground">
-					{#each group.people.slice(0, 3) as person, index (`${group.title}:${person.name}:${person.externalId ?? index}`)}
+					{#each group.people.slice(0, 3) as person, index (`${group.title}:${person.externalProvider ?? ''}:${person.externalId ?? person.name}:${index}`)}
 						{@const personUrl = mediaPersonHref(person)}
 						{#if index > 0},&nbsp;
 						{/if}{#if personUrl}<a

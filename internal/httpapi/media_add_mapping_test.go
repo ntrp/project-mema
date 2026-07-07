@@ -22,6 +22,7 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 		Year:             &year,
 		ExternalProvider: "tmdb",
 		ExternalID:       "series-1",
+		ExternalURL:      stringPointer("https://www.themoviedb.org/tv/series-1"),
 		Overview:         stringPointer("Overview"),
 		PosterPath:       stringPointer("/poster.jpg"),
 		CollectionID:     stringPointer("collection-1"),
@@ -68,6 +69,7 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 			Year:             &year,
 			ExternalProvider: "tmdb",
 			ExternalID:       "rec-1",
+			ExternalURL:      stringPointer("https://www.themoviedb.org/movie/rec-1"),
 			Overview:         stringPointer("Recommendation"),
 			PosterPath:       stringPointer("/rec.jpg"),
 		}},
@@ -86,6 +88,9 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 	}
 	if input.ExternalProvider == nil || *input.ExternalProvider != "tmdb" || input.ExternalID == nil || *input.ExternalID != "series-1" {
 		t.Fatalf("external ids = provider %v id %v", input.ExternalProvider, input.ExternalID)
+	}
+	if len(input.ProviderMappings) != 1 || input.ProviderMappings[0].Source["externalUrl"] != "https://www.themoviedb.org/tv/series-1" {
+		t.Fatalf("provider mappings = %#v", input.ProviderMappings)
 	}
 	if len(input.Genres) != 1 || input.Genres[0] != "Drama" || len(input.Keywords) != 1 {
 		t.Fatalf("genres/keywords = %#v %#v", input.Genres, input.Keywords)
@@ -107,6 +112,9 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 	}
 	if len(input.Recommendations) != 1 || input.Recommendations[0].ExternalID != "rec-1" {
 		t.Fatalf("recommendations = %#v", input.Recommendations)
+	}
+	if input.Recommendations[0].ExternalURL == nil || *input.Recommendations[0].ExternalURL != "https://www.themoviedb.org/movie/rec-1" {
+		t.Fatalf("recommendation external url = %#v", input.Recommendations[0].ExternalURL)
 	}
 	if len(input.Similar) != 1 || input.Similar[0].ExternalID != "sim-1" {
 		t.Fatalf("similar = %#v", input.Similar)

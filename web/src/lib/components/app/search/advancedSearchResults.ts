@@ -37,7 +37,7 @@ export function mediaHref(result: MediaSearchResult) {
 }
 
 export function externalMediaUrl(result: MediaSearchResult) {
-	return providerPageUrl(result.externalProvider, result.type, result.externalId);
+	return providerPageUrl(result.externalProvider, result.type, result.externalId, result.externalUrl);
 }
 
 export function personResultKey(result: PersonSearchResult) {

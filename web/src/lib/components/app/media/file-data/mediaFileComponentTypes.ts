@@ -47,6 +47,7 @@ export interface MediaFilesTableProps {
 	item: MediaItem;
 	activities: DownloadActivity[];
 	searchingItemId?: string;
+	scanningMediaItemId?: string;
 	grabbingKey?: string;
 	canManage: boolean;
 	libraryFolders: LibraryFolder[];
@@ -54,6 +55,7 @@ export interface MediaFilesTableProps {
 	qualityProfiles: QualityProfileOption[];
 	onSaveOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 	onAutoSearch: (_item: MediaItem) => void;
+	onRescanMediaFiles: (_item: MediaItem) => void;
 	onSearchSubtitle: (_item: MediaItem, _request: SubtitleSearchRequest) => void | Promise<void>;
 	onGrabSubtitle: (_item: MediaItem, _request: GrabSubtitleRequest) => void | Promise<void>;
 	onDeleteSubtitle: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;

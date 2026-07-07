@@ -101,19 +101,19 @@
 	}
 
 	const navButtonClass =
-		'gap-4 text-[20px] font-semibold data-[active=true]:bg-primary data-[active=true]:text-primary-foreground [&_svg]:size-6';
+		'gap-4 text-[20px] font-semibold data-[active=true]:bg-primary data-[active=true]:text-primary-foreground group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 [&_svg]:size-6';
 	const navSubButtonClass = 'text-[15px] font-semibold';
 </script>
 
 <Sidebar.Root collapsible="icon" aria-label={title}>
 	<Sidebar.Header>
 		<a
-			class="flex min-w-0 items-center gap-3 rounded-md px-2 py-2 text-sidebar-foreground no-underline transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+			class="flex min-w-0 items-center gap-3 rounded-md px-2 py-2 text-sidebar-foreground no-underline transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
 			href={resolve('/discover')}
 			onclick={() => selectItem('discover')}
 		>
 			<span
-				class="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-base font-black text-primary-foreground min-[641px]:size-9"
+				class="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-base font-black text-primary-foreground min-[641px]:size-9 group-data-[collapsible=icon]:!size-8"
 				aria-hidden="true">M</span
 			>
 			<span class="truncate text-lg font-black group-data-[collapsible=icon]:hidden">{title}</span>
@@ -142,7 +142,7 @@
 										onclick={() => selectItem(item.value)}
 									>
 										<Icon aria-hidden="true" />
-										<span>{item.label}</span>
+										<span class="group-data-[collapsible=icon]:hidden">{item.label}</span>
 									</a>
 								{/snippet}
 							</Sidebar.MenuButton>

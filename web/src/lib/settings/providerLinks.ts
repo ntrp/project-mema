@@ -1,6 +1,14 @@
 import type { MediaType } from './types';
 
-export function providerPageUrl(provider?: string, type?: MediaType, externalId?: string) {
+export function providerPageUrl(
+	provider?: string,
+	type?: MediaType,
+	externalId?: string,
+	externalUrl?: string
+) {
+	if (externalUrl) {
+		return externalUrl;
+	}
 	if (!provider || !type || !externalId) {
 		return undefined;
 	}
@@ -8,7 +16,7 @@ export function providerPageUrl(provider?: string, type?: MediaType, externalId?
 		return `https://www.themoviedb.org/${type === 'movie' ? 'movie' : 'tv'}/${externalId}`;
 	}
 	if (provider === 'tvdb') {
-		return `https://thetvdb.com/${type === 'movie' ? 'movies' : 'series'}/${externalId}`;
+		return `https://thetvdb.com/dereferrer/${type === 'movie' ? 'movie' : 'series'}/${externalId}`;
 	}
 	return undefined;
 }

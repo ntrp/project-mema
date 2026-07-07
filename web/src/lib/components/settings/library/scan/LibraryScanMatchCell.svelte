@@ -14,11 +14,12 @@
 	interface Props {
 		item: LibraryScanItem;
 		draft: MatchDraft;
+		disabled?: boolean;
 		onSearch: (_item: LibraryScanItem) => void;
 		onSelect: (_item: LibraryScanItem, _result: MediaSearchResult) => void;
 	}
 
-	let { item, draft = $bindable(), onSearch, onSelect }: Props = $props();
+	let { item, draft = $bindable(), disabled = false, onSearch, onSelect }: Props = $props();
 	let editing = $state(false);
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let containerEl = $state<HTMLDivElement | null>(null);
@@ -32,6 +33,7 @@
 	);
 
 	async function openSearch() {
+		if (disabled) return;
 		queryBeforeEdit = draft.query;
 		draft.query = cleanMatchSearchTitle(
 			draft.matched?.title ??
@@ -104,6 +106,7 @@
 		variant="secondary"
 		class={`${draft.matched ? '' : 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/15 hover:text-amber-500 '}h-9 max-w-96 justify-start truncate`}
 		onclick={openSearch}
+		{disabled}
 	>
 		{#if draft.searching}
 			<InlineSpinner label="Matching" />
@@ -136,7 +139,7 @@
 						class="h-auto min-h-22 w-full items-start justify-start gap-3 whitespace-normal rounded-sm border-0 border-b border-border/60 bg-transparent p-2 text-left text-foreground shadow-none last:border-b-0"
 						onclick={() => choose(result)}
 					>
-						<span class="h-18 aspect-[2/3] shrink-0 overflow-hidden rounded-sm bg-muted">
+						<span class="h-18 aspect-2/3 shrink-0 overflow-hidden rounded-sm bg-muted">
 							{#if imageUrl(result.posterPath)}
 								<img
 									class="block size-full object-cover"

@@ -41,6 +41,7 @@
 	removingBlacklistId={app.removingBlacklistId}
 	approvingRequestId={app.approvingRequestId}
 	searchingItemId={app.searchingItemId}
+	scanningMediaItemId={app.scanningMediaItemId}
 	refreshingMetadataItemId={app.refreshingMetadataItemId}
 	savingMediaItemOptionsId={app.savingMediaItemOptionsId}
 	grabbingKey={app.grabbingKey}
@@ -59,6 +60,7 @@
 	onApproveMediaRequest={app.approveMediaRequest}
 	onFindReleases={app.findReleases}
 	onAutoSearchMedia={app.autoSearchMedia}
+	onRescanMediaFiles={app.rescanMediaFiles}
 	onSearchMediaSubtitle={app.searchMediaSubtitle}
 	onGrabMediaSubtitle={app.grabMediaSubtitle}
 	onDeleteMediaSubtitle={app.deleteMediaSubtitle}

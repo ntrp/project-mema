@@ -1,24 +1,21 @@
 <script lang="ts">
 	import MediaFileSummary from '$lib/components/app/media/files/MediaFileSummary.svelte';
 	import MediaFileDeleteModal from '$lib/components/app/media/files/MediaFileDeleteModal.svelte';
-	import MediaRenameApplyModal from '$lib/components/app/media/files/MediaRenameApplyModal.svelte';
-	import MediaRenamePreviewPanel from '$lib/components/app/media/files/MediaRenamePreviewPanel.svelte';
+	import MediaFilesHeader from '$lib/components/app/media/files/MediaFilesHeader.svelte';
+	import MediaRenameModal from '$lib/components/app/media/files/MediaRenameModal.svelte';
 	import MediaFileSearchModal from '$lib/components/app/media/files/MediaFileSearchModal.svelte';
 	import SubtitleSearchModal from '$lib/components/app/media/subtitle-search/SubtitleSearchModal.svelte';
 	import MediaRootPanel from '$lib/components/app/media/collection/MediaRootPanel.svelte';
 	import { activityForMovie } from '$lib/components/app/activity/activityQueue';
 	import { mediaFileGroups, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import type { MediaFilesTableProps as Props } from '$lib/components/app/media/file-data/mediaFileComponentTypes';
-	import { applyMediaRename, previewMediaRename } from '$lib/settings/api';
-	import type {
-		MediaItemSubtitleSelectionRequest,
-		MediaRenamePreviewRow
-	} from '$lib/settings/types';
+	import type { MediaItemSubtitleSelectionRequest } from '$lib/settings/types';
 
 	let {
 		item,
 		activities,
 		searchingItemId,
+		scanningMediaItemId,
 		grabbingKey,
 		canManage,
 		libraryFolders,
@@ -26,6 +23,7 @@
 		qualityProfiles,
 		onSaveOptions,
 		onAutoSearch,
+		onRescanMediaFiles,
 		onSearchSubtitle,
 		onGrabSubtitle,
 		onDeleteSubtitle,
@@ -37,14 +35,9 @@
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
+	let renameOpen = $state(false);
 	let subtitleSearch = $state<{ row: MediaFileRow; languageId: string } | undefined>();
-	let previewRows = $state<MediaRenamePreviewRow[]>([]);
-	let previewLoading = $state(false);
-	let previewApplying = $state(false);
-	let previewError = $state<string | undefined>();
-	let renameApplyOpen = $state(false);
 	const groups = $derived(mediaFileGroups(item, qualityProfiles));
-	const safeRenameCount = $derived(previewRows.filter((row) => row.status === 'safe').length);
 	const activityStatus = $derived(
 		item.type === 'movie' ? activityForMovie(activities, item.id) : undefined
 	);
@@ -86,48 +79,21 @@
 		};
 	}
 
-	async function loadRenamePreview() {
-		previewLoading = true;
-		previewError = undefined;
-		try {
-			const preview = await previewMediaRename(item.id);
-			previewRows = preview.rows;
-		} catch (error) {
-			previewError = error instanceof Error ? error.message : 'Could not preview rename';
-		} finally {
-			previewLoading = false;
-		}
-	}
-
-	async function confirmRenameApply() {
-		renameApplyOpen = false;
-		previewApplying = true;
-		previewError = undefined;
-		try {
-			const result = await applyMediaRename(item.id);
-			previewRows = result.rows;
-		} catch (error) {
-			previewError = error instanceof Error ? error.message : 'Could not apply rename';
-		} finally {
-			previewApplying = false;
-		}
+	function renameApplied() {
+		onRescanMediaFiles(item);
 	}
 </script>
 
 <section aria-labelledby="media-files-title">
-	<h2 id="media-files-title" class="m-0 text-3xl font-semibold text-foreground">Files</h2>
+	<MediaFilesHeader
+		{item}
+		{canManage}
+		{scanningMediaItemId}
+		onRename={() => (renameOpen = true)}
+		{onRescanMediaFiles}
+	/>
 	<div class="grid gap-3.5">
 		<MediaRootPanel {item} {libraryFolders} {canManage} {onSaveOptions} />
-		{#if canManage && item.filePaths.length > 0}
-			<MediaRenamePreviewPanel
-				rows={previewRows}
-				loading={previewLoading}
-				applying={previewApplying}
-				errorMessage={previewError}
-				onPreview={loadRenamePreview}
-				onApply={() => (renameApplyOpen = true)}
-			/>
-		{/if}
 		{#each groups as group (group.key)}
 			<div class="grid" aria-label={group.title}>
 				{#each group.rows as row (row.key)}
@@ -175,14 +141,6 @@
 	/>
 {/if}
 
-{#if renameApplyOpen}
-	<MediaRenameApplyModal
-		safeCount={safeRenameCount}
-		onCancel={() => (renameApplyOpen = false)}
-		onConfirm={confirmRenameApply}
-	/>
-{/if}
-
 {#if searchOpen}
 	<MediaFileSearchModal
 		{item}
@@ -193,4 +151,8 @@
 		onGrab={onGrabRelease}
 		onClose={() => (searchOpen = false)}
 	/>
+{/if}
+
+{#if renameOpen}
+	<MediaRenameModal {item} onClose={() => (renameOpen = false)} onApplied={renameApplied} />
 {/if}

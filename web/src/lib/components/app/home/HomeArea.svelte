@@ -30,6 +30,7 @@
 		removingBlacklistId,
 		approvingRequestId,
 		searchingItemId,
+		scanningMediaItemId,
 		refreshingMetadataItemId,
 		savingMediaItemOptionsId,
 		grabbingKey,
@@ -48,6 +49,7 @@
 		onApproveMediaRequest,
 		onFindReleases,
 		onAutoSearchMedia,
+		onRescanMediaFiles,
 		onSearchMediaSubtitle = () => {},
 		onGrabMediaSubtitle = () => {},
 		onDeleteMediaSubtitle = () => {},
@@ -126,6 +128,7 @@
 				requestedItemId={selectedMediaItemId}
 				{activities}
 				{searchingItemId}
+				{scanningMediaItemId}
 				{refreshingMetadataItemId}
 				{savingMediaItemOptionsId}
 				{grabbingKey}
@@ -136,6 +139,7 @@
 				{canManage}
 				actionLabel={canManage ? 'Add' : 'Request'}
 				{onAutoSearchMedia}
+				{onRescanMediaFiles}
 				{onSearchMediaSubtitle}
 				{onGrabMediaSubtitle}
 				{onDeleteMediaSubtitle}

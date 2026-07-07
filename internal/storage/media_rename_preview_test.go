@@ -45,7 +45,7 @@ func TestMediaRenamePreviewExpandsTemplatesAndDetectsConflict(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := filepath.Join(root, "Scenario Movie (2026)", "Scenario Movie (2026).mkv")
+	want := filepath.Join(*item.MediaFolderPath, "Scenario Movie (2026).mkv")
 	if len(preview.Rows) != 1 || preview.Rows[0].Status != "safe" || preview.Rows[0].ProposedPath != want {
 		t.Fatalf("preview = %#v, want %s", preview, want)
 	}
@@ -96,7 +96,7 @@ func TestApplyMediaItemRenameMovesSafeRowsAndRecordsHistory(t *testing.T) {
 	if result.AppliedCount != 1 || result.FailedCount != 0 {
 		t.Fatalf("result = %#v", result)
 	}
-	destination := filepath.Join(root, "Scenario Movie (2026)", "Scenario Movie (2026).mkv")
+	destination := filepath.Join(*item.MediaFolderPath, "Scenario Movie (2026).mkv")
 	if _, err := os.Stat(source); !os.IsNotExist(err) {
 		t.Fatalf("source stat err = %v, want missing", err)
 	}
@@ -138,7 +138,7 @@ func TestApplyMediaItemRenameSkipsConflictRows(t *testing.T) {
 		t.Fatal(err)
 	}
 	source := filepath.Join(*item.MediaFolderPath, "Bad.Name.mkv")
-	destination := filepath.Join(root, "Scenario Movie (2026)", "Scenario Movie (2026).mkv")
+	destination := filepath.Join(*item.MediaFolderPath, "Scenario Movie (2026).mkv")
 	writePreviewFile(t, source)
 	writePreviewFile(t, destination)
 	if err := store.RecordImportedMediaFile(ctx, item, source); err != nil {
@@ -154,6 +154,62 @@ func TestApplyMediaItemRenameSkipsConflictRows(t *testing.T) {
 	}
 	if got := result.Rows[0].Status; got != "skipped" {
 		t.Fatalf("row status = %q", got)
+	}
+}
+
+func TestMediaRenamePreviewRendersQualityFull(t *testing.T) {
+	ctx, store := testDBStore(t)
+	root := t.TempDir()
+	folder, err := store.CreateLibraryFolder(ctx, root, "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.SaveFileNamingSettings(ctx, defaultFileNamingSettingsInput()); err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:            "movie",
+		Title:           "Scenario Movie",
+		Year:            int32Ptr(2026),
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.1080p.WEB-DL.AAC2.0-GRP.mkv")
+	writePreviewFile(t, source)
+	if err := store.RecordImportedMediaFile(ctx, item, source); err != nil {
+		t.Fatal(err)
+	}
+
+	preview, err := store.PreviewMediaItemRename(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := filepath.Join(*item.MediaFolderPath, "Scenario Movie (2026) WEBDL-1080p.mkv")
+	if len(preview.Rows) != 1 || preview.Rows[0].Status != "safe" || preview.Rows[0].ProposedPath != want {
+		t.Fatalf("preview = %#v, want %s", preview, want)
+	}
+}
+
+func TestMediaRenamePreviewUsesCurrentMediaRootWhenTemplateRootDiffers(t *testing.T) {
+	currentRoot := filepath.Join(t.TempDir(), "Current Root")
+	libraryRoot := filepath.Join(t.TempDir(), "Library Root")
+	source := filepath.Join(currentRoot, "Bad.Name.mkv")
+	writePreviewFile(t, source)
+
+	row := mediaRenamePreviewRow(MediaItem{
+		Title:             "Scenario Movie",
+		Type:              "movie",
+		Year:              int32Ptr(2026),
+		LibraryFolderPath: &libraryRoot,
+		MediaFolderPath:   &currentRoot,
+	}, DefaultFileNamingSettings(), source)
+
+	want := filepath.Join(currentRoot, "Scenario Movie (2026).mkv")
+	if row.Status != "safe" || row.ProposedPath != want {
+		t.Fatalf("row = %#v, want %s", row, want)
 	}
 }
 
@@ -197,8 +253,8 @@ func TestApplyMediaItemRenameRollsBackWhenRecordIsStale(t *testing.T) {
 }
 
 func TestMediaRenamePreviewDetectsMissingSource(t *testing.T) {
-	item := MediaItem{Title: "Scenario", Type: "movie", Year: int32Ptr(2026), LibraryFolderPath: stringPtr(t.TempDir())}
-	source := filepath.Join(*item.LibraryFolderPath, "missing.mkv")
+	item := MediaItem{Title: "Scenario", Type: "movie", Year: int32Ptr(2026), MediaFolderPath: stringPtr(t.TempDir())}
+	source := filepath.Join(*item.MediaFolderPath, "missing.mkv")
 
 	row := mediaRenamePreviewRow(item, DefaultFileNamingSettings(), source)
 

@@ -10,9 +10,17 @@ import (
 )
 
 func (s *Service) PersonDetails(ctx context.Context, config Config, personID string) (PersonDetails, error) {
-	if config.Type != "tmdb" {
+	switch config.Type {
+	case "tmdb":
+		return s.personDetailsTMDB(ctx, config, personID)
+	case "tvdb":
+		return s.personDetailsTVDB(ctx, config, personID)
+	default:
 		return PersonDetails{}, ErrUnsupportedProvider
 	}
+}
+
+func (s *Service) personDetailsTMDB(ctx context.Context, config Config, personID string) (PersonDetails, error) {
 	personID = strings.TrimSpace(personID)
 	if personID == "" {
 		return PersonDetails{}, ErrUnsupportedProvider

@@ -65,7 +65,8 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 				metadataProviders: providers,
 				loading: false,
 				onSearchMatch: vi.fn(),
-				onImport: vi.fn()
+				onImport: vi.fn(),
+				onResetImport: vi.fn()
 			}
 		});
 		const row = render(LibraryScanImportRow, {
@@ -77,7 +78,8 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 				metadataProviders: providers,
 				onSearch: vi.fn(),
 				onSelect: vi.fn(),
-				onProviderChange: vi.fn()
+				onProviderChange: vi.fn(),
+				onResetImport: vi.fn()
 			}
 		});
 		const unmatchedRow = render(LibraryScanImportRow, {
@@ -89,7 +91,8 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 				metadataProviders: providers,
 				onSearch: vi.fn(),
 				onSelect: vi.fn(),
-				onProviderChange: vi.fn()
+				onProviderChange: vi.fn(),
+				onResetImport: vi.fn()
 			}
 		});
 

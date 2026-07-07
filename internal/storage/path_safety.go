@@ -15,6 +15,29 @@ func safeAbsRoot(root string) (string, error) {
 	return root, nil
 }
 
+func absoluteCleanPath(path string) (string, error) {
+	path = filepath.Clean(strings.TrimSpace(path))
+	if path == "" || path == "." {
+		return "", ErrInvalidInput
+	}
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return "", ErrInvalidInput
+	}
+	return absolute, nil
+}
+
+func absoluteCleanPathOrClean(path string) string {
+	if strings.TrimSpace(path) == "" {
+		return ""
+	}
+	absolute, err := absoluteCleanPath(path)
+	if err == nil {
+		return absolute
+	}
+	return filepath.Clean(strings.TrimSpace(path))
+}
+
 func safePathUnderRoot(root string, value string, allowRoot bool) (string, error) {
 	root, err := safeAbsRoot(root)
 	if err != nil {

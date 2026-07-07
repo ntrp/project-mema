@@ -61,10 +61,10 @@ func mediaRenameProposedPath(
 	settings FileNamingSettings,
 	currentPath string,
 ) (string, []string, bool) {
-	if item.LibraryFolderPath == nil || strings.TrimSpace(*item.LibraryFolderPath) == "" {
-		return "", []string{"Library root is missing."}, false
+	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
+		return "", []string{"Media root is missing."}, false
 	}
-	root := filepath.Clean(strings.TrimSpace(*item.LibraryFolderPath))
+	root := filepath.Clean(strings.TrimSpace(*item.MediaFolderPath))
 	if item.Type == "serie" {
 		return seriesRenamePath(item, settings, root, currentPath)
 	}
@@ -77,9 +77,9 @@ func movieRenamePath(
 	root string,
 	currentPath string,
 ) (string, []string, bool) {
-	folder := filepath.Join(root, sanitizePathSegment(renderMediaTemplate(settings.MovieFolderFormat, mediaItemRenameInput(item))))
-	file := sanitizePathSegment(renderMediaTemplate(settings.MovieFileFormat, mediaItemRenameInput(item)))
-	return checkedRenamePath(root, folder, file+strings.ToLower(filepath.Ext(currentPath)))
+	input := mediaItemRenameInput(item, currentPath)
+	file := sanitizePathSegment(renderMediaTemplate(settings.MovieFileFormat, input))
+	return checkedRenamePath(root, root, file+strings.ToLower(filepath.Ext(currentPath)))
 }
 
 func seriesRenamePath(
@@ -92,14 +92,19 @@ func seriesRenamePath(
 	if !ok {
 		return "", []string{"Season and episode could not be detected."}, false
 	}
-	input := mediaItemRenameInput(item)
+	input := mediaItemRenameInput(item, currentPath)
 	input.Seasons = []MediaSeason{{SeasonNumber: season, Episodes: []MediaEpisode{{EpisodeNumber: episode}}}}
 	folder := filepath.Join(
 		root,
-		sanitizePathSegment(renderMediaTemplate(settings.SeriesFolderFormat, input)),
 		sanitizePathSegment(renderSeriesTemplate(settings.SeasonFolderFormat, item, season, episode)),
 	)
-	file := sanitizePathSegment(renderSeriesTemplate(settings.SeriesEpisodeFormat, item, season, episode))
+	file := sanitizePathSegment(renderSeriesTemplateWithQuality(
+		settings.SeriesEpisodeFormat,
+		item,
+		season,
+		episode,
+		input.QualityFull,
+	))
 	return checkedRenamePath(root, folder, file+strings.ToLower(filepath.Ext(currentPath)))
 }
 
@@ -111,6 +116,11 @@ func checkedRenamePath(root string, folder string, file string) (string, []strin
 	return proposed, nil, true
 }
 
-func mediaItemRenameInput(item MediaItem) MediaItemInput {
-	return MediaItemInput{Type: item.Type, Title: item.Title, Year: item.Year}
+func mediaItemRenameInput(item MediaItem, currentPath string) MediaItemInput {
+	return MediaItemInput{
+		Type:        item.Type,
+		Title:       item.Title,
+		Year:        item.Year,
+		QualityFull: mediaRenameQualityFull(currentPath),
+	}
 }

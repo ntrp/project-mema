@@ -722,6 +722,9 @@ create unique index if not exists idx_path_mappings_client_path
 alter table app.media_items
     add column if not exists library_folder_id uuid references app.library_folders(id) on delete set null;
 
+create index if not exists idx_media_items_library_folder
+    on app.media_items (library_folder_id);
+
 alter table app.media_items
     add column if not exists series_type text;
 

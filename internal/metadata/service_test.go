@@ -56,7 +56,7 @@ func TestTMDBSeriesDetailsLoadsSeasonEpisodes(t *testing.T) {
 		BaseURL: "https://metadata.test",
 		APIKey:  &apiKey,
 	}, DetailsRequest{
-		MediaType:       "serie",
+		MediaType:  "serie",
 		ExternalID: "123",
 	})
 	if err != nil {

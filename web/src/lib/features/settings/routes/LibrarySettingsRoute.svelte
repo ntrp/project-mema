@@ -27,5 +27,6 @@
 		onDeletePathMapping={app.deletePathMapping}
 		onSearchMatch={app.searchLibraryMatch}
 		onImport={app.importLibraryScanRows}
+		onResetImport={app.resetLibraryScanImport}
 	/>
 </SettingsRouteFrame>

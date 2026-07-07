@@ -6,12 +6,22 @@ import (
 )
 
 func renderSeriesTemplate(template string, item MediaItem, season int32, episode int32) string {
+	return renderSeriesTemplateWithQuality(template, item, season, episode, "")
+}
+
+func renderSeriesTemplateWithQuality(
+	template string,
+	item MediaItem,
+	season int32,
+	episode int32,
+	qualityFull string,
+) string {
 	values := map[string]string{
 		"series_title":  item.Title,
 		"season":        strconv.Itoa(int(season)),
 		"episode":       strconv.Itoa(int(episode)),
 		"episode_title": episodeTitle(item, season, episode),
-		"quality_full":  "",
+		"quality_full":  strings.TrimSpace(qualityFull),
 		"air_date":      episodeAirDate(item, season, episode),
 	}
 	rendered := fileNamingTokenPattern.ReplaceAllStringFunc(template, func(token string) string {

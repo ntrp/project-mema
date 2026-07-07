@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-
 import { crewRolePreviews } from '$lib/components/app/media/people/mediaPeople';
-import { mediaRootPreview } from '$lib/components/app/media/collection/mediaRootPreview';
+import {
+	mediaRootPreview,
+	mediaRootWarning
+} from '$lib/components/app/media/collection/mediaRootPreview';
 import { seasonFileSummary } from '$lib/components/app/media/series/mediaSeasonSummary';
 import {
 	episodeTitle,
@@ -22,6 +24,7 @@ import {
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import type {
 	DownloadActivity,
+	LibraryFolder,
 	MediaItem,
 	MediaMetadataDetails,
 	MediaMetadataEpisode
@@ -141,6 +144,28 @@ describe('media metadata previews (SCN-MEDIA-004)', () => {
 			)
 		).toBe('/movies/Bad -  Title (2026)');
 		expect(mediaRootPreview(item, undefined, undefined)).toBe('-');
+	});
+
+	it('warns when the current media root differs from the templated root', () => {
+		const item = {
+			type: 'movie',
+			title: 'Scenario Movie',
+			year: 2026,
+			mediaFolderPath: '/movies/Legacy Folder'
+		} as MediaItem;
+		const folder = { path: '/movies' } as LibraryFolder;
+		const settings = { movieFolderFormat: '{Movie Title} ({Release Year})' } as never;
+
+		expect(mediaRootWarning(item, folder, settings)).toEqual({
+			expected: '/movies/Scenario Movie (2026)'
+		});
+		expect(
+			mediaRootWarning(
+				{ ...item, mediaFolderPath: '/movies/Scenario Movie (2026)/' },
+				folder,
+				settings
+			)
+		).toBeUndefined();
 	});
 });
 

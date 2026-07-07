@@ -44,6 +44,7 @@ export interface HomeAreaProps {
 	removingBlacklistId?: string;
 	approvingRequestId?: string;
 	searchingItemId?: string;
+	scanningMediaItemId?: string;
 	refreshingMetadataItemId?: string;
 	savingMediaItemOptionsId?: string;
 	grabbingKey?: string;
@@ -62,6 +63,7 @@ export interface HomeAreaProps {
 	onApproveMediaRequest: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
 	onFindReleases: (_item: MediaItem, _query?: string) => void;
 	onAutoSearchMedia: (_item: MediaItem) => void;
+	onRescanMediaFiles: (_item: MediaItem) => void;
 	onSearchMediaSubtitle?: (
 		_item: MediaItem,
 		_request: { languageId?: string; filePath?: string }

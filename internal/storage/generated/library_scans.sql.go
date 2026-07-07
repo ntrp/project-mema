@@ -229,27 +229,45 @@ func (q *Queries) GetLibraryScanItemPath(ctx context.Context, arg GetLibraryScan
 }
 
 const listActiveImportedPathsForLibraryFolder = `-- name: ListActiveImportedPathsForLibraryFolder :many
-select distinct lsi.path
+select distinct on (lsi.path)
+    lsi.path,
+    mi.id as media_item_id,
+    mi.title as matched_title,
+    mi.year as matched_year
 from app.library_scan_items lsi
 join app.library_scans ls on ls.id = lsi.scan_id
+join app.media_items mi on mi.id = lsi.media_item_id
 where ls.library_folder_id = $1
     and lsi.media_item_id is not null
     and lsi.status in ('auto_added', 'manually_added', 'restored')
+order by lsi.path, lsi.updated_at desc
 `
 
-func (q *Queries) ListActiveImportedPathsForLibraryFolder(ctx context.Context, libraryFolderID uuid.UUID) ([]string, error) {
+type ListActiveImportedPathsForLibraryFolderRow struct {
+	Path         string
+	MediaItemID  uuid.UUID
+	MatchedTitle string
+	MatchedYear  pgtype.Int4
+}
+
+func (q *Queries) ListActiveImportedPathsForLibraryFolder(ctx context.Context, libraryFolderID uuid.UUID) ([]ListActiveImportedPathsForLibraryFolderRow, error) {
 	rows, err := q.db.Query(ctx, listActiveImportedPathsForLibraryFolder, libraryFolderID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []string
+	var items []ListActiveImportedPathsForLibraryFolderRow
 	for rows.Next() {
-		var path string
-		if err := rows.Scan(&path); err != nil {
+		var i ListActiveImportedPathsForLibraryFolderRow
+		if err := rows.Scan(
+			&i.Path,
+			&i.MediaItemID,
+			&i.MatchedTitle,
+			&i.MatchedYear,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, path)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -504,6 +522,156 @@ where id = $1
 
 func (q *Queries) RefreshLibraryScanManualCount(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, refreshLibraryScanManualCount, id)
+	return err
+}
+
+const resetLibraryScanItemImport = `-- name: ResetLibraryScanItemImport :one
+with current as (
+    select id,
+        media_item_id as previous_media_item_id,
+        match_source as previous_match_source
+    from app.library_scan_items
+    where app.library_scan_items.scan_id = $1
+        and app.library_scan_items.id = $2
+        and app.library_scan_items.media_item_id is not null
+),
+reset as (
+    update app.library_scan_items as lsi
+    set status = 'pending',
+        imported = false,
+        matched_title = null,
+        matched_year = null,
+        matched_media_kind = null,
+        matched_external_provider = null,
+        matched_external_id = null,
+        match_source = null,
+        selected_metadata_provider_id = null,
+        media_item_id = null,
+        season_id = null,
+        episode_id = null,
+        updated_at = now()
+    from current
+    where lsi.id = current.id
+        and lsi.scan_id = $1
+    returning lsi.id,
+        lsi.scan_id,
+        lsi.path,
+        lsi.file_name,
+        lsi.size_bytes,
+        lsi.detected_title,
+        lsi.detected_year,
+        lsi.detected_media_kind,
+        lsi.season_number,
+        lsi.episode_number,
+        lsi.status,
+        lsi.imported,
+        lsi.matched_title,
+        lsi.matched_year,
+        lsi.matched_media_kind,
+        lsi.matched_external_provider,
+        lsi.matched_external_id,
+        lsi.match_source,
+        lsi.selected_metadata_provider_id,
+        lsi.duplicate_group_id,
+        lsi.duplicate_removal_allowed,
+        lsi.media_item_id,
+        lsi.created_at,
+        lsi.updated_at,
+        current.previous_media_item_id,
+        current.previous_match_source
+)
+select reset.id, reset.scan_id, reset.path, reset.file_name, reset.size_bytes, reset.detected_title, reset.detected_year, reset.detected_media_kind, reset.season_number, reset.episode_number, reset.status, reset.imported, reset.matched_title, reset.matched_year, reset.matched_media_kind, reset.matched_external_provider, reset.matched_external_id, reset.match_source, reset.selected_metadata_provider_id, reset.duplicate_group_id, reset.duplicate_removal_allowed, reset.media_item_id, reset.created_at, reset.updated_at, reset.previous_media_item_id, reset.previous_match_source
+from reset
+`
+
+type ResetLibraryScanItemImportParams struct {
+	ScanID uuid.UUID
+	ID     uuid.UUID
+}
+
+type ResetLibraryScanItemImportRow struct {
+	ID                         uuid.UUID
+	ScanID                     uuid.UUID
+	Path                       string
+	FileName                   string
+	SizeBytes                  int64
+	DetectedTitle              string
+	DetectedYear               pgtype.Int4
+	DetectedMediaKind          string
+	SeasonNumber               pgtype.Int4
+	EpisodeNumber              pgtype.Int4
+	Status                     string
+	Imported                   bool
+	MatchedTitle               pgtype.Text
+	MatchedYear                pgtype.Int4
+	MatchedMediaKind           pgtype.Text
+	MatchedExternalProvider    pgtype.Text
+	MatchedExternalID          pgtype.Text
+	MatchSource                pgtype.Text
+	SelectedMetadataProviderID *uuid.UUID
+	DuplicateGroupID           pgtype.Text
+	DuplicateRemovalAllowed    bool
+	MediaItemID                *uuid.UUID
+	CreatedAt                  time.Time
+	UpdatedAt                  time.Time
+	PreviousMediaItemID        *uuid.UUID
+	PreviousMatchSource        pgtype.Text
+}
+
+func (q *Queries) ResetLibraryScanItemImport(ctx context.Context, arg ResetLibraryScanItemImportParams) (ResetLibraryScanItemImportRow, error) {
+	row := q.db.QueryRow(ctx, resetLibraryScanItemImport, arg.ScanID, arg.ID)
+	var i ResetLibraryScanItemImportRow
+	err := row.Scan(
+		&i.ID,
+		&i.ScanID,
+		&i.Path,
+		&i.FileName,
+		&i.SizeBytes,
+		&i.DetectedTitle,
+		&i.DetectedYear,
+		&i.DetectedMediaKind,
+		&i.SeasonNumber,
+		&i.EpisodeNumber,
+		&i.Status,
+		&i.Imported,
+		&i.MatchedTitle,
+		&i.MatchedYear,
+		&i.MatchedMediaKind,
+		&i.MatchedExternalProvider,
+		&i.MatchedExternalID,
+		&i.MatchSource,
+		&i.SelectedMetadataProviderID,
+		&i.DuplicateGroupID,
+		&i.DuplicateRemovalAllowed,
+		&i.MediaItemID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.PreviousMediaItemID,
+		&i.PreviousMatchSource,
+	)
+	return i, err
+}
+
+const resetLibraryScanItemsForMediaItem = `-- name: ResetLibraryScanItemsForMediaItem :exec
+update app.library_scan_items
+set status = 'pending',
+    imported = false,
+    matched_title = null,
+    matched_year = null,
+    matched_media_kind = null,
+    matched_external_provider = null,
+    matched_external_id = null,
+    match_source = null,
+    selected_metadata_provider_id = null,
+    media_item_id = null,
+    season_id = null,
+    episode_id = null,
+    updated_at = now()
+where media_item_id = $1
+`
+
+func (q *Queries) ResetLibraryScanItemsForMediaItem(ctx context.Context, mediaItemID *uuid.UUID) error {
+	_, err := q.db.Exec(ctx, resetLibraryScanItemsForMediaItem, mediaItemID)
 	return err
 }
 

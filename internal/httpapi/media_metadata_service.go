@@ -225,6 +225,7 @@ func metadataSearchResultResponse(result metadata.SearchResult) MediaSearchResul
 		Year:             result.Year,
 		ExternalProvider: optionalString(result.ExternalProvider),
 		ExternalId:       optionalString(result.ExternalID),
+		ExternalUrl:      result.ExternalURL,
 		Overview:         result.Overview,
 		PosterPath:       result.PosterPath,
 		Popularity:       result.Popularity,
@@ -276,6 +277,7 @@ func mediaItemSearchResultResponse(item storage.MediaItem) MediaSearchResult {
 		Year:             item.Year,
 		ExternalProvider: item.ExternalProvider,
 		ExternalId:       item.ExternalID,
+		ExternalUrl:      mediaItemExternalURL(item),
 		Overview:         item.Overview,
 		PosterPath:       item.PosterPath,
 	}

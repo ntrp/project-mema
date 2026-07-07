@@ -2090,6 +2090,26 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/library/scans/{id}/items/{itemId}/reset': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				itemId: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Reset an imported library scan item without touching files */
+		post: operations['resetLibraryScanItemImport'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/users': {
 		parameters: {
 			query?: never;
@@ -2496,6 +2516,7 @@ export interface components {
 			year?: number;
 			externalProvider?: string;
 			externalId?: string;
+			externalUrl?: string;
 			overview?: string;
 			posterPath?: string;
 			/** Format: double */
@@ -2545,6 +2566,7 @@ export interface components {
 			year?: number;
 			externalProvider: string;
 			externalId: string;
+			externalUrl?: string;
 			overview?: string;
 			posterPath?: string;
 			collectionId?: string;
@@ -2647,6 +2669,7 @@ export interface components {
 			collectionName?: string;
 			backdropPath?: string;
 			metadataStatus?: string;
+			externalUrl?: string;
 			providerMappings?: components['schemas']['MediaProviderMapping'][];
 			aliases?: components['schemas']['MediaItemAlias'][];
 			episodeNumbering?: components['schemas']['MediaEpisodeNumbering'][];
@@ -3082,6 +3105,9 @@ export interface components {
 				| 'applied'
 				| 'failed';
 			messages: string[];
+		};
+		MediaRenameApplyRequest: {
+			currentPaths: string[];
 		};
 		MediaRenameApplyResponse: {
 			rows: components['schemas']['MediaRenamePreviewRow'][];
@@ -4320,6 +4346,12 @@ export interface components {
 		LibraryScanItemMatchResponse: {
 			item: components['schemas']['LibraryScanItem'];
 			mediaItem: components['schemas']['MediaItem'];
+		};
+		LibraryScanItemResetResponse: {
+			scan: components['schemas']['LibraryScan'];
+			item: components['schemas']['LibraryScanItem'];
+			/** Format: uuid */
+			removedMediaItemId?: string;
 		};
 		IntegrationTestResponse: {
 			success: boolean;
@@ -6072,7 +6104,11 @@ export interface operations {
 			};
 			cookie?: never;
 		};
-		requestBody?: never;
+		requestBody?: {
+			content: {
+				'application/json': components['schemas']['MediaRenameApplyRequest'];
+			};
+		};
 		responses: {
 			/** @description Rename apply result rows for the media item */
 			200: {
@@ -8222,6 +8258,32 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['LibraryScanItemMatchResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	resetLibraryScanItemImport: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+				itemId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Imported scan item reset */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryScanItemResetResponse'];
 				};
 			};
 			400: components['responses']['BadRequest'];

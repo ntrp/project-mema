@@ -45,7 +45,7 @@
 								icon="delete"
 								variant="destructive"
 								confirmTitle="Delete library folder"
-								confirmDescription={`Delete library folder "${folder.path}" from settings?`}
+								confirmDescription={`Delete library folder "${folder.path}" from settings and remove detected media, metadata, tracks, and history for that root? Files on disk are not removed.`}
 								confirmLabel="Delete folder"
 								onclick={() => onDelete(folder.id)}
 							/>

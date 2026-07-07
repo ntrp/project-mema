@@ -95,12 +95,18 @@ from app.library_scans
 where id = $1;
 
 -- name: ListActiveImportedPathsForLibraryFolder :many
-select distinct lsi.path
+select distinct on (lsi.path)
+    lsi.path,
+    mi.id as media_item_id,
+    mi.title as matched_title,
+    mi.year as matched_year
 from app.library_scan_items lsi
 join app.library_scans ls on ls.id = lsi.scan_id
+join app.media_items mi on mi.id = lsi.media_item_id
 where ls.library_folder_id = $1
     and lsi.media_item_id is not null
-    and lsi.status in ('auto_added', 'manually_added', 'restored');
+    and lsi.status in ('auto_added', 'manually_added', 'restored')
+order by lsi.path, lsi.updated_at desc;
 
 -- name: GetLibraryScanItemPath :one
 select path
@@ -150,6 +156,81 @@ returning id,
     media_item_id,
     created_at,
     updated_at;
+
+-- name: ResetLibraryScanItemImport :one
+with current as (
+    select id,
+        media_item_id as previous_media_item_id,
+        match_source as previous_match_source
+    from app.library_scan_items
+    where app.library_scan_items.scan_id = sqlc.arg(scan_id)
+        and app.library_scan_items.id = sqlc.arg(id)
+        and app.library_scan_items.media_item_id is not null
+),
+reset as (
+    update app.library_scan_items as lsi
+    set status = 'pending',
+        imported = false,
+        matched_title = null,
+        matched_year = null,
+        matched_media_kind = null,
+        matched_external_provider = null,
+        matched_external_id = null,
+        match_source = null,
+        selected_metadata_provider_id = null,
+        media_item_id = null,
+        season_id = null,
+        episode_id = null,
+        updated_at = now()
+    from current
+    where lsi.id = current.id
+        and lsi.scan_id = sqlc.arg(scan_id)
+    returning lsi.id,
+        lsi.scan_id,
+        lsi.path,
+        lsi.file_name,
+        lsi.size_bytes,
+        lsi.detected_title,
+        lsi.detected_year,
+        lsi.detected_media_kind,
+        lsi.season_number,
+        lsi.episode_number,
+        lsi.status,
+        lsi.imported,
+        lsi.matched_title,
+        lsi.matched_year,
+        lsi.matched_media_kind,
+        lsi.matched_external_provider,
+        lsi.matched_external_id,
+        lsi.match_source,
+        lsi.selected_metadata_provider_id,
+        lsi.duplicate_group_id,
+        lsi.duplicate_removal_allowed,
+        lsi.media_item_id,
+        lsi.created_at,
+        lsi.updated_at,
+        current.previous_media_item_id,
+        current.previous_match_source
+)
+select reset.*
+from reset;
+
+-- name: ResetLibraryScanItemsForMediaItem :exec
+update app.library_scan_items
+set status = 'pending',
+    imported = false,
+    matched_title = null,
+    matched_year = null,
+    matched_media_kind = null,
+    matched_external_provider = null,
+    matched_external_id = null,
+    match_source = null,
+    selected_metadata_provider_id = null,
+    media_item_id = null,
+    season_id = null,
+    episode_id = null,
+    updated_at = now()
+where media_item_id = $1;
 
 -- name: RefreshLibraryScanManualCount :exec
 update app.library_scans

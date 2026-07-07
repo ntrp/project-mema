@@ -78,7 +78,7 @@ func (s *Server) storeLibraryScan(
 	return scan, true
 }
 
-func (s *Server) libraryScanInputs(ctx context.Context, folderPath string, discovered []library.DiscoveredFile, importedPaths map[string]struct{}) []storage.LibraryScanItemInput {
+func (s *Server) libraryScanInputs(ctx context.Context, folderPath string, discovered []library.DiscoveredFile, importedPaths map[string]storage.ActiveImportedPath) []storage.LibraryScanItemInput {
 	inputs := make([]storage.LibraryScanItemInput, 0, len(discovered))
 	for _, item := range discovered {
 		itemPath := libraryScanItemPath(folderPath, item.Path)
@@ -93,14 +93,23 @@ func (s *Server) libraryScanInputs(ctx context.Context, folderPath string, disco
 			EpisodeNumber:     item.EpisodeNumber,
 			SafeMatch:         item.SafeMatch,
 		}
-		if _, ok := importedPaths[itemPath]; ok {
-			input.Imported = true
-		} else if _, ok := importedPaths[item.Path]; ok {
-			input.Imported = true
+		if imported, ok := importedPaths[itemPath]; ok {
+			applyImportedPathMatch(&input, imported)
+		} else if imported, ok := importedPaths[item.Path]; ok {
+			applyImportedPathMatch(&input, imported)
 		}
 		inputs = append(inputs, input)
 	}
 	return inputs
+}
+
+func applyImportedPathMatch(input *storage.LibraryScanItemInput, imported storage.ActiveImportedPath) {
+	input.Imported = true
+	input.MatchedTitle = &imported.MatchedTitle
+	input.MatchedYear = imported.MatchedYear
+	input.MatchedMediaKind = &input.DetectedMediaKind
+	input.MatchSource = &imported.MatchedSource
+	input.MediaItemID = &imported.MediaItemID
 }
 
 func libraryScanItemPath(folderPath string, discoveredPath string) string {

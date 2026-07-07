@@ -60,6 +60,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		ContentKind:         &contentKind,
 		ExternalProvider:    item.ExternalProvider,
 		ExternalId:          item.ExternalID,
+		ExternalUrl:         mediaItemExternalURL(item),
 		Overview:            item.Overview,
 		PosterPath:          item.PosterPath,
 		CollectionId:        item.CollectionID,
@@ -267,9 +268,43 @@ func mediaRelatedResponses(values []storage.MediaRelatedItem) []MediaSearchResul
 			Year:             value.Year,
 			ExternalProvider: &value.ExternalProvider,
 			ExternalId:       &value.ExternalID,
+			ExternalUrl:      value.ExternalURL,
 			Overview:         value.Overview,
 			PosterPath:       value.PosterPath,
 		})
 	}
 	return items
+}
+
+func mediaItemExternalURL(item storage.MediaItem) *string {
+	for _, mapping := range item.ProviderMappings {
+		if !mapping.Canonical || !strings.EqualFold(mapping.EntityType, "media_item") {
+			continue
+		}
+		if value, ok := mapping.Source["externalUrl"].(string); ok && strings.TrimSpace(value) != "" {
+			return optionalString(strings.TrimSpace(value))
+		}
+	}
+	if item.ExternalProvider == nil || item.ExternalID == nil {
+		return nil
+	}
+	externalID := strings.TrimSpace(*item.ExternalID)
+	if externalID == "" {
+		return nil
+	}
+	if strings.EqualFold(*item.ExternalProvider, "tmdb") {
+		path := "movie"
+		if strings.EqualFold(item.Type, "serie") {
+			path = "tv"
+		}
+		return optionalString("https://www.themoviedb.org/" + path + "/" + externalID)
+	}
+	if strings.EqualFold(*item.ExternalProvider, "tvdb") {
+		path := "movie"
+		if strings.EqualFold(item.Type, "serie") {
+			path = "series"
+		}
+		return optionalString("https://thetvdb.com/dereferrer/" + path + "/" + externalID)
+	}
+	return nil
 }

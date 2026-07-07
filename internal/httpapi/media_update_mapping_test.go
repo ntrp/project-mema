@@ -115,6 +115,22 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 	}
 }
 
+func TestSCNMedia001MediaFileProbePathConvertsRelativePaths(t *testing.T) {
+	dir := t.TempDir()
+	t.Chdir(dir)
+
+	got := mediaFileProbePath(filepath.Join("relative", "Movie.mkv"))
+	want := filepath.Join(dir, "relative", "Movie.mkv")
+	if got != want {
+		t.Fatalf("mediaFileProbePath = %q, want %q", got, want)
+	}
+
+	absolute := filepath.Join(dir, "absolute.mkv")
+	if mediaFileProbePath(absolute) != absolute {
+		t.Fatalf("absolute probe path changed")
+	}
+}
+
 func hasOtherFile(
 	files []MediaFileOtherFile,
 	fileType MediaFileOtherFileType,

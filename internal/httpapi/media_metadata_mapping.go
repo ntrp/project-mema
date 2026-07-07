@@ -66,6 +66,7 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 		Year:             details.Year,
 		ExternalProvider: details.ExternalProvider,
 		ExternalId:       details.ExternalID,
+		ExternalUrl:      details.ExternalURL,
 		Overview:         details.Overview,
 		PosterPath:       details.PosterPath,
 		CollectionId:     details.CollectionID,

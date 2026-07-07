@@ -20,10 +20,11 @@
 		sortedScanItems,
 		type MatchDraft
 	} from './libraryScanImport';
+	import { runCheckedScanImport } from './libraryScanTableImportRunner';
 	import {
 		applyScanItemProvider,
 		changeScanItemProvider,
-		importCheckedScanRows,
+		resetScanItemImport,
 		scheduleScanItemSearch,
 		searchPendingScanItems,
 		searchScanItem
@@ -43,7 +44,8 @@
 		metadataProviders,
 		loading,
 		onSearchMatch,
-		onImport
+		onImport,
+		onResetImport
 	}: LibraryScanImportTableProps = $props();
 	let drafts = $state<Record<string, MatchDraft>>({});
 	let showImported = $state(false);
@@ -56,8 +58,10 @@
 	let bulkSeriesType = $state<SeriesType>('standard');
 	let importing = $state(false);
 	let importingItemId = $state('');
+	let resetting = $state({ itemId: '' });
 	let searchTimers: Record<string, ReturnType<typeof globalThis.setTimeout>> = {};
 	let autoSearchStarted: Record<string, boolean> = {};
+	let draftSources: Record<string, string> = {};
 	const searchCache: Record<string, MediaSearchResult[] | undefined> = {};
 	const allRows = $derived(sortedScanItems(scan.items));
 	const rows = $derived(allRows.filter((item) => showImported || !item.imported));
@@ -88,6 +92,12 @@
 			([id, draft]) => draft.removeDuplicate && (!draft.matched || duplicateStates[id]?.duplicate)
 		).length
 	);
+	const importBulkOptions = $derived({
+		qualityProfileId: bulkQualityProfileId,
+		monitorMode: movieMonitorMode,
+		minimumAvailability: movieMinimumAvailability,
+		seriesType: bulkSeriesType
+	});
 	$effect(() => {
 		if (!bulkQualityProfileId && !defaultsApplied.profile && defaultProfileId)
 			bulkQualityProfileId = defaultProfileId;
@@ -97,31 +107,21 @@
 		if (defaultProviderId) defaultsApplied.provider = true;
 	});
 	$effect(() => {
-		ensureScanDrafts(scan.items, drafts, metadataProviders, {
-			qualityProfileId: bulkQualityProfileId,
-			monitorMode: movieMonitorMode,
-			minimumAvailability: movieMinimumAvailability,
-			seriesType: bulkSeriesType
-		});
+		ensureScanDrafts(scan.items, drafts, metadataProviders, importBulkOptions, draftSources);
 	});
 	$effect(() => {
 		searchPendingScanItems({ rows: allRows, drafts, autoSearchStarted, search });
 	});
-	function toggleVisibleRows() {
-		setRowsSelected(importableRows, drafts, !allVisibleChecked);
-	}
-	function scheduleSearch(item: LibraryScanItem) {
+	const toggleVisibleRows = () => setRowsSelected(importableRows, drafts, !allVisibleChecked);
+	const scheduleSearch = (item: LibraryScanItem) =>
 		scheduleScanItemSearch({ item, drafts, searchTimers, search });
-	}
 	async function search(item: LibraryScanItem, auto: boolean) {
 		await searchScanItem({ item, allRows, drafts, searchCache, auto, onSearchMatch });
 	}
-	function changeProvider(item: LibraryScanItem, providerId: string) {
+	const changeProvider = (item: LibraryScanItem, providerId: string) =>
 		changeScanItemProvider({ item, providerId, drafts, search });
-	}
-	function selectResult(item: LibraryScanItem, result: MediaSearchResult) {
+	const selectResult = (item: LibraryScanItem, result: MediaSearchResult) =>
 		applyAutoMatch(item, result, allRows, drafts);
-	}
 	function applyProvider() {
 		applyScanItemProvider({
 			rows: [...checkedRows],
@@ -131,28 +131,20 @@
 		});
 	}
 	async function importChecked() {
-		if (!canImport) return;
-		importing = true;
-		try {
-			await importCheckedScanRows({
-				canImport,
-				checkedRows: [...checkedRows],
-				allRows,
-				drafts,
-				scan,
-				onProgress: (id) => (importingItemId = id),
-				onImport,
-				bulk: {
-					qualityProfileId: bulkQualityProfileId,
-					monitorMode: movieMonitorMode,
-					minimumAvailability: movieMinimumAvailability,
-					seriesType: bulkSeriesType
-				}
-			});
-		} finally {
-			importingItemId = '';
-			importing = false;
-		}
+		await runCheckedScanImport({
+			canImport,
+			checkedRows: [...checkedRows],
+			allRows,
+			drafts,
+			scan,
+			setImporting: (value) => (importing = value),
+			setImportingItem: (id) => (importingItemId = id),
+			onImport,
+			bulk: importBulkOptions
+		});
+	}
+	function resetImport(item: LibraryScanItem) {
+		return resetScanItemImport({ item, drafts, resetting, scan, onResetImport });
 	}
 </script>
 
@@ -169,6 +161,7 @@
 	{qualityProfiles}
 	{metadataProviders}
 	{importingItemId}
+	resettingItemId={resetting.itemId}
 	bind:showImported
 	{allVisibleChecked}
 	importableCount={importableRows.length}
@@ -190,6 +183,7 @@
 	onSearch={scheduleSearch}
 	onSelect={selectResult}
 	onProviderChange={changeProvider}
+	onResetImport={resetImport}
 	onApplyProvider={applyProvider}
 	onApplyQualityProfile={() => applyQualityProfile(checkedRows, drafts, bulkQualityProfileId)}
 	onApplyMovie={() =>

@@ -18,4 +18,5 @@ export interface LibraryScanImportTableProps {
 		_providerId?: string
 	) => Promise<MediaSearchResult[]>;
 	onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
+	onResetImport: (_scan: LibraryScan, _itemId: string) => Promise<void>;
 }

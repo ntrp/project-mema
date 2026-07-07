@@ -1,6 +1,9 @@
 package storage
 
 import (
+	"path/filepath"
+	"strings"
+
 	storagegen "media-manager/internal/storage/generated"
 
 	"github.com/google/uuid"
@@ -82,9 +85,9 @@ func mediaItemFromGetRow(row storagegen.GetMediaItemRow) MediaItem {
 		QualityProfileName:  textPtr(row.QualityProfileName),
 		Status:              row.Status,
 		LibraryFolderID:     row.LibraryFolderID,
-		MediaFolderPath:     textPtr(row.MediaFolderPath),
-		LibraryFolderPath:   emptyStringPtr(row.LibraryFolderPath),
-		FilePaths:           row.FilePaths,
+		MediaFolderPath:     effectiveMediaFolderPath(textPtr(row.MediaFolderPath), row.FilePaths),
+		LibraryFolderPath:   emptyStringPtr(absoluteCleanPathOrClean(row.LibraryFolderPath)),
+		FilePaths:           absoluteCleanPaths(row.FilePaths),
 		Tags:                row.Tags,
 		CreatedAt:           row.CreatedAt,
 		UpdatedAt:           row.UpdatedAt,
@@ -103,6 +106,93 @@ func mediaItemFromGetRow(row storagegen.GetMediaItemRow) MediaItem {
 	scanMediaMetadata(&item.MediaMetadataSnapshot, row.Genres, row.Keywords, row.Facts, row.Seasons, row.CastMembers, row.CrewMembers, row.Recommendations, row.SimilarMedia)
 	item.MetadataFilePaths = collectMetadataFilePaths(item.FilePaths)
 	return item
+}
+
+func effectiveMediaFolderPath(stored *string, filePaths []string) *string {
+	stored = absoluteStringPtr(stored)
+	filePaths = absoluteCleanPaths(filePaths)
+	if stored != nil && mediaRootContainsFiles(*stored, filePaths) {
+		return stored
+	}
+	currentRoot, ok := commonMediaFileRoot(filePaths)
+	if ok {
+		return &currentRoot
+	}
+	return stored
+}
+
+func absoluteStringPtr(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	absolute := absoluteCleanPathOrClean(*value)
+	if strings.TrimSpace(absolute) == "" {
+		return nil
+	}
+	return &absolute
+}
+
+func absoluteCleanPaths(paths []string) []string {
+	cleaned := make([]string, 0, len(paths))
+	for _, path := range paths {
+		if strings.TrimSpace(path) == "" {
+			continue
+		}
+		cleaned = append(cleaned, absoluteCleanPathOrClean(path))
+	}
+	return cleaned
+}
+
+func mediaRootContainsFiles(root string, filePaths []string) bool {
+	root = filepath.Clean(strings.TrimSpace(root))
+	if root == "" || root == "." {
+		return false
+	}
+	hasFile := false
+	for _, path := range filePaths {
+		path = filepath.Clean(strings.TrimSpace(path))
+		if path == "" || path == "." {
+			continue
+		}
+		hasFile = true
+		if !pathWithinOrEqual(root, path) || root == path {
+			return false
+		}
+	}
+	return hasFile
+}
+
+func commonMediaFileRoot(filePaths []string) (string, bool) {
+	root := ""
+	for _, path := range filePaths {
+		path = filepath.Clean(strings.TrimSpace(path))
+		if path == "" || path == "." {
+			continue
+		}
+		dir := filepath.Dir(path)
+		if dir == "." || dir == string(filepath.Separator) {
+			continue
+		}
+		if root == "" {
+			root = dir
+			continue
+		}
+		for root != "" && root != string(filepath.Separator) && !pathWithinOrEqual(root, dir) {
+			root = filepath.Dir(root)
+		}
+	}
+	if root == "" || root == "." || root == string(filepath.Separator) {
+		return "", false
+	}
+	return root, true
+}
+
+func pathWithinOrEqual(root string, target string) bool {
+	rel, err := filepath.Rel(root, target)
+	if err != nil {
+		return false
+	}
+	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))
 }
 
 func emptyStringPtr(value string) *string {

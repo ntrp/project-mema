@@ -89,7 +89,8 @@
 						index > 0 && track.type !== rows[index - 1]?.type && 'border-t-4 border-border',
 						track.missing && 'bg-destructive/10 text-destructive',
 						track.unwanted && 'bg-secondary/40',
-						track.chapterSummary && 'cursor-pointer border-t-4 border-border'
+						track.chapterSummary &&
+							'cursor-pointer border-t-4 border-border [&>td]:border-t-4 [&>td]:border-border'
 					)}
 					role={track.chapterSummary ? 'button' : undefined}
 					tabindex={track.chapterSummary ? 0 : undefined}

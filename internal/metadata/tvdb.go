@@ -52,12 +52,14 @@ func (s *Service) searchTVDB(ctx context.Context, config Config, request SearchR
 		if title == "" {
 			continue
 		}
+		externalID := firstNonEmpty(item.TVDBID, item.ID, item.ObjectID)
 		results = append(results, SearchResult{
 			Title:            title,
 			Type:             mediaType,
 			Year:             yearFromString(item.Year),
 			ExternalProvider: "tvdb",
-			ExternalID:       firstNonEmpty(item.TVDBID, item.ID, item.ObjectID),
+			ExternalID:       externalID,
+			ExternalURL:      optionalString(tvdbPageURL(mediaType, item.Slug, externalID)),
 			Overview:         optionalString(firstNonEmpty(item.Overview, firstString(item.OverviewTranslated))),
 			PosterPath:       optionalString(firstNonEmpty(item.ImageURL, item.Poster, item.Thumbnail)),
 		})

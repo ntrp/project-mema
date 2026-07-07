@@ -63,13 +63,24 @@ function structuredCrewGroups(crew: MediaMetadataPerson[]): MediaPersonGroup[] {
 	for (const person of crew) {
 		const card = personData(person);
 		const role = card.role ?? 'Crew';
-		mapped.set(role, [...(mapped.get(role) ?? []), card]);
+		const people = mapped.get(role) ?? [];
+		if (people.some((existing) => samePerson(existing, card))) {
+			continue;
+		}
+		mapped.set(role, [...people, card]);
 	}
 	const orderedRoles = [
 		...crewRoleLabels,
 		...[...mapped.keys()].filter((role) => !crewRoleLabels.includes(role)).sort()
 	];
 	return orderedRoles.map((title) => ({ title, people: mapped.get(title) ?? [] }));
+}
+
+function samePerson(left: MediaPersonCardData, right: MediaPersonCardData) {
+	if (left.externalProvider && right.externalProvider && left.externalId && right.externalId) {
+		return left.externalProvider === right.externalProvider && left.externalId === right.externalId;
+	}
+	return left.name === right.name;
 }
 
 function factCrewGroups(facts: MediaMetadataFact[]): MediaPersonGroup[] {

@@ -92,6 +92,7 @@ func applyMediaDetails(input storage.MediaItemInput, details metadata.Details) s
 	input.ExternalID = optionalString(details.ExternalID)
 	input.Overview = details.Overview
 	input.PosterPath = details.PosterPath
+	input.ProviderMappings = mediaProviderMappings(details)
 	input.MediaMetadataSnapshot = storage.MediaMetadataSnapshot{
 		CollectionID:     details.CollectionID,
 		CollectionName:   details.CollectionName,
@@ -176,11 +177,30 @@ func mediaRelatedItems(results []metadata.SearchResult) []storage.MediaRelatedIt
 			Year:             result.Year,
 			ExternalProvider: result.ExternalProvider,
 			ExternalID:       result.ExternalID,
+			ExternalURL:      result.ExternalURL,
 			Overview:         result.Overview,
 			PosterPath:       result.PosterPath,
 		})
 	}
 	return items
+}
+
+func mediaProviderMappings(details metadata.Details) []storage.MediaProviderMappingInput {
+	if strings.TrimSpace(details.ExternalProvider) == "" || strings.TrimSpace(details.ExternalID) == "" {
+		return nil
+	}
+	source := map[string]any{"source": "primary_metadata"}
+	if details.ExternalURL != nil && strings.TrimSpace(*details.ExternalURL) != "" {
+		source["externalUrl"] = strings.TrimSpace(*details.ExternalURL)
+	}
+	return []storage.MediaProviderMappingInput{{
+		EntityType:         "media_item",
+		ProviderName:       details.ExternalProvider,
+		ProviderEntityType: details.Type,
+		ExternalID:         details.ExternalID,
+		Canonical:          true,
+		Source:             source,
+	}}
 }
 
 func (s *Server) mediaAddInputs(ctx context.Context, input storage.MediaItemInput) ([]storage.MediaItemInput, error) {

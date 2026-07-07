@@ -71,7 +71,7 @@
 							{/snippet}
 						</SectionHeading>
 						<div class="grid grid-cols-[repeat(auto-fill,minmax(231px,1fr))] gap-4">
-							{#each group.people as person (`${group.title}:${person.name}:${person.role ?? ''}`)}
+							{#each group.people as person, index (`${group.title}:${person.externalProvider ?? ''}:${person.externalId ?? person.name}:${person.role ?? ''}:${index}`)}
 								<MediaPersonCard
 									name={person.name}
 									role={person.role}

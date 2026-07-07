@@ -1833,6 +1833,12 @@ paths:
       summary: Apply safe rename/reorganize paths for media files
       security:
         - sessionCookie: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaRenameApplyRequest"
       responses:
         "200":
           description: Rename apply result rows for the media item
@@ -3795,6 +3801,35 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/library/scans/{id}/items/{itemId}/reset:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: resetLibraryScanItemImport
+      tags:
+        - Settings
+      summary: Reset an imported library scan item without touching files
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Imported scan item reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryScanItemResetResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/users:
     get:
       operationId: listUsers
@@ -4725,6 +4760,8 @@ components:
           type: string
         externalId:
           type: string
+        externalUrl:
+          type: string
         overview:
           type: string
         posterPath:
@@ -4844,6 +4881,8 @@ components:
         externalProvider:
           type: string
         externalId:
+          type: string
+        externalUrl:
           type: string
         overview:
           type: string
@@ -5102,6 +5141,8 @@ components:
             backdropPath:
               type: string
             metadataStatus:
+              type: string
+            externalUrl:
               type: string
             providerMappings:
               type: array
@@ -6205,6 +6246,16 @@ components:
             - applied
             - failed
         messages:
+          type: array
+          items:
+            type: string
+    MediaRenameApplyRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - currentPaths
+      properties:
+        currentPaths:
           type: array
           items:
             type: string
@@ -9577,6 +9628,20 @@ components:
           $ref: "#/components/schemas/LibraryScanItem"
         mediaItem:
           $ref: "#/components/schemas/MediaItem"
+    LibraryScanItemResetResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - scan
+        - item
+      properties:
+        scan:
+          $ref: "#/components/schemas/LibraryScan"
+        item:
+          $ref: "#/components/schemas/LibraryScanItem"
+        removedMediaItemId:
+          type: string
+          format: uuid
     IntegrationTestResponse:
       type: object
       additionalProperties: false

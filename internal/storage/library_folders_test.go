@@ -66,6 +66,26 @@ func TestLibraryFoldersUseGeneratedQueries(t *testing.T) {
 	}
 }
 
+func TestCreateLibraryFolderStoresAbsolutePath(t *testing.T) {
+	ctx, store := testDBStore(t)
+	relativePath := filepath.Join(".data", "relative-library")
+
+	created, err := store.CreateLibraryFolder(ctx, relativePath, "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, err := filepath.Abs(relativePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Path != want {
+		t.Fatalf("created path = %q, want %q", created.Path, want)
+	}
+	if !filepath.IsAbs(created.Path) {
+		t.Fatalf("created path is not absolute: %q", created.Path)
+	}
+}
+
 func libraryFolderListHasID(folders []LibraryFolder, id uuid.UUID) bool {
 	for _, folder := range folders {
 		if folder.ID == id {

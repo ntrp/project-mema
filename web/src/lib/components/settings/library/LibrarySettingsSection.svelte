@@ -48,6 +48,7 @@
 			_providerId?: string
 		) => Promise<MediaSearchResult[]>;
 		onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
+		onResetImport: (_scan: LibraryScan, _itemId: string) => Promise<void>;
 	}
 
 	let {
@@ -69,7 +70,8 @@
 		onSavePathMapping,
 		onDeletePathMapping,
 		onSearchMatch,
-		onImport
+		onImport,
+		onResetImport
 	}: Props = $props();
 
 	let modalOpen = $state(false);
@@ -116,6 +118,7 @@
 					{onDelete}
 					{onSearchMatch}
 					{onImport}
+					{onResetImport}
 				/>
 			</section>
 			<PathMappingSettings

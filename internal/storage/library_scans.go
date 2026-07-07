@@ -12,7 +12,7 @@ import (
 func libraryFolderFromRow(row storagegen.AppLibraryFolder) LibraryFolder {
 	return LibraryFolder{
 		ID:        row.ID,
-		Path:      row.Path,
+		Path:      absoluteCleanPathOrClean(row.Path),
 		Kind:      row.Kind,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
@@ -23,7 +23,7 @@ func libraryScanFromRow(row storagegen.GetLibraryScanRow) LibraryScan {
 	return LibraryScan{
 		ID:               row.ID,
 		FolderID:         row.LibraryFolderID,
-		FolderPath:       row.FolderPath,
+		FolderPath:       absoluteCleanPathOrClean(row.FolderPath),
 		FolderKind:       row.FolderKind,
 		Status:           row.Status,
 		TotalFiles:       row.TotalFiles,
@@ -69,6 +69,23 @@ func libraryScanItemFromListRow(row storagegen.ListLibraryScanItemsRow) LibraryS
 }
 
 func libraryScanItemFromMatchRow(row storagegen.MatchLibraryScanItemRow) LibraryScanItem {
+	return libraryScanItemFromFields(libraryScanItemFields{
+		ID: row.ID, ScanID: row.ScanID, Path: row.Path, FileName: row.FileName,
+		SizeBytes: row.SizeBytes, DetectedTitle: row.DetectedTitle,
+		DetectedYear: row.DetectedYear, DetectedMediaKind: row.DetectedMediaKind,
+		SeasonNumber: row.SeasonNumber, EpisodeNumber: row.EpisodeNumber,
+		Status: row.Status, Imported: row.Imported, MatchedTitle: row.MatchedTitle,
+		MatchedYear: row.MatchedYear, MatchedMediaKind: row.MatchedMediaKind,
+		MatchedExternalProvider: row.MatchedExternalProvider,
+		MatchedExternalID:       row.MatchedExternalID, MatchSource: row.MatchSource,
+		SelectedMetadataProviderID: row.SelectedMetadataProviderID,
+		DuplicateGroupID:           row.DuplicateGroupID,
+		DuplicateRemovalAllowed:    row.DuplicateRemovalAllowed,
+		MediaItemID:                row.MediaItemID, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+	})
+}
+
+func libraryScanItemFromResetRow(row storagegen.ResetLibraryScanItemImportRow) LibraryScanItem {
 	return libraryScanItemFromFields(libraryScanItemFields{
 		ID: row.ID, ScanID: row.ScanID, Path: row.Path, FileName: row.FileName,
 		SizeBytes: row.SizeBytes, DetectedTitle: row.DetectedTitle,

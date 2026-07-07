@@ -171,3 +171,30 @@ export async function importRowsSequentially(input: {
 		);
 	}
 }
+
+export async function resetScanItemImport(input: {
+	item: LibraryScanItem;
+	drafts: Record<string, MatchDraft>;
+	resetting: { itemId: string };
+	scan: LibraryScan;
+	onResetImport: (_scan: LibraryScan, _itemId: string) => Promise<void>;
+}) {
+	const { item, drafts, resetting, scan, onResetImport } = input;
+	if (!item.imported || resetting.itemId) return;
+	const existing = { ...drafts[item.id] };
+	resetting.itemId = item.id;
+	try {
+		await onResetImport(scan, item.id);
+		drafts[item.id] = {
+			...existing,
+			selected: false,
+			matched: undefined,
+			results: [],
+			searching: false,
+			searched: false,
+			removeDuplicate: false
+		};
+	} finally {
+		resetting.itemId = '';
+	}
+}

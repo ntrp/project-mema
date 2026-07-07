@@ -70,6 +70,7 @@ export type LibraryScanItem = components['schemas']['LibraryScanItem'];
 export type LibraryScanItemMatchRequest = components['schemas']['LibraryScanItemMatchRequest'];
 export type LibraryScanImportRequest = components['schemas']['LibraryScanImportRequest'];
 export type LibraryScanImportResponse = components['schemas']['LibraryScanImportResponse'];
+export type LibraryScanItemResetResponse = components['schemas']['LibraryScanItemResetResponse'];
 export type MediaType = components['schemas']['MediaType'];
 export type MediaSearchRequest = components['schemas']['MediaSearchRequest'];
 export type MediaSearchResult = components['schemas']['MediaSearchResult'];

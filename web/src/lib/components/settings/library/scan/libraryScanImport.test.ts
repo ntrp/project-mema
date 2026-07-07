@@ -8,7 +8,9 @@ import {
 import { importRequestForDraft } from '$lib/components/settings/library/scan/libraryScanImportPayloads';
 import {
 	defaultMetadataProviderId,
-	initialMatchDraft
+	ensureScanDrafts,
+	initialMatchDraft,
+	matchFromScanItem
 } from '$lib/components/settings/library/scan/libraryScanDrafts';
 import {
 	applyMovieOptions,
@@ -70,6 +72,77 @@ describe('library scan import payloads', () => {
 		} as const;
 		expect(initialMatchDraft(matchedItem('movie'), [], bulk).monitorMode).toBe('only_media');
 		expect(initialMatchDraft(matchedItem('series'), [], bulk).monitorMode).toBe('all_episodes');
+	});
+
+	it('shows imported scan rows as matched even when rescans only carry media item links', () => {
+		expect(
+			matchFromScanItem({
+				id: 'item-imported',
+				imported: true,
+				mediaItemId: 'media-1',
+				detectedTitle: 'Imported Movie',
+				detectedYear: 2026,
+				detectedMediaKind: 'movie'
+			} as LibraryScanItem)
+		).toMatchObject({
+			id: 'media-1',
+			title: 'Imported Movie',
+			type: 'movie',
+			year: 2026
+		});
+	});
+
+	it('rebuilds a row draft when reset import clears the scan item state', () => {
+		const item = {
+			id: 'item-imported',
+			scanId: 'scan-1',
+			path: '/library/Imported.Movie.2026.mkv',
+			fileName: 'Imported.Movie.2026.mkv',
+			imported: true,
+			status: 'manually_added',
+			mediaItemId: 'media-1',
+			detectedTitle: 'Imported Movie',
+			detectedYear: 2026,
+			detectedMediaKind: 'movie',
+			duplicateRemovalAllowed: false,
+			createdAt: '2026-07-07T00:00:00Z',
+			updatedAt: '2026-07-07T00:00:00Z'
+		} as LibraryScanItem;
+		const drafts: Record<string, MatchDraft> = {};
+		const sources: Record<string, string> = {};
+		const bulk = {
+			qualityProfileId: 'profile-1',
+			monitorMode: 'only_media',
+			minimumAvailability: 'released',
+			seriesType: 'standard'
+		} as const;
+
+		ensureScanDrafts([item], drafts, [], bulk, sources);
+		expect(drafts[item.id].matched).toMatchObject({ id: 'media-1', title: 'Imported Movie' });
+
+		ensureScanDrafts(
+			[
+				{
+					...item,
+					imported: false,
+					status: 'pending',
+					mediaItemId: undefined
+				} as LibraryScanItem
+			],
+			drafts,
+			[],
+			bulk,
+			sources
+		);
+
+		expect(drafts[item.id]).toMatchObject({
+			selected: false,
+			query: 'Imported Movie',
+			searching: false,
+			searched: false,
+			removeDuplicate: false
+		});
+		expect(drafts[item.id].matched).toBeUndefined();
 	});
 
 	it('applies footer movie and series sections only to matched media of that type', () => {

@@ -131,7 +131,7 @@ func renderMediaTemplate(template string, input MediaItemInput) string {
 	}
 	values := map[string]string{
 		"movie_title":  title,
-		"quality_full": "",
+		"quality_full": strings.TrimSpace(input.QualityFull),
 		"release_year": year,
 		"series_title": title,
 		"year":         year,

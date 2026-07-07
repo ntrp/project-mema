@@ -27,6 +27,9 @@ func NewProviderServer() *ProviderServer {
 	mux.HandleFunc("/tmdb/3/tv/top_rated", writeJSON(tmdbSeriesSearch))
 	mux.HandleFunc("/tmdb/3/trending/all/day", writeJSON(tmdbTrendingSearch))
 	mux.HandleFunc("/tmdb/3/collection/123", writeJSON(tmdbMovieCollection))
+	mux.HandleFunc("/tvdb/v4/login", writeJSON(tvdbLogin))
+	mux.HandleFunc("/tvdb/v4/search", writeJSON(tvdbMovieSearch))
+	mux.HandleFunc("/tvdb/v4/movies/900/extended", writeJSON(tvdbMovieDetails))
 	return &ProviderServer{Server: httptest.NewServer(mux)}
 }
 
@@ -185,4 +188,62 @@ const tmdbMovieCollection = `{
       "overview": "A realistic local metadata result."
     }
   ]
+}`
+
+const tvdbLogin = `{
+  "status": "success",
+  "data": {
+    "token": "scenario-tvdb-token"
+  }
+}`
+
+const tvdbMovieSearch = `{
+  "status": "success",
+  "data": [
+    {
+      "id": "search-900",
+      "tvdb_id": "900",
+      "type": "movie",
+      "name": "Example TVDB Movie",
+      "year": "2026",
+      "overview": "A realistic TVDB metadata result.",
+      "image_url": "/tvdb-movie.jpg"
+    }
+  ]
+}`
+
+const tvdbMovieDetails = `{
+  "status": "success",
+  "data": {
+    "id": 900,
+    "name": "Example TVDB Movie",
+    "year": "2026",
+    "overview": "A realistic TVDB metadata detail response.",
+    "image": "/tvdb-movie.jpg",
+    "first_release": "2026-04-12",
+    "runtime": 101,
+    "status": { "name": "Released" },
+    "originalLanguage": "eng",
+    "score": 7.4,
+    "boxOffice": "533300000.00",
+    "budget": "120000000.00",
+    "artworks": [
+      { "type": 15, "image": "/tvdb-backdrop.jpg", "width": 1920, "height": 1080, "score": 50 }
+    ],
+    "production_countries": [
+      { "country": "usa", "name": "United States" }
+    ],
+    "genres": [
+      { "name": "Adventure" }
+    ],
+    "characters": [
+      {
+        "peopleId": 4001,
+        "personName": "Example TVDB Actor",
+        "name": "Lead",
+        "peopleType": "Actor",
+        "image": "/tvdb-actor.jpg"
+      }
+    ]
+  }
 }`

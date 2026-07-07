@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	storagegen "media-manager/internal/storage/generated"
 
@@ -12,6 +13,14 @@ import (
 )
 
 func (s *SettingsStore) ApplyMediaItemRename(ctx context.Context, id uuid.UUID) (MediaRenameApplyResult, error) {
+	return s.ApplySelectedMediaItemRename(ctx, id, nil)
+}
+
+func (s *SettingsStore) ApplySelectedMediaItemRename(
+	ctx context.Context,
+	id uuid.UUID,
+	currentPaths []string,
+) (MediaRenameApplyResult, error) {
 	item, err := s.GetMediaItem(ctx, id)
 	if err != nil {
 		return MediaRenameApplyResult{}, err
@@ -20,9 +29,10 @@ func (s *SettingsStore) ApplyMediaItemRename(ctx context.Context, id uuid.UUID) 
 	if err != nil {
 		return MediaRenameApplyResult{}, err
 	}
+	selected := renamePathSelection(currentPaths)
 	result := MediaRenameApplyResult{Rows: make([]MediaRenamePreviewRow, 0, len(preview.Rows))}
 	for _, row := range preview.Rows {
-		applied := s.applyMediaRenameRow(ctx, item, row)
+		applied := s.applySelectedMediaRenameRow(ctx, item, row, selected)
 		result.Rows = append(result.Rows, applied)
 		switch applied.Status {
 		case "applied":
@@ -34,6 +44,33 @@ func (s *SettingsStore) ApplyMediaItemRename(ctx context.Context, id uuid.UUID) 
 		}
 	}
 	return result, nil
+}
+
+func (s *SettingsStore) applySelectedMediaRenameRow(
+	ctx context.Context,
+	item MediaItem,
+	row MediaRenamePreviewRow,
+	selected map[string]struct{},
+) MediaRenamePreviewRow {
+	if selected != nil {
+		if _, ok := selected[row.CurrentPath]; !ok {
+			row.Status = "skipped"
+			row.Messages = append(row.Messages, "Skipped because it was not selected.")
+			return row
+		}
+	}
+	return s.applyMediaRenameRow(ctx, item, row)
+}
+
+func renamePathSelection(paths []string) map[string]struct{} {
+	if paths == nil {
+		return nil
+	}
+	selected := make(map[string]struct{}, len(paths))
+	for _, path := range paths {
+		selected[path] = struct{}{}
+	}
+	return selected
 }
 
 func (s *SettingsStore) applyMediaRenameRow(ctx context.Context, item MediaItem, row MediaRenamePreviewRow) MediaRenamePreviewRow {
@@ -69,13 +106,13 @@ func (s *SettingsStore) applyMediaRenameRow(ctx context.Context, item MediaItem,
 }
 
 func validateRenameApplyPaths(item MediaItem, row MediaRenamePreviewRow) error {
-	if item.MediaFolderPath == nil || item.LibraryFolderPath == nil {
+	if item.MediaFolderPath == nil {
 		return ErrInvalidInput
 	}
 	if _, err := safePathUnderRoot(*item.MediaFolderPath, row.CurrentPath, false); err != nil {
 		return err
 	}
-	if _, err := safePathUnderRoot(*item.LibraryFolderPath, row.ProposedPath, false); err != nil {
+	if _, err := safePathUnderRoot(*item.MediaFolderPath, row.ProposedPath, false); err != nil {
 		return err
 	}
 	return nil
@@ -100,6 +137,12 @@ func (s *SettingsStore) commitAppliedRename(ctx context.Context, mediaItemID uui
 		return err
 	}
 	if updated == 0 {
+		updated, err = renameRelativeMediaFileRecord(ctx, queries, mediaItemID, source, destination)
+		if err != nil {
+			return err
+		}
+	}
+	if updated == 0 {
 		return ErrInvalidInput
 	}
 	if _, err := createMediaFileHistory(ctx, tx, MediaFileHistoryInput{
@@ -117,6 +160,33 @@ func (s *SettingsStore) commitAppliedRename(ctx context.Context, mediaItemID uui
 		return err
 	}
 	return tx.Commit(ctx)
+}
+
+func renameRelativeMediaFileRecord(
+	ctx context.Context,
+	queries *storagegen.Queries,
+	mediaItemID uuid.UUID,
+	source string,
+	destination string,
+) (int64, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return 0, nil
+	}
+	relativeSource, err := filepath.Rel(cwd, source)
+	if err != nil || relativeSource == "." || strings.HasPrefix(relativeSource, ".."+string(filepath.Separator)) {
+		return 0, nil
+	}
+	relativeDestination, err := filepath.Rel(cwd, destination)
+	if err != nil || relativeDestination == "." || strings.HasPrefix(relativeDestination, ".."+string(filepath.Separator)) {
+		return 0, nil
+	}
+	return queries.RenameMediaFileRecord(ctx, storagegen.RenameMediaFileRecordParams{
+		MediaItemID:     &mediaItemID,
+		SourcePath:      relativeSource,
+		DestinationPath: relativeDestination,
+		FileName:        filepath.Base(destination),
+	})
 }
 
 func failedRenameRow(ctx context.Context, s *SettingsStore, mediaItemID uuid.UUID, row MediaRenamePreviewRow, err error) MediaRenamePreviewRow {

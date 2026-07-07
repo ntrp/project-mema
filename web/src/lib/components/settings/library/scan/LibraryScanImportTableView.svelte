@@ -29,6 +29,7 @@
 		qualityProfiles: QualityProfileOption[];
 		metadataProviders: MetadataProvider[];
 		importingItemId: string;
+		resettingItemId: string;
 		showImported: boolean;
 		allVisibleChecked: boolean;
 		importableCount: number;
@@ -50,6 +51,7 @@
 		onSearch: (_item: LibraryScanItem) => void;
 		onSelect: (_item: LibraryScanItem, _result: MediaSearchResult) => void;
 		onProviderChange: (_item: LibraryScanItem, _providerId: string) => void;
+		onResetImport: (_item: LibraryScanItem) => void | Promise<void>;
 		onApplyProvider: () => void;
 		onApplyQualityProfile: () => void;
 		onApplyMovie: () => void;
@@ -70,6 +72,7 @@
 		qualityProfiles,
 		metadataProviders,
 		importingItemId,
+		resettingItemId,
 		showImported = $bindable(),
 		allVisibleChecked,
 		importableCount,
@@ -91,6 +94,7 @@
 		onSearch,
 		onSelect,
 		onProviderChange,
+		onResetImport,
 		onApplyProvider,
 		onApplyQualityProfile,
 		onApplyMovie,
@@ -128,9 +132,11 @@
 			{qualityProfiles}
 			{metadataProviders}
 			{importingItemId}
+			{resettingItemId}
 			{onSearch}
 			{onSelect}
 			{onProviderChange}
+			{onResetImport}
 		/>
 		<LibraryScanImportFooter
 			{checkedRowsMatched}

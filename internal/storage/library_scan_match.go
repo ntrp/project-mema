@@ -18,6 +18,45 @@ func (s *SettingsStore) ImportLibraryScanItem(ctx context.Context, scanID uuid.U
 	return s.matchLibraryScanItem(ctx, scanID, itemID, input, true)
 }
 
+func (s *SettingsStore) ResetLibraryScanItemImport(ctx context.Context, scanID uuid.UUID, itemID uuid.UUID) (LibraryScanItemResetResult, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return LibraryScanItemResetResult{}, err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	queries := storagegen.New(tx)
+	row, err := queries.ResetLibraryScanItemImport(ctx, storagegen.ResetLibraryScanItemImportParams{
+		ScanID: scanID,
+		ID:     itemID,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return LibraryScanItemResetResult{}, ErrNotFound
+	}
+	if err != nil {
+		return LibraryScanItemResetResult{}, err
+	}
+	result := LibraryScanItemResetResult{Item: libraryScanItemFromResetRow(row)}
+	if row.PreviousMediaItemID != nil {
+		if err := queries.ResetLibraryScanItemsForMediaItem(ctx, row.PreviousMediaItemID); err != nil {
+			return LibraryScanItemResetResult{}, err
+		}
+		if _, err := queries.DeleteMediaItemRecord(ctx, *row.PreviousMediaItemID); err != nil {
+			return LibraryScanItemResetResult{}, err
+		}
+		result.RemovedMediaItemID = row.PreviousMediaItemID
+	}
+	if err := queries.RefreshLibraryScanManualCount(ctx, scanID); err != nil {
+		return LibraryScanItemResetResult{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return LibraryScanItemResetResult{}, err
+	}
+	return result, nil
+}
+
 func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UUID, itemID uuid.UUID, input LibraryMatchInput, imported bool) (LibraryScanItem, MediaItem, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -80,7 +119,15 @@ func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UU
 		return LibraryScanItem{}, MediaItem{}, err
 	}
 	if imported {
-		if err := recordImportedFileProvenance(ctx, tx, item.ID, "", itemPath, "libraryScanImport"); err != nil {
+		if err := recordImportedFileProvenanceWithOriginalName(
+			ctx,
+			tx,
+			item.ID,
+			"",
+			itemPath,
+			"libraryScanImport",
+			updated.FileName,
+		); err != nil {
 			return LibraryScanItem{}, MediaItem{}, err
 		}
 		if err := recordImportedFileSidecars(ctx, tx, item.ID, itemPath, seasonID, episodeID, item.SubtitleMode); err != nil {
