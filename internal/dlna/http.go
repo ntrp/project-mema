@@ -11,7 +11,7 @@ import (
 
 func (m *Manager) Handler() http.Handler {
 	mux := http.NewServeMux()
-	dispatcher := SOAPDispatcher()
+	dispatcher := m.SOAPDispatcher()
 	for _, prefix := range []string{"", "/dlna"} {
 		mux.HandleFunc(prefix+"/rootDesc.xml", m.rootDescription)
 		mux.HandleFunc(prefix+"/contentDirectory.xml", serveXML(ContentDirectorySCPDXML))

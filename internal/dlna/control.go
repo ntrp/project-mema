@@ -2,22 +2,27 @@ package dlna
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
+	"media-manager/internal/dlna/content"
 	"media-manager/internal/dlna/soap"
 	"media-manager/internal/dlna/ssdp"
+	"media-manager/internal/storage"
 )
 
-func SOAPDispatcher() *soap.Dispatcher {
+func (m *Manager) SOAPDispatcher() *soap.Dispatcher {
 	dispatcher := soap.NewDispatcher()
+	tree := m.contentTree()
 	for _, prefix := range []string{"", "/dlna"} {
-		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions())
+		dispatcher.Register(prefix+"/control/content-directory", ssdp.ContentDir, contentDirectoryActions(tree))
 		dispatcher.Register(prefix+"/control/connection-manager", ssdp.Connection, connectionManagerActions())
 		dispatcher.Register(prefix+"/control/media-receiver-registrar", "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", registrarActions())
 	}
 	return dispatcher
 }
 
-func contentDirectoryActions() map[string]soap.HandlerFunc {
+func contentDirectoryActions(tree *content.Tree) map[string]soap.HandlerFunc {
 	return map[string]soap.HandlerFunc{
 		"GetSearchCapabilities": func(ctx context.Context, args map[string]string) (map[string]string, error) {
 			return map[string]string{"SearchCaps": "dc:title,upnp:class,upnp:genre,dc:creator"}, nil
@@ -29,12 +34,45 @@ func contentDirectoryActions() map[string]soap.HandlerFunc {
 			return map[string]string{"Id": "0"}, nil
 		},
 		"Browse": func(ctx context.Context, args map[string]string) (map[string]string, error) {
-			return nil, soap.Error{Code: 501, Description: "Action Failed"}
+			request, err := content.ParseBrowseRequest(args)
+			if err != nil {
+				return nil, soap.InvalidArgs(err.Error())
+			}
+			response, err := tree.Browse(ctx, request)
+			if errors.Is(err, content.ErrObjectNotFound) {
+				return nil, soap.Error{Code: 701, Description: "No Such Object"}
+			}
+			if err != nil {
+				return nil, soap.InvalidArgs(err.Error())
+			}
+			payload, err := content.RenderDIDL(response.Objects, nil)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]string{
+				"Result":         string(payload),
+				"NumberReturned": strconv.Itoa(response.NumberReturned),
+				"TotalMatches":   strconv.Itoa(response.TotalMatches),
+				"UpdateID":       strconv.Itoa(response.UpdateID),
+			}, nil
 		},
 		"Search": func(ctx context.Context, args map[string]string) (map[string]string, error) {
 			return nil, soap.Error{Code: 501, Description: "Action Failed"}
 		},
 	}
+}
+
+func (m *Manager) contentTree() *content.Tree {
+	if m.store == nil {
+		return content.NewTree(emptyLibrarySource{})
+	}
+	return content.NewTree(m.store)
+}
+
+type emptyLibrarySource struct{}
+
+func (emptyLibrarySource) ListMediaItems(context.Context) ([]storage.MediaItem, error) {
+	return []storage.MediaItem{}, nil
 }
 
 func connectionManagerActions() map[string]soap.HandlerFunc {
