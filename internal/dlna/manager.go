@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/uuid"
 	"media-manager/internal/dlna/ssdp"
 	"media-manager/internal/storage"
 )
@@ -23,7 +22,6 @@ type Manager struct {
 	store     *storage.SettingsStore
 	baseURL   string
 	httpPort  string
-	uuid      string
 	startSSDP func(context.Context, ssdp.Config) (ssdpRuntime, error)
 	ssdp      ssdpRuntime
 	mu        sync.Mutex
@@ -35,7 +33,6 @@ func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
 		store:     store,
 		baseURL:   strings.TrimRight(baseURL, "/"),
 		httpPort:  portFromBaseURL(baseURL),
-		uuid:      uuid.NewString(),
 		startSSDP: startSSDPRuntime,
 	}
 }
@@ -62,7 +59,7 @@ func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettin
 		HTTPPort:        m.httpPort,
 		Interfaces:      settings.Interfaces,
 		AnnounceSeconds: settings.AnnounceIntervalSeconds,
-		UUID:            m.uuid,
+		UUID:            deviceUUID(settings),
 	})
 	if err != nil {
 		message := err.Error()
@@ -72,6 +69,13 @@ func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettin
 	m.ssdp = runtime
 	m.status = m.statusForSettings(settings, runtime.Interfaces())
 	return nil
+}
+
+func deviceUUID(settings storage.DLNASettings) string {
+	if strings.TrimSpace(settings.DeviceUUID) != "" {
+		return settings.DeviceUUID
+	}
+	return "00000000-0000-4000-8000-000000000001"
 }
 
 func (m *Manager) Stop(ctx context.Context) error {

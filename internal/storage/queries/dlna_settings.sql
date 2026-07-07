@@ -9,9 +9,10 @@ insert into app.dlna_settings (
     transcode_enabled,
     thumbnails_enabled,
     subtitles_enabled,
-    default_renderer_profile
+    default_renderer_profile,
+    device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 on conflict (id) do update set id = excluded.id
 returning
     enabled,
@@ -23,6 +24,7 @@ returning
     thumbnails_enabled,
     subtitles_enabled,
     default_renderer_profile,
+    device_uuid,
     created_at,
     updated_at;
 
@@ -37,9 +39,10 @@ insert into app.dlna_settings (
     transcode_enabled,
     thumbnails_enabled,
     subtitles_enabled,
-    default_renderer_profile
+    default_renderer_profile,
+    device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 on conflict (id) do update
 set enabled = excluded.enabled,
     friendly_name = excluded.friendly_name,
@@ -61,5 +64,6 @@ returning
     thumbnails_enabled,
     subtitles_enabled,
     default_renderer_profile,
+    device_uuid,
     created_at,
     updated_at;

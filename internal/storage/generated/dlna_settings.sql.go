@@ -21,9 +21,10 @@ insert into app.dlna_settings (
     transcode_enabled,
     thumbnails_enabled,
     subtitles_enabled,
-    default_renderer_profile
+    default_renderer_profile,
+    device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 on conflict (id) do update set id = excluded.id
 returning
     enabled,
@@ -35,6 +36,7 @@ returning
     thumbnails_enabled,
     subtitles_enabled,
     default_renderer_profile,
+    device_uuid,
     created_at,
     updated_at
 `
@@ -49,6 +51,7 @@ type GetDLNASettingsParams struct {
 	ThumbnailsEnabled       bool
 	SubtitlesEnabled        bool
 	DefaultRendererProfile  string
+	DeviceUuid              string
 }
 
 type GetDLNASettingsRow struct {
@@ -61,6 +64,7 @@ type GetDLNASettingsRow struct {
 	ThumbnailsEnabled       bool
 	SubtitlesEnabled        bool
 	DefaultRendererProfile  string
+	DeviceUuid              string
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 }
@@ -76,6 +80,7 @@ func (q *Queries) GetDLNASettings(ctx context.Context, arg GetDLNASettingsParams
 		arg.ThumbnailsEnabled,
 		arg.SubtitlesEnabled,
 		arg.DefaultRendererProfile,
+		arg.DeviceUuid,
 	)
 	var i GetDLNASettingsRow
 	err := row.Scan(
@@ -88,6 +93,7 @@ func (q *Queries) GetDLNASettings(ctx context.Context, arg GetDLNASettingsParams
 		&i.ThumbnailsEnabled,
 		&i.SubtitlesEnabled,
 		&i.DefaultRendererProfile,
+		&i.DeviceUuid,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -105,9 +111,10 @@ insert into app.dlna_settings (
     transcode_enabled,
     thumbnails_enabled,
     subtitles_enabled,
-    default_renderer_profile
+    default_renderer_profile,
+    device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 on conflict (id) do update
 set enabled = excluded.enabled,
     friendly_name = excluded.friendly_name,
@@ -129,6 +136,7 @@ returning
     thumbnails_enabled,
     subtitles_enabled,
     default_renderer_profile,
+    device_uuid,
     created_at,
     updated_at
 `
@@ -143,6 +151,7 @@ type UpdateDLNASettingsParams struct {
 	ThumbnailsEnabled       bool
 	SubtitlesEnabled        bool
 	DefaultRendererProfile  string
+	DeviceUuid              string
 }
 
 type UpdateDLNASettingsRow struct {
@@ -155,6 +164,7 @@ type UpdateDLNASettingsRow struct {
 	ThumbnailsEnabled       bool
 	SubtitlesEnabled        bool
 	DefaultRendererProfile  string
+	DeviceUuid              string
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 }
@@ -170,6 +180,7 @@ func (q *Queries) UpdateDLNASettings(ctx context.Context, arg UpdateDLNASettings
 		arg.ThumbnailsEnabled,
 		arg.SubtitlesEnabled,
 		arg.DefaultRendererProfile,
+		arg.DeviceUuid,
 	)
 	var i UpdateDLNASettingsRow
 	err := row.Scan(
@@ -182,6 +193,7 @@ func (q *Queries) UpdateDLNASettings(ctx context.Context, arg UpdateDLNASettings
 		&i.ThumbnailsEnabled,
 		&i.SubtitlesEnabled,
 		&i.DefaultRendererProfile,
+		&i.DeviceUuid,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

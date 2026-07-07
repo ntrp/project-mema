@@ -136,6 +136,7 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 
 	router := chi.NewRouter()
 	router.Mount("/api", apiRouter)
+	router.Mount("/dlna", dlnaManager.Handler())
 	router.Handle("/*", web.StaticHandler(cfg.WebDir))
 
 	return &http.Server{

@@ -44,6 +44,7 @@ type AppDlnaSetting struct {
 	ThumbnailsEnabled       bool
 	SubtitlesEnabled        bool
 	DefaultRendererProfile  string
+	DeviceUuid              string
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 }

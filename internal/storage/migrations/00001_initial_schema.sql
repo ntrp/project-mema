@@ -392,35 +392,10 @@ create table if not exists app.dlna_settings (
     thumbnails_enabled boolean not null default true,
     subtitles_enabled boolean not null default true,
     default_renderer_profile text not null default 'generic',
+    device_uuid text not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
-
-insert into app.dlna_settings (
-    id,
-    enabled,
-    friendly_name,
-    interfaces,
-    allowed_cidrs,
-    announce_interval_seconds,
-    transcode_enabled,
-    thumbnails_enabled,
-    subtitles_enabled,
-    default_renderer_profile
-)
-values (
-    true,
-    false,
-    'Mema',
-    '{}',
-    array['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '127.0.0.0/8', '::1/128', 'fc00::/7', 'fe80::/10'],
-    1800,
-    true,
-    true,
-    true,
-    'generic'
-)
-on conflict (id) do nothing;
 
 create table if not exists app.media_items (
     id uuid primary key,

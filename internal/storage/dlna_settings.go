@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	storagegen "media-manager/internal/storage/generated"
 )
 
@@ -35,6 +36,7 @@ type DLNASettings struct {
 	ThumbnailsEnabled       bool
 	SubtitlesEnabled        bool
 	DefaultRendererProfile  string
+	DeviceUUID              string
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
 }
@@ -74,6 +76,7 @@ func (s *SettingsStore) UpdateDLNASettings(ctx context.Context, input DLNASettin
 		ThumbnailsEnabled:       input.ThumbnailsEnabled,
 		SubtitlesEnabled:        input.SubtitlesEnabled,
 		DefaultRendererProfile:  input.DefaultRendererProfile,
+		DeviceUuid:              uuid.NewString(),
 	})
 	if err != nil {
 		return DLNASettings{}, err
@@ -92,6 +95,7 @@ func dlnaDefaultParams() storagegen.GetDLNASettingsParams {
 		ThumbnailsEnabled:       true,
 		SubtitlesEnabled:        true,
 		DefaultRendererProfile:  DefaultDLNARendererProfile,
+		DeviceUuid:              uuid.NewString(),
 	}
 }
 
@@ -163,6 +167,7 @@ func dlnaSettingsFromGetRow(row storagegen.GetDLNASettingsRow) DLNASettings {
 		ThumbnailsEnabled:       row.ThumbnailsEnabled,
 		SubtitlesEnabled:        row.SubtitlesEnabled,
 		DefaultRendererProfile:  row.DefaultRendererProfile,
+		DeviceUUID:              row.DeviceUuid,
 		CreatedAt:               row.CreatedAt,
 		UpdatedAt:               row.UpdatedAt,
 	}
@@ -179,6 +184,7 @@ func dlnaSettingsFromUpdateRow(row storagegen.UpdateDLNASettingsRow) DLNASetting
 		ThumbnailsEnabled:       row.ThumbnailsEnabled,
 		SubtitlesEnabled:        row.SubtitlesEnabled,
 		DefaultRendererProfile:  row.DefaultRendererProfile,
+		DeviceUUID:              row.DeviceUuid,
 		CreatedAt:               row.CreatedAt,
 		UpdatedAt:               row.UpdatedAt,
 	}
