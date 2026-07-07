@@ -2,10 +2,13 @@ package dlna
 
 import (
 	"context"
-	"fmt"
 	"net"
+	"net/url"
+	"strings"
 	"sync"
 
+	"github.com/google/uuid"
+	"media-manager/internal/dlna/ssdp"
 	"media-manager/internal/storage"
 )
 
@@ -17,14 +20,24 @@ type Status struct {
 }
 
 type Manager struct {
-	store   *storage.SettingsStore
-	baseURL string
-	mu      sync.Mutex
-	status  Status
+	store     *storage.SettingsStore
+	baseURL   string
+	httpPort  string
+	uuid      string
+	startSSDP func(context.Context, ssdp.Config) (ssdpRuntime, error)
+	ssdp      ssdpRuntime
+	mu        sync.Mutex
+	status    Status
 }
 
 func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
-	return &Manager{store: store, baseURL: baseURL}
+	return &Manager{
+		store:     store,
+		baseURL:   strings.TrimRight(baseURL, "/"),
+		httpPort:  portFromBaseURL(baseURL),
+		uuid:      uuid.NewString(),
+		startSSDP: startSSDPRuntime,
+	}
 }
 
 func (m *Manager) Start(ctx context.Context) error {
@@ -39,23 +52,32 @@ func (m *Manager) Start(ctx context.Context) error {
 func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettings) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.stopSSDP(ctx)
 	if !settings.Enabled {
 		m.status = Status{}
 		return nil
 	}
-	status, err := m.statusForSettings(settings)
+	runtime, err := m.startSSDP(ctx, ssdp.Config{
+		FriendlyName:    settings.FriendlyName,
+		HTTPPort:        m.httpPort,
+		Interfaces:      settings.Interfaces,
+		AnnounceSeconds: settings.AnnounceIntervalSeconds,
+		UUID:            m.uuid,
+	})
 	if err != nil {
 		message := err.Error()
 		m.status = Status{LastError: &message}
 		return err
 	}
-	m.status = status
+	m.ssdp = runtime
+	m.status = m.statusForSettings(settings, runtime.Interfaces())
 	return nil
 }
 
 func (m *Manager) Stop(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.stopSSDP(ctx)
 	m.status = Status{}
 	return nil
 }
@@ -69,42 +91,30 @@ func (m *Manager) Status() Status {
 	return status
 }
 
-func (m *Manager) statusForSettings(settings storage.DLNASettings) (Status, error) {
+func (m *Manager) statusForSettings(settings storage.DLNASettings, ifaces []ssdp.Interface) Status {
 	names := settings.Interfaces
 	if len(names) == 0 {
-		discovered, err := activeInterfaceNames()
-		if err != nil {
-			return Status{}, err
+		names = make([]string, 0, len(ifaces))
+		for _, item := range ifaces {
+			names = append(names, item.Name)
 		}
-		names = discovered
 	}
-	urls := []string{}
-	if m.baseURL != "" {
+	urls := make([]string, 0, len(ifaces))
+	for _, item := range ifaces {
+		urls = append(urls, item.Location)
+	}
+	if len(urls) == 0 && m.baseURL != "" {
 		urls = append(urls, m.baseURL+"/dlna/rootDesc.xml")
 	}
-	return Status{
-		Running:         true,
-		BoundInterfaces: append([]string{}, names...),
-		AdvertisedURLs:  urls,
-	}, nil
+	return Status{Running: true, BoundInterfaces: append([]string{}, names...), AdvertisedURLs: urls}
 }
 
-func activeInterfaceNames() ([]string, error) {
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return nil, fmt.Errorf("network interfaces unavailable: %w", err)
+func (m *Manager) stopSSDP(ctx context.Context) {
+	if m.ssdp == nil {
+		return
 	}
-	names := []string{}
-	for _, item := range interfaces {
-		if item.Flags&net.FlagUp == 0 || item.Flags&net.FlagLoopback != 0 {
-			continue
-		}
-		names = append(names, item.Name)
-	}
-	if len(names) == 0 {
-		return nil, fmt.Errorf("no active non-loopback interfaces found")
-	}
-	return names, nil
+	_ = m.ssdp.Stop(ctx)
+	m.ssdp = nil
 }
 
 func (m *Manager) setError(err error) {
@@ -112,4 +122,28 @@ func (m *Manager) setError(err error) {
 	defer m.mu.Unlock()
 	message := err.Error()
 	m.status = Status{LastError: &message}
+}
+
+type ssdpRuntime interface {
+	Stop(context.Context) error
+	Interfaces() []ssdp.Interface
+}
+
+func startSSDPRuntime(ctx context.Context, config ssdp.Config) (ssdpRuntime, error) {
+	return ssdp.Start(ctx, config)
+}
+
+func portFromBaseURL(baseURL string) string {
+	parsed, err := url.Parse(baseURL)
+	if err == nil && parsed.Port() != "" {
+		return parsed.Port()
+	}
+	_, port, err := net.SplitHostPort(strings.TrimPrefix(baseURL, "http://"))
+	if err == nil && port != "" {
+		return port
+	}
+	if strings.HasPrefix(baseURL, "https://") {
+		return "443"
+	}
+	return "80"
 }
