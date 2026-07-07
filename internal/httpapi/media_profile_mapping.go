@@ -38,7 +38,7 @@ func mediaProfileInput(w http.ResponseWriter, request MediaProfileRequest) (stor
 		RemoveUnwantedAudio:               request.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:         string(request.AudioLossyTranscodePolicy),
 		RemoveUnwantedSubtitles:           request.RemoveUnwantedSubtitles,
-		SubtitlePreferredMode:             string(request.SubtitlePreferredMode),
+		SubtitleMode:                      string(request.SubtitleMode),
 		AllowSubtitleReleaseFallback:      request.AllowSubtitleReleaseFallback,
 		PreferredProtocol:                 string(request.PreferredProtocol),
 		SeriesPackPreference:              string(request.SeriesPackPreference),
@@ -148,7 +148,7 @@ func mediaProfileResponse(profile storage.MediaProfile) MediaProfile {
 		RemoveUnwantedAudio:               profile.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:         MediaProfileLossyTranscodePolicy(profile.AudioLossyTranscodePolicy),
 		RemoveUnwantedSubtitles:           profile.RemoveUnwantedSubtitles,
-		SubtitlePreferredMode:             mediaProfileSubtitlePreferredModeResponse(profile.SubtitlePreferredMode),
+		SubtitleMode:                      mediaProfileSubtitleModeResponse(profile.SubtitleMode),
 		AllowSubtitleReleaseFallback:      profile.AllowSubtitleReleaseFallback,
 		PreferredProtocol:                 MediaProfilePreferredProtocol(profile.PreferredProtocol),
 		SeriesPackPreference:              MediaProfileSeriesPackPreference(profile.SeriesPackPreference),
@@ -202,14 +202,14 @@ func mediaProfileSubtitleTargetResponses(targets []storage.MediaProfileSubtitleT
 	return response
 }
 
-func mediaProfileSubtitlePreferredModeResponse(value string) MediaProfileSubtitlePreferredMode {
+func mediaProfileSubtitleModeResponse(value string) MediaProfileSubtitleMode {
 	switch value {
 	case "embedded":
-		return MediaProfileSubtitlePreferredModeEmbedded
+		return MediaProfileSubtitleModeEmbedded
 	case "external":
-		return MediaProfileSubtitlePreferredModeExternal
+		return MediaProfileSubtitleModeExternal
 	default:
-		return MediaProfileSubtitlePreferredModeMixed
+		return MediaProfileSubtitleModeMixed
 	}
 }
 

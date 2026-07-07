@@ -1,0 +1,20 @@
+:root {
+	--sl-content-width: 52rem;
+	--sl-text-5xl: 3rem;
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: #d7f5eb;
+	--sl-color-accent: #087f5b;
+	--sl-color-accent-high: #053b2d;
+}
+
+:root[data-theme='dark'] {
+	--sl-color-accent-low: #063328;
+	--sl-color-accent: #37c99b;
+	--sl-color-accent-high: #caf5e8;
+}
+
+.hero {
+	gap: 2rem;
+}

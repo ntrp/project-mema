@@ -9,11 +9,11 @@ import (
 )
 
 type SubtitleFulfillmentNeed struct {
-	LanguageID    string
-	PreferredMode string
-	Formats       []string
-	Mode          string
-	Query         string
+	LanguageID   string
+	SubtitleMode string
+	Formats      []string
+	Mode         string
+	Query        string
 }
 
 type SubtitleFulfillmentCandidate struct {
@@ -29,10 +29,10 @@ func SubtitleFulfillmentNeeds(item storage.MediaItem) []SubtitleFulfillmentNeed 
 	for _, target := range item.SubtitleTargets {
 		for _, mode := range subtitleFulfillmentModes(item, target) {
 			need := SubtitleFulfillmentNeed{
-				LanguageID:    target.LanguageID,
-				PreferredMode: subtitlePreferredMode(item.SubtitlePreferredMode),
-				Formats:       normalizedSubtitleFormats(target.Formats),
-				Mode:          mode,
+				LanguageID:   target.LanguageID,
+				SubtitleMode: subtitleMode(item.SubtitleMode),
+				Formats:      normalizedSubtitleFormats(target.Formats),
+				Mode:         mode,
 			}
 			need.Query = subtitleFulfillmentQuery(item, need)
 			needs = append(needs, need)
@@ -78,7 +78,7 @@ func SubtitleFulfillmentSourceInput(
 }
 
 func subtitleFulfillmentModes(item storage.MediaItem, target storage.MediaProfileSubtitleTarget) []string {
-	mode := subtitlePreferredMode(item.SubtitlePreferredMode)
+	mode := subtitleMode(item.SubtitleMode)
 	modes := []string{}
 	if !subtitleSearchTargetSatisfied(item, target, firstMediaFilePath(item)) {
 		modes = append(modes, "provider")
@@ -89,7 +89,7 @@ func subtitleFulfillmentModes(item storage.MediaItem, target storage.MediaProfil
 	return modes
 }
 
-func subtitlePreferredMode(value string) string {
+func subtitleMode(value string) string {
 	switch strings.TrimSpace(value) {
 	case "embedded", "external":
 		return strings.TrimSpace(value)
@@ -178,13 +178,13 @@ func subtitleStreamMatchesTarget(stream subtitleInventoryStream, target storage.
 
 func subtitleFulfillmentMetadata(release storage.ReleaseCandidateInput, need SubtitleFulfillmentNeed) string {
 	payload := map[string]any{
-		"kind":          "subtitleFulfillment",
-		"release":       release.Title,
-		"indexer":       release.IndexerName,
-		"language":      need.LanguageID,
-		"formats":       need.Formats,
-		"mode":          need.Mode,
-		"preferredMode": need.PreferredMode,
+		"kind":         "subtitleFulfillment",
+		"release":      release.Title,
+		"indexer":      release.IndexerName,
+		"language":     need.LanguageID,
+		"formats":      need.Formats,
+		"mode":         need.Mode,
+		"subtitleMode": need.SubtitleMode,
 	}
 	data, _ := json.Marshal(payload)
 	return string(data)

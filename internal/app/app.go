@@ -25,11 +25,8 @@ import (
 	"media-manager/internal/web"
 )
 
-func Run(ctx context.Context, args []string) error {
+func Run(ctx context.Context) error {
 	cfg := config.Load()
-	if len(args) > 0 && args[0] == "reset-dev" {
-		return resetDevelopment(ctx, cfg)
-	}
 	if err := ensureMediaDataDir(cfg.MediaDataDir); err != nil {
 		return err
 	}
@@ -91,14 +88,6 @@ func ensureMediaDataDir(path string) error {
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		return fmt.Errorf("media data directory setup failed: %w", err)
 	}
-	return nil
-}
-
-func resetDevelopment(ctx context.Context, cfg config.Config) error {
-	if err := storage.ResetDevelopment(ctx, cfg); err != nil {
-		return fmt.Errorf("development reset failed: %w", err)
-	}
-	slog.Info("development database reset complete")
 	return nil
 }
 

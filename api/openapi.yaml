@@ -1752,6 +1752,35 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/items/{id}/files/tracks/delete:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: deleteMediaItemFileTrack
+      tags:
+        - Media
+      summary: Delete one embedded media file track or chapter set
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaFileTrackDeleteRequest"
+      responses:
+        "200":
+          description: Embedded track deleted and item rescanned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MediaItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/items/{id}/file-history:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -5390,6 +5419,31 @@ components:
         path:
           type: string
           minLength: 1
+    MediaFileTrackDeleteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - path
+        - targetType
+      properties:
+        path:
+          type: string
+          minLength: 1
+        targetType:
+          type: string
+          enum:
+            - audio
+            - subtitle
+            - chapter
+            - chapters
+        trackIndex:
+          type: integer
+          format: int32
+          minimum: 0
+        chapterIndex:
+          type: integer
+          format: int32
+          minimum: 0
     MediaFileInfo:
       type: object
       additionalProperties: false
@@ -5461,7 +5515,7 @@ components:
       additionalProperties: false
       required:
         - state
-        - preferredMode
+        - mode
         - wantedLanguages
         - matchedLanguages
         - missingLanguages
@@ -5472,8 +5526,8 @@ components:
             - satisfied
             - missing
             - ignored
-        preferredMode:
-          $ref: "#/components/schemas/MediaProfileSubtitlePreferredMode"
+        mode:
+          $ref: "#/components/schemas/MediaProfileSubtitleMode"
         wantedLanguages:
           type: array
           items:
@@ -6697,7 +6751,7 @@ components:
         - removeUnwantedAudio
         - audioLossyTranscodePolicy
         - removeUnwantedSubtitles
-        - subtitlePreferredMode
+        - subtitleMode
         - allowSubtitleReleaseFallback
         - preferredProtocol
         - seriesPackPreference
@@ -6746,8 +6800,8 @@ components:
           $ref: "#/components/schemas/MediaProfileLossyTranscodePolicy"
         removeUnwantedSubtitles:
           type: boolean
-        subtitlePreferredMode:
-          $ref: "#/components/schemas/MediaProfileSubtitlePreferredMode"
+        subtitleMode:
+          $ref: "#/components/schemas/MediaProfileSubtitleMode"
         allowSubtitleReleaseFallback:
           type: boolean
         preferredProtocol:
@@ -6824,16 +6878,16 @@ components:
         - MediaProfileLossyTranscodePolicyDisabled
         - MediaProfileLossyTranscodePolicyLosslessToLossy
         - MediaProfileLossyTranscodePolicyLossyToLossy
-    MediaProfileSubtitlePreferredMode:
+    MediaProfileSubtitleMode:
       type: string
       enum:
         - mixed
         - embedded
         - external
       x-enum-varnames:
-        - MediaProfileSubtitlePreferredModeMixed
-        - MediaProfileSubtitlePreferredModeEmbedded
-        - MediaProfileSubtitlePreferredModeExternal
+        - MediaProfileSubtitleModeMixed
+        - MediaProfileSubtitleModeEmbedded
+        - MediaProfileSubtitleModeExternal
     MediaProfileAudioTarget:
       type: object
       additionalProperties: false

@@ -929,6 +929,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/items/{id}/files/tracks/delete': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Delete one embedded media file track or chapter set */
+		post: operations['deleteMediaItemFileTrack'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/items/{id}/file-history': {
 		parameters: {
 			query?: never;
@@ -2755,6 +2774,15 @@ export interface components {
 		MediaFileDeleteRequest: {
 			path: string;
 		};
+		MediaFileTrackDeleteRequest: {
+			path: string;
+			/** @enum {string} */
+			targetType: 'audio' | 'subtitle' | 'chapter' | 'chapters';
+			/** Format: int32 */
+			trackIndex?: number;
+			/** Format: int32 */
+			chapterIndex?: number;
+		};
 		MediaFileInfo: {
 			path: string;
 			/** @enum {string} */
@@ -2779,7 +2807,7 @@ export interface components {
 		MediaFileSubtitleSatisfaction: {
 			/** @enum {string} */
 			state: 'satisfied' | 'missing' | 'ignored';
-			preferredMode: components['schemas']['MediaProfileSubtitlePreferredMode'];
+			mode: components['schemas']['MediaProfileSubtitleMode'];
 			wantedLanguages: string[];
 			matchedLanguages: string[];
 			missingLanguages: string[];
@@ -3279,7 +3307,7 @@ export interface components {
 			removeUnwantedAudio: boolean;
 			audioLossyTranscodePolicy: components['schemas']['MediaProfileLossyTranscodePolicy'];
 			removeUnwantedSubtitles: boolean;
-			subtitlePreferredMode: components['schemas']['MediaProfileSubtitlePreferredMode'];
+			subtitleMode: components['schemas']['MediaProfileSubtitleMode'];
 			allowSubtitleReleaseFallback: boolean;
 			/** @enum {string} */
 			preferredProtocol: 'any' | 'torrent' | 'usenet';
@@ -3307,7 +3335,7 @@ export interface components {
 		/** @enum {string} */
 		MediaProfileLossyTranscodePolicy: 'disabled' | 'losslessToLossy' | 'lossyToLossy';
 		/** @enum {string} */
-		MediaProfileSubtitlePreferredMode: 'mixed' | 'embedded' | 'external';
+		MediaProfileSubtitleMode: 'mixed' | 'embedded' | 'external';
 		MediaProfileAudioTarget: {
 			languageId: string;
 			/** Format: int32 */
@@ -5945,6 +5973,35 @@ export interface operations {
 		};
 		responses: {
 			/** @description Media file deleted and item rescanned */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['MediaItem'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteMediaItemFileTrack: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaFileTrackDeleteRequest'];
+			};
+		};
+		responses: {
+			/** @description Embedded track deleted and item rescanned */
 			200: {
 				headers: {
 					[name: string]: unknown;

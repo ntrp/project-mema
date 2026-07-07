@@ -69,7 +69,7 @@ func TestSCNMedia001ProbeTracksAndChapters(t *testing.T) {
 			CodecType:     "audio",
 			Channels:      6,
 			ChannelLayout: "5.1",
-			Tags:          map[string]string{"LANGUAGE": "deu"},
+			Tags:          map[string]string{"LANGUAGE": "deu", "BPS-eng": "640000"},
 		},
 		{Index: 2, CodecType: "data"},
 	})
@@ -86,6 +86,9 @@ func TestSCNMedia001ProbeTracksAndChapters(t *testing.T) {
 	if tracks[1].Type != Audio || tracks[1].Language == nil || *tracks[1].Language != "deu" {
 		t.Fatalf("audio track = %#v", tracks[1])
 	}
+	if tracks[1].BitRate == nil || *tracks[1].BitRate != "640000" {
+		t.Fatalf("audio bitrate = %#v", tracks[1].BitRate)
+	}
 
 	chapters := mediaFileChapters([]ffprobeChapter{
 		{ID: 0, StartTime: "0.0", EndTime: "60.0", Tags: map[string]string{"title": "Intro"}},
@@ -96,6 +99,25 @@ func TestSCNMedia001ProbeTracksAndChapters(t *testing.T) {
 	}
 	if chapters[0].Title == nil || *chapters[0].Title != "Intro" {
 		t.Fatalf("chapter title = %#v", chapters[0])
+	}
+}
+
+func TestSCNMedia001ProbeTrackBitRateFromByteTags(t *testing.T) {
+	track, ok := mediaFileTrack(ffprobeStream{
+		Index:     1,
+		CodecName: "flac",
+		CodecType: "audio",
+		Tags: map[string]string{
+			"NUMBER_OF_BYTES-eng": "9600000",
+			"DURATION-eng":        "00:02:00.000000000",
+		},
+	})
+
+	if !ok {
+		t.Fatal("expected audio track")
+	}
+	if track.BitRate == nil || *track.BitRate != "640000" {
+		t.Fatalf("derived audio bitrate = %#v, want 640000", track.BitRate)
 	}
 }
 

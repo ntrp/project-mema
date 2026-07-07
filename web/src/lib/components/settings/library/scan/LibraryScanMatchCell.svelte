@@ -21,6 +21,8 @@
 	let { item, draft = $bindable(), onSearch, onSelect }: Props = $props();
 	let editing = $state(false);
 	let inputEl = $state<HTMLInputElement | null>(null);
+	let containerEl = $state<HTMLDivElement | null>(null);
+	let dropdownStyle = $state('');
 	let queryBeforeEdit = '';
 
 	const badgeLabel = $derived(
@@ -42,6 +44,7 @@
 		draft.searched = false;
 		editing = true;
 		await tick();
+		updateDropdownPosition();
 		inputEl?.focus();
 		inputEl?.select();
 	}
@@ -63,6 +66,7 @@
 	}
 
 	function handleInput() {
+		updateDropdownPosition();
 		onSearch(item);
 	}
 
@@ -75,7 +79,24 @@
 		if (result.overview) return result.overview;
 		return [result.type, result.externalProvider].filter(Boolean).join(' · ');
 	}
+
+	function updateDropdownPosition() {
+		if (!containerEl || typeof window === 'undefined') return;
+		const rect = containerEl.getBoundingClientRect();
+		const margin = 16;
+		const width = Math.min(576, window.innerWidth - margin * 2);
+		const left = Math.min(Math.max(rect.left, margin), window.innerWidth - width - margin);
+		dropdownStyle = [
+			'position: fixed',
+			`top: ${rect.bottom + 8}px`,
+			`left: ${left}px`,
+			`width: ${width}px`,
+			'max-width: calc(100vw - 2rem)'
+		].join('; ');
+	}
 </script>
+
+<svelte:window onscroll={updateDropdownPosition} onresize={updateDropdownPosition} />
 
 {#if !editing}
 	<Button
@@ -84,10 +105,14 @@
 		class={`${draft.matched ? '' : 'border-amber-500/40 bg-amber-500/10 text-amber-500 hover:bg-amber-500/15 hover:text-amber-500 '}h-9 max-w-96 justify-start truncate`}
 		onclick={openSearch}
 	>
-		<span class="truncate">{badgeLabel}</span>
+		{#if draft.searching}
+			<InlineSpinner label="Matching" />
+		{:else}
+			<span class="truncate">{badgeLabel}</span>
+		{/if}
 	</Button>
 {:else}
-	<div class="relative inline-block align-top" onfocusout={handleFocusOut}>
+	<div bind:this={containerEl} class="relative inline-block align-top" onfocusout={handleFocusOut}>
 		<div class="flex max-w-96 items-center gap-2">
 			<Input
 				bind:ref={inputEl}
@@ -101,7 +126,8 @@
 		</div>
 		{#if draft.results.length}
 			<div
-				class="absolute top-full left-0 z-50 mt-2 grid w-[36rem] max-w-[calc(100vw-4rem)] rounded-md border border-border bg-popover p-1 shadow-xl"
+				class="z-50 grid rounded-md border border-border bg-popover p-1 shadow-xl"
+				style={dropdownStyle}
 			>
 				{#each draft.results as result (mediaResultKey(result))}
 					<Button
@@ -138,7 +164,8 @@
 			</div>
 		{:else if draft.searched && !draft.searching}
 			<div
-				class="absolute top-full left-0 z-50 mt-2 w-72 rounded-md border border-border bg-popover p-3 text-xs text-muted-foreground shadow-xl"
+				class="z-50 rounded-md border border-border bg-popover p-3 text-xs text-muted-foreground shadow-xl"
+				style={dropdownStyle}
 			>
 				No results
 			</div>

@@ -30,6 +30,8 @@ later. See [LICENSE](LICENSE).
 - `cmd/server`: Go entrypoint.
 - `internal`: private Go application packages.
 - `web`: SvelteKit app, built as static files.
+- `docs/website`: Astro/Starlight documentation website.
+- `docs/adr` and `docs/prd`: architecture decisions and product docs.
 - `features`: PRDs, requirements, architecture decisions, and delivery notes.
 - `tools/tools.go`: pinned code generation and CLI tool dependencies.
 
@@ -47,6 +49,12 @@ Install frontend dependencies:
 
 ```sh
 make web-install
+```
+
+Install documentation website dependencies:
+
+```sh
+make docs-install
 ```
 
 Start PostgreSQL:
@@ -85,7 +93,7 @@ TRANSMISSION_OPENVPN_CONFIG=sweden docker compose up -d transmission-openvpn
 Create the development schema:
 
 ```sh
-ALLOW_DEV_RESET=true make db-reset
+make db-reset
 ```
 
 Run the Go API:
@@ -116,6 +124,14 @@ VITE_API_PROXY_TARGET=http://127.0.0.1:19080 make dev-web
 
 Open the frontend URL printed by Vite. The dev frontend calls the Go API at
 `/api`; for full same-origin behavior, use the built app served by Go.
+
+Run the documentation website:
+
+```sh
+make docs-dev
+```
+
+The documentation website listens on `15174` by default.
 
 ## Build And Check
 
@@ -201,16 +217,21 @@ Season and episode numbers expose padded variants such as `{season:0}`,
 
 ## Database Workflow
 
-The project starts with a simple protected reset path instead of migrations.
-`make db-reset` only works when both conditions are true:
+The application applies schema migrations and production defaults on startup.
+Development-only database cleanup, reset, and local seed application live outside
+the server command:
 
-- `APP_ENV=development`
-- `ALLOW_DEV_RESET=true`
+```sh
+make db-clean
+make db-reset
+make db-seed-local
+```
 
-This is intentionally destructive and should only be used before the project is
-live. Tracked reset seeds are strict. The gitignored
-`internal/storage/seeds/dev.local.sql` is optional for `make db-reset`: if it is
-missing or invalid, the reset still completes and prints a warning.
+`make db-reset` drops and recreates the `app` schema, runs migrations, applies
+tracked defaults, applies tracked development defaults, and then tries the
+gitignored `scripts/seeds/dev.local.sql`. Missing or invalid local seed files
+are skipped with a warning. Destructive reset commands only run against local
+database hosts unless `ALLOW_REMOTE_DEV_DB_RESET=true` is set.
 
 River schema changes are handled separately through:
 

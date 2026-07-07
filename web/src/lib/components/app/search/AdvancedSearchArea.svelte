@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Checkbox } from '$lib/components/ui/checkbox';
@@ -141,7 +142,11 @@
 		</fieldset>
 		<div class="flex items-center gap-3 md:col-span-3">
 			<Button type="submit" disabled={searching || query.trim().length === 0}>
-				{searching ? 'Searching' : 'Search'}
+				{#if searching}
+					<InlineSpinner label="Searching" />
+				{:else}
+					<span>Search</span>
+				{/if}
 			</Button>
 			<span class="text-sm text-muted-foreground">{resultCount} results</span>
 		</div>

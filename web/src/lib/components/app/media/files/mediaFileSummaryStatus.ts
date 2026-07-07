@@ -1,5 +1,6 @@
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay';
+export { audioSatisfaction } from '$lib/components/app/media/files/mediaFileAudioStatus';
 
 export type MediaFileSummaryStatusState = 'ignored' | 'missing' | 'partial' | 'satisfied';
 
@@ -9,36 +10,30 @@ export interface MediaFileSummaryStatus {
 	details: string[];
 }
 
-export function audioSatisfaction(row: MediaFileRow): MediaFileSummaryStatus {
-	if (!row.exists) return missingStatus(['File is missing']);
-	if (!hasTrack(row, 'video')) return missingStatus(['Video track is missing']);
-	if (!hasTrack(row, 'audio')) return missingStatus(['Audio track is missing']);
-	const missing = missingRequiredAudio(row);
-	if (missing.length > 0) {
-		const matched = matchedRequiredAudio(row);
-		const details = [`Missing required audio: ${languageList(missing)}`];
-		return matched.length > 0 ? partialStatus(details) : missingStatus(details);
-	}
-	const unwanted = unwantedAudio(row);
-	if (unwanted.length > 0) {
-		return partialStatus([`Unwanted audio tracks: ${languageList(unwanted)}`]);
-	}
-	return okStatus([
-		row.expectedRequiredLanguages.length > 0
-			? `Required audio present: ${languageList(row.expectedRequiredLanguages)}`
-			: 'Audio and video are available'
-	]);
-}
-
 export function subtitleSatisfaction(row: MediaFileRow): MediaFileSummaryStatus {
 	const satisfaction = row.subtitleSatisfaction;
 	if (!satisfaction || satisfaction.state === 'ignored') {
 		return { state: 'ignored', label: 'Ignored', details: ['Subtitle requirements are ignored'] };
 	}
+	const details = [`Mode: ${subtitleModeLabel(satisfaction.mode)}`];
 	if (satisfaction.state === 'satisfied') {
-		return okStatus([`Subtitle requirements met: ${languageList(satisfaction.matchedLanguages)}`]);
+		return okStatus([
+			...details,
+			`Subtitle requirements met: ${languageList(satisfaction.matchedLanguages)}`
+		]);
 	}
-	const details = [`Missing subtitles: ${languageList(satisfaction.missingLanguages)}`];
+	const externalMissing = externallyAvailableMissingSubtitles(row);
+	const missing = satisfaction.missingLanguages.filter(
+		(language) => !languageKeys(externalMissing).has(languageMatchKey(language))
+	);
+	if (externalMissing.length > 0) {
+		return partialStatus([
+			...details,
+			`Subtitles need to be imported: ${languageList(externalMissing)}`,
+			...(missing.length > 0 ? [`Missing subtitles: ${languageList(missing)}`] : [])
+		]);
+	}
+	details.push(`Missing subtitles: ${languageList(satisfaction.missingLanguages)}`);
 	return satisfaction.matchedLanguages.length > 0 ? partialStatus(details) : missingStatus(details);
 }
 
@@ -59,51 +54,28 @@ export function statusBadgeVariant(state: MediaFileSummaryStatusState) {
 	return state === 'missing' ? 'destructive' : 'secondary';
 }
 
-function missingRequiredAudio(row: MediaFileRow) {
-	const audioLanguages = new Set(
-		row.tracks
-			.filter((track) => track.type === 'audio')
-			.map((track) => languageMatchKey(track.language))
-			.filter(Boolean)
-	);
-	return row.expectedRequiredLanguages.filter(
-		(language) => !audioLanguages.has(languageMatchKey(language))
+function externallyAvailableMissingSubtitles(row: MediaFileRow) {
+	const satisfaction = row.subtitleSatisfaction;
+	if (!satisfaction || satisfaction.mode !== 'embedded') return [];
+	const external = externalSubtitleLanguageKeys(row);
+	return satisfaction.missingLanguages.filter((language) =>
+		external.has(languageMatchKey(language))
 	);
 }
 
-function matchedRequiredAudio(row: MediaFileRow) {
-	const audioLanguages = audioLanguageKeys(row);
-	return row.expectedRequiredLanguages.filter((language) =>
-		audioLanguages.has(languageMatchKey(language))
-	);
-}
-
-function unwantedAudio(row: MediaFileRow) {
-	if (!row.removeNonEnabledLanguages || row.expectedLanguages.length === 0) return [];
-	const expected = new Set(row.expectedLanguages.map(languageMatchKey).filter(Boolean));
-	return uniqueLanguages(
-		row.tracks
-			.filter((track) => track.type === 'audio')
-			.map((track) => track.language)
-			.filter((language): language is string => Boolean(language))
-			.filter((language) => {
-				const key = languageMatchKey(language);
-				return key !== '' && !expected.has(key);
-			})
-	);
-}
-
-function audioLanguageKeys(row: MediaFileRow) {
+function externalSubtitleLanguageKeys(row: MediaFileRow) {
 	return new Set(
-		row.tracks
-			.filter((track) => track.type === 'audio')
-			.map((track) => languageMatchKey(track.language))
-			.filter(Boolean)
+		[
+			...(row.externalSubtitles ?? []).map((subtitle) => languageMatchKey(subtitle.languageId)),
+			...row.otherFiles
+				.filter((file) => file.type === 'subtitle' && file.status === 'available')
+				.map((file) => languageMatchKey(file.language))
+		].filter(Boolean)
 	);
 }
 
-function hasTrack(row: MediaFileRow, type: 'audio' | 'video') {
-	return row.tracks.some((track) => track.type === type);
+function languageKeys(values: string[]) {
+	return new Set(values.map(languageMatchKey).filter(Boolean));
 }
 
 function okStatus(details: string[]): MediaFileSummaryStatus {
@@ -118,10 +90,17 @@ function missingStatus(details: string[]): MediaFileSummaryStatus {
 	return { state: 'missing', label: 'Missing', details };
 }
 
-function languageList(values: string[]) {
-	return values.map(displayLanguage).join(', ') || '-';
+function subtitleModeLabel(value: string) {
+	switch (value) {
+		case 'embedded':
+			return 'Embedded';
+		case 'external':
+			return 'External';
+		default:
+			return 'Mixed';
+	}
 }
 
-function uniqueLanguages(values: string[]) {
-	return [...new Map(values.map((value) => [languageMatchKey(value) || value, value])).values()];
+function languageList(values: string[]) {
+	return values.map(displayLanguage).join(', ') || '-';
 }

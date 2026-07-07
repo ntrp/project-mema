@@ -165,7 +165,7 @@ function mediaProfileForm() {
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
-		subtitlePreferredMode: 'mixed',
+		subtitleMode: 'mixed',
 		allowSubtitleReleaseFallback: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',

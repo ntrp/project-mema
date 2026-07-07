@@ -41,6 +41,7 @@ import type {
 	ManualImportRequest,
 	MediaAdvancedSearchRequest,
 	MediaFileHistoryResponse,
+	MediaFileTrackDeleteRequest,
 	MediaItemCreateRequest,
 	MediaItemSubtitleListResponse,
 	MediaItemSubtitleSelectionRequest,
@@ -871,6 +872,21 @@ export async function deleteMediaItemFile(id: string, path: string) {
 	const { data, error } = await client.POST('/media/items/{id}/files/delete', {
 		params: { path: { id } },
 		body: { path }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
+export async function deleteMediaItemFileTrack(id: string, request: MediaFileTrackDeleteRequest) {
+	const { data, error } = await client.POST('/media/items/{id}/files/tracks/delete', {
+		params: { path: { id } },
+		body: request
 	});
 
 	if (error) {

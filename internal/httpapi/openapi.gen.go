@@ -897,19 +897,43 @@ func (e MediaFileSubtitleSatisfactionState) Valid() bool {
 
 // Defines values for MediaFileTrackType.
 const (
-	Audio    MediaFileTrackType = "audio"
-	Subtitle MediaFileTrackType = "subtitle"
-	Video    MediaFileTrackType = "video"
+	MediaFileTrackTypeAudio    MediaFileTrackType = "audio"
+	MediaFileTrackTypeSubtitle MediaFileTrackType = "subtitle"
+	MediaFileTrackTypeVideo    MediaFileTrackType = "video"
 )
 
 // Valid indicates whether the value is a known member of the MediaFileTrackType enum.
 func (e MediaFileTrackType) Valid() bool {
 	switch e {
-	case Audio:
+	case MediaFileTrackTypeAudio:
 		return true
-	case Subtitle:
+	case MediaFileTrackTypeSubtitle:
 		return true
-	case Video:
+	case MediaFileTrackTypeVideo:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaFileTrackDeleteRequestTargetType.
+const (
+	MediaFileTrackDeleteRequestTargetTypeAudio    MediaFileTrackDeleteRequestTargetType = "audio"
+	MediaFileTrackDeleteRequestTargetTypeChapter  MediaFileTrackDeleteRequestTargetType = "chapter"
+	MediaFileTrackDeleteRequestTargetTypeChapters MediaFileTrackDeleteRequestTargetType = "chapters"
+	MediaFileTrackDeleteRequestTargetTypeSubtitle MediaFileTrackDeleteRequestTargetType = "subtitle"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileTrackDeleteRequestTargetType enum.
+func (e MediaFileTrackDeleteRequestTargetType) Valid() bool {
+	switch e {
+	case MediaFileTrackDeleteRequestTargetTypeAudio:
+		return true
+	case MediaFileTrackDeleteRequestTargetTypeChapter:
+		return true
+	case MediaFileTrackDeleteRequestTargetTypeChapters:
+		return true
+	case MediaFileTrackDeleteRequestTargetTypeSubtitle:
 		return true
 	default:
 		return false
@@ -1189,21 +1213,21 @@ func (e MediaProfileRequestSeriesPackPreference) Valid() bool {
 	}
 }
 
-// Defines values for MediaProfileSubtitlePreferredMode.
+// Defines values for MediaProfileSubtitleMode.
 const (
-	MediaProfileSubtitlePreferredModeEmbedded MediaProfileSubtitlePreferredMode = "embedded"
-	MediaProfileSubtitlePreferredModeExternal MediaProfileSubtitlePreferredMode = "external"
-	MediaProfileSubtitlePreferredModeMixed    MediaProfileSubtitlePreferredMode = "mixed"
+	MediaProfileSubtitleModeEmbedded MediaProfileSubtitleMode = "embedded"
+	MediaProfileSubtitleModeExternal MediaProfileSubtitleMode = "external"
+	MediaProfileSubtitleModeMixed    MediaProfileSubtitleMode = "mixed"
 )
 
-// Valid indicates whether the value is a known member of the MediaProfileSubtitlePreferredMode enum.
-func (e MediaProfileSubtitlePreferredMode) Valid() bool {
+// Valid indicates whether the value is a known member of the MediaProfileSubtitleMode enum.
+func (e MediaProfileSubtitleMode) Valid() bool {
 	switch e {
-	case MediaProfileSubtitlePreferredModeEmbedded:
+	case MediaProfileSubtitleModeEmbedded:
 		return true
-	case MediaProfileSubtitlePreferredModeExternal:
+	case MediaProfileSubtitleModeExternal:
 		return true
-	case MediaProfileSubtitlePreferredModeMixed:
+	case MediaProfileSubtitleModeMixed:
 		return true
 	default:
 		return false
@@ -2745,7 +2769,7 @@ type MediaFilePreviewMode string
 type MediaFileSubtitleSatisfaction struct {
 	MatchedLanguages []string                           `json:"matchedLanguages"`
 	MissingLanguages []string                           `json:"missingLanguages"`
-	PreferredMode    MediaProfileSubtitlePreferredMode  `json:"preferredMode"`
+	Mode             MediaProfileSubtitleMode           `json:"mode"`
 	State            MediaFileSubtitleSatisfactionState `json:"state"`
 	WantedLanguages  []string                           `json:"wantedLanguages"`
 }
@@ -2773,6 +2797,17 @@ type MediaFileTrack struct {
 
 // MediaFileTrackType defines model for MediaFileTrack.Type.
 type MediaFileTrackType string
+
+// MediaFileTrackDeleteRequest defines model for MediaFileTrackDeleteRequest.
+type MediaFileTrackDeleteRequest struct {
+	ChapterIndex *int32                                `json:"chapterIndex,omitempty"`
+	Path         string                                `json:"path"`
+	TargetType   MediaFileTrackDeleteRequestTargetType `json:"targetType"`
+	TrackIndex   *int32                                `json:"trackIndex,omitempty"`
+}
+
+// MediaFileTrackDeleteRequestTargetType defines model for MediaFileTrackDeleteRequest.TargetType.
+type MediaFileTrackDeleteRequestTargetType string
 
 // MediaFileTrackProvenance defines model for MediaFileTrackProvenance.
 type MediaFileTrackProvenance struct {
@@ -3039,29 +3074,29 @@ type MediaNumberingStrategy string
 
 // MediaProfile defines model for MediaProfile.
 type MediaProfile struct {
-	AllowSubtitleReleaseFallback      bool                              `json:"allowSubtitleReleaseFallback"`
-	AudioLossyTranscodePolicy         MediaProfileLossyTranscodePolicy  `json:"audioLossyTranscodePolicy"`
-	AudioTargets                      []MediaProfileAudioTarget         `json:"audioTargets"`
-	CreatedAt                         time.Time                         `json:"createdAt"`
-	CustomFormatScores                []MediaProfileCustomFormatScore   `json:"customFormatScores"`
-	FinalContainer                    MediaProfileFinalContainer        `json:"finalContainer"`
-	Id                                string                            `json:"id"`
-	IsDefault                         bool                              `json:"isDefault"`
-	MinimumCustomFormatScore          int32                             `json:"minimumCustomFormatScore"`
-	MinimumCustomFormatScoreIncrement int32                             `json:"minimumCustomFormatScoreIncrement"`
-	Name                              string                            `json:"name"`
-	PreferredProtocol                 MediaProfilePreferredProtocol     `json:"preferredProtocol"`
-	QualityIds                        []string                          `json:"qualityIds"`
-	RemoveUnwantedAudio               bool                              `json:"removeUnwantedAudio"`
-	RemoveUnwantedSubtitles           bool                              `json:"removeUnwantedSubtitles"`
-	SeriesPackPreference              MediaProfileSeriesPackPreference  `json:"seriesPackPreference"`
-	SubtitlePreferredMode             MediaProfileSubtitlePreferredMode `json:"subtitlePreferredMode"`
-	SubtitleTargets                   []MediaProfileSubtitleTarget      `json:"subtitleTargets"`
-	UpdatedAt                         time.Time                         `json:"updatedAt"`
-	UpgradeUntilCustomFormatScore     int32                             `json:"upgradeUntilCustomFormatScore"`
-	UpgradeUntilQualityId             *string                           `json:"upgradeUntilQualityId,omitempty"`
-	UpgradesAllowed                   bool                              `json:"upgradesAllowed"`
-	VideoTarget                       MediaProfileVideoTarget           `json:"videoTarget"`
+	AllowSubtitleReleaseFallback      bool                             `json:"allowSubtitleReleaseFallback"`
+	AudioLossyTranscodePolicy         MediaProfileLossyTranscodePolicy `json:"audioLossyTranscodePolicy"`
+	AudioTargets                      []MediaProfileAudioTarget        `json:"audioTargets"`
+	CreatedAt                         time.Time                        `json:"createdAt"`
+	CustomFormatScores                []MediaProfileCustomFormatScore  `json:"customFormatScores"`
+	FinalContainer                    MediaProfileFinalContainer       `json:"finalContainer"`
+	Id                                string                           `json:"id"`
+	IsDefault                         bool                             `json:"isDefault"`
+	MinimumCustomFormatScore          int32                            `json:"minimumCustomFormatScore"`
+	MinimumCustomFormatScoreIncrement int32                            `json:"minimumCustomFormatScoreIncrement"`
+	Name                              string                           `json:"name"`
+	PreferredProtocol                 MediaProfilePreferredProtocol    `json:"preferredProtocol"`
+	QualityIds                        []string                         `json:"qualityIds"`
+	RemoveUnwantedAudio               bool                             `json:"removeUnwantedAudio"`
+	RemoveUnwantedSubtitles           bool                             `json:"removeUnwantedSubtitles"`
+	SeriesPackPreference              MediaProfileSeriesPackPreference `json:"seriesPackPreference"`
+	SubtitleMode                      MediaProfileSubtitleMode         `json:"subtitleMode"`
+	SubtitleTargets                   []MediaProfileSubtitleTarget     `json:"subtitleTargets"`
+	UpdatedAt                         time.Time                        `json:"updatedAt"`
+	UpgradeUntilCustomFormatScore     int32                            `json:"upgradeUntilCustomFormatScore"`
+	UpgradeUntilQualityId             *string                          `json:"upgradeUntilQualityId,omitempty"`
+	UpgradesAllowed                   bool                             `json:"upgradesAllowed"`
+	VideoTarget                       MediaProfileVideoTarget          `json:"videoTarget"`
 }
 
 // MediaProfileFinalContainer defines model for MediaProfile.FinalContainer.
@@ -3113,7 +3148,7 @@ type MediaProfileRequest struct {
 	RemoveUnwantedAudio               bool                                    `json:"removeUnwantedAudio"`
 	RemoveUnwantedSubtitles           bool                                    `json:"removeUnwantedSubtitles"`
 	SeriesPackPreference              MediaProfileRequestSeriesPackPreference `json:"seriesPackPreference"`
-	SubtitlePreferredMode             MediaProfileSubtitlePreferredMode       `json:"subtitlePreferredMode"`
+	SubtitleMode                      MediaProfileSubtitleMode                `json:"subtitleMode"`
 	SubtitleTargets                   []MediaProfileSubtitleTarget            `json:"subtitleTargets"`
 	UpgradeUntilCustomFormatScore     int32                                   `json:"upgradeUntilCustomFormatScore"`
 	UpgradeUntilQualityId             *string                                 `json:"upgradeUntilQualityId,omitempty"`
@@ -3130,8 +3165,8 @@ type MediaProfileRequestPreferredProtocol string
 // MediaProfileRequestSeriesPackPreference defines model for MediaProfileRequest.SeriesPackPreference.
 type MediaProfileRequestSeriesPackPreference string
 
-// MediaProfileSubtitlePreferredMode defines model for MediaProfileSubtitlePreferredMode.
-type MediaProfileSubtitlePreferredMode string
+// MediaProfileSubtitleMode defines model for MediaProfileSubtitleMode.
+type MediaProfileSubtitleMode string
 
 // MediaProfileSubtitleTarget defines model for MediaProfileSubtitleTarget.
 type MediaProfileSubtitleTarget struct {
@@ -4166,6 +4201,9 @@ type EnqueueMediaComponentExtractionJSONRequestBody = MediaComponentExtractionRe
 // DeleteMediaItemFileJSONRequestBody defines body for DeleteMediaItemFile for application/json ContentType.
 type DeleteMediaItemFileJSONRequestBody = MediaFileDeleteRequest
 
+// DeleteMediaItemFileTrackJSONRequestBody defines body for DeleteMediaItemFileTrack for application/json ContentType.
+type DeleteMediaItemFileTrackJSONRequestBody = MediaFileTrackDeleteRequest
+
 // GrabMediaReleaseJSONRequestBody defines body for GrabMediaRelease for application/json ContentType.
 type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
 
@@ -4447,6 +4485,9 @@ type ServerInterface interface {
 	// Convert a media file subtitle stream to WebVTT
 	// (GET /media/items/{id}/files/subtitle)
 	PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileSubtitleParams)
+	// Delete one embedded media file track or chapter set
+	// (POST /media/items/{id}/files/tracks/delete)
+	DeleteMediaItemFileTrack(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Open a VLC-compatible remote streaming playlist
 	// (GET /media/items/{id}/files/vlc)
 	PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, id ResourceId, params PlayMediaItemFileInVlcParams)
@@ -5083,6 +5124,12 @@ func (_ Unimplemented) StreamMediaItemFile(w http.ResponseWriter, r *http.Reques
 // Convert a media file subtitle stream to WebVTT
 // (GET /media/items/{id}/files/subtitle)
 func (_ Unimplemented) PreviewMediaItemFileSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, params PreviewMediaItemFileSubtitleParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete one embedded media file track or chapter set
+// (POST /media/items/{id}/files/tracks/delete)
+func (_ Unimplemented) DeleteMediaItemFileTrack(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7892,6 +7939,38 @@ func (siw *ServerInterfaceWrapper) PreviewMediaItemFileSubtitle(w http.ResponseW
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PreviewMediaItemFileSubtitle(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteMediaItemFileTrack operation middleware
+func (siw *ServerInterfaceWrapper) DeleteMediaItemFileTrack(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteMediaItemFileTrack(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11591,6 +11670,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/files/subtitle", wrapper.PreviewMediaItemFileSubtitle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/files/tracks/delete", wrapper.DeleteMediaItemFileTrack)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/items/{id}/files/vlc", wrapper.PlayMediaItemFileInVlc)

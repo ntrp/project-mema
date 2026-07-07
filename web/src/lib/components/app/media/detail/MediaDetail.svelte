@@ -47,9 +47,11 @@
 		onSearchMediaSubtitle = () => {},
 		onGrabMediaSubtitle = () => {},
 		onDeleteMediaSubtitle = () => {},
+		onUpdateMediaSubtitle = () => {},
 		onRefreshMediaMetadata,
 		onSaveMediaItemOptions,
 		onDeleteMediaFile,
+		onDeleteMediaFileTrack = () => {},
 		onAssembleMediaComponents = () => {},
 		onReviewComponentCompatibility = () => {},
 		onDeleteMedia,
@@ -130,7 +132,9 @@
 								onSearchSubtitle={onSearchMediaSubtitle}
 								onGrabSubtitle={onGrabMediaSubtitle}
 								onDeleteSubtitle={onDeleteMediaSubtitle}
+								onUpdateSubtitle={onUpdateMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
+								onDeleteFileTrack={onDeleteMediaFileTrack}
 								{onGrabRelease}
 							/>
 						{/if}
@@ -151,7 +155,9 @@
 								onSearchSubtitle={onSearchMediaSubtitle}
 								onGrabSubtitle={onGrabMediaSubtitle}
 								onDeleteSubtitle={onDeleteMediaSubtitle}
+								onUpdateSubtitle={onUpdateMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
+								onDeleteFileTrack={onDeleteMediaFileTrack}
 								{onGrabRelease}
 							/>
 						{/if}

@@ -98,7 +98,6 @@ export function fileRow(
 	const name = fileName(path);
 	const formats = matchedFormats(name);
 	const info = mediaFileInfo(item, path);
-	const sizeBytes = info?.sizeBytes;
 	const profile = fileProfileSettings(item, qualityProfiles);
 	const exists = info?.status !== 'missing';
 	const quality = qualityInfo(name);
@@ -112,7 +111,7 @@ export function fileRow(
 		videoCodec: matchToken(name, ['x265', 'h265', 'hevc', 'x264', 'h264', 'avc']),
 		audioInfo: audioInfo(name),
 		size: mediaFileSize(item, path),
-		sizeBytes,
+		sizeBytes: info?.sizeBytes,
 		languages: mediaFileLanguageInfo(name),
 		quality,
 		formats,
@@ -122,6 +121,7 @@ export function fileRow(
 		subtitleSatisfaction: info?.subtitleSatisfaction,
 		externalSubtitles: externalSubtitlesForPath(item.externalSubtitles ?? [], path),
 		upgrade,
+		expectedAudioTargets: profile.expectedAudioTargets,
 		expectedLanguages: profile.expectedLanguages,
 		expectedRequiredLanguages: profile.expectedRequiredLanguages,
 		expectedSubtitleLanguages: profile.expectedSubtitleLanguages,
@@ -156,12 +156,13 @@ export function missingRow(
 		externalSubtitles: [],
 		subtitleSatisfaction: {
 			state: 'missing',
-			preferredMode: 'mixed',
+			mode: 'mixed',
 			wantedLanguages: [],
 			matchedLanguages: [],
 			missingLanguages: []
 		},
 		upgrade: { state: 'missing', label: 'Missing', reasons: ['File is missing'] },
+		expectedAudioTargets: [],
 		expectedLanguages: [],
 		expectedRequiredLanguages: [],
 		expectedSubtitleLanguages: [],

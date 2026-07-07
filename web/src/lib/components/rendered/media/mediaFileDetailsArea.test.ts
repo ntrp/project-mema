@@ -39,6 +39,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 
 		expect(body).toContain('Track Nr.');
 		expect(body).toContain('Provenance');
+		expect(body).toContain('Actions');
 		expect(body).toContain('Video track');
 		expect(body).toContain('h264');
 		expect(body).toContain('1920x1080');
@@ -54,6 +55,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Chapter');
 		expect(body).toContain('2-21');
 		expect(body).toContain('20 chapters');
+		expect(body.match(/Delete embedded track/g) ?? []).toHaveLength(4);
 		expect(body).not.toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
@@ -79,10 +81,11 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('poster.jpg');
 		expect(body).toContain('notes.bin');
 		expect(body).toContain('Missing');
-		expect(otherFilesOrder(body)).toEqual(['Other files', 'Type', 'Language', 'Status']);
+		expect(otherFilesOrder(body)).toEqual(['Other files', 'Type', 'Language', 'Status', 'Actions']);
 		expect(body.match(/>Type</g) ?? []).toHaveLength(1);
 		expect(body.match(/>Language</g) ?? []).toHaveLength(1);
 		expect(body.match(/>Status</g) ?? []).toHaveLength(1);
+		expect(body.match(/>Actions</g) ?? []).toHaveLength(1);
 		expect(body.match(/Delete other file/g) ?? []).toHaveLength(2);
 	});
 
@@ -95,6 +98,29 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 
 		expect(body).toContain('Other files');
 		expect(body).toContain('No other files present.');
+	});
+
+	it('marks detected external subtitles outside the target languages', () => {
+		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
+			row: {
+				...detailedFileRow(),
+				removeNonEnabledSubtitleLanguages: false,
+				expectedSubtitleLanguages: ['english'],
+				otherFiles: [
+					{
+						type: 'subtitle' as const,
+						path: '/library/Scenario Movie/Scenario.Movie.2026.1080p.spanish.srt',
+						status: 'available' as const,
+						language: 'spanish'
+					}
+				]
+			},
+			canManage: true,
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Spanish');
+		expect(body).toContain('bg-secondary/40');
 	});
 
 	it('formats all track provenance fields for the tooltip', () => {
@@ -124,7 +150,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 				...detailedFileRow(),
 				subtitleSatisfaction: {
 					state: 'satisfied' as const,
-					preferredMode: 'mixed' as const,
+					mode: 'mixed' as const,
 					wantedLanguages: ['english'],
 					matchedLanguages: ['english'],
 					missingLanguages: []
@@ -167,7 +193,7 @@ function summaryOrder(body: string) {
 }
 
 function otherFilesOrder(body: string) {
-	return ['Other files', 'Type', 'Language', 'Status'].sort(
+	return ['Other files', 'Type', 'Language', 'Status', 'Actions'].sort(
 		(left, right) => body.indexOf(left) - body.indexOf(right)
 	);
 }
@@ -186,6 +212,7 @@ function detailedFileRow(): MediaFileRow {
 		quality: '1080p',
 		formats: ['WEB-DL'],
 		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
+		expectedAudioTargets: [],
 		expectedLanguages: ['english', 'german'],
 		expectedRequiredLanguages: ['german'],
 		expectedSubtitleLanguages: ['english'],
@@ -245,7 +272,7 @@ function detailedFileRow(): MediaFileRow {
 		],
 		subtitleSatisfaction: {
 			state: 'missing',
-			preferredMode: 'mixed',
+			mode: 'mixed',
 			wantedLanguages: ['english', 'japanese'],
 			matchedLanguages: ['english'],
 			missingLanguages: ['japanese']

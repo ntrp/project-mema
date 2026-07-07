@@ -37,3 +37,16 @@ func TestLibraryScanItemPathUsesFolderRoot(t *testing.T) {
 		t.Fatalf("libraryScanItemPath absolute = %q, want %q", got, absolute)
 	}
 }
+
+func TestSameMediaTitleStripsAccentsAndPunctuation(t *testing.T) {
+	cases := [][2]string{
+		{"Amelie", "Amélie"},
+		{"Walle", "WALL-E"},
+		{"Wall e", "Wall-e"},
+	}
+	for _, tc := range cases {
+		if !sameMediaTitle(tc[0], tc[1]) {
+			t.Fatalf("sameMediaTitle(%q, %q) = false", tc[0], tc[1])
+		}
+	}
+}

@@ -3,14 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	canImportRows,
 	defaultQualityProfileId,
-	importPayloadForRows,
-	importRequestForDraft,
 	type MatchDraft
 } from '$lib/components/settings/library/scan/libraryScanImport';
-import {
-	duplicateDraftStatesForRows,
-	normalizeDuplicateDrafts
-} from '$lib/components/settings/library/scan/libraryScanDuplicates';
+import { importRequestForDraft } from '$lib/components/settings/library/scan/libraryScanImportPayloads';
 import {
 	defaultMetadataProviderId,
 	initialMatchDraft
@@ -101,67 +96,7 @@ describe('library scan import payloads', () => {
 		expect(drafts['series-1'].seriesType).toBe('daily');
 		expect(drafts['unmatched-1'].monitorMode).toBe('none');
 	});
-
-	it('recalculates duplicate validation from changed matches', () => {
-		const rows = [scanItem('item-1'), scanItem('item-2')];
-		const drafts = {
-			'item-1': movieDraft({ matched: match('tmdb-1') }),
-			'item-2': movieDraft({ matched: match('tmdb-1') })
-		};
-
-		expect(canImportRows(rows, drafts, 'profile-1')).toBe(false);
-		expect(duplicateDraftStatesForRows(rows, drafts)['item-1']?.duplicate).toBe(true);
-
-		drafts['item-2'].matched = match('tmdb-2');
-
-		expect(canImportRows(rows, drafts, 'profile-1')).toBe(true);
-		expect(duplicateDraftStatesForRows(rows, drafts)['item-1']).toBeUndefined();
-	});
-
-	it('does not import stale duplicate removals after a match changes', () => {
-		const rows = [scanItem('item-1'), scanItem('item-2'), scanItem('item-3')];
-		const drafts = {
-			'item-1': movieDraft({ matched: match('tmdb-1') }),
-			'item-2': movieDraft({
-				matched: match('tmdb-2'),
-				selected: false,
-				removeDuplicate: true
-			}),
-			'item-3': movieDraft({ matched: undefined, selected: false, removeDuplicate: true })
-		};
-
-		expect(
-			importPayloadForRows([rows[0]], rows, drafts, {
-				qualityProfileId: '',
-				monitorMode: 'only_media',
-				minimumAvailability: 'released',
-				seriesType: 'standard'
-			}).removeDuplicatePaths
-		).toEqual(['/downloads/item-3.mkv']);
-	});
-
-	it('does not recalculate every duplicate group for non-duplicate rows', () => {
-		const rows = [scanItem('item-1'), scanItem('item-2'), { id: 'item-3' } as LibraryScanItem];
-		const drafts = {
-			'item-1': movieDraft({ selected: false, matched: match('tmdb-1'), removeDuplicate: true }),
-			'item-2': movieDraft({ matched: match('tmdb-1') }),
-			'item-3': movieDraft({ matched: match('tmdb-3') })
-		};
-
-		normalizeDuplicateDrafts(rows, drafts, rows[2].duplicateGroupId);
-
-		expect(drafts['item-1'].removeDuplicate).toBe(true);
-	});
 });
-
-function scanItem(id: string): LibraryScanItem {
-	return {
-		id,
-		path: `/downloads/${id}.mkv`,
-		duplicateGroupId: 'dup:tmdb-1',
-		duplicateRemovalAllowed: true
-	} as LibraryScanItem;
-}
 
 function matchedItem(kind: 'movie' | 'series'): LibraryScanItem {
 	return {
@@ -176,10 +111,16 @@ function matchedItem(kind: 'movie' | 'series'): LibraryScanItem {
 	} as LibraryScanItem;
 }
 
-function match(externalId: string, type: MediaSearchResult['type'] = 'movie'): MediaSearchResult {
+function match(
+	externalId: string,
+	type: MediaSearchResult['type'] = 'movie',
+	title = 'Scenario Movie',
+	year = 2026
+): MediaSearchResult {
 	return {
-		title: 'Scenario Movie',
+		title,
 		type,
+		year,
 		externalProvider: 'tmdb',
 		externalId
 	};

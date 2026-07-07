@@ -3,7 +3,9 @@ import type {
 	GrabSubtitleRequest,
 	Language,
 	LibraryFolder,
+	MediaFileTrackDeleteRequest,
 	MediaItem,
+	MediaItemSubtitleSelectionRequest,
 	MediaItemUpdateRequest,
 	QualityProfileOption,
 	ReleaseCandidate,
@@ -26,7 +28,16 @@ export interface MediaSeriesSeasonsProps {
 	onSearchSubtitle: (_item: MediaItem, _request: SubtitleSearchRequest) => void | Promise<void>;
 	onGrabSubtitle: (_item: MediaItem, _request: GrabSubtitleRequest) => void | Promise<void>;
 	onDeleteSubtitle: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;
+	onUpdateSubtitle: (
+		_item: MediaItem,
+		_subtitleId: string,
+		_request: MediaItemSubtitleSelectionRequest
+	) => void | Promise<void>;
 	onDeleteFile: (_item: MediaItem, _path: string) => void;
+	onDeleteFileTrack: (
+		_item: MediaItem,
+		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
 	onGrabRelease: (
 		_item: MediaItem,
 		_release: ReleaseCandidate,

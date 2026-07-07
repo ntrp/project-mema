@@ -66,7 +66,7 @@ func hydrateMediaItemProfile(
 		return item, err
 	}
 	item.SubtitleTargets = targets
-	item.SubtitlePreferredMode = profile.SubtitlePreferredMode
+	item.SubtitleMode = profile.SubtitleMode
 	item.AllowSubtitleReleaseFallback = profile.AllowSubtitleReleaseFallback
 	return item, nil
 }

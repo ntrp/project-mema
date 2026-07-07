@@ -6,6 +6,7 @@ import {
 	createMediaRequest as createMediaRequestRequest,
 	deleteMediaItem as deleteMediaItemRequest,
 	deleteMediaItemFile as deleteMediaItemFileRequest,
+	deleteMediaItemFileTrack as deleteMediaItemFileTrackRequest,
 	enqueueMediaAutomaticSearch as enqueueMediaAutomaticSearchRequest,
 	rescanMediaItemFiles as rescanMediaItemFilesRequest,
 	updateMediaItem as updateMediaItemRequest
@@ -13,6 +14,7 @@ import {
 import type { MediaActionSelection } from '$lib/components/app/media/actions/mediaActionTypes';
 import type {
 	MediaItem,
+	MediaFileTrackDeleteRequest,
 	MediaItemUpdateRequest,
 	MediaRequest,
 	MediaRequestApproveRequest,
@@ -165,6 +167,20 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 		}
 	}
 
+	async function deleteMediaFileTrack(item: MediaItem, request: MediaFileTrackDeleteRequest) {
+		clearNotice();
+		try {
+			const updated = await deleteMediaItemFileTrackRequest(item.id, request);
+			state.mediaItems = [
+				updated,
+				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
+			];
+			state.message = 'Embedded track deleted';
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not delete embedded track');
+		}
+	}
+
 	async function saveMediaItemOptions(item: MediaItem, request: MediaItemUpdateRequest) {
 		state.savingMediaItemOptionsId = item.id;
 		clearNotice();
@@ -262,6 +278,7 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 		autoSearchMedia,
 		rescanMediaFiles,
 		deleteMediaFile,
+		deleteMediaFileTrack,
 		saveMediaItemOptions,
 		deleteMediaItem,
 		closeMediaDelete,

@@ -25,6 +25,17 @@ export function applyQualityProfile(
 	}
 }
 
+export function setRowsSelected(
+	rows: LibraryScanItem[],
+	drafts: Record<string, MatchDraft>,
+	selected: boolean
+) {
+	for (const item of rows) {
+		const draft = drafts[item.id];
+		if (draft) draft.selected = selected;
+	}
+}
+
 export function applyMovieOptions(
 	rows: LibraryScanItem[],
 	drafts: Record<string, MatchDraft>,

@@ -115,6 +115,7 @@ function playbackRow(): MediaFileRow {
 		],
 		otherFiles: [],
 		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
+		expectedAudioTargets: [],
 		expectedLanguages: [],
 		expectedRequiredLanguages: [],
 		expectedSubtitleLanguages: [],

@@ -1,5 +1,6 @@
 import type { MediaFileUpgradeInfo } from '$lib/components/app/media/files/mediaFileUpgradeState';
 import type { MediaItem, MediaItemSubtitle } from '$lib/settings/types';
+import type { MediaFileAudioTargetOption } from '$lib/components/app/media/file-data/mediaFileProfiles';
 
 type MediaFileTrack = NonNullable<NonNullable<MediaItem['files']>[number]['tracks']>[number];
 type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['chapters']>[number];
@@ -31,6 +32,7 @@ export interface MediaFileRow {
 	subtitleSatisfaction?: MediaFileSubtitleSatisfaction;
 	externalSubtitles?: MediaItemSubtitle[];
 	upgrade: MediaFileUpgradeInfo;
+	expectedAudioTargets: MediaFileAudioTargetOption[];
 	expectedLanguages: string[];
 	expectedRequiredLanguages: string[];
 	expectedSubtitleLanguages: string[];

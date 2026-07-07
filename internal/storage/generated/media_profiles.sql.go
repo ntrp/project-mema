@@ -194,7 +194,7 @@ insert into app.media_profiles (
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
-    subtitle_preferred_mode,
+    subtitle_mode,
     allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference
@@ -232,7 +232,7 @@ type CreateMediaProfileParams struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
-	SubtitlePreferredMode             string
+	SubtitleMode                      string
 	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -252,7 +252,7 @@ func (q *Queries) CreateMediaProfile(ctx context.Context, arg CreateMediaProfile
 		arg.RemoveUnwantedAudio,
 		arg.AudioLossyTranscodePolicy,
 		arg.RemoveUnwantedSubtitles,
-		arg.SubtitlePreferredMode,
+		arg.SubtitleMode,
 		arg.AllowSubtitleReleaseFallback,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,
@@ -286,7 +286,7 @@ select id,
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
-    subtitle_preferred_mode,
+    subtitle_mode,
     allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference,
@@ -312,7 +312,7 @@ func (q *Queries) GetMediaProfile(ctx context.Context, id string) (AppMediaProfi
 		&i.RemoveUnwantedAudio,
 		&i.AudioLossyTranscodePolicy,
 		&i.RemoveUnwantedSubtitles,
-		&i.SubtitlePreferredMode,
+		&i.SubtitleMode,
 		&i.AllowSubtitleReleaseFallback,
 		&i.PreferredProtocol,
 		&i.SeriesPackPreference,
@@ -522,7 +522,7 @@ select id,
     remove_unwanted_audio,
     audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
-    subtitle_preferred_mode,
+    subtitle_mode,
     allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference,
@@ -554,7 +554,7 @@ func (q *Queries) ListMediaProfiles(ctx context.Context) ([]AppMediaProfile, err
 			&i.RemoveUnwantedAudio,
 			&i.AudioLossyTranscodePolicy,
 			&i.RemoveUnwantedSubtitles,
-			&i.SubtitlePreferredMode,
+			&i.SubtitleMode,
 			&i.AllowSubtitleReleaseFallback,
 			&i.PreferredProtocol,
 			&i.SeriesPackPreference,
@@ -595,7 +595,7 @@ set name = $1,
     remove_unwanted_audio = $9,
     audio_lossy_transcode_policy = $10,
     remove_unwanted_subtitles = $11,
-    subtitle_preferred_mode = $12,
+    subtitle_mode = $12,
     allow_subtitle_release_fallback = $13,
     preferred_protocol = $14,
     series_pack_preference = $15,
@@ -615,7 +615,7 @@ type UpdateMediaProfileParams struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
-	SubtitlePreferredMode             string
+	SubtitleMode                      string
 	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -635,7 +635,7 @@ func (q *Queries) UpdateMediaProfile(ctx context.Context, arg UpdateMediaProfile
 		arg.RemoveUnwantedAudio,
 		arg.AudioLossyTranscodePolicy,
 		arg.RemoveUnwantedSubtitles,
-		arg.SubtitlePreferredMode,
+		arg.SubtitleMode,
 		arg.AllowSubtitleReleaseFallback,
 		arg.PreferredProtocol,
 		arg.SeriesPackPreference,

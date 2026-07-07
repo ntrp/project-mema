@@ -16,6 +16,12 @@ web/node_modules/
 web/test-results/
 web/playwright-report/
 
+# Astro docs
+docs/website/.astro/
+docs/website/dist/
+docs/website/node_modules/
+.pnpm-store/
+
 # Local verification artifacts
 .playwright-cli/
 output/playwright/
@@ -26,3 +32,4 @@ output/playwright/
 !.env.example
 .data/secrets/
 internal/storage/seeds/dev.local.sql
+scripts/seeds/dev.local.sql

@@ -75,7 +75,7 @@ export function mediaProfile(overrides: Partial<MediaProfile> = {}): MediaProfil
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: false,
-		subtitlePreferredMode: 'mixed',
+		subtitleMode: 'mixed',
 		allowSubtitleReleaseFallback: false,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',

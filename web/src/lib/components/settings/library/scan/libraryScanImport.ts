@@ -1,6 +1,5 @@
 import type {
 	LibraryMediaKind,
-	LibraryScanImportRequest,
 	LibraryScanItem,
 	LibraryScanItemMatchRequest,
 	MediaMonitorMode,
@@ -9,7 +8,7 @@ import type {
 	SeriesType
 } from '$lib/settings/types';
 import type { QualityProfileOption } from '$lib/settings/types';
-import { duplicateDraftStatesForRows, duplicateSelectionValid } from './libraryScanDuplicates';
+import { duplicateSelectionValid } from './libraryScanDuplicates';
 
 export interface MatchDraft {
 	selected: boolean;
@@ -127,67 +126,6 @@ export function canImportRows(
 			draft?.matched && effectiveDraftValue(draft.qualityProfileId, bulkQualityProfileId)
 		);
 	});
-}
-
-export function importRequestForDraft(
-	draft: MatchDraft,
-	match: MediaSearchResult,
-	bulk: {
-		qualityProfileId: string;
-		monitorMode: MediaMonitorMode;
-		minimumAvailability: MinimumAvailability;
-		seriesType: SeriesType;
-	}
-): LibraryScanItemMatchRequest {
-	const series = isSeriesKind(draft.mediaKind);
-	const monitorMode = effectiveDraftValue(draft.monitorMode, bulk.monitorMode);
-	return {
-		mediaKind: draft.mediaKind,
-		title: match.title,
-		year: match.year,
-		monitored: monitorMode !== 'none',
-		qualityProfileId: effectiveDraftValue(draft.qualityProfileId, bulk.qualityProfileId),
-		monitorMode,
-		minimumAvailability: series
-			? 'released'
-			: effectiveDraftValue(draft.minimumAvailability, bulk.minimumAvailability),
-		seriesType: series ? effectiveDraftValue(draft.seriesType, bulk.seriesType) : undefined,
-		metadataProviderId: draft.metadataProviderId || undefined,
-		mediaItemId: match.id,
-		externalProvider: match.externalProvider,
-		externalId: match.externalId,
-		overview: match.overview,
-		posterPath: match.posterPath
-	};
-}
-
-export function importPayloadForRows(
-	importRows: LibraryScanItem[],
-	allRows: LibraryScanItem[],
-	drafts: Record<string, MatchDraft>,
-	bulk: {
-		qualityProfileId: string;
-		monitorMode: MediaMonitorMode;
-		minimumAvailability: MinimumAvailability;
-		seriesType: SeriesType;
-	}
-): LibraryScanImportRequest {
-	const duplicateStates = duplicateDraftStatesForRows(allRows, drafts);
-	return {
-		items: importRows.map((item) => {
-			const draft = drafts[item.id];
-			return {
-				itemId: item.id,
-				match: importRequestForDraft(draft, draft.matched!, bulk)
-			};
-		}),
-		removeDuplicatePaths: Object.entries(drafts)
-			.filter(
-				([id, draft]) => draft.removeDuplicate && (!draft.matched || duplicateStates[id]?.duplicate)
-			)
-			.map(([id]) => allRows.find((row) => row.id === id)?.path)
-			.filter((path): path is string => Boolean(path))
-	};
 }
 
 export function wait(ms: number) {

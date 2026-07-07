@@ -6,8 +6,10 @@ import type {
 	ActivitySection,
 	Language,
 	LibraryFolder,
+	MediaFileTrackDeleteRequest,
 	MediaDiscoverSection,
 	MediaItem,
+	MediaItemSubtitleSelectionRequest,
 	MediaItemUpdateRequest,
 	MediaRequest,
 	MediaRequestApproveRequest,
@@ -66,9 +68,18 @@ export interface HomeAreaProps {
 	) => void | Promise<void>;
 	onGrabMediaSubtitle?: (_item: MediaItem, _request: GrabSubtitleRequest) => void | Promise<void>;
 	onDeleteMediaSubtitle?: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;
+	onUpdateMediaSubtitle?: (
+		_item: MediaItem,
+		_subtitleId: string,
+		_request: MediaItemSubtitleSelectionRequest
+	) => void | Promise<void>;
 	onRefreshMediaMetadata: (_item: MediaItem) => void;
 	onSaveMediaItemOptions: (_item: MediaItem, _request: MediaItemUpdateRequest) => void;
 	onDeleteMediaFile: (_item: MediaItem, _path: string) => void;
+	onDeleteMediaFileTrack?: (
+		_item: MediaItem,
+		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
 	onAssembleMediaComponents?: (
 		_item: MediaItem,
 		_baseSourceId: string,

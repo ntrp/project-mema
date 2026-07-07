@@ -50,7 +50,7 @@
 	function patchForm(value: Partial<MediaProfileForm>) {
 		onChange({ ...form, ...value });
 	}
-	function subtitleModeLabel(value: MediaProfileForm['subtitlePreferredMode'] | undefined) {
+	function subtitleModeLabel(value: MediaProfileForm['subtitleMode'] | undefined) {
 		switch (value) {
 			case 'embedded':
 				return 'Embedded';
@@ -82,17 +82,17 @@
 	<Card.Content class="mt-2 grid gap-4">
 		<div class="grid gap-3">
 			<div class="grid gap-2 text-sm md:max-w-xs">
-				<Label>Preferred Mode</Label>
+				<Label>Mode</Label>
 				<Select.Root
 					type="single"
-					value={form.subtitlePreferredMode ?? 'mixed'}
+					value={form.subtitleMode ?? 'mixed'}
 					onValueChange={(value: string) =>
 						patchForm({
-							subtitlePreferredMode: value as MediaProfileForm['subtitlePreferredMode']
+							subtitleMode: value as MediaProfileForm['subtitleMode']
 						})}
 				>
 					<Select.Trigger class="w-full">
-						{subtitleModeLabel(form.subtitlePreferredMode)}
+						{subtitleModeLabel(form.subtitleMode)}
 					</Select.Trigger>
 					<Select.Content>
 						<Select.Item value="mixed" label="Mixed" />

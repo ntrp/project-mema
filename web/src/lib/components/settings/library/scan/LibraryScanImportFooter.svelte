@@ -1,7 +1,6 @@
 <script lang="ts">
+	import LibraryScanImportButton from './LibraryScanImportButton.svelte';
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
-	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
 	import {
 		minimumAvailabilityOptions,
@@ -11,6 +10,7 @@
 	} from '$lib/components/settings/library/scan/libraryScanImport';
 	import type {
 		MediaMonitorMode,
+		MetadataProvider,
 		MinimumAvailability,
 		QualityProfileOption,
 		SeriesType
@@ -22,15 +22,18 @@
 		loading: boolean;
 		importing: boolean;
 		duplicateRemovalCount: number;
+		metadataProviders: MetadataProvider[];
 		qualityProfiles: QualityProfileOption[];
 		hasMatchedMovies: boolean;
 		hasMatchedSeries: boolean;
 		showSeriesControls?: boolean;
+		metadataProviderId: string;
 		qualityProfileId: string;
 		movieMonitorMode: MediaMonitorMode;
 		movieMinimumAvailability: MinimumAvailability;
 		seriesMonitorMode: MediaMonitorMode;
 		seriesType: SeriesType;
+		onApplyProvider: () => void;
 		onApplyQualityProfile: () => void;
 		onApplyMovie: () => void;
 		onApplySeries: () => void;
@@ -43,15 +46,18 @@
 		loading,
 		importing,
 		duplicateRemovalCount,
+		metadataProviders,
 		qualityProfiles,
 		hasMatchedMovies,
 		hasMatchedSeries,
 		showSeriesControls = true,
+		metadataProviderId = $bindable(),
 		qualityProfileId = $bindable(),
 		movieMonitorMode = $bindable(),
 		movieMinimumAvailability = $bindable(),
 		seriesMonitorMode = $bindable(),
 		seriesType = $bindable(),
+		onApplyProvider,
 		onApplyQualityProfile,
 		onApplyMovie,
 		onApplySeries,
@@ -59,6 +65,11 @@
 	}: Props = $props();
 
 	let monitorSelection = $state('');
+	const providerOptions = $derived(
+		metadataProviders
+			.filter((provider) => provider.enabled)
+			.map((provider) => ({ value: provider.id, label: provider.name }))
+	);
 	const qualityProfileOptions = $derived([
 		{ value: '', label: 'Select profile' },
 		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
@@ -86,6 +97,11 @@
 	function applyQualityProfile(value: string) {
 		qualityProfileId = value;
 		onApplyQualityProfile();
+	}
+
+	function applyMetadataProvider(value: string) {
+		metadataProviderId = value;
+		onApplyProvider();
 	}
 
 	function applyMovieMinimumAvailability(value: string) {
@@ -116,32 +132,23 @@
 <Table.Footer class="sticky bottom-0 bg-muted shadow-sm">
 	<Table.Row>
 		<Table.Cell class="align-top" colspan={2}>
-			{#if duplicateRemovalCount > 0}
-				<ConfirmActionButton
-					label="Import selected"
-					title="Remove files"
-					description={`Import selected rows and remove ${duplicateRemovalCount} file${duplicateRemovalCount === 1 ? '' : 's'}?`}
-					confirmLabel="Import selected"
-					confirmingLabel="Importing"
-					variant="default"
-					class="whitespace-nowrap"
-					disabled={!canImport || loading || importing}
-					onConfirm={onImport}
-				>
-					{importing ? 'Importing' : 'Import Selected'}
-				</ConfirmActionButton>
-			{:else}
-				<Button
-					type="button"
-					class="whitespace-nowrap"
-					disabled={!canImport || loading || importing}
-					onclick={onImport}
-				>
-					{importing ? 'Importing' : 'Import Selected'}
-				</Button>
-			{/if}
+			<LibraryScanImportButton
+				{canImport}
+				{loading}
+				{importing}
+				{duplicateRemovalCount}
+				{onImport}
+			/>
 		</Table.Cell>
-		<Table.Cell class="w-px align-top"></Table.Cell>
+		<Table.Cell class="w-px align-top">
+			<SettingsSelect
+				value={metadataProviderId}
+				options={providerOptions}
+				disabled={!checkedRowsMatched || !providerOptions.length}
+				placeholder="Apply provider"
+				onValueChange={applyMetadataProvider}
+			/>
+		</Table.Cell>
 		<Table.Cell class="w-px align-top">
 			<SettingsSelect
 				value={qualityProfileId}

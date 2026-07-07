@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,6 +35,7 @@ type ffprobeStream struct {
 	Channels      int32             `json:"channels"`
 	ChannelLayout string            `json:"channel_layout"`
 	BitRate       string            `json:"bit_rate"`
+	Duration      string            `json:"duration"`
 	Tags          map[string]string `json:"tags"`
 }
 
@@ -140,7 +142,7 @@ func mediaFileTrack(stream ffprobeStream) (MediaFileTrack, bool) {
 		Codec:         optionalProbeString(stream.CodecName),
 		Language:      optionalProbeString(languageTag(stream.Tags)),
 		Title:         optionalProbeString(stream.Tags["title"]),
-		BitRate:       optionalProbeString(stream.BitRate),
+		BitRate:       streamBitRate(stream),
 		ChannelLayout: optionalProbeString(stream.ChannelLayout),
 		FrameRate:     optionalProbeString(normalFrameRate(stream.FrameRate)),
 		Height:        optionalProbeInt(stream.Height),
@@ -150,6 +152,54 @@ func mediaFileTrack(stream ffprobeStream) (MediaFileTrack, bool) {
 		Channels:      optionalProbeInt(stream.Channels),
 	}
 	return track, true
+}
+
+func streamBitRate(stream ffprobeStream) *string {
+	if bitRate := optionalProbeString(stream.BitRate); bitRate != nil {
+		return bitRate
+	}
+	if bitRate := optionalProbeString(probeTag(stream.Tags, "BPS")); bitRate != nil {
+		return bitRate
+	}
+	bytes, err := strconv.ParseFloat(probeTag(stream.Tags, "NUMBER_OF_BYTES"), 64)
+	duration := streamDurationSeconds(stream)
+	if err != nil || bytes <= 0 || duration <= 0 {
+		return nil
+	}
+	value := strconv.FormatInt(int64(bytes*8/duration), 10)
+	return &value
+}
+
+func streamDurationSeconds(stream ffprobeStream) float64 {
+	if duration := optionalProbeDuration(stream.Duration); duration != nil {
+		return *duration
+	}
+	return probeDurationTagSeconds(probeTag(stream.Tags, "DURATION"))
+}
+
+func probeTag(tags map[string]string, name string) string {
+	name = strings.ToLower(strings.ReplaceAll(name, "_", "-"))
+	for key, value := range tags {
+		key = strings.ToLower(strings.ReplaceAll(key, "_", "-"))
+		if key == name || strings.HasPrefix(key, name+"-") {
+			return value
+		}
+	}
+	return ""
+}
+
+func probeDurationTagSeconds(value string) float64 {
+	parts := strings.Split(strings.TrimSpace(value), ":")
+	if len(parts) != 3 {
+		return 0
+	}
+	hours, errHours := strconv.ParseFloat(parts[0], 64)
+	minutes, errMinutes := strconv.ParseFloat(parts[1], 64)
+	seconds, errSeconds := strconv.ParseFloat(parts[2], 64)
+	if errHours != nil || errMinutes != nil || errSeconds != nil {
+		return 0
+	}
+	return hours*3600 + minutes*60 + seconds
 }
 
 func mediaFileTrackType(value string) (MediaFileTrackType, bool) {

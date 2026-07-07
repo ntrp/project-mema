@@ -1,11 +1,16 @@
-import type { MediaItem } from '$lib/settings/types';
+import type { MediaItem, MediaProfileAudioTarget } from '$lib/settings/types';
+
+export type MediaFileAudioTargetOption = Omit<MediaProfileAudioTarget, 'score'> & {
+	score?: number;
+	required?: boolean;
+};
 
 export interface MediaFileProfileOption {
 	id: string;
 	qualityIds?: string[];
 	upgradesAllowed?: boolean;
 	upgradeUntilQualityId?: string;
-	audioTargets?: { languageId: string; required?: boolean }[];
+	audioTargets?: MediaFileAudioTargetOption[];
 	subtitleTargets?: { languageId: string }[];
 	removeUnwantedAudio?: boolean;
 	removeUnwantedSubtitles?: boolean;
@@ -17,6 +22,7 @@ export function fileProfileSettings(item: MediaItem, qualityProfiles: MediaFileP
 		: undefined;
 	return {
 		profile,
+		expectedAudioTargets: profile?.audioTargets?.map((target) => ({ ...target })) ?? [],
 		expectedLanguages: profile?.audioTargets?.map((target) => target.languageId) ?? [],
 		expectedRequiredLanguages: requiredTargetLanguages(profile),
 		expectedSubtitleLanguages:

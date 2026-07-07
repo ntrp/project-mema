@@ -9,7 +9,6 @@
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
 	import MediaFileRequirementBadge from '$lib/components/app/media/files/MediaFileRequirementBadge.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
-	import MediaSubtitlePanel from '$lib/components/app/media/subtitles/MediaSubtitlePanel.svelte';
 	import {
 		audioSatisfaction,
 		subtitleSatisfaction
@@ -28,10 +27,11 @@
 		showSearchActions = true,
 		onAutoSearch,
 		onManualSearch,
-		subtitleSearching,
 		onSearchSubtitle = async () => {},
 		onManualSubtitleSearch = () => {},
 		onDeleteSubtitle = async () => {},
+		onUpdateSubtitle = async () => {},
+		onDeleteTrack = async () => {},
 		onDelete
 	}: Props = $props();
 	let detailsOpen = $state(false);
@@ -155,17 +155,17 @@
 	</div>
 
 	{#if row.exists && detailsOpen}
-		<MediaFileDetailsAccordion {row} />
+		<MediaFileDetailsAccordion {row} {canManage} {onDeleteTrack} />
 	{/if}
-	<MediaSubtitlePanel
+	<MediaFileOtherFilesPanel
 		{row}
 		{canManage}
-		searching={subtitleSearching}
 		onSearch={(languageId) => onSearchSubtitle(row, languageId)}
 		onManualSearch={(languageId) => onManualSubtitleSearch(row, languageId)}
-		onDelete={onDeleteSubtitle}
+		{onDeleteSubtitle}
+		{onUpdateSubtitle}
+		{onDelete}
 	/>
-	<MediaFileOtherFilesPanel {row} {canManage} {onDelete} />
 </div>
 
 {#if row.exists && row.path && previewOpen}

@@ -125,6 +125,7 @@ export type MediaItemRequest = components['schemas']['MediaItemRequest'];
 export type MediaItemStatus = components['schemas']['MediaItemStatus'];
 export type MediaFileHistoryEntry = components['schemas']['MediaFileHistoryEntry'];
 export type MediaFileHistoryResponse = components['schemas']['MediaFileHistoryResponse'];
+export type MediaFileTrackDeleteRequest = components['schemas']['MediaFileTrackDeleteRequest'];
 export type MediaRenameApplyResponse = components['schemas']['MediaRenameApplyResponse'];
 export type MediaRenamePreviewResponse = components['schemas']['MediaRenamePreviewResponse'];
 export type MediaRenamePreviewRow = components['schemas']['MediaRenamePreviewRow'];
@@ -157,8 +158,7 @@ export type MediaProfileAudioTarget = components['schemas']['MediaProfileAudioTa
 export type MediaProfileSubtitleTarget = components['schemas']['MediaProfileSubtitleTarget'];
 export type MediaProfileLossyTranscodePolicy =
 	components['schemas']['MediaProfileLossyTranscodePolicy'];
-export type MediaProfileSubtitlePreferredMode =
-	components['schemas']['MediaProfileSubtitlePreferredMode'];
+export type MediaProfileSubtitleMode = components['schemas']['MediaProfileSubtitleMode'];
 export type MediaProfileCustomFormatScore = components['schemas']['MediaProfileCustomFormatScore'];
 export type FileNamingSettings = components['schemas']['FileNamingSettings'];
 export type FileNamingSettingsRequest = components['schemas']['FileNamingSettingsRequest'];

@@ -41,7 +41,7 @@ function missingSubtitleRows(row: MediaFileRow): MediaFileDetailRow[] {
 	const satisfaction = row.subtitleSatisfaction;
 	if (
 		!satisfaction ||
-		satisfaction.preferredMode === 'external' ||
+		satisfaction.mode === 'external' ||
 		satisfaction.missingLanguages.length === 0
 	) {
 		return [];

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LibraryScanMatchCell from '$lib/components/settings/library/scan/LibraryScanMatchCell.svelte';
 	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Table from '$lib/components/ui/table';
@@ -30,8 +31,10 @@
 		qualityProfiles: QualityProfileOption[];
 		metadataProviders: MetadataProvider[];
 		duplicateState?: DuplicateDraftState;
+		importing?: boolean;
 		onSearch: (_item: LibraryScanItem) => void;
 		onSelect: (_item: LibraryScanItem, _result: MediaSearchResult) => void;
+		onProviderChange: (_item: LibraryScanItem, _providerId: string) => void;
 	}
 
 	let {
@@ -41,8 +44,10 @@
 		qualityProfiles,
 		metadataProviders,
 		duplicateState,
+		importing = false,
 		onSearch,
-		onSelect
+		onSelect,
+		onProviderChange
 	}: Props = $props();
 	const series = $derived(isSeriesKind(draft.mediaKind));
 	const canRemoveFile = $derived(
@@ -89,7 +94,7 @@
 
 <Table.Row class={duplicateState?.duplicate ? 'bg-amber-500/5' : undefined}>
 	<Table.Cell class="w-px align-middle">
-		<Checkbox bind:checked={draft.selected} disabled={!importable} />
+		<Checkbox bind:checked={draft.selected} disabled={!importable || importing} />
 	</Table.Cell>
 	<Table.Cell class="min-w-120 align-top">
 		<div class="grid gap-2">
@@ -106,6 +111,10 @@
 							>
 								Imported
 							</Badge>
+						{:else if importing}
+							<span class="mt-1 shrink-0">
+								<InlineSpinner label="Importing" />
+							</span>
 						{/if}
 					</div>
 					<div class="flex ml-3 mt-1 min-w-0 items-start justify-end gap-3">
@@ -115,7 +124,8 @@
 								<Checkbox
 									checked={draft.removeDuplicate}
 									disabled={Boolean(
-										draft.matched && duplicateState?.duplicate && !duplicateState.removalAllowed
+										importing ||
+										(draft.matched && duplicateState?.duplicate && !duplicateState.removalAllowed)
 									)}
 									onCheckedChange={(checked) => setRemoveFile(checked === true)}
 								/>
@@ -131,15 +141,15 @@
 		<SettingsSelect
 			value={draft.metadataProviderId}
 			options={providerOptions}
-			disabled={!providerOptions.length || Boolean(draft.matched)}
-			onValueChange={(value) => (draft.metadataProviderId = value)}
+			disabled={!providerOptions.length || importing}
+			onValueChange={(value) => onProviderChange(item, value)}
 		/>
 	</Table.Cell>
 	<Table.Cell class="w-px align-top">
 		<SettingsSelect
 			value={draft.qualityProfileId}
 			options={qualityProfileOptions}
-			disabled={!draft.selected || !draft.matched}
+			disabled={!draft.selected || !draft.matched || importing}
 			onValueChange={(value) => (draft.qualityProfileId = value)}
 		/>
 	</Table.Cell>
@@ -147,7 +157,7 @@
 		<SettingsSelect
 			value={draft.monitorMode}
 			options={monitorOptions}
-			disabled={!draft.selected || !draft.matched}
+			disabled={!draft.selected || !draft.matched || importing}
 			onValueChange={(value) => (draft.monitorMode = value as MediaMonitorMode)}
 		/>
 	</Table.Cell>
@@ -158,7 +168,7 @@
 			<SettingsSelect
 				value={draft.minimumAvailability}
 				options={minimumAvailabilityOptions}
-				disabled={!draft.selected || !draft.matched}
+				disabled={!draft.selected || !draft.matched || importing}
 				onValueChange={(value) => (draft.minimumAvailability = value as MinimumAvailability)}
 			/>
 		{/if}
@@ -168,7 +178,7 @@
 			<SettingsSelect
 				value={draft.seriesType}
 				options={seriesTypeOptions}
-				disabled={!draft.selected || !draft.matched}
+				disabled={!draft.selected || !draft.matched || importing}
 				onValueChange={(value) => (draft.seriesType = value as SeriesType)}
 			/>
 		{/if}

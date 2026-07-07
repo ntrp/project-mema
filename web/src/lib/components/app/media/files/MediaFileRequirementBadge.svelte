@@ -12,7 +12,7 @@
 	}
 
 	let { status }: Props = $props();
-	const detail = $derived(status.details.join(', '));
+	const detail = $derived(status.details.join('. '));
 </script>
 
 {#if status.state === 'ignored'}
@@ -31,6 +31,12 @@
 				</Badge>
 			{/snippet}
 		</Tooltip.Trigger>
-		<Tooltip.Content>{detail}</Tooltip.Content>
+		<Tooltip.Content>
+			<span class="grid gap-1">
+				{#each status.details as item (item)}
+					<span>{item}</span>
+				{/each}
+			</span>
+		</Tooltip.Content>
 	</Tooltip.Root>
 {/if}

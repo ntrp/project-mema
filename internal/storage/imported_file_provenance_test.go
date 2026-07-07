@@ -68,6 +68,9 @@ func TestRecordImportedMediaFileRecordsSidecars(t *testing.T) {
 	if len(loaded.ExternalSubtitles) != 1 || loaded.ExternalSubtitles[0].LanguageID != "english" || loaded.ExternalSubtitles[0].FilePath != subtitle {
 		t.Fatalf("external subtitles = %#v", loaded.ExternalSubtitles)
 	}
+	if loaded.ExternalSubtitles[0].RetentionMode != SubtitleRetentionExternal {
+		t.Fatalf("expected imported mixed-mode subtitle to stay external, got %#v", loaded.ExternalSubtitles[0])
+	}
 	if !stringSliceHas(loaded.MetadataFilePaths, poster) {
 		t.Fatalf("metadata paths = %#v", loaded.MetadataFilePaths)
 	}
@@ -76,7 +79,7 @@ func TestRecordImportedMediaFileRecordsSidecars(t *testing.T) {
 func TestRecordImportedMediaFileMuxesSidecarSubtitlesForEmbeddedProfile(t *testing.T) {
 	ctx, store := testDBStore(t)
 	item := rescanMediaItem(t, ctx, store)
-	item.SubtitlePreferredMode = "embedded"
+	item.SubtitleMode = "embedded"
 	target := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.1080p-ARR.mkv")
 	subtitle := filepath.Join(*item.MediaFolderPath, "English.srt")
 	if err := os.WriteFile(subtitle, []byte("sidecar"), 0o600); err != nil {

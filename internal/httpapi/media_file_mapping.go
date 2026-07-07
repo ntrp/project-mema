@@ -11,7 +11,7 @@ import (
 func mediaFileInfoResponses(
 	paths []string,
 	subtitleTargets []storage.MediaProfileSubtitleTarget,
-	subtitlePreferredMode string,
+	subtitleMode string,
 	externalSubtitles []storage.MediaItemSubtitle,
 	componentProvenance []storage.MediaComponentProvenance,
 	sidecars []storage.MediaItemSidecar,
@@ -34,10 +34,10 @@ func mediaFileInfoResponses(
 			file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(
 				probe.tracks,
 				subtitleTargets,
-				subtitlePreferredMode,
+				subtitleMode,
 				externalSubtitleLanguagesForPath(externalSubtitles, sidecars, path),
 			)
-			otherFiles := mediaFileOtherFiles(path, paths, subtitleTargets, subtitlePreferredMode, externalSubtitles, sidecars, file.SubtitleSatisfaction)
+			otherFiles := mediaFileOtherFiles(path, paths, subtitleTargets, subtitleMode, externalSubtitles, sidecars, file.SubtitleSatisfaction)
 			if len(otherFiles) > 0 {
 				file.OtherFiles = &otherFiles
 			}
@@ -50,12 +50,12 @@ func mediaFileInfoResponses(
 func mediaFileSubtitleSatisfaction(
 	tracks []MediaFileTrack,
 	targets []storage.MediaProfileSubtitleTarget,
-	subtitlePreferredMode string,
+	subtitleMode string,
 	externalLanguages []string,
 ) *MediaFileSubtitleSatisfaction {
 	if len(targets) == 0 {
 		return &MediaFileSubtitleSatisfaction{
-			PreferredMode:    mediaFileSubtitlePreferredMode(subtitlePreferredMode),
+			Mode:             mediaFileSubtitleMode(subtitleMode),
 			State:            MediaFileSubtitleSatisfactionStateIgnored,
 			WantedLanguages:  []string{},
 			MatchedLanguages: []string{},
@@ -78,7 +78,7 @@ func mediaFileSubtitleSatisfaction(
 		}
 		seenTargets[language] = struct{}{}
 		wanted = append(wanted, target.LanguageID)
-		if subtitleTargetSatisfied(target, subtitlePreferredMode, embedded, external) {
+		if subtitleTargetSatisfied(target, subtitleMode, embedded, external) {
 			matched = append(matched, target.LanguageID)
 			continue
 		}
@@ -89,7 +89,7 @@ func mediaFileSubtitleSatisfaction(
 		state = MediaFileSubtitleSatisfactionStateMissing
 	}
 	return &MediaFileSubtitleSatisfaction{
-		PreferredMode:    mediaFileSubtitlePreferredMode(subtitlePreferredMode),
+		Mode:             mediaFileSubtitleMode(subtitleMode),
 		State:            state,
 		WantedLanguages:  wanted,
 		MatchedLanguages: matched,
@@ -97,29 +97,29 @@ func mediaFileSubtitleSatisfaction(
 	}
 }
 
-func mediaFileSubtitlePreferredMode(value string) MediaProfileSubtitlePreferredMode {
+func mediaFileSubtitleMode(value string) MediaProfileSubtitleMode {
 	switch strings.ToLower(strings.TrimSpace(value)) {
-	case string(MediaProfileSubtitlePreferredModeEmbedded):
-		return MediaProfileSubtitlePreferredModeEmbedded
-	case string(MediaProfileSubtitlePreferredModeExternal):
-		return MediaProfileSubtitlePreferredModeExternal
+	case string(MediaProfileSubtitleModeEmbedded):
+		return MediaProfileSubtitleModeEmbedded
+	case string(MediaProfileSubtitleModeExternal):
+		return MediaProfileSubtitleModeExternal
 	default:
-		return MediaProfileSubtitlePreferredModeMixed
+		return MediaProfileSubtitleModeMixed
 	}
 }
 
 func subtitleTargetSatisfied(
 	target storage.MediaProfileSubtitleTarget,
-	subtitlePreferredMode string,
+	subtitleMode string,
 	embedded map[string]struct{},
 	external map[string]struct{},
 ) bool {
 	language := languageMatchKey(target.LanguageID)
 	_, embeddedOK := embedded[language]
 	_, externalOK := external[language]
-	switch subtitlePreferredMode {
+	switch subtitleMode {
 	case "embedded":
-		return embeddedOK || externalOK
+		return embeddedOK
 	case "external":
 		return externalOK
 	default:

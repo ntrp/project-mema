@@ -94,7 +94,7 @@ func mediaItemResponse(item storage.MediaItem) MediaItem {
 		Files: mediaFileInfoResponses(
 			item.FilePaths,
 			item.SubtitleTargets,
-			item.SubtitlePreferredMode,
+			item.SubtitleMode,
 			item.ExternalSubtitles,
 			item.ComponentProvenance,
 			item.Sidecars,

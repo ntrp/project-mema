@@ -84,11 +84,13 @@ func subtitleSearchTargetSatisfied(
 }
 
 func subtitleSearchLanguageSatisfied(item storage.MediaItem, languageID string, filePath string) bool {
-	if subtitlePreferredMode(item.SubtitlePreferredMode) == "embedded" {
+	switch subtitleMode(item.SubtitleMode) {
+	case "embedded", "mixed":
 		return embeddedSubtitleExists(item, storage.MediaProfileSubtitleTarget{LanguageID: languageID}) ||
 			externalSubtitleExists(item, languageID, filePath)
+	default:
+		return externalSubtitleExists(item, languageID, filePath)
 	}
-	return externalSubtitleExists(item, languageID, filePath)
 }
 
 func externalSubtitleExists(item storage.MediaItem, languageID string, filePath string) bool {

@@ -76,7 +76,8 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 				qualityProfiles: profiles,
 				metadataProviders: providers,
 				onSearch: vi.fn(),
-				onSelect: vi.fn()
+				onSelect: vi.fn(),
+				onProviderChange: vi.fn()
 			}
 		});
 		const unmatchedRow = render(LibraryScanImportRow, {
@@ -87,7 +88,8 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 				qualityProfiles: profiles,
 				metadataProviders: providers,
 				onSearch: vi.fn(),
-				onSelect: vi.fn()
+				onSelect: vi.fn(),
+				onProviderChange: vi.fn()
 			}
 		});
 

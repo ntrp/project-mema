@@ -3,7 +3,7 @@ GOFLAGS ?=
 DATABASE_URL ?= postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable
 MEDIA_DATA_DIR ?= $(CURDIR)/.data/media
 
-.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-reset dev dev-api dev-api-watch dev-watch dev-web format river-migrate sqlc-generate test test-api test-deps test-e2e verify-generated verify-sqlc-generated web-install
+.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-clean db-reset db-seed-local dev dev-api dev-api-watch dev-watch dev-web docs-build docs-dev docs-install docs-preview format river-migrate sqlc-generate test test-api test-deps test-e2e verify-generated verify-sqlc-generated web-install
 
 api-generate: api-generate-go api-generate-web
 
@@ -45,8 +45,14 @@ coverage-backend: test-deps
 coverage-web:
 	cd web && pnpm run test:coverage
 
+db-clean:
+	GOCACHE=$(GOCACHE) DATABASE_URL=$(DATABASE_URL) go run ./cmd/devdb clean
+
 db-reset:
-	APP_ENV=development ALLOW_DEV_RESET=true DEV_LOCAL_SEED_OPTIONAL=true GOCACHE=$(GOCACHE) go run ./cmd/server reset-dev
+	GOCACHE=$(GOCACHE) DATABASE_URL=$(DATABASE_URL) go run ./cmd/devdb reset
+
+db-seed-local:
+	GOCACHE=$(GOCACHE) DATABASE_URL=$(DATABASE_URL) go run ./cmd/devdb seed-local
 
 river-migrate:
 	GOCACHE=$(GOCACHE) go run github.com/riverqueue/river/cmd/river migrate-up --database-url "$(DATABASE_URL)"
@@ -65,6 +71,18 @@ dev-watch:
 
 dev-web:
 	cd web && pnpm exec vite dev --host 127.0.0.1 --port 15173
+
+docs-install:
+	cd docs/website && pnpm install
+
+docs-dev:
+	cd docs/website && pnpm exec astro dev --host 0.0.0.0 --port 15174
+
+docs-build:
+	cd docs/website && pnpm run build
+
+docs-preview:
+	cd docs/website && pnpm exec astro preview --host 0.0.0.0 --port 15174
 
 format:
 	gofmt -w cmd internal

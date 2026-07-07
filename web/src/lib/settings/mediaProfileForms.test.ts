@@ -15,7 +15,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			finalContainer: 'mkv',
 			qualityIds: [],
 			audioLossyTranscodePolicy: 'disabled',
-			subtitlePreferredMode: 'mixed',
+			subtitleMode: 'mixed',
 			allowSubtitleReleaseFallback: false,
 			audioTargets: [
 				{
@@ -53,7 +53,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			minimumCustomFormatScore: '10',
 			upgradeUntilCustomFormatScore: '20.9',
 			minimumCustomFormatScoreIncrement: '-5',
-			subtitlePreferredMode: 'embedded',
+			subtitleMode: 'embedded',
 			allowSubtitleReleaseFallback: true,
 			preferredProtocol: undefined,
 			seriesPackPreference: undefined,
@@ -104,7 +104,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 			preferredProtocol: 'any',
 			seriesPackPreference: 'auto',
 			audioLossyTranscodePolicy: 'disabled',
-			subtitlePreferredMode: 'embedded',
+			subtitleMode: 'embedded',
 			allowSubtitleReleaseFallback: true,
 			videoTarget: { codecs: ['h265', 'av1'], codecScore: 15, hdrFormats: ['HDR10'] },
 			audioTargets: [
@@ -143,7 +143,7 @@ function mediaProfile(): MediaProfile {
 		removeUnwantedAudio: false,
 		audioLossyTranscodePolicy: 'disabled',
 		removeUnwantedSubtitles: true,
-		subtitlePreferredMode: 'embedded',
+		subtitleMode: 'embedded',
 		allowSubtitleReleaseFallback: true,
 		preferredProtocol: 'any',
 		seriesPackPreference: 'auto',

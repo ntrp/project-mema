@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	mediatools "media-manager/internal/tools"
 )
 
 func (s *Server) RescanMediaItemFiles(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -33,6 +34,49 @@ func (s *Server) DeleteMediaItemFile(w http.ResponseWriter, r *http.Request, id 
 		return
 	}
 	s.recordEvent(r.Context(), eventSeverityInfo, "media", "Media file deleted", map[string]any{"mediaItemId": uuid.UUID(id).String(), "path": body.Path})
+	writeJSON(w, http.StatusOK, mediaItemResponse(item))
+}
+
+func (s *Server) DeleteMediaItemFileTrack(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	var body MediaFileTrackDeleteRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	target, err := s.settings.MediaItemFilePath(r.Context(), uuid.UUID(id), body.Path)
+	if err != nil {
+		writeSettingsError(w, err, "Could not find media file")
+		return
+	}
+	if _, ok := statMediaFile(w, target); !ok {
+		return
+	}
+	if _, err := mediatools.LookPath("ffmpeg"); err != nil {
+		writeError(w, http.StatusInternalServerError, "ffmpeg_not_available", "ffmpeg is required to delete embedded tracks")
+		return
+	}
+	if err := deleteMediaFileTrack(r.Context(), target, body); err != nil {
+		if isMediaFileTrackDeleteInputError(err) {
+			writeError(w, http.StatusBadRequest, "invalid_track_delete", err.Error())
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "track_delete_failed", "Could not delete embedded track")
+		return
+	}
+	item, err := s.settings.RescanMediaItemFiles(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not rescan media folder")
+		return
+	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "media", "Embedded track deleted", map[string]any{
+		"mediaItemId":  uuid.UUID(id).String(),
+		"path":         body.Path,
+		"targetType":   body.TargetType,
+		"trackIndex":   body.TrackIndex,
+		"chapterIndex": body.ChapterIndex,
+	})
 	writeJSON(w, http.StatusOK, mediaItemResponse(item))
 }
 

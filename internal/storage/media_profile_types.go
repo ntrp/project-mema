@@ -19,7 +19,7 @@ type MediaProfile struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
-	SubtitlePreferredMode             string
+	SubtitleMode                      string
 	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string
@@ -44,7 +44,7 @@ type MediaProfileInput struct {
 	RemoveUnwantedAudio               bool
 	AudioLossyTranscodePolicy         string
 	RemoveUnwantedSubtitles           bool
-	SubtitlePreferredMode             string
+	SubtitleMode                      string
 	AllowSubtitleReleaseFallback      bool
 	PreferredProtocol                 string
 	SeriesPackPreference              string

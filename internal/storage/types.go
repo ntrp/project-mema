@@ -31,7 +31,7 @@ type MediaItem struct {
 	FilePaths                    []string
 	MetadataFilePaths            []string
 	SubtitleTargets              []MediaProfileSubtitleTarget
-	SubtitlePreferredMode        string
+	SubtitleMode                 string
 	AllowSubtitleReleaseFallback bool
 	ExternalSubtitles            []MediaItemSubtitle
 	Sidecars                     []MediaItemSidecar

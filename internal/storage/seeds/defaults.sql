@@ -62,7 +62,7 @@ insert into app.media_profiles (
     audio_lossy_transcode_policy,
     remove_unwanted_audio,
     remove_unwanted_subtitles,
-    subtitle_preferred_mode,
+    subtitle_mode,
     allow_subtitle_release_fallback,
     preferred_protocol,
     series_pack_preference

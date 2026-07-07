@@ -62,9 +62,11 @@
 	onSearchMediaSubtitle={app.searchMediaSubtitle}
 	onGrabMediaSubtitle={app.grabMediaSubtitle}
 	onDeleteMediaSubtitle={app.deleteMediaSubtitle}
+	onUpdateMediaSubtitle={app.updateMediaSubtitle}
 	onRefreshMediaMetadata={app.refreshMediaMetadata}
 	onSaveMediaItemOptions={app.saveMediaItemOptions}
 	onDeleteMediaFile={app.deleteMediaFile}
+	onDeleteMediaFileTrack={app.deleteMediaFileTrack}
 	onAssembleMediaComponents={app.assembleMediaComponents}
 	onReviewComponentCompatibility={app.reviewComponentCompatibility}
 	onDeleteMedia={app.deleteMediaItem}

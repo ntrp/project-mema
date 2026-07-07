@@ -30,7 +30,7 @@ func mediaFileOtherFiles(
 	path string,
 	mediaPaths []string,
 	subtitleTargets []storage.MediaProfileSubtitleTarget,
-	subtitlePreferredMode string,
+	subtitleMode string,
 	externalSubtitles []storage.MediaItemSubtitle,
 	sidecars []storage.MediaItemSidecar,
 	satisfaction *MediaFileSubtitleSatisfaction,
@@ -49,7 +49,7 @@ func mediaFileOtherFiles(
 		file := subtitleOtherFile(subtitle.FilePath, subtitle.LanguageID, otherFileStatus(subtitle.FilePath))
 		seen[file.pathKey()] = file
 	}
-	if mediaFileSubtitlePreferredMode(subtitlePreferredMode) == MediaProfileSubtitlePreferredModeExternal {
+	if mediaFileSubtitleMode(subtitleMode) == MediaProfileSubtitleModeExternal {
 		for _, file := range missingExternalSubtitleFiles(path, subtitleTargets, satisfaction) {
 			seen[file.pathKey()] = file
 		}

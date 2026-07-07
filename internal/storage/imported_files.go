@@ -54,7 +54,7 @@ func (s *SettingsStore) RecordImportedMediaFileWithHistory(
 		if err != nil {
 			return err
 		}
-		if err := recordImportedFileSidecars(ctx, tx, mediaItemID, filePath, seasonID, episodeID, item.SubtitlePreferredMode); err != nil {
+		if err := recordImportedFileSidecars(ctx, tx, mediaItemID, filePath, seasonID, episodeID, item.SubtitleMode); err != nil {
 			return err
 		}
 		return tx.Commit(ctx)
@@ -105,7 +105,7 @@ func (s *SettingsStore) RecordImportedMediaFileWithHistory(
 	if err := recordImportedFileProvenance(ctx, tx, mediaItemID, sourcePath, filePath, "diskImport"); err != nil {
 		return err
 	}
-	if err := recordImportedFileSidecars(ctx, tx, mediaItemID, filePath, seasonID, episodeID, item.SubtitlePreferredMode); err != nil {
+	if err := recordImportedFileSidecars(ctx, tx, mediaItemID, filePath, seasonID, episodeID, item.SubtitleMode); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)

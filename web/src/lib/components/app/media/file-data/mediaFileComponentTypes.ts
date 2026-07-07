@@ -4,8 +4,10 @@ import type {
 	DownloadActivity,
 	Language,
 	LibraryFolder,
+	MediaFileTrackDeleteRequest,
 	MediaItem,
 	MediaItemSubtitle,
+	MediaItemSubtitleSelectionRequest,
 	MediaItemUpdateRequest,
 	GrabSubtitleRequest,
 	QualityProfileOption,
@@ -25,12 +27,19 @@ export interface MediaFileSummaryProps {
 	fileLabel?: string;
 	missingLabel?: string;
 	showSearchActions?: boolean;
-	subtitleSearching?: boolean;
 	onAutoSearch: () => void;
 	onManualSearch: () => void;
 	onSearchSubtitle?: (_row: MediaFileRow, _languageId?: string) => void | Promise<void>;
 	onManualSubtitleSearch?: (_row: MediaFileRow, _languageId?: string) => void;
 	onDeleteSubtitle?: (_subtitle: MediaItemSubtitle) => void | Promise<void>;
+	onUpdateSubtitle?: (
+		_subtitle: MediaItemSubtitle,
+		_request: MediaItemSubtitleSelectionRequest
+	) => void | Promise<void>;
+	onDeleteTrack?: (
+		_row: MediaFileRow,
+		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
 	onDelete: (_row: MediaFileRow) => void;
 }
 
@@ -48,7 +57,16 @@ export interface MediaFilesTableProps {
 	onSearchSubtitle: (_item: MediaItem, _request: SubtitleSearchRequest) => void | Promise<void>;
 	onGrabSubtitle: (_item: MediaItem, _request: GrabSubtitleRequest) => void | Promise<void>;
 	onDeleteSubtitle: (_item: MediaItem, _subtitleId: string) => void | Promise<void>;
+	onUpdateSubtitle: (
+		_item: MediaItem,
+		_subtitleId: string,
+		_request: MediaItemSubtitleSelectionRequest
+	) => void | Promise<void>;
 	onDeleteFile: (_item: MediaItem, _path: string) => void;
+	onDeleteFileTrack: (
+		_item: MediaItem,
+		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
 	onGrabRelease: (
 		_item: MediaItem,
 		_release: ReleaseCandidate,

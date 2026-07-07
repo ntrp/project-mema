@@ -104,15 +104,17 @@ func subtitleRecord(
 		ProviderSubtitleID: optionalSubtitleString(providerSubtitleID),
 		Checksum:           optionalSubtitleString(artifact.Checksum),
 		SizeBytes:          &artifact.SizeBytes,
-		RetentionMode:      subtitleRetentionModeForProfile(item.SubtitlePreferredMode),
+		RetentionMode:      subtitleRetentionModeForProfile(item.SubtitleMode),
 	}
 }
 
-func subtitleRetentionModeForProfile(subtitlePreferredMode string) storage.SubtitleRetentionMode {
-	if subtitlePreferredMode == "embedded" {
+func subtitleRetentionModeForProfile(subtitleMode string) storage.SubtitleRetentionMode {
+	switch subtitleMode {
+	case "embedded", "mixed":
 		return storage.SubtitleRetentionMux
+	default:
+		return storage.SubtitleRetentionExternal
 	}
-	return storage.SubtitleRetentionExternal
 }
 
 func optionalSubtitleString(value string) *string {

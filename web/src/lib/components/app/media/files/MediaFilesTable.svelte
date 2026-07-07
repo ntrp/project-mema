@@ -10,7 +10,10 @@
 	import { mediaFileGroups, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import type { MediaFilesTableProps as Props } from '$lib/components/app/media/file-data/mediaFileComponentTypes';
 	import { applyMediaRename, previewMediaRename } from '$lib/settings/api';
-	import type { MediaRenamePreviewRow } from '$lib/settings/types';
+	import type {
+		MediaItemSubtitleSelectionRequest,
+		MediaRenamePreviewRow
+	} from '$lib/settings/types';
 
 	let {
 		item,
@@ -26,14 +29,15 @@
 		onSearchSubtitle,
 		onGrabSubtitle,
 		onDeleteSubtitle,
+		onUpdateSubtitle,
 		onDeleteFile,
+		onDeleteFileTrack,
 		onGrabRelease
 	}: Props = $props();
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchOpen = $state(false);
 	let subtitleSearch = $state<{ row: MediaFileRow; languageId: string } | undefined>();
-	let subtitleSearchKey = $state<string | undefined>();
 	let previewRows = $state<MediaRenamePreviewRow[]>([]);
 	let previewLoading = $state(false);
 	let previewApplying = $state(false);
@@ -64,16 +68,15 @@
 
 	async function searchSubtitle(row: MediaFileRow, languageId?: string) {
 		if (!row.path) return;
-		subtitleSearchKey = `${row.key}:${languageId ?? 'all'}`;
-		try {
-			await onSearchSubtitle(item, { languageId, filePath: row.path });
-		} finally {
-			subtitleSearchKey = undefined;
-		}
+		await onSearchSubtitle(item, { languageId, filePath: row.path });
 	}
 
 	function deleteSubtitle(subtitleId: string) {
 		return onDeleteSubtitle(item, subtitleId);
+	}
+
+	function updateSubtitle(subtitleId: string, request: MediaItemSubtitleSelectionRequest) {
+		return onUpdateSubtitle(item, subtitleId, request);
 	}
 
 	function openSubtitleSearch(row: MediaFileRow, languageId?: string) {
@@ -139,10 +142,12 @@
 						missingLabel="No matched file for this movie"
 						onAutoSearch={() => onAutoSearch(item)}
 						onManualSearch={() => (searchOpen = true)}
-						subtitleSearching={subtitleSearchKey?.startsWith(`${row.key}:`) === true}
 						onSearchSubtitle={searchSubtitle}
 						onManualSubtitleSearch={openSubtitleSearch}
 						onDeleteSubtitle={(subtitle) => deleteSubtitle(subtitle.id)}
+						onUpdateSubtitle={(subtitle, request) => updateSubtitle(subtitle.id, request)}
+						onDeleteTrack={(row, request) =>
+							onDeleteFileTrack(item, { ...request, path: row.path ?? '' })}
 						onDelete={requestDelete}
 					/>
 				{/each}

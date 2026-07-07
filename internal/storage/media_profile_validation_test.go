@@ -35,7 +35,7 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 			{LanguageID: "english", Score: 80},
 			{LanguageID: "Brazilian Portuguese", Score: 50},
 		},
-		SubtitlePreferredMode:        "embedded",
+		SubtitleMode:                 "embedded",
 		AllowSubtitleReleaseFallback: true,
 		SubtitleTargets: []MediaProfileSubtitleTarget{
 			{LanguageID: " English ", Score: 25, Formats: []string{" SRT "}},
@@ -59,7 +59,7 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if input.AudioLossyTranscodePolicy != "lossyToLossy" {
 		t.Fatalf("expected normalized lossy conversion policy, got %q", input.AudioLossyTranscodePolicy)
 	}
-	if input.SubtitlePreferredMode != "embedded" || !input.AllowSubtitleReleaseFallback {
+	if input.SubtitleMode != "embedded" || !input.AllowSubtitleReleaseFallback {
 		t.Fatalf("unexpected subtitle settings: %#v", input)
 	}
 	if len(input.AudioTargets) != 2 {

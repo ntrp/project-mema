@@ -20,7 +20,7 @@ func TestScenarioSCNSettings023AdminManagesMediaProfilesAndQualitySizes(t *testi
 	if created.Name != "Scenario Profile" || len(created.QualityIds) != len(qualityIDs) {
 		t.Fatalf("created media profile = %#v", created)
 	}
-	if len(created.SubtitleTargets) != 1 || created.SubtitlePreferredMode != MediaProfileSubtitlePreferredModeMixed {
+	if len(created.SubtitleTargets) != 1 || created.SubtitleMode != MediaProfileSubtitleModeMixed {
 		t.Fatalf("created media profile subtitles = %#v", created.SubtitleTargets)
 	}
 	if !created.AllowSubtitleReleaseFallback {
@@ -84,7 +84,7 @@ func mediaProfileRequest(name string, qualityIDs []string) MediaProfileRequest {
 		RemoveUnwantedAudio:               true,
 		AudioLossyTranscodePolicy:         MediaProfileLossyTranscodePolicyDisabled,
 		RemoveUnwantedSubtitles:           true,
-		SubtitlePreferredMode:             MediaProfileSubtitlePreferredModeMixed,
+		SubtitleMode:                      MediaProfileSubtitleModeMixed,
 		AllowSubtitleReleaseFallback:      true,
 		PreferredProtocol:                 Usenet,
 		SeriesPackPreference:              MediaProfileRequestSeriesPackPreferencePreferPacks,

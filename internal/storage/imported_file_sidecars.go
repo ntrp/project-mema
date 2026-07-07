@@ -17,10 +17,10 @@ func recordImportedFileSidecars(
 	mediaPath string,
 	seasonID *uuid.UUID,
 	episodeID *uuid.UUID,
-	subtitlePreferredMode string,
+	subtitleMode string,
 ) error {
 	for _, sidecar := range MediaSidecarsForFile(mediaPath) {
-		if err := recordImportedFileSidecar(ctx, q, mediaItemID, mediaPath, seasonID, episodeID, subtitlePreferredMode, sidecar); err != nil {
+		if err := recordImportedFileSidecar(ctx, q, mediaItemID, mediaPath, seasonID, episodeID, subtitleMode, sidecar); err != nil {
 			return err
 		}
 	}
@@ -34,7 +34,7 @@ func recordImportedFileSidecar(
 	mediaPath string,
 	seasonID *uuid.UUID,
 	episodeID *uuid.UUID,
-	subtitlePreferredMode string,
+	subtitleMode string,
 	sidecar MediaSidecar,
 ) error {
 	if _, err := upsertMediaItemSidecar(ctx, q, MediaItemSidecarInput{
@@ -60,16 +60,18 @@ func recordImportedFileSidecar(
 		FilePath:      sidecar.Path,
 		ReleaseName:   sidecarString(filepath.Base(mediaPath)),
 		DownloadedAt:  time.Now().UTC(),
-		RetentionMode: importedSubtitleRetentionMode(subtitlePreferredMode),
+		RetentionMode: importedSubtitleRetentionMode(subtitleMode),
 	})
 	return err
 }
 
-func importedSubtitleRetentionMode(subtitlePreferredMode string) SubtitleRetentionMode {
-	if subtitlePreferredMode == "embedded" {
+func importedSubtitleRetentionMode(subtitleMode string) SubtitleRetentionMode {
+	switch subtitleMode {
+	case "embedded":
 		return SubtitleRetentionMux
+	default:
+		return SubtitleRetentionExternal
 	}
-	return SubtitleRetentionExternal
 }
 
 func sidecarString(value string) *string {

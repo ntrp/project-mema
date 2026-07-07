@@ -40,14 +40,15 @@
 		onSearchSubtitle,
 		onGrabSubtitle,
 		onDeleteSubtitle,
+		onUpdateSubtitle,
 		onDeleteFile,
+		onDeleteFileTrack,
 		onGrabRelease
 	}: Props = $props();
 
 	let deleteRow = $state<MediaFileRow | undefined>();
 	let searchContext = $state<ReleaseSearchContext | undefined>();
 	let subtitleSearch = $state<{ row: MediaFileRow; languageId: string } | undefined>();
-	let subtitleSearchKey = $state<string | undefined>();
 	const seasons = $derived(item.seasons ?? []);
 	const mediaRows = $derived(item.filePaths.map((path) => fileRow(item, path, qualityProfiles)));
 
@@ -72,12 +73,7 @@
 
 	async function searchSubtitle(row: MediaFileRow, languageId?: string) {
 		if (!row.path) return;
-		subtitleSearchKey = `${row.key}:${languageId ?? 'all'}`;
-		try {
-			await onSearchSubtitle(item, { languageId, filePath: row.path });
-		} finally {
-			subtitleSearchKey = undefined;
-		}
+		await onSearchSubtitle(item, { languageId, filePath: row.path });
 	}
 
 	function deleteSubtitle(subtitleId: string) {
@@ -144,10 +140,13 @@
 										searching={searchingItemId === item.id}
 										onAutoSearch={() => onAutoSearch(item)}
 										onManualSearch={() => (searchContext = episodeReleaseSearchContext(file.row))}
-										subtitleSearching={subtitleSearchKey?.startsWith(`${file.row.key}:`) === true}
 										onSearchSubtitle={searchSubtitle}
 										onManualSubtitleSearch={openSubtitleSearch}
 										onDeleteSubtitle={(subtitle) => deleteSubtitle(subtitle.id)}
+										onUpdateSubtitle={(subtitle, request) =>
+											onUpdateSubtitle(item, subtitle.id, request)}
+										onDeleteTrack={(row, request) =>
+											onDeleteFileTrack(item, { ...request, path: row.path ?? '' })}
 										onDelete={requestDelete}
 									/>
 								</MediaEpisodeRow>

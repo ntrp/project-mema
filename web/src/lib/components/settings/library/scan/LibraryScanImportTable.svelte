@@ -1,63 +1,63 @@
 <script lang="ts">
-	import LibraryScanImportFooter from '$lib/components/settings/library/scan/LibraryScanImportFooter.svelte';
-	import LibraryScanImportTableBody from '$lib/components/settings/library/scan/LibraryScanImportTableBody.svelte';
-	import LibraryScanImportTableHead from '$lib/components/settings/library/scan/LibraryScanImportTableHead.svelte';
-	import LibraryScanImportToolbar from '$lib/components/settings/library/scan/LibraryScanImportToolbar.svelte';
-	import * as Table from '$lib/components/ui/table';
+	import LibraryScanImportTableView from '$lib/components/settings/library/scan/LibraryScanImportTableView.svelte';
 	import {
 		applyMovieOptions,
 		applyQualityProfile,
 		applySeriesOptions,
-		matchedRowsByKind
+		matchedRowsByKind,
+		setRowsSelected
 	} from './libraryScanBulk';
-	import { initialMatchDraft, matchFromScanItem } from './libraryScanDrafts';
-	import { duplicateDraftStatesForRows, normalizeDuplicateDrafts } from './libraryScanDuplicates';
+	import { applyAutoMatch } from './libraryScanAutoMatch';
+	import {
+		defaultMetadataProviderId,
+		ensureScanDrafts,
+		matchFromScanItem
+	} from './libraryScanDrafts';
+	import { duplicateDraftStatesForRows } from './libraryScanDuplicates';
 	import {
 		canImportRows,
 		defaultQualityProfileId,
-		defaultMonitorModeForMatch,
-		importPayloadForRows,
-		searchCacheKey,
 		sortedScanItems,
 		type MatchDraft
 	} from './libraryScanImport';
+	import {
+		applyScanItemProvider,
+		changeScanItemProvider,
+		importCheckedScanRows,
+		scheduleScanItemSearch,
+		searchPendingScanItems,
+		searchScanItem
+	} from './libraryScanTableActions';
+	import type { LibraryScanImportTableProps } from './libraryScanTableProps';
 	import type {
-		LibraryMediaKind,
-		LibraryScan,
-		LibraryScanImportRequest,
 		LibraryScanItem,
 		MediaMonitorMode,
 		MediaSearchResult,
-		MetadataProvider,
 		MinimumAvailability,
-		QualityProfileOption,
 		SeriesType
 	} from '$lib/settings/types';
 
-	interface Props {
-		scan: LibraryScan;
-		qualityProfiles: QualityProfileOption[];
-		metadataProviders: MetadataProvider[];
-		loading: boolean;
-		onSearchMatch: (
-			_kind: LibraryMediaKind,
-			_query: string,
-			_providerId?: string
-		) => Promise<MediaSearchResult[]>;
-		onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
-	}
-	let { scan, qualityProfiles, metadataProviders, loading, onSearchMatch, onImport }: Props =
-		$props();
+	let {
+		scan,
+		qualityProfiles,
+		metadataProviders,
+		loading,
+		onSearchMatch,
+		onImport
+	}: LibraryScanImportTableProps = $props();
 	let drafts = $state<Record<string, MatchDraft>>({});
 	let showImported = $state(false);
 	let bulkQualityProfileId = $state('');
-	let defaultProfileApplied = $state(false);
+	let bulkMetadataProviderId = $state('');
+	let defaultsApplied = $state({ profile: false, provider: false });
 	let movieMonitorMode = $state<MediaMonitorMode>('only_media');
 	let movieMinimumAvailability = $state<MinimumAvailability>('released');
 	let seriesMonitorMode = $state<MediaMonitorMode>('all_episodes');
 	let bulkSeriesType = $state<SeriesType>('standard');
 	let importing = $state(false);
+	let importingItemId = $state('');
 	let searchTimers: Record<string, ReturnType<typeof globalThis.setTimeout>> = {};
+	let autoSearchStarted: Record<string, boolean> = {};
 	const searchCache: Record<string, MediaSearchResult[] | undefined> = {};
 	const allRows = $derived(sortedScanItems(scan.items));
 	const rows = $derived(allRows.filter((item) => showImported || !item.imported));
@@ -74,162 +74,127 @@
 	const allVisibleChecked = $derived(
 		importableRows.length > 0 && importableRows.every((item) => drafts[item.id]?.selected)
 	);
-	const matchedCount = $derived(scan.items.filter((item) => matchFromScanItem(item)).length);
+	const matchedCount = $derived(
+		allRows.filter((item) => drafts[item.id]?.matched || matchFromScanItem(item)).length
+	);
 	const importedCount = $derived(scan.items.filter((item) => item.imported).length);
 	const duplicateCount = $derived(scan.items.filter((item) => item.duplicateGroupId).length);
 	const noMatchCount = $derived(scan.items.length - matchedCount);
 	const duplicateStates = $derived(duplicateDraftStatesForRows(allRows, drafts));
 	const defaultProfileId = $derived(defaultQualityProfileId(qualityProfiles));
+	const defaultProviderId = $derived(defaultMetadataProviderId(metadataProviders, 'movie'));
 	const duplicateRemovalCount = $derived(
 		Object.entries(drafts).filter(
 			([id, draft]) => draft.removeDuplicate && (!draft.matched || duplicateStates[id]?.duplicate)
 		).length
 	);
-	const showSeriesControls = $derived(scan.folderKind !== 'movie');
 	$effect(() => {
-		if (!bulkQualityProfileId && !defaultProfileApplied && defaultProfileId)
+		if (!bulkQualityProfileId && !defaultsApplied.profile && defaultProfileId)
 			bulkQualityProfileId = defaultProfileId;
-		if (defaultProfileId) defaultProfileApplied = true;
+		if (defaultProfileId) defaultsApplied.profile = true;
+		if (!bulkMetadataProviderId && !defaultsApplied.provider && defaultProviderId)
+			bulkMetadataProviderId = defaultProviderId;
+		if (defaultProviderId) defaultsApplied.provider = true;
 	});
 	$effect(() => {
-		for (const item of scan.items) {
-			if (drafts[item.id]) continue;
-			drafts[item.id] = initialMatchDraft(item, metadataProviders, {
-				qualityProfileId: bulkQualityProfileId,
-				monitorMode: movieMonitorMode,
-				minimumAvailability: movieMinimumAvailability,
-				seriesType: bulkSeriesType
-			});
-		}
+		ensureScanDrafts(scan.items, drafts, metadataProviders, {
+			qualityProfileId: bulkQualityProfileId,
+			monitorMode: movieMonitorMode,
+			minimumAvailability: movieMinimumAvailability,
+			seriesType: bulkSeriesType
+		});
+	});
+	$effect(() => {
+		searchPendingScanItems({ rows: allRows, drafts, autoSearchStarted, search });
 	});
 	function toggleVisibleRows() {
-		const next = !allVisibleChecked;
-		for (const item of importableRows) {
-			const draft = drafts[item.id];
-			if (draft) draft.selected = next;
-		}
+		setRowsSelected(importableRows, drafts, !allVisibleChecked);
 	}
 	function scheduleSearch(item: LibraryScanItem) {
-		const draft = drafts[item.id];
-		if (!draft) return;
-		globalThis.clearTimeout(searchTimers[item.id]);
-		if (draft.query.trim().length < 2) {
-			draft.results = [];
-			draft.searched = false;
-			draft.searching = false;
-			return;
-		}
-		searchTimers[item.id] = globalThis.setTimeout(() => void search(item), 1000);
+		scheduleScanItemSearch({ item, drafts, searchTimers, search });
 	}
-	async function search(item: LibraryScanItem) {
-		const draft = drafts[item.id];
-		if (!draft || draft.query.trim().length < 2) return;
-		const query = draft.query;
-		const key = searchCacheKey(draft.mediaKind, draft.metadataProviderId, query);
-		draft.searching = true;
-		try {
-			const results =
-				searchCache[key] ?? (await onSearchMatch(draft.mediaKind, query, draft.metadataProviderId));
-			if (draft.query !== query) return;
-			searchCache[key] = results;
-			draft.results = results;
-			draft.searched = true;
-		} catch {
-			if (draft.query !== query) return;
-			draft.results = [];
-			draft.searched = true;
-		} finally {
-			if (draft.query === query) draft.searching = false;
-		}
+	async function search(item: LibraryScanItem, auto: boolean) {
+		await searchScanItem({ item, allRows, drafts, searchCache, auto, onSearchMatch });
+	}
+	function changeProvider(item: LibraryScanItem, providerId: string) {
+		changeScanItemProvider({ item, providerId, drafts, search });
 	}
 	function selectResult(item: LibraryScanItem, result: MediaSearchResult) {
-		const draft = drafts[item.id];
-		if (!draft) return;
-		draft.matched = result;
-		draft.query = result.title;
-		draft.results = [];
-		draft.selected = true;
-		draft.monitorMode = defaultMonitorModeForMatch(result);
-		normalizeDuplicateDrafts(allRows, drafts, item.duplicateGroupId);
+		applyAutoMatch(item, result, allRows, drafts);
 	}
-	function applyBulk() {
-		applyQualityProfile(checkedRows, drafts, bulkQualityProfileId);
-	}
-	function applyMovieBulk() {
-		applyMovieOptions(checkedMatchedMovies, drafts, movieMonitorMode, movieMinimumAvailability);
-	}
-	function applySeriesBulk() {
-		applySeriesOptions(checkedMatchedSeries, drafts, seriesMonitorMode, bulkSeriesType);
+	function applyProvider() {
+		applyScanItemProvider({
+			rows: [...checkedRows],
+			drafts,
+			providerId: bulkMetadataProviderId,
+			search
+		});
 	}
 	async function importChecked() {
 		if (!canImport) return;
 		importing = true;
 		try {
-			await onImport(
+			await importCheckedScanRows({
+				canImport,
+				checkedRows: [...checkedRows],
+				allRows,
+				drafts,
 				scan,
-				importPayloadForRows(checkedRows, allRows, drafts, {
+				onProgress: (id) => (importingItemId = id),
+				onImport,
+				bulk: {
 					qualityProfileId: bulkQualityProfileId,
 					monitorMode: movieMonitorMode,
 					minimumAvailability: movieMinimumAvailability,
 					seriesType: bulkSeriesType
-				})
-			);
+				}
+			});
 		} finally {
+			importingItemId = '';
 			importing = false;
 		}
 	}
 </script>
 
-<LibraryScanImportToolbar
+<LibraryScanImportTableView
 	totalFiles={scan.totalFiles}
 	{matchedCount}
 	{noMatchCount}
 	{importedCount}
 	{duplicateCount}
+	{rows}
+	folderPath={scan.folderPath}
+	bind:drafts
+	{duplicateStates}
+	{qualityProfiles}
+	{metadataProviders}
+	{importingItemId}
 	bind:showImported
+	{allVisibleChecked}
+	importableCount={importableRows.length}
+	showSeriesControls={scan.folderKind !== 'movie'}
+	{checkedRowsMatched}
+	{canImport}
+	{loading}
+	{importing}
+	{duplicateRemovalCount}
+	hasMatchedMovies={checkedMatchedMovies.length > 0}
+	hasMatchedSeries={checkedMatchedSeries.length > 0}
+	bind:metadataProviderId={bulkMetadataProviderId}
+	bind:qualityProfileId={bulkQualityProfileId}
+	bind:movieMonitorMode
+	bind:movieMinimumAvailability
+	bind:seriesMonitorMode
+	bind:seriesType={bulkSeriesType}
+	onToggleRows={toggleVisibleRows}
+	onSearch={scheduleSearch}
+	onSelect={selectResult}
+	onProviderChange={changeProvider}
+	onApplyProvider={applyProvider}
+	onApplyQualityProfile={() => applyQualityProfile(checkedRows, drafts, bulkQualityProfileId)}
+	onApplyMovie={() =>
+		applyMovieOptions(checkedMatchedMovies, drafts, movieMonitorMode, movieMinimumAvailability)}
+	onApplySeries={() =>
+		applySeriesOptions(checkedMatchedSeries, drafts, seriesMonitorMode, bulkSeriesType)}
+	onImport={importChecked}
 />
-<div class="mt-4 overflow-auto rounded-md border border-border">
-	<Table.Root class="min-w-7xl table-auto border-collapse">
-		<colgroup>
-			<col class="w-[1%]" />
-			<col class="w-full" />
-			<col span={5} class="w-[1%]" />
-		</colgroup>
-		<LibraryScanImportTableHead
-			checked={allVisibleChecked}
-			disabled={importableRows.length === 0}
-			{showSeriesControls}
-			onToggle={toggleVisibleRows}
-		/>
-		<LibraryScanImportTableBody
-			{rows}
-			folderPath={scan.folderPath}
-			bind:drafts
-			{duplicateStates}
-			{qualityProfiles}
-			{metadataProviders}
-			onSearch={scheduleSearch}
-			onSelect={selectResult}
-		/>
-		<LibraryScanImportFooter
-			{checkedRowsMatched}
-			{canImport}
-			{loading}
-			{importing}
-			{duplicateRemovalCount}
-			{qualityProfiles}
-			hasMatchedMovies={checkedMatchedMovies.length > 0}
-			hasMatchedSeries={checkedMatchedSeries.length > 0}
-			{showSeriesControls}
-			bind:qualityProfileId={bulkQualityProfileId}
-			bind:movieMonitorMode
-			bind:movieMinimumAvailability
-			bind:seriesMonitorMode
-			bind:seriesType={bulkSeriesType}
-			onApplyQualityProfile={applyBulk}
-			onApplyMovie={applyMovieBulk}
-			onApplySeries={applySeriesBulk}
-			onImport={importChecked}
-		/>
-	</Table.Root>
-</div>

@@ -48,7 +48,7 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 			removeUnwantedAudio: true,
 			audioLossyTranscodePolicy: 'disabled' as const,
 			removeUnwantedSubtitles: true,
-			subtitlePreferredMode: 'mixed' as const,
+			subtitleMode: 'mixed' as const,
 			allowSubtitleReleaseFallback: true,
 			audioTargets: [
 				{
@@ -79,12 +79,12 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 		expect(body).toContain('Prefer season packs');
 	});
 
-	it('renders subtitle preferred mode choices', () => {
+	it('renders subtitle mode choices', () => {
 		const { body } = render(MediaProfileSubtitleSelector, {
 			props: {
 				form: {
 					...emptyMediaProfileForm(),
-					subtitlePreferredMode: 'embedded',
+					subtitleMode: 'embedded',
 					allowSubtitleReleaseFallback: true,
 					subtitleTargets: [{ languageId: 'english', score: 25 }]
 				},
@@ -101,7 +101,7 @@ describe('rendered media profile editor controls (SCN-SETTINGS-023)', () => {
 			}
 		});
 
-		expect(body).toContain('Preferred Mode');
+		expect(body).toContain('Mode');
 		expect(body).toContain('Embedded');
 		expect(body).toContain('Allow searching subtitles in other releases');
 	});

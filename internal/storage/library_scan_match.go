@@ -83,7 +83,7 @@ func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UU
 		if err := recordImportedFileProvenance(ctx, tx, item.ID, "", itemPath, "libraryScanImport"); err != nil {
 			return LibraryScanItem{}, MediaItem{}, err
 		}
-		if err := recordImportedFileSidecars(ctx, tx, item.ID, itemPath, seasonID, episodeID, item.SubtitlePreferredMode); err != nil {
+		if err := recordImportedFileSidecars(ctx, tx, item.ID, itemPath, seasonID, episodeID, item.SubtitleMode); err != nil {
 			return LibraryScanItem{}, MediaItem{}, err
 		}
 	}

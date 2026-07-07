@@ -1,4 +1,9 @@
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
+import type {
+	MediaFileDetailRow,
+	TrackDeleteRequest
+} from '$lib/components/app/media/files/mediaFileDetailRows';
+import { relativePath } from '$lib/components/app/media/files/mediaFilePath';
 import {
 	missingAudioRows,
 	rowsWithMissingSubtitles
@@ -7,28 +12,17 @@ import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay
 
 type MediaFileTrack = MediaFileRow['tracks'][number];
 type MediaFileChapter = MediaFileRow['chapters'][number];
-type TrackType = MediaFileTrack['type'] | 'chapter';
 
-export interface MediaFileDetailRow {
-	key: string;
-	trackNumber: string;
-	type: TrackType;
-	language: string;
-	description: string;
-	provenance?: MediaFileTrack['provenance'];
-	chapterSummary?: boolean;
-	missing?: boolean;
-	unwanted?: boolean;
-}
+export type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetailRows';
 
 export function fileDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
 	const details = [...trackRowsWithMissingSubtitles(row), ...fileChapterDetailRows(row)];
-	return [...details, ...missingLanguageRows(row, details)];
+	return [...details, ...missingAudioRows(row, details)];
 }
 
 export function fileTrackDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
 	const details = trackRowsWithMissingSubtitles(row);
-	return [...details, ...missingLanguageRows(row, details)];
+	return [...details, ...missingAudioRows(row, details)];
 }
 
 export function fileChapterDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
@@ -50,7 +44,8 @@ export function fileChapterSummaryRow(row: MediaFileRow): MediaFileDetailRow | u
 		type: 'chapter',
 		language: '-',
 		description: chapterCountLabel(row.chapters.length),
-		chapterSummary: true
+		chapterSummary: true,
+		deleteRequest: { targetType: 'chapters' }
 	};
 }
 
@@ -62,16 +57,41 @@ function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): Medi
 		language: displayLanguage(track.language),
 		description: trackDescription(row, track),
 		provenance: track.provenance,
-		unwanted: unwantedTrack(row, track)
+		unwanted: unwantedTrack(row, track),
+		deleteRequest: trackDeleteRequest(track)
 	};
 }
 
 function trackRowsWithMissingSubtitles(row: MediaFileRow): MediaFileDetailRow[] {
-	const rows = row.tracks.map((track, index) => trackRow(row, track, index));
+	const rows = [
+		...row.tracks.map((track, index) => trackRow(row, track, index)),
+		...externalSubtitleTrackRows(row)
+	];
 	return rowsWithMissingSubtitles(row, rows);
 }
 
+function externalSubtitleTrackRows(row: MediaFileRow): MediaFileDetailRow[] {
+	if (row.subtitleSatisfaction?.mode !== 'embedded') return [];
+	return (row.externalSubtitles ?? [])
+		.filter((subtitle) => subtitle.retentionMode === 'mux')
+		.map((subtitle) => ({
+			key: `external-subtitle-${subtitle.id}`,
+			trackNumber: '-',
+			type: 'subtitle' as const,
+			language: displayLanguage(subtitle.languageId),
+			description: compactParts([
+				'External subtitle',
+				subtitle.format.toUpperCase(),
+				relativePath(row.path ? row.path.replace(/[^/]+$/, '') : undefined, subtitle.filePath)
+			]),
+			unwanted: unwantedSubtitleLanguage(row, subtitle.languageId)
+		}));
+}
+
 function unwantedTrack(row: MediaFileRow, track: MediaFileTrack) {
+	if (track.type === 'subtitle' && row.subtitleSatisfaction?.mode === 'external') {
+		return true;
+	}
 	const expectedLanguages = wantedLanguagesForTrack(row, track);
 	if (expectedLanguages.length === 0) {
 		return false;
@@ -79,6 +99,13 @@ function unwantedTrack(row: MediaFileRow, track: MediaFileTrack) {
 	const enabled = new Set(expectedLanguages.map(languageMatchKey).filter(Boolean));
 	const language = languageMatchKey(track.language);
 	return language !== '' && !enabled.has(language);
+}
+
+function trackDeleteRequest(track: MediaFileTrack): TrackDeleteRequest | undefined {
+	if ((track.type !== 'audio' && track.type !== 'subtitle') || track.index === undefined) {
+		return undefined;
+	}
+	return { targetType: track.type, trackIndex: track.index };
 }
 
 function wantedLanguagesForTrack(row: MediaFileRow, track: MediaFileTrack) {
@@ -91,6 +118,15 @@ function wantedLanguagesForTrack(row: MediaFileRow, track: MediaFileTrack) {
 	return [];
 }
 
+function unwantedSubtitleLanguage(row: MediaFileRow, languageId: string) {
+	if (!row.removeNonEnabledSubtitleLanguages || row.expectedSubtitleLanguages.length === 0) {
+		return false;
+	}
+	const enabled = new Set(row.expectedSubtitleLanguages.map(languageMatchKey).filter(Boolean));
+	const language = languageMatchKey(languageId);
+	return language !== '' && !enabled.has(language);
+}
+
 function chapterRow(chapter: MediaFileChapter): MediaFileDetailRow {
 	return {
 		key: `chapter-${chapter.index}`,
@@ -100,15 +136,9 @@ function chapterRow(chapter: MediaFileChapter): MediaFileDetailRow {
 		description: compactParts([
 			valueOrDash(chapter.title),
 			rangeLabel(chapter.startTime, chapter.endTime)
-		])
+		]),
+		deleteRequest: { targetType: 'chapter', chapterIndex: chapter.index }
 	};
-}
-
-function missingLanguageRows(
-	row: MediaFileRow,
-	existingRows: MediaFileDetailRow[]
-): MediaFileDetailRow[] {
-	return missingAudioRows(row, existingRows);
 }
 
 function chapterCountLabel(count: number) {

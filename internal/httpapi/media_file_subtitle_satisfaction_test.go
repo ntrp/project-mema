@@ -71,16 +71,16 @@ func TestExternalSubtitleLanguagesForPathUsesAvailableSidecarLanguage(t *testing
 	}
 }
 
-func TestMediaFileSubtitleSatisfactionUsesExternalSidecarForEmbeddedMode(t *testing.T) {
+func TestMediaFileSubtitleSatisfactionRequiresImportForEmbeddedModeExternalSidecar(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction(nil, []storage.MediaProfileSubtitleTarget{
 		{LanguageID: "english"},
 	}, "embedded", []string{"english"})
 
-	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {
-		t.Fatalf("expected external sidecar source to satisfy embedded target before mux, got %#v", result)
+	if result.State != MediaFileSubtitleSatisfactionStateMissing {
+		t.Fatalf("expected external sidecar source to require embedded import, got %#v", result)
 	}
-	if len(result.MatchedLanguages) != 1 || result.MatchedLanguages[0] != "english" {
-		t.Fatalf("expected english match, got %#v", result.MatchedLanguages)
+	if len(result.MissingLanguages) != 1 || result.MissingLanguages[0] != "english" {
+		t.Fatalf("expected english missing until import, got %#v", result.MissingLanguages)
 	}
 }
 

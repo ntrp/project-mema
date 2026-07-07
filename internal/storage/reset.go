@@ -11,23 +11,16 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
-
-	"media-manager/internal/config"
 )
-
-var ErrDevResetNotAllowed = errors.New("dev reset is only allowed when APP_ENV=development and ALLOW_DEV_RESET=true")
 
 const (
 	gooseMigrationsDir = "migrations"
 	gooseVersionTable  = "app.goose_db_version"
 	defaultSeedPath    = "seeds/defaults.sql"
 	languageSeedPath   = "seeds/languages.sql"
-	devDefaultSeedPath = "seeds/dev.defaults.sql"
-	devSeedPath        = "internal/storage/seeds/dev.local.sql"
-	devLocalOptional   = "DEV_LOCAL_SEED_OPTIONAL"
 )
 
-//go:embed migrations/*.sql seeds/defaults.sql seeds/languages.sql seeds/dev.defaults.sql
+//go:embed migrations/*.sql seeds/defaults.sql seeds/languages.sql
 var storageFS embed.FS
 
 func init() {
@@ -49,35 +42,6 @@ func EnsureSchema(ctx context.Context, databaseURL string) error {
 		return err
 	}
 	return applyDefaultSeed(ctx, db)
-}
-
-func ResetDevelopment(ctx context.Context, cfg config.Config) error {
-	if !cfg.IsDevelopment() || !cfg.AllowDevReset {
-		return ErrDevResetNotAllowed
-	}
-
-	db, err := openMigrationDB(ctx, cfg.DatabaseURL)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	if _, err := db.ExecContext(ctx, `drop schema if exists app cascade`); err != nil {
-		return err
-	}
-	if _, err := db.ExecContext(ctx, `create schema app`); err != nil {
-		return err
-	}
-	if err := runMigrations(ctx, db); err != nil {
-		return err
-	}
-	if err := applyDefaultSeed(ctx, db); err != nil {
-		return err
-	}
-	if err := applyDevDefaultSeed(ctx, db); err != nil {
-		return err
-	}
-	return applyDevSeed(ctx, db)
 }
 
 func openMigrationDB(ctx context.Context, databaseURL string) (*sql.DB, error) {
@@ -107,19 +71,6 @@ func applyDefaultSeed(ctx context.Context, db *sql.DB) error {
 		return err
 	}
 	return applySeed(ctx, db, languageSeedPath, storageFS.ReadFile)
-}
-
-func applyDevDefaultSeed(ctx context.Context, db *sql.DB) error {
-	return applySeed(ctx, db, devDefaultSeedPath, storageFS.ReadFile)
-}
-
-func applyDevSeed(ctx context.Context, db *sql.DB) error {
-	err := applySeed(ctx, db, devSeedPath, os.ReadFile)
-	if err == nil || os.Getenv(devLocalOptional) != "true" {
-		return err
-	}
-	fmt.Fprintf(os.Stderr, "warning: skipped optional %s: %v\n", devSeedPath, err)
-	return nil
 }
 
 func applySeed(

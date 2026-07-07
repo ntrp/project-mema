@@ -17,8 +17,10 @@
 		duplicateStates: Record<string, DuplicateDraftState>;
 		qualityProfiles: QualityProfileOption[];
 		metadataProviders: MetadataProvider[];
+		importingItemId: string;
 		onSearch: (_item: LibraryScanItem) => void;
 		onSelect: (_item: LibraryScanItem, _result: MediaSearchResult) => void;
+		onProviderChange: (_item: LibraryScanItem, _providerId: string) => void;
 	}
 
 	let {
@@ -28,8 +30,10 @@
 		duplicateStates,
 		qualityProfiles,
 		metadataProviders,
+		importingItemId,
 		onSearch,
-		onSelect
+		onSelect,
+		onProviderChange
 	}: Props = $props();
 </script>
 
@@ -43,8 +47,10 @@
 				{qualityProfiles}
 				{metadataProviders}
 				duplicateState={duplicateStates[item.id]}
+				importing={importingItemId === item.id}
 				{onSearch}
 				{onSelect}
+				{onProviderChange}
 			/>
 		{/if}
 	{:else}

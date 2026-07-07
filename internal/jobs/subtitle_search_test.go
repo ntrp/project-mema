@@ -18,12 +18,12 @@ import (
 func TestSubtitleSearchRequestBuildsEpisodeContext(t *testing.T) {
 	year := int32(2026)
 	item := storage.MediaItem{
-		ID:                    uuid.New(),
-		Type:                  "serie",
-		Title:                 "Scenario Series",
-		Year:                  &year,
-		FilePaths:             []string{"/library/Scenario.Series.S01E02.mkv"},
-		SubtitlePreferredMode: "mixed",
+		ID:           uuid.New(),
+		Type:         "serie",
+		Title:        "Scenario Series",
+		Year:         &year,
+		FilePaths:    []string{"/library/Scenario.Series.S01E02.mkv"},
+		SubtitleMode: "mixed",
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
 			{LanguageID: "english"},
 		},
@@ -47,8 +47,8 @@ func TestSubtitleSearchRequestBuildsEpisodeContext(t *testing.T) {
 
 func TestSubtitleRecordMuxesProviderSubtitleForEmbeddedProfile(t *testing.T) {
 	item := storage.MediaItem{
-		ID:                    uuid.New(),
-		SubtitlePreferredMode: "embedded",
+		ID:           uuid.New(),
+		SubtitleMode: "embedded",
 	}
 	record := subtitleRecord(
 		item,
@@ -61,6 +61,25 @@ func TestSubtitleRecordMuxesProviderSubtitleForEmbeddedProfile(t *testing.T) {
 
 	if record.RetentionMode != storage.SubtitleRetentionMux {
 		t.Fatalf("expected mux retention, got %#v", record.RetentionMode)
+	}
+}
+
+func TestSubtitleRecordMuxesProviderSubtitleForMixedProfile(t *testing.T) {
+	item := storage.MediaItem{
+		ID:           uuid.New(),
+		SubtitleMode: "mixed",
+	}
+	record := subtitleRecord(
+		item,
+		storage.SubtitleProvider{ID: uuid.New(), Name: "Scenario Subtitles"},
+		subtitles.Candidate{Format: "srt"},
+		subtitles.SearchRequest{LanguageID: "english"},
+		subtitleArtifact{Path: "/library/Scenario.Movie.english.srt", Format: "srt"},
+		"",
+	)
+
+	if record.RetentionMode != storage.SubtitleRetentionMux {
+		t.Fatalf("expected mux retention for mixed profile download, got %#v", record.RetentionMode)
 	}
 }
 
@@ -93,7 +112,7 @@ func TestSubtitleSearchDownloadsAndRecordsSubtitle(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
-	item.SubtitlePreferredMode = "mixed"
+	item.SubtitleMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
 		{LanguageID: "english"},
 	}
@@ -148,7 +167,7 @@ func TestSubtitleSearchConvertsDownloadedSubtitleToTargetFormat(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
-	item.SubtitlePreferredMode = "mixed"
+	item.SubtitleMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
 		{LanguageID: "english", Formats: []string{"vtt"}},
 	}
@@ -202,7 +221,7 @@ func TestSubtitleSearchDownloadsMockProviderSubtitle(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
-	item.SubtitlePreferredMode = "mixed"
+	item.SubtitleMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{{LanguageID: "english"}}
 
 	err = subtitleSearchDownload(ctx, store, subtitles.NewService(nil), nil, item, SubtitleSearchArgs{LanguageID: "english"})
@@ -294,7 +313,7 @@ func TestManualSubtitleGrabDownloadsSelectedMockCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
-	item.SubtitlePreferredMode = "mixed"
+	item.SubtitleMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{{LanguageID: "english"}}
 
 	err = GrabManualSubtitle(ctx, store, subtitles.NewService(nil), item, ManualSubtitleGrabInput{
@@ -346,7 +365,7 @@ func TestSubtitleSearchRejectsUnsupportedBitmapTargetFormat(t *testing.T) {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
-	item.SubtitlePreferredMode = "mixed"
+	item.SubtitleMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{
 		{LanguageID: "english", Formats: []string{"pgs"}},
 	}

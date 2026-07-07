@@ -67,3 +67,20 @@ export function initialMatchDraft(
 		removeDuplicate: false
 	};
 }
+
+export function ensureScanDrafts(
+	items: LibraryScanItem[],
+	drafts: Record<string, MatchDraft>,
+	metadataProviders: MetadataProvider[],
+	bulk: {
+		qualityProfileId: string;
+		monitorMode: MediaMonitorMode;
+		minimumAvailability: MinimumAvailability;
+		seriesType: SeriesType;
+	}
+) {
+	for (const item of items) {
+		if (drafts[item.id]) continue;
+		drafts[item.id] = initialMatchDraft(item, metadataProviders, bulk);
+	}
+}

@@ -1,9 +1,15 @@
 import {
 	deleteMediaItemSubtitle as deleteMediaItemSubtitleRequest,
 	grabMediaSubtitle as grabMediaSubtitleRequest,
-	enqueueMediaSubtitleSearch as enqueueMediaSubtitleSearchRequest
+	enqueueMediaSubtitleSearch as enqueueMediaSubtitleSearchRequest,
+	updateMediaItemSubtitle as updateMediaItemSubtitleRequest
 } from '$lib/settings/api';
-import type { GrabSubtitleRequest, MediaItem, SubtitleSearchRequest } from '$lib/settings/types';
+import type {
+	GrabSubtitleRequest,
+	MediaItem,
+	MediaItemSubtitleSelectionRequest,
+	SubtitleSearchRequest
+} from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
@@ -38,6 +44,24 @@ export function createMediaSubtitleActions(state: AppShellState, deps: MediaSubt
 		}
 	}
 
+	async function updateMediaSubtitle(
+		item: MediaItem,
+		subtitleId: string,
+		request: MediaItemSubtitleSelectionRequest
+	) {
+		clearNotice();
+		try {
+			const updated = await updateMediaItemSubtitleRequest(item.id, subtitleId, request);
+			state.mediaItems = [
+				updated,
+				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
+			];
+			state.message = 'Subtitle updated';
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not update subtitle');
+		}
+	}
+
 	async function grabMediaSubtitle(item: MediaItem, request: GrabSubtitleRequest) {
 		clearNotice();
 		try {
@@ -56,6 +80,7 @@ export function createMediaSubtitleActions(state: AppShellState, deps: MediaSubt
 	return {
 		searchMediaSubtitle,
 		deleteMediaSubtitle,
+		updateMediaSubtitle,
 		grabMediaSubtitle
 	};
 }

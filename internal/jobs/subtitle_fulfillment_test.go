@@ -12,7 +12,7 @@ func TestSubtitleFulfillmentNeedsUseBothProvidersForMixedMode(t *testing.T) {
 		Type:                         "movie",
 		Title:                        "Scenario Movie",
 		FilePaths:                    []string{"/library/Scenario.Movie.mkv"},
-		SubtitlePreferredMode:        "mixed",
+		SubtitleMode:                 "mixed",
 		AllowSubtitleReleaseFallback: true,
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
@@ -32,10 +32,10 @@ func TestSubtitleFulfillmentNeedsUseBothProvidersForMixedMode(t *testing.T) {
 
 func TestSubtitleFulfillmentNeedsSkipSatisfiedExternalTarget(t *testing.T) {
 	item := storage.MediaItem{
-		Type:                  "movie",
-		Title:                 "Scenario Movie",
-		FilePaths:             []string{"/library/Scenario.Movie.mkv"},
-		SubtitlePreferredMode: "external",
+		Type:         "movie",
+		Title:        "Scenario Movie",
+		FilePaths:    []string{"/library/Scenario.Movie.mkv"},
+		SubtitleMode: "external",
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
 		}},
@@ -52,9 +52,9 @@ func TestSubtitleFulfillmentNeedsSkipSatisfiedExternalTarget(t *testing.T) {
 
 func TestSubtitleFulfillmentNeedsUseEmbeddedInventory(t *testing.T) {
 	item := storage.MediaItem{
-		Type:                  "movie",
-		Title:                 "Scenario Movie",
-		SubtitlePreferredMode: "embedded",
+		Type:         "movie",
+		Title:        "Scenario Movie",
+		SubtitleMode: "embedded",
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
 			Formats:    []string{"ass"},
@@ -71,10 +71,10 @@ func TestSubtitleFulfillmentNeedsUseEmbeddedInventory(t *testing.T) {
 
 func TestSubtitleFulfillmentNeedsUseMuxableExternalSubtitle(t *testing.T) {
 	item := storage.MediaItem{
-		Type:                  "movie",
-		Title:                 "Scenario Movie",
-		FilePaths:             []string{"/library/Scenario.Movie.mkv"},
-		SubtitlePreferredMode: "embedded",
+		Type:         "movie",
+		Title:        "Scenario Movie",
+		FilePaths:    []string{"/library/Scenario.Movie.mkv"},
+		SubtitleMode: "embedded",
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",
 		}},
@@ -100,7 +100,7 @@ func TestPlanSubtitleFulfillmentChoosesAlternateRelease(t *testing.T) {
 	item := storage.MediaItem{
 		Type:                         "movie",
 		Title:                        "Scenario Movie",
-		SubtitlePreferredMode:        "embedded",
+		SubtitleMode:                 "embedded",
 		AllowSubtitleReleaseFallback: true,
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{
 			LanguageID: "english",

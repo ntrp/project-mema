@@ -33,10 +33,10 @@
 	class={`${isUnreleased ? 'border-yellow-400 ' : 'border-border '}relative grid items-center gap-3.5 rounded-md border bg-muted p-2.5 transition-colors hover:bg-accent/20 md:grid-cols-[82px_minmax(0,1fr)_auto]`}
 >
 	{#if href}
-		<a class="absolute inset-0 z-0 rounded-md" {href} aria-label={`Open ${result.title}`}></a>
+		<a class="absolute inset-0 z-10 rounded-md" {href} aria-label={`Open ${result.title}`}></a>
 	{/if}
 	<div
-		class={`${href ? 'pointer-events-none ' : ''}${isUnreleased ? 'border-yellow-400 ' : 'border-border '}relative z-10 aspect-[2/3] overflow-hidden rounded-md border bg-card`}
+		class={`${href ? 'pointer-events-none ' : ''}${isUnreleased ? 'border-yellow-400 ' : 'border-border '}relative z-20 aspect-[2/3] overflow-hidden rounded-md border bg-card`}
 	>
 		{#if imageUrl(result.posterPath)}
 			<img
@@ -49,7 +49,7 @@
 			<PosterPlaceholder label={result.title} class="h-full min-h-0" />
 		{/if}
 	</div>
-	<div class={`${href ? 'pointer-events-none ' : ''}relative z-10 grid min-w-0 gap-2`}>
+	<div class={`${href ? 'pointer-events-none ' : ''}relative z-20 grid min-w-0 gap-2`}>
 		<div>
 			<h3 class="m-0 text-base leading-tight">
 				{result.title}
@@ -62,7 +62,7 @@
 			<p class="line-clamp-2 m-0 text-sm text-muted-foreground">{result.overview}</p>
 		{/if}
 	</div>
-	<div class="relative z-20 flex items-center justify-end gap-2.5">
+	<div class="relative z-30 flex items-center justify-end gap-2.5">
 		{#if externalUrl}
 			<Button
 				variant="outline"

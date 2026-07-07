@@ -6,8 +6,10 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/google/uuid"
+	"golang.org/x/text/unicode/norm"
 
 	"media-manager/internal/library"
 	"media-manager/internal/metadata"
@@ -96,7 +98,6 @@ func (s *Server) libraryScanInputs(ctx context.Context, folderPath string, disco
 		} else if _, ok := importedPaths[item.Path]; ok {
 			input.Imported = true
 		}
-		s.applyLibraryScanMatch(ctx, &input)
 		inputs = append(inputs, input)
 	}
 	return inputs
@@ -207,7 +208,21 @@ func scanInputMediaType(kind string) (string, bool) {
 }
 
 func sameMediaTitle(left string, right string) bool {
-	return strings.EqualFold(strings.Join(strings.Fields(left), " "), strings.Join(strings.Fields(right), " "))
+	return normalizedMediaTitle(left) == normalizedMediaTitle(right)
+}
+
+func normalizedMediaTitle(value string) string {
+	normalized := norm.NFD.String(strings.ToLower(value))
+	var builder strings.Builder
+	for _, r := range normalized {
+		if unicode.Is(unicode.Mn, r) {
+			continue
+		}
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			builder.WriteRune(r)
+		}
+	}
+	return builder.String()
 }
 
 func assignLibraryScanDuplicateGroups(inputs []storage.LibraryScanItemInput) {
@@ -237,6 +252,16 @@ func libraryScanDuplicateKey(input storage.LibraryScanItemInput) string {
 	}
 	if input.MatchedExternalProvider != nil && input.MatchedExternalID != nil {
 		key := strings.ToLower(*input.MatchedExternalProvider + ":" + *input.MatchedExternalID)
+		if input.SeasonNumber != nil && input.EpisodeNumber != nil {
+			key += ":s" + int32String(*input.SeasonNumber) + "e" + int32String(*input.EpisodeNumber)
+		}
+		return key
+	}
+	if input.DetectedTitle != "" {
+		key := input.DetectedMediaKind + ":" + normalizedMediaTitle(input.DetectedTitle)
+		if input.DetectedYear != nil {
+			key += ":" + int32String(*input.DetectedYear)
+		}
 		if input.SeasonNumber != nil && input.EpisodeNumber != nil {
 			key += ":s" + int32String(*input.SeasonNumber) + "e" + int32String(*input.EpisodeNumber)
 		}
