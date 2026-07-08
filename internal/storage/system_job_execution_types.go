@@ -43,6 +43,7 @@ type SystemJobSchedule struct {
 	ActiveStatus          string
 	ActiveProgressPercent *int32
 	ActiveProgressLabel   string
+	ActiveProgressData    map[string]any
 	ActiveInfoMessage     string
 	LastRiverJobID        *int64
 	LastStatus            string
@@ -63,6 +64,7 @@ type SystemJobExecution struct {
 	Priority        int32
 	ProgressPercent *int32
 	ProgressLabel   string
+	ProgressData    map[string]any
 	Args            string
 	Metadata        string
 	Errors          string
@@ -84,6 +86,7 @@ type SystemJobExecutionInput struct {
 	Attempt        int32
 	MaxAttempts    int32
 	Priority       int32
+	ProgressData   map[string]any
 	Args           []byte
 	Metadata       []byte
 	Errors         []byte

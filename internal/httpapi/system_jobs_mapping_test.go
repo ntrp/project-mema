@@ -91,6 +91,7 @@ func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *te
 		ActiveStatus:          "running",
 		ActiveProgressPercent: &progress,
 		ActiveProgressLabel:   "Checking indexers",
+		ActiveProgressData:    map[string]any{"phase": "release_search"},
 		CreatedAt:             now,
 		UpdatedAt:             now,
 	})
@@ -100,6 +101,9 @@ func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *te
 	}
 	if schedule.ActiveProgressPercent == nil || *schedule.ActiveProgressPercent != progress {
 		t.Fatalf("progress = %#v", schedule.ActiveProgressPercent)
+	}
+	if schedule.ActiveProgressData["phase"] != "release_search" {
+		t.Fatalf("progress data = %#v", schedule.ActiveProgressData)
 	}
 	if schedule.HistoryPolicy != SystemJobScheduleHistoryPolicyRoutine || !schedule.IntervalConfigurable {
 		t.Fatalf("schedule policy = %#v", schedule)
@@ -126,6 +130,7 @@ func TestSCNSystem006SystemJobExecutionResponsePreservesLogsContract(t *testing.
 		Queue:           "downloads",
 		ProgressPercent: &progress,
 		ProgressLabel:   "Checking downloads",
+		ProgressData:    map[string]any{"phase": "download_activity_status"},
 		ScheduledAt:     now,
 		CreatedAt:       now,
 		UpdatedAt:       now,
@@ -136,6 +141,9 @@ func TestSCNSystem006SystemJobExecutionResponsePreservesLogsContract(t *testing.
 	}
 	if response.Classification != Fixed || response.HistoryPolicy != SystemJobExecutionHistoryPolicyRoutine || response.ProgressPercent == nil || *response.ProgressPercent != progress {
 		t.Fatalf("execution response = %#v", response)
+	}
+	if response.ProgressData["phase"] != "download_activity_status" {
+		t.Fatalf("execution progress data = %#v", response.ProgressData)
 	}
 	logs := systemJobExecutionLogResponses([]storage.SystemJobExecutionLog{{
 		ID: 1, RiverJobID: 77, Severity: "info", Message: "Started", Data: map[string]any{"queue": "downloads"}, CreatedAt: now,

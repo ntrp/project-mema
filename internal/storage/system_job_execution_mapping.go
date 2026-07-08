@@ -33,6 +33,7 @@ func systemJobScheduleFromRow(row storagegen.ListSystemJobSchedulesRow) SystemJo
 		schedule.ActiveStatus = row.ActiveStatus
 		schedule.ActiveProgressPercent = int4Ptr(row.ActiveProgressPercent)
 		schedule.ActiveProgressLabel = row.ActiveProgressLabel
+		schedule.ActiveProgressData = jsonObjectMap(row.ActiveProgressData)
 		schedule.ActiveInfoMessage = row.ActiveInfoMessage
 	}
 	if row.LastRiverJobID > 0 {
@@ -78,6 +79,7 @@ func systemJobExecutionFromRow(row storagegen.AppSystemJobExecution) SystemJobEx
 		Priority:        row.Priority,
 		ProgressPercent: int4Ptr(row.ProgressPercent),
 		ProgressLabel:   row.ProgressLabel,
+		ProgressData:    jsonObjectMap(row.ProgressData),
 		Args:            string(row.Args),
 		Metadata:        string(row.Metadata),
 		Errors:          string(row.Errors),
@@ -91,16 +93,20 @@ func systemJobExecutionFromRow(row storagegen.AppSystemJobExecution) SystemJobEx
 }
 
 func systemJobExecutionLogFromRow(row storagegen.AppSystemJobExecutionLog) SystemJobExecutionLog {
-	var data map[string]any
-	_ = json.Unmarshal(row.Data, &data)
 	return SystemJobExecutionLog{
 		ID:         row.ID,
 		RiverJobID: row.RiverJobID,
 		Severity:   row.Severity,
 		Message:    row.Message,
-		Data:       nonNilMap(data),
+		Data:       jsonObjectMap(row.Data),
 		CreatedAt:  row.CreatedAt,
 	}
+}
+
+func jsonObjectMap(data []byte) map[string]any {
+	var value map[string]any
+	_ = json.Unmarshal(data, &value)
+	return nonNilMap(value)
 }
 
 func nullableText(value string) pgtype.Text {

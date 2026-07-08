@@ -73,7 +73,12 @@ func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSe
 		query = decisions.SearchQueryForMediaItem(item)
 	}
 	slog.Debug("release search started", "mediaItemId", item.ID, "title", item.Title, "query", query)
-	recordJobProgress(ctx, w.settings, w.events, nil, "Searching releases")
+	recordJobProgressData(ctx, w.settings, w.events, nil, "Searching releases", map[string]any{
+		"mediaItemId":      item.ID.String(),
+		"mediaTitle":       item.Title,
+		"phase":            "release_search",
+		"pendingOperation": "indexer_search",
+	})
 	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Release search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "query": query})
 	releases, searchErrors, err := searchReleases(ctx, w.settings, w.indexers, item, query, w.events, true)
 	if err != nil {
@@ -120,7 +125,12 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 	}
 	slog.Debug("grab release started", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "releaseTitle", job.Args.Title)
 	progress := int32(20)
-	recordJobProgress(ctx, w.settings, w.events, &progress, "Sending release to download client")
+	recordJobProgressData(ctx, w.settings, w.events, &progress, "Sending release to download client", map[string]any{
+		"mediaItemId":      activity.MediaItemID.String(),
+		"mediaTitle":       activity.MediaTitle,
+		"phase":            "download_grab",
+		"pendingOperation": "download_client_add",
+	})
 	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Download job started", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": job.Args.Title})
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
@@ -150,7 +160,11 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 	activity, err = w.settings.UpdateDownloadActivityClientState(ctx, activityID, "grabbed", downloadID, nil)
 	if err == nil {
 		done := int32(100)
-		recordJobProgress(ctx, w.settings, w.events, &done, "Download accepted")
+		recordJobProgressData(ctx, w.settings, w.events, &done, "Download accepted", map[string]any{
+			"mediaItemId": activity.MediaItemID.String(),
+			"mediaTitle":  activity.MediaTitle,
+			"phase":       "download_grab",
+		})
 		publishDownloadActivity(w.events, activity)
 		slog.Debug("grab release finished", "activityId", activity.ID, "downloadClientName", client.Name, "downloadId", result.DownloadID)
 		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Download sent to client", map[string]any{"activityId": activity.ID.String(), "downloadClientName": client.Name, "downloadId": result.DownloadID})

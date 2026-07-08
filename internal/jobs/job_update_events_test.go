@@ -132,6 +132,7 @@ func TestSCNSystem008JobExecutionEventPreservesProgress(t *testing.T) {
 		Queue:           "media_search",
 		ProgressPercent: &progress,
 		ProgressLabel:   "Searching indexers",
+		ProgressData:    map[string]any{"phase": "release_search"},
 	})
 
 	if execution.RiverJobID != 45 || execution.ProgressPercent == nil || *execution.ProgressPercent != progress {
@@ -142,6 +143,9 @@ func TestSCNSystem008JobExecutionEventPreservesProgress(t *testing.T) {
 	}
 	if execution.ProgressLabel != "Searching indexers" {
 		t.Fatalf("progress label = %q", execution.ProgressLabel)
+	}
+	if execution.ProgressData["phase"] != "release_search" {
+		t.Fatalf("progress data = %#v", execution.ProgressData)
 	}
 }
 

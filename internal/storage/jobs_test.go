@@ -74,6 +74,7 @@ func TestSCNSystem006SystemJobScheduleOverviewMapsActiveAndLastRuns(t *testing.T
 		ActiveStatus:          "running",
 		ActiveProgressPercent: pgtype.Int4{Int32: progress, Valid: true},
 		ActiveProgressLabel:   "Checking indexers",
+		ActiveProgressData:    []byte(`{"phase":"release_search","mediaItemId":"media-1"}`),
 		LastRiverJobID:        100,
 		LastStatus:            "completed",
 		LastCreatedAt:         createdAt,
@@ -85,6 +86,9 @@ func TestSCNSystem006SystemJobScheduleOverviewMapsActiveAndLastRuns(t *testing.T
 	}
 	if schedule.ActiveProgressPercent == nil || *schedule.ActiveProgressPercent != progress {
 		t.Fatalf("progress = %#v", schedule.ActiveProgressPercent)
+	}
+	if schedule.ActiveProgressData["phase"] != "release_search" {
+		t.Fatalf("progress data = %#v", schedule.ActiveProgressData)
 	}
 	if schedule.NextRunAt == nil || !schedule.NextRunAt.Equal(createdAt.Add(15*time.Minute)) {
 		t.Fatalf("next run = %#v", schedule.NextRunAt)

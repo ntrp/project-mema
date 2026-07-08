@@ -8609,6 +8609,7 @@ components:
         - paused
         - activeStatus
         - activeProgressLabel
+        - activeProgressData
         - activeInfoMessage
         - lastStatus
         - createdAt
@@ -8661,6 +8662,9 @@ components:
           maximum: 100
         activeProgressLabel:
           type: string
+        activeProgressData:
+          type: object
+          additionalProperties: true
         activeInfoMessage:
           type: string
         lastRiverJobId:
@@ -8717,6 +8721,7 @@ components:
         - maxAttempts
         - priority
         - progressLabel
+        - progressData
         - args
         - metadata
         - errors
@@ -8762,6 +8767,10 @@ components:
           maximum: 100
         progressLabel:
           type: string
+        progressData:
+          type: object
+          additionalProperties: true
+          description: Structured progress payload with media, file or target, phase, units, timestamps, and pending operation fields when known.
         args:
           type: string
         metadata:

@@ -98,6 +98,7 @@ select s.id,
     coalesce(active.status, '')::text as active_status,
     active.progress_percent as active_progress_percent,
     coalesce(active.progress_label, '')::text as active_progress_label,
+    coalesce(active.progress_data, '{}'::jsonb) as active_progress_data,
     coalesce(active.info_message, '')::text as active_info_message,
     coalesce(last_run.river_job_id, 0)::bigint as last_river_job_id,
     coalesce(last_run.status, '')::text as last_status,
@@ -105,7 +106,7 @@ select s.id,
     last_run.finalized_at as last_finalized_at
 from app.system_job_schedules s
 left join lateral (
-    select river_job_id, status, progress_percent, progress_label, info_message
+    select river_job_id, status, progress_percent, progress_label, progress_data, info_message
     from app.system_job_executions
     where schedule_id = s.id
         and status in ('available', 'scheduled', 'retryable', 'running')
@@ -228,6 +229,7 @@ returning *;
 update app.system_job_executions
 set progress_percent = sqlc.narg(progress_percent),
     progress_label = $2,
+    progress_data = coalesce(sqlc.narg(progress_data), '{}'::jsonb),
     info_message = case when $2 = '' then info_message else $2 end,
     updated_at = now()
 where river_job_id = $1

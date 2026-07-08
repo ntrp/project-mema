@@ -4046,6 +4046,9 @@ export interface components {
 			/** Format: int32 */
 			activeProgressPercent?: number;
 			activeProgressLabel: string;
+			activeProgressData: {
+				[key: string]: unknown;
+			};
 			activeInfoMessage: string;
 			/** Format: int64 */
 			lastRiverJobId?: number;
@@ -4087,6 +4090,10 @@ export interface components {
 			/** Format: int32 */
 			progressPercent?: number;
 			progressLabel: string;
+			/** @description Structured progress payload with media, file or target, phase, units, timestamps, and pending operation fields when known. */
+			progressData: {
+				[key: string]: unknown;
+			};
 			args: string;
 			metadata: string;
 			errors: string;

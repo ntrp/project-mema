@@ -52,6 +52,9 @@ same row.
 Use the execution history logs when a job fails or appears stuck. Each run keeps
 structured messages, progress updates, errors, and relevant IDs so you can see
 which indexer, download client, media item, or path was involved.
+Progress details may include the current phase, percent or item counts, the
+affected media, and a pending provider or tool operation when the worker can
+report it.
 
 Routine successful sync runs are hidden from the normal execution history so
 they do not bury other background work. Turn on Include routine runs when you

@@ -645,6 +645,7 @@ create table if not exists app.system_job_executions (
     priority integer not null default 0,
     progress_percent integer check (progress_percent between 0 and 100),
     progress_label text not null default '',
+    progress_data jsonb not null default '{}'::jsonb,
     args jsonb not null default '{}'::jsonb,
     metadata jsonb not null default '{}'::jsonb,
     errors jsonb not null default '[]'::jsonb,

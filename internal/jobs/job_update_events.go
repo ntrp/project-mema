@@ -31,27 +31,28 @@ type jobUpdateEvent struct {
 }
 
 type jobExecutionEvent struct {
-	RiverJobID      int64      `json:"riverJobId"`
-	ScheduleID      string     `json:"scheduleId,omitempty"`
-	Classification  string     `json:"classification"`
-	HistoryPolicy   string     `json:"historyPolicy"`
-	Status          string     `json:"status"`
-	Kind            string     `json:"kind"`
-	Queue           string     `json:"queue"`
-	Attempt         int32      `json:"attempt"`
-	MaxAttempts     int32      `json:"maxAttempts"`
-	Priority        int32      `json:"priority"`
-	ProgressPercent *int32     `json:"progressPercent,omitempty"`
-	ProgressLabel   string     `json:"progressLabel"`
-	Args            string     `json:"args"`
-	Metadata        string     `json:"metadata"`
-	Errors          string     `json:"errors"`
-	InfoMessage     string     `json:"infoMessage"`
-	ScheduledAt     time.Time  `json:"scheduledAt"`
-	CreatedAt       time.Time  `json:"createdAt"`
-	AttemptedAt     *time.Time `json:"attemptedAt,omitempty"`
-	FinalizedAt     *time.Time `json:"finalizedAt,omitempty"`
-	UpdatedAt       time.Time  `json:"updatedAt"`
+	RiverJobID      int64          `json:"riverJobId"`
+	ScheduleID      string         `json:"scheduleId,omitempty"`
+	Classification  string         `json:"classification"`
+	HistoryPolicy   string         `json:"historyPolicy"`
+	Status          string         `json:"status"`
+	Kind            string         `json:"kind"`
+	Queue           string         `json:"queue"`
+	Attempt         int32          `json:"attempt"`
+	MaxAttempts     int32          `json:"maxAttempts"`
+	Priority        int32          `json:"priority"`
+	ProgressPercent *int32         `json:"progressPercent,omitempty"`
+	ProgressLabel   string         `json:"progressLabel"`
+	ProgressData    map[string]any `json:"progressData"`
+	Args            string         `json:"args"`
+	Metadata        string         `json:"metadata"`
+	Errors          string         `json:"errors"`
+	InfoMessage     string         `json:"infoMessage"`
+	ScheduledAt     time.Time      `json:"scheduledAt"`
+	CreatedAt       time.Time      `json:"createdAt"`
+	AttemptedAt     *time.Time     `json:"attemptedAt,omitempty"`
+	FinalizedAt     *time.Time     `json:"finalizedAt,omitempty"`
+	UpdatedAt       time.Time      `json:"updatedAt"`
 }
 
 type jobExecutionContextKey struct{}
@@ -94,19 +95,6 @@ func recordJobFinished(ctx context.Context, store *storage.SettingsStore, broker
 		return
 	}
 	recordJobUpdated(ctx, store, broker, row, "completed")
-}
-
-func recordJobProgress(ctx context.Context, store *storage.SettingsStore, broker *events.Broker, percent *int32, label string) {
-	riverJobID, ok := jobExecutionID(ctx)
-	if !ok || store == nil {
-		return
-	}
-	execution, err := store.UpdateSystemJobExecutionProgress(ctx, riverJobID, percent, label)
-	if err != nil {
-		return
-	}
-	_, _ = store.CreateSystemJobExecutionLog(ctx, riverJobID, "info", label, nil)
-	publishJobExecutionUpdated(broker, execution)
 }
 
 func jobUpdateFromRow(row *rivertype.JobRow, status string) jobUpdateEvent {
@@ -237,6 +225,7 @@ func jobExecutionEventFromStorage(execution storage.SystemJobExecution) jobExecu
 		Priority:        execution.Priority,
 		ProgressPercent: execution.ProgressPercent,
 		ProgressLabel:   execution.ProgressLabel,
+		ProgressData:    execution.ProgressData,
 		Args:            execution.Args,
 		Metadata:        execution.Metadata,
 		Errors:          execution.Errors,

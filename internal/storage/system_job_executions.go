@@ -123,10 +123,15 @@ func (s *SettingsStore) UpsertSystemJobExecution(ctx context.Context, input Syst
 }
 
 func (s *SettingsStore) UpdateSystemJobExecutionProgress(ctx context.Context, riverJobID int64, progressPercent *int32, label string) (SystemJobExecution, error) {
+	return s.UpdateSystemJobExecutionProgressData(ctx, riverJobID, progressPercent, label, nil)
+}
+
+func (s *SettingsStore) UpdateSystemJobExecutionProgressData(ctx context.Context, riverJobID int64, progressPercent *int32, label string, data map[string]any) (SystemJobExecution, error) {
 	row, err := storagegen.New(s.pool).UpdateSystemJobExecutionProgress(ctx, storagegen.UpdateSystemJobExecutionProgressParams{
 		RiverJobID:      riverJobID,
 		ProgressLabel:   strings.TrimSpace(label),
 		ProgressPercent: nullableInt4(progressPercent),
+		ProgressData:    jsonMapBytes(data),
 	})
 	return systemJobExecutionFromRow(row), err
 }
@@ -238,6 +243,14 @@ func jsonBytes(value []byte, fallback []byte) []byte {
 		return fallback
 	}
 	return value
+}
+
+func jsonMapBytes(value map[string]any) []byte {
+	payload, err := json.Marshal(nonNilMap(value))
+	if err != nil {
+		return []byte("{}")
+	}
+	return payload
 }
 
 func nonNilMap(value map[string]any) map[string]any {

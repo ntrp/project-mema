@@ -39,8 +39,11 @@ state.
 
 River remains the execution engine for background work. The app mirrors job
 lifecycle changes into `app.system_job_executions` and records structured
-execution logs in `app.system_job_execution_logs`. Fixed scheduled jobs are
-registered from the application catalog and synchronized into
+execution logs in `app.system_job_execution_logs`. Execution rows keep
+structured progress data alongside the progress label and percent. Progress data
+can identify media item, media title, file path, target, phase, unit counts,
+timestamps, and pending provider or tool operation when a worker knows those
+fields. Fixed scheduled jobs are registered from the application catalog and synchronized into
 `app.system_job_schedules`, where category, description, automatic/manual flags,
 pause state, and interval settings are persisted.
 

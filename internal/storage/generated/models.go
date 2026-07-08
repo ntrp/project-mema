@@ -871,6 +871,7 @@ type AppSystemJobExecution struct {
 	Priority        int32
 	ProgressPercent pgtype.Int4
 	ProgressLabel   string
+	ProgressData    []byte
 	Args            []byte
 	Metadata        []byte
 	Errors          []byte

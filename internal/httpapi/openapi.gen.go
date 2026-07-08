@@ -3969,27 +3969,30 @@ type SystemJob struct {
 
 // SystemJobExecution defines model for SystemJobExecution.
 type SystemJobExecution struct {
-	Args            string                           `json:"args"`
-	Attempt         int32                            `json:"attempt"`
-	AttemptedAt     *time.Time                       `json:"attemptedAt,omitempty"`
-	Classification  SystemJobExecutionClassification `json:"classification"`
-	CreatedAt       time.Time                        `json:"createdAt"`
-	Errors          string                           `json:"errors"`
-	FinalizedAt     *time.Time                       `json:"finalizedAt,omitempty"`
-	HistoryPolicy   SystemJobExecutionHistoryPolicy  `json:"historyPolicy"`
-	InfoMessage     string                           `json:"infoMessage"`
-	Kind            string                           `json:"kind"`
-	MaxAttempts     int32                            `json:"maxAttempts"`
-	Metadata        string                           `json:"metadata"`
-	Priority        int32                            `json:"priority"`
-	ProgressLabel   string                           `json:"progressLabel"`
-	ProgressPercent *int32                           `json:"progressPercent,omitempty"`
-	Queue           string                           `json:"queue"`
-	RiverJobId      int64                            `json:"riverJobId"`
-	ScheduleId      *string                          `json:"scheduleId,omitempty"`
-	ScheduledAt     time.Time                        `json:"scheduledAt"`
-	Status          string                           `json:"status"`
-	UpdatedAt       time.Time                        `json:"updatedAt"`
+	Args           string                           `json:"args"`
+	Attempt        int32                            `json:"attempt"`
+	AttemptedAt    *time.Time                       `json:"attemptedAt,omitempty"`
+	Classification SystemJobExecutionClassification `json:"classification"`
+	CreatedAt      time.Time                        `json:"createdAt"`
+	Errors         string                           `json:"errors"`
+	FinalizedAt    *time.Time                       `json:"finalizedAt,omitempty"`
+	HistoryPolicy  SystemJobExecutionHistoryPolicy  `json:"historyPolicy"`
+	InfoMessage    string                           `json:"infoMessage"`
+	Kind           string                           `json:"kind"`
+	MaxAttempts    int32                            `json:"maxAttempts"`
+	Metadata       string                           `json:"metadata"`
+	Priority       int32                            `json:"priority"`
+
+	// ProgressData Structured progress payload with media, file or target, phase, units, timestamps, and pending operation fields when known.
+	ProgressData    map[string]interface{} `json:"progressData"`
+	ProgressLabel   string                 `json:"progressLabel"`
+	ProgressPercent *int32                 `json:"progressPercent,omitempty"`
+	Queue           string                 `json:"queue"`
+	RiverJobId      int64                  `json:"riverJobId"`
+	ScheduleId      *string                `json:"scheduleId,omitempty"`
+	ScheduledAt     time.Time              `json:"scheduledAt"`
+	Status          string                 `json:"status"`
+	UpdatedAt       time.Time              `json:"updatedAt"`
 }
 
 // SystemJobExecutionClassification defines model for SystemJobExecution.Classification.
@@ -4032,12 +4035,13 @@ type SystemJobListResponse struct {
 
 // SystemJobSchedule defines model for SystemJobSchedule.
 type SystemJobSchedule struct {
-	ActiveInfoMessage     string `json:"activeInfoMessage"`
-	ActiveProgressLabel   string `json:"activeProgressLabel"`
-	ActiveProgressPercent *int32 `json:"activeProgressPercent,omitempty"`
-	ActiveRiverJobId      *int64 `json:"activeRiverJobId,omitempty"`
-	ActiveStatus          string `json:"activeStatus"`
-	Automatic             bool   `json:"automatic"`
+	ActiveInfoMessage     string                 `json:"activeInfoMessage"`
+	ActiveProgressData    map[string]interface{} `json:"activeProgressData"`
+	ActiveProgressLabel   string                 `json:"activeProgressLabel"`
+	ActiveProgressPercent *int32                 `json:"activeProgressPercent,omitempty"`
+	ActiveRiverJobId      *int64                 `json:"activeRiverJobId,omitempty"`
+	ActiveStatus          string                 `json:"activeStatus"`
+	Automatic             bool                   `json:"automatic"`
 
 	// Category Automatic fulfillment job category.
 	Category              string                         `json:"category"`
