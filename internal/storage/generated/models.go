@@ -653,28 +653,30 @@ type AppMediaProviderMapping struct {
 }
 
 type AppMediaReleaseCandidate struct {
-	ID               uuid.UUID
-	MediaItemID      uuid.UUID
-	SeasonID         *uuid.UUID
-	EpisodeID        *uuid.UUID
-	IndexerID        *uuid.UUID
-	IndexerName      string
-	IndexerType      string
-	IndexerProtocol  string
-	Title            string
-	DownloadUrl      string
-	InfoUrl          pgtype.Text
-	Guid             pgtype.Text
-	SizeBytes        int64
-	Seeders          pgtype.Int4
-	Peers            pgtype.Int4
-	PublishedAt      *time.Time
-	SearchKind       string
-	RequestedSeason  pgtype.Int4
-	RequestedEpisode pgtype.Int4
-	Sources          []byte
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID                   uuid.UUID
+	MediaItemID          uuid.UUID
+	SeasonID             *uuid.UUID
+	EpisodeID            *uuid.UUID
+	IndexerID            *uuid.UUID
+	IndexerName          string
+	IndexerType          string
+	IndexerProtocol      string
+	Title                string
+	DownloadUrl          string
+	InfoUrl              pgtype.Text
+	Guid                 pgtype.Text
+	SizeBytes            int64
+	Seeders              pgtype.Int4
+	Peers                pgtype.Int4
+	PublishedAt          *time.Time
+	SearchKind           string
+	RequestedSeason      pgtype.Int4
+	RequestedEpisode     pgtype.Int4
+	Sources              []byte
+	CustomFormatScore    int32
+	MatchedCustomFormats []byte
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 type AppMediaReleaseSearchError struct {

@@ -33,7 +33,9 @@ insert into app.media_release_candidates (
     search_kind,
     requested_season,
     requested_episode,
-    sources
+    sources,
+    custom_format_score,
+    matched_custom_formats
 )
 values (
     $1,
@@ -54,30 +56,34 @@ values (
     $16,
     $17,
     $18,
-    $19
+    $19,
+    $20,
+    $21
 )
 `
 
 type AddReleaseCandidateParams struct {
-	ID               uuid.UUID
-	MediaItemID      uuid.UUID
-	SeasonID         *uuid.UUID
-	EpisodeID        *uuid.UUID
-	IndexerID        *uuid.UUID
-	IndexerName      string
-	IndexerProtocol  string
-	Title            string
-	DownloadUrl      string
-	InfoUrl          pgtype.Text
-	Guid             pgtype.Text
-	SizeBytes        int64
-	Seeders          pgtype.Int4
-	Peers            pgtype.Int4
-	PublishedAt      *time.Time
-	SearchKind       string
-	RequestedSeason  pgtype.Int4
-	RequestedEpisode pgtype.Int4
-	Sources          []byte
+	ID                   uuid.UUID
+	MediaItemID          uuid.UUID
+	SeasonID             *uuid.UUID
+	EpisodeID            *uuid.UUID
+	IndexerID            *uuid.UUID
+	IndexerName          string
+	IndexerProtocol      string
+	Title                string
+	DownloadUrl          string
+	InfoUrl              pgtype.Text
+	Guid                 pgtype.Text
+	SizeBytes            int64
+	Seeders              pgtype.Int4
+	Peers                pgtype.Int4
+	PublishedAt          *time.Time
+	SearchKind           string
+	RequestedSeason      pgtype.Int4
+	RequestedEpisode     pgtype.Int4
+	Sources              []byte
+	CustomFormatScore    int32
+	MatchedCustomFormats []byte
 }
 
 func (q *Queries) AddReleaseCandidate(ctx context.Context, arg AddReleaseCandidateParams) error {
@@ -101,6 +107,8 @@ func (q *Queries) AddReleaseCandidate(ctx context.Context, arg AddReleaseCandida
 		arg.RequestedSeason,
 		arg.RequestedEpisode,
 		arg.Sources,
+		arg.CustomFormatScore,
+		arg.MatchedCustomFormats,
 	)
 	return err
 }
@@ -162,6 +170,8 @@ select id,
     requested_season,
     requested_episode,
     sources,
+    custom_format_score,
+    matched_custom_formats,
     created_at,
     updated_at
 from app.media_release_candidates
@@ -198,6 +208,8 @@ func (q *Queries) GetReleaseCandidate(ctx context.Context, arg GetReleaseCandida
 		&i.RequestedSeason,
 		&i.RequestedEpisode,
 		&i.Sources,
+		&i.CustomFormatScore,
+		&i.MatchedCustomFormats,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -225,6 +237,8 @@ select id,
     requested_season,
     requested_episode,
     sources,
+    custom_format_score,
+    matched_custom_formats,
     created_at,
     updated_at
 from app.media_release_candidates
@@ -262,6 +276,8 @@ func (q *Queries) ListReleaseCandidates(ctx context.Context, mediaItemID uuid.UU
 			&i.RequestedSeason,
 			&i.RequestedEpisode,
 			&i.Sources,
+			&i.CustomFormatScore,
+			&i.MatchedCustomFormats,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {

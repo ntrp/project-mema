@@ -1046,6 +1046,8 @@ create table if not exists app.media_release_candidates (
     requested_season integer,
     requested_episode integer,
     sources jsonb not null default '[]'::jsonb,
+    custom_format_score integer not null default 0,
+    matched_custom_formats jsonb not null default '[]'::jsonb check (jsonb_typeof(matched_custom_formats) = 'array'),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );

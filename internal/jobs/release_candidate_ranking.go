@@ -79,6 +79,24 @@ func sortReleaseCandidates(
 	sort.SliceStable(releases, func(i, j int) bool {
 		return sortedReleaseLess(matches, profile, releases[i], releases[j])
 	})
+	for index := range releases {
+		releases[index] = releaseWithCustomFormatMatches(matches.match(releases[index]), releases[index])
+	}
+}
+
+func releaseWithCustomFormatMatches(
+	match decisions.ReleaseMatch,
+	release storage.ReleaseCandidateInput,
+) storage.ReleaseCandidateInput {
+	release.CustomFormatScore = match.CustomFormatScore
+	release.MatchedCustomFormats = make([]storage.ReleaseCandidateCustomFormatMatch, 0, len(match.CustomFormatContributors))
+	for _, contributor := range match.CustomFormatContributors {
+		release.MatchedCustomFormats = append(release.MatchedCustomFormats, storage.ReleaseCandidateCustomFormatMatch{
+			Name:  contributor.Label,
+			Score: contributor.Score,
+		})
+	}
+	return release
 }
 
 func sortedReleaseLess(

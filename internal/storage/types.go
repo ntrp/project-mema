@@ -116,48 +116,57 @@ type DownloadActivityInput struct {
 }
 
 type ReleaseCandidate struct {
-	ID               uuid.UUID
-	MediaItemID      uuid.UUID
-	SeasonID         *uuid.UUID
-	EpisodeID        *uuid.UUID
-	IndexerID        *uuid.UUID
-	IndexerName      string
-	IndexerProtocol  string
-	Title            string
-	DownloadURL      string
-	InfoURL          *string
-	GUID             *string
-	SizeBytes        int64
-	Seeders          *int32
-	Peers            *int32
-	PublishedAt      *time.Time
-	SearchKind       string
-	RequestedSeason  *int32
-	RequestedEpisode *int32
-	Sources          []ReleaseCandidateSource
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	ID                   uuid.UUID
+	MediaItemID          uuid.UUID
+	SeasonID             *uuid.UUID
+	EpisodeID            *uuid.UUID
+	IndexerID            *uuid.UUID
+	IndexerName          string
+	IndexerProtocol      string
+	Title                string
+	DownloadURL          string
+	InfoURL              *string
+	GUID                 *string
+	SizeBytes            int64
+	Seeders              *int32
+	Peers                *int32
+	PublishedAt          *time.Time
+	SearchKind           string
+	RequestedSeason      *int32
+	RequestedEpisode     *int32
+	Sources              []ReleaseCandidateSource
+	CustomFormatScore    int32
+	MatchedCustomFormats []ReleaseCandidateCustomFormatMatch
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 type ReleaseCandidateInput struct {
-	MediaItemID      uuid.UUID
-	SeasonID         *uuid.UUID
-	EpisodeID        *uuid.UUID
-	IndexerID        *uuid.UUID
-	IndexerName      string
-	IndexerProtocol  string
-	Title            string
-	DownloadURL      string
-	InfoURL          *string
-	GUID             *string
-	SizeBytes        int64
-	Seeders          *int32
-	Peers            *int32
-	PublishedAt      *time.Time
-	SearchKind       string
-	RequestedSeason  *int32
-	RequestedEpisode *int32
-	Sources          []ReleaseCandidateSource
+	MediaItemID          uuid.UUID
+	SeasonID             *uuid.UUID
+	EpisodeID            *uuid.UUID
+	IndexerID            *uuid.UUID
+	IndexerName          string
+	IndexerProtocol      string
+	Title                string
+	DownloadURL          string
+	InfoURL              *string
+	GUID                 *string
+	SizeBytes            int64
+	Seeders              *int32
+	Peers                *int32
+	PublishedAt          *time.Time
+	SearchKind           string
+	RequestedSeason      *int32
+	RequestedEpisode     *int32
+	Sources              []ReleaseCandidateSource
+	CustomFormatScore    int32
+	MatchedCustomFormats []ReleaseCandidateCustomFormatMatch
+}
+
+type ReleaseCandidateCustomFormatMatch struct {
+	Name  string `json:"name"`
+	Score int32  `json:"score"`
 }
 
 type ReleaseCandidateSource struct {

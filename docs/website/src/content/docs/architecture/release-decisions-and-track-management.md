@@ -42,6 +42,11 @@ format score, language score, preferred protocol, season-pack preference,
 seeders, publish time, size, and title. Hard errors are never chosen. Warnings
 can still win when they are the best acceptable candidate.
 
+Search results persist matched custom format names and score so grab and import
+workflows can keep using those acquisition facts. Custom formats remain scoring
+and upgrade rules by default; they do not create video, audio, or subtitle target
+rows.
+
 ## Upgrade Decisions
 
 Upgrade checks compare a candidate against the current file state before the

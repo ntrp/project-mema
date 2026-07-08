@@ -49,26 +49,32 @@ func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID
 	if err != nil {
 		return err
 	}
+	customFormats, err := json.Marshal(release.MatchedCustomFormats)
+	if err != nil {
+		return err
+	}
 	return storagegen.New(q).AddReleaseCandidate(ctx, storagegen.AddReleaseCandidateParams{
-		ID:               uuid.New(),
-		MediaItemID:      mediaItemID,
-		SeasonID:         release.SeasonID,
-		EpisodeID:        release.EpisodeID,
-		IndexerID:        release.IndexerID,
-		IndexerName:      release.IndexerName,
-		IndexerProtocol:  release.IndexerProtocol,
-		Title:            release.Title,
-		DownloadUrl:      release.DownloadURL,
-		InfoUrl:          textValue(release.InfoURL),
-		Guid:             textValue(release.GUID),
-		SizeBytes:        release.SizeBytes,
-		Seeders:          int4Value(release.Seeders),
-		Peers:            int4Value(release.Peers),
-		PublishedAt:      release.PublishedAt,
-		SearchKind:       release.SearchKind,
-		RequestedSeason:  int4Value(release.RequestedSeason),
-		RequestedEpisode: int4Value(release.RequestedEpisode),
-		Sources:          sources,
+		ID:                   uuid.New(),
+		MediaItemID:          mediaItemID,
+		SeasonID:             release.SeasonID,
+		EpisodeID:            release.EpisodeID,
+		IndexerID:            release.IndexerID,
+		IndexerName:          release.IndexerName,
+		IndexerProtocol:      release.IndexerProtocol,
+		Title:                release.Title,
+		DownloadUrl:          release.DownloadURL,
+		InfoUrl:              textValue(release.InfoURL),
+		Guid:                 textValue(release.GUID),
+		SizeBytes:            release.SizeBytes,
+		Seeders:              int4Value(release.Seeders),
+		Peers:                int4Value(release.Peers),
+		PublishedAt:          release.PublishedAt,
+		SearchKind:           release.SearchKind,
+		RequestedSeason:      int4Value(release.RequestedSeason),
+		RequestedEpisode:     int4Value(release.RequestedEpisode),
+		Sources:              sources,
+		CustomFormatScore:    release.CustomFormatScore,
+		MatchedCustomFormats: customFormats,
 	})
 }
 
@@ -121,29 +127,35 @@ func (s *SettingsStore) listReleaseSearchErrors(ctx context.Context, mediaItemID
 
 func releaseCandidateFromRow(row storagegen.AppMediaReleaseCandidate) (ReleaseCandidate, error) {
 	release := ReleaseCandidate{
-		ID:               row.ID,
-		MediaItemID:      row.MediaItemID,
-		SeasonID:         row.SeasonID,
-		EpisodeID:        row.EpisodeID,
-		IndexerID:        row.IndexerID,
-		IndexerName:      row.IndexerName,
-		IndexerProtocol:  row.IndexerProtocol,
-		Title:            row.Title,
-		DownloadURL:      row.DownloadUrl,
-		InfoURL:          textPtr(row.InfoUrl),
-		GUID:             textPtr(row.Guid),
-		SizeBytes:        row.SizeBytes,
-		Seeders:          int4Ptr(row.Seeders),
-		Peers:            int4Ptr(row.Peers),
-		PublishedAt:      row.PublishedAt,
-		SearchKind:       row.SearchKind,
-		RequestedSeason:  int4Ptr(row.RequestedSeason),
-		RequestedEpisode: int4Ptr(row.RequestedEpisode),
-		CreatedAt:        row.CreatedAt,
-		UpdatedAt:        row.UpdatedAt,
+		ID:                row.ID,
+		MediaItemID:       row.MediaItemID,
+		SeasonID:          row.SeasonID,
+		EpisodeID:         row.EpisodeID,
+		IndexerID:         row.IndexerID,
+		IndexerName:       row.IndexerName,
+		IndexerProtocol:   row.IndexerProtocol,
+		Title:             row.Title,
+		DownloadURL:       row.DownloadUrl,
+		InfoURL:           textPtr(row.InfoUrl),
+		GUID:              textPtr(row.Guid),
+		SizeBytes:         row.SizeBytes,
+		Seeders:           int4Ptr(row.Seeders),
+		Peers:             int4Ptr(row.Peers),
+		PublishedAt:       row.PublishedAt,
+		SearchKind:        row.SearchKind,
+		RequestedSeason:   int4Ptr(row.RequestedSeason),
+		RequestedEpisode:  int4Ptr(row.RequestedEpisode),
+		CustomFormatScore: row.CustomFormatScore,
+		CreatedAt:         row.CreatedAt,
+		UpdatedAt:         row.UpdatedAt,
 	}
 	if len(row.Sources) > 0 {
 		if err := json.Unmarshal(row.Sources, &release.Sources); err != nil {
+			return ReleaseCandidate{}, err
+		}
+	}
+	if len(row.MatchedCustomFormats) > 0 {
+		if err := json.Unmarshal(row.MatchedCustomFormats, &release.MatchedCustomFormats); err != nil {
 			return ReleaseCandidate{}, err
 		}
 	}

@@ -26,7 +26,9 @@ insert into app.media_release_candidates (
     search_kind,
     requested_season,
     requested_episode,
-    sources
+    sources,
+    custom_format_score,
+    matched_custom_formats
 )
 values (
     sqlc.arg(id),
@@ -47,7 +49,9 @@ values (
     sqlc.arg(search_kind),
     sqlc.narg(requested_season),
     sqlc.narg(requested_episode),
-    sqlc.arg(sources)
+    sqlc.arg(sources),
+    sqlc.arg(custom_format_score),
+    sqlc.arg(matched_custom_formats)
 );
 
 -- name: AddReleaseSearchError :exec
@@ -75,6 +79,8 @@ select id,
     requested_season,
     requested_episode,
     sources,
+    custom_format_score,
+    matched_custom_formats,
     created_at,
     updated_at
 from app.media_release_candidates
@@ -102,6 +108,8 @@ select id,
     requested_season,
     requested_episode,
     sources,
+    custom_format_score,
+    matched_custom_formats,
     created_at,
     updated_at
 from app.media_release_candidates

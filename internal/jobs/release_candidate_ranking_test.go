@@ -153,6 +153,9 @@ func TestSCNMedia002SortReleaseCandidatesUsesQualityThenCustomFormatThenSeeders(
 			t.Fatalf("release[%d] = %q, want %q; all = %#v", index, releases[index].Title, title, releases)
 		}
 	}
+	if releases[1].CustomFormatScore != 100 || len(releases[1].MatchedCustomFormats) != 1 {
+		t.Fatalf("custom format facts = score %d matches %#v", releases[1].CustomFormatScore, releases[1].MatchedCustomFormats)
+	}
 }
 
 func TestSCNMedia002ReleaseCandidateRankingFallbackHelpers(t *testing.T) {
