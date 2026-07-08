@@ -149,6 +149,14 @@ DIDL-Lite output includes:
 - subtitle resources
 - resource attributes from probe metadata where available
 
+Renderer profile DIDL rules decide which of those fields are emitted for each
+client. Subtitle rules filter external subtitle resources by format and can
+hide subtitle resources entirely. Artwork rules control album-art URLs and the
+DLNA image profile ID. Metadata rules can trim dates, rich video metadata,
+folder storage fields, and child counts for renderers that parse smaller DIDL
+documents more reliably. Thumbnail and artwork URLs still use server routes so
+cache paths stay derived from media identity, not raw source paths.
+
 ## Resource Delivery
 
 The resource endpoint resolves an object ID back to a visible media file and
@@ -266,6 +274,10 @@ The selected profile also drives a capability evaluator. Probe metadata is
 normalized into container, video codec, audio codec, and resolution checks.
 The evaluator returns a delivery decision, reason codes, and trace rows that
 feed DIDL resources, `ConnectionManager` protocol info, and diagnostics.
+The same selected profile feeds DIDL options, so seeded LG, Samsung, Sony, VLC,
+BubbleUPnP, Chromecast-like, audio-only, HLS-first, and legacy families can
+expose different subtitle, artwork, thumbnail, and metadata surfaces without
+branching in the SOAP handlers.
 
 Settings API endpoints expose renderer profiles, profile clone/reset/import/
 export actions, IP/UUID device overrides, recent renderer devices, profile

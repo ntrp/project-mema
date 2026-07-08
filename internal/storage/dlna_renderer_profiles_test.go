@@ -31,6 +31,31 @@ func TestDLNARendererProfilesSeedBaseline(t *testing.T) {
 	}
 }
 
+func TestDLNARendererProfileSeedDIDLRulesDifferByFamily(t *testing.T) {
+	ctx, store := testDBStore(t)
+
+	vlc := requireRendererProfile(t, ctx, store, "vlc")
+	cast := requireRendererProfile(t, ctx, store, "chromecast")
+	samsung := requireRendererProfile(t, ctx, store, "samsung-tv")
+
+	vlcSubtitles := parseSeedSubtitles(t, vlc.SubtitleRules)
+	if !vlcSubtitles.Resources || len(vlcSubtitles.Formats) != 3 {
+		t.Fatalf("vlc subtitle rules = %#v", vlcSubtitles)
+	}
+	castSubtitles := parseSeedSubtitles(t, cast.SubtitleRules)
+	if !castSubtitles.Resources || len(castSubtitles.Formats) != 1 || castSubtitles.Formats[0] != "vtt" {
+		t.Fatalf("chromecast subtitle rules = %#v", castSubtitles)
+	}
+	castArtwork := parseSeedArtwork(t, cast.ArtworkRules)
+	if castArtwork.AlbumArt {
+		t.Fatalf("chromecast artwork should be disabled: %#v", castArtwork)
+	}
+	samsungMetadata := parseSeedMetadata(t, samsung.MetadataRules)
+	if samsungMetadata.Media || samsungMetadata.Dates || !samsungMetadata.ChildCounts {
+		t.Fatalf("samsung metadata rules = %#v", samsungMetadata)
+	}
+}
+
 func TestDLNARendererProfileEditSurvivesSeedRestart(t *testing.T) {
 	ctx := context.Background()
 	store, databaseURL, closeStore := newRendererProfileTestStore(t, ctx)
@@ -172,6 +197,48 @@ func rendererProfileInput(profile DLNARendererProfile) DLNARendererProfileInput 
 
 func rawJSON(value string) json.RawMessage {
 	return json.RawMessage(value)
+}
+
+type seedSubtitleRules struct {
+	Formats   []string `json:"formats"`
+	Resources bool     `json:"resources"`
+}
+
+type seedArtworkRules struct {
+	AlbumArt bool `json:"albumArt"`
+}
+
+type seedMetadataRules struct {
+	Dates       bool `json:"dates"`
+	Media       bool `json:"media"`
+	ChildCounts bool `json:"childCounts"`
+}
+
+func parseSeedSubtitles(t *testing.T, payload json.RawMessage) seedSubtitleRules {
+	t.Helper()
+	var rules seedSubtitleRules
+	if err := json.Unmarshal(payload, &rules); err != nil {
+		t.Fatalf("parse subtitle rules: %v", err)
+	}
+	return rules
+}
+
+func parseSeedArtwork(t *testing.T, payload json.RawMessage) seedArtworkRules {
+	t.Helper()
+	var rules seedArtworkRules
+	if err := json.Unmarshal(payload, &rules); err != nil {
+		t.Fatalf("parse artwork rules: %v", err)
+	}
+	return rules
+}
+
+func parseSeedMetadata(t *testing.T, payload json.RawMessage) seedMetadataRules {
+	t.Helper()
+	var rules seedMetadataRules
+	if err := json.Unmarshal(payload, &rules); err != nil {
+		t.Fatalf("parse metadata rules: %v", err)
+	}
+	return rules
 }
 
 func hasDLNARendererProfile(profiles []DLNARendererProfile, id string) bool {

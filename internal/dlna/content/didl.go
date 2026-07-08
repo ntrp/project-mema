@@ -2,6 +2,7 @@ package content
 
 import (
 	"encoding/xml"
+	"strings"
 )
 
 const didlNamespace = "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"
@@ -59,7 +60,22 @@ type didlRes struct {
 	URL             string `xml:",chardata"`
 }
 
+type DIDLOptions struct {
+	SubtitleFormats          []string
+	IncludeSubtitleResources bool
+	IncludeArtwork           bool
+	ArtworkProfileID         string
+	IncludeDates             bool
+	IncludeMediaMetadata     bool
+	IncludeFolderData        bool
+	IncludeChildCounts       bool
+}
+
 func RenderDIDL(objects []Object, resources map[string][]Resource) ([]byte, error) {
+	return RenderDIDLWithOptions(objects, resources, DefaultDIDLOptions())
+}
+
+func RenderDIDLWithOptions(objects []Object, resources map[string][]Resource, options DIDLOptions) ([]byte, error) {
 	doc := didlLite{
 		XMLNS: didlNamespace,
 		UPNP:  "urn:schemas-upnp-org:metadata-1-0/upnp/",
@@ -68,10 +84,10 @@ func RenderDIDL(objects []Object, resources map[string][]Resource) ([]byte, erro
 	}
 	for _, object := range objects {
 		if object.Kind == ObjectContainer {
-			doc.Containers = append(doc.Containers, didlContainerFromObject(object))
+			doc.Containers = append(doc.Containers, didlContainerFromObject(object, options))
 			continue
 		}
-		doc.Items = append(doc.Items, didlItemFromObject(object, resources[object.ID]))
+		doc.Items = append(doc.Items, didlItemFromObject(object, resources[object.ID], options))
 	}
 	payload, err := xml.Marshal(doc)
 	if err != nil {
@@ -80,7 +96,20 @@ func RenderDIDL(objects []Object, resources map[string][]Resource) ([]byte, erro
 	return payload, nil
 }
 
-func didlContainerFromObject(object Object) didlContainer {
+func DefaultDIDLOptions() DIDLOptions {
+	return DIDLOptions{
+		SubtitleFormats:          []string{"srt", "vtt"},
+		IncludeSubtitleResources: true,
+		IncludeArtwork:           true,
+		ArtworkProfileID:         "JPEG_TN",
+		IncludeDates:             true,
+		IncludeMediaMetadata:     true,
+		IncludeFolderData:        true,
+		IncludeChildCounts:       true,
+	}
+}
+
+func didlContainerFromObject(object Object, options DIDLOptions) didlContainer {
 	container := didlContainer{
 		ID:         object.ID,
 		ParentID:   object.ParentID,
@@ -89,53 +118,80 @@ func didlContainerFromObject(object Object) didlContainer {
 		Title:      object.Title,
 		Class:      object.Class,
 	}
-	if !object.OmitChildCount {
+	if options.IncludeChildCounts && !object.OmitChildCount {
 		container.ChildCount = &object.ChildCount
 	}
-	if object.Class == "object.container.storageFolder" {
+	if options.IncludeFolderData && object.Class == "object.container.storageFolder" {
 		storageUsed := int64(0)
 		container.StorageUsed = &storageUsed
 	}
 	return container
 }
 
-func didlItemFromObject(object Object, resources []Resource) didlItem {
-	resources = append(resources, subtitleResources(object.Subtitles)...)
-	return didlItem{
+func didlItemFromObject(object Object, resources []Resource, options DIDLOptions) didlItem {
+	if options.IncludeSubtitleResources {
+		resources = append(resources, subtitleResources(object.Subtitles, options.SubtitleFormats)...)
+	}
+	item := didlItem{
 		ID:         object.ID,
 		ParentID:   object.ParentID,
 		Restricted: "1",
 		Title:      object.Title,
 		Class:      object.Class,
-		Date:       object.Date,
-		Genres:     object.Genres,
-		Artists:    object.Artists,
-		Album:      object.Album,
-		Artwork:    didlArtwork(object.Artwork),
 		Resources:  didlResources(resources),
 	}
+	if options.IncludeDates {
+		item.Date = object.Date
+	}
+	if options.IncludeMediaMetadata {
+		item.Genres = object.Genres
+		item.Artists = object.Artists
+		item.Album = object.Album
+	}
+	if options.IncludeArtwork {
+		item.Artwork = didlArtwork(object.Artwork, options.ArtworkProfileID)
+	}
+	return item
 }
 
-func didlArtwork(url *string) *didlAlbumArt {
+func didlArtwork(url *string, profileID string) *didlAlbumArt {
 	if url == nil || *url == "" {
 		return nil
 	}
+	if profileID == "" {
+		profileID = "JPEG_TN"
+	}
 	return &didlAlbumArt{
 		XMLNSDLNA: "urn:schemas-dlna-org:metadata-1-0/",
-		ProfileID: "JPEG_TN",
+		ProfileID: profileID,
 		URL:       *url,
 	}
 }
 
-func subtitleResources(subtitles []Subtitle) []Resource {
+func subtitleResources(subtitles []Subtitle, allowedFormats []string) []Resource {
+	allowed := allowedSubtitleFormats(allowedFormats)
 	resources := make([]Resource, 0, len(subtitles))
 	for _, subtitle := range subtitles {
+		if !allowed[strings.ToLower(subtitle.Format)] {
+			continue
+		}
 		resources = append(resources, Resource{
 			URL:          subtitle.URL,
 			ProtocolInfo: SubtitleProtocolInfo(subtitle.Format),
 		})
 	}
 	return resources
+}
+
+func allowedSubtitleFormats(formats []string) map[string]bool {
+	if len(formats) == 0 {
+		formats = DefaultDIDLOptions().SubtitleFormats
+	}
+	allowed := map[string]bool{}
+	for _, format := range formats {
+		allowed[strings.ToLower(format)] = true
+	}
+	return allowed
 }
 
 func didlResources(resources []Resource) []didlRes {

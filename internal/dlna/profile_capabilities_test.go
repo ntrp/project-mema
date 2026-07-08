@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"media-manager/internal/delivery"
+	"media-manager/internal/storage"
 )
 
 func TestRendererCapabilityEvaluatorDirectPlaysCompatibleMedia(t *testing.T) {
@@ -76,6 +77,20 @@ func TestConnectionProtocolInfoUsesProfileCapabilities(t *testing.T) {
 	}
 }
 
+func TestRendererProfileParsesDIDLOptions(t *testing.T) {
+	profile := rendererProfileFromStorage(storageRendererProfileForDIDLTest())
+
+	if profile.DIDLOptions.IncludeArtwork {
+		t.Fatalf("artwork should be disabled: %#v", profile.DIDLOptions)
+	}
+	if profile.DIDLOptions.IncludeDates || profile.DIDLOptions.IncludeMediaMetadata {
+		t.Fatalf("metadata should be trimmed: %#v", profile.DIDLOptions)
+	}
+	if len(profile.DIDLOptions.SubtitleFormats) != 1 || profile.DIDLOptions.SubtitleFormats[0] != "vtt" {
+		t.Fatalf("subtitle formats = %#v", profile.DIDLOptions.SubtitleFormats)
+	}
+}
+
 func capabilityTestProfile() RendererProfile {
 	return RendererProfile{
 		ID: "test",
@@ -96,6 +111,22 @@ func capabilityProbe(container string, videoCodec string, audioCodec string, hei
 			{Type: delivery.TrackVideo, Codec: &videoCodec, Height: &height},
 			{Type: delivery.TrackAudio, Codec: &audioCodec},
 		},
+	}
+}
+
+func storageRendererProfileForDIDLTest() storage.DLNARendererProfile {
+	return storage.DLNARendererProfile{
+		ID:               "test",
+		Name:             "Test",
+		Enabled:          true,
+		Priority:         1,
+		MatchRules:       []byte(`{"tokens":[]}`),
+		CapabilityRules:  []byte(`{}`),
+		DeliverySettings: []byte(`{}`),
+		SubtitleRules:    []byte(`{"formats":["vtt"],"resources":true}`),
+		ArtworkRules:     []byte(`{"albumArt":false}`),
+		MetadataRules:    []byte(`{"dates":false,"media":false,"folderData":false,"childCounts":false}`),
+		Quirks:           []byte(`{}`),
 	}
 }
 

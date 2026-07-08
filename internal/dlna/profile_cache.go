@@ -46,7 +46,22 @@ type rendererCapabilitiesJSON struct {
 }
 
 type rendererSubtitlesJSON struct {
-	Formats []string `json:"formats"`
+	Formats   []string `json:"formats"`
+	Resources *bool    `json:"resources"`
+}
+
+type rendererArtworkJSON struct {
+	AlbumArt  *bool  `json:"albumArt"`
+	ProfileID string `json:"profileId"`
+}
+
+type rendererMetadataJSON struct {
+	RichMetadata *bool `json:"richMetadata"`
+	AlbumArt     *bool `json:"albumArt"`
+	Dates        *bool `json:"dates"`
+	Media        *bool `json:"media"`
+	FolderData   *bool `json:"folderData"`
+	ChildCounts  *bool `json:"childCounts"`
 }
 
 type rendererQuirksJSON struct {
@@ -133,6 +148,8 @@ func rendererProfileFromStorage(row storage.DLNARendererProfile) RendererProfile
 	capabilities := parseRendererCapabilities(row.CapabilityRules)
 	delivery := parseRendererDelivery(row.DeliverySettings)
 	subtitles := parseRendererSubtitles(row.SubtitleRules)
+	artwork := parseRendererArtwork(row.ArtworkRules)
+	metadata := parseRendererMetadata(row.MetadataRules)
 	quirks := parseRendererQuirks(row.Quirks)
 	headers := map[string]string{}
 	if delivery.StreamingHeaders {
@@ -162,7 +179,8 @@ func rendererProfileFromStorage(row storage.DLNARendererProfile) RendererProfile
 			RemuxContainer:     delivery.RemuxContainer,
 			TranscodeContainer: delivery.TranscodeContainer,
 		},
-		rules: matchRules.Rules,
+		DIDLOptions: rendererDIDLOptions(subtitles, artwork, metadata),
+		rules:       matchRules.Rules,
 	}
 }
 

@@ -64,10 +64,11 @@ func contentDirectoryActions(tree *content.Tree, baseURL string, updateID func()
 				return nil, soap.InvalidArgs(err.Error())
 			}
 			responseBaseURL := contentActionBaseURL(ctx, baseURL)
-			resources := contentResources(response.Objects, responseBaseURL, profileForContext(ctx))
+			profile := profileForContext(ctx)
+			resources := contentResources(response.Objects, responseBaseURL, profile)
 			objects := content.ApplySubtitleURLs(responseBaseURL, content.ApplyArtworkURLs(responseBaseURL, response.Objects))
 			response.UpdateID = updateID()
-			payload, err := content.RenderDIDL(objects, resources)
+			payload, err := content.RenderDIDLWithOptions(objects, resources, DIDLOptionsForProfile(profile))
 			if err != nil {
 				return nil, err
 			}
@@ -91,10 +92,11 @@ func contentDirectoryActions(tree *content.Tree, baseURL string, updateID func()
 				return nil, soap.InvalidArgs(err.Error())
 			}
 			responseBaseURL := contentActionBaseURL(ctx, baseURL)
-			resources := contentResources(response.Objects, responseBaseURL, profileForContext(ctx))
+			profile := profileForContext(ctx)
+			resources := contentResources(response.Objects, responseBaseURL, profile)
 			objects := content.ApplySubtitleURLs(responseBaseURL, content.ApplyArtworkURLs(responseBaseURL, response.Objects))
 			response.UpdateID = updateID()
-			payload, err := content.RenderDIDL(objects, resources)
+			payload, err := content.RenderDIDLWithOptions(objects, resources, DIDLOptionsForProfile(profile))
 			if err != nil {
 				return nil, err
 			}

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"media-manager/internal/delivery"
+	"media-manager/internal/dlna/content"
 	"media-manager/internal/dlna/soap"
 )
 
@@ -24,6 +25,7 @@ type RendererProfile struct {
 	ResponseHeaders map[string]string
 	Capabilities    RendererCapabilities
 	DeliveryRules   RendererDeliveryRules
+	DIDLOptions     content.DIDLOptions
 	rules           []rendererMatchRule
 }
 

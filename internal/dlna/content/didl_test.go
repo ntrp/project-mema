@@ -119,6 +119,42 @@ func TestRenderDIDLSerializesItemMetadataAndResources(t *testing.T) {
 	}
 }
 
+func TestRenderDIDLWithOptionsFiltersProfileControlledMetadata(t *testing.T) {
+	date := "2026-07-07"
+	artwork := "http://127.0.0.1:18080/dlna/artwork/item-1"
+	object := Object{
+		ID: "item-1", ParentID: "container-1", Title: "Scenario",
+		Class: "object.item.videoItem.movie", Kind: ObjectItem, Date: &date,
+		Genres: []string{"Drama"}, Artists: []string{"Actor One"}, Artwork: &artwork,
+		Subtitles: []Subtitle{
+			{URL: "http://mema/subtitle/0", Format: "srt"},
+			{URL: "http://mema/subtitle/1", Format: "vtt"},
+		},
+	}
+
+	payload, err := RenderDIDLWithOptions([]Object{object}, nil, DIDLOptions{
+		SubtitleFormats:          []string{"vtt"},
+		IncludeSubtitleResources: true,
+		IncludeArtwork:           false,
+		IncludeDates:             false,
+		IncludeMediaMetadata:     false,
+		IncludeFolderData:        true,
+		IncludeChildCounts:       true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(payload)
+	for _, forbidden := range []string{"<dc:date>", "<upnp:genre>", "<upnp:artist>", "albumArtURI", "application/x-subrip"} {
+		if strings.Contains(got, forbidden) {
+			t.Fatalf("DIDL contains %q:\n%s", forbidden, got)
+		}
+	}
+	if !strings.Contains(got, "text/vtt") {
+		t.Fatalf("DIDL missing VTT subtitle:\n%s", got)
+	}
+}
+
 func stringPtr(value string) *string {
 	return &value
 }
