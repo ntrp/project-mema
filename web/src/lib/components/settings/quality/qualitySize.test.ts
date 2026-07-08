@@ -3,6 +3,7 @@ import {
 	activeTrackStyle,
 	gibPerHourToMbPerMinute,
 	mbPerMinuteToGibPerHour,
+	mbPerMinuteTitle,
 	nextSliderQuality,
 	qualityRequest,
 	rowError,
@@ -39,6 +40,7 @@ describe('quality size controls', () => {
 
 		expect(mbPerMinuteToGibPerHour(20)).toBe(1.17);
 		expect(gibPerHourToMbPerMinute(1.17)).toBe(19.97);
+		expect(mbPerMinuteTitle('Min', 1.17)).toBe('Min: 19.97 MiB/min');
 		expect(sliderValues(baseQuality)).toEqual({ minimum: 0.59, preferred: 1.17, maximum: 1.76 });
 		expect(qualityRequest(baseQuality)).toMatchObject({ qualityId: 'bluray-1080p' });
 		expect(activeTrackStyle({ minimum: 12, maximum: 24 })).toBe('left: 10%; width: 10%');

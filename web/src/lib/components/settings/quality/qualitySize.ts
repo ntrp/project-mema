@@ -89,7 +89,7 @@ export function gibValue(value: number) {
 }
 
 export function mbPerMinuteTitle(label: string, value: number) {
-	return `${label}: ${gibPerHourToMbPerMinute(value).toFixed(2)} MB/m`;
+	return `${label}: ${gibPerHourToMbPerMinute(value).toFixed(2)} MiB/min`;
 }
 
 export function labelOffset(value: number) {

@@ -19,8 +19,11 @@ these values while judging releases. A release that is much smaller than
 expected may be low quality or mislabeled. A release that is much larger than
 expected may be wasteful for the selected profile.
 
-The default quality sizes are a reasonable starting point. Tune them only after
-you see real releases being accepted or rejected for the wrong size reason.
+The default quality sizes are estimated from resolution, source, and a
+high-quality H.264 encode baseline. Lower-quality sources stay permissive, while
+Blu-ray, remux, and UHD qualities get progressively larger preferred and maximum
+ranges. Tune them only after you see real releases being accepted or rejected for
+the wrong size reason.
 
 ## Custom Formats
 
