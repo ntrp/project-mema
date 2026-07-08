@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -43,6 +44,41 @@ func TestActiveStreamLimitRejectsBeforeServing(t *testing.T) {
 
 	if response.Code != http.StatusTooManyRequests {
 		t.Fatalf("status = %d body=%s", response.Code, response.Body.String())
+	}
+}
+
+func TestHandlerRateLimitRejectsNoisyClient(t *testing.T) {
+	manager := NewManager(nil, "http://127.0.0.1:18080")
+	manager.rateLimiter = newDLNARateLimiter(1, time.Minute)
+
+	first := httptest.NewRequest(http.MethodGet, "/dlna/rootDesc.xml", nil)
+	first.RemoteAddr = "127.0.0.1:1234"
+	manager.Handler().ServeHTTP(httptest.NewRecorder(), first)
+
+	second := httptest.NewRequest(http.MethodGet, "/dlna/rootDesc.xml", nil)
+	second.RemoteAddr = "127.0.0.1:1234"
+	response := httptest.NewRecorder()
+	manager.Handler().ServeHTTP(response, second)
+
+	if response.Code != http.StatusTooManyRequests {
+		t.Fatalf("status = %d body=%s", response.Code, response.Body.String())
+	}
+}
+
+func TestStopCancelsAndClearsStreamDiagnostics(t *testing.T) {
+	manager, resourceID := resourceTestManager(t, "0123456789")
+	done, ok := manager.beginStream(allowedTestRequest(), resourceID, "direct", true)
+	if !ok {
+		t.Fatal("beginStream rejected test stream")
+	}
+	defer done()
+
+	if err := manager.Stop(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	status := manager.Status()
+	if len(status.ActiveStreams) != 0 || len(status.ActiveTranscodes) != 0 {
+		t.Fatalf("status = %#v", status)
 	}
 }
 

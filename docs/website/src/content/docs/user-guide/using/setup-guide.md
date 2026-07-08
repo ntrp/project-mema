@@ -135,6 +135,16 @@ Mema also supports renderer search, sorted browse results, and UPnP event
 subscriptions; disable eventing in a profile only when a client fails during
 subscription setup.
 
+When profile edits make playback worse, reset a seeded profile to restore the
+current built-in default, or clone the profile before experimenting. If a seed
+profile receives an upgrade, customized profiles keep their local edits until
+you reset them. Use recent devices, profile match trace, and delivery decision
+trace to troubleshoot common cases: a TV matching the wrong profile, LG audio
+falling back to transcode, seeking failures, missing artwork, or subtitle
+formats the renderer cannot load. DLNA cleanup runs on startup and removes stale
+thumbnail, remux, and transcode cache files; active stream and transcode rows in
+Settings > DLNA show current long-running work.
+
 ## Add Subtitle Providers
 
 Open Settings, then Subtitles. Configure OpenSubtitles if you want real subtitle

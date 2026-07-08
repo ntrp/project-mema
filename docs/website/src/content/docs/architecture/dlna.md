@@ -182,6 +182,12 @@ Remux and transcode outputs use structured target definitions rather than raw
 profile-provided ffmpeg arguments. Supported containers are MPEG-TS, Matroska,
 and MP4. Transcode work is bounded by slots, uses safe media-tool path
 validation, and records active stream/transcode diagnostics.
+Streaming ffmpeg commands inherit the request context and the DLNA manager
+shutdown context, so disconnects and server stops cancel long-running remux,
+transcode, and thumbnail work where the media tool supports cancellation.
+Thumbnail and remux/transcode caches are pruned on DLNA startup by age and total
+size. The DLNA HTTP handler also applies a small per-client request rate limit
+before SOAP, resource, artwork, and subtitle handlers run.
 
 ## Renderer Profiles Today
 
@@ -284,6 +290,10 @@ export actions, IP/UUID device overrides, recent renderer devices, profile
 match traces, and delivery decision traces. Mutating profile or override
 endpoints refresh the DLNA manager cache so running matching behavior follows
 saved settings.
+Seeded profile upgrades update non-customized profiles automatically. Customized
+profiles keep user edits across seed updates; reset restores the current seed,
+and rebase records that a customized profile has been reviewed against the
+current seed version without overwriting its edited rules.
 
 ## Settings UI
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"media-manager/internal/storage"
 )
@@ -34,6 +35,11 @@ func (m *Manager) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !m.allowRequest(r) {
 			http.Error(w, "DLNA client is not allowed", http.StatusForbidden)
+			return
+		}
+		if m.rateLimiter != nil && !m.rateLimiter.Allow(clientIP(r), time.Now()) {
+			w.Header().Set("Retry-After", "60")
+			http.Error(w, "DLNA rate limit exceeded", http.StatusTooManyRequests)
 			return
 		}
 		recorder := &statusResponseWriter{ResponseWriter: w, status: http.StatusOK}

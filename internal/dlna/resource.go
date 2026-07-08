@@ -107,10 +107,12 @@ func (m *Manager) resourceTranscode(
 		http.Error(w, "invalid media path", http.StatusBadRequest)
 		return
 	}
+	ctx, cancel := m.commandContext(r)
+	defer cancel()
 	writer := flushWriter{w: w}
-	err := mediatools.RunStream(r.Context(), "ffmpeg", dlnaOutputArgs(target, "pipe:1", decision, output), &writer, 64*1024)
+	err := mediatools.RunStream(ctx, "ffmpeg", dlnaOutputArgs(target, "pipe:1", decision, output), &writer, 64*1024)
 	if err != nil {
-		if !writer.wrote && r.Context().Err() == nil {
+		if !writer.wrote && ctx.Err() == nil {
 			http.Error(w, "could not start DLNA remux", http.StatusInternalServerError)
 		}
 	}
@@ -176,8 +178,10 @@ func (m *Manager) resourceSegment(w http.ResponseWriter, r *http.Request, target
 	decision := delivery.DecisionFromTracks(target, probe.Tracks, nil, DeliveryClientProfile(m.RendererProfileFromRequest(r)))
 	args := delivery.SegmentArgs(target, nil, start, duration, decision)
 	writer := flushWriter{w: w}
-	err := mediatools.RunStream(r.Context(), "ffmpeg", args, &writer, 64*1024)
-	if err != nil && !writer.wrote && r.Context().Err() == nil {
+	ctx, cancel := m.commandContext(r)
+	defer cancel()
+	err := mediatools.RunStream(ctx, "ffmpeg", args, &writer, 64*1024)
+	if err != nil && !writer.wrote && ctx.Err() == nil {
 		http.Error(w, "could not start DLNA segment", http.StatusInternalServerError)
 	}
 }

@@ -1,6 +1,7 @@
 package dlna
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"image"
@@ -123,14 +124,16 @@ func (m *Manager) thumbnail(w http.ResponseWriter, r *http.Request, target strin
 		return
 	}
 	defer func() { <-dlnaTranscodeSlots }()
-	if err := generateThumbnail(r, target, cachePath); err != nil {
+	ctx, cancel := m.commandContext(r)
+	defer cancel()
+	if err := generateThumbnail(ctx, target, cachePath); err != nil {
 		http.Error(w, "could not generate thumbnail", http.StatusInternalServerError)
 		return
 	}
 	writeFileError(w, delivery.ServeFile(w, r, cachePath))
 }
 
-func generateThumbnail(r *http.Request, target string, cachePath string) error {
+func generateThumbnail(ctx context.Context, target string, cachePath string) error {
 	if err := mediatools.SafePathArg(target); err != nil {
 		return err
 	}
@@ -138,7 +141,7 @@ func generateThumbnail(r *http.Request, target string, cachePath string) error {
 		return err
 	}
 	args := []string{"-hide_banner", "-loglevel", "error", "-y", "-ss", "1", "-i", target, "-frames:v", "1", "-vf", "scale=320:-2", cachePath}
-	_, err := mediatools.RunOutput(r.Context(), mediatools.CommandSpec{
+	_, err := mediatools.RunOutput(ctx, mediatools.CommandSpec{
 		Name:           "ffmpeg",
 		Args:           args,
 		Timeout:        30 * time.Second,

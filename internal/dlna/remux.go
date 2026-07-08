@@ -1,6 +1,7 @@
 package dlna
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -41,7 +42,9 @@ func (m *Manager) cachedDLNAOutput(
 		return "", errNoDLNATranscodeSlot
 	}
 	defer func() { <-dlnaTranscodeSlots }()
-	if err := generateDLNAOutput(r, target, cachePath, decision, output); err != nil {
+	ctx, cancel := m.commandContext(r)
+	defer cancel()
+	if err := generateDLNAOutput(ctx, target, cachePath, decision, output); err != nil {
 		return "", err
 	}
 	return cachePath, nil
@@ -69,11 +72,11 @@ func (m *Manager) dlnaOutputCachePath(target string, output dlnaOutputTarget) (s
 }
 
 func generateMatroskaRemux(r *http.Request, target string, cachePath string, decision delivery.Decision) error {
-	return generateDLNAOutput(r, target, cachePath, decision, matroskaOutputTarget())
+	return generateDLNAOutput(r.Context(), target, cachePath, decision, matroskaOutputTarget())
 }
 
 func generateDLNAOutput(
-	r *http.Request,
+	ctx context.Context,
 	target string,
 	cachePath string,
 	decision delivery.Decision,
@@ -92,7 +95,7 @@ func generateDLNAOutput(
 	tmpPath := tmp.Name()
 	_ = tmp.Close()
 	defer func() { _ = os.Remove(tmpPath) }()
-	_, err = mediatools.RunOutput(r.Context(), mediatools.CommandSpec{
+	_, err = mediatools.RunOutput(ctx, mediatools.CommandSpec{
 		Name:           "ffmpeg",
 		Args:           dlnaOutputArgs(target, tmpPath, decision, output),
 		MaxStderrBytes: 64 * 1024,

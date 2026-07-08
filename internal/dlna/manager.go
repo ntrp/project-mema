@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"media-manager/internal/dlna/content"
 	"media-manager/internal/dlna/ssdp"
@@ -46,6 +47,9 @@ type Manager struct {
 	activeStreams    map[string]StreamStatus
 	activeTranscodes map[string]StreamStatus
 	allowedNets      []*net.IPNet
+	streamShutdown   context.Context
+	streamCancel     context.CancelFunc
+	rateLimiter      *dlnaRateLimiter
 	nextStreamID     int
 	startSSDP        func(context.Context, ssdp.Config) (ssdpRuntime, error)
 	ssdp             ssdpRuntime
@@ -54,6 +58,7 @@ type Manager struct {
 }
 
 func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
+	streamShutdown, streamCancel := context.WithCancel(context.Background())
 	return &Manager{
 		store:            store,
 		baseURL:          strings.TrimRight(baseURL, "/"),
@@ -65,6 +70,9 @@ func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
 		activeStreams:    map[string]StreamStatus{},
 		activeTranscodes: map[string]StreamStatus{},
 		allowedNets:      parseAllowedCIDRs(storage.DefaultDLNAAllowedCIDRs),
+		streamShutdown:   streamShutdown,
+		streamCancel:     streamCancel,
+		rateLimiter:      newDLNARateLimiter(defaultDLNARateLimit, defaultDLNARateWindow),
 		startSSDP:        startSSDPRuntime,
 	}
 }
@@ -83,11 +91,15 @@ func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettin
 		m.setError(err)
 		return err
 	}
+	if _, err := m.PruneCaches(time.Now().UTC()); err != nil {
+		m.audit(ctx, "DLNA cache cleanup failed", map[string]any{"error": err.Error()})
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.allowedNets = parseAllowedCIDRs(settings.AllowedCIDRs)
 	m.stopSSDP(ctx)
 	if !settings.Enabled {
+		m.cancelStreamsLocked()
 		event := "stopped"
 		m.status = Status{}
 		m.status.LastSSDPEvent = &event
@@ -121,6 +133,7 @@ func (m *Manager) Stop(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.stopSSDP(ctx)
+	m.cancelStreamsLocked()
 	m.status = Status{}
 	return nil
 }
@@ -164,6 +177,15 @@ func (m *Manager) stopSSDP(ctx context.Context) {
 	}
 	_ = m.ssdp.Stop(ctx)
 	m.ssdp = nil
+}
+
+func (m *Manager) cancelStreamsLocked() {
+	if m.streamCancel != nil {
+		m.streamCancel()
+	}
+	m.streamShutdown, m.streamCancel = context.WithCancel(context.Background())
+	m.activeStreams = map[string]StreamStatus{}
+	m.activeTranscodes = map[string]StreamStatus{}
 }
 
 func (m *Manager) setError(err error) {

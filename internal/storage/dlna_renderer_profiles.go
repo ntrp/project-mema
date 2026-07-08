@@ -107,6 +107,17 @@ func (s *SettingsStore) ResetDLNARendererProfile(ctx context.Context, id string)
 	return dlnaRendererProfileFromRow(row), nil
 }
 
+func (s *SettingsStore) RebaseDLNARendererProfile(ctx context.Context, id string) (DLNARendererProfile, error) {
+	row, err := storagegen.New(s.pool).RebaseDLNARendererProfile(ctx, strings.TrimSpace(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return DLNARendererProfile{}, ErrNotFound
+	}
+	if err != nil {
+		return DLNARendererProfile{}, err
+	}
+	return dlnaRendererProfileFromRow(row), nil
+}
+
 func normalizeDLNARendererProfileInput(input DLNARendererProfileInput) (DLNARendererProfileInput, error) {
 	input.Name = strings.TrimSpace(input.Name)
 	input.Vendor = strings.TrimSpace(input.Vendor)

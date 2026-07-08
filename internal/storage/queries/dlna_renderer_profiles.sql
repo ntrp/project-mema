@@ -88,6 +88,17 @@ where profile.id = $1
   and defaults.id = profile.id
 returning profile.*;
 
+-- name: RebaseDLNARendererProfile :one
+update app.dlna_renderer_profiles as profile
+set source = 'user',
+    source_version = defaults.source_version,
+    customized = true,
+    updated_at = now()
+from app.dlna_renderer_profile_defaults as defaults
+where profile.id = $1
+  and defaults.id = profile.id
+returning profile.*;
+
 -- name: ListDLNARendererDeviceOverrides :many
 select *
 from app.dlna_renderer_device_overrides

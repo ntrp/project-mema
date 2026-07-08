@@ -251,6 +251,47 @@ func (q *Queries) ListDLNARendererProfiles(ctx context.Context) ([]AppDlnaRender
 	return items, nil
 }
 
+const rebaseDLNARendererProfile = `-- name: RebaseDLNARendererProfile :one
+update app.dlna_renderer_profiles as profile
+set source = 'user',
+    source_version = defaults.source_version,
+    customized = true,
+    updated_at = now()
+from app.dlna_renderer_profile_defaults as defaults
+where profile.id = $1
+  and defaults.id = profile.id
+returning profile.id, profile.name, profile.vendor, profile.device_class, profile.source, profile.source_version, profile.customized, profile.enabled, profile.priority, profile.icon_key, profile.notes, profile.match_rules, profile.capability_rules, profile.delivery_settings, profile.dlna_flags, profile.subtitle_rules, profile.artwork_rules, profile.metadata_rules, profile.quirks, profile.created_at, profile.updated_at
+`
+
+func (q *Queries) RebaseDLNARendererProfile(ctx context.Context, id string) (AppDlnaRendererProfile, error) {
+	row := q.db.QueryRow(ctx, rebaseDLNARendererProfile, id)
+	var i AppDlnaRendererProfile
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Vendor,
+		&i.DeviceClass,
+		&i.Source,
+		&i.SourceVersion,
+		&i.Customized,
+		&i.Enabled,
+		&i.Priority,
+		&i.IconKey,
+		&i.Notes,
+		&i.MatchRules,
+		&i.CapabilityRules,
+		&i.DeliverySettings,
+		&i.DlnaFlags,
+		&i.SubtitleRules,
+		&i.ArtworkRules,
+		&i.MetadataRules,
+		&i.Quirks,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const resetDLNARendererProfile = `-- name: ResetDLNARendererProfile :one
 update app.dlna_renderer_profiles as profile
 set name = defaults.name,
