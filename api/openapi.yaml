@@ -2897,6 +2897,300 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/dlna/profiles:
+    get:
+      operationId: listDLNARendererProfiles
+      tags:
+        - Settings
+      summary: List DLNA renderer profiles
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: DLNA renderer profiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfileListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createDLNARendererProfile
+      tags:
+        - Settings
+      summary: Create a DLNA renderer profile
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNARendererProfileCreateRequest"
+      responses:
+        "201":
+          description: DLNA renderer profile created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/dlna/profiles/import:
+    post:
+      operationId: importDLNARendererProfile
+      tags:
+        - Settings
+      summary: Import a DLNA renderer profile
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNARendererProfileCreateRequest"
+      responses:
+        "200":
+          description: DLNA renderer profile imported
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/dlna/profiles/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getDLNARendererProfile
+      tags:
+        - Settings
+      summary: Get a DLNA renderer profile
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: DLNA renderer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateDLNARendererProfile
+      tags:
+        - Settings
+      summary: Update a DLNA renderer profile
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNARendererProfileRequest"
+      responses:
+        "200":
+          description: DLNA renderer profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteDLNARendererProfile
+      tags:
+        - Settings
+      summary: Delete a DLNA renderer profile
+      security:
+        - sessionCookie: []
+      responses:
+        "204":
+          description: DLNA renderer profile deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/dlna/profiles/{id}/clone:
+    post:
+      operationId: cloneDLNARendererProfile
+      tags:
+        - Settings
+      summary: Clone a DLNA renderer profile
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNARendererProfileCloneRequest"
+      responses:
+        "201":
+          description: DLNA renderer profile cloned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/dlna/profiles/{id}/reset:
+    post:
+      operationId: resetDLNARendererProfile
+      tags:
+        - Settings
+      summary: Reset a seeded DLNA renderer profile
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: DLNA renderer profile reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/dlna/profiles/{id}/export:
+    get:
+      operationId: exportDLNARendererProfile
+      tags:
+        - Settings
+      summary: Export a DLNA renderer profile
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: DLNA renderer profile export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/dlna/device-overrides:
+    get:
+      operationId: listDLNARendererDeviceOverrides
+      tags:
+        - Settings
+      summary: List DLNA renderer device overrides
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: DLNA renderer device overrides
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererDeviceOverrideListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: upsertDLNARendererDeviceOverride
+      tags:
+        - Settings
+      summary: Save a DLNA renderer device override
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNARendererDeviceOverrideRequest"
+      responses:
+        "200":
+          description: DLNA renderer device override saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARendererDeviceOverride"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/dlna/device-overrides/{id}:
+    delete:
+      operationId: deleteDLNARendererDeviceOverride
+      tags:
+        - Settings
+      summary: Delete a DLNA renderer device override
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: DLNA renderer device override deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /settings/dlna/recent-devices:
+    get:
+      operationId: listDLNARecentDevices
+      tags:
+        - Settings
+      summary: List recent DLNA renderer devices
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Recent DLNA renderer devices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNARecentDeviceListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/profiles:
     get:
       operationId: listMediaProfiles
@@ -4839,6 +5133,9 @@ components:
       enum:
         - admin
         - user
+      x-enum-varnames:
+        - UserRoleAdmin
+        - UserRoleUser
     UserListResponse:
       type: object
       additionalProperties: false
@@ -8275,6 +8572,204 @@ components:
           type: string
           minLength: 1
           maxLength: 80
+    DLNAJsonObject:
+      type: object
+      additionalProperties: true
+    DLNARendererProfileListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - profiles
+      properties:
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNARendererProfile"
+    DLNARendererProfile:
+      allOf:
+        - $ref: "#/components/schemas/DLNARendererProfileRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - source
+            - sourceVersion
+            - customized
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+            source:
+              type: string
+              enum: [mema_seed, user, imported_clean_room]
+            sourceVersion:
+              type: integer
+              format: int32
+            customized:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    DLNARendererProfileCreateRequest:
+      allOf:
+        - $ref: "#/components/schemas/DLNARendererProfileRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              minLength: 2
+              maxLength: 80
+    DLNARendererProfileRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - vendor
+        - deviceClass
+        - enabled
+        - priority
+        - iconKey
+        - notes
+        - matchRules
+        - capabilityRules
+        - deliverySettings
+        - dlnaFlags
+        - subtitleRules
+        - artworkRules
+        - metadataRules
+        - quirks
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        vendor:
+          type: string
+          maxLength: 120
+        deviceClass:
+          type: string
+          minLength: 1
+          maxLength: 80
+        enabled:
+          type: boolean
+        priority:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+        iconKey:
+          type: string
+          maxLength: 80
+        notes:
+          type: string
+          maxLength: 4000
+        matchRules:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        capabilityRules:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        deliverySettings:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        dlnaFlags:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        subtitleRules:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        artworkRules:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        metadataRules:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        quirks:
+          $ref: "#/components/schemas/DLNAJsonObject"
+    DLNARendererProfileCloneRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          minLength: 2
+          maxLength: 80
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+    DLNARendererDeviceOverrideListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - overrides
+      properties:
+        overrides:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNARendererDeviceOverride"
+    DLNARendererDeviceOverride:
+      allOf:
+        - $ref: "#/components/schemas/DLNARendererDeviceOverrideRequest"
+        - type: object
+          additionalProperties: false
+          required:
+            - id
+            - createdAt
+            - updatedAt
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    DLNARendererDeviceOverrideRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - profileId
+        - displayName
+        - allowed
+        - deliveryPolicyOverrides
+        - notes
+      properties:
+        id:
+          type: string
+          format: uuid
+        rendererUuid:
+          type: string
+        ipAddress:
+          type: string
+        profileId:
+          type: string
+          minLength: 1
+        displayName:
+          type: string
+          maxLength: 160
+        allowed:
+          type: boolean
+        deliveryPolicyOverrides:
+          $ref: "#/components/schemas/DLNAJsonObject"
+        notes:
+          type: string
+          maxLength: 2000
+    DLNARecentDeviceListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - devices
+      properties:
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAClientDiagnostic"
     MediaRequestApproveRequest:
       type: object
       additionalProperties: false

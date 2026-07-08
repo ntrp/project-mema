@@ -164,3 +164,10 @@ Feature: Settings controls
     Given the admin is signed in
     When a managed user is created, updated, listed, and deleted
     Then each API response reflects the requested managed user state
+
+  @SCN-SETTINGS-025 @api
+  Scenario: Admin manages DLNA renderer profiles
+    Given the admin is signed in
+    And seeded DLNA renderer profiles are available
+    When renderer profiles and device overrides are created, updated, reset, imported, exported, and deleted
+    Then each API response reflects the requested DLNA profile state

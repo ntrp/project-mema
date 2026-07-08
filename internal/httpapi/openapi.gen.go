@@ -64,6 +64,27 @@ func (e CustomFormatSpecType) Valid() bool {
 	}
 }
 
+// Defines values for DLNARendererProfileSource.
+const (
+	DLNARendererProfileSourceImportedCleanRoom DLNARendererProfileSource = "imported_clean_room"
+	DLNARendererProfileSourceMemaSeed          DLNARendererProfileSource = "mema_seed"
+	DLNARendererProfileSourceUser              DLNARendererProfileSource = "user"
+)
+
+// Valid indicates whether the value is a known member of the DLNARendererProfileSource enum.
+func (e DLNARendererProfileSource) Valid() bool {
+	switch e {
+	case DLNARendererProfileSourceImportedCleanRoom:
+		return true
+	case DLNARendererProfileSourceMemaSeed:
+		return true
+	case DLNARendererProfileSourceUser:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DownloadActivityStatus.
 const (
 	DownloadActivityStatusCancelled   DownloadActivityStatus = "cancelled"
@@ -1979,6 +2000,123 @@ type DLNAInterfaceDiagnostic struct {
 	Address  string `json:"address"`
 	Location string `json:"location"`
 	Name     string `json:"name"`
+}
+
+// DLNAJsonObject defines model for DLNAJsonObject.
+type DLNAJsonObject map[string]interface{}
+
+// DLNARecentDeviceListResponse defines model for DLNARecentDeviceListResponse.
+type DLNARecentDeviceListResponse struct {
+	Devices []DLNAClientDiagnostic `json:"devices"`
+}
+
+// DLNARendererDeviceOverride defines model for DLNARendererDeviceOverride.
+type DLNARendererDeviceOverride struct {
+	Allowed                 bool               `json:"allowed"`
+	CreatedAt               time.Time          `json:"createdAt"`
+	DeliveryPolicyOverrides DLNAJsonObject     `json:"deliveryPolicyOverrides"`
+	DisplayName             string             `json:"displayName"`
+	Id                      openapi_types.UUID `json:"id"`
+	IpAddress               *string            `json:"ipAddress,omitempty"`
+	Notes                   string             `json:"notes"`
+	ProfileId               string             `json:"profileId"`
+	RendererUuid            *string            `json:"rendererUuid,omitempty"`
+	UpdatedAt               time.Time          `json:"updatedAt"`
+}
+
+// DLNARendererDeviceOverrideListResponse defines model for DLNARendererDeviceOverrideListResponse.
+type DLNARendererDeviceOverrideListResponse struct {
+	Overrides []DLNARendererDeviceOverride `json:"overrides"`
+}
+
+// DLNARendererDeviceOverrideRequest defines model for DLNARendererDeviceOverrideRequest.
+type DLNARendererDeviceOverrideRequest struct {
+	Allowed                 bool                `json:"allowed"`
+	DeliveryPolicyOverrides DLNAJsonObject      `json:"deliveryPolicyOverrides"`
+	DisplayName             string              `json:"displayName"`
+	Id                      *openapi_types.UUID `json:"id,omitempty"`
+	IpAddress               *string             `json:"ipAddress,omitempty"`
+	Notes                   string              `json:"notes"`
+	ProfileId               string              `json:"profileId"`
+	RendererUuid            *string             `json:"rendererUuid,omitempty"`
+}
+
+// DLNARendererProfile defines model for DLNARendererProfile.
+type DLNARendererProfile struct {
+	ArtworkRules     DLNAJsonObject            `json:"artworkRules"`
+	CapabilityRules  DLNAJsonObject            `json:"capabilityRules"`
+	CreatedAt        time.Time                 `json:"createdAt"`
+	Customized       bool                      `json:"customized"`
+	DeliverySettings DLNAJsonObject            `json:"deliverySettings"`
+	DeviceClass      string                    `json:"deviceClass"`
+	DlnaFlags        DLNAJsonObject            `json:"dlnaFlags"`
+	Enabled          bool                      `json:"enabled"`
+	IconKey          string                    `json:"iconKey"`
+	Id               string                    `json:"id"`
+	MatchRules       DLNAJsonObject            `json:"matchRules"`
+	MetadataRules    DLNAJsonObject            `json:"metadataRules"`
+	Name             string                    `json:"name"`
+	Notes            string                    `json:"notes"`
+	Priority         int32                     `json:"priority"`
+	Quirks           DLNAJsonObject            `json:"quirks"`
+	Source           DLNARendererProfileSource `json:"source"`
+	SourceVersion    int32                     `json:"sourceVersion"`
+	SubtitleRules    DLNAJsonObject            `json:"subtitleRules"`
+	UpdatedAt        time.Time                 `json:"updatedAt"`
+	Vendor           string                    `json:"vendor"`
+}
+
+// DLNARendererProfileSource defines model for DLNARendererProfile.Source.
+type DLNARendererProfileSource string
+
+// DLNARendererProfileCloneRequest defines model for DLNARendererProfileCloneRequest.
+type DLNARendererProfileCloneRequest struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// DLNARendererProfileCreateRequest defines model for DLNARendererProfileCreateRequest.
+type DLNARendererProfileCreateRequest struct {
+	ArtworkRules     DLNAJsonObject `json:"artworkRules"`
+	CapabilityRules  DLNAJsonObject `json:"capabilityRules"`
+	DeliverySettings DLNAJsonObject `json:"deliverySettings"`
+	DeviceClass      string         `json:"deviceClass"`
+	DlnaFlags        DLNAJsonObject `json:"dlnaFlags"`
+	Enabled          bool           `json:"enabled"`
+	IconKey          string         `json:"iconKey"`
+	Id               string         `json:"id"`
+	MatchRules       DLNAJsonObject `json:"matchRules"`
+	MetadataRules    DLNAJsonObject `json:"metadataRules"`
+	Name             string         `json:"name"`
+	Notes            string         `json:"notes"`
+	Priority         int32          `json:"priority"`
+	Quirks           DLNAJsonObject `json:"quirks"`
+	SubtitleRules    DLNAJsonObject `json:"subtitleRules"`
+	Vendor           string         `json:"vendor"`
+}
+
+// DLNARendererProfileListResponse defines model for DLNARendererProfileListResponse.
+type DLNARendererProfileListResponse struct {
+	Profiles []DLNARendererProfile `json:"profiles"`
+}
+
+// DLNARendererProfileRequest defines model for DLNARendererProfileRequest.
+type DLNARendererProfileRequest struct {
+	ArtworkRules     DLNAJsonObject `json:"artworkRules"`
+	CapabilityRules  DLNAJsonObject `json:"capabilityRules"`
+	DeliverySettings DLNAJsonObject `json:"deliverySettings"`
+	DeviceClass      string         `json:"deviceClass"`
+	DlnaFlags        DLNAJsonObject `json:"dlnaFlags"`
+	Enabled          bool           `json:"enabled"`
+	IconKey          string         `json:"iconKey"`
+	MatchRules       DLNAJsonObject `json:"matchRules"`
+	MetadataRules    DLNAJsonObject `json:"metadataRules"`
+	Name             string         `json:"name"`
+	Notes            string         `json:"notes"`
+	Priority         int32          `json:"priority"`
+	Quirks           DLNAJsonObject `json:"quirks"`
+	SubtitleRules    DLNAJsonObject `json:"subtitleRules"`
+	Vendor           string         `json:"vendor"`
 }
 
 // DLNASettings defines model for DLNASettings.
@@ -4840,6 +4978,21 @@ type UpdateCustomFormatJSONRequestBody = CustomFormatRequest
 // UpdateDLNASettingsJSONRequestBody defines body for UpdateDLNASettings for application/json ContentType.
 type UpdateDLNASettingsJSONRequestBody = DLNASettingsRequest
 
+// UpsertDLNARendererDeviceOverrideJSONRequestBody defines body for UpsertDLNARendererDeviceOverride for application/json ContentType.
+type UpsertDLNARendererDeviceOverrideJSONRequestBody = DLNARendererDeviceOverrideRequest
+
+// CreateDLNARendererProfileJSONRequestBody defines body for CreateDLNARendererProfile for application/json ContentType.
+type CreateDLNARendererProfileJSONRequestBody = DLNARendererProfileCreateRequest
+
+// ImportDLNARendererProfileJSONRequestBody defines body for ImportDLNARendererProfile for application/json ContentType.
+type ImportDLNARendererProfileJSONRequestBody = DLNARendererProfileCreateRequest
+
+// UpdateDLNARendererProfileJSONRequestBody defines body for UpdateDLNARendererProfile for application/json ContentType.
+type UpdateDLNARendererProfileJSONRequestBody = DLNARendererProfileRequest
+
+// CloneDLNARendererProfileJSONRequestBody defines body for CloneDLNARendererProfile for application/json ContentType.
+type CloneDLNARendererProfileJSONRequestBody = DLNARendererProfileCloneRequest
+
 // CreateDownloadClientJSONRequestBody defines body for CreateDownloadClient for application/json ContentType.
 type CreateDownloadClientJSONRequestBody = DownloadClientRequest
 
@@ -5187,6 +5340,45 @@ type ServerInterface interface {
 	// Update DLNA server settings
 	// (PUT /settings/dlna)
 	UpdateDLNASettings(w http.ResponseWriter, r *http.Request)
+	// List DLNA renderer device overrides
+	// (GET /settings/dlna/device-overrides)
+	ListDLNARendererDeviceOverrides(w http.ResponseWriter, r *http.Request)
+	// Save a DLNA renderer device override
+	// (POST /settings/dlna/device-overrides)
+	UpsertDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request)
+	// Delete a DLNA renderer device override
+	// (DELETE /settings/dlna/device-overrides/{id})
+	DeleteDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// List DLNA renderer profiles
+	// (GET /settings/dlna/profiles)
+	ListDLNARendererProfiles(w http.ResponseWriter, r *http.Request)
+	// Create a DLNA renderer profile
+	// (POST /settings/dlna/profiles)
+	CreateDLNARendererProfile(w http.ResponseWriter, r *http.Request)
+	// Import a DLNA renderer profile
+	// (POST /settings/dlna/profiles/import)
+	ImportDLNARendererProfile(w http.ResponseWriter, r *http.Request)
+	// Delete a DLNA renderer profile
+	// (DELETE /settings/dlna/profiles/{id})
+	DeleteDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string)
+	// Get a DLNA renderer profile
+	// (GET /settings/dlna/profiles/{id})
+	GetDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string)
+	// Update a DLNA renderer profile
+	// (PUT /settings/dlna/profiles/{id})
+	UpdateDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string)
+	// Clone a DLNA renderer profile
+	// (POST /settings/dlna/profiles/{id}/clone)
+	CloneDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string)
+	// Export a DLNA renderer profile
+	// (GET /settings/dlna/profiles/{id}/export)
+	ExportDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string)
+	// Reset a seeded DLNA renderer profile
+	// (POST /settings/dlna/profiles/{id}/reset)
+	ResetDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string)
+	// List recent DLNA renderer devices
+	// (GET /settings/dlna/recent-devices)
+	ListDLNARecentDevices(w http.ResponseWriter, r *http.Request)
 	// Restart DLNA server
 	// (POST /settings/dlna/restart)
 	RestartDLNA(w http.ResponseWriter, r *http.Request)
@@ -5967,6 +6159,84 @@ func (_ Unimplemented) GetDLNASettings(w http.ResponseWriter, r *http.Request) {
 // Update DLNA server settings
 // (PUT /settings/dlna)
 func (_ Unimplemented) UpdateDLNASettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List DLNA renderer device overrides
+// (GET /settings/dlna/device-overrides)
+func (_ Unimplemented) ListDLNARendererDeviceOverrides(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Save a DLNA renderer device override
+// (POST /settings/dlna/device-overrides)
+func (_ Unimplemented) UpsertDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a DLNA renderer device override
+// (DELETE /settings/dlna/device-overrides/{id})
+func (_ Unimplemented) DeleteDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List DLNA renderer profiles
+// (GET /settings/dlna/profiles)
+func (_ Unimplemented) ListDLNARendererProfiles(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Create a DLNA renderer profile
+// (POST /settings/dlna/profiles)
+func (_ Unimplemented) CreateDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Import a DLNA renderer profile
+// (POST /settings/dlna/profiles/import)
+func (_ Unimplemented) ImportDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a DLNA renderer profile
+// (DELETE /settings/dlna/profiles/{id})
+func (_ Unimplemented) DeleteDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a DLNA renderer profile
+// (GET /settings/dlna/profiles/{id})
+func (_ Unimplemented) GetDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a DLNA renderer profile
+// (PUT /settings/dlna/profiles/{id})
+func (_ Unimplemented) UpdateDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Clone a DLNA renderer profile
+// (POST /settings/dlna/profiles/{id}/clone)
+func (_ Unimplemented) CloneDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Export a DLNA renderer profile
+// (GET /settings/dlna/profiles/{id}/export)
+func (_ Unimplemented) ExportDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Reset a seeded DLNA renderer profile
+// (POST /settings/dlna/profiles/{id}/reset)
+func (_ Unimplemented) ResetDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List recent DLNA renderer devices
+// (GET /settings/dlna/recent-devices)
+func (_ Unimplemented) ListDLNARecentDevices(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9666,6 +9936,350 @@ func (siw *ServerInterfaceWrapper) UpdateDLNASettings(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// ListDLNARendererDeviceOverrides operation middleware
+func (siw *ServerInterfaceWrapper) ListDLNARendererDeviceOverrides(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDLNARendererDeviceOverrides(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpsertDLNARendererDeviceOverride operation middleware
+func (siw *ServerInterfaceWrapper) UpsertDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpsertDLNARendererDeviceOverride(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDLNARendererDeviceOverride operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDLNARendererDeviceOverride(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDLNARendererProfiles operation middleware
+func (siw *ServerInterfaceWrapper) ListDLNARendererProfiles(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDLNARendererProfiles(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) CreateDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDLNARendererProfile(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) ImportDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportDLNARendererProfile(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDLNARendererProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) GetDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDLNARendererProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) UpdateDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateDLNARendererProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CloneDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) CloneDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CloneDLNARendererProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) ExportDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportDLNARendererProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetDLNARendererProfile operation middleware
+func (siw *ServerInterfaceWrapper) ResetDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetDLNARendererProfile(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDLNARecentDevices operation middleware
+func (siw *ServerInterfaceWrapper) ListDLNARecentDevices(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDLNARecentDevices(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // RestartDLNA operation middleware
 func (siw *ServerInterfaceWrapper) RestartDLNA(w http.ResponseWriter, r *http.Request) {
 
@@ -12969,6 +13583,45 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/settings/dlna", wrapper.UpdateDLNASettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/dlna/device-overrides", wrapper.ListDLNARendererDeviceOverrides)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/device-overrides", wrapper.UpsertDLNARendererDeviceOverride)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/dlna/device-overrides/{id}", wrapper.DeleteDLNARendererDeviceOverride)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/dlna/profiles", wrapper.ListDLNARendererProfiles)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/profiles", wrapper.CreateDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/profiles/import", wrapper.ImportDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/settings/dlna/profiles/{id}", wrapper.DeleteDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/dlna/profiles/{id}", wrapper.GetDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/settings/dlna/profiles/{id}", wrapper.UpdateDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/profiles/{id}/clone", wrapper.CloneDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/dlna/profiles/{id}/export", wrapper.ExportDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/profiles/{id}/reset", wrapper.ResetDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/dlna/recent-devices", wrapper.ListDLNARecentDevices)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/dlna/restart", wrapper.RestartDLNA)

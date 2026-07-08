@@ -8,6 +8,33 @@ select *
 from app.dlna_renderer_profiles
 where id = $1;
 
+-- name: CreateDLNARendererProfile :one
+insert into app.dlna_renderer_profiles (
+    id,
+    name,
+    vendor,
+    device_class,
+    source,
+    source_version,
+    customized,
+    enabled,
+    priority,
+    icon_key,
+    notes,
+    match_rules,
+    capability_rules,
+    delivery_settings,
+    dlna_flags,
+    subtitle_rules,
+    artwork_rules,
+    metadata_rules,
+    quirks
+)
+values (
+    $1, $2, $3, $4, 'user', 1, true, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+)
+returning *;
+
 -- name: UpdateDLNARendererProfile :one
 update app.dlna_renderer_profiles
 set name = $2,
@@ -30,6 +57,10 @@ set name = $2,
     updated_at = now()
 where id = $1
 returning *;
+
+-- name: DeleteDLNARendererProfile :execrows
+delete from app.dlna_renderer_profiles
+where id = $1;
 
 -- name: ResetDLNARendererProfile :one
 update app.dlna_renderer_profiles as profile

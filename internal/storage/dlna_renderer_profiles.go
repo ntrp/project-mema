@@ -132,7 +132,7 @@ func validateRendererProfileJSON(input DLNARendererProfileInput) error {
 			return ErrInvalidInput
 		}
 	}
-	return nil
+	return validateRendererMatchRegexes(input.MatchRules)
 }
 
 func dlnaRendererProfileParams(

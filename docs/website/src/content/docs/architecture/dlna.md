@@ -245,6 +245,11 @@ normalized into container, video codec, audio codec, and resolution checks.
 The evaluator returns a delivery decision, reason codes, and trace rows that
 feed DIDL resources, `ConnectionManager` protocol info, and diagnostics.
 
+Settings API endpoints expose renderer profiles, profile clone/reset/import/
+export actions, IP/UUID device overrides, and recent renderer devices. Mutating
+profile or override endpoints refresh the DLNA manager cache so running
+matching behavior follows saved settings.
+
 ## Planned Settings UI
 
 Settings > DLNA will gain a Device profiles panel.

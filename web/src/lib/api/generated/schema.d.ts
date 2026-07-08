@@ -1638,6 +1638,165 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/dlna/profiles': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List DLNA renderer profiles */
+		get: operations['listDLNARendererProfiles'];
+		put?: never;
+		/** Create a DLNA renderer profile */
+		post: operations['createDLNARendererProfile'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/profiles/import': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Import a DLNA renderer profile */
+		post: operations['importDLNARendererProfile'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/profiles/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		/** Get a DLNA renderer profile */
+		get: operations['getDLNARendererProfile'];
+		/** Update a DLNA renderer profile */
+		put: operations['updateDLNARendererProfile'];
+		post?: never;
+		/** Delete a DLNA renderer profile */
+		delete: operations['deleteDLNARendererProfile'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/profiles/{id}/clone': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Clone a DLNA renderer profile */
+		post: operations['cloneDLNARendererProfile'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/profiles/{id}/reset': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Reset a seeded DLNA renderer profile */
+		post: operations['resetDLNARendererProfile'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/profiles/{id}/export': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Export a DLNA renderer profile */
+		get: operations['exportDLNARendererProfile'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/device-overrides': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List DLNA renderer device overrides */
+		get: operations['listDLNARendererDeviceOverrides'];
+		put?: never;
+		/** Save a DLNA renderer device override */
+		post: operations['upsertDLNARendererDeviceOverride'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/device-overrides/{id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** Delete a DLNA renderer device override */
+		delete: operations['deleteDLNARendererDeviceOverride'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/recent-devices': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List recent DLNA renderer devices */
+		get: operations['listDLNARecentDevices'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/profiles': {
 		parameters: {
 			query?: never;
@@ -3925,6 +4084,74 @@ export interface components {
 			thumbnailsEnabled: boolean;
 			subtitlesEnabled: boolean;
 			defaultRendererProfile: string;
+		};
+		DLNAJsonObject: {
+			[key: string]: unknown;
+		};
+		DLNARendererProfileListResponse: {
+			profiles: components['schemas']['DLNARendererProfile'][];
+		};
+		DLNARendererProfile: components['schemas']['DLNARendererProfileRequest'] & {
+			id: string;
+			/** @enum {string} */
+			source: 'mema_seed' | 'user' | 'imported_clean_room';
+			/** Format: int32 */
+			sourceVersion: number;
+			customized: boolean;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		DLNARendererProfileCreateRequest: components['schemas']['DLNARendererProfileRequest'] & {
+			id: string;
+		};
+		DLNARendererProfileRequest: {
+			name: string;
+			vendor: string;
+			deviceClass: string;
+			enabled: boolean;
+			/** Format: int32 */
+			priority: number;
+			iconKey: string;
+			notes: string;
+			matchRules: components['schemas']['DLNAJsonObject'];
+			capabilityRules: components['schemas']['DLNAJsonObject'];
+			deliverySettings: components['schemas']['DLNAJsonObject'];
+			dlnaFlags: components['schemas']['DLNAJsonObject'];
+			subtitleRules: components['schemas']['DLNAJsonObject'];
+			artworkRules: components['schemas']['DLNAJsonObject'];
+			metadataRules: components['schemas']['DLNAJsonObject'];
+			quirks: components['schemas']['DLNAJsonObject'];
+		};
+		DLNARendererProfileCloneRequest: {
+			id: string;
+			name: string;
+		};
+		DLNARendererDeviceOverrideListResponse: {
+			overrides: components['schemas']['DLNARendererDeviceOverride'][];
+		};
+		DLNARendererDeviceOverride: components['schemas']['DLNARendererDeviceOverrideRequest'] & {
+			/** Format: uuid */
+			id: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		DLNARendererDeviceOverrideRequest: {
+			/** Format: uuid */
+			id?: string;
+			rendererUuid?: string;
+			ipAddress?: string;
+			profileId: string;
+			displayName: string;
+			allowed: boolean;
+			deliveryPolicyOverrides: components['schemas']['DLNAJsonObject'];
+			notes: string;
+		};
+		DLNARecentDeviceListResponse: {
+			devices: components['schemas']['DLNAClientDiagnostic'][];
 		};
 		MediaRequestApproveRequest: {
 			qualityProfileId: string;
@@ -7825,6 +8052,321 @@ export interface operations {
 				};
 			};
 			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	listDLNARendererProfiles: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA renderer profiles */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfileListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	createDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNARendererProfileCreateRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA renderer profile created */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfile'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	importDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNARendererProfileCreateRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA renderer profile imported */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfile'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	getDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA renderer profile */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfile'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	updateDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNARendererProfileRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA renderer profile updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfile'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	deleteDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA renderer profile deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	cloneDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNARendererProfileCloneRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA renderer profile cloned */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfile'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	resetDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA renderer profile reset */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfile'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	exportDLNARendererProfile: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA renderer profile export */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererProfile'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listDLNARendererDeviceOverrides: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA renderer device overrides */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererDeviceOverrideListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	upsertDLNARendererDeviceOverride: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNARendererDeviceOverrideRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA renderer device override saved */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARendererDeviceOverride'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	deleteDLNARendererDeviceOverride: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description DLNA renderer device override deleted */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	listDLNARecentDevices: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Recent DLNA renderer devices */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNARecentDeviceListResponse'];
+				};
+			};
 			401: components['responses']['Unauthorized'];
 		};
 	};

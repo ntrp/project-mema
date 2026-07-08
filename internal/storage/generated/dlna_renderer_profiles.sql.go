@@ -12,6 +12,99 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createDLNARendererProfile = `-- name: CreateDLNARendererProfile :one
+insert into app.dlna_renderer_profiles (
+    id,
+    name,
+    vendor,
+    device_class,
+    source,
+    source_version,
+    customized,
+    enabled,
+    priority,
+    icon_key,
+    notes,
+    match_rules,
+    capability_rules,
+    delivery_settings,
+    dlna_flags,
+    subtitle_rules,
+    artwork_rules,
+    metadata_rules,
+    quirks
+)
+values (
+    $1, $2, $3, $4, 'user', 1, true, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+)
+returning id, name, vendor, device_class, source, source_version, customized, enabled, priority, icon_key, notes, match_rules, capability_rules, delivery_settings, dlna_flags, subtitle_rules, artwork_rules, metadata_rules, quirks, created_at, updated_at
+`
+
+type CreateDLNARendererProfileParams struct {
+	ID               string
+	Name             string
+	Vendor           string
+	DeviceClass      string
+	Enabled          bool
+	Priority         int32
+	IconKey          string
+	Notes            string
+	MatchRules       []byte
+	CapabilityRules  []byte
+	DeliverySettings []byte
+	DlnaFlags        []byte
+	SubtitleRules    []byte
+	ArtworkRules     []byte
+	MetadataRules    []byte
+	Quirks           []byte
+}
+
+func (q *Queries) CreateDLNARendererProfile(ctx context.Context, arg CreateDLNARendererProfileParams) (AppDlnaRendererProfile, error) {
+	row := q.db.QueryRow(ctx, createDLNARendererProfile,
+		arg.ID,
+		arg.Name,
+		arg.Vendor,
+		arg.DeviceClass,
+		arg.Enabled,
+		arg.Priority,
+		arg.IconKey,
+		arg.Notes,
+		arg.MatchRules,
+		arg.CapabilityRules,
+		arg.DeliverySettings,
+		arg.DlnaFlags,
+		arg.SubtitleRules,
+		arg.ArtworkRules,
+		arg.MetadataRules,
+		arg.Quirks,
+	)
+	var i AppDlnaRendererProfile
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Vendor,
+		&i.DeviceClass,
+		&i.Source,
+		&i.SourceVersion,
+		&i.Customized,
+		&i.Enabled,
+		&i.Priority,
+		&i.IconKey,
+		&i.Notes,
+		&i.MatchRules,
+		&i.CapabilityRules,
+		&i.DeliverySettings,
+		&i.DlnaFlags,
+		&i.SubtitleRules,
+		&i.ArtworkRules,
+		&i.MetadataRules,
+		&i.Quirks,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteDLNARendererDeviceOverride = `-- name: DeleteDLNARendererDeviceOverride :execrows
 delete from app.dlna_renderer_device_overrides
 where id = $1
@@ -19,6 +112,19 @@ where id = $1
 
 func (q *Queries) DeleteDLNARendererDeviceOverride(ctx context.Context, id uuid.UUID) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteDLNARendererDeviceOverride, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteDLNARendererProfile = `-- name: DeleteDLNARendererProfile :execrows
+delete from app.dlna_renderer_profiles
+where id = $1
+`
+
+func (q *Queries) DeleteDLNARendererProfile(ctx context.Context, id string) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteDLNARendererProfile, id)
 	if err != nil {
 		return 0, err
 	}
