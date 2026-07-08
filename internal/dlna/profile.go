@@ -35,8 +35,11 @@ type RendererCapabilities struct {
 }
 
 type RendererDeliveryRules struct {
-	DirectPlay bool
-	Transcode  bool
+	DirectPlay         bool
+	Transcode          bool
+	SeekMode           string
+	RemuxContainer     string
+	TranscodeContainer string
 }
 
 type RendererProfileExplanation struct {

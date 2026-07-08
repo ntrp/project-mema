@@ -28,11 +28,14 @@ type rendererMatchTokenJSON struct {
 }
 
 type rendererDeliveryJSON struct {
-	PreferHLS        bool `json:"preferHls"`
-	AvoidHLS         bool `json:"avoidHls"`
-	DirectPlay       bool `json:"directPlay"`
-	Transcode        bool `json:"transcode"`
-	StreamingHeaders bool `json:"streamingHeaders"`
+	PreferHLS          bool   `json:"preferHls"`
+	AvoidHLS           bool   `json:"avoidHls"`
+	DirectPlay         bool   `json:"directPlay"`
+	Transcode          bool   `json:"transcode"`
+	StreamingHeaders   bool   `json:"streamingHeaders"`
+	SeekMode           string `json:"seekMode"`
+	RemuxContainer     string `json:"remuxContainer"`
+	TranscodeContainer string `json:"transcodeContainer"`
 }
 
 type rendererCapabilitiesJSON struct {
@@ -152,8 +155,14 @@ func rendererProfileFromStorage(row storage.DLNARendererProfile) RendererProfile
 		SubtitleFormats: append([]string{}, subtitles.Formats...),
 		ResponseHeaders: headers,
 		Capabilities:    capabilities,
-		DeliveryRules:   RendererDeliveryRules{DirectPlay: delivery.DirectPlay, Transcode: delivery.Transcode},
-		rules:           matchRules.Rules,
+		DeliveryRules: RendererDeliveryRules{
+			DirectPlay:         delivery.DirectPlay,
+			Transcode:          delivery.Transcode,
+			SeekMode:           delivery.SeekMode,
+			RemuxContainer:     delivery.RemuxContainer,
+			TranscodeContainer: delivery.TranscodeContainer,
+		},
+		rules: matchRules.Rules,
 	}
 }
 

@@ -3,7 +3,6 @@ package dlna
 import (
 	"context"
 	"errors"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -125,12 +124,14 @@ func contentResources(objects []content.Object, baseURL string, profile Renderer
 		}
 		itemResources := []content.Resource{}
 		capability := EvaluateRendererCapability(profile, probe)
+		resourceURL := resourceURLForDecision(directResourceURL, capability.Decision)
+		resourceProbe := probeForDecision(probe, capability.Decision, profile)
 		if capability.Decision.Mode == delivery.ModeTranscode &&
 			capability.Decision.DeliveryProtocol == delivery.ProtocolFile {
 			itemResources = append(itemResources, content.ResourceFromDelivery(content.ResourceInput{
-				URL:       directResourceURL,
+				URL:       resourceURL,
 				SizeBytes: size,
-				Probe:     probe,
+				Probe:     resourceProbe,
 				Decision:  capability.Decision,
 			}))
 			resources[object.ID] = itemResources
@@ -140,18 +141,23 @@ func contentResources(objects []content.Object, baseURL string, profile Renderer
 		if capability.Decision.Mode == delivery.ModeDirect || capability.Decision.Mode == delivery.ModeRemux {
 			resourceDecision = capability.Decision
 		}
+		primaryURL := directResourceURL
+		primaryProbe := probe
+		if capability.Decision.Mode == delivery.ModeRemux {
+			primaryURL = resourceURL
+			primaryProbe = resourceProbe
+		}
 		itemResources = append(itemResources, content.ResourceFromDelivery(content.ResourceInput{
-			URL:       directResourceURL,
+			URL:       primaryURL,
 			SizeBytes: size,
-			Probe:     probe,
+			Probe:     primaryProbe,
 			Decision:  resourceDecision,
 		}))
-		resourceURL := resourceURLForDecision(directResourceURL, capability.Decision)
 		if capability.Decision.DeliveryProtocol == delivery.ProtocolHLS && !profile.AvoidHLS {
 			itemResources = append(itemResources, content.ResourceFromDelivery(content.ResourceInput{
 				URL:       resourceURL,
 				SizeBytes: size,
-				Probe:     probe,
+				Probe:     resourceProbe,
 				Decision:  capability.Decision,
 			}))
 		}
@@ -225,20 +231,6 @@ func formatNameFromPath(filePath string) string {
 	default:
 		return ""
 	}
-}
-
-func resourceURLForDecision(resourceURL string, decision delivery.Decision) string {
-	if decision.DeliveryProtocol != delivery.ProtocolHLS {
-		return resourceURL
-	}
-	parsed, err := url.Parse(resourceURL)
-	if err != nil {
-		return resourceURL
-	}
-	values := parsed.Query()
-	values.Set("mode", "hls")
-	parsed.RawQuery = values.Encode()
-	return parsed.String()
 }
 
 func contentActionBaseURL(ctx context.Context, fallback string) string {

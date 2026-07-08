@@ -17,11 +17,20 @@ import (
 var errNoDLNATranscodeSlot = errors.New("no DLNA transcode slot available")
 
 func (m *Manager) cachedMatroskaRemux(r *http.Request, target string, probe delivery.ProbeResult) (string, error) {
-	cachePath, err := m.matroskaRemuxCachePath(target)
+	return m.cachedDLNAOutput(r, target, matroskaAudioTranscodeDecision(probe), matroskaOutputTarget())
+}
+
+func (m *Manager) cachedDLNAOutput(
+	r *http.Request,
+	target string,
+	decision delivery.Decision,
+	output dlnaOutputTarget,
+) (string, error) {
+	cachePath, err := m.dlnaOutputCachePath(target, output)
 	if err != nil {
 		return "", err
 	}
-	if _, err := os.Stat(cachePath); err == nil {
+	if fileExists(cachePath) {
 		return cachePath, nil
 	}
 	select {
@@ -32,32 +41,44 @@ func (m *Manager) cachedMatroskaRemux(r *http.Request, target string, probe deli
 		return "", errNoDLNATranscodeSlot
 	}
 	defer func() { <-dlnaTranscodeSlots }()
-	if err := generateMatroskaRemux(r, target, cachePath, matroskaAudioTranscodeDecision(probe)); err != nil {
+	if err := generateDLNAOutput(r, target, cachePath, decision, output); err != nil {
 		return "", err
 	}
 	return cachePath, nil
 }
 
 func (m *Manager) existingMatroskaRemux(target string) (string, bool) {
-	cachePath, err := m.matroskaRemuxCachePath(target)
-	if err != nil {
-		return "", false
-	}
-	if _, err := os.Stat(cachePath); err == nil {
-		return cachePath, true
-	}
-	return cachePath, false
+	return m.existingDLNAOutput(target, matroskaOutputTarget())
+}
+
+func (m *Manager) existingDLNAOutput(target string, output dlnaOutputTarget) (string, bool) {
+	cachePath, err := m.dlnaOutputCachePath(target, output)
+	return cachePath, err == nil && fileExists(cachePath)
 }
 
 func (m *Manager) matroskaRemuxCachePath(target string) (string, error) {
+	return m.dlnaOutputCachePath(target, matroskaOutputTarget())
+}
+
+func (m *Manager) dlnaOutputCachePath(target string, output dlnaOutputTarget) (string, error) {
 	info, err := delivery.StatFile(target)
 	if err != nil {
 		return "", err
 	}
-	return remuxCachePath(m.remuxDir, target, info.ModTime(), info.Size()), nil
+	return remuxCachePath(m.remuxDir, target, info.ModTime(), info.Size(), output.Extension), nil
 }
 
 func generateMatroskaRemux(r *http.Request, target string, cachePath string, decision delivery.Decision) error {
+	return generateDLNAOutput(r, target, cachePath, decision, matroskaOutputTarget())
+}
+
+func generateDLNAOutput(
+	r *http.Request,
+	target string,
+	cachePath string,
+	decision delivery.Decision,
+	output dlnaOutputTarget,
+) error {
 	if err := mediatools.SafePathArg(target); err != nil {
 		return err
 	}
@@ -73,7 +94,7 @@ func generateMatroskaRemux(r *http.Request, target string, cachePath string, dec
 	defer func() { _ = os.Remove(tmpPath) }()
 	_, err = mediatools.RunOutput(r.Context(), mediatools.CommandSpec{
 		Name:           "ffmpeg",
-		Args:           matroskaRemuxArgs(target, tmpPath, decision),
+		Args:           dlnaOutputArgs(target, tmpPath, decision, output),
 		MaxStderrBytes: 64 * 1024,
 	})
 	if err != nil {
@@ -83,6 +104,14 @@ func generateMatroskaRemux(r *http.Request, target string, cachePath string, dec
 }
 
 func matroskaRemuxArgs(target string, output string, decision delivery.Decision) []string {
+	return dlnaOutputArgs(target, output, decision, matroskaOutputTarget())
+}
+
+func matroskaRemuxStreamArgs(target string, decision delivery.Decision) []string {
+	return dlnaOutputArgs(target, "pipe:1", decision, matroskaOutputTarget())
+}
+
+func dlnaOutputArgs(target string, output string, decision delivery.Decision, container dlnaOutputTarget) []string {
 	args := []string{
 		"-hide_banner",
 		"-loglevel", "error",
@@ -101,16 +130,19 @@ func matroskaRemuxArgs(target string, output string, decision delivery.Decision)
 	if decision.Plan.AudioCodec != "copy" {
 		args = append(args, "-ac", "2")
 	}
-	return append(args, "-f", "matroska", output)
+	return append(args, "-f", container.Container, output)
 }
 
-func matroskaRemuxStreamArgs(target string, decision delivery.Decision) []string {
-	args := matroskaRemuxArgs(target, "pipe:1", decision)
-	return args
-}
-
-func remuxCachePath(dir string, target string, modTime time.Time, size int64) string {
+func remuxCachePath(dir string, target string, modTime time.Time, size int64, extension string) string {
 	key := target + "\x00" + modTime.UTC().Format(time.RFC3339Nano) + "\x00" + strconv.FormatInt(size, 10)
 	sum := sha256.Sum256([]byte(key))
-	return filepath.Join(dir, hex.EncodeToString(sum[:16])+".mkv")
+	return filepath.Join(dir, hex.EncodeToString(sum[:16])+extension)
+}
+
+func fileExists(path string) bool {
+	if path == "" {
+		return false
+	}
+	_, err := os.Stat(path)
+	return err == nil
 }

@@ -123,6 +123,10 @@ why a renderer matched a profile and why the selected media will direct play,
 remux, transcode, or use HLS; the output uses the file name instead of exposing
 the full media path.
 
+Renderer profile delivery settings can also control output container and seek
+mode. Use byte seek for normal range requests, time or time-exclusive for
+renderers that prefer DLNA time seeking, and none for devices that fail on seek.
+
 ## Add Subtitle Providers
 
 Open Settings, then Subtitles. Configure OpenSubtitles if you want real subtitle

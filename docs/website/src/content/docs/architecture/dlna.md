@@ -150,15 +150,21 @@ serves one of these delivery modes:
 | Direct file | Uses shared range-capable file serving. |
 | HLS playlist | Uses shared delivery segment planning for HLS-capable profiles. |
 | HLS segment | Streams an ffmpeg-generated MPEG-TS segment. |
-| LG audio transcode | Copies compatible video and transcodes unsupported audio to AAC in Matroska. |
-| Cached remux | Builds or reuses a seekable cached Matroska output for real byte-range seeks. |
+| Container remux | Streams or caches a profile-selected safe output container, defaulting to MPEG-TS. |
+| Audio transcode | Copies compatible video and transcodes unsupported audio to AAC in a profile-selected container. |
+| Full transcode | Transcodes incompatible video to H.264/AAC for HLS or file-based output. |
+| Cached output | Builds or reuses seekable cached remux/transcode output for real byte-range seeks. |
 
 Initial play is treated differently from real seek. `Range: bytes=0-` is an
-initial play request and should stream immediately. Nonzero byte ranges are
-treated as seek requests and can use a cached remux/transcode output.
+initial play request and streams immediately. Nonzero byte ranges are treated
+as seek requests and can use a cached remux/transcode output. Renderer profiles
+can set seek mode to `byte`, `time`, `both`, `time_exclusive`, or `none`; byte
+range requests are rejected when the profile disables byte seek.
 
-Transcode work is bounded by slots, uses safe media-tool path validation, and
-records active stream/transcode diagnostics.
+Remux and transcode outputs use structured target definitions rather than raw
+profile-provided ffmpeg arguments. Supported containers are MPEG-TS, Matroska,
+and MP4. Transcode work is bounded by slots, uses safe media-tool path
+validation, and records active stream/transcode diagnostics.
 
 ## Renderer Profiles Today
 
@@ -195,7 +201,7 @@ Profiles currently affect:
 - response headers
 - advertised source protocol order
 - browser/WebKit delivery profile selection
-- LG audio-transcode compatibility behavior
+- profile-specific remux/transcode output containers and seek mode
 
 ## Planned Profile Architecture
 
@@ -282,10 +288,10 @@ codecs, and capability checks for the selected renderer and media file.
 Responses return file names, object IDs, resource IDs, and stream mode when
 useful, but do not echo absolute media paths.
 
-## Future Delivery Model
+## Delivery Model
 
-The profile engine will feed a structured capability evaluator. The evaluator
-will compare probe metadata against profile rules and choose:
+The profile engine feeds a structured capability evaluator. The evaluator
+compares probe metadata against profile rules and chooses:
 
 - direct play
 - remux
@@ -296,10 +302,10 @@ will compare probe metadata against profile rules and choose:
 Resource advertisement must come from the same decision. A renderer should
 never see a resource that Mema cannot serve.
 
-The future delivery service should generalize the current LG-specific
-Matroska audio transcode path into profile-specific targets. Seek mode,
-container choice, audio codec, video codec, MIME type, DLNA flags, and subtitle
-resource behavior should all come from the selected profile.
+The delivery service generalizes the original LG-specific Matroska audio
+transcode path into profile-specific targets. Seek mode, container choice,
+audio codec, video codec, MIME type, and DLNA flags come from the selected
+profile and the shared capability evaluator.
 
 ## Operational Rules
 

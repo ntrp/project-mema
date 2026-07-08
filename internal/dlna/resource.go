@@ -25,17 +25,29 @@ func (m *Manager) resource(w http.ResponseWriter, r *http.Request) {
 		m.resourceSegment(w, r, object.FilePath)
 		return
 	}
+	profile := m.RendererProfileFromRequest(r)
+	if rejectUnsupportedSeek(w, r, profile) {
+		return
+	}
 	if r.URL.Query().Get("mode") == "hls" {
 		m.resourcePlaylist(w, r, id, object.FilePath)
 		return
 	}
-	profile := m.RendererProfileFromRequest(r)
 	probe := probeWithPathContainer(delivery.Probe(object.FilePath), object.FilePath)
 	capability := EvaluateRendererCapability(profile, probe)
-	if r.URL.Query().Get("mode") == "transcode" ||
+	mode := r.URL.Query().Get("mode")
+	if mode == "remux" || capability.Decision.Mode == delivery.ModeRemux {
+		m.resourceRemux(w, r, id, object.FilePath, remuxDecision(), profile)
+		return
+	}
+	decision := capability.Decision
+	if mode == "transcode" && decision.Mode != delivery.ModeTranscode {
+		decision = matroskaAudioTranscodeDecision(probe)
+	}
+	if mode == "transcode" ||
 		(capability.Decision.Mode == delivery.ModeTranscode &&
 			capability.Decision.DeliveryProtocol == delivery.ProtocolFile) {
-		m.resourceTranscode(w, r, id, object.FilePath, probe)
+		m.resourceTranscode(w, r, id, object.FilePath, decision, profile)
 		return
 	}
 	if capability.Decision.DeliveryProtocol == delivery.ProtocolHLS {
@@ -51,17 +63,25 @@ func (m *Manager) resource(w http.ResponseWriter, r *http.Request) {
 	writeFileError(w, delivery.ServeFile(w, r, object.FilePath))
 }
 
-func (m *Manager) resourceTranscode(w http.ResponseWriter, r *http.Request, id string, target string, probe delivery.ProbeResult) {
-	done, ok := m.beginStream(r, id, "matroska_audio_transcode", true)
+func (m *Manager) resourceTranscode(
+	w http.ResponseWriter,
+	r *http.Request,
+	id string,
+	target string,
+	decision delivery.Decision,
+	profile RendererProfile,
+) {
+	output := transcodeOutputTarget(profile)
+	done, ok := m.beginStream(r, id, output.StreamMode, true)
 	if !ok {
 		http.Error(w, "too many DLNA streams", http.StatusTooManyRequests)
 		return
 	}
 	defer done()
-	cachePath, cached := m.existingMatroskaRemux(target)
+	cachePath, cached := m.existingDLNAOutput(target, output)
 	if isSeekRange(r.Header.Get("Range")) && !cached {
 		var err error
-		cachePath, err = m.cachedMatroskaRemux(r, target, probe)
+		cachePath, err = m.cachedDLNAOutput(r, target, decision, output)
 		if err != nil {
 			http.Error(w, "could not prepare DLNA remux", http.StatusInternalServerError)
 			return
@@ -69,17 +89,13 @@ func (m *Manager) resourceTranscode(w http.ResponseWriter, r *http.Request, id s
 		cached = true
 	}
 	if cached {
-		w.Header().Set("Content-Type", "video/x-matroska")
-		w.Header().Set("TransferMode.DLNA.ORG", "Streaming")
-		w.Header().Set("ContentFeatures.DLNA.ORG", "DLNA.ORG_OP=01;DLNA.ORG_CI=1")
+		setDLNAOutputHeaders(w, output)
 		writeFileError(w, delivery.ServeFile(w, r, cachePath))
 		return
 	}
-	w.Header().Set("Content-Type", "video/x-matroska")
+	setDLNAOutputHeaders(w, output)
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Accel-Buffering", "no")
-	w.Header().Set("TransferMode.DLNA.ORG", "Streaming")
-	w.Header().Set("ContentFeatures.DLNA.ORG", "DLNA.ORG_OP=01;DLNA.ORG_CI=1")
 	if r.Method == http.MethodHead {
 		return
 	}
@@ -92,7 +108,7 @@ func (m *Manager) resourceTranscode(w http.ResponseWriter, r *http.Request, id s
 		return
 	}
 	writer := flushWriter{w: w}
-	err := mediatools.RunStream(r.Context(), "ffmpeg", matroskaRemuxStreamArgs(target, matroskaAudioTranscodeDecision(probe)), &writer, 64*1024)
+	err := mediatools.RunStream(r.Context(), "ffmpeg", dlnaOutputArgs(target, "pipe:1", decision, output), &writer, 64*1024)
 	if err != nil {
 		if !writer.wrote && r.Context().Err() == nil {
 			http.Error(w, "could not start DLNA remux", http.StatusInternalServerError)

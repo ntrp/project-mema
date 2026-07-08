@@ -83,6 +83,28 @@ func TestResourceTranscodeRangeUsesSeekableMatroskaCache(t *testing.T) {
 	}
 }
 
+func TestResourceRemuxRangeUsesSeekableMPEGTSCache(t *testing.T) {
+	manager, resourceID := resourceTestManager(t, "0123456789")
+	manager.remuxDir = t.TempDir()
+	installFakeFFmpeg(t)
+	request := httptest.NewRequest("GET", "/dlna/resource/"+url.PathEscape(resourceID)+"?mode=remux", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
+	request.Header.Set("Range", "bytes=1-3")
+	response := httptest.NewRecorder()
+
+	manager.Handler().ServeHTTP(response, request)
+
+	if response.Code != http.StatusPartialContent {
+		t.Fatalf("status = %d body=%s", response.Code, response.Body.String())
+	}
+	if response.Header().Get("Content-Type") != "video/mp2t" {
+		t.Fatalf("Content-Type = %q", response.Header().Get("Content-Type"))
+	}
+	if response.Body.String() != "emu" {
+		t.Fatalf("body = %q", response.Body.String())
+	}
+}
+
 func TestInitialRangeDoesNotForceRemuxCache(t *testing.T) {
 	for _, value := range []string{"", "bytes=0-", "bytes=0-65535"} {
 		if isSeekRange(value) {
@@ -93,6 +115,27 @@ func TestInitialRangeDoesNotForceRemuxCache(t *testing.T) {
 		if !isSeekRange(value) {
 			t.Fatalf("range %q should force cache", value)
 		}
+	}
+}
+
+func TestProfileSeekModeCanDisableByteSeek(t *testing.T) {
+	manager, resourceID := resourceTestManager(t, "0123456789")
+	manager.profileCache = rendererProfileCacheState{
+		loaded: true,
+		profiles: []RendererProfile{{
+			ID: "generic", Name: "Generic DLNA",
+			DeliveryRules: RendererDeliveryRules{DirectPlay: true, SeekMode: seekModeNone},
+		}},
+	}
+	request := httptest.NewRequest("GET", "/dlna/resource/"+url.PathEscape(resourceID), nil)
+	request.RemoteAddr = "127.0.0.1:1234"
+	request.Header.Set("Range", "bytes=1-3")
+	response := httptest.NewRecorder()
+
+	manager.Handler().ServeHTTP(response, request)
+
+	if response.Code != http.StatusRequestedRangeNotSatisfiable {
+		t.Fatalf("status = %d body=%s", response.Code, response.Body.String())
 	}
 }
 

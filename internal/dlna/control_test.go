@@ -145,6 +145,29 @@ func TestLGUnsupportedAudioAdvertisesVisibleMatroskaResource(t *testing.T) {
 	}
 }
 
+func TestRemuxDecisionAdvertisesServeableRemuxResource(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "Scenario.Movie.mkv")
+	if err := os.WriteFile(path, []byte("media"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	object := content.Object{ID: "movie:1", FilePath: path}
+	profile := RendererProfile{
+		Capabilities:  RendererCapabilities{Containers: []string{"mp4"}},
+		DeliveryRules: RendererDeliveryRules{DirectPlay: true, Transcode: true},
+	}
+
+	resources := contentResources([]content.Object{object}, "http://127.0.0.1:18080", profile)
+
+	if len(resources[object.ID]) != 1 {
+		t.Fatalf("resources = %#v", resources[object.ID])
+	}
+	resource := resources[object.ID][0]
+	if !strings.Contains(resource.URL, "mode=remux") || !strings.Contains(resource.ProtocolInfo, "video/mp2t") {
+		t.Fatalf("resource = %#v", resource)
+	}
+}
+
 func TestContentDirectoryBrowseInvalidObjectReturns701(t *testing.T) {
 	tree := content.NewTree(contentFakeSource{})
 	dispatcher := soap.NewDispatcher()
