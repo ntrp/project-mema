@@ -179,8 +179,8 @@ the profile quality upgrade target is higher than the persisted quality.
 
 ## Audio Satisfaction
 
-Audio satisfaction is calculated from detected audio tracks and profile audio
-targets.
+Audio satisfaction is calculated by `internal/satisfaction` from persisted audio
+track facts and profile audio targets.
 
 If no file exists, audio is missing. If the file has no audio tracks, audio is
 missing. Otherwise each target is matched against detected audio tracks by
@@ -199,8 +199,9 @@ When a profile has no explicit audio target list, legacy required audio
 languages are used as simple language-only targets.
 
 If unwanted audio removal is enabled, audio tracks whose language is outside the
-profile target languages mark the file partial. Those rows are shown as unwanted
-in the track list.
+profile target languages become `unwanted` candidates. This does not change the
+audio target state directly; target state comes from the configured target's own
+matching, partial, pending, or missing candidates.
 
 Missing audio targets are inserted into the track list as red placeholder audio
 rows next to detected audio tracks. This mirrors missing embedded subtitle rows
