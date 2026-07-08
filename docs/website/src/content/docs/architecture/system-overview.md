@@ -7,6 +7,9 @@ description: Runtime architecture and repository layout.
 
 - The Go server exposes the `/api` HTTP API.
 - The built SvelteKit SPA is served by the Go server for production.
+- The production Docker image builds the SPA in a Node stage, builds the Go
+  server in a Go stage, then copies both into a Debian runtime image with the
+  required media tools.
 - PostgreSQL stores application state.
 - River runs background jobs.
 - System job schedules, execution snapshots, and per-run structured logs are
@@ -34,6 +37,13 @@ description: Runtime architecture and repository layout.
 Development reset, cleanup, and local seed logic is intentionally outside the
 final app. The server starts the app; developer tooling prepares local database
 state.
+
+## Production Image
+
+The root `Dockerfile` is the supported unified image build. It copies the
+SvelteKit static output to `/app/web`, sets `WEB_DIR=/app/web`, and runs the Go
+server on `ADDR=:18080`. API and DLNA routes are handled by backend routers;
+other paths fall back to the SPA shell.
 
 ## Background Jobs
 

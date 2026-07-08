@@ -8,13 +8,13 @@ description: Runtime environment variables and local development paths.
 | Variable | Purpose | Default |
 | --- | --- | --- |
 | `ADDR` | Go API bind address | `:18080` |
-| `APP_ENV` | Runtime environment name | `development` |
+| `APP_ENV` | Runtime environment name | `development`; Docker image uses `production` |
 | `DATABASE_URL` | PostgreSQL connection string | local Docker Postgres |
-| `MEDIA_DATA_DIR` | Media working directory | `.data/media` |
-| `WEB_DIR` | Static web build served by Go | `web/build` |
+| `MEDIA_DATA_DIR` | Media working directory | `.data/media`; Docker image uses `/data` through compose |
+| `WEB_DIR` | Static web build served by Go | `web/build`; Docker image uses `/app/web` |
 | `APP_VERSION` | Version shown in system status | `0.0.0-dev` |
 | `APP_COMMIT` | Commit shown in system status | `dev` |
-| `APP_SOURCE_URL` | Source repository URL shown in status | empty |
+| `APP_SOURCE_URL` | Source repository URL shown in status | `Not configured` |
 | `ADMIN_USERNAME` | Default admin username | `admin` |
 | `ADMIN_PASSWORD` | Default admin password | `admin` |
 | `SESSION_TTL` | Session cookie lifetime | `24h` |

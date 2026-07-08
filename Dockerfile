@@ -15,6 +15,9 @@ COPY --from=web-build /src/web/build ./web/build
 RUN CGO_ENABLED=0 go build -o /out/server ./cmd/server
 
 FROM debian:bookworm-slim
+ARG APP_VERSION=0.0.0-dev
+ARG APP_COMMIT=dev
+ARG APP_SOURCE_URL=Not configured
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -25,7 +28,11 @@ RUN apt-get update \
 WORKDIR /app
 COPY --from=go-build /out/server /app/server
 COPY --from=web-build /src/web/build /app/web
-ENV ADDR=:18080
-ENV WEB_DIR=/app/web
+ENV ADDR=:18080 \
+    APP_ENV=production \
+    WEB_DIR=/app/web \
+    APP_VERSION=$APP_VERSION \
+    APP_COMMIT=$APP_COMMIT \
+    APP_SOURCE_URL=$APP_SOURCE_URL
 EXPOSE 18080
 ENTRYPOINT ["/app/server"]

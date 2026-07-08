@@ -2,8 +2,12 @@ GOCACHE ?= $(CURDIR)/.cache/go-build
 GOFLAGS ?=
 DATABASE_URL ?= postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable
 MEDIA_DATA_DIR ?= $(CURDIR)/.data/media
+IMAGE ?= project-mema:local
+APP_VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo 0.0.0-dev)
+APP_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
+APP_SOURCE_URL ?= Not configured
 
-.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-clean db-reset db-seed-local dev dev-api dev-api-watch dev-watch dev-web docs-build docs-dev docs-install docs-preview format river-migrate sqlc-generate test test-api test-deps test-e2e verify-generated verify-sqlc-generated web-install
+.PHONY: api-generate api-generate-go api-generate-web build check coverage coverage-backend coverage-web db-clean db-reset db-seed-local dev dev-api dev-api-watch dev-watch dev-web docker-build docs-build docs-dev docs-install docs-preview format river-migrate sqlc-generate test test-api test-deps test-e2e verify-generated verify-sqlc-generated web-install
 
 api-generate: api-generate-go api-generate-web
 
@@ -26,6 +30,13 @@ verify-sqlc-generated:
 build: api-generate
 	cd web && pnpm run build
 	GOCACHE=$(GOCACHE) go build $(GOFLAGS) -o bin/server ./cmd/server
+
+docker-build:
+	docker build \
+		--build-arg APP_VERSION="$(APP_VERSION)" \
+		--build-arg APP_COMMIT="$(APP_COMMIT)" \
+		--build-arg APP_SOURCE_URL="$(APP_SOURCE_URL)" \
+		-t "$(IMAGE)" .
 
 check: verify-generated verify-sqlc-generated
 	GOCACHE=$(GOCACHE) go test ./...

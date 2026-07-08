@@ -186,6 +186,29 @@ Run the built server after `make build`:
 WEB_DIR=web/build ./bin/server
 ```
 
+Build the unified Docker image with the Go backend, built SvelteKit files, and
+required media tools:
+
+```sh
+make docker-build
+```
+
+Run the app image with the compose-managed PostgreSQL service:
+
+```sh
+docker compose up --build app
+```
+
+For a direct container run, point `DATABASE_URL` at a reachable PostgreSQL
+instance and mount media storage at `/data`:
+
+```sh
+docker run --rm -p 18080:18080 \
+  -e DATABASE_URL=postgres://media_manager:media_manager@host.docker.internal:15432/media_manager?sslmode=disable \
+  -v "$PWD/.data/media:/data" \
+  project-mema:local
+```
+
 ## Contract-First Workflow
 
 1. Update `api/openapi.yaml`.

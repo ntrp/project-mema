@@ -1,0 +1,36 @@
+.git/
+.cache/
+.data/
+.research/
+.DS_Store
+
+# Go build artifacts
+bin/
+coverage.out
+coverage/
+
+# Frontend dependencies and outputs
+web/.svelte-kit/
+web/build/
+web/coverage/
+web/node_modules/
+web/test-results/
+web/playwright-report/
+
+# Docs dependencies and outputs
+docs/website/.astro/
+docs/website/dist/
+docs/website/node_modules/
+.pnpm-store/
+
+# Local verification artifacts
+.playwright-cli/
+output/playwright/
+
+# Local config and secrets
+.env
+.env.*
+!.env.example
+.data/secrets/
+internal/storage/seeds/dev.local.sql
+scripts/seeds/dev.local.sql
