@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"media-manager/internal/dlna/soap"
@@ -34,16 +35,26 @@ func (m *Manager) recordHTTPClient(r *http.Request) {
 
 func (m *Manager) recordHTTPRequest(r *http.Request, status int) {
 	m.recordClient(r, "", nil, nil)
+	if isSOAPControlPath(r.URL.Path) {
+		return
+	}
 	request := RendererRequestFromHTTP(r)
-	profile := m.RendererProfile(request)
+	match := m.ExplainRendererProfile(r.Context(), request)
 	m.audit(r.Context(), "DLNA HTTP request", map[string]any{
-		"clientIP":  request.ClientIP,
-		"profile":   profile.ID,
-		"method":    r.Method,
-		"path":      r.URL.Path,
-		"status":    status,
-		"userAgent": request.UserAgent,
+		"clientIP":    request.ClientIP,
+		"profile":     match.Profile.ID,
+		"matchSource": match.Explanation.MatchSource,
+		"winningRule": match.Explanation.WinningRule,
+		"fallback":    match.Explanation.FallbackPath,
+		"method":      r.Method,
+		"path":        r.URL.Path,
+		"status":      status,
+		"userAgent":   request.UserAgent,
 	})
+}
+
+func isSOAPControlPath(path string) bool {
+	return path == "/control" || strings.Contains(path, "/control/")
 }
 
 func (m *Manager) recordSOAPAction(ctx context.Context, action string, args map[string]string, err error) {
@@ -56,11 +67,11 @@ func (m *Manager) recordSOAPAction(ctx context.Context, action string, args map[
 
 func (m *Manager) recordClient(r *http.Request, action string, args map[string]string, err error) {
 	request := RendererRequestFromHTTP(r)
-	profile := m.RendererProfile(request)
+	match := m.ExplainRendererProfile(r.Context(), request)
 	status := ClientStatus{
 		IP:        request.ClientIP,
 		UserAgent: request.UserAgent,
-		ProfileID: profile.ID,
+		ProfileID: match.Profile.ID,
 		LastSeen:  time.Now().UTC(),
 	}
 	if action != "" {

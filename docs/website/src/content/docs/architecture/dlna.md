@@ -235,6 +235,11 @@ startup and only refreshes runtime profiles that have not been customized.
 Device overrides are stored separately and can bind a renderer profile by IP
 address or renderer UUID.
 
+The DLNA manager loads those rows into an in-memory matcher cache. Manual UUID
+and IP overrides are checked before automatic matching. Automatic matching uses
+the structured seed rules, then falls back to the recent-client sticky IP path
+for weak media requests and finally the generic profile.
+
 ## Planned Settings UI
 
 Settings > DLNA will gain a Device profiles panel.

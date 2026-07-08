@@ -12,13 +12,32 @@ import (
 
 type RendererProfile struct {
 	ID              string
+	SourceID        string
 	Name            string
 	MatchTokens     []string
+	MatchMinScore   int
+	Priority        int
 	PreferHLS       bool
 	AvoidHLS        bool
 	DisableEventing bool
 	SubtitleFormats []string
 	ResponseHeaders map[string]string
+	rules           []rendererMatchRule
+}
+
+type RendererProfileExplanation struct {
+	SelectedProfileID   string
+	SourceProfileID     string
+	MatchSource         string
+	WinningRule         string
+	FallbackPath        string
+	Score               int
+	CandidateProfileIDs []string
+}
+
+type RendererProfileMatch struct {
+	Profile     RendererProfile
+	Explanation RendererProfileExplanation
 }
 
 type RendererRequest struct {
@@ -26,37 +45,63 @@ type RendererRequest struct {
 	FriendlyName string
 	Headers      http.Header
 	ClientIP     string
+	RendererUUID string
 }
 
 func DefaultRendererProfiles() []RendererProfile {
 	return []RendererProfile{
 		{ID: "generic", Name: "Generic DLNA", SubtitleFormats: []string{"srt", "vtt"}},
-		{ID: "vlc", Name: "VLC", MatchTokens: []string{"vlc"}, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
-		{ID: "kodi", Name: "Kodi", MatchTokens: []string{"kodi", "xbmc"}, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
-		{ID: "samsung", Name: "Samsung TV", MatchTokens: []string{"samsung", "tizen"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
-		{ID: "lg", Name: "LG TV", MatchTokens: []string{"lg", "webos"}, AvoidHLS: true, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
-		{ID: "sony", Name: "Sony TV", MatchTokens: []string{"sony", "bravia"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
-		{ID: "bubbleupnp", Name: "BubbleUPnP", MatchTokens: []string{"bubbleupnp"}, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
-		{ID: "chromecast", Name: "Chromecast", MatchTokens: []string{"chromecast", "google cast"}, PreferHLS: true, DisableEventing: true, SubtitleFormats: []string{"vtt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "vlc", Name: "VLC", MatchTokens: []string{"vlc"}, Priority: 100, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "kodi", Name: "Kodi", MatchTokens: []string{"kodi", "xbmc"}, Priority: 100, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "samsung", SourceID: "samsung-tv", Name: "Samsung TV", MatchTokens: []string{"samsung", "tizen"}, Priority: 100, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "lg", SourceID: "lg-webos", Name: "LG TV", MatchTokens: []string{"lg", "webos"}, Priority: 100, AvoidHLS: true, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "sony", SourceID: "sony-tv", Name: "Sony TV", MatchTokens: []string{"sony", "bravia"}, Priority: 100, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "bubbleupnp", Name: "BubbleUPnP", MatchTokens: []string{"bubbleupnp"}, Priority: 100, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "chromecast", Name: "Chromecast", MatchTokens: []string{"chromecast", "google cast"}, Priority: 100, PreferHLS: true, DisableEventing: true, SubtitleFormats: []string{"vtt"}, ResponseHeaders: streamingHeaders()},
 	}
 }
 
 func MatchRendererProfile(request RendererRequest, overrides map[string]string) RendererProfile {
-	profiles := DefaultRendererProfiles()
-	if id := overrides[strings.TrimSpace(request.ClientIP)]; id != "" {
-		if profile, ok := findProfile(profiles, id); ok {
-			return profile
-		}
+	return matchRendererProfiles(DefaultRendererProfiles(), nil, request, overrides, "").Profile
+}
+
+func (m *Manager) SetRendererProfileOverride(clientIP string, profileID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.profileOverrides == nil {
+		m.profileOverrides = map[string]string{}
 	}
-	haystack := strings.ToLower(request.UserAgent + " " + request.FriendlyName + " " + headersText(request.Headers))
-	for _, profile := range profiles[1:] {
-		for _, token := range profile.MatchTokens {
-			if strings.Contains(haystack, strings.ToLower(token)) {
-				return profile
-			}
-		}
+	m.profileOverrides[strings.TrimSpace(clientIP)] = strings.TrimSpace(profileID)
+}
+
+func (m *Manager) RendererProfile(request RendererRequest) RendererProfile {
+	return m.ExplainRendererProfile(context.Background(), request).Profile
+}
+
+func (m *Manager) ExplainRendererProfile(ctx context.Context, request RendererRequest) RendererProfileMatch {
+	profiles, deviceOverrides := m.rendererProfileCache(ctx)
+	overrides, rememberedProfileID := m.profileMatchState(request.ClientIP)
+	return matchRendererProfiles(profiles, deviceOverrides, request, overrides, rememberedProfileID)
+}
+
+func (m *Manager) RendererProfileFromRequest(r *http.Request) RendererProfile {
+	return m.ExplainRendererProfile(r.Context(), RendererRequestFromHTTP(r)).Profile
+}
+
+func (m *Manager) rendererProfileFromContext(ctx context.Context) RendererProfile {
+	if r, ok := soap.RequestFromContext(ctx); ok {
+		return m.RendererProfileFromRequest(r)
 	}
-	return profiles[0]
+	return m.ExplainRendererProfile(ctx, RendererRequest{}).Profile
+}
+
+func RendererRequestFromHTTP(r *http.Request) RendererRequest {
+	return RendererRequest{
+		UserAgent:    r.UserAgent(),
+		Headers:      r.Header,
+		ClientIP:     clientIP(r),
+		RendererUUID: rendererUUIDFromHeaders(r.Header),
+	}
 }
 
 func SourceProtocolInfosForProfile(profile RendererProfile) []string {
@@ -97,55 +142,6 @@ func DeliveryClientProfile(profile RendererProfile) delivery.ClientProfile {
 	return delivery.ClientBrowser
 }
 
-func (m *Manager) SetRendererProfileOverride(clientIP string, profileID string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if m.profileOverrides == nil {
-		m.profileOverrides = map[string]string{}
-	}
-	m.profileOverrides[strings.TrimSpace(clientIP)] = strings.TrimSpace(profileID)
-}
-
-func (m *Manager) RendererProfile(request RendererRequest) RendererProfile {
-	m.mu.Lock()
-	overrides := map[string]string{}
-	for key, value := range m.profileOverrides {
-		overrides[key] = value
-	}
-	rememberedProfileID := ""
-	if existing, ok := m.recentClients[strings.TrimSpace(request.ClientIP)]; ok {
-		rememberedProfileID = existing.ProfileID
-	}
-	m.mu.Unlock()
-	profile := MatchRendererProfile(request, overrides)
-	if profile.ID != "generic" || rememberedProfileID == "" || rememberedProfileID == "generic" {
-		return profile
-	}
-	if remembered, ok := findProfile(DefaultRendererProfiles(), rememberedProfileID); ok {
-		return remembered
-	}
-	return profile
-}
-
-func (m *Manager) RendererProfileFromRequest(r *http.Request) RendererProfile {
-	return m.RendererProfile(RendererRequestFromHTTP(r))
-}
-
-func (m *Manager) rendererProfileFromContext(ctx context.Context) RendererProfile {
-	if r, ok := soap.RequestFromContext(ctx); ok {
-		return m.RendererProfileFromRequest(r)
-	}
-	return MatchRendererProfile(RendererRequest{}, nil)
-}
-
-func RendererRequestFromHTTP(r *http.Request) RendererRequest {
-	return RendererRequest{
-		UserAgent: r.UserAgent(),
-		Headers:   r.Header,
-		ClientIP:  clientIP(r),
-	}
-}
-
 func applyRendererHeaders(w http.ResponseWriter, profile RendererProfile) {
 	for key, value := range profile.ResponseHeaders {
 		w.Header().Set(key, value)
@@ -153,23 +149,13 @@ func applyRendererHeaders(w http.ResponseWriter, profile RendererProfile) {
 }
 
 func findProfile(profiles []RendererProfile, id string) (RendererProfile, bool) {
+	id = strings.TrimSpace(id)
 	for _, profile := range profiles {
-		if profile.ID == id {
+		if profile.ID == id || profile.SourceID == id {
 			return profile, true
 		}
 	}
 	return RendererProfile{}, false
-}
-
-func headersText(headers http.Header) string {
-	var builder strings.Builder
-	for key, values := range headers {
-		builder.WriteString(key)
-		builder.WriteByte(' ')
-		builder.WriteString(strings.Join(values, " "))
-		builder.WriteByte(' ')
-	}
-	return builder.String()
 }
 
 func clientIP(r *http.Request) string {

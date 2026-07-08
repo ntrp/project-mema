@@ -39,6 +39,7 @@ type Manager struct {
 	thumbDir         string
 	remuxDir         string
 	events           *EventManager
+	profileCache     rendererProfileCacheState
 	profileOverrides map[string]string
 	recentClients    map[string]ClientStatus
 	activeStreams    map[string]StreamStatus
@@ -77,6 +78,10 @@ func (m *Manager) Start(ctx context.Context) error {
 }
 
 func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettings) error {
+	if err := m.RefreshRendererProfiles(ctx); err != nil {
+		m.setError(err)
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.allowedNets = parseAllowedCIDRs(settings.AllowedCIDRs)
