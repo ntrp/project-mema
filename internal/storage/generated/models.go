@@ -900,16 +900,20 @@ type AppSystemJobHistorySetting struct {
 }
 
 type AppSystemJobSchedule struct {
-	ID                   string
-	Name                 string
-	Kind                 string
-	Queue                string
-	IntervalSeconds      int32
-	IntervalConfigurable bool
-	HistoryPolicy        string
-	Paused               bool
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+	ID                    string
+	Name                  string
+	Category              string
+	Description           string
+	Kind                  string
+	Queue                 string
+	IntervalSeconds       int32
+	IntervalConfigurable  bool
+	HistoryPolicy         string
+	Automatic             bool
+	ManualActionAvailable bool
+	Paused                bool
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 }
 
 type AppTag struct {

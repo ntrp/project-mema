@@ -12,8 +12,12 @@
 	import type { SystemJobSchedule } from '$lib/settings/types';
 	import { createRowPulse } from '../cache/rowPulse.svelte';
 	import SystemJobProgress from './SystemJobProgress.svelte';
-	import { canAbortStatus, formatInterval, statusClass } from './systemJobDisplay';
-
+	import {
+		canAbortStatus,
+		formatInterval,
+		scheduleCategoryLabel,
+		statusClass
+	} from './systemJobDisplay';
 	interface Props {
 		schedules: SystemJobSchedule[];
 		updatingId?: string;
@@ -26,7 +30,6 @@
 		onSaveInterval: (schedule: SystemJobSchedule, intervalSeconds: number) => void;
 		onAbort: (id: number) => void;
 	}
-
 	let {
 		schedules,
 		updatingId,
@@ -39,28 +42,21 @@
 		onSaveInterval,
 		onAbort
 	}: Props = $props();
-
 	const rowPulse = createRowPulse();
 	const rowKeys = $derived(schedules.map((schedule) => schedule.id));
 	let intervalDrafts = $state<Record<string, number>>({});
-
 	$effect(() => rowPulse.update(rowKeys));
-
 	function intervalDraft(schedule: SystemJobSchedule) {
 		return intervalDrafts[schedule.id] ?? schedule.intervalSeconds;
 	}
-
 	function updateIntervalDraft(schedule: SystemJobSchedule, value: number) {
 		intervalDrafts = { ...intervalDrafts, [schedule.id]: value };
 	}
-
 	const hasActiveRun = (schedule: SystemJobSchedule) =>
 		!!schedule.activeRiverJobId && canAbortStatus(schedule.activeStatus);
-
 	const progressValue = (schedule: SystemJobSchedule) =>
 		schedule.activeStatus ? schedule.activeProgressPercent : 0;
 </script>
-
 {#snippet actionButton(label: string, disabled: boolean, onclick: () => void)}
 	<Tooltip.Root>
 		<Tooltip.Trigger>
@@ -78,7 +74,7 @@
 						<PlayIcon aria-hidden="true" />
 					{:else if label === 'Abort active run'}
 						<BanIcon aria-hidden="true" />
-					{:else if label === 'Resume schedule'}
+					{:else if label === 'Enable automatic job'}
 						<PlayIcon aria-hidden="true" />
 					{:else if label === 'Save interval'}
 						<SaveIcon aria-hidden="true" />
@@ -91,7 +87,6 @@
 		<Tooltip.Content>{label}</Tooltip.Content>
 	</Tooltip.Root>
 {/snippet}
-
 <div class="overflow-auto rounded-md border border-border">
 	<Table.Root class="min-w-full table-auto border-collapse">
 		<Table.Header class="bg-card">
@@ -111,17 +106,17 @@
 					<Table.Cell>
 						<div class="flex min-w-0 items-center gap-2">
 							<strong class="truncate">{schedule.name}</strong>
-							{#if schedule.historyPolicy === 'routine'}
-								<Badge variant="outline">routine</Badge>
-							{/if}
-						</div>
-						<span class="block truncate text-xs text-muted-foreground">{schedule.kind}</span>
+								<Badge variant="outline">{scheduleCategoryLabel(schedule.category)}</Badge>
+								{#if schedule.historyPolicy === 'routine'}<Badge variant="outline">routine</Badge>{/if}
+								{#if schedule.manualActionAvailable}<Badge variant="secondary">manual</Badge>{/if}
+							</div>
+							<span class="block truncate text-xs text-muted-foreground">{schedule.description || schedule.kind}</span>
 					</Table.Cell>
 					<Table.Cell class="w-px">
 						<Badge
 							variant="outline"
-							class={statusClass(schedule.paused ? 'cancelled' : schedule.activeStatus)}
-							>{schedule.paused ? 'paused' : schedule.activeStatus || 'idle'}</Badge
+							class={statusClass(schedule.enabled ? schedule.activeStatus : 'cancelled')}
+							>{schedule.enabled ? schedule.activeStatus || 'idle' : 'disabled'}</Badge
 						>
 					</Table.Cell>
 					<Table.Cell class="w-px">
@@ -171,7 +166,7 @@
 								() => onRun(schedule)
 							)}
 							{@render actionButton(
-								schedule.paused ? 'Resume schedule' : 'Pause schedule',
+								schedule.enabled ? 'Disable automatic job' : 'Enable automatic job',
 								updatingId === schedule.id,
 								() => (schedule.paused ? onResume(schedule) : onPause(schedule))
 							)}

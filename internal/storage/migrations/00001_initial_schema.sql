@@ -618,11 +618,15 @@ on conflict (id) do nothing;
 create table if not exists app.system_job_schedules (
     id text primary key,
     name text not null,
+    category text not null default 'maintenance',
+    description text not null default '',
     kind text not null,
     queue text not null,
     interval_seconds integer not null check (interval_seconds >= 15),
     interval_configurable boolean not null default false,
     history_policy text not null default 'standard' check (history_policy in ('standard', 'routine')),
+    automatic boolean not null default true,
+    manual_action_available boolean not null default true,
     paused boolean not null default false,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()

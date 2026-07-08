@@ -59,11 +59,15 @@ func TestSCNSystem006SystemJobScheduleOverviewMapsActiveAndLastRuns(t *testing.T
 	schedule := systemJobScheduleFromRow(storagegen.ListSystemJobSchedulesRow{
 		ID:                    "rss_sync",
 		Name:                  "RSS sync",
+		Category:              "release_search",
+		Description:           "Checks feeds",
 		Kind:                  "media.rss_sync",
 		Queue:                 "media_search",
 		IntervalSeconds:       900,
 		HistoryPolicy:         "routine",
 		IntervalConfigurable:  true,
+		Automatic:             true,
+		ManualActionAvailable: true,
 		CreatedAt:             createdAt.Add(-time.Hour),
 		UpdatedAt:             createdAt,
 		ActiveRiverJobID:      101,
@@ -87,6 +91,9 @@ func TestSCNSystem006SystemJobScheduleOverviewMapsActiveAndLastRuns(t *testing.T
 	}
 	if schedule.HistoryPolicy != "routine" || !schedule.IntervalConfigurable {
 		t.Fatalf("schedule policy/configurable = %#v", schedule)
+	}
+	if schedule.Category != "release_search" || !schedule.Automatic || !schedule.ManualActionAvailable || !schedule.Enabled {
+		t.Fatalf("schedule fulfillment settings = %#v", schedule)
 	}
 	if schedule.LastFinalizedAt == nil || !schedule.LastFinalizedAt.Equal(finalizedAt) {
 		t.Fatalf("last finalized = %#v", schedule.LastFinalizedAt)
@@ -115,6 +122,18 @@ func TestSCNSystem006ConfigurableSystemJobScheduleInterval(t *testing.T) {
 	}
 	if schedule.IntervalSeconds != 30 {
 		t.Fatalf("interval = %d, want 30", schedule.IntervalSeconds)
+	}
+	if err := store.SyncSystemJobSchedules(ctx, []SystemJobScheduleDefinition{
+		{ID: "download_activity_sync", Name: "Download activity sync", Kind: "download.activity_sync", Queue: "downloads", IntervalSeconds: 15, IntervalConfigurable: true, HistoryPolicy: "routine"},
+	}); err != nil {
+		t.Fatalf("resync schedules: %v", err)
+	}
+	schedules, err := store.ListSystemJobSchedules(ctx)
+	if err != nil {
+		t.Fatalf("list schedules: %v", err)
+	}
+	if scheduleByID(schedules, "download_activity_sync").IntervalSeconds != 30 {
+		t.Fatalf("resync overwrote configured interval: %#v", schedules)
 	}
 }
 
@@ -204,6 +223,15 @@ func ids(executions []SystemJobExecution) string {
 		values = append(values, strconv.FormatInt(execution.RiverJobID, 10))
 	}
 	return strings.Join(values, ",")
+}
+
+func scheduleByID(schedules []SystemJobSchedule, id string) SystemJobSchedule {
+	for _, schedule := range schedules {
+		if schedule.ID == id {
+			return schedule
+		}
+	}
+	return SystemJobSchedule{}
 }
 
 func TestSCNSystem006PausedSystemJobScheduleHasNoNextRun(t *testing.T) {

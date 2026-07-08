@@ -15,13 +15,17 @@ func (s *SettingsStore) SyncSystemJobSchedules(ctx context.Context, definitions 
 			return ErrInvalidInput
 		}
 		_, err := queries.UpsertSystemJobSchedule(ctx, storagegen.UpsertSystemJobScheduleParams{
-			ID:                   definition.ID,
-			Name:                 definition.Name,
-			Kind:                 definition.Kind,
-			Queue:                definition.Queue,
-			IntervalSeconds:      definition.IntervalSeconds,
-			IntervalConfigurable: definition.IntervalConfigurable,
-			HistoryPolicy:        systemJobHistoryPolicy(definition.HistoryPolicy),
+			ID:                    definition.ID,
+			Name:                  definition.Name,
+			Category:              systemJobCategory(definition.Category),
+			Description:           strings.TrimSpace(definition.Description),
+			Kind:                  definition.Kind,
+			Queue:                 definition.Queue,
+			IntervalSeconds:       definition.IntervalSeconds,
+			IntervalConfigurable:  definition.IntervalConfigurable,
+			HistoryPolicy:         systemJobHistoryPolicy(definition.HistoryPolicy),
+			Automatic:             true,
+			ManualActionAvailable: true,
 		})
 		if err != nil {
 			return err
@@ -219,6 +223,14 @@ func systemJobHistoryPolicy(value string) string {
 		return "routine"
 	}
 	return "standard"
+}
+
+func systemJobCategory(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "maintenance"
+	}
+	return value
 }
 
 func jsonBytes(value []byte, fallback []byte) []byte {

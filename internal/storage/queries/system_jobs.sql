@@ -51,34 +51,46 @@ where id = $1;
 insert into app.system_job_schedules (
     id,
     name,
+    category,
+    description,
     kind,
     queue,
     interval_seconds,
     interval_configurable,
-    history_policy
+    history_policy,
+    automatic,
+    manual_action_available
 )
-values ($1, $2, $3, $4, $5, $6, $7)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 on conflict (id) do update set
     name = excluded.name,
+    category = excluded.category,
+    description = excluded.description,
     kind = excluded.kind,
     queue = excluded.queue,
     interval_seconds = case
-        when excluded.interval_configurable then greatest(app.system_job_schedules.interval_seconds, excluded.interval_seconds)
+        when excluded.interval_configurable then app.system_job_schedules.interval_seconds
         else excluded.interval_seconds
     end,
     interval_configurable = excluded.interval_configurable,
     history_policy = excluded.history_policy,
+    automatic = excluded.automatic,
+    manual_action_available = excluded.manual_action_available,
     updated_at = now()
 returning *;
 
 -- name: ListSystemJobSchedules :many
 select s.id,
     s.name,
+    s.category,
+    s.description,
     s.kind,
     s.queue,
     s.interval_seconds,
     s.interval_configurable,
     s.history_policy,
+    s.automatic,
+    s.manual_action_available,
     s.paused,
     s.created_at,
     s.updated_at,

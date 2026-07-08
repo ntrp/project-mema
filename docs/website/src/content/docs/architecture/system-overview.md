@@ -41,13 +41,16 @@ River remains the execution engine for background work. The app mirrors job
 lifecycle changes into `app.system_job_executions` and records structured
 execution logs in `app.system_job_execution_logs`. Fixed scheduled jobs are
 registered from the application catalog and synchronized into
-`app.system_job_schedules`, where pause state is persisted.
+`app.system_job_schedules`, where category, description, automatic/manual flags,
+pause state, and interval settings are persisted.
 
-Schedules can be marked configurable. Configurable schedules keep the catalog
-minimum as their River tick, but the persisted interval decides whether a run is
-due. This lets the download client activity sync run as often as every 15
-seconds while still allowing administrators to raise the interval without a
-server restart.
+Schedules can be disabled by pausing them. Disabled automatic schedules do not
+enqueue periodic work, but manual runs and other manual actions remain
+available when the schedule definition allows them. Schedules can also be marked
+configurable. Configurable schedules keep the catalog minimum as their River
+tick, but the persisted interval decides whether a run is due. This lets
+administrators raise or lower automatic fulfillment intervals without a server
+restart.
 
 Routine schedules, such as download client activity sync, are marked with a
 separate history policy. Routine successful runs are hidden from the default

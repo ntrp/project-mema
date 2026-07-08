@@ -169,7 +169,7 @@ func (q *Queries) GetSystemJobHistorySettings(ctx context.Context, arg GetSystem
 }
 
 const getSystemJobSchedule = `-- name: GetSystemJobSchedule :one
-select id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
+select id, name, category, description, kind, queue, interval_seconds, interval_configurable, history_policy, automatic, manual_action_available, paused, created_at, updated_at
 from app.system_job_schedules
 where id = $1
 `
@@ -180,11 +180,15 @@ func (q *Queries) GetSystemJobSchedule(ctx context.Context, id string) (AppSyste
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Category,
+		&i.Description,
 		&i.Kind,
 		&i.Queue,
 		&i.IntervalSeconds,
 		&i.IntervalConfigurable,
 		&i.HistoryPolicy,
+		&i.Automatic,
+		&i.ManualActionAvailable,
 		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -373,11 +377,15 @@ func (q *Queries) ListSystemJobExecutions(ctx context.Context, arg ListSystemJob
 const listSystemJobSchedules = `-- name: ListSystemJobSchedules :many
 select s.id,
     s.name,
+    s.category,
+    s.description,
     s.kind,
     s.queue,
     s.interval_seconds,
     s.interval_configurable,
     s.history_policy,
+    s.automatic,
+    s.manual_action_available,
     s.paused,
     s.created_at,
     s.updated_at,
@@ -412,11 +420,15 @@ order by s.name
 type ListSystemJobSchedulesRow struct {
 	ID                    string
 	Name                  string
+	Category              string
+	Description           string
 	Kind                  string
 	Queue                 string
 	IntervalSeconds       int32
 	IntervalConfigurable  bool
 	HistoryPolicy         string
+	Automatic             bool
+	ManualActionAvailable bool
 	Paused                bool
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
@@ -443,11 +455,15 @@ func (q *Queries) ListSystemJobSchedules(ctx context.Context) ([]ListSystemJobSc
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.Category,
+			&i.Description,
 			&i.Kind,
 			&i.Queue,
 			&i.IntervalSeconds,
 			&i.IntervalConfigurable,
 			&i.HistoryPolicy,
+			&i.Automatic,
+			&i.ManualActionAvailable,
 			&i.Paused,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -705,7 +721,7 @@ set interval_seconds = $2,
     updated_at = now()
 where id = $1
     and interval_configurable
-returning id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
+returning id, name, category, description, kind, queue, interval_seconds, interval_configurable, history_policy, automatic, manual_action_available, paused, created_at, updated_at
 `
 
 type UpdateSystemJobScheduleIntervalParams struct {
@@ -719,11 +735,15 @@ func (q *Queries) UpdateSystemJobScheduleInterval(ctx context.Context, arg Updat
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Category,
+		&i.Description,
 		&i.Kind,
 		&i.Queue,
 		&i.IntervalSeconds,
 		&i.IntervalConfigurable,
 		&i.HistoryPolicy,
+		&i.Automatic,
+		&i.ManualActionAvailable,
 		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -736,7 +756,7 @@ update app.system_job_schedules
 set paused = $2,
     updated_at = now()
 where id = $1
-returning id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
+returning id, name, category, description, kind, queue, interval_seconds, interval_configurable, history_policy, automatic, manual_action_available, paused, created_at, updated_at
 `
 
 type UpdateSystemJobSchedulePausedParams struct {
@@ -750,11 +770,15 @@ func (q *Queries) UpdateSystemJobSchedulePaused(ctx context.Context, arg UpdateS
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Category,
+		&i.Description,
 		&i.Kind,
 		&i.Queue,
 		&i.IntervalSeconds,
 		&i.IntervalConfigurable,
 		&i.HistoryPolicy,
+		&i.Automatic,
+		&i.ManualActionAvailable,
 		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -895,56 +919,76 @@ const upsertSystemJobSchedule = `-- name: UpsertSystemJobSchedule :one
 insert into app.system_job_schedules (
     id,
     name,
+    category,
+    description,
     kind,
     queue,
     interval_seconds,
     interval_configurable,
-    history_policy
+    history_policy,
+    automatic,
+    manual_action_available
 )
-values ($1, $2, $3, $4, $5, $6, $7)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 on conflict (id) do update set
     name = excluded.name,
+    category = excluded.category,
+    description = excluded.description,
     kind = excluded.kind,
     queue = excluded.queue,
     interval_seconds = case
-        when excluded.interval_configurable then greatest(app.system_job_schedules.interval_seconds, excluded.interval_seconds)
+        when excluded.interval_configurable then app.system_job_schedules.interval_seconds
         else excluded.interval_seconds
     end,
     interval_configurable = excluded.interval_configurable,
     history_policy = excluded.history_policy,
+    automatic = excluded.automatic,
+    manual_action_available = excluded.manual_action_available,
     updated_at = now()
-returning id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
+returning id, name, category, description, kind, queue, interval_seconds, interval_configurable, history_policy, automatic, manual_action_available, paused, created_at, updated_at
 `
 
 type UpsertSystemJobScheduleParams struct {
-	ID                   string
-	Name                 string
-	Kind                 string
-	Queue                string
-	IntervalSeconds      int32
-	IntervalConfigurable bool
-	HistoryPolicy        string
+	ID                    string
+	Name                  string
+	Category              string
+	Description           string
+	Kind                  string
+	Queue                 string
+	IntervalSeconds       int32
+	IntervalConfigurable  bool
+	HistoryPolicy         string
+	Automatic             bool
+	ManualActionAvailable bool
 }
 
 func (q *Queries) UpsertSystemJobSchedule(ctx context.Context, arg UpsertSystemJobScheduleParams) (AppSystemJobSchedule, error) {
 	row := q.db.QueryRow(ctx, upsertSystemJobSchedule,
 		arg.ID,
 		arg.Name,
+		arg.Category,
+		arg.Description,
 		arg.Kind,
 		arg.Queue,
 		arg.IntervalSeconds,
 		arg.IntervalConfigurable,
 		arg.HistoryPolicy,
+		arg.Automatic,
+		arg.ManualActionAvailable,
 	)
 	var i AppSystemJobSchedule
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Category,
+		&i.Description,
 		&i.Kind,
 		&i.Queue,
 		&i.IntervalSeconds,
 		&i.IntervalConfigurable,
 		&i.HistoryPolicy,
+		&i.Automatic,
+		&i.ManualActionAvailable,
 		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,

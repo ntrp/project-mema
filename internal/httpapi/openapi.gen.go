@@ -4032,12 +4032,18 @@ type SystemJobListResponse struct {
 
 // SystemJobSchedule defines model for SystemJobSchedule.
 type SystemJobSchedule struct {
-	ActiveInfoMessage     string                         `json:"activeInfoMessage"`
-	ActiveProgressLabel   string                         `json:"activeProgressLabel"`
-	ActiveProgressPercent *int32                         `json:"activeProgressPercent,omitempty"`
-	ActiveRiverJobId      *int64                         `json:"activeRiverJobId,omitempty"`
-	ActiveStatus          string                         `json:"activeStatus"`
+	ActiveInfoMessage     string `json:"activeInfoMessage"`
+	ActiveProgressLabel   string `json:"activeProgressLabel"`
+	ActiveProgressPercent *int32 `json:"activeProgressPercent,omitempty"`
+	ActiveRiverJobId      *int64 `json:"activeRiverJobId,omitempty"`
+	ActiveStatus          string `json:"activeStatus"`
+	Automatic             bool   `json:"automatic"`
+
+	// Category Automatic fulfillment job category.
+	Category              string                         `json:"category"`
 	CreatedAt             time.Time                      `json:"createdAt"`
+	Description           string                         `json:"description"`
+	Enabled               bool                           `json:"enabled"`
 	HistoryPolicy         SystemJobScheduleHistoryPolicy `json:"historyPolicy"`
 	Id                    string                         `json:"id"`
 	IntervalConfigurable  bool                           `json:"intervalConfigurable"`
@@ -4047,6 +4053,7 @@ type SystemJobSchedule struct {
 	LastFinalizedAt       *time.Time                     `json:"lastFinalizedAt,omitempty"`
 	LastRiverJobId        *int64                         `json:"lastRiverJobId,omitempty"`
 	LastStatus            string                         `json:"lastStatus"`
+	ManualActionAvailable bool                           `json:"manualActionAvailable"`
 	Name                  string                         `json:"name"`
 	NextRunAt             *time.Time                     `json:"nextRunAt,omitempty"`
 	Paused                bool                           `json:"paused"`

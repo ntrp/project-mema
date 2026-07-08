@@ -40,11 +40,14 @@ you expect.
 
 Open System > Jobs to see fixed scheduled jobs, current one-shot jobs, and
 execution history. Fixed schedules can be run now, paused, or resumed from that
-page. Running or queued executions can be aborted from the row actions.
+page. The schedule table groups automatic jobs by category and shows whether
+the automatic path is enabled. Disabling a schedule stops future automatic runs,
+while manual runs and media-level manual actions remain available. Running or
+queued executions can be aborted from the row actions.
 
-The download client activity sync is a routine fixed schedule with a
-configurable interval. It can run as often as every 15 seconds; higher values
-can be saved from the fixed schedules table.
+Automatic job intervals can be edited from the fixed schedules table. If
+activity is too chatty or too slow, change the interval and save it from the
+same row.
 
 Use the execution history logs when a job fails or appears stuck. Each run keeps
 structured messages, progress updates, errors, and relevant IDs so you can see

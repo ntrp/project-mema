@@ -22,6 +22,19 @@ export function formatInterval(seconds: number) {
 	return `${Math.round(seconds / 86400)}d`;
 }
 
+export function scheduleCategoryLabel(category: string) {
+	switch (category) {
+		case 'release_search':
+			return 'Release search';
+		case 'download_import':
+			return 'Download import';
+		case 'subtitle_fulfillment':
+			return 'Subtitles';
+		default:
+			return 'Maintenance';
+	}
+}
+
 export function progressStyle(progress?: number) {
 	if (progress === undefined) return '';
 	return `width: ${Math.max(0, Math.min(100, progress))}%`;

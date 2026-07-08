@@ -41,10 +41,12 @@ describe('rendered system job dashboard components', () => {
 		});
 
 		expect(body).toContain('RSS sync');
+		expect(body).toContain('Release search');
+		expect(body).toContain('Checks indexer feeds');
 		expect(body).toContain('Checking indexers');
 		expect(body).toContain('routine');
 		expect(body).toContain('Run schedule now');
-		expect(body).toContain('Pause schedule');
+		expect(body).toContain('Disable automatic job');
 		expect(body).toContain('Abort active run');
 	});
 
@@ -117,11 +119,16 @@ function systemJobSchedule(overrides: Partial<SystemJobSchedule>): SystemJobSche
 	return {
 		id: 'schedule-1',
 		name: 'Schedule',
+		category: 'release_search',
+		description: 'Checks indexer feeds',
 		kind: 'media.release_search',
 		queue: 'media_search',
 		intervalSeconds: 900,
 		intervalConfigurable: false,
 		historyPolicy: 'standard',
+		automatic: true,
+		manualActionAvailable: true,
+		enabled: true,
 		paused: false,
 		activeStatus: '',
 		activeProgressLabel: '',

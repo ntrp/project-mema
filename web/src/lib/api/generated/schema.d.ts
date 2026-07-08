@@ -4024,6 +4024,9 @@ export interface components {
 		SystemJobSchedule: {
 			id: string;
 			name: string;
+			/** @description Automatic fulfillment job category. */
+			category: string;
+			description: string;
 			kind: string;
 			queue: string;
 			/** Format: int32 */
@@ -4031,6 +4034,9 @@ export interface components {
 			intervalConfigurable: boolean;
 			/** @enum {string} */
 			historyPolicy: 'standard' | 'routine';
+			automatic: boolean;
+			manualActionAvailable: boolean;
+			enabled: boolean;
 			paused: boolean;
 			/** Format: date-time */
 			nextRunAt?: string;

@@ -77,11 +77,16 @@ func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *te
 	schedule := systemJobScheduleResponse(storage.SystemJobSchedule{
 		ID:                    "rss_sync",
 		Name:                  "RSS sync",
+		Category:              "release_search",
+		Description:           "Checks indexer feeds",
 		Kind:                  "media.rss_sync",
 		Queue:                 "media_search",
 		IntervalSeconds:       900,
 		IntervalConfigurable:  true,
 		HistoryPolicy:         "routine",
+		Automatic:             true,
+		ManualActionAvailable: true,
+		Enabled:               true,
 		ActiveRiverJobID:      &activeID,
 		ActiveStatus:          "running",
 		ActiveProgressPercent: &progress,
@@ -98,6 +103,9 @@ func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *te
 	}
 	if schedule.HistoryPolicy != SystemJobScheduleHistoryPolicyRoutine || !schedule.IntervalConfigurable {
 		t.Fatalf("schedule policy = %#v", schedule)
+	}
+	if schedule.Category != "release_search" || !schedule.Automatic || !schedule.ManualActionAvailable || !schedule.Enabled {
+		t.Fatalf("fulfillment fields = %#v", schedule)
 	}
 	settings := systemJobHistorySettingsResponse(storage.SystemJobHistorySettings{RetentionDays: 45, RoutineRetentionHours: 12})
 	if settings.RetentionDays != 45 || settings.RoutineRetentionHours != 12 {

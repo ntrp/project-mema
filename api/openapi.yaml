@@ -8596,11 +8596,16 @@ components:
       required:
         - id
         - name
+        - category
+        - description
         - kind
         - queue
         - intervalSeconds
         - intervalConfigurable
         - historyPolicy
+        - automatic
+        - manualActionAvailable
+        - enabled
         - paused
         - activeStatus
         - activeProgressLabel
@@ -8612,6 +8617,11 @@ components:
         id:
           type: string
         name:
+          type: string
+        category:
+          type: string
+          description: Automatic fulfillment job category.
+        description:
           type: string
         kind:
           type: string
@@ -8628,6 +8638,12 @@ components:
           enum:
             - standard
             - routine
+        automatic:
+          type: boolean
+        manualActionAvailable:
+          type: boolean
+        enabled:
+          type: boolean
         paused:
           type: boolean
         nextRunAt:
