@@ -97,6 +97,10 @@ export default defineConfig({
 								items: [
 									{ label: 'System Overview', link: '/architecture/system-overview/' },
 									{ label: 'Storage', link: '/architecture/storage/' },
+									{
+										label: 'Release Decisions And Track Management',
+										link: '/architecture/release-decisions-and-track-management/'
+									},
 									{ label: 'DLNA', link: '/architecture/dlna/' },
 									{ label: 'API Contract', link: '/architecture/api-contract/' }
 								]

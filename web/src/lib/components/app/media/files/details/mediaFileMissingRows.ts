@@ -1,5 +1,6 @@
 import type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetails';
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
+import { audioTrackMatchesTarget } from '$lib/components/app/media/files/mediaFileAudioTargetMatching';
 import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay';
 
 type TrackType = MediaFileDetailRow['type'];
@@ -25,23 +26,40 @@ export function rowsWithMissingAudio(
 }
 
 function missingAudioRows(row: MediaFileRow, rows: MediaFileDetailRow[]): MediaFileDetailRow[] {
-	if (row.expectedRequiredLanguages.length === 0) return [];
-	const audioLanguages = new Set(
-		rows
-			.filter((track) => track.type === 'audio')
-			.map((track) => languageMatchKey(track.language))
-			.filter(Boolean)
-	);
-	return row.expectedRequiredLanguages
-		.filter((language) => !audioLanguages.has(languageMatchKey(language)))
-		.map((language) => ({
-			key: `missing-audio-${languageMatchKey(language)}`,
+	const audioTracks = row.tracks.filter((track) => track.type === 'audio');
+	const targets =
+		row.expectedAudioTargets.length > 0
+			? row.expectedAudioTargets
+			: row.expectedRequiredLanguages.map((languageId) => ({ languageId }));
+	if (targets.length === 0) return [];
+	return targets
+		.filter(
+			(target) =>
+				!audioTracks.some(
+					(track) =>
+						languageMatchKey(track.language) === languageMatchKey(target.languageId) &&
+						audioTrackMatchesTarget(track, target)
+				)
+		)
+		.map((target) => ({
+			key: `missing-audio-${targetKey(target)}`,
 			trackNumber: '-',
 			type: 'audio' as const,
-			language: displayLanguage(language),
+			language: displayLanguage(target.languageId),
 			description: 'Missing expected audio track',
 			missing: true
 		}));
+}
+
+function targetKey(target: MediaFileRow['expectedAudioTargets'][number]) {
+	return [
+		languageMatchKey(target.languageId) || target.languageId,
+		target.targetCodec,
+		target.targetChannels?.join('-'),
+		target.minimumBitrateKbps
+	]
+		.filter(Boolean)
+		.join('-');
 }
 
 function missingAudioInsertIndex(rows: MediaFileDetailRow[]) {

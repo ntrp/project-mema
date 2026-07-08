@@ -66,6 +66,26 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('[&amp;>td]:border-t-4');
 	});
 
+	it('renders missing audio target rows when the profile target is not required', () => {
+		const { body } = renderWithTooltip(MediaFileDetailsAccordion, {
+			row: {
+				...detailedFileRow(),
+				expectedAudioTargets: [
+					{ languageId: 'italian', targetCodec: 'aac', targetChannels: ['2.0'] }
+				],
+				expectedLanguages: ['italian'],
+				expectedRequiredLanguages: []
+			}
+		});
+
+		expect(body).toContain('Italian');
+		expect(body).toContain('Missing expected audio track');
+		expect(body.indexOf('Missing expected audio track')).toBeLessThan(
+			body.indexOf('Subtitle track')
+		);
+		expect(body).toContain('bg-destructive/10 text-destructive');
+	});
+
 	it('renders other files with path, type, and status', () => {
 		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
 			row: detailedFileRow(),
