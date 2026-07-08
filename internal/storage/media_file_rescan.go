@@ -79,6 +79,9 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 					return MediaItem{}, err
 				}
 			}
+			if err := recordMediaFileFactFromPath(ctx, tx, mediaItemID, record.SeasonID, record.EpisodeID, record.Path, "rescan"); err != nil {
+				return MediaItem{}, err
+			}
 			continue
 		}
 		if activeMediaFileStatus(record.Status) {
@@ -120,6 +123,9 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 			if err := recordMediaFileReconciliation(ctx, tx, mediaItemID, path, "moved_candidate", "skipped", sourcePath, &path); err != nil {
 				return MediaItem{}, err
 			}
+		}
+		if err := recordMediaFileFactFromPath(ctx, tx, mediaItemID, nil, nil, path, "rescan"); err != nil {
+			return MediaItem{}, err
 		}
 	}
 	if err := queries.TouchMediaItem(ctx, item.ID); err != nil {

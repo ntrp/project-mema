@@ -1154,6 +1154,55 @@ create index if not exists idx_media_item_subtitles_episode
     on app.media_item_subtitles (episode_id)
     where episode_id is not null;
 
+create table if not exists app.media_file_facts (
+    id uuid primary key,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    season_id uuid references app.media_seasons(id) on delete set null,
+    episode_id uuid references app.media_episodes(id) on delete set null,
+    file_path text not null,
+    quality_id text,
+    container_format text,
+    container_format_name text,
+    container_bitrate bigint check (container_bitrate is null or container_bitrate >= 0),
+    duration_ms bigint check (duration_ms is null or duration_ms >= 0),
+    size_bytes bigint check (size_bytes is null or size_bytes >= 0),
+    source_kind text not null default 'rescan' check (source_kind in ('import', 'rescan', 'probe', 'manual')),
+    probed_at timestamptz not null default now(),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (media_item_id, file_path)
+);
+
+create index if not exists idx_media_file_facts_media_item
+    on app.media_file_facts (media_item_id, file_path);
+
+create table if not exists app.media_file_tracks (
+    id uuid primary key,
+    media_file_fact_id uuid not null references app.media_file_facts(id) on delete cascade,
+    media_item_id uuid not null references app.media_items(id) on delete cascade,
+    file_path text not null,
+    stream_index integer not null check (stream_index >= 0),
+    track_type text not null check (track_type in ('video', 'audio', 'subtitle')),
+    language_id text,
+    codec text,
+    channels text,
+    bitrate_kbps integer check (bitrate_kbps is null or bitrate_kbps >= 0),
+    width integer check (width is null or width >= 0),
+    height integer check (height is null or height >= 0),
+    hdr_format text,
+    pixel_format text,
+    bit_depth integer check (bit_depth is null or bit_depth >= 0),
+    format text,
+    title text,
+    disposition jsonb not null default '{}'::jsonb check (jsonb_typeof(disposition) = 'object'),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (media_file_fact_id, stream_index, track_type)
+);
+
+create index if not exists idx_media_file_tracks_media_item
+    on app.media_file_tracks (media_item_id, file_path, track_type);
+
 create table if not exists app.media_component_sources (
     id uuid primary key,
     media_item_id uuid not null references app.media_items(id) on delete cascade,

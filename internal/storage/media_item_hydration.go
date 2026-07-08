@@ -23,6 +23,10 @@ func hydrateMediaItem(ctx context.Context, q storagegen.DBTX, item MediaItem) (M
 	if err != nil {
 		return item, err
 	}
+	item, err = hydrateMediaItemFileFacts(ctx, q, item)
+	if err != nil {
+		return item, err
+	}
 	item, err = hydrateMediaItemComponentSources(ctx, q, item)
 	if err != nil {
 		return item, err
@@ -96,6 +100,19 @@ func hydrateMediaItemSidecars(
 	}
 	item.Sidecars = sidecars
 	item.MetadataFilePaths = mergedStringSet(item.MetadataFilePaths, metadataSidecarFilePaths(sidecars))
+	return item, nil
+}
+
+func hydrateMediaItemFileFacts(
+	ctx context.Context,
+	q storagegen.DBTX,
+	item MediaItem,
+) (MediaItem, error) {
+	facts, err := listMediaFileFacts(ctx, q, item.ID)
+	if err != nil {
+		return item, err
+	}
+	item.FileFacts = facts
 	return item, nil
 }
 

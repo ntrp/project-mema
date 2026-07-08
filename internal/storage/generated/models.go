@@ -419,6 +419,24 @@ type AppMediaEpisodeNumbering struct {
 	UpdatedAt       time.Time
 }
 
+type AppMediaFileFact struct {
+	ID                  uuid.UUID
+	MediaItemID         uuid.UUID
+	SeasonID            *uuid.UUID
+	EpisodeID           *uuid.UUID
+	FilePath            string
+	QualityID           pgtype.Text
+	ContainerFormat     pgtype.Text
+	ContainerFormatName pgtype.Text
+	ContainerBitrate    pgtype.Int8
+	DurationMs          pgtype.Int8
+	SizeBytes           pgtype.Int8
+	SourceKind          string
+	ProbedAt            time.Time
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
 type AppMediaFileHistory struct {
 	ID              uuid.UUID
 	MediaItemID     *uuid.UUID
@@ -433,6 +451,29 @@ type AppMediaFileHistory struct {
 	Details         []byte
 	FailureDetails  pgtype.Text
 	CreatedAt       time.Time
+}
+
+type AppMediaFileTrack struct {
+	ID              uuid.UUID
+	MediaFileFactID uuid.UUID
+	MediaItemID     uuid.UUID
+	FilePath        string
+	StreamIndex     int32
+	TrackType       string
+	LanguageID      pgtype.Text
+	Codec           pgtype.Text
+	Channels        pgtype.Text
+	BitrateKbps     pgtype.Int4
+	Width           pgtype.Int4
+	Height          pgtype.Int4
+	HdrFormat       pgtype.Text
+	PixelFormat     pgtype.Text
+	BitDepth        pgtype.Int4
+	Format          pgtype.Text
+	Title           pgtype.Text
+	Disposition     []byte
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type AppMediaItem struct {
