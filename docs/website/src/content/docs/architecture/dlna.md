@@ -229,6 +229,12 @@ Seeded profiles must cover the UMS-supported device families in clean-room
 form. User edits must survive seed upgrades, and each seeded profile must be
 resettable or cloneable.
 
+The storage layer now keeps two profile copies: seeded defaults and editable
+runtime profiles. `internal/storage/seeds/defaults.sql` refreshes defaults on
+startup and only refreshes runtime profiles that have not been customized.
+Device overrides are stored separately and can bind a renderer profile by IP
+address or renderer UUID.
+
 ## Planned Settings UI
 
 Settings > DLNA will gain a Device profiles panel.

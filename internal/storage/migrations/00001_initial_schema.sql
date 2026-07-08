@@ -397,6 +397,104 @@ create table if not exists app.dlna_settings (
     updated_at timestamptz not null default now()
 );
 
+create table if not exists app.dlna_renderer_profile_defaults (
+    id text primary key,
+    name text not null,
+    vendor text not null default '',
+    device_class text not null default 'renderer',
+    source_version integer not null default 1 check (source_version > 0),
+    enabled boolean not null default true,
+    priority integer not null default 100 check (priority >= 0 and priority <= 1000),
+    icon_key text not null default '',
+    notes text not null default '',
+    match_rules jsonb not null default '{}'::jsonb,
+    capability_rules jsonb not null default '{}'::jsonb,
+    delivery_settings jsonb not null default '{}'::jsonb,
+    dlna_flags jsonb not null default '{}'::jsonb,
+    subtitle_rules jsonb not null default '{}'::jsonb,
+    artwork_rules jsonb not null default '{}'::jsonb,
+    metadata_rules jsonb not null default '{}'::jsonb,
+    quirks jsonb not null default '{}'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint dlna_renderer_profile_defaults_json_check check (
+        jsonb_typeof(match_rules) = 'object'
+        and jsonb_typeof(capability_rules) = 'object'
+        and jsonb_typeof(delivery_settings) = 'object'
+        and jsonb_typeof(dlna_flags) = 'object'
+        and jsonb_typeof(subtitle_rules) = 'object'
+        and jsonb_typeof(artwork_rules) = 'object'
+        and jsonb_typeof(metadata_rules) = 'object'
+        and jsonb_typeof(quirks) = 'object'
+    )
+);
+
+create table if not exists app.dlna_renderer_profiles (
+    id text primary key,
+    name text not null,
+    vendor text not null default '',
+    device_class text not null default 'renderer',
+    source text not null default 'mema_seed'
+        check (source in ('mema_seed', 'user', 'imported_clean_room')),
+    source_version integer not null default 1 check (source_version > 0),
+    customized boolean not null default false,
+    enabled boolean not null default true,
+    priority integer not null default 100 check (priority >= 0 and priority <= 1000),
+    icon_key text not null default '',
+    notes text not null default '',
+    match_rules jsonb not null default '{}'::jsonb,
+    capability_rules jsonb not null default '{}'::jsonb,
+    delivery_settings jsonb not null default '{}'::jsonb,
+    dlna_flags jsonb not null default '{}'::jsonb,
+    subtitle_rules jsonb not null default '{}'::jsonb,
+    artwork_rules jsonb not null default '{}'::jsonb,
+    metadata_rules jsonb not null default '{}'::jsonb,
+    quirks jsonb not null default '{}'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint dlna_renderer_profiles_json_check check (
+        jsonb_typeof(match_rules) = 'object'
+        and jsonb_typeof(capability_rules) = 'object'
+        and jsonb_typeof(delivery_settings) = 'object'
+        and jsonb_typeof(dlna_flags) = 'object'
+        and jsonb_typeof(subtitle_rules) = 'object'
+        and jsonb_typeof(artwork_rules) = 'object'
+        and jsonb_typeof(metadata_rules) = 'object'
+        and jsonb_typeof(quirks) = 'object'
+    )
+);
+
+create unique index if not exists idx_dlna_renderer_profiles_name_lower
+    on app.dlna_renderer_profiles (lower(name));
+
+create index if not exists idx_dlna_renderer_profiles_enabled
+    on app.dlna_renderer_profiles (enabled, priority, name);
+
+create table if not exists app.dlna_renderer_device_overrides (
+    id uuid primary key,
+    renderer_uuid text,
+    ip_address text,
+    profile_id text not null references app.dlna_renderer_profiles(id) on delete restrict,
+    display_name text not null default '',
+    allowed boolean not null default true,
+    delivery_policy_overrides jsonb not null default '{}'::jsonb,
+    notes text not null default '',
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint dlna_renderer_device_overrides_identity_check
+        check (renderer_uuid is not null or ip_address is not null),
+    constraint dlna_renderer_device_overrides_json_check
+        check (jsonb_typeof(delivery_policy_overrides) = 'object')
+);
+
+create unique index if not exists idx_dlna_renderer_device_overrides_uuid
+    on app.dlna_renderer_device_overrides (lower(renderer_uuid))
+    where renderer_uuid is not null;
+
+create unique index if not exists idx_dlna_renderer_device_overrides_ip
+    on app.dlna_renderer_device_overrides (ip_address)
+    where ip_address is not null;
+
 create table if not exists app.media_items (
     id uuid primary key,
     media_type text not null check (media_type in ('movie', 'serie')),

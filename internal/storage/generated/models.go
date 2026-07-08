@@ -33,6 +33,65 @@ type AppDiscoverBlacklist struct {
 	CreatedAt        time.Time
 }
 
+type AppDlnaRendererDeviceOverride struct {
+	ID                      uuid.UUID
+	RendererUuid            pgtype.Text
+	IpAddress               pgtype.Text
+	ProfileID               string
+	DisplayName             string
+	Allowed                 bool
+	DeliveryPolicyOverrides []byte
+	Notes                   string
+	CreatedAt               time.Time
+	UpdatedAt               time.Time
+}
+
+type AppDlnaRendererProfile struct {
+	ID               string
+	Name             string
+	Vendor           string
+	DeviceClass      string
+	Source           string
+	SourceVersion    int32
+	Customized       bool
+	Enabled          bool
+	Priority         int32
+	IconKey          string
+	Notes            string
+	MatchRules       []byte
+	CapabilityRules  []byte
+	DeliverySettings []byte
+	DlnaFlags        []byte
+	SubtitleRules    []byte
+	ArtworkRules     []byte
+	MetadataRules    []byte
+	Quirks           []byte
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+type AppDlnaRendererProfileDefault struct {
+	ID               string
+	Name             string
+	Vendor           string
+	DeviceClass      string
+	SourceVersion    int32
+	Enabled          bool
+	Priority         int32
+	IconKey          string
+	Notes            string
+	MatchRules       []byte
+	CapabilityRules  []byte
+	DeliverySettings []byte
+	DlnaFlags        []byte
+	SubtitleRules    []byte
+	ArtworkRules     []byte
+	MetadataRules    []byte
+	Quirks           []byte
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
 type AppDlnaSetting struct {
 	ID                      bool
 	Enabled                 bool
