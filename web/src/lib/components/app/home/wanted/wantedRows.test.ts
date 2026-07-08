@@ -47,6 +47,43 @@ describe('wanted display rows', () => {
 		expect(rows[1].operation).toBe('Transcode audio.');
 		expect(rows[2].context).toBe('Movie.mkv');
 	});
+
+	it('shows actionable target states and hides resolved target states', () => {
+		const states = [
+			'missing',
+			'partial',
+			'pending',
+			'satisfied',
+			'upgradeable',
+			'blocked',
+			'failed'
+		] as const;
+		const rows = wantedDisplayRows([
+			mediaItem({
+				id: 'downloaded-2',
+				status: 'downloaded',
+				targetSatisfaction: {
+					targets: states.map((state) => ({
+						id: `video:${state}`,
+						type: 'video',
+						state,
+						mediaItemId: 'downloaded-2',
+						reasons: [`${state} reason`]
+					})),
+					candidates: []
+				}
+			})
+		]);
+
+		expect(rows.map((row) => row.state)).toEqual([
+			'missing',
+			'partial',
+			'pending',
+			'blocked',
+			'failed'
+		]);
+		expect(rows.map((row) => row.kind)).toEqual(['target', 'target', 'target', 'target', 'target']);
+	});
 });
 
 function mediaItem(overrides: Partial<MediaItem> = {}): MediaItem {

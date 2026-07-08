@@ -47,7 +47,8 @@
 							<Badge variant="outline">{action.operation}</Badge>
 						</Table.Cell>
 						<Table.Cell class="whitespace-nowrap font-mono text-xs">
-							{action.method} {action.path}
+							{action.method}
+							{action.path}
 						</Table.Cell>
 						<Table.Cell class="whitespace-nowrap text-xs">{action.workerPath}</Table.Cell>
 						<Table.Cell class="w-px text-right">
@@ -81,7 +82,9 @@
 				</Table.Row>
 			{:else}
 				<Table.Row>
-					<Table.Cell colspan={5} class="text-muted-foreground">No manual actions registered.</Table.Cell>
+					<Table.Cell colspan={5} class="text-muted-foreground"
+						>No manual actions registered.</Table.Cell
+					>
 				</Table.Row>
 			{/if}
 		</Table.Body>

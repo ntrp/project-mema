@@ -57,6 +57,7 @@
 	const progressValue = (schedule: SystemJobSchedule) =>
 		schedule.activeStatus ? schedule.activeProgressPercent : 0;
 </script>
+
 {#snippet actionButton(label: string, disabled: boolean, onclick: () => void)}
 	<Tooltip.Root>
 		<Tooltip.Trigger>
@@ -106,11 +107,14 @@
 					<Table.Cell>
 						<div class="flex min-w-0 items-center gap-2">
 							<strong class="truncate">{schedule.name}</strong>
-								<Badge variant="outline">{scheduleCategoryLabel(schedule.category)}</Badge>
-								{#if schedule.historyPolicy === 'routine'}<Badge variant="outline">routine</Badge>{/if}
-								{#if schedule.manualActionAvailable}<Badge variant="secondary">manual</Badge>{/if}
-							</div>
-							<span class="block truncate text-xs text-muted-foreground">{schedule.description || schedule.kind}</span>
+							<Badge variant="outline">{scheduleCategoryLabel(schedule.category)}</Badge>
+							{#if schedule.historyPolicy === 'routine'}<Badge variant="outline">routine</Badge
+								>{/if}
+							{#if schedule.manualActionAvailable}<Badge variant="secondary">manual</Badge>{/if}
+						</div>
+						<span class="block truncate text-xs text-muted-foreground"
+							>{schedule.description || schedule.kind}</span
+						>
 					</Table.Cell>
 					<Table.Cell class="w-px">
 						<Badge

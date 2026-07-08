@@ -95,15 +95,16 @@ function embeddedSubtitleVisualState(
 	if (unwantedSubtitleLanguage(row, language)) {
 		return unwantedState(`${displayLanguage(language)} is outside enabled subtitle targets.`);
 	}
-	if (subtitleTargetMatches(row, language) || row.expectedSubtitleLanguages.length === 0) {
+	if (subtitleTargetMatches(row, language) || (row.expectedSubtitleLanguages ?? []).length === 0) {
 		return matchingState('Embedded subtitle satisfies the subtitle target.');
 	}
 	return {};
 }
 
 function audioTargets(row: MediaFileRow) {
-	if (row.expectedAudioTargets.length > 0) return row.expectedAudioTargets;
-	return row.expectedRequiredLanguages.map((languageId) => ({ languageId }));
+	const expectedAudioTargets = row.expectedAudioTargets ?? [];
+	if (expectedAudioTargets.length > 0) return expectedAudioTargets;
+	return (row.expectedRequiredLanguages ?? []).map((languageId) => ({ languageId }));
 }
 
 function unwantedAudioLanguage(row: MediaFileRow, language: string | undefined) {
@@ -118,15 +119,20 @@ function unwantedSubtitleLanguage(row: MediaFileRow, language: string | undefine
 	);
 }
 
-function unwantedLanguage(enabled: boolean, expected: string[], language: string | undefined) {
-	if (!enabled || expected.length === 0) return false;
-	const wanted = new Set(expected.map(languageMatchKey).filter(Boolean));
+function unwantedLanguage(
+	enabled: boolean,
+	expected: string[] | undefined,
+	language: string | undefined
+) {
+	const expectedLanguages = expected ?? [];
+	if (!enabled || expectedLanguages.length === 0) return false;
+	const wanted = new Set(expectedLanguages.map(languageMatchKey).filter(Boolean));
 	const key = languageMatchKey(language);
 	return key !== '' && !wanted.has(key);
 }
 
 function subtitleTargetMatches(row: MediaFileRow, language: string | undefined) {
-	return row.expectedSubtitleLanguages.some((target) => languageMatches(language, target));
+	return (row.expectedSubtitleLanguages ?? []).some((target) => languageMatches(language, target));
 }
 
 function languageMatches(value: string | undefined, target: string) {

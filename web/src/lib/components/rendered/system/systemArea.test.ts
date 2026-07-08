@@ -19,12 +19,13 @@ describe('rendered system area sections (SCN-SYSTEM-001)', () => {
 		const { body } = renderSystemArea('jobs');
 
 		expect(body).toContain('Jobs');
-		expect(body).toContain('Live');
+		expect(body).toContain('Fixed Scheduled Jobs');
 		expect(body).toContain('Status');
 		expect(body).toContain('Queue');
 		expect(body).toContain('Kind');
 		expect(body).toContain('Search');
-		expect(body).toContain('No jobs match the filters.');
+		expect(body).toContain('No one-shot jobs are running or scheduled.');
+		expect(body).toContain('Manual Fulfillment Actions');
 	});
 
 	it('renders live events controls and initial loading state', () => {

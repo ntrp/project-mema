@@ -34,7 +34,9 @@ want to compare indexers, or when you want to grab a specific release.
 Wanted can show missing media, specific unsatisfied profile targets, and
 custom-format upgrade rows. Target rows include the parent media and file
 context, the language or target type when relevant, and the operation that can
-move the item forward.
+move the item forward. Target rows appear for missing, partial, pending,
+blocked, and failed targets. Satisfied and upgradeable targets stay out of the
+target-row list unless a custom-format upgrade row needs attention.
 Media cards and file cards use the same rollup state so missing, partial,
 downloaded, and upgradeable states read consistently across library and detail
 views.

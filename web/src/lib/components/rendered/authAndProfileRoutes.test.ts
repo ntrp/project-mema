@@ -34,7 +34,8 @@ describe('rendered auth and profile routes (SCN-AUTH-001, SCN-SETTINGS-023)', ()
 		expect(create.body).toContain('Add profile');
 		expect(create.body).toContain('Create profile');
 		expect(create.body).toContain('Qualities');
-		expect(create.body).toContain('Target languages');
+		expect(create.body).toContain('Audio targets');
+		expect(create.body).toContain('Subtitle targets');
 
 		const edit = renderProfileRoute(EditMediaProfileRoute, { profileId: 'profile-1' }, [
 			mediaProfile()

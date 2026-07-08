@@ -27,13 +27,14 @@ describe('rendered system settings views (SCN-SYSTEM-008)', () => {
 	it('renders job observability filters and empty results guidance', () => {
 		const { body } = renderWithTooltip(SystemJobsSettings, {});
 		expect(body).toContain('Jobs');
-		expect(body).toContain('Live');
+		expect(body).toContain('Fixed Scheduled Jobs');
 		expect(body).toContain('Refresh');
 		expect(body).toContain('Status');
 		expect(body).toContain('Queue');
 		expect(body).toContain('Kind');
 		expect(body).toContain('Search');
-		expect(body).toContain('No jobs match the filters.');
+		expect(body).toContain('No one-shot jobs are running or scheduled.');
+		expect(body).toContain('Manual Fulfillment Actions');
 	});
 
 	it('renders live log controls and waiting state before events arrive', () => {

@@ -20,18 +20,19 @@ export function rowsWithMissingAudio(
 	row: MediaFileRow,
 	rows: MediaFileDetailRow[]
 ): MediaFileDetailRow[] {
-	const missing = missingAudioRows(row, rows);
+	const missing = missingAudioRows(row);
 	if (missing.length === 0) return rows;
 	const insertAt = missingAudioInsertIndex(rows);
 	return [...rows.slice(0, insertAt), ...missing, ...rows.slice(insertAt)];
 }
 
-function missingAudioRows(row: MediaFileRow, rows: MediaFileDetailRow[]): MediaFileDetailRow[] {
+function missingAudioRows(row: MediaFileRow): MediaFileDetailRow[] {
 	const audioTracks = row.tracks.filter((track) => track.type === 'audio');
+	const expectedAudioTargets = row.expectedAudioTargets ?? [];
 	const targets =
-		row.expectedAudioTargets.length > 0
-			? row.expectedAudioTargets
-			: row.expectedRequiredLanguages.map((languageId) => ({ languageId }));
+		expectedAudioTargets.length > 0
+			? expectedAudioTargets
+			: (row.expectedRequiredLanguages ?? []).map((languageId) => ({ languageId }));
 	if (targets.length === 0) return [];
 	return targets
 		.filter(
@@ -73,7 +74,7 @@ function missingAudioInsertIndex(rows: MediaFileDetailRow[]) {
 
 function missingSubtitleRows(row: MediaFileRow): MediaFileDetailRow[] {
 	const satisfaction = row.subtitleSatisfaction;
-	if (!satisfaction || satisfaction.missingLanguages.length === 0) {
+	if (!satisfaction || (satisfaction.missingLanguages ?? []).length === 0) {
 		return [];
 	}
 	return satisfaction.missingLanguages.map((language) => ({
