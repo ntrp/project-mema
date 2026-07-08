@@ -20,6 +20,7 @@ type Status struct {
 	LastError           *string
 	LastSSDPEvent       *string
 	LastSOAPAction      *string
+	EventSubscriptions  int
 	RecentClients       []ClientStatus
 	ActiveStreams       []StreamStatus
 	ActiveTranscodes    []StreamStatus
@@ -133,6 +134,7 @@ func (m *Manager) Status() Status {
 	status.ActiveStreams = sortedStreams(m.activeStreams)
 	status.ActiveTranscodes = sortedStreams(m.activeTranscodes)
 	m.mu.Unlock()
+	status.EventSubscriptions = m.events.SubscriptionCount()
 	status.AvailableInterfaces = availableInterfaces(m.httpPort)
 	return status
 }

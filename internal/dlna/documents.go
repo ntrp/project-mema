@@ -243,15 +243,15 @@ func MediaReceiverRegistrarSCPDXML() ([]byte, error) {
 }
 
 func contentDirectoryService() Service {
-	return Service{ServiceType: ssdp.ContentDir, ServiceID: "urn:upnp-org:serviceId:ContentDirectory", SCPDURL: "/dlna/contentDirectory.xml", ControlURL: "/dlna/control/content-directory"}
+	return Service{ServiceType: ssdp.ContentDir, ServiceID: "urn:upnp-org:serviceId:ContentDirectory", SCPDURL: "/dlna/contentDirectory.xml", ControlURL: "/dlna/control/content-directory", EventSubURL: "/dlna/events/content-directory"}
 }
 
 func connectionManagerService() Service {
-	return Service{ServiceType: ssdp.Connection, ServiceID: "urn:upnp-org:serviceId:ConnectionManager", SCPDURL: "/dlna/connectionManager.xml", ControlURL: "/dlna/control/connection-manager"}
+	return Service{ServiceType: ssdp.Connection, ServiceID: "urn:upnp-org:serviceId:ConnectionManager", SCPDURL: "/dlna/connectionManager.xml", ControlURL: "/dlna/control/connection-manager", EventSubURL: "/dlna/events/connection-manager"}
 }
 
 func mediaReceiverRegistrarService() Service {
-	return Service{ServiceType: "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", ServiceID: "urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar", SCPDURL: "/dlna/mediaReceiverRegistrar.xml", ControlURL: "/dlna/control/media-receiver-registrar"}
+	return Service{ServiceType: "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", ServiceID: "urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar", SCPDURL: "/dlna/mediaReceiverRegistrar.xml", ControlURL: "/dlna/control/media-receiver-registrar", EventSubURL: "/dlna/events/media-receiver-registrar"}
 }
 
 func action(name string, args ...SCPDArgument) SCPDAction {

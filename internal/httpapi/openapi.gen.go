@@ -2331,6 +2331,7 @@ type DLNAStatus struct {
 	AdvertisedUrls      []string                  `json:"advertisedUrls"`
 	AvailableInterfaces []DLNAInterfaceDiagnostic `json:"availableInterfaces"`
 	BoundInterfaces     []string                  `json:"boundInterfaces"`
+	EventSubscriptions  int32                     `json:"eventSubscriptions"`
 	LastError           *string                   `json:"lastError,omitempty"`
 	LastSoapAction      *string                   `json:"lastSoapAction,omitempty"`
 	LastSsdpEvent       *string                   `json:"lastSsdpEvent,omitempty"`

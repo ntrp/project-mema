@@ -121,24 +121,51 @@ func pageObjects(objects []Object, start int, count int) []Object {
 }
 
 func sortObjects(objects []Object, criteria string) {
-	if strings.TrimSpace(criteria) == "" {
+	orders := parseSortCriteria(criteria)
+	if len(orders) == 0 {
 		return
 	}
-	descending := strings.HasPrefix(criteria, "-")
-	field := strings.TrimLeft(strings.TrimSpace(criteria), "+-")
 	sort.SliceStable(objects, func(i, j int) bool {
-		compare := compareObjects(objects[i], objects[j], field)
-		if descending {
-			return compare > 0
+		for _, order := range orders {
+			compare := compareObjects(objects[i], objects[j], order.Field)
+			if compare == 0 {
+				continue
+			}
+			if order.Descending {
+				return compare > 0
+			}
+			return compare < 0
 		}
-		return compare < 0
+		return false
 	})
+}
+
+type sortOrder struct {
+	Field      string
+	Descending bool
+}
+
+func parseSortCriteria(criteria string) []sortOrder {
+	orders := []sortOrder{}
+	for _, part := range strings.Split(criteria, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		orders = append(orders, sortOrder{
+			Field:      strings.TrimLeft(part, "+-"),
+			Descending: strings.HasPrefix(part, "-"),
+		})
+	}
+	return orders
 }
 
 func compareObjects(left Object, right Object, field string) int {
 	switch field {
 	case "dc:date":
 		return strings.Compare(stringValue(left.Date), stringValue(right.Date))
+	case "upnp:class":
+		return strings.Compare(left.Class, right.Class)
 	case "dc:title", "":
 		return strings.Compare(left.Title, right.Title)
 	default:

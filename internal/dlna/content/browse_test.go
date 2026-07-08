@@ -37,6 +37,27 @@ func TestBrowsePaginatesWithoutChangingTotalMatches(t *testing.T) {
 	}
 }
 
+func TestBrowseSortsByMultipleCriteria(t *testing.T) {
+	paths := []string{"/media/A.mkv", "/media/B.mkv", "/media/C.mkv"}
+	tree := NewTree(fakeSource{items: []storage.MediaItem{
+		{ID: uuid.New(), Type: "movie", Title: "Same", FilePaths: []string{paths[0]}},
+		{ID: uuid.New(), Type: "movie", Title: "Alpha", FilePaths: []string{paths[1]}},
+		{ID: uuid.New(), Type: "movie", Title: "Same", FilePaths: []string{paths[2]}},
+	}}).WithStat(fakeStat(paths...))
+
+	response, err := tree.Browse(context.Background(), BrowseRequest{
+		ObjectID:     EncodeID(RootContainerRef("movies")),
+		BrowseFlag:   BrowseDirectChildren,
+		SortCriteria: "+dc:title,-dc:date",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Objects) != 3 || response.Objects[0].Title != "Alpha" {
+		t.Fatalf("objects = %#v", response.Objects)
+	}
+}
+
 func TestBrowseMetadataReturnsExactlyOneObject(t *testing.T) {
 	ctx := context.Background()
 	path := "/media/Scenario.mkv"

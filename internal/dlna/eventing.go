@@ -33,6 +33,13 @@ func (e *EventManager) UpdateID() int {
 	return int(e.update.Load())
 }
 
+func (e *EventManager) SubscriptionCount() int {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.purgeExpiredLocked(time.Now())
+	return len(e.subs)
+}
+
 func (e *EventManager) NotifyContentChanged() {
 	e.update.Add(1)
 	e.notifyAll()
@@ -50,6 +57,10 @@ func (e *EventManager) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *EventManager) subscribe(w http.ResponseWriter, r *http.Request) {
+	if sid := strings.TrimSpace(r.Header.Get("SID")); sid != "" {
+		e.renew(w, r, sid)
+		return
+	}
 	callback := strings.Trim(r.Header.Get("CALLBACK"), "<>")
 	if callback == "" {
 		http.Error(w, "missing callback", http.StatusBadRequest)
@@ -66,6 +77,24 @@ func (e *EventManager) subscribe(w http.ResponseWriter, r *http.Request) {
 	e.notifySID(sid)
 }
 
+func (e *EventManager) renew(w http.ResponseWriter, r *http.Request, sid string) {
+	timeout := requestedTimeout(r.Header.Get("TIMEOUT"))
+	e.mu.Lock()
+	sub, ok := e.subs[sid]
+	if ok {
+		sub.Expires = time.Now().Add(timeout)
+		e.subs[sid] = sub
+	}
+	e.mu.Unlock()
+	if !ok {
+		http.Error(w, "unknown subscription", http.StatusPreconditionFailed)
+		return
+	}
+	w.Header().Set("SID", sid)
+	w.Header().Set("TIMEOUT", "Second-"+fmt.Sprint(int(timeout.Seconds())))
+	w.WriteHeader(http.StatusOK)
+}
+
 func (e *EventManager) unsubscribe(w http.ResponseWriter, r *http.Request) {
 	sid := r.Header.Get("SID")
 	e.mu.Lock()
@@ -80,6 +109,7 @@ func (e *EventManager) unsubscribe(w http.ResponseWriter, r *http.Request) {
 
 func (e *EventManager) notifyAll() {
 	e.mu.Lock()
+	e.purgeExpiredLocked(time.Now())
 	sids := make([]string, 0, len(e.subs))
 	for sid := range e.subs {
 		sids = append(sids, sid)
@@ -113,6 +143,14 @@ func (e *EventManager) notifySID(sid string) {
 	request.Header.Set("SEQ", fmt.Sprint(seq))
 	request.Header.Set("Content-Type", "text/xml; charset=utf-8")
 	_, _ = e.client.Do(request)
+}
+
+func (e *EventManager) purgeExpiredLocked(now time.Time) {
+	for sid, sub := range e.subs {
+		if now.After(sub.Expires) {
+			delete(e.subs, sid)
+		}
+	}
 }
 
 func requestedTimeout(value string) time.Duration {

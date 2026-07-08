@@ -40,9 +40,9 @@ func TestRootDeviceXMLIncludesStableUDNAndServices(t *testing.T) {
 			t.Fatalf("root XML missing %q:\n%s", want, payload)
 		}
 	}
-	for _, forbidden := range []string{"/dlna/events/content-directory", "/dlna/events/connection-manager", "/dlna/events/media-receiver-registrar"} {
-		if strings.Contains(string(payload), forbidden) {
-			t.Fatalf("root XML advertises unsupported event URL %q:\n%s", forbidden, payload)
+	for _, want := range []string{"/dlna/events/content-directory", "/dlna/events/connection-manager", "/dlna/events/media-receiver-registrar"} {
+		if !strings.Contains(string(payload), want) {
+			t.Fatalf("root XML missing event URL %q:\n%s", want, payload)
 		}
 	}
 }

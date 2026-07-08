@@ -4074,6 +4074,8 @@ export interface components {
 			lastError?: string;
 			lastSsdpEvent?: string;
 			lastSoapAction?: string;
+			/** Format: int32 */
+			eventSubscriptions: number;
 			recentClients: components['schemas']['DLNAClientDiagnostic'][];
 			activeStreams: components['schemas']['DLNAStreamDiagnostic'][];
 			activeTranscodes: components['schemas']['DLNAStreamDiagnostic'][];

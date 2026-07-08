@@ -64,9 +64,12 @@ func dlnaStatusResponse(status dlna.Status) DLNAStatus {
 		AvailableInterfaces: dlnaInterfaceDiagnostics(
 			status.AvailableInterfaces,
 		),
-		LastError:        status.LastError,
-		LastSsdpEvent:    status.LastSSDPEvent,
-		LastSoapAction:   status.LastSOAPAction,
+		LastError:      status.LastError,
+		LastSsdpEvent:  status.LastSSDPEvent,
+		LastSoapAction: status.LastSOAPAction,
+		EventSubscriptions: int32(
+			status.EventSubscriptions,
+		),
 		RecentClients:    dlnaClientDiagnostics(status.RecentClients),
 		ActiveStreams:    dlnaStreamDiagnostics(status.ActiveStreams),
 		ActiveTranscodes: dlnaStreamDiagnostics(status.ActiveTranscodes),

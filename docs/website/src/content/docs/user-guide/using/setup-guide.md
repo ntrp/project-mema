@@ -126,6 +126,9 @@ the full media path.
 Renderer profile delivery settings can also control output container and seek
 mode. Use byte seek for normal range requests, time or time-exclusive for
 renderers that prefer DLNA time seeking, and none for devices that fail on seek.
+Mema also supports renderer search, sorted browse results, and UPnP event
+subscriptions; disable eventing in a profile only when a client fails during
+subscription setup.
 
 ## Add Subtitle Providers
 

@@ -8467,6 +8467,7 @@ components:
         - boundInterfaces
         - advertisedUrls
         - availableInterfaces
+        - eventSubscriptions
         - recentClients
         - activeStreams
         - activeTranscodes
@@ -8491,6 +8492,10 @@ components:
           type: string
         lastSoapAction:
           type: string
+        eventSubscriptions:
+          type: integer
+          format: int32
+          minimum: 0
         recentClients:
           type: array
           items:

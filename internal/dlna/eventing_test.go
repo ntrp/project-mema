@@ -35,6 +35,28 @@ func TestEventSubscriptionLifecycleSendsInitialNotify(t *testing.T) {
 	if got.Method != "NOTIFY" || got.Header.Get("NTS") != "upnp:propchange" || got.Header.Get("SEQ") != "0" {
 		t.Fatalf("notify headers = %#v", got.Header)
 	}
+	if events.SubscriptionCount() != 1 {
+		t.Fatalf("subscriptions = %d", events.SubscriptionCount())
+	}
+
+	renew := httptest.NewRequest("SUBSCRIBE", "/dlna/events/content-directory", nil)
+	renew.Header.Set("SID", response.Header().Get("SID"))
+	renew.Header.Set("TIMEOUT", "Second-120")
+	renewed := httptest.NewRecorder()
+	events.Handle(renewed, renew)
+	if renewed.Code != http.StatusOK || renewed.Header().Get("TIMEOUT") != "Second-120" {
+		t.Fatalf("renew = %d timeout=%q", renewed.Code, renewed.Header().Get("TIMEOUT"))
+	}
+
+	events.NotifyContentChanged()
+	select {
+	case got = <-notify:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for changed notify")
+	}
+	if got.Header.Get("SEQ") != "1" {
+		t.Fatalf("renewed notify headers = %#v", got.Header)
+	}
 
 	unsubscribe := httptest.NewRequest("UNSUBSCRIBE", "/dlna/events/content-directory", nil)
 	unsubscribe.Header.Set("SID", response.Header().Get("SID"))
@@ -42,6 +64,9 @@ func TestEventSubscriptionLifecycleSendsInitialNotify(t *testing.T) {
 	events.Handle(done, unsubscribe)
 	if done.Code != http.StatusOK {
 		t.Fatalf("unsubscribe = %d", done.Code)
+	}
+	if events.SubscriptionCount() != 0 {
+		t.Fatalf("subscriptions after unsubscribe = %d", events.SubscriptionCount())
 	}
 }
 
