@@ -159,6 +159,12 @@ The media item rollup should be derived from child states:
 | `downloaded` | Required media file exists and required child states are `satisfied` or acceptable under the profile. |
 | `upgradeable` | Same as downloaded, but one or more required child states can improve within profile upgrade rules. |
 
+`internal/satisfaction` provides the rollup helpers used by the implementation:
+media file state is derived from required target states plus active work, and
+media item state is derived from required file states. Partial, failed, blocked,
+missing, or pending targets keep usable media `partial`. Active work can surface
+`downloading`, but it does not hide a higher-priority partial file state.
+
 ## Video Satisfaction
 
 Release-time video satisfaction is handled in the release decision engine. The
