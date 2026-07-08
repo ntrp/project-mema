@@ -59,6 +59,158 @@ set name = excluded.name,
     quirks = excluded.quirks,
     updated_at = now();
 
+with catalog(id, name, vendor, device_class, priority, icon_key, match_tokens, profile_kind) as (
+    values
+        ('amazon-fire-tv-vimu', 'Amazon Fire TV Stick Vimu Player', 'Amazon', 'cast', 110, 'cast', array['amazon','fire tv','vimu']::text[], 'hls'),
+        ('android-generic', 'Android DLNA Renderer', 'Android', 'mobile', 90, 'phone', array['android','aosp']::text[], 'mobile'),
+        ('chromecast-ultra', 'Chromecast Ultra', 'Google', 'cast', 120, 'cast', array['chromecast ultra','google cast']::text[], 'hls'),
+        ('apple-ios', 'iPad/iPhone', 'Apple', 'mobile', 90, 'phone', array['ipad','iphone','ios']::text[], 'mobile'),
+        ('airplayer', 'AirPlayer', 'Apple', 'mobile', 90, 'phone', array['airplayer']::text[], 'mobile'),
+        ('vlc-ios', 'VLC for iOS/macOS', 'VideoLAN', 'software', 105, 'vlc', array['vlc','ios','mac os']::text[], 'desktop'),
+        ('vlc-appletv', 'VLC for Apple TV', 'VideoLAN', 'settop', 110, 'vlc', array['vlc','apple tv']::text[], 'desktop'),
+        ('movian', 'Movian', 'Movian', 'software', 90, 'app', array['movian']::text[], 'desktop'),
+        ('mediaplayer', 'MediaPlayer', 'Generic', 'software', 80, 'app', array['mediaplayer','media player']::text[], 'desktop'),
+        ('foobar2000-mobile', 'foobar2000 mobile', 'foobar2000', 'mobile', 90, 'phone', array['foobar2000']::text[], 'audio'),
+        ('bigscreen', 'Bigscreen', 'Bigscreen', 'software', 90, 'app', array['bigscreen']::text[], 'desktop'),
+        ('skybox-vr', 'Skybox VR Player', 'Skybox', 'software', 90, 'app', array['skybox']::text[], 'desktop'),
+        ('kalemsoft', 'KalemSoft Media Player', 'KalemSoft', 'mobile', 80, 'phone', array['kalemsoft']::text[], 'legacy'),
+        ('nokia-n900', 'Nokia N900', 'Nokia', 'mobile', 70, 'phone', array['nokia','n900']::text[], 'legacy'),
+        ('bush-freeview', 'Bush Freeview Set Top Box', 'Bush', 'settop', 80, 'settop', array['bush','freeview']::text[], 'legacy'),
+        ('directv', 'DirecTV', 'DirecTV', 'settop', 80, 'settop', array['directv']::text[], 'legacy'),
+        ('fetch-tv', 'Fetch TV', 'Fetch', 'settop', 80, 'settop', array['fetch tv']::text[], 'tv'),
+        ('freebox', 'Freebox', 'Freebox', 'settop', 80, 'settop', array['freebox']::text[], 'tv'),
+        ('netgem-n7700', 'Netgem N7700', 'Netgem', 'settop', 80, 'settop', array['netgem','n7700']::text[], 'legacy'),
+        ('telstra-tbox', 'Telstra T-Box', 'Telstra', 'settop', 80, 'settop', array['telstra','t-box']::text[], 'legacy'),
+        ('thomson-u3', 'Thomson U3 Series', 'Thomson', 'settop', 80, 'settop', array['thomson','u3']::text[], 'legacy'),
+        ('cambridge-azur-bd', 'Azur BD', 'Cambridge Audio', 'bluray', 85, 'disc', array['azur','cambridge']::text[], 'legacy'),
+        ('denon-avr', 'Denon AVR', 'Denon', 'receiver', 85, 'receiver', array['denon','avr']::text[], 'receiver'),
+        ('onkyo-tx', 'Onkyo TX Receiver', 'Onkyo', 'receiver', 85, 'receiver', array['onkyo','tx-nr']::text[], 'receiver'),
+        ('yamaha-av-receiver', 'Yamaha AV Receiver', 'Yamaha', 'receiver', 85, 'receiver', array['yamaha','rx-','r-n']::text[], 'receiver'),
+        ('dlink-dsm510', 'D-Link DSM-510', 'D-Link', 'settop', 80, 'settop', array['d-link','dsm-510']::text[], 'legacy'),
+        ('netgear-neotv', 'Netgear NeoTV', 'Netgear', 'settop', 80, 'settop', array['netgear','neotv']::text[], 'legacy'),
+        ('wd-tv-live', 'WD TV Live', 'Western Digital', 'settop', 85, 'settop', array['wd tv','western digital']::text[], 'legacy'),
+        ('realtek', 'Realtek', 'Realtek', 'settop', 80, 'settop', array['realtek']::text[], 'legacy'),
+        ('freecom-musicpal', 'Freecom MusicPal', 'Freecom', 'speaker', 75, 'speaker', array['freecom','musicpal']::text[], 'audio'),
+        ('hama-ir320', 'Hama IR320', 'Hama', 'speaker', 75, 'speaker', array['hama','ir320']::text[], 'audio'),
+        ('wiim', 'WiiM', 'Linkplay', 'speaker', 85, 'speaker', array['wiim','linkplay']::text[], 'audio'),
+        ('linn-app', 'Linn App', 'Linn', 'control_point', 80, 'receiver', array['linn']::text[], 'audio'),
+        ('logitech-squeezebox', 'Logitech Squeezebox', 'Logitech', 'speaker', 80, 'speaker', array['squeezebox','logitech']::text[], 'audio'),
+        ('lumin', 'Lumin', 'Lumin', 'receiver', 85, 'receiver', array['lumin']::text[], 'audio'),
+        ('naim-muso', 'Naim Mu-So', 'Naim', 'speaker', 85, 'speaker', array['naim','mu-so']::text[], 'audio'),
+        ('technisat-s1', 'Technisat S1+', 'Technisat', 'settop', 80, 'settop', array['technisat','s1']::text[], 'legacy'),
+        ('hisense-tv', 'Hisense TV', 'Hisense', 'tv', 95, 'tv', array['hisense','k680']::text[], 'tv'),
+        ('sharp-aquos', 'Sharp Aquos', 'Sharp', 'tv', 95, 'tv', array['sharp','aquos']::text[], 'tv'),
+        ('telefunken-tv', 'Telefunken TV', 'Telefunken', 'tv', 90, 'tv', array['telefunken']::text[], 'tv'),
+        ('vizio-tv', 'Vizio Smart TV', 'Vizio', 'tv', 95, 'tv', array['vizio']::text[], 'tv'),
+        ('videoweb-tv', 'VideoWeb TV', 'VideoWeb', 'tv', 80, 'tv', array['videoweb']::text[], 'legacy'),
+        ('lg-bluray', 'LG Blu-ray', 'LG', 'bluray', 105, 'disc', array['lg','blu-ray','bdp','bp550']::text[], 'legacy'),
+        ('lg-legacy-tv', 'LG Legacy TV', 'LG', 'tv', 105, 'tv', array['lg','netcast','la6200','lm620']::text[], 'legacy'),
+        ('lg-nano-tv', 'LG NANO TV', 'LG', 'tv', 125, 'tv', array['lg','nano']::text[], 'tv'),
+        ('lg-oled-2022', 'LG OLED 2022', 'LG', 'tv', 140, 'tv', array['lg','oled','2022']::text[], 'tv'),
+        ('windows-media-player', 'Windows Media Player', 'Microsoft', 'desktop', 95, 'windows', array['windows media player','wmplayer']::text[], 'desktop'),
+        ('xbox-360', 'Xbox 360', 'Microsoft', 'console', 95, 'gamepad', array['xbox 360']::text[], 'legacy'),
+        ('xbox-one', 'Xbox One', 'Microsoft', 'console', 105, 'gamepad', array['xbox one','xbox']::text[], 'console'),
+        ('anycast', 'AnyCast', 'AnyCast', 'cast', 85, 'cast', array['anycast']::text[], 'hls'),
+        ('miracast', 'Miracast M806', 'Miracast', 'cast', 85, 'cast', array['miracast','m806']::text[], 'hls'),
+        ('mirascreen', 'Mirascreen', 'Mirascreen', 'cast', 85, 'cast', array['mirascreen']::text[], 'hls'),
+        ('oppo-bdp', 'OPPO BDP', 'OPPO', 'bluray', 95, 'disc', array['oppo','bdp']::text[], 'legacy'),
+        ('pioneer-bdp', 'Pioneer BDP', 'Pioneer', 'bluray', 90, 'disc', array['pioneer','bdp']::text[], 'legacy'),
+        ('pioneer-kuro', 'Pioneer Kuro', 'Pioneer', 'tv', 90, 'tv', array['pioneer','kuro']::text[], 'legacy'),
+        ('panasonic-bdt', 'Panasonic BDT', 'Panasonic', 'bluray', 95, 'disc', array['panasonic','bdt']::text[], 'legacy'),
+        ('panasonic-dmr', 'Panasonic DMR', 'Panasonic', 'recorder', 95, 'disc', array['panasonic','dmr']::text[], 'legacy'),
+        ('panasonic-tv', 'Panasonic TV', 'Panasonic', 'tv', 95, 'tv', array['panasonic','viera']::text[], 'tv'),
+        ('panasonic-viera-modern', 'Panasonic Viera Modern TV', 'Panasonic', 'tv', 115, 'tv', array['panasonic','gx800','hz1500']::text[], 'tv'),
+        ('philips-android-tv', 'Philips Android TV', 'Philips', 'tv', 110, 'tv', array['philips','android tv']::text[], 'tv'),
+        ('philips-tv', 'Philips TV', 'Philips', 'tv', 95, 'tv', array['philips','pus','6500']::text[], 'tv'),
+        ('philips-streamium', 'Philips Streamium', 'Philips', 'speaker', 80, 'speaker', array['philips','streamium']::text[], 'audio'),
+        ('popcorn-hour', 'Popcorn Hour', 'Popcorn Hour', 'settop', 85, 'settop', array['popcorn hour']::text[], 'legacy'),
+        ('showtime-player', 'Showtime Player', 'Showtime', 'settop', 85, 'settop', array['showtime']::text[], 'legacy'),
+        ('roku-legacy', 'Roku DVP', 'Roku', 'settop', 85, 'settop', array['roku dvp','roku 3']::text[], 'legacy'),
+        ('roku-tv', 'Roku TV', 'Roku', 'tv', 100, 'tv', array['roku tv']::text[], 'tv'),
+        ('roku-ultra', 'Roku Ultra', 'Roku', 'settop', 110, 'settop', array['roku ultra','roku 4']::text[], 'hls'),
+        ('samsung-bluray', 'Samsung Blu-ray', 'Samsung', 'bluray', 100, 'disc', array['samsung','bd-c6800','h6500']::text[], 'legacy'),
+        ('samsung-soundbar', 'Samsung Soundbar', 'Samsung', 'speaker', 95, 'speaker', array['samsung','soundbar']::text[], 'audio'),
+        ('samsung-mobile', 'Samsung Mobile', 'Samsung', 'mobile', 95, 'phone', array['samsung','galaxy','note tab']::text[], 'mobile'),
+        ('samsung-tv-legacy', 'Samsung TV Legacy', 'Samsung', 'tv', 105, 'tv', array['samsung','wiselink','series']::text[], 'legacy'),
+        ('samsung-tv-modern', 'Samsung TV Modern', 'Samsung', 'tv', 125, 'tv', array['samsung','tizen','qled','the frame']::text[], 'tv'),
+        ('samsung-neo-qled', 'Samsung Neo QLED 8K', 'Samsung', 'tv', 140, 'tv', array['samsung','neo qled','8k']::text[], 'tv'),
+        ('sony-bluray', 'Sony Blu-ray', 'Sony', 'bluray', 100, 'disc', array['sony','blu-ray','bdp','ubp']::text[], 'legacy'),
+        ('sony-playstation', 'PlayStation', 'Sony', 'console', 110, 'gamepad', array['playstation','ps3','ps4','vita']::text[], 'console'),
+        ('sony-mobile', 'Sony Xperia', 'Sony', 'mobile', 90, 'phone', array['sony','xperia']::text[], 'mobile'),
+        ('sony-receiver', 'Sony Receiver', 'Sony', 'receiver', 95, 'receiver', array['sony','str-dn','str-da']::text[], 'receiver'),
+        ('sony-bravia-modern', 'Sony Bravia Modern', 'Sony', 'tv', 125, 'tv', array['sony','bravia','xbr','xr']::text[], 'tv')
+)
+insert into app.dlna_renderer_profile_defaults (
+    id, name, vendor, device_class, source_version, enabled, priority, icon_key, notes,
+    match_rules, capability_rules, delivery_settings, dlna_flags, subtitle_rules,
+    artwork_rules, metadata_rules, quirks
+)
+select
+    id,
+    name,
+    vendor,
+    device_class,
+    1,
+    true,
+    priority,
+    icon_key,
+    'Mema clean-room seeded profile for the ' || name || ' renderer family.',
+    jsonb_build_object(
+        'mode', 'weighted',
+        'minScore', 3,
+        'tokens', (
+            select jsonb_agg(jsonb_build_object('field', 'any', 'contains', token, 'score', 5))
+            from unnest(match_tokens) as token
+        )
+    ),
+    case profile_kind
+        when 'audio' then '{"containers":["mp3","flac","wav","aac"],"videoCodecs":[],"audioCodecs":["mp3","flac","aac","pcm"],"maxResolution":"audio"}'::jsonb
+        when 'hls' then '{"containers":["mp4","webm"],"videoCodecs":["h264","vp9","av1"],"audioCodecs":["aac","mp3","opus"],"maxResolution":"2160p"}'::jsonb
+        when 'legacy' then '{"containers":["mp4","avi","mpegts"],"videoCodecs":["h264","mpeg2video"],"audioCodecs":["aac","mp3","ac3"],"maxResolution":"1080p"}'::jsonb
+        when 'mobile' then '{"containers":["mp4","mkv"],"videoCodecs":["h264","hevc"],"audioCodecs":["aac","mp3"],"maxResolution":"1080p"}'::jsonb
+        when 'receiver' then '{"containers":["mp3","flac","wav","aac"],"videoCodecs":[],"audioCodecs":["mp3","flac","aac","pcm"],"maxResolution":"audio"}'::jsonb
+        else '{"containers":["mp4","mkv","mpegts"],"videoCodecs":["h264","hevc","mpeg2video"],"audioCodecs":["aac","mp3","ac3","eac3"],"maxResolution":"2160p"}'::jsonb
+    end,
+    case profile_kind
+        when 'hls' then '{"preferHls":true,"avoidHls":false,"directPlay":true,"transcode":true,"streamingHeaders":true}'::jsonb
+        when 'audio' then '{"preferHls":false,"avoidHls":true,"directPlay":true,"transcode":true,"streamingHeaders":true}'::jsonb
+        when 'receiver' then '{"preferHls":false,"avoidHls":true,"directPlay":true,"transcode":true,"streamingHeaders":true}'::jsonb
+        else '{"preferHls":false,"avoidHls":false,"directPlay":true,"transcode":true,"streamingHeaders":true}'::jsonb
+    end,
+    case profile_kind
+        when 'hls' then '{"protocolInfo":["http-get:*:application/vnd.apple.mpegurl:*","http-get:*:video/mp4:*"],"operations":"01","conversionIndicator":"0"}'::jsonb
+        when 'audio' then '{"protocolInfo":["http-get:*:audio/mpeg:*","http-get:*:audio/flac:*"],"operations":"01","conversionIndicator":"0"}'::jsonb
+        when 'receiver' then '{"protocolInfo":["http-get:*:audio/mpeg:*","http-get:*:audio/flac:*"],"operations":"01","conversionIndicator":"0"}'::jsonb
+        else '{"protocolInfo":["http-get:*:video/mp4:*","http-get:*:video/x-matroska:*"],"operations":"01","conversionIndicator":"0"}'::jsonb
+    end,
+    case profile_kind
+        when 'audio' then '{"formats":[],"external":false,"embedded":false}'::jsonb
+        when 'receiver' then '{"formats":[],"external":false,"embedded":false}'::jsonb
+        else '{"formats":["srt","vtt"],"external":true,"embedded":true}'::jsonb
+    end,
+    '{"thumbnails":true,"jpeg":true,"png":false}'::jsonb,
+    '{"richMetadata":true,"albumArt":true}'::jsonb,
+    jsonb_build_object('disableEventing', false, 'extraHeaders', jsonb_build_object('TransferMode.DLNA.ORG', 'Streaming'), 'confidence', 'family')
+from catalog
+on conflict (id) do update
+set name = excluded.name,
+    vendor = excluded.vendor,
+    device_class = excluded.device_class,
+    source_version = excluded.source_version,
+    enabled = excluded.enabled,
+    priority = excluded.priority,
+    icon_key = excluded.icon_key,
+    notes = excluded.notes,
+    match_rules = excluded.match_rules,
+    capability_rules = excluded.capability_rules,
+    delivery_settings = excluded.delivery_settings,
+    dlna_flags = excluded.dlna_flags,
+    subtitle_rules = excluded.subtitle_rules,
+    artwork_rules = excluded.artwork_rules,
+    metadata_rules = excluded.metadata_rules,
+    quirks = excluded.quirks,
+    updated_at = now();
+
 insert into app.dlna_renderer_profiles (
     id,
     name,

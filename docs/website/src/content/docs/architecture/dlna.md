@@ -235,6 +235,13 @@ startup and only refreshes runtime profiles that have not been customized.
 Device overrides are stored separately and can bind a renderer profile by IP
 address or renderer UUID.
 
+The seeded defaults include clean-room family profiles for the UMS-supported
+catalog areas: generic fallback, Android/Chromecast, Apple/VLC clients,
+desktop apps, set-top boxes, receivers and speakers, LG, Microsoft/Xbox,
+Panasonic, Philips, Roku, Samsung, Sony, and other TV families. Broad family
+records use conservative capability rules and can be cloned or narrowed by
+users without copying upstream renderer configuration syntax.
+
 The DLNA manager loads those rows into an in-memory matcher cache. Manual UUID
 and IP overrides are checked before automatic matching. Automatic matching uses
 the structured seed rules, then falls back to the recent-client sticky IP path
