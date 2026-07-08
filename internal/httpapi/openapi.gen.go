@@ -1309,6 +1309,33 @@ func (e MediaRequestStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaRollupState.
+const (
+	MediaRollupStateDownloaded  MediaRollupState = "downloaded"
+	MediaRollupStateDownloading MediaRollupState = "downloading"
+	MediaRollupStateMissing     MediaRollupState = "missing"
+	MediaRollupStatePartial     MediaRollupState = "partial"
+	MediaRollupStateUpgradeable MediaRollupState = "upgradeable"
+)
+
+// Valid indicates whether the value is a known member of the MediaRollupState enum.
+func (e MediaRollupState) Valid() bool {
+	switch e {
+	case MediaRollupStateDownloaded:
+		return true
+	case MediaRollupStateDownloading:
+		return true
+	case MediaRollupStateMissing:
+		return true
+	case MediaRollupStatePartial:
+		return true
+	case MediaRollupStateUpgradeable:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaSearchSourceType.
 const (
 	Library  MediaSearchSourceType = "library"
@@ -1612,6 +1639,60 @@ func (e SystemLogLevel) Valid() bool {
 	}
 }
 
+// Defines values for TargetCandidateType.
+const (
+	TargetCandidateTypeAudioTrack       TargetCandidateType = "audio_track"
+	TargetCandidateTypeEmbeddedSubtitle TargetCandidateType = "embedded_subtitle"
+	TargetCandidateTypeExternalSubtitle TargetCandidateType = "external_subtitle"
+	TargetCandidateTypeFileProvenance   TargetCandidateType = "file_provenance"
+	TargetCandidateTypeVideoTrack       TargetCandidateType = "video_track"
+)
+
+// Valid indicates whether the value is a known member of the TargetCandidateType enum.
+func (e TargetCandidateType) Valid() bool {
+	switch e {
+	case TargetCandidateTypeAudioTrack:
+		return true
+	case TargetCandidateTypeEmbeddedSubtitle:
+		return true
+	case TargetCandidateTypeExternalSubtitle:
+		return true
+	case TargetCandidateTypeFileProvenance:
+		return true
+	case TargetCandidateTypeVideoTrack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TargetCandidateVisualState.
+const (
+	TargetCandidateVisualStateMatching           TargetCandidateVisualState = "matching"
+	TargetCandidateVisualStateMissingPlaceholder TargetCandidateVisualState = "missing_placeholder"
+	TargetCandidateVisualStatePartial            TargetCandidateVisualState = "partial"
+	TargetCandidateVisualStatePendingOperation   TargetCandidateVisualState = "pending_operation"
+	TargetCandidateVisualStateUnwanted           TargetCandidateVisualState = "unwanted"
+)
+
+// Valid indicates whether the value is a known member of the TargetCandidateVisualState enum.
+func (e TargetCandidateVisualState) Valid() bool {
+	switch e {
+	case TargetCandidateVisualStateMatching:
+		return true
+	case TargetCandidateVisualStateMissingPlaceholder:
+		return true
+	case TargetCandidateVisualStatePartial:
+		return true
+	case TargetCandidateVisualStatePendingOperation:
+		return true
+	case TargetCandidateVisualStateUnwanted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TargetOperationType.
 const (
 	TargetOperationTypeAudioSourcing      TargetOperationType = "audio_sourcing"
@@ -1648,6 +1729,60 @@ func (e TargetOperationType) Valid() bool {
 	case TargetOperationTypeSubtitleExtraction:
 		return true
 	case TargetOperationTypeVideoTranscode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TargetSatisfactionState.
+const (
+	TargetSatisfactionStateBlocked     TargetSatisfactionState = "blocked"
+	TargetSatisfactionStateFailed      TargetSatisfactionState = "failed"
+	TargetSatisfactionStateMissing     TargetSatisfactionState = "missing"
+	TargetSatisfactionStatePartial     TargetSatisfactionState = "partial"
+	TargetSatisfactionStatePending     TargetSatisfactionState = "pending"
+	TargetSatisfactionStateSatisfied   TargetSatisfactionState = "satisfied"
+	TargetSatisfactionStateUpgradeable TargetSatisfactionState = "upgradeable"
+)
+
+// Valid indicates whether the value is a known member of the TargetSatisfactionState enum.
+func (e TargetSatisfactionState) Valid() bool {
+	switch e {
+	case TargetSatisfactionStateBlocked:
+		return true
+	case TargetSatisfactionStateFailed:
+		return true
+	case TargetSatisfactionStateMissing:
+		return true
+	case TargetSatisfactionStatePartial:
+		return true
+	case TargetSatisfactionStatePending:
+		return true
+	case TargetSatisfactionStateSatisfied:
+		return true
+	case TargetSatisfactionStateUpgradeable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TargetSatisfactionType.
+const (
+	TargetSatisfactionTypeAudio    TargetSatisfactionType = "audio"
+	TargetSatisfactionTypeSubtitle TargetSatisfactionType = "subtitle"
+	TargetSatisfactionTypeVideo    TargetSatisfactionType = "video"
+)
+
+// Valid indicates whether the value is a known member of the TargetSatisfactionType enum.
+func (e TargetSatisfactionType) Valid() bool {
+	switch e {
+	case TargetSatisfactionTypeAudio:
+		return true
+	case TargetSatisfactionTypeSubtitle:
+		return true
+	case TargetSatisfactionTypeVideo:
 		return true
 	default:
 		return false
@@ -1693,6 +1828,27 @@ func (e UserRole) Valid() bool {
 	case UserRoleAdmin:
 		return true
 	case UserRoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WantedRowKind.
+const (
+	WantedRowKindCustomFormatUpgrade WantedRowKind = "custom_format_upgrade"
+	WantedRowKindMedia               WantedRowKind = "media"
+	WantedRowKindTarget              WantedRowKind = "target"
+)
+
+// Valid indicates whether the value is a known member of the WantedRowKind enum.
+func (e WantedRowKind) Valid() bool {
+	switch e {
+	case WantedRowKindCustomFormatUpgrade:
+		return true
+	case WantedRowKindMedia:
+		return true
+	case WantedRowKindTarget:
 		return true
 	default:
 		return false
@@ -2915,9 +3071,11 @@ type MediaFileInfo struct {
 	Chapters             *[]MediaFileChapter            `json:"chapters,omitempty"`
 	OtherFiles           *[]MediaFileOtherFile          `json:"otherFiles,omitempty"`
 	Path                 string                         `json:"path"`
+	Rollup               *MediaRollupSummary            `json:"rollup,omitempty"`
 	SizeBytes            *int64                         `json:"sizeBytes,omitempty"`
 	Status               MediaFileInfoStatus            `json:"status"`
 	SubtitleSatisfaction *MediaFileSubtitleSatisfaction `json:"subtitleSatisfaction,omitempty"`
+	TargetSatisfaction   *TargetSatisfactionSummary     `json:"targetSatisfaction,omitempty"`
 	Tracks               *[]MediaFileTrack              `json:"tracks,omitempty"`
 }
 
@@ -3073,6 +3231,7 @@ type MediaItem struct {
 	QualityProfileName  *string                      `json:"qualityProfileName,omitempty"`
 	Recommendations     *[]MediaSearchResult         `json:"recommendations,omitempty"`
 	ReleaseDate         *string                      `json:"releaseDate,omitempty"`
+	Rollup              *MediaRollupSummary          `json:"rollup,omitempty"`
 	RuntimeMinutes      *int32                       `json:"runtimeMinutes,omitempty"`
 	SeasonCount         *int32                       `json:"seasonCount,omitempty"`
 	Seasons             *[]MediaMetadataSeason       `json:"seasons,omitempty"`
@@ -3080,6 +3239,7 @@ type MediaItem struct {
 	Similar             *[]MediaSearchResult         `json:"similar,omitempty"`
 	Status              MediaItemStatus              `json:"status"`
 	Tags                *[]string                    `json:"tags,omitempty"`
+	TargetSatisfaction  *TargetSatisfactionSummary   `json:"targetSatisfaction,omitempty"`
 	Title               string                       `json:"title"`
 	Type                MediaType                    `json:"type"`
 	UpdatedAt           time.Time                    `json:"updatedAt"`
@@ -3493,6 +3653,16 @@ type MediaRequestListResponse struct {
 
 // MediaRequestStatus defines model for MediaRequestStatus.
 type MediaRequestStatus string
+
+// MediaRollupState defines model for MediaRollupState.
+type MediaRollupState string
+
+// MediaRollupSummary defines model for MediaRollupSummary.
+type MediaRollupSummary struct {
+	Reasons      []string          `json:"reasons"`
+	State        MediaRollupState  `json:"state"`
+	TargetCounts TargetStateCounts `json:"targetCounts"`
+}
 
 // MediaSearchGroup defines model for MediaSearchGroup.
 type MediaSearchGroup struct {
@@ -4217,8 +4387,69 @@ type TagRequest struct {
 	Name string `json:"name"`
 }
 
+// TargetCandidateType defines model for TargetCandidateType.
+type TargetCandidateType string
+
+// TargetCandidateVisualState defines model for TargetCandidateVisualState.
+type TargetCandidateVisualState string
+
+// TargetOperationMetadata defines model for TargetOperationMetadata.
+type TargetOperationMetadata struct {
+	Automatic bool                `json:"automatic"`
+	JobId     *openapi_types.UUID `json:"jobId,omitempty"`
+	Manual    bool                `json:"manual"`
+	Reason    string              `json:"reason"`
+	Type      TargetOperationType `json:"type"`
+}
+
 // TargetOperationType defines model for TargetOperationType.
 type TargetOperationType string
+
+// TargetSatisfactionCandidate defines model for TargetSatisfactionCandidate.
+type TargetSatisfactionCandidate struct {
+	Id            string                     `json:"id"`
+	LanguageId    *string                    `json:"languageId,omitempty"`
+	Operation     *TargetOperationMetadata   `json:"operation,omitempty"`
+	TargetIds     []string                   `json:"targetIds"`
+	Type          TargetCandidateType        `json:"type"`
+	UnwantedRules *[]string                  `json:"unwantedRules,omitempty"`
+	VisualState   TargetCandidateVisualState `json:"visualState"`
+}
+
+// TargetSatisfactionState defines model for TargetSatisfactionState.
+type TargetSatisfactionState string
+
+// TargetSatisfactionSummary defines model for TargetSatisfactionSummary.
+type TargetSatisfactionSummary struct {
+	Candidates []TargetSatisfactionCandidate `json:"candidates"`
+	Targets    []TargetSatisfactionTarget    `json:"targets"`
+}
+
+// TargetSatisfactionTarget defines model for TargetSatisfactionTarget.
+type TargetSatisfactionTarget struct {
+	Id                string                   `json:"id"`
+	LanguageId        *string                  `json:"languageId,omitempty"`
+	MediaFileId       *openapi_types.UUID      `json:"mediaFileId,omitempty"`
+	MediaItemId       openapi_types.UUID       `json:"mediaItemId"`
+	Reasons           []string                 `json:"reasons"`
+	RequiredOperation *TargetOperationMetadata `json:"requiredOperation,omitempty"`
+	State             TargetSatisfactionState  `json:"state"`
+	Type              TargetSatisfactionType   `json:"type"`
+}
+
+// TargetSatisfactionType defines model for TargetSatisfactionType.
+type TargetSatisfactionType string
+
+// TargetStateCounts defines model for TargetStateCounts.
+type TargetStateCounts struct {
+	Blocked     int32 `json:"blocked"`
+	Failed      int32 `json:"failed"`
+	Missing     int32 `json:"missing"`
+	Partial     int32 `json:"partial"`
+	Pending     int32 `json:"pending"`
+	Satisfied   int32 `json:"satisfied"`
+	Upgradeable int32 `json:"upgradeable"`
+}
 
 // ToolName defines model for ToolName.
 type ToolName string
@@ -4283,6 +4514,33 @@ type UserUpdateRequest struct {
 	Password *string  `json:"password,omitempty"`
 	Role     UserRole `json:"role"`
 	Username string   `json:"username"`
+}
+
+// WantedRow defines model for WantedRow.
+type WantedRow struct {
+	CurrentScore      *int32                   `json:"currentScore,omitempty"`
+	EpisodeNumber     *int32                   `json:"episodeNumber,omitempty"`
+	FileLabel         *string                  `json:"fileLabel,omitempty"`
+	FilePath          *string                  `json:"filePath,omitempty"`
+	Id                string                   `json:"id"`
+	Kind              WantedRowKind            `json:"kind"`
+	LanguageId        *string                  `json:"languageId,omitempty"`
+	MediaItemId       openapi_types.UUID       `json:"mediaItemId"`
+	MediaTitle        string                   `json:"mediaTitle"`
+	MediaType         MediaType                `json:"mediaType"`
+	RequiredOperation *TargetOperationMetadata `json:"requiredOperation,omitempty"`
+	SeasonNumber      *int32                   `json:"seasonNumber,omitempty"`
+	TargetScore       *int32                   `json:"targetScore,omitempty"`
+	TargetState       *TargetSatisfactionState `json:"targetState,omitempty"`
+	TargetType        *TargetSatisfactionType  `json:"targetType,omitempty"`
+}
+
+// WantedRowKind defines model for WantedRowKind.
+type WantedRowKind string
+
+// WantedRowListResponse defines model for WantedRowListResponse.
+type WantedRowListResponse struct {
+	Rows []WantedRow `json:"rows"`
 }
 
 // MediaFilePath defines model for MediaFilePath.
@@ -4896,6 +5154,9 @@ type ServerInterface interface {
 	// Search for a movie or series candidate
 	// (POST /media/search)
 	SearchMedia(w http.ResponseWriter, r *http.Request)
+	// List wanted media, target, and custom-format rows
+	// (GET /media/wanted)
+	ListWantedRows(w http.ResponseWriter, r *http.Request)
 	// Get provider person details and appearances
 	// (GET /people/{provider}/{personId})
 	GetPersonDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, personId string)
@@ -5640,6 +5901,12 @@ func (_ Unimplemented) ApproveMediaRequest(w http.ResponseWriter, r *http.Reques
 // Search for a movie or series candidate
 // (POST /media/search)
 func (_ Unimplemented) SearchMedia(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List wanted media, target, and custom-format rows
+// (GET /media/wanted)
+func (_ Unimplemented) ListWantedRows(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9125,6 +9392,26 @@ func (siw *ServerInterfaceWrapper) SearchMedia(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SearchMedia(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWantedRows operation middleware
+func (siw *ServerInterfaceWrapper) ListWantedRows(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWantedRows(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12649,6 +12936,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/search", wrapper.SearchMedia)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/wanted", wrapper.ListWantedRows)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/people/{provider}/{personId}", wrapper.GetPersonDetails)

@@ -136,6 +136,14 @@ worker or storage path used by automatic execution. Automatic scheduling flags
 do not remove those manual actions; UI surfaces can disable only
 context-specific invalid actions and must show the catalog blocked reason.
 
+The API contract exposes rollup and satisfaction data separately. Media item
+and media file payloads can carry a `rollup` summary with the aggregate state,
+target-state counts, and reasons, plus a `targetSatisfaction` summary with
+target rows and candidate rows. `/media/wanted` returns a normalized wanted-row
+list that can contain missing media rows, target rows, and custom-format upgrade
+rows with parent media, file, season, episode, state, score, and operation
+context.
+
 ## Canonical Target And Candidate States
 
 Use a normalized state list for each video, audio, and subtitle target. Keep

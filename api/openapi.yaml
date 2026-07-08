@@ -815,6 +815,23 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /media/wanted:
+    get:
+      operationId: listWantedRows
+      tags:
+        - Media
+      summary: List wanted media, target, and custom-format rows
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Wanted rows
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WantedRowListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /media/requests:
     get:
       operationId: listMediaRequests
@@ -5581,6 +5598,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/MediaComponentAssemblyRun"
+            rollup:
+              $ref: "#/components/schemas/MediaRollupSummary"
+            targetSatisfaction:
+              $ref: "#/components/schemas/TargetSatisfactionSummary"
             metadataFilePaths:
               type: array
               items:
@@ -5866,6 +5887,10 @@ components:
             $ref: "#/components/schemas/MediaFileOtherFile"
         subtitleSatisfaction:
           $ref: "#/components/schemas/MediaFileSubtitleSatisfaction"
+        rollup:
+          $ref: "#/components/schemas/MediaRollupSummary"
+        targetSatisfaction:
+          $ref: "#/components/schemas/TargetSatisfactionSummary"
     MediaFileOtherFile:
       type: object
       additionalProperties: false
@@ -7558,6 +7583,149 @@ components:
           type: array
           items:
             type: string
+    TargetStateCounts:
+      type: object
+      additionalProperties: false
+      required:
+        - missing
+        - partial
+        - pending
+        - satisfied
+        - upgradeable
+        - blocked
+        - failed
+      properties:
+        missing:
+          type: integer
+          format: int32
+        partial:
+          type: integer
+          format: int32
+        pending:
+          type: integer
+          format: int32
+        satisfied:
+          type: integer
+          format: int32
+        upgradeable:
+          type: integer
+          format: int32
+        blocked:
+          type: integer
+          format: int32
+        failed:
+          type: integer
+          format: int32
+    MediaRollupState:
+      type: string
+      enum:
+        - missing
+        - downloading
+        - partial
+        - downloaded
+        - upgradeable
+      x-enum-varnames:
+        - MediaRollupStateMissing
+        - MediaRollupStateDownloading
+        - MediaRollupStatePartial
+        - MediaRollupStateDownloaded
+        - MediaRollupStateUpgradeable
+    MediaRollupSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - state
+        - targetCounts
+        - reasons
+      properties:
+        state:
+          $ref: "#/components/schemas/MediaRollupState"
+        targetCounts:
+          $ref: "#/components/schemas/TargetStateCounts"
+        reasons:
+          type: array
+          items:
+            type: string
+    TargetSatisfactionSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - targets
+        - candidates
+      properties:
+        targets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TargetSatisfactionTarget"
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/TargetSatisfactionCandidate"
+    WantedRowKind:
+      type: string
+      enum:
+        - media
+        - target
+        - custom_format_upgrade
+      x-enum-varnames:
+        - WantedRowKindMedia
+        - WantedRowKindTarget
+        - WantedRowKindCustomFormatUpgrade
+    WantedRow:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - kind
+        - mediaItemId
+        - mediaTitle
+        - mediaType
+      properties:
+        id:
+          type: string
+        kind:
+          $ref: "#/components/schemas/WantedRowKind"
+        mediaItemId:
+          type: string
+          format: uuid
+        mediaTitle:
+          type: string
+        mediaType:
+          $ref: "#/components/schemas/MediaType"
+        seasonNumber:
+          type: integer
+          format: int32
+        episodeNumber:
+          type: integer
+          format: int32
+        fileLabel:
+          type: string
+        filePath:
+          type: string
+        targetType:
+          $ref: "#/components/schemas/TargetSatisfactionType"
+        languageId:
+          type: string
+        targetState:
+          $ref: "#/components/schemas/TargetSatisfactionState"
+        requiredOperation:
+          $ref: "#/components/schemas/TargetOperationMetadata"
+        currentScore:
+          type: integer
+          format: int32
+        targetScore:
+          type: integer
+          format: int32
+    WantedRowListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - rows
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/WantedRow"
     MediaProfileCustomFormatScore:
       type: object
       additionalProperties: false

@@ -374,6 +374,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/wanted': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List wanted media, target, and custom-format rows */
+		get: operations['listWantedRows'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/requests': {
 		parameters: {
 			query?: never;
@@ -2898,6 +2915,8 @@ export interface components {
 			externalSubtitles?: components['schemas']['MediaItemSubtitle'][];
 			componentSources?: components['schemas']['MediaComponentSource'][];
 			assemblyRuns?: components['schemas']['MediaComponentAssemblyRun'][];
+			rollup?: components['schemas']['MediaRollupSummary'];
+			targetSatisfaction?: components['schemas']['TargetSatisfactionSummary'];
 			metadataFilePaths: string[];
 			/** Format: date-time */
 			createdAt: string;
@@ -3014,6 +3033,8 @@ export interface components {
 			chapters?: components['schemas']['MediaFileChapter'][];
 			otherFiles?: components['schemas']['MediaFileOtherFile'][];
 			subtitleSatisfaction?: components['schemas']['MediaFileSubtitleSatisfaction'];
+			rollup?: components['schemas']['MediaRollupSummary'];
+			targetSatisfaction?: components['schemas']['TargetSatisfactionSummary'];
 		};
 		MediaFileOtherFile: {
 			type: components['schemas']['MediaFileOtherFileType'];
@@ -3662,6 +3683,60 @@ export interface components {
 			languageId?: string;
 			operation?: components['schemas']['TargetOperationMetadata'];
 			unwantedRules?: string[];
+		};
+		TargetStateCounts: {
+			/** Format: int32 */
+			missing: number;
+			/** Format: int32 */
+			partial: number;
+			/** Format: int32 */
+			pending: number;
+			/** Format: int32 */
+			satisfied: number;
+			/** Format: int32 */
+			upgradeable: number;
+			/** Format: int32 */
+			blocked: number;
+			/** Format: int32 */
+			failed: number;
+		};
+		/** @enum {string} */
+		MediaRollupState: 'missing' | 'downloading' | 'partial' | 'downloaded' | 'upgradeable';
+		MediaRollupSummary: {
+			state: components['schemas']['MediaRollupState'];
+			targetCounts: components['schemas']['TargetStateCounts'];
+			reasons: string[];
+		};
+		TargetSatisfactionSummary: {
+			targets: components['schemas']['TargetSatisfactionTarget'][];
+			candidates: components['schemas']['TargetSatisfactionCandidate'][];
+		};
+		/** @enum {string} */
+		WantedRowKind: 'media' | 'target' | 'custom_format_upgrade';
+		WantedRow: {
+			id: string;
+			kind: components['schemas']['WantedRowKind'];
+			/** Format: uuid */
+			mediaItemId: string;
+			mediaTitle: string;
+			mediaType: components['schemas']['MediaType'];
+			/** Format: int32 */
+			seasonNumber?: number;
+			/** Format: int32 */
+			episodeNumber?: number;
+			fileLabel?: string;
+			filePath?: string;
+			targetType?: components['schemas']['TargetSatisfactionType'];
+			languageId?: string;
+			targetState?: components['schemas']['TargetSatisfactionState'];
+			requiredOperation?: components['schemas']['TargetOperationMetadata'];
+			/** Format: int32 */
+			currentScore?: number;
+			/** Format: int32 */
+			targetScore?: number;
+		};
+		WantedRowListResponse: {
+			rows: components['schemas']['WantedRow'][];
 		};
 		MediaProfileCustomFormatScore: {
 			/** Format: uuid */
@@ -5596,6 +5671,27 @@ export interface operations {
 			};
 			401: components['responses']['Unauthorized'];
 			403: components['responses']['Forbidden'];
+		};
+	};
+	listWantedRows: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Wanted rows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['WantedRowListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
 		};
 	};
 	listMediaRequests: {

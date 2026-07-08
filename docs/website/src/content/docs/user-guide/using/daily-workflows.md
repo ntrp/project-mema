@@ -31,6 +31,11 @@ releases that satisfy the language targets.
 Use manual search when automatic search does not find what you want, when you
 want to compare indexers, or when you want to grab a specific release.
 
+Wanted can show missing media, specific unsatisfied profile targets, and
+custom-format upgrade rows. Target rows include the parent media and file
+context, the language or target type when relevant, and the operation that can
+move the item forward.
+
 ## Grab And Download
 
 When you grab a release, the app sends it to the matching download client.

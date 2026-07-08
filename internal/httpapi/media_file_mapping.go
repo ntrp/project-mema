@@ -45,6 +45,10 @@ func mediaFileInfoResponses(
 				file.OtherFiles = &otherFiles
 			}
 		}
+		rollup := mediaFileRollupSummary(file.Status)
+		targetSatisfaction := targetSatisfactionSummaryResponse(nil, nil)
+		file.Rollup = &rollup
+		file.TargetSatisfaction = &targetSatisfaction
 		files = append(files, file)
 	}
 	return &files
