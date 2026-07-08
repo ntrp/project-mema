@@ -46,6 +46,10 @@
 	const audioStatus = $derived(audioSatisfaction(row));
 	const subtitleStatus = $derived(subtitleSatisfaction(row));
 	const upgradeVariant = $derived(row.upgrade.state === 'upgradeable' ? 'secondary' : 'outline');
+	const rollupLabel = $derived(row.rollup?.state ? rollupStateLabel(row.rollup.state) : undefined);
+	const rollupReasons = $derived(
+		row.rollup?.reasons?.length ? row.rollup.reasons : row.upgrade.reasons
+	);
 
 	function toggleDetails() {
 		if (row.exists) {
@@ -57,6 +61,13 @@
 		if (!row.exists || (event.key !== 'Enter' && event.key !== ' ')) return;
 		event.preventDefault();
 		toggleDetails();
+	}
+
+	function rollupStateLabel(state: string) {
+		return state
+			.split('_')
+			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+			.join(' ');
 	}
 </script>
 
@@ -123,14 +134,14 @@
 							<Badge
 								{...props}
 								variant={upgradeVariant}
-								class="justify-self-start"
-								aria-label={row.upgrade.reasons.join(' ')}
+								class="justify-self-start capitalize"
+								aria-label={rollupReasons.join(' ')}
 							>
-								{row.upgrade.label}
+								{rollupLabel ?? row.upgrade.label}
 							</Badge>
 						{/snippet}
 					</Tooltip.Trigger>
-					<Tooltip.Content>{row.upgrade.reasons.join(', ')}</Tooltip.Content>
+					<Tooltip.Content>{rollupReasons.join(', ')}</Tooltip.Content>
 				</Tooltip.Root>
 			{/if}
 		</span>

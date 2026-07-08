@@ -4,6 +4,7 @@
 	import SystemJobHistorySection from './SystemJobHistorySection.svelte';
 	import SystemJobLogsDialog from './SystemJobLogsDialog.svelte';
 	import SystemJobsLiveSections from './SystemJobsLiveSections.svelte';
+	import ManualFulfillmentActionsPanel from './manual-actions/ManualFulfillmentActionsPanel.svelte';
 	import { SystemJobsController } from './systemJobsController.svelte';
 
 	const controller = new SystemJobsController();
@@ -84,6 +85,8 @@
 		onLogs={(execution) => void controller.openLogs(execution)}
 		onLoadMore={() => void controller.loadHistory(false)}
 	/>
+
+	<ManualFulfillmentActionsPanel />
 </div>
 
 <SystemJobAbortDialog

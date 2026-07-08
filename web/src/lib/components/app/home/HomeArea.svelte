@@ -72,7 +72,6 @@
 
 	const movies = $derived(mediaItems.filter((item) => item.type === 'movie'));
 	const series = $derived(mediaItems.filter((item) => item.type === 'serie'));
-	const wanted = $derived(mediaItems.filter((item) => item.status === 'missing'));
 	const selectedMediaItem = $derived(
 		selectedMediaItemId
 			? mediaItems.find(
@@ -162,7 +161,7 @@
 		{/if}
 	{:else if activeSection === 'wanted'}
 		<WantedMediaTable
-			items={wanted}
+			items={mediaItems}
 			{languages}
 			{searchingItemId}
 			{grabbingKey}

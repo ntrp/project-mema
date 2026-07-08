@@ -11,6 +11,11 @@ import {
 	relativePath
 } from '$lib/components/app/media/files/mediaFilePath';
 import {
+	episodeKey,
+	missingRow,
+	seasonNumberFromName
+} from '$lib/components/app/media/files/mediaFileMissing';
+import {
 	audioInfo,
 	matchToken,
 	qualityInfo
@@ -26,6 +31,12 @@ export type {
 	MediaFileGroup,
 	MediaFileRow
 } from '$lib/components/app/media/file-data/mediaFileRows';
+export {
+	episodeKey,
+	missingRow,
+	seasonNumberFromName
+} from '$lib/components/app/media/files/mediaFileMissing';
+
 export function mediaFileGroups(
 	item: MediaItem,
 	qualityProfiles: MediaFileProfileOption[] = []
@@ -119,6 +130,7 @@ export function fileRow(
 		chapters: info?.chapters ?? [],
 		otherFiles: info?.otherFiles ?? [],
 		subtitleSatisfaction: info?.subtitleSatisfaction,
+		rollup: info?.rollup,
 		externalSubtitles: externalSubtitlesForPath(item.externalSubtitles ?? [], path),
 		upgrade,
 		expectedAudioTargets: profile.expectedAudioTargets,
@@ -130,59 +142,6 @@ export function fileRow(
 		score: 0
 	};
 }
-export function missingRow(
-	key: string,
-	title: string,
-	seasonNumber?: number,
-	episodeNumber?: number
-): MediaFileRow {
-	return {
-		key,
-		relativePath: '-',
-		exists: false,
-		seasonNumber,
-		episodeNumber,
-		episodeTitle: title,
-		videoCodec: '-',
-		audioInfo: '-',
-		size: '-',
-		sizeBytes: undefined,
-		languages: '-',
-		quality: '-',
-		formats: [],
-		tracks: [],
-		chapters: [],
-		otherFiles: [],
-		externalSubtitles: [],
-		subtitleSatisfaction: {
-			state: 'missing',
-			mode: 'mixed',
-			wantedLanguages: [],
-			matchedLanguages: [],
-			missingLanguages: []
-		},
-		upgrade: { state: 'missing', label: 'Missing', reasons: ['File is missing'] },
-		expectedAudioTargets: [],
-		expectedLanguages: [],
-		expectedRequiredLanguages: [],
-		expectedSubtitleLanguages: [],
-		removeNonEnabledLanguages: false,
-		removeNonEnabledSubtitleLanguages: false,
-		score: 0
-	};
-}
-export function episodeKey(season?: number, episode?: number) {
-	return `${season ?? 0}:${episode ?? 0}`;
-}
-
-export function seasonNumberFromName(name: string) {
-	if (name.trim().toLowerCase() === 'specials') {
-		return 0;
-	}
-	const match = /(\d+)/.exec(name);
-	return match ? Number(match[1]) : undefined;
-}
-
 function externalSubtitlesForPath(subtitles: MediaItemSubtitle[], path: string) {
 	return subtitles.filter((subtitle) => sameSubtitleMediaBase(subtitle.filePath, path));
 }

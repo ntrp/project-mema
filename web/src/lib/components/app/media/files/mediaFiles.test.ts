@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
+import { fileRow, mediaFileGroups } from '$lib/components/app/media/files/mediaFiles';
 import {
 	episodeKey,
-	fileRow,
-	mediaFileGroups,
 	missingRow,
 	seasonNumberFromName
-} from '$lib/components/app/media/files/mediaFiles';
+} from '$lib/components/app/media/files/mediaFileMissing';
 import { qualityInfo } from '$lib/components/app/media/files/mediaFileParsing';
 import type { MediaItem } from '$lib/settings/types';
 
@@ -60,8 +59,8 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 			expectedLanguages: ['english'],
 			expectedRequiredLanguages: ['english'],
 			expectedSubtitleLanguages: ['english'],
-			removeUnwantedAudio: true,
-			removeUnwantedSubtitles: true
+			removeNonEnabledLanguages: true,
+			removeNonEnabledSubtitleLanguages: true
 		});
 		expect(row.tracks).toHaveLength(1);
 		expect(row.chapters).toHaveLength(1);

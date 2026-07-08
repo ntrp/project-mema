@@ -1,10 +1,10 @@
 import { activityForEpisode } from '$lib/components/app/activity/activityQueue';
+import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import {
 	episodeKey,
 	missingRow,
-	seasonNumberFromName,
-	type MediaFileRow
-} from '$lib/components/app/media/files/mediaFiles';
+	seasonNumberFromName
+} from '$lib/components/app/media/files/mediaFileMissing';
 import type { ReleaseSearchContext } from '$lib/components/app/media/release-search/releaseSearchQuery';
 import type { SeasonEpisodeFile } from '$lib/components/app/media/series/mediaSeasonSummary';
 import type {

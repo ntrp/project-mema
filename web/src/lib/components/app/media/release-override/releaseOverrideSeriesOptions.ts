@@ -1,4 +1,4 @@
-import { seasonNumberFromName } from '$lib/components/app/media/files/mediaFiles';
+import { seasonNumberFromName } from '$lib/components/app/media/files/mediaFileMissing';
 import type { MediaMetadataDetails, MediaMetadataSeason } from '$lib/settings/types';
 
 export interface SeasonOption {

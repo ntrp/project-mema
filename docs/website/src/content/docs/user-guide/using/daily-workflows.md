@@ -35,6 +35,9 @@ Wanted can show missing media, specific unsatisfied profile targets, and
 custom-format upgrade rows. Target rows include the parent media and file
 context, the language or target type when relevant, and the operation that can
 move the item forward.
+Media cards and file cards use the same rollup state so missing, partial,
+downloaded, and upgradeable states read consistently across library and detail
+views.
 
 ## Grab And Download
 
@@ -78,6 +81,9 @@ and use component actions for remuxing, embedding, extraction, and stream
 sourcing where the current media context supports them. Turning off an automatic
 schedule stops future background runs, but it does not remove the matching
 manual action.
+
+System > Jobs lists the manual fulfillment action catalog next to scheduled job
+controls, including the API route and worker path used by each action.
 
 Treat profiles as living rules. If every release you like is being penalized,
 adjust the profile or custom formats. If bad releases score too well, tighten

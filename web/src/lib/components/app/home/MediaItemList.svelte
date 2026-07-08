@@ -32,7 +32,11 @@
 	}
 
 	function statusLabel(item: MediaItem) {
-		switch (item.status) {
+		switch (item.rollup?.state ?? item.status) {
+			case 'upgradeable':
+				return 'Upgradeable';
+			case 'partial':
+				return 'Partial';
 			case 'downloaded':
 				return isContinuingSeries(item) ? 'Downloaded available episodes' : 'Downloaded';
 			case 'downloading':
@@ -43,12 +47,14 @@
 	}
 
 	function statusLineClass(item: MediaItem) {
-		if (item.status === 'downloaded') {
+		const state = item.rollup?.state ?? item.status;
+		if (state === 'downloaded') {
 			return isContinuingSeries(item) ? 'bg-sky-300' : 'bg-green-500';
 		}
-		if (item.status === 'downloading') {
+		if (state === 'downloading') {
 			return 'bg-primary';
 		}
+		if (state === 'partial' || state === 'upgradeable') return 'bg-amber-400';
 		return 'bg-destructive';
 	}
 

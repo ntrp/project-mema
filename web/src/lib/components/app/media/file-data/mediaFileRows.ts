@@ -7,6 +7,7 @@ type MediaFileChapter = NonNullable<NonNullable<MediaItem['files']>[number]['cha
 type MediaFileSubtitleSatisfaction = NonNullable<
 	NonNullable<MediaItem['files']>[number]['subtitleSatisfaction']
 >;
+type MediaFileRollup = NonNullable<NonNullable<MediaItem['files']>[number]['rollup']>;
 type MediaFileOtherFile = NonNullable<
 	NonNullable<MediaItem['files']>[number]['otherFiles']
 >[number];
@@ -30,6 +31,7 @@ export interface MediaFileRow {
 	chapters: MediaFileChapter[];
 	otherFiles: MediaFileOtherFile[];
 	subtitleSatisfaction?: MediaFileSubtitleSatisfaction;
+	rollup?: MediaFileRollup;
 	externalSubtitles?: MediaItemSubtitle[];
 	upgrade: MediaFileUpgradeInfo;
 	expectedAudioTargets: MediaFileAudioTargetOption[];

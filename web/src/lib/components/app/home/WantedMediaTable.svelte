@@ -10,6 +10,8 @@
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { releaseSearchQuery } from '$lib/components/app/media/release-search/releaseSearchQuery';
+	import WantedKindBadge from '$lib/components/app/home/wanted/WantedKindBadge.svelte';
+	import { wantedDisplayRows } from '$lib/components/app/home/wanted/wantedRows';
 	import type {
 		Language,
 		MediaItem,
@@ -42,6 +44,7 @@
 		onGrabRelease
 	}: Props = $props();
 	let manualSearchItem = $state<MediaItem | undefined>();
+	const rows = $derived(wantedDisplayRows(items));
 
 	function monitorLabel(item: MediaItem) {
 		if (!item.monitored || item.monitorMode === 'none') {
@@ -53,37 +56,39 @@
 
 <PageHeading eyebrow="Library" title="Wanted" titleId="home-title" />
 
-{#if items.length}
+{#if rows.length}
 	<Card class="overflow-hidden p-0">
 		<Table.Root class="wanted-table">
 			<Table.Header>
 				<Table.Row>
+					<Table.Head>Kind</Table.Head>
 					<Table.Head>Title</Table.Head>
-					<Table.Head>Type</Table.Head>
-					<Table.Head>Year</Table.Head>
+					<Table.Head>Context</Table.Head>
+					<Table.Head>State</Table.Head>
 					<Table.Head>Monitor</Table.Head>
 					<Table.Head>Profile</Table.Head>
-					<Table.Head>Availability</Table.Head>
+					<Table.Head>Operation</Table.Head>
 					<Table.Head></Table.Head>
 				</Table.Row>
 			</Table.Header>
 			<Table.Body>
-				{#each items as item (item.id)}
+				{#each rows as row (row.key)}
 					<Table.Row>
+						<Table.Cell><WantedKindBadge kind={row.kind} /></Table.Cell>
 						<Table.Cell>
 							<a
-								href={item.type === 'movie'
-									? resolve('/movies/[id]', { id: item.id })
-									: resolve('/series/[id]', { id: item.id })}
+								href={row.item.type === 'movie'
+									? resolve('/movies/[id]', { id: row.item.id })
+									: resolve('/series/[id]', { id: row.item.id })}
 							>
-								{item.title}
+								{row.title}
 							</a>
 						</Table.Cell>
-						<Table.Cell>{item.type}</Table.Cell>
-						<Table.Cell>{item.year ?? '-'}</Table.Cell>
-						<Table.Cell>{monitorLabel(item)}</Table.Cell>
-						<Table.Cell>{item.qualityProfileName ?? '-'}</Table.Cell>
-						<Table.Cell>{item.minimumAvailability}</Table.Cell>
+						<Table.Cell>{row.context}</Table.Cell>
+						<Table.Cell>{row.state}</Table.Cell>
+						<Table.Cell>{monitorLabel(row.item)}</Table.Cell>
+						<Table.Cell>{row.item.qualityProfileName ?? '-'}</Table.Cell>
+						<Table.Cell>{row.operation ?? row.item.minimumAvailability}</Table.Cell>
 						<Table.Cell class="text-right">
 							{#if canManage}
 								<div class="flex items-center justify-end gap-2">
@@ -95,9 +100,9 @@
 													type="button"
 													variant="outline"
 													size="icon-sm"
-													aria-label={`Automatic search ${item.title}`}
-													disabled={searchingItemId === item.id}
-													onclick={() => onFindReleases(item, releaseSearchQuery(item))}
+													aria-label={`Automatic search ${row.item.title}`}
+													disabled={searchingItemId === row.item.id}
+													onclick={() => onFindReleases(row.item, releaseSearchQuery(row.item))}
 												>
 													<SearchIcon aria-hidden="true" />
 												</Button>
@@ -113,9 +118,9 @@
 													type="button"
 													variant="outline"
 													size="icon-sm"
-													aria-label={`Manual search ${item.title}`}
-													disabled={searchingItemId === item.id}
-													onclick={() => (manualSearchItem = item)}
+													aria-label={`Manual search ${row.item.title}`}
+													disabled={searchingItemId === row.item.id}
+													onclick={() => (manualSearchItem = row.item)}
 												>
 													<UserIcon aria-hidden="true" />
 												</Button>
