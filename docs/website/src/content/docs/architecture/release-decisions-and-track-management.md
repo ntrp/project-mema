@@ -210,8 +210,9 @@ badge is missing or partial.
 
 ## Subtitle Satisfaction
 
-Subtitle satisfaction is calculated from backend subtitle state plus the
-profile subtitle mode.
+Subtitle satisfaction is calculated by `internal/satisfaction` from persisted
+embedded subtitle track facts, stored external subtitle records, and profile
+subtitle mode.
 
 The profile declares wanted subtitle languages and mode:
 
@@ -226,9 +227,11 @@ missing, the file shows partial or missing depending on whether any wanted
 subtitle language is already matched.
 
 For embedded mode, available external subtitle files can change a missing state
-into partial because the subtitle exists but still needs import. Missing embedded
-subtitle targets are inserted into the track list as red placeholder subtitle
-rows.
+into `pending` because the subtitle exists but still needs embedding. For
+external mode, an embedded subtitle can become `pending` because extraction is
+required. Mixed or external mode can treat the same stored external subtitle as
+`satisfied`. Missing embedded subtitle targets are inserted into the track list
+as red placeholder subtitle rows.
 
 ## Track Management
 
