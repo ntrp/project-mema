@@ -5,27 +5,89 @@
       "delivery": "direct",
       "container": "mp4",
       "videoCodec": "h264",
-      "audioCodec": "aac"
+      "audioCodec": "aac",
+      "height": 1080
     },
     {
       "name": "matroska-remux-target",
       "delivery": "remux",
       "container": "mkv",
       "videoCodec": "h264",
-      "audioCodec": "aac"
+      "audioCodec": "aac",
+      "height": 1080
     },
     {
-      "name": "webkit-hls-transcode-target",
+      "name": "avi-mpeg2-ac3-legacy",
+      "delivery": "direct",
+      "container": "avi",
+      "videoCodec": "mpeg2video",
+      "audioCodec": "ac3",
+      "height": 720
+    },
+    {
+      "name": "mpegts-h264-eac3-tv",
+      "delivery": "direct",
+      "container": "mpegts",
+      "videoCodec": "h264",
+      "audioCodec": "eac3",
+      "height": 1080
+    },
+    {
+      "name": "hdr-hevc-dts-remux",
       "delivery": "transcode",
       "container": "mkv",
       "videoCodec": "hevc",
-      "audioCodec": "opus"
+      "audioCodec": "dts",
+      "height": 2160,
+      "hdr": true
+    },
+    {
+      "name": "av1-webm-opus-hls",
+      "delivery": "transcode",
+      "container": "webm",
+      "videoCodec": "av1",
+      "audioCodec": "opus",
+      "height": 2160
     },
     {
       "name": "external-subtitle-sidecar",
       "delivery": "subtitle",
       "container": "srt",
+      "subtitleFormat": "srt",
       "language": "eng"
+    },
+    {
+      "name": "webvtt-subtitle-sidecar",
+      "delivery": "subtitle",
+      "container": "vtt",
+      "subtitleFormat": "vtt",
+      "language": "eng"
+    },
+    {
+      "name": "ass-subtitle-sidecar",
+      "delivery": "subtitle",
+      "container": "ass",
+      "subtitleFormat": "ass",
+      "language": "jpn"
+    },
+    {
+      "name": "ssa-subtitle-sidecar",
+      "delivery": "subtitle",
+      "container": "ssa",
+      "subtitleFormat": "ssa",
+      "language": "jpn"
+    },
+    {
+      "name": "jpeg-artwork",
+      "delivery": "image",
+      "container": "jpg",
+      "imageFormat": "jpeg"
+    },
+    {
+      "name": "png-artwork",
+      "delivery": "image",
+      "container": "png",
+      "imageFormat": "png"
     }
   ]
 }

@@ -105,7 +105,7 @@ export function profileExportText(profile: DLNARendererProfile) {
 }
 
 export function downloadProfileJson(profile: DLNARendererProfile) {
-	const blob = new Blob([profileExportText(profile)], { type: 'application/json' });
+	const blob = new globalThis.Blob([profileExportText(profile)], { type: 'application/json' });
 	const url = URL.createObjectURL(blob);
 	const link = document.createElement('a');
 	link.href = url;

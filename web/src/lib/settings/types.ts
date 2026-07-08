@@ -1,198 +1,189 @@
 import type { components } from '$lib/api/generated/schema';
 
-export type DownloadClient = components['schemas']['DownloadClient'];
-export type DownloadClientRequest = components['schemas']['DownloadClientRequest'];
-export type DownloadClientType = components['schemas']['DownloadClientType'];
-export type ManagedUser = components['schemas']['ManagedUser'];
-export type SessionResponse = components['schemas']['SessionResponse'];
-export type UserProfile = components['schemas']['UserProfile'];
-export type UserProfileUpdateRequest = components['schemas']['UserProfileUpdateRequest'];
-export type UserCreateRequest = components['schemas']['UserCreateRequest'];
-export type UserRole = components['schemas']['UserRole'];
-export type UserSummary = components['schemas']['UserSummary'];
-export type UserUpdateRequest = components['schemas']['UserUpdateRequest'];
-export type Indexer = components['schemas']['Indexer'];
-export type IndexerHealthStatus = components['schemas']['IndexerHealthStatus'];
-export type IndexerRequest = components['schemas']['IndexerRequest'];
-export type IndexerSearchResponse = components['schemas']['IndexerSearchResponse'];
-export type IndexerSearchSettings = components['schemas']['IndexerSearchSettings'];
-export type IndexerSearchCacheEntry = components['schemas']['IndexerSearchCacheEntry'];
-export type IndexerSearchCacheStats = components['schemas']['IndexerSearchCacheStats'];
-export type IndexerSearchHistoryEntry = components['schemas']['IndexerSearchHistoryEntry'];
-export type IndexerProtocol = components['schemas']['IndexerProtocol'];
-export type IndexerPrivacy = components['schemas']['IndexerPrivacy'];
-export type IndexerMediaType = components['schemas']['IndexerMediaType'];
-export type IndexerCatalogResponse = components['schemas']['IndexerCatalogResponse'];
-export type IndexerCatalogEntry = components['schemas']['IndexerCatalogEntry'];
-export type IndexerAppProfile = components['schemas']['IndexerAppProfile'];
-export type IndexerProxy = components['schemas']['IndexerProxy'];
-export type IndexerProxyRequest = components['schemas']['IndexerProxyRequest'];
-export type IndexerBulkUpdateRequest = components['schemas']['IndexerBulkUpdateRequest'];
-export type MetadataProvider = components['schemas']['MetadataProvider'];
-export type MetadataCacheClearResponse = components['schemas']['MetadataCacheClearResponse'];
-export type MetadataCacheEntry = components['schemas']['MetadataCacheEntry'];
-export type MetadataCacheResponse = components['schemas']['MetadataCacheResponse'];
-export type MetadataCacheStats = components['schemas']['MetadataCacheStats'];
-export type MetadataSearchHistoryEntry = components['schemas']['MetadataSearchHistoryEntry'];
-export type MetadataProviderRequest = components['schemas']['MetadataProviderRequest'];
-export type MetadataProviderType = components['schemas']['MetadataProviderType'];
-export type SubtitleProvider = components['schemas']['SubtitleProvider'];
-export type SubtitleProviderRequest = components['schemas']['SubtitleProviderRequest'];
-export type SubtitleProviderType = components['schemas']['SubtitleProviderType'];
-export type IntegrationTestResponse = components['schemas']['IntegrationTestResponse'];
-export type SystemLogEntry = components['schemas']['SystemLogEntry'];
-export type SystemStatusResponse = components['schemas']['SystemStatusResponse'];
-export type SystemEvent = components['schemas']['SystemEvent'];
-export type SystemEventListResponse = components['schemas']['SystemEventListResponse'];
-export type SystemEventSeverity = components['schemas']['SystemEventSeverity'];
-export type SystemEventSettings = components['schemas']['SystemEventSettings'];
-export type SystemEventSettingsRequest = components['schemas']['SystemEventSettingsRequest'];
-export type SystemLogFile = components['schemas']['SystemLogFile'];
-export type SystemLogFileSettings = components['schemas']['SystemLogFileSettings'];
-export type SystemLogFileSettingsRequest = components['schemas']['SystemLogFileSettingsRequest'];
-export type SystemLogLevel = components['schemas']['SystemLogLevel'];
-export type SystemLogLevelResponse = components['schemas']['SystemLogLevelResponse'];
-export type DLNASettings = components['schemas']['DLNASettings'];
-export type DLNASettingsRequest = components['schemas']['DLNASettingsRequest'];
-export type DLNAStatus = components['schemas']['DLNAStatus'];
-export type DLNAClientDiagnostic = components['schemas']['DLNAClientDiagnostic'];
-export type DLNAInterfaceDiagnostic = components['schemas']['DLNAInterfaceDiagnostic'];
-export type DLNAStreamDiagnostic = components['schemas']['DLNAStreamDiagnostic'];
-export type DLNARendererProfile = components['schemas']['DLNARendererProfile'];
-export type DLNARendererProfileRequest = components['schemas']['DLNARendererProfileRequest'];
-export type DLNARendererProfileCreateRequest = components['schemas']['DLNARendererProfileCreateRequest'];
-export type DLNARendererProfileCloneRequest = components['schemas']['DLNARendererProfileCloneRequest'];
-export type DLNARendererDeviceOverride = components['schemas']['DLNARendererDeviceOverride'];
-export type DLNARendererDeviceOverrideRequest = components['schemas']['DLNARendererDeviceOverrideRequest'];
-export type DLNAProfileMatchTraceRequest = components['schemas']['DLNAProfileMatchTraceRequest'];
-export type DLNAProfileMatchTraceResponse = components['schemas']['DLNAProfileMatchTraceResponse'];
-export type DLNADeliveryTraceRequest = components['schemas']['DLNADeliveryTraceRequest'];
-export type DLNADeliveryTraceResponse = components['schemas']['DLNADeliveryTraceResponse'];
-export type SystemJob = components['schemas']['SystemJob'];
-export type SystemJobListResponse = components['schemas']['SystemJobListResponse'];
-export type SystemJobsOverviewResponse = components['schemas']['SystemJobsOverviewResponse'];
-export type SystemJobSchedule = components['schemas']['SystemJobSchedule'];
-export type SystemJobExecution = components['schemas']['SystemJobExecution'];
-export type SystemJobExecutionListResponse =
-	components['schemas']['SystemJobExecutionListResponse'];
-export type SystemJobExecutionLog = components['schemas']['SystemJobExecutionLog'];
-export type SystemJobHistorySettings = components['schemas']['SystemJobHistorySettings'];
-export type LibraryFolder = components['schemas']['LibraryFolder'];
-export type LibraryFolderKind = components['schemas']['LibraryFolderKind'];
-export type LibraryFolderOption = components['schemas']['LibraryFolderOption'];
-export type LibraryFolderOptionCreateRequest =
-	components['schemas']['LibraryFolderOptionCreateRequest'];
-export type LibraryFolderOptionListResponse =
-	components['schemas']['LibraryFolderOptionListResponse'];
-export type LibraryFolderRequest = components['schemas']['LibraryFolderRequest'];
-export type PathMapping = components['schemas']['PathMapping'];
-export type PathMappingRequest = components['schemas']['PathMappingRequest'];
-export type LibraryMediaKind = components['schemas']['LibraryMediaKind'];
-export type LibraryScan = components['schemas']['LibraryScan'];
-export type LibraryScanItem = components['schemas']['LibraryScanItem'];
-export type LibraryScanItemMatchRequest = components['schemas']['LibraryScanItemMatchRequest'];
-export type LibraryScanImportRequest = components['schemas']['LibraryScanImportRequest'];
-export type LibraryScanImportResponse = components['schemas']['LibraryScanImportResponse'];
-export type LibraryScanItemResetResponse = components['schemas']['LibraryScanItemResetResponse'];
-export type MediaType = components['schemas']['MediaType'];
-export type MediaSearchRequest = components['schemas']['MediaSearchRequest'];
-export type MediaSearchResult = components['schemas']['MediaSearchResult'];
-export type DiscoverBlacklistItem = components['schemas']['DiscoverBlacklistItem'];
-export type DiscoverBlacklistRequest = components['schemas']['DiscoverBlacklistRequest'];
-export type DiscoverMovieFacetOption = components['schemas']['DiscoverMovieFacetOption'];
-export type DiscoverMovieSearchResponse = components['schemas']['DiscoverMovieSearchResponse'];
-export type MediaAdvancedSearchRequest = components['schemas']['MediaAdvancedSearchRequest'];
-export type MediaDiscoverSection = components['schemas']['MediaDiscoverSection'];
-export type MediaMetadataDetails = components['schemas']['MediaMetadataDetails'];
-export type MediaMetadataFact = components['schemas']['MediaMetadataFact'];
-export type MediaMetadataEpisode = components['schemas']['MediaMetadataEpisode'];
-export type MediaMetadataSeason = components['schemas']['MediaMetadataSeason'];
-export type PersonAppearance = components['schemas']['PersonAppearance'];
-export type PersonDetails = components['schemas']['PersonDetails'];
-export type PersonSearchResult = components['schemas']['PersonSearchResult'];
-export type MediaCollection = components['schemas']['MediaCollection'];
-export type MediaRequest = components['schemas']['MediaRequest'];
-export type MediaRequestApproveRequest = components['schemas']['MediaRequestApproveRequest'];
-export type MediaRequestCreateRequest = components['schemas']['MediaRequestCreateRequest'];
-export type MediaRequestStatus = components['schemas']['MediaRequestStatus'];
-export type MediaSearchGroup = components['schemas']['MediaSearchGroup'];
-export type MediaItem = components['schemas']['MediaItem'];
-export type MediaItemSubtitle = components['schemas']['MediaItemSubtitle'];
-export type MediaItemSubtitleListResponse = components['schemas']['MediaItemSubtitleListResponse'];
-export type MediaItemSubtitleRetentionMode =
-	components['schemas']['MediaItemSubtitleRetentionMode'];
-export type MediaItemSubtitleSelectionRequest =
-	components['schemas']['MediaItemSubtitleSelectionRequest'];
-export type ManualSubtitleSearchRequest = components['schemas']['ManualSubtitleSearchRequest'];
-export type ManualSubtitleSearchResponse = components['schemas']['ManualSubtitleSearchResponse'];
-export type SubtitleCandidate = components['schemas']['SubtitleCandidate'];
-export type GrabSubtitleRequest = components['schemas']['GrabSubtitleRequest'];
-export type MediaComponentSource = components['schemas']['MediaComponentSource'];
-export type MediaComponentSourceListResponse =
-	components['schemas']['MediaComponentSourceListResponse'];
-export type MediaComponentSourceRetainRequest =
-	components['schemas']['MediaComponentSourceRetainRequest'];
-export type MediaComponentSourceRetentionState =
-	components['schemas']['MediaComponentSourceRetentionState'];
-export type MediaComponentSourceRole = components['schemas']['MediaComponentSourceRole'];
-export type MediaComponentArtifact = components['schemas']['MediaComponentArtifact'];
-export type MediaComponentAssemblyRun = components['schemas']['MediaComponentAssemblyRun'];
-export type MediaComponentAssemblyInput = components['schemas']['MediaComponentAssemblyInput'];
-export type MediaComponentAssemblyRequest = components['schemas']['MediaComponentAssemblyRequest'];
-export type MediaComponentCompatibilityDecision =
-	components['schemas']['MediaComponentCompatibilityDecision'];
-export type MediaComponentCompatibilityReviewState =
-	components['schemas']['MediaComponentCompatibilityReviewState'];
-export type MediaItemCreateRequest = components['schemas']['MediaItemCreateRequest'];
-export type MediaItemUpdateRequest = components['schemas']['MediaItemUpdateRequest'];
-export type MediaItemRequest = components['schemas']['MediaItemRequest'];
-export type MediaItemStatus = components['schemas']['MediaItemStatus'];
-export type MediaFileHistoryEntry = components['schemas']['MediaFileHistoryEntry'];
-export type MediaFileHistoryResponse = components['schemas']['MediaFileHistoryResponse'];
-export type MediaFileTrackDeleteRequest = components['schemas']['MediaFileTrackDeleteRequest'];
-export type MediaRenameApplyResponse = components['schemas']['MediaRenameApplyResponse'];
-export type MediaRenamePreviewResponse = components['schemas']['MediaRenamePreviewResponse'];
-export type MediaRenamePreviewRow = components['schemas']['MediaRenamePreviewRow'];
-export type SubtitleSearchRequest = components['schemas']['SubtitleSearchRequest'];
-export type MediaMonitorMode = components['schemas']['MediaMonitorMode'];
-export type SeriesType = components['schemas']['SeriesType'];
-export type MinimumAvailability = components['schemas']['MinimumAvailability'];
-export type ReleaseCandidate = components['schemas']['ReleaseCandidate'];
-export type ReleaseBlocklistItem = components['schemas']['ReleaseBlocklistItem'];
-export type ReleaseOverrideDetails = components['schemas']['ReleaseOverrideDetails'];
-export type DownloadActivity = components['schemas']['DownloadActivity'];
-export type DownloadActivityStatus = components['schemas']['DownloadActivity']['status'];
-export type ImportMode = components['schemas']['ImportMode'];
-export type ManualImportRequest = components['schemas']['ManualImportRequest'];
-export type JobEnqueueResponse = components['schemas']['JobEnqueueResponse'];
-export type Tag = components['schemas']['Tag'];
-export type TagRequest = components['schemas']['TagRequest'];
-export type Language = components['schemas']['Language'];
-export type LanguageRequest = components['schemas']['LanguageRequest'];
-export type LanguageUpdateRequest = components['schemas']['LanguageUpdateRequest'];
-export type QualitySizeSetting = components['schemas']['QualitySizeSetting'];
-export type QualitySizeSettingRequest = components['schemas']['QualitySizeSettingRequest'];
-export type QualitySizeSettingsResponse = components['schemas']['QualitySizeSettingsResponse'];
-export type QualitySizeSettingsUpdateRequest =
-	components['schemas']['QualitySizeSettingsUpdateRequest'];
-export type MediaProfile = components['schemas']['MediaProfile'];
-export type MediaProfileRequest = components['schemas']['MediaProfileRequest'];
-export type MediaProfileVideoTarget = components['schemas']['MediaProfileVideoTarget'];
-export type MediaProfileAudioTarget = components['schemas']['MediaProfileAudioTarget'];
-export type MediaProfileSubtitleTarget = components['schemas']['MediaProfileSubtitleTarget'];
-export type MediaProfileLossyTranscodePolicy =
-	components['schemas']['MediaProfileLossyTranscodePolicy'];
-export type MediaProfileSubtitleMode = components['schemas']['MediaProfileSubtitleMode'];
-export type MediaProfileCustomFormatScore = components['schemas']['MediaProfileCustomFormatScore'];
-export type FileNamingSettings = components['schemas']['FileNamingSettings'];
-export type FileNamingSettingsRequest = components['schemas']['FileNamingSettingsRequest'];
-export type FileDeleteMode = components['schemas']['FileDeleteMode'];
-export type FileDeleteSettings = components['schemas']['FileDeleteSettings'];
-export type FileDeleteSettingsRequest = components['schemas']['FileDeleteSettingsRequest'];
-export type CustomFormat = components['schemas']['CustomFormat'];
-export type CustomFormatRequest = components['schemas']['CustomFormatRequest'];
-export type CustomFormatParsingResponse = components['schemas']['CustomFormatParsingResponse'];
-export type CustomFormatSpec = components['schemas']['CustomFormatSpec'];
-export type CustomFormatSpecType = components['schemas']['CustomFormatSpecType'];
+type S = components['schemas'];
 
-export type { ActivitySection, AppView, CustomFormatForm, DownloadClientForm, HomeSection, IndexerForm, IndexerProxyForm, IntegrationTestResults, LanguageForm, LibraryFolderForm, MediaProfileForm, MetadataProviderForm, PathMappingForm, QualityProfileOption, ReleaseSearchResults, ReleaseSearchState, SettingsData, SettingsSection, SubtitleProviderForm, SystemSection, TagForm, UserForm } from './formTypes';
+export type * from './schema/platformTypes';
+
+export type DownloadClient = S['DownloadClient'];
+export type DownloadClientRequest = S['DownloadClientRequest'];
+export type DownloadClientType = S['DownloadClientType'];
+export type ManagedUser = S['ManagedUser'];
+export type SessionResponse = S['SessionResponse'];
+export type UserProfile = S['UserProfile'];
+export type UserProfileUpdateRequest = S['UserProfileUpdateRequest'];
+export type UserCreateRequest = S['UserCreateRequest'];
+export type UserRole = S['UserRole'];
+export type UserSummary = S['UserSummary'];
+export type UserUpdateRequest = S['UserUpdateRequest'];
+export type Indexer = S['Indexer'];
+export type IndexerHealthStatus = S['IndexerHealthStatus'];
+export type IndexerRequest = S['IndexerRequest'];
+export type IndexerSearchResponse = S['IndexerSearchResponse'];
+export type IndexerSearchSettings = S['IndexerSearchSettings'];
+export type IndexerSearchCacheEntry = S['IndexerSearchCacheEntry'];
+export type IndexerSearchCacheStats = S['IndexerSearchCacheStats'];
+export type IndexerSearchHistoryEntry = S['IndexerSearchHistoryEntry'];
+export type IndexerProtocol = S['IndexerProtocol'];
+export type IndexerPrivacy = S['IndexerPrivacy'];
+export type IndexerMediaType = S['IndexerMediaType'];
+export type IndexerCatalogResponse = S['IndexerCatalogResponse'];
+export type IndexerCatalogEntry = S['IndexerCatalogEntry'];
+export type IndexerAppProfile = S['IndexerAppProfile'];
+export type IndexerProxy = S['IndexerProxy'];
+export type IndexerProxyRequest = S['IndexerProxyRequest'];
+export type IndexerBulkUpdateRequest = S['IndexerBulkUpdateRequest'];
+export type MetadataProvider = S['MetadataProvider'];
+export type MetadataCacheClearResponse = S['MetadataCacheClearResponse'];
+export type MetadataCacheEntry = S['MetadataCacheEntry'];
+export type MetadataCacheResponse = S['MetadataCacheResponse'];
+export type MetadataCacheStats = S['MetadataCacheStats'];
+export type MetadataSearchHistoryEntry = S['MetadataSearchHistoryEntry'];
+export type MetadataProviderRequest = S['MetadataProviderRequest'];
+export type MetadataProviderType = S['MetadataProviderType'];
+export type SubtitleProvider = S['SubtitleProvider'];
+export type SubtitleProviderRequest = S['SubtitleProviderRequest'];
+export type SubtitleProviderType = S['SubtitleProviderType'];
+export type IntegrationTestResponse = S['IntegrationTestResponse'];
+export type SystemLogEntry = S['SystemLogEntry'];
+export type SystemStatusResponse = S['SystemStatusResponse'];
+export type SystemEvent = S['SystemEvent'];
+export type SystemEventListResponse = S['SystemEventListResponse'];
+export type SystemEventSeverity = S['SystemEventSeverity'];
+export type SystemEventSettings = S['SystemEventSettings'];
+export type SystemEventSettingsRequest = S['SystemEventSettingsRequest'];
+export type SystemLogFile = S['SystemLogFile'];
+export type SystemLogFileSettings = S['SystemLogFileSettings'];
+export type SystemLogFileSettingsRequest = S['SystemLogFileSettingsRequest'];
+export type SystemLogLevel = S['SystemLogLevel'];
+export type SystemLogLevelResponse = S['SystemLogLevelResponse'];
+export type LibraryFolder = S['LibraryFolder'];
+export type LibraryFolderKind = S['LibraryFolderKind'];
+export type LibraryFolderOption = S['LibraryFolderOption'];
+export type LibraryFolderOptionCreateRequest = S['LibraryFolderOptionCreateRequest'];
+export type LibraryFolderOptionListResponse = S['LibraryFolderOptionListResponse'];
+export type LibraryFolderRequest = S['LibraryFolderRequest'];
+export type PathMapping = S['PathMapping'];
+export type PathMappingRequest = S['PathMappingRequest'];
+export type LibraryMediaKind = S['LibraryMediaKind'];
+export type LibraryScan = S['LibraryScan'];
+export type LibraryScanItem = S['LibraryScanItem'];
+export type LibraryScanItemMatchRequest = S['LibraryScanItemMatchRequest'];
+export type LibraryScanImportRequest = S['LibraryScanImportRequest'];
+export type LibraryScanImportResponse = S['LibraryScanImportResponse'];
+export type LibraryScanItemResetResponse = S['LibraryScanItemResetResponse'];
+export type MediaType = S['MediaType'];
+export type MediaSearchRequest = S['MediaSearchRequest'];
+export type MediaSearchResult = S['MediaSearchResult'];
+export type DiscoverBlacklistItem = S['DiscoverBlacklistItem'];
+export type DiscoverBlacklistRequest = S['DiscoverBlacklistRequest'];
+export type DiscoverMovieFacetOption = S['DiscoverMovieFacetOption'];
+export type DiscoverMovieSearchResponse = S['DiscoverMovieSearchResponse'];
+export type MediaAdvancedSearchRequest = S['MediaAdvancedSearchRequest'];
+export type MediaDiscoverSection = S['MediaDiscoverSection'];
+export type MediaMetadataDetails = S['MediaMetadataDetails'];
+export type MediaMetadataFact = S['MediaMetadataFact'];
+export type MediaMetadataEpisode = S['MediaMetadataEpisode'];
+export type MediaMetadataSeason = S['MediaMetadataSeason'];
+export type PersonAppearance = S['PersonAppearance'];
+export type PersonDetails = S['PersonDetails'];
+export type PersonSearchResult = S['PersonSearchResult'];
+export type MediaCollection = S['MediaCollection'];
+export type MediaRequest = S['MediaRequest'];
+export type MediaRequestApproveRequest = S['MediaRequestApproveRequest'];
+export type MediaRequestCreateRequest = S['MediaRequestCreateRequest'];
+export type MediaRequestStatus = S['MediaRequestStatus'];
+export type MediaSearchGroup = S['MediaSearchGroup'];
+export type MediaItem = S['MediaItem'];
+export type MediaItemSubtitle = S['MediaItemSubtitle'];
+export type MediaItemSubtitleListResponse = S['MediaItemSubtitleListResponse'];
+export type MediaItemSubtitleRetentionMode = S['MediaItemSubtitleRetentionMode'];
+export type MediaItemSubtitleSelectionRequest = S['MediaItemSubtitleSelectionRequest'];
+export type ManualSubtitleSearchRequest = S['ManualSubtitleSearchRequest'];
+export type ManualSubtitleSearchResponse = S['ManualSubtitleSearchResponse'];
+export type SubtitleCandidate = S['SubtitleCandidate'];
+export type GrabSubtitleRequest = S['GrabSubtitleRequest'];
+export type MediaComponentSource = S['MediaComponentSource'];
+export type MediaComponentSourceListResponse = S['MediaComponentSourceListResponse'];
+export type MediaComponentSourceRetainRequest = S['MediaComponentSourceRetainRequest'];
+export type MediaComponentSourceRetentionState = S['MediaComponentSourceRetentionState'];
+export type MediaComponentSourceRole = S['MediaComponentSourceRole'];
+export type MediaComponentArtifact = S['MediaComponentArtifact'];
+export type MediaComponentAssemblyRun = S['MediaComponentAssemblyRun'];
+export type MediaComponentAssemblyInput = S['MediaComponentAssemblyInput'];
+export type MediaComponentAssemblyRequest = S['MediaComponentAssemblyRequest'];
+export type MediaComponentCompatibilityDecision = S['MediaComponentCompatibilityDecision'];
+export type MediaComponentCompatibilityReviewState = S['MediaComponentCompatibilityReviewState'];
+export type MediaItemCreateRequest = S['MediaItemCreateRequest'];
+export type MediaItemUpdateRequest = S['MediaItemUpdateRequest'];
+export type MediaItemRequest = S['MediaItemRequest'];
+export type MediaItemStatus = S['MediaItemStatus'];
+export type MediaFileHistoryEntry = S['MediaFileHistoryEntry'];
+export type MediaFileHistoryResponse = S['MediaFileHistoryResponse'];
+export type MediaFileTrackDeleteRequest = S['MediaFileTrackDeleteRequest'];
+export type MediaRenameApplyResponse = S['MediaRenameApplyResponse'];
+export type MediaRenamePreviewResponse = S['MediaRenamePreviewResponse'];
+export type MediaRenamePreviewRow = S['MediaRenamePreviewRow'];
+export type SubtitleSearchRequest = S['SubtitleSearchRequest'];
+export type MediaMonitorMode = S['MediaMonitorMode'];
+export type SeriesType = S['SeriesType'];
+export type MinimumAvailability = S['MinimumAvailability'];
+export type ReleaseCandidate = S['ReleaseCandidate'];
+export type ReleaseBlocklistItem = S['ReleaseBlocklistItem'];
+export type ReleaseOverrideDetails = S['ReleaseOverrideDetails'];
+export type DownloadActivity = S['DownloadActivity'];
+export type DownloadActivityStatus = S['DownloadActivity']['status'];
+export type ImportMode = S['ImportMode'];
+export type ManualImportRequest = S['ManualImportRequest'];
+export type JobEnqueueResponse = S['JobEnqueueResponse'];
+export type Tag = S['Tag'];
+export type TagRequest = S['TagRequest'];
+export type Language = S['Language'];
+export type LanguageRequest = S['LanguageRequest'];
+export type LanguageUpdateRequest = S['LanguageUpdateRequest'];
+export type QualitySizeSetting = S['QualitySizeSetting'];
+export type QualitySizeSettingRequest = S['QualitySizeSettingRequest'];
+export type QualitySizeSettingsResponse = S['QualitySizeSettingsResponse'];
+export type QualitySizeSettingsUpdateRequest = S['QualitySizeSettingsUpdateRequest'];
+export type MediaProfile = S['MediaProfile'];
+export type MediaProfileRequest = S['MediaProfileRequest'];
+export type MediaProfileVideoTarget = S['MediaProfileVideoTarget'];
+export type MediaProfileAudioTarget = S['MediaProfileAudioTarget'];
+export type MediaProfileSubtitleTarget = S['MediaProfileSubtitleTarget'];
+export type MediaProfileLossyTranscodePolicy = S['MediaProfileLossyTranscodePolicy'];
+export type MediaProfileSubtitleMode = S['MediaProfileSubtitleMode'];
+export type MediaProfileCustomFormatScore = S['MediaProfileCustomFormatScore'];
+export type FileNamingSettings = S['FileNamingSettings'];
+export type FileNamingSettingsRequest = S['FileNamingSettingsRequest'];
+export type FileDeleteMode = S['FileDeleteMode'];
+export type FileDeleteSettings = S['FileDeleteSettings'];
+export type FileDeleteSettingsRequest = S['FileDeleteSettingsRequest'];
+export type CustomFormat = S['CustomFormat'];
+export type CustomFormatRequest = S['CustomFormatRequest'];
+export type CustomFormatParsingResponse = S['CustomFormatParsingResponse'];
+export type CustomFormatSpec = S['CustomFormatSpec'];
+export type CustomFormatSpecType = S['CustomFormatSpecType'];
+
+export type {
+	ActivitySection,
+	AppView,
+	CustomFormatForm,
+	DownloadClientForm,
+	HomeSection,
+	IndexerForm,
+	IndexerProxyForm,
+	IntegrationTestResults,
+	LanguageForm,
+	LibraryFolderForm,
+	MediaProfileForm,
+	MetadataProviderForm,
+	PathMappingForm,
+	QualityProfileOption,
+	ReleaseSearchResults,
+	ReleaseSearchState,
+	SettingsData,
+	SettingsSection,
+	SubtitleProviderForm,
+	SystemSection,
+	TagForm,
+	UserForm
+} from './formTypes';

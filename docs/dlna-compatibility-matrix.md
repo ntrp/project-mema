@@ -8,8 +8,16 @@ This checklist records renderer behavior for the DLNA server and the media fixtu
 | --- | --- | --- |
 | baseline-mp4-h264-aac | Common MP4 direct play path | Direct file |
 | matroska-remux-target | MKV container compatibility | Remuxed stream |
-| webkit-hls-transcode-target | HLS-only clients | Transcoded HLS |
+| avi-mpeg2-ac3-legacy | Legacy AVI/MPEG-2/AC3 playback | Direct file |
+| mpegts-h264-eac3-tv | MPEG-TS and EAC3 television playback | Direct file |
+| hdr-hevc-dts-remux | HDR, HEVC, and DTS fallback behavior | Transcode or remux |
+| av1-webm-opus-hls | AV1/WebM/Opus client behavior | Direct file or HLS |
 | external-subtitle-sidecar | External subtitle exposure | SRT or VTT subtitle resource |
+| webvtt-subtitle-sidecar | WebVTT subtitle exposure | VTT subtitle resource |
+| ass-subtitle-sidecar | ASS subtitle conversion coverage | Converted subtitle resource |
+| ssa-subtitle-sidecar | SSA subtitle conversion coverage | Converted subtitle resource |
+| jpeg-artwork | JPEG artwork route behavior | Cached image |
+| png-artwork | PNG artwork route behavior | Cached image |
 
 ## Client checklist
 
@@ -23,6 +31,17 @@ This checklist records renderer behavior for the DLNA server and the media fixtu
 | LG TV | lg | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT | Manual | LG profile covered |
 | Sony TV | sony | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT | Manual | Sony profile covered |
 | iOS/tvOS cast target | chromecast | Manual | Manual | Manual | Manual | HLS | HLS | HLS | Manual | VTT | Manual | HLS-first, eventing disabled |
+| Panasonic TV | panasonic-tv | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT/VTT | Manual | Automated seeded-profile match covered |
+| Philips TV | philips-tv | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT/VTT | Manual | Automated seeded-profile match covered |
+| Roku TV | roku-tv | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT/VTT | Manual | Automated seeded-profile match covered |
+| Windows Media Player | windows-media-player | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT/VTT | Manual | Automated seeded-profile match covered |
+| Xbox One | xbox-one | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT/VTT | Manual | Automated seeded-profile match covered |
+| Android DLNA | android-generic | Manual | Manual | Manual | Manual | Manual | Manual | Manual | Manual | SRT/VTT | Manual | Automated seeded-profile match covered |
+
+Automated coverage validates seeded profile IDs, match requests, protocolInfo
+ordering, direct/remux/transcode decisions, and representative DIDL subtitle,
+artwork, and metadata trimming. Manual status remains separate because hardware
+firmware behavior must be confirmed on real devices.
 
 ## Manual run steps
 
