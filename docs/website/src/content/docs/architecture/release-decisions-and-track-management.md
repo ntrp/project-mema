@@ -110,8 +110,8 @@ Target states aggregate upward:
 | Level | State rule |
 | --- | --- |
 | Track/candidate | Persisted probe row, or persisted external subtitle row for subtitle targets. It can match, partially match, be unwanted, or be unusable for a specific target. |
-| Target | `satisfied` if any candidate fully matches. `partial` if at least one candidate partially matches and none fully match. `missing` if no candidate can satisfy the target. |
-| Media file | `downloaded` only when the file exists and every required target is `satisfied`, `upgradeable`, or `unmanaged`. `partial` when at least one required target is partial or missing but the file is usable. `missing` when no usable file exists. |
+| Target | One of `missing`, `partial`, `pending`, `satisfied`, `upgradeable`, `blocked`, or `failed`. `available` and `unmanaged` are not target states; if a profile requirement is not configured, no target row exists. |
+| Media file | `downloaded` only when the file exists and every required target is `satisfied` or acceptable under the profile. `partial` when at least one required target is `missing`, `partial`, `pending`, `blocked`, or `failed` but the file is usable. `missing` when no usable file exists. |
 
 Wanted views should expose both media and target rows. A missing media row shows
 that no usable file exists for the movie or episode. A target row shows a
@@ -120,32 +120,38 @@ media file. Target rows must include enough parent context to make ownership
 clear, such as media title, season and episode when applicable, file path or file
 label, target type, target language when applicable, and target state.
 
-## Recommended State List
+## Canonical Target And Candidate States
 
-Use a normalized state list for each video, audio, and subtitle target, and keep
-media item status as a rollup instead of a single overloaded download flag.
+Use a normalized state list for each video, audio, and subtitle target. Keep
+candidate visual states separate from target states, and keep media item status
+as a rollup instead of a single overloaded download flag.
 
-| State | Meaning | Counts as done |
+| Target state | Meaning | Counts as done |
 | --- | --- | --- |
-| `unmanaged` | Scope is intentionally not required by monitoring or profile settings. | Yes |
-| `wanted` | Required, no active work, no satisfying artifact. | No |
-| `queued` | Work has been requested but not started. | No |
-| `acquiring` | Download, search, extraction, or import is running. | No |
-| `available` | Artifact exists and can be read, but profile satisfaction is not yet known or not yet checked. | No |
-| `partial` | Some required targets are satisfied and some are missing, wrong, or waiting for import. | No |
-| `satisfied` | Required targets for this scope are present and pass profile rules. | Yes |
-| `upgradeable` | Satisfied enough to use, but a configured upgrade target can improve it. | Yes |
-| `blocked` | Present work cannot satisfy requirements without user action or settings change. | No |
-| `failed` | Last attempted work failed. Retry or manual action may be possible. | No |
+| `missing` | No database-backed candidate can satisfy the target. | No |
+| `partial` | At least one related candidate exists, but every related candidate fails one or more requirements. | No |
+| `pending` | A candidate exists and can satisfy the target after a known operation. | No |
+| `satisfied` | At least one candidate fully satisfies the target. | Yes |
+| `upgradeable` | Usable, but profile upgrade rules prefer a better candidate. | Yes |
+| `blocked` | Cannot be satisfied without user action, settings change, or missing tool support. | No |
+| `failed` | Last fulfillment attempt failed. Retry or manual action may be possible. | No |
+
+| Candidate visual state | Meaning |
+| --- | --- |
+| `matching` | Candidate satisfies at least one target. |
+| `partial` | Candidate relates to a target but fails one or more requirements. |
+| `unwanted` | Candidate conflicts with profile or settings. |
+| `pending_operation` | Candidate can satisfy a target after a known operation. |
+| `missing_placeholder` | Synthetic row shown because a target has no candidate. |
 
 The media item rollup should be derived from child states:
 
 | Rollup | Condition |
 | --- | --- |
-| `missing` | Required media file is `wanted`, `failed`, or `blocked`, and no usable file is present. |
-| `downloading` | Any required child is `queued` or `acquiring`, and no higher-priority failed or blocked state should be shown. |
-| `partial` | A usable file exists, but required video, audio, or subtitle target state is `partial`, `wanted`, `failed`, or `blocked`. |
-| `downloaded` | Required media file exists and required child states are `satisfied`, `upgradeable`, or `unmanaged`. |
+| `missing` | No usable required media file is present. |
+| `downloading` | Work for required media or targets is queued or running, and no higher-priority failed or blocked state should be shown. |
+| `partial` | A usable file exists, but required video, audio, or subtitle target state is `missing`, `partial`, `pending`, `failed`, or `blocked`. |
+| `downloaded` | Required media file exists and required child states are `satisfied` or acceptable under the profile. |
 | `upgradeable` | Same as downloaded, but one or more required child states can improve within profile upgrade rules. |
 
 ## Video Satisfaction

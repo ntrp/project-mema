@@ -7321,6 +7321,170 @@ components:
             type: string
             minLength: 1
             maxLength: 40
+    TargetSatisfactionType:
+      type: string
+      enum:
+        - video
+        - audio
+        - subtitle
+      x-enum-varnames:
+        - TargetSatisfactionTypeVideo
+        - TargetSatisfactionTypeAudio
+        - TargetSatisfactionTypeSubtitle
+    TargetSatisfactionState:
+      type: string
+      enum:
+        - missing
+        - partial
+        - pending
+        - satisfied
+        - upgradeable
+        - blocked
+        - failed
+      x-enum-varnames:
+        - TargetSatisfactionStateMissing
+        - TargetSatisfactionStatePartial
+        - TargetSatisfactionStatePending
+        - TargetSatisfactionStateSatisfied
+        - TargetSatisfactionStateUpgradeable
+        - TargetSatisfactionStateBlocked
+        - TargetSatisfactionStateFailed
+    TargetCandidateType:
+      type: string
+      enum:
+        - video_track
+        - audio_track
+        - embedded_subtitle
+        - external_subtitle
+        - file_provenance
+      x-enum-varnames:
+        - TargetCandidateTypeVideoTrack
+        - TargetCandidateTypeAudioTrack
+        - TargetCandidateTypeEmbeddedSubtitle
+        - TargetCandidateTypeExternalSubtitle
+        - TargetCandidateTypeFileProvenance
+    TargetCandidateVisualState:
+      type: string
+      enum:
+        - matching
+        - partial
+        - unwanted
+        - pending_operation
+        - missing_placeholder
+      x-enum-varnames:
+        - TargetCandidateVisualStateMatching
+        - TargetCandidateVisualStatePartial
+        - TargetCandidateVisualStateUnwanted
+        - TargetCandidateVisualStatePendingOperation
+        - TargetCandidateVisualStateMissingPlaceholder
+    TargetOperationType:
+      type: string
+      enum:
+        - release_search
+        - video_transcode
+        - audio_transcode
+        - audio_sourcing
+        - container_remux
+        - subtitle_download
+        - subtitle_embed
+        - subtitle_extraction
+        - subtitle_conversion
+        - file_rescan
+      x-enum-varnames:
+        - TargetOperationTypeReleaseSearch
+        - TargetOperationTypeVideoTranscode
+        - TargetOperationTypeAudioTranscode
+        - TargetOperationTypeAudioSourcing
+        - TargetOperationTypeContainerRemux
+        - TargetOperationTypeSubtitleDownload
+        - TargetOperationTypeSubtitleEmbed
+        - TargetOperationTypeSubtitleExtraction
+        - TargetOperationTypeSubtitleConversion
+        - TargetOperationTypeFileRescan
+    TargetOperationMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - manual
+        - automatic
+        - reason
+      properties:
+        type:
+          $ref: "#/components/schemas/TargetOperationType"
+        manual:
+          type: boolean
+        automatic:
+          type: boolean
+        jobId:
+          type: string
+          format: uuid
+        reason:
+          type: string
+    TargetSatisfactionTarget:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - type
+        - state
+        - mediaItemId
+        - reasons
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          $ref: "#/components/schemas/TargetSatisfactionType"
+        state:
+          $ref: "#/components/schemas/TargetSatisfactionState"
+        mediaItemId:
+          type: string
+          format: uuid
+        mediaFileId:
+          type: string
+          format: uuid
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 40
+        requiredOperation:
+          $ref: "#/components/schemas/TargetOperationMetadata"
+        reasons:
+          type: array
+          items:
+            type: string
+    TargetSatisfactionCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - type
+        - visualState
+        - targetIds
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          $ref: "#/components/schemas/TargetCandidateType"
+        visualState:
+          $ref: "#/components/schemas/TargetCandidateVisualState"
+        targetIds:
+          type: array
+          items:
+            type: string
+            minLength: 1
+        languageId:
+          type: string
+          minLength: 1
+          maxLength: 40
+        operation:
+          $ref: "#/components/schemas/TargetOperationMetadata"
+        unwantedRules:
+          type: array
+          items:
+            type: string
     MediaProfileCustomFormatScore:
       type: object
       additionalProperties: false

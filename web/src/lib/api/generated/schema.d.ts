@@ -3560,6 +3560,72 @@ export interface components {
 			score: number;
 			formats?: string[];
 		};
+		/** @enum {string} */
+		TargetSatisfactionType: 'video' | 'audio' | 'subtitle';
+		/** @enum {string} */
+		TargetSatisfactionState:
+			| 'missing'
+			| 'partial'
+			| 'pending'
+			| 'satisfied'
+			| 'upgradeable'
+			| 'blocked'
+			| 'failed';
+		/** @enum {string} */
+		TargetCandidateType:
+			| 'video_track'
+			| 'audio_track'
+			| 'embedded_subtitle'
+			| 'external_subtitle'
+			| 'file_provenance';
+		/** @enum {string} */
+		TargetCandidateVisualState:
+			| 'matching'
+			| 'partial'
+			| 'unwanted'
+			| 'pending_operation'
+			| 'missing_placeholder';
+		/** @enum {string} */
+		TargetOperationType:
+			| 'release_search'
+			| 'video_transcode'
+			| 'audio_transcode'
+			| 'audio_sourcing'
+			| 'container_remux'
+			| 'subtitle_download'
+			| 'subtitle_embed'
+			| 'subtitle_extraction'
+			| 'subtitle_conversion'
+			| 'file_rescan';
+		TargetOperationMetadata: {
+			type: components['schemas']['TargetOperationType'];
+			manual: boolean;
+			automatic: boolean;
+			/** Format: uuid */
+			jobId?: string;
+			reason: string;
+		};
+		TargetSatisfactionTarget: {
+			id: string;
+			type: components['schemas']['TargetSatisfactionType'];
+			state: components['schemas']['TargetSatisfactionState'];
+			/** Format: uuid */
+			mediaItemId: string;
+			/** Format: uuid */
+			mediaFileId?: string;
+			languageId?: string;
+			requiredOperation?: components['schemas']['TargetOperationMetadata'];
+			reasons: string[];
+		};
+		TargetSatisfactionCandidate: {
+			id: string;
+			type: components['schemas']['TargetCandidateType'];
+			visualState: components['schemas']['TargetCandidateVisualState'];
+			targetIds: string[];
+			languageId?: string;
+			operation?: components['schemas']['TargetOperationMetadata'];
+			unwantedRules?: string[];
+		};
 		MediaProfileCustomFormatScore: {
 			/** Format: uuid */
 			customFormatId: string;
