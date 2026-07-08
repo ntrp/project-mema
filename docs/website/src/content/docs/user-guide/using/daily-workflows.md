@@ -57,7 +57,9 @@ subtitles, size, quality, score, status, and actions. Status details are shown
 through compact badges and hover details so the row stays readable.
 
 Use the file detail area when the row says partial or missing. It will show
-which tracks and sidecars were detected and what the profile still wants.
+which tracks and sidecars were detected and what the profile still wants. Track
+rows show whether they match the profile, partially match it, need a follow-up
+operation, are unwanted by current settings, or stand in for a missing target.
 
 ## Refresh And Maintain
 

@@ -1,6 +1,7 @@
 import type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetails';
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import { audioTrackMatchesTarget } from '$lib/components/app/media/files/mediaFileAudioTargetMatching';
+import { missingPlaceholderState } from '$lib/components/app/media/files/details/mediaFileVisualStates';
 import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay';
 
 type TrackType = MediaFileDetailRow['type'];
@@ -47,7 +48,8 @@ function missingAudioRows(row: MediaFileRow, rows: MediaFileDetailRow[]): MediaF
 			type: 'audio' as const,
 			language: displayLanguage(target.languageId),
 			description: 'Missing expected audio track',
-			missing: true
+			missing: true,
+			...missingPlaceholderState('audio', target.languageId)
 		}));
 }
 
@@ -71,11 +73,7 @@ function missingAudioInsertIndex(rows: MediaFileDetailRow[]) {
 
 function missingSubtitleRows(row: MediaFileRow): MediaFileDetailRow[] {
 	const satisfaction = row.subtitleSatisfaction;
-	if (
-		!satisfaction ||
-		satisfaction.mode === 'external' ||
-		satisfaction.missingLanguages.length === 0
-	) {
+	if (!satisfaction || satisfaction.missingLanguages.length === 0) {
 		return [];
 	}
 	return satisfaction.missingLanguages.map((language) => ({
@@ -84,7 +82,8 @@ function missingSubtitleRows(row: MediaFileRow): MediaFileDetailRow[] {
 		type: 'subtitle' as const,
 		language: displayLanguage(language),
 		description: 'Missing expected subtitle track',
-		missing: true
+		missing: true,
+		...missingPlaceholderState('subtitle', language)
 	}));
 }
 

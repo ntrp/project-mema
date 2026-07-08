@@ -21,7 +21,8 @@ If audio is marked partial or missing, open the file detail area and compare the
 detected tracks with the selected profile. The file may be perfectly playable
 but still not satisfy the profile you chose. Missing required audio languages
 appear as placeholder rows in the track table, next to the detected audio
-tracks.
+tracks. Audio rows that miss codec, channel, or bitrate targets are marked
+partial and list the failed requirement in their hover details.
 
 ## Subtitle Status
 
@@ -31,6 +32,11 @@ the subtitle mode from the profile: Embedded, External, or Mixed.
 When subtitles are missing, use subtitle search from the media page. If a
 subtitle provider is configured, the app can search candidates and attach the
 selected subtitle to the media item.
+
+The subtitle rows reflect subtitle mode immediately. An embedded subtitle can
+show as pending extraction for External mode, while an external sidecar can show
+as pending embedding for Embedded mode. Extra subtitle rows are marked unwanted
+only when the profile settings or subtitle mode make them unwanted.
 
 ## Subtitle Providers
 

@@ -2,12 +2,12 @@
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
-	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
+	import MediaFileDetailStateBadge from '$lib/components/app/media/files/details/MediaFileDetailStateBadge.svelte';
 	import MediaFileTrackProvenanceIcon from '$lib/components/app/media/files/provenance/MediaFileTrackProvenanceIcon.svelte';
 	import MediaFileTrackTypeIcon from '$lib/components/app/media/files/track-icons/MediaFileTrackTypeIcon.svelte';
 	import {
@@ -124,24 +124,7 @@
 					<Table.Cell class="whitespace-normal">
 						<span class="inline-flex items-center gap-2">
 							{track.description}
-							{#if track.unwanted}
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										{#snippet child({ props })}
-											<button
-												{...props}
-												type="button"
-												class="inline-flex border-0 bg-transparent p-0 text-secondary-foreground"
-											>
-												<TriangleAlertIcon class="size-4" aria-label="Not wanted" />
-											</button>
-										{/snippet}
-									</Tooltip.Trigger>
-									<Tooltip.Content>
-										This track does not match the subtitle mode or enabled profile targets.
-									</Tooltip.Content>
-								</Tooltip.Root>
-							{/if}
+							<MediaFileDetailStateBadge row={track} />
 						</span>
 					</Table.Cell>
 					<Table.Cell class="justify-end">

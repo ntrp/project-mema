@@ -13,6 +13,10 @@ export interface MediaFileDetailRow {
 	language: string;
 	description: string;
 	provenance?: MediaFileTrack['provenance'];
+	visualState?: 'matching' | 'partial' | 'unwanted' | 'pending_operation' | 'missing_placeholder';
+	statusLabel?: string;
+	details?: string[];
+	operationLabel?: string;
 	chapterSummary?: boolean;
 	missing?: boolean;
 	unwanted?: boolean;

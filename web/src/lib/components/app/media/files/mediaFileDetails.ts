@@ -8,7 +8,11 @@ import {
 	rowsWithMissingAudio,
 	rowsWithMissingSubtitles
 } from '$lib/components/app/media/files/details/mediaFileMissingRows';
-import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay';
+import {
+	externalSubtitleVisualState,
+	trackVisualState
+} from '$lib/components/app/media/files/details/mediaFileVisualStates';
+import { displayLanguage } from '$lib/settings/languageDisplay';
 
 type MediaFileTrack = MediaFileRow['tracks'][number];
 type MediaFileChapter = MediaFileRow['chapters'][number];
@@ -48,6 +52,7 @@ export function fileChapterSummaryRow(row: MediaFileRow): MediaFileDetailRow | u
 }
 
 function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): MediaFileDetailRow {
+	const visual = trackVisualState(row, track);
 	return {
 		key: `${track.type}-${track.index ?? index}`,
 		trackNumber: track.index === undefined ? String(index + 1) : String(track.index),
@@ -55,7 +60,8 @@ function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): Medi
 		language: displayLanguage(track.language),
 		description: trackDescription(row, track),
 		provenance: track.provenance,
-		unwanted: unwantedTrack(row, track),
+		...visual,
+		unwanted: visual.visualState === 'unwanted',
 		deleteRequest: trackDeleteRequest(track)
 	};
 }
@@ -69,10 +75,9 @@ function trackRowsWithMissingTargets(row: MediaFileRow): MediaFileDetailRow[] {
 }
 
 function externalSubtitleTrackRows(row: MediaFileRow): MediaFileDetailRow[] {
-	if (row.subtitleSatisfaction?.mode !== 'embedded') return [];
-	return (row.externalSubtitles ?? [])
-		.filter((subtitle) => subtitle.retentionMode === 'mux')
-		.map((subtitle) => ({
+	return (row.externalSubtitles ?? []).map((subtitle) => {
+		const visual = externalSubtitleVisualState(row, subtitle.languageId);
+		return {
 			key: `external-subtitle-${subtitle.id}`,
 			trackNumber: '-',
 			type: 'subtitle' as const,
@@ -82,21 +87,10 @@ function externalSubtitleTrackRows(row: MediaFileRow): MediaFileDetailRow[] {
 				subtitle.format.toUpperCase(),
 				relativePath(row.path ? row.path.replace(/[^/]+$/, '') : undefined, subtitle.filePath)
 			]),
-			unwanted: unwantedSubtitleLanguage(row, subtitle.languageId)
-		}));
-}
-
-function unwantedTrack(row: MediaFileRow, track: MediaFileTrack) {
-	if (track.type === 'subtitle' && row.subtitleSatisfaction?.mode === 'external') {
-		return true;
-	}
-	const expectedLanguages = wantedLanguagesForTrack(row, track);
-	if (expectedLanguages.length === 0) {
-		return false;
-	}
-	const enabled = new Set(expectedLanguages.map(languageMatchKey).filter(Boolean));
-	const language = languageMatchKey(track.language);
-	return language !== '' && !enabled.has(language);
+			...visual,
+			unwanted: visual.visualState === 'unwanted'
+		};
+	});
 }
 
 function trackDeleteRequest(track: MediaFileTrack): TrackDeleteRequest | undefined {
@@ -104,25 +98,6 @@ function trackDeleteRequest(track: MediaFileTrack): TrackDeleteRequest | undefin
 		return undefined;
 	}
 	return { targetType: track.type, trackIndex: track.index };
-}
-
-function wantedLanguagesForTrack(row: MediaFileRow, track: MediaFileTrack) {
-	if (track.type === 'audio' && row.removeNonEnabledLanguages) {
-		return row.expectedLanguages;
-	}
-	if (track.type === 'subtitle' && row.removeNonEnabledSubtitleLanguages) {
-		return row.expectedSubtitleLanguages;
-	}
-	return [];
-}
-
-function unwantedSubtitleLanguage(row: MediaFileRow, languageId: string) {
-	if (!row.removeNonEnabledSubtitleLanguages || row.expectedSubtitleLanguages.length === 0) {
-		return false;
-	}
-	const enabled = new Set(row.expectedSubtitleLanguages.map(languageMatchKey).filter(Boolean));
-	const language = languageMatchKey(languageId);
-	return language !== '' && !enabled.has(language);
 }
 
 function chapterRow(chapter: MediaFileChapter): MediaFileDetailRow {

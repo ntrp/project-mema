@@ -148,7 +148,7 @@ as a rollup instead of a single overloaded download flag.
 | --- | --- |
 | `matching` | Candidate satisfies at least one target. |
 | `partial` | Candidate relates to a target but fails one or more requirements. |
-| `unwanted` | Candidate conflicts with profile or settings. |
+| `unwanted` | Candidate conflicts with profile settings or subtitle mode. |
 | `pending_operation` | Candidate can satisfy a target after a known operation. |
 | `missing_placeholder` | Synthetic row shown because a target has no candidate. |
 
