@@ -30,7 +30,16 @@ type rendererMatchTokenJSON struct {
 type rendererDeliveryJSON struct {
 	PreferHLS        bool `json:"preferHls"`
 	AvoidHLS         bool `json:"avoidHls"`
+	DirectPlay       bool `json:"directPlay"`
+	Transcode        bool `json:"transcode"`
 	StreamingHeaders bool `json:"streamingHeaders"`
+}
+
+type rendererCapabilitiesJSON struct {
+	Containers    []string `json:"containers"`
+	VideoCodecs   []string `json:"videoCodecs"`
+	AudioCodecs   []string `json:"audioCodecs"`
+	MaxResolution string   `json:"maxResolution"`
 }
 
 type rendererSubtitlesJSON struct {
@@ -118,6 +127,7 @@ func (m *Manager) loadRendererProfiles(ctx context.Context) ([]RendererProfile, 
 
 func rendererProfileFromStorage(row storage.DLNARendererProfile) RendererProfile {
 	matchRules := parseRendererMatchRules(row.MatchRules)
+	capabilities := parseRendererCapabilities(row.CapabilityRules)
 	delivery := parseRendererDelivery(row.DeliverySettings)
 	subtitles := parseRendererSubtitles(row.SubtitleRules)
 	quirks := parseRendererQuirks(row.Quirks)
@@ -141,6 +151,8 @@ func rendererProfileFromStorage(row storage.DLNARendererProfile) RendererProfile
 		DisableEventing: quirks.DisableEventing,
 		SubtitleFormats: append([]string{}, subtitles.Formats...),
 		ResponseHeaders: headers,
+		Capabilities:    capabilities,
+		DeliveryRules:   RendererDeliveryRules{DirectPlay: delivery.DirectPlay, Transcode: delivery.Transcode},
 		rules:           matchRules.Rules,
 	}
 }
@@ -194,6 +206,17 @@ func parseRendererDelivery(payload []byte) rendererDeliveryJSON {
 	return raw
 }
 
+func parseRendererCapabilities(payload []byte) RendererCapabilities {
+	var raw rendererCapabilitiesJSON
+	_ = json.Unmarshal(payload, &raw)
+	return RendererCapabilities{
+		Containers:    normalizedLowerList(raw.Containers),
+		VideoCodecs:   normalizedLowerList(raw.VideoCodecs),
+		AudioCodecs:   normalizedLowerList(raw.AudioCodecs),
+		MaxResolution: strings.ToLower(strings.TrimSpace(raw.MaxResolution)),
+	}
+}
+
 func parseRendererSubtitles(payload []byte) rendererSubtitlesJSON {
 	var raw rendererSubtitlesJSON
 	_ = json.Unmarshal(payload, &raw)
@@ -226,4 +249,15 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func normalizedLowerList(values []string) []string {
+	results := make([]string, 0, len(values))
+	for _, value := range values {
+		cleaned := strings.ToLower(strings.TrimSpace(value))
+		if cleaned != "" {
+			results = append(results, cleaned)
+		}
+	}
+	return results
 }

@@ -31,8 +31,15 @@ func (m *Manager) resource(w http.ResponseWriter, r *http.Request) {
 	}
 	profile := m.RendererProfileFromRequest(r)
 	probe := probeWithPathContainer(delivery.Probe(object.FilePath), object.FilePath)
-	if r.URL.Query().Get("mode") == "transcode" || (profile.ID == "lg" && audioNeedsTranscode(probe)) {
+	capability := EvaluateRendererCapability(profile, probe)
+	if r.URL.Query().Get("mode") == "transcode" ||
+		(capability.Decision.Mode == delivery.ModeTranscode &&
+			capability.Decision.DeliveryProtocol == delivery.ProtocolFile) {
 		m.resourceTranscode(w, r, id, object.FilePath, probe)
+		return
+	}
+	if capability.Decision.DeliveryProtocol == delivery.ProtocolHLS {
+		m.resourcePlaylist(w, r, id, object.FilePath)
 		return
 	}
 	done, ok := m.beginStream(r, id, "direct", false)

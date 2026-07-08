@@ -22,7 +22,21 @@ type RendererProfile struct {
 	DisableEventing bool
 	SubtitleFormats []string
 	ResponseHeaders map[string]string
+	Capabilities    RendererCapabilities
+	DeliveryRules   RendererDeliveryRules
 	rules           []rendererMatchRule
+}
+
+type RendererCapabilities struct {
+	Containers    []string
+	VideoCodecs   []string
+	AudioCodecs   []string
+	MaxResolution string
+}
+
+type RendererDeliveryRules struct {
+	DirectPlay bool
+	Transcode  bool
 }
 
 type RendererProfileExplanation struct {
@@ -105,7 +119,7 @@ func RendererRequestFromHTTP(r *http.Request) RendererRequest {
 }
 
 func SourceProtocolInfosForProfile(profile RendererProfile) []string {
-	values := SourceProtocolInfos()
+	values := SourceProtocolInfosForCapabilities(profile)
 	if profile.AvoidHLS {
 		return protocolInfosWithoutHLS(values)
 	}

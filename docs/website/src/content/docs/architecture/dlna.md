@@ -240,6 +240,11 @@ and IP overrides are checked before automatic matching. Automatic matching uses
 the structured seed rules, then falls back to the recent-client sticky IP path
 for weak media requests and finally the generic profile.
 
+The selected profile also drives a capability evaluator. Probe metadata is
+normalized into container, video codec, audio codec, and resolution checks.
+The evaluator returns a delivery decision, reason codes, and trace rows that
+feed DIDL resources, `ConnectionManager` protocol info, and diagnostics.
+
 ## Planned Settings UI
 
 Settings > DLNA will gain a Device profiles panel.

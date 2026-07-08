@@ -124,30 +124,35 @@ func contentResources(objects []content.Object, baseURL string, profile Renderer
 			size = &value
 		}
 		itemResources := []content.Resource{}
-		if profile.ID == "lg" && audioNeedsTranscode(probe) {
+		capability := EvaluateRendererCapability(profile, probe)
+		if capability.Decision.Mode == delivery.ModeTranscode &&
+			capability.Decision.DeliveryProtocol == delivery.ProtocolFile {
 			itemResources = append(itemResources, content.ResourceFromDelivery(content.ResourceInput{
 				URL:       directResourceURL,
 				SizeBytes: size,
 				Probe:     probe,
-				Decision:  directDecision(),
+				Decision:  capability.Decision,
 			}))
 			resources[object.ID] = itemResources
 			continue
+		}
+		resourceDecision := directDecision()
+		if capability.Decision.Mode == delivery.ModeDirect || capability.Decision.Mode == delivery.ModeRemux {
+			resourceDecision = capability.Decision
 		}
 		itemResources = append(itemResources, content.ResourceFromDelivery(content.ResourceInput{
 			URL:       directResourceURL,
 			SizeBytes: size,
 			Probe:     probe,
-			Decision:  directDecision(),
+			Decision:  resourceDecision,
 		}))
-		decision := delivery.DecisionFromTracks(object.FilePath, probe.Tracks, nil, DeliveryClientProfile(profile))
-		resourceURL := resourceURLForDecision(directResourceURL, decision)
-		if decision.DeliveryProtocol == delivery.ProtocolHLS && !profile.AvoidHLS {
+		resourceURL := resourceURLForDecision(directResourceURL, capability.Decision)
+		if capability.Decision.DeliveryProtocol == delivery.ProtocolHLS && !profile.AvoidHLS {
 			itemResources = append(itemResources, content.ResourceFromDelivery(content.ResourceInput{
 				URL:       resourceURL,
 				SizeBytes: size,
 				Probe:     probe,
-				Decision:  decision,
+				Decision:  capability.Decision,
 			}))
 		}
 		resources[object.ID] = itemResources
