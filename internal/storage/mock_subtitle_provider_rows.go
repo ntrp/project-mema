@@ -92,7 +92,7 @@ func mockSubtitleProviderRowFromRow(row storagegen.AppMockSubtitleProviderRow) M
 func normalizeMockSubtitleFormat(value string) string {
 	switch strings.TrimPrefix(strings.ToLower(strings.TrimSpace(value)), ".") {
 	case "", "srt", "subrip":
-		return "srt"
+		return "subrip"
 	case "vtt", "webvtt":
 		return "vtt"
 	case "ass":

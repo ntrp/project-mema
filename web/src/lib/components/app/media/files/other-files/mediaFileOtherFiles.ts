@@ -23,6 +23,12 @@ export function otherFileLanguageLabel(file: MediaFileOtherFile) {
 	return file.type === 'subtitle' ? displayLanguage(file.language) : '-';
 }
 
+export function otherFileSubtypeLabel(file: MediaFileOtherFile) {
+	if (!file.subtype) return '-';
+	if (file.subtype === 'subrip') return 'SubRip';
+	return file.subtype.toUpperCase();
+}
+
 export function otherFileDisplayPath(row: MediaFileRow, file: MediaFileOtherFile) {
 	return relativePath(row.path ? row.path.replace(/[^/]+$/, '') : undefined, file.path);
 }

@@ -107,7 +107,10 @@ values
     ('12-other-files-actions', 'english', 'aac', array['2.0'], 192, 256, 'external', true, true),
     ('13-three-movies-one-folder-grand-budapest', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
     ('13-three-movies-one-folder-interstellar', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('13-three-movies-one-folder-truman-show', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false);
+    ('13-three-movies-one-folder-truman-show', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('14-subrip-subtitle', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('15-ass-subtitle', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('16-wrong-video-resolution', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false);
 
 drop table if exists dev_test_media_subtitles;
 create temporary table dev_test_media_subtitles (
@@ -134,7 +137,10 @@ values
     ('12-other-files-actions', 'english', 50, 0),
     ('13-three-movies-one-folder-grand-budapest', 'english', 0, 0),
     ('13-three-movies-one-folder-interstellar', 'english', 0, 0),
-    ('13-three-movies-one-folder-truman-show', 'english', 0, 0);
+    ('13-three-movies-one-folder-truman-show', 'english', 0, 0),
+    ('14-subrip-subtitle', 'english', 0, 0),
+    ('15-ass-subtitle', 'english', 0, 0),
+    ('16-wrong-video-resolution', 'english', 0, 0);
 
 insert into app.media_profiles (
     id,
@@ -240,7 +246,7 @@ select
 from dev_test_media_profiles;
 
 insert into app.media_profile_subtitle_targets (profile_id, language_id, score, formats, sort_order)
-select profile_id, language_id, score, array['srt'], sort_order
+select profile_id, language_id, score, array['subrip'], sort_order
 from dev_test_media_subtitles;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)
@@ -297,7 +303,10 @@ values
     (12, '12-other-files-actions', '10000000-0000-4000-8000-000000001012', '10000000-0000-4000-8000-000000002012', 2008, '10681', 'EN', '.data/media/test-movie/12-other-files-actions', 'WALL-E.2008.tmdb-10681.1080p.WEB-DL.AAC2.0.EN.mkv', 'WALL E'),
     (13, '13-three-movies-one-folder-grand-budapest', '10000000-0000-4000-8000-000000001013', '10000000-0000-4000-8000-000000002013', 2014, '120467', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'The.Grand.Budapest.Hotel.2014.tmdb-120467.1080p.WEB-DL.AAC2.0.EN.mkv', 'The Grand Budapest Hotel'),
     (14, '13-three-movies-one-folder-interstellar', '10000000-0000-4000-8000-000000001014', '10000000-0000-4000-8000-000000002014', 2014, '157336', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'Interstellar.2014.tmdb-157336.1080p.WEB-DL.AAC2.0.EN.mkv', 'Interstellar'),
-    (15, '13-three-movies-one-folder-truman-show', '10000000-0000-4000-8000-000000001015', '10000000-0000-4000-8000-000000002015', 1998, '37165', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'The.Truman.Show.1998.tmdb-37165.1080p.WEB-DL.AAC2.0.EN.mkv', 'The Truman Show');
+    (15, '13-three-movies-one-folder-truman-show', '10000000-0000-4000-8000-000000001015', '10000000-0000-4000-8000-000000002015', 1998, '37165', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'The.Truman.Show.1998.tmdb-37165.1080p.WEB-DL.AAC2.0.EN.mkv', 'The Truman Show'),
+    (16, '14-subrip-subtitle', '10000000-0000-4000-8000-000000001016', '10000000-0000-4000-8000-000000002016', 2001, '585', 'EN', '.data/media/test-movie/14-subrip-subtitle', 'Monsters.Inc.2001.tmdb-585.1080p.WEB-DL.AAC2.0.EN.SubRip.mkv', 'Monsters Inc'),
+    (17, '15-ass-subtitle', '10000000-0000-4000-8000-000000001017', '10000000-0000-4000-8000-000000002017', 2009, '14160', 'EN', '.data/media/test-movie/15-ass-subtitle', 'Up.2009.tmdb-14160.1080p.WEB-DL.AAC2.0.EN.ASS.mkv', 'Up'),
+    (18, '16-wrong-video-resolution', '10000000-0000-4000-8000-000000001018', '10000000-0000-4000-8000-000000002018', 2006, '920', 'EN', '.data/media/test-movie/16-wrong-video-resolution', 'Cars.2006.tmdb-920.1080p.WEB-DL.AAC2.0.EN.WrongResolution.mkv', 'Cars');
 
 insert into app.media_items (
     id,

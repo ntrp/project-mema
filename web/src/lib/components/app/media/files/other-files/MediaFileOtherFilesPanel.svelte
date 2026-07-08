@@ -6,6 +6,7 @@
 	import {
 		otherFileDisplayPath,
 		otherFileLanguageLabel,
+		otherFileSubtypeLabel,
 		otherFileTypeLabel
 	} from '$lib/components/app/media/files/other-files/mediaFileOtherFiles';
 	import type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetails';
@@ -71,10 +72,11 @@
 
 <div class="border-t border-border bg-card" aria-label="Other files">
 	<div
-		class="grid items-start gap-3 border-b border-border px-4 pt-3 pb-2 lg:grid-cols-[minmax(220px,1fr)_96px_116px_176px]"
+		class="grid items-start gap-3 border-b border-border px-4 pt-3 pb-2 lg:grid-cols-[minmax(220px,1fr)_96px_96px_116px_176px]"
 	>
 		<strong class="text-xs font-medium text-muted-foreground uppercase">Other files</strong>
 		<strong class="text-xs font-medium text-muted-foreground uppercase">Type</strong>
+		<strong class="text-xs font-medium text-muted-foreground uppercase">Subtype</strong>
 		<strong class="text-xs font-medium text-muted-foreground uppercase">Language</strong>
 		<strong class="text-right text-xs font-medium text-muted-foreground uppercase">Actions</strong>
 	</div>
@@ -85,7 +87,7 @@
 			{@const visualRow = subtitleVisualRow(file, subtitle)}
 			<div
 				class={cn(
-					'grid items-start gap-3 border-b border-border p-4 last:border-b-0 lg:grid-cols-[minmax(220px,1fr)_96px_116px_176px]',
+					'grid items-start gap-3 border-b border-border p-4 last:border-b-0 lg:grid-cols-[minmax(220px,1fr)_96px_96px_116px_176px]',
 					file.status === 'missing' && 'text-muted-foreground italic',
 					visualRow?.missing && 'bg-destructive/10 text-destructive',
 					visualRow?.unwanted && unwantedMediaRowClass
@@ -100,6 +102,7 @@
 					</span>
 				</span>
 				<span class="flex min-h-8 items-center text-sm">{otherFileTypeLabel(file.type)}</span>
+				<span class="flex min-h-8 items-center text-sm">{otherFileSubtypeLabel(file)}</span>
 				<span class="flex min-h-8 items-center text-sm">{otherFileLanguageLabel(file)}</span>
 				<MediaFileOtherFileActions
 					{file}
@@ -116,10 +119,11 @@
 			</div>
 		{/each}
 	{:else}
-		<div class="grid items-start gap-3 p-4 lg:grid-cols-[minmax(220px,1fr)_96px_116px_176px]">
+		<div class="grid items-start gap-3 p-4 lg:grid-cols-[minmax(220px,1fr)_96px_96px_116px_176px]">
 			<span class="flex min-h-8 min-w-0 items-center text-sm text-muted-foreground">
 				No other files present.
 			</span>
+			<span class="flex min-h-8 items-center text-sm text-muted-foreground">-</span>
 			<span class="flex min-h-8 items-center text-sm text-muted-foreground">-</span>
 			<span class="flex min-h-8 items-center text-sm text-muted-foreground">-</span>
 			<span class="flex min-h-8 items-center justify-end text-sm text-muted-foreground">-</span>

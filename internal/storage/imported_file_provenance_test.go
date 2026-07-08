@@ -41,7 +41,8 @@ func TestRecordImportedMediaFileRecordsSidecars(t *testing.T) {
 	target := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.1080p-ARR.mkv")
 	poster := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.1080p-ARR-poster.jpg")
 	subtitle := filepath.Join(*item.MediaFolderPath, "English.srt")
-	for _, path := range []string{poster, subtitle} {
+	notes := filepath.Join(*item.MediaFolderPath, "notes.bin")
+	for _, path := range []string{poster, subtitle, notes} {
 		if err := os.WriteFile(path, []byte("sidecar"), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -55,7 +56,8 @@ func TestRecordImportedMediaFileRecordsSidecars(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !mediaItemHasSidecar(loaded.Sidecars, MediaSidecarMetadata, poster) {
+	metadataSidecar := mediaItemSidecar(loaded.Sidecars, MediaSidecarMetadata, poster)
+	if metadataSidecar == nil || metadataSidecar.Subtype == nil || *metadataSidecar.Subtype != "poster" {
 		t.Fatalf("metadata sidecar not recorded: %#v", loaded.Sidecars)
 	}
 	if !mediaItemHasSidecar(loaded.Sidecars, MediaSidecarSubtitle, subtitle) {
@@ -64,6 +66,13 @@ func TestRecordImportedMediaFileRecordsSidecars(t *testing.T) {
 	sidecar := mediaItemSidecar(loaded.Sidecars, MediaSidecarSubtitle, subtitle)
 	if sidecar == nil || sidecar.LanguageID == nil || *sidecar.LanguageID != "english" {
 		t.Fatalf("subtitle sidecar language not recorded: %#v", sidecar)
+	}
+	if sidecar.Subtype == nil || *sidecar.Subtype != "subrip" {
+		t.Fatalf("subtitle sidecar subtype not recorded: %#v", sidecar)
+	}
+	unknownSidecar := mediaItemSidecar(loaded.Sidecars, MediaSidecarUnknown, notes)
+	if unknownSidecar == nil || unknownSidecar.Subtype == nil || *unknownSidecar.Subtype != "bin" {
+		t.Fatalf("unknown sidecar subtype not recorded: %#v", loaded.Sidecars)
 	}
 	if len(loaded.ExternalSubtitles) != 1 || loaded.ExternalSubtitles[0].LanguageID != "english" || loaded.ExternalSubtitles[0].FilePath != subtitle {
 		t.Fatalf("external subtitles = %#v", loaded.ExternalSubtitles)

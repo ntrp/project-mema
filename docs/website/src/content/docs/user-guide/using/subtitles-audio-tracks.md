@@ -29,6 +29,8 @@ partial and list the failed requirement in their hover details.
 Subtitle status is computed on the backend from wanted subtitle languages,
 formats, sidecars, embedded tracks, and the subtitle mode from the profile:
 Embedded, External, or Mixed.
+Language aliases are normalized to ISO-style match keys, so `eng`, `en`, and
+`English` are treated as the same language during matching.
 
 When subtitles are missing, use subtitle search from the media page. If a
 subtitle provider is configured, the app can search candidates and attach the
@@ -38,8 +40,7 @@ The subtitle rows render backend states. An embedded subtitle can show as
 pending extraction for External mode, while an external sidecar can show as
 pending embedding for Embedded mode. A subtitle in the right language but the
 wrong format shows as pending conversion instead of as a missing subtitle. Extra
-subtitle rows are marked unwanted only when the profile settings or subtitle
-mode make them unwanted.
+subtitle rows outside the target languages are marked unwanted.
 
 ## Subtitle Providers
 
@@ -52,8 +53,9 @@ replacement for a real subtitle source.
 ## Track Actions
 
 The media file detail page can show actions for audio tracks, subtitle tracks,
-chapters, and sidecar files. Available actions depend on the file and installed
-media tools.
+chapters, and sidecar files. Sidecar rows show type and subtype, such as SubRip,
+poster, fanart, backdrop, or NFO. Available actions depend on the file and
+installed media tools.
 
 Deleting a track changes the media file. Use the profile status and track list
 to confirm you are removing the right thing. If you often remove the same

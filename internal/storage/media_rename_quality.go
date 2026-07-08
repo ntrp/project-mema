@@ -10,6 +10,10 @@ import (
 var mediaRenameResolutionPattern = regexp.MustCompile(`(?i)\b(2160|1080|720|576|480)[pi]\b`)
 
 func mediaRenameQualityFull(path string) string {
+	return mediaRenameQualityDefinition(path).Name
+}
+
+func mediaRenameQualityDefinition(path string) QualitySizeDefinition {
 	title := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 	source := mediaRenameSource(title)
 	resolution := mediaRenameResolution(title)
@@ -20,7 +24,7 @@ func mediaRenameQualityFull(path string) string {
 			best = definition
 		}
 	}
-	return best.Name
+	return best
 }
 
 func mediaRenameSource(title string) string {

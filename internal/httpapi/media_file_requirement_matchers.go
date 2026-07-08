@@ -6,10 +6,18 @@ import (
 	"strings"
 
 	"media-manager/internal/storage"
+	"media-manager/internal/subtitleformats"
 )
 
 func unwantedLanguage(enabled bool, expected []string, language string) bool {
-	if !enabled || len(expected) == 0 {
+	if !enabled {
+		return false
+	}
+	return outsideTargetLanguage(expected, language)
+}
+
+func outsideTargetLanguage(expected []string, language string) bool {
+	if len(expected) == 0 {
 		return false
 	}
 	key := languageMatchKey(language)
@@ -52,9 +60,25 @@ func subtitleTargetFormatMatches(targets []storage.MediaProfileSubtitleTarget, l
 		if languageMatchKey(target.LanguageID) != languageMatchKey(language) {
 			continue
 		}
-		return len(target.Formats) == 0 || stringListHasNormalized(target.Formats, format)
+		return subtitleformats.AnyMatch(target.Formats, format)
 	}
 	return len(targets) == 0
+}
+
+func subtitleTargetTextConversionSupported(
+	targets []storage.MediaProfileSubtitleTarget,
+	language string,
+	format string,
+) bool {
+	if !subtitleformats.Text(format) {
+		return false
+	}
+	for _, target := range targets {
+		if languageMatchKey(target.LanguageID) == languageMatchKey(language) {
+			return subtitleformats.HasTextTarget(target.Formats)
+		}
+	}
+	return false
 }
 
 func hasPendingSubtitleCandidate(tracks []MediaFileTrack, otherFiles []MediaFileOtherFile) bool {

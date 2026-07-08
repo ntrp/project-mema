@@ -3500,6 +3500,7 @@ type MediaFileOtherFile struct {
 	Path     string                   `json:"path"`
 	State    *MediaFileDetailState    `json:"state,omitempty"`
 	Status   MediaFileOtherFileStatus `json:"status"`
+	Subtype  *string                  `json:"subtype,omitempty"`
 	Type     MediaFileOtherFileType   `json:"type"`
 }
 

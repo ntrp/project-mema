@@ -102,18 +102,29 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 
 		expect(body).toContain('Other files');
 		expect(body).toContain('Type');
+		expect(body).toContain('Subtype');
 		expect(body).toContain('Language');
 		expect(body).toContain('Subtitle');
 		expect(body).toContain('Metadata');
 		expect(body).toContain('Unknown');
+		expect(body).toContain('SubRip');
+		expect(body).toContain('POSTER');
+		expect(body).toContain('BIN');
 		expect(body).toContain('Japanese');
 		expect(body).toContain('Scenario.Movie.2026.1080p.japanese.srt');
 		expect(body).toContain('poster.jpg');
 		expect(body).toContain('notes.bin');
 		expect(body).toContain('Missing');
 		expect(body).toContain('bg-destructive/10 text-destructive');
-		expect(otherFilesOrder(body)).toEqual(['Other files', 'Type', 'Language', 'Actions']);
+		expect(otherFilesOrder(body)).toEqual([
+			'Other files',
+			'Type',
+			'Subtype',
+			'Language',
+			'Actions'
+		]);
 		expect(body.match(/>Type</g) ?? []).toHaveLength(1);
+		expect(body.match(/>Subtype</g) ?? []).toHaveLength(1);
 		expect(body.match(/>Language</g) ?? []).toHaveLength(1);
 		expect(body.match(/>Actions</g) ?? []).toHaveLength(1);
 		expect(body.match(/Delete other file/g) ?? []).toHaveLength(2);
@@ -153,7 +164,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		});
 
 		expect(body).toContain('Spanish');
-		expect(body).toContain('bg-yellow-500/10 text-yellow-800 dark:text-yellow-300');
+		expect(body).toContain('bg-yellow-300/10 text-yellow-600 dark:text-yellow-200');
 		expect(body).toContain('Unwanted');
 	});
 
@@ -217,7 +228,7 @@ function summaryOrder(body: string) {
 }
 
 function otherFilesOrder(body: string) {
-	return ['Other files', 'Type', 'Language', 'Actions'].sort(
+	return ['Other files', 'Type', 'Subtype', 'Language', 'Actions'].sort(
 		(left, right) => body.indexOf(left) - body.indexOf(right)
 	);
 }
@@ -313,6 +324,7 @@ function detailedFileRow(): MediaFileRow {
 				type: 'subtitle',
 				path: '/library/Scenario Movie/Scenario.Movie.2026.1080p.japanese.srt',
 				status: 'missing',
+				subtype: 'subrip',
 				language: 'japanese',
 				state: {
 					visualState: 'missing_placeholder',
@@ -323,12 +335,14 @@ function detailedFileRow(): MediaFileRow {
 			{
 				type: 'metadata',
 				path: '/library/Scenario Movie/poster.jpg',
-				status: 'available'
+				status: 'available',
+				subtype: 'poster'
 			},
 			{
 				type: 'unknown',
 				path: '/library/Scenario Movie/notes.bin',
-				status: 'available'
+				status: 'available',
+				subtype: 'bin'
 			}
 		],
 		subtitleSatisfaction: {

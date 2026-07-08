@@ -83,6 +83,9 @@ profile expectations before the API response is returned:
 - Every track and subtitle sidecar that can affect satisfaction carries a
   backend-computed row state. Missing audio/subtitle candidates are returned as
   backend-computed missing rows.
+- Other-file subtype is persisted with sidecar facts: subtitle rows store the
+  subtitle format, metadata rows store the metadata kind, and unknown rows store
+  the extension when known.
 
 The frontend renders these states and chooses badges, colors, and row placement.
 It must not recompute profile satisfaction from target settings, because the
@@ -104,6 +107,10 @@ target. Manually created files become eligible only after a manual or automatic
 rescan discovers them and persists the updated file, track, or subtitle data.
 The media item state is then the rollup of every required video, audio, and
 subtitle target for the file.
+
+Language matching normalizes configured targets, probed stream language tags,
+and sidecar language hints to ISO-style match keys through one alias table. For
+example, `english`, `eng`, and `en` all match as `en`.
 
 Parsed release data is used to decide whether to fetch a new file. After a file
 is downloaded or imported, video and audio target evaluation uses probed data
@@ -203,10 +210,13 @@ container, and video target settings. Live filesystem discovery does not
 participate in satisfaction; imports and rescans must persist file facts first.
 
 No persisted file or no persisted video track returns `missing`. A known
-quality, codec, HDR, pixel format, or container mismatch returns `partial` with
-the failed requirement names. A container mismatch can return `pending` when the
-known operation is a remux. A satisfied file can still return `upgradeable` when
-the profile quality upgrade target is higher than the persisted quality.
+quality, selected-quality resolution, codec, HDR, pixel format, or container
+mismatch returns `partial` with the failed requirement names. Resolution checks
+use the persisted file quality: for cropped widescreen video, matching either
+the expected width or height satisfies the selected quality. A container mismatch
+can return `pending` when the known operation is a remux. A satisfied file can
+still return `upgradeable` when the profile quality upgrade target is higher
+than the persisted quality.
 
 ## Audio Satisfaction
 
@@ -229,10 +239,10 @@ partial. If every target matches, audio is satisfied.
 When a profile has no explicit audio target list, legacy required audio
 languages are used as simple language-only targets.
 
-If unwanted audio removal is enabled, audio tracks whose language is outside the
-profile target languages become `unwanted` candidates. This does not change the
-audio target state directly; target state comes from the configured target's own
-matching, partial, pending, or missing candidates.
+Audio tracks whose language is outside the profile target languages become
+`unwanted` candidates. This does not change the audio target state directly;
+target state comes from the configured target's own matching, partial, pending,
+or missing candidates.
 
 Missing audio targets are inserted into the track list as red placeholder audio
 rows next to detected audio tracks. This mirrors missing embedded subtitle rows
@@ -260,11 +270,14 @@ subtitle language is already matched.
 For embedded mode, available external subtitle files can change a missing state
 into `pending` because the subtitle exists but still needs embedding. For
 external mode, an embedded subtitle can become `pending` because extraction is
-required. A language match with the wrong subtitle format becomes a pending
-conversion state. Mixed or external mode can treat the same stored external
-subtitle as `satisfied`. Missing embedded subtitle targets are inserted into the
-track list as red placeholder subtitle rows only when no same-language candidate
-already exists.
+required. A language match with the wrong subtitle format becomes pending only
+when both existing and target formats are text formats (SubRip/`subrip`,
+`vtt`/WebVTT, `ass`, or `ssa`). Bitmap formats such as `pgs`/`sup` are
+recognized but blocked for conversion until bitmap subtitle tooling exists.
+Mixed or external mode can treat the same stored external subtitle as
+`satisfied`. Subtitle rows outside the target languages are marked `unwanted`.
+Missing embedded subtitle targets are inserted into the track list as red
+placeholder subtitle rows only when no same-language candidate already exists.
 
 ## Track Management
 

@@ -135,16 +135,22 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 	apiServer.SetDLNAManager(dlnaManager)
 	httpapi.HandlerFromMux(apiServer, apiRouter)
 
-	router := chi.NewRouter()
-	router.Mount("/api", apiRouter)
-	router.Handle("/*", web.StaticHandler(cfg.WebDir))
-	handler := routeDLNA(router, dlnaManager.Handler())
+	handler := routeDLNA(appRouter(cfg, apiRouter), dlnaManager.Handler())
 
 	return &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}, jobClient, dlnaManager, nil
+}
+
+func appRouter(cfg config.Config, apiRouter http.Handler) http.Handler {
+	router := chi.NewRouter()
+	router.Mount("/api", apiRouter)
+	if !cfg.IsDevelopment() {
+		router.Handle("/*", web.StaticHandler(cfg.WebDir))
+	}
+	return router
 }
 
 func routeDLNA(next http.Handler, dlnaHandler http.Handler) http.Handler {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"media-manager/internal/storage"
+	"media-manager/internal/subtitleformats"
 	"media-manager/internal/targets"
 )
 
@@ -68,7 +69,7 @@ func evaluateSubtitleTarget(
 		return result, nil
 	}
 	for index := range candidateFacts {
-		failures, operation := subtitleCandidateFailures(profile, target, candidateFacts[index])
+		failures, operation, blocked := subtitleCandidateFailures(profile, target, candidateFacts[index])
 		if len(failures) == 0 {
 			candidates[index].VisualState = targets.VisualMatching
 			result.Target.State = targets.StateSatisfied
@@ -88,8 +89,13 @@ func evaluateSubtitleTarget(
 		if len(result.FailedRequirements) == 0 || len(failures) < len(result.FailedRequirements) {
 			result.FailedRequirements = failures
 		}
+		if blocked {
+			result.Target.State = targets.StateBlocked
+		}
 	}
-	result.Target.State = targets.StatePartial
+	if result.Target.State != targets.StateBlocked {
+		result.Target.State = targets.StatePartial
+	}
 	result.Target.Reasons = result.FailedRequirements
 	return result, candidates
 }
@@ -139,7 +145,7 @@ func subtitleCandidateFailures(
 	profile *storage.MediaProfile,
 	target storage.MediaProfileSubtitleTarget,
 	candidate subtitleCandidateFact,
-) ([]string, *targets.Operation) {
+) ([]string, *targets.Operation, bool) {
 	mode := profile.SubtitleMode
 	if mode == "" {
 		mode = "mixed"
@@ -150,7 +156,7 @@ func subtitleCandidateFailures(
 			Manual:    true,
 			Automatic: true,
 			Reason:    "Embed external subtitle for embedded subtitle mode.",
-		}
+		}, false
 	}
 	if candidate.Candidate.Type == targets.CandidateEmbeddedSubtitle && mode == "external" {
 		return []string{"subtitle must be external"}, &targets.Operation{
@@ -158,17 +164,23 @@ func subtitleCandidateFailures(
 			Manual:    true,
 			Automatic: true,
 			Reason:    "Extract embedded subtitle for external subtitle mode.",
-		}
+		}, false
 	}
-	if len(target.Formats) > 0 && !stringListHasNormalized(target.Formats, candidate.Format) {
+	if len(target.Formats) > 0 && !subtitleformats.AnyMatch(target.Formats, candidate.Format) {
+		if !subtitleformats.Text(candidate.Format) {
+			return []string{"subtitle format requires non-text conversion support"}, nil, true
+		}
+		if !subtitleformats.HasTextTarget(target.Formats) {
+			return []string{"subtitle target format requires non-text conversion support"}, nil, true
+		}
 		return []string{"subtitle format does not meet the profile target"}, &targets.Operation{
 			Type:      targets.OperationSubtitleConversion,
 			Manual:    true,
 			Automatic: true,
 			Reason:    fmt.Sprintf("Convert subtitle to one of %v.", target.Formats),
-		}
+		}, false
 	}
-	return nil, nil
+	return nil, nil, false
 }
 
 func subtitleTargetCandidates(facts []subtitleCandidateFact) []targets.Candidate {

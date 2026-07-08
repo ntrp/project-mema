@@ -37,6 +37,24 @@ Mock subtitle second line: $label
 SRT
 }
 
+write_ass() {
+	local path="$1"
+	local label="$2"
+	cat >"$path" <<ASS
+[Script Info]
+ScriptType: v4.00+
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, Alignment
+Style: Default,Arial,20,&H00FFFFFF,2
+
+[Events]
+Format: Start, End, Style, Text
+Dialogue: 0:00:00.00,0:00:01.00,Default,Mock subtitle: $label
+Dialogue: 0:00:02.00,0:00:03.00,Default,Mock subtitle second line: $label
+ASS
+}
+
 write_chapters() {
 	local path="$1"
 	cat >"$path" <<'META'
@@ -67,17 +85,28 @@ poster() {
 }
 
 movie_one_audio() {
-	local out="$1" audio_lang="$2" audio_codec="$3" audio_bitrate="$4" channels="$5" sub_lang="${6:-}" chapters="${7:-no}"
-	local dir base srt="" meta="" sub_index="" chapter_index=""
+	local out="$1" audio_lang="$2" audio_codec="$3" audio_bitrate="$4" channels="$5" sub_lang="${6:-}" chapters="${7:-no}" sub_format="${8:-subrip}" video_size="${9:-1920x1080}"
+	local dir base srt="" meta="" sub_index="" chapter_index="" sub_encoder=""
 	dir="$(dirname "$out")"
 	base="$(clean_name "$(basename "$out")")"
 	mkdir -p "$dir"
 	local args=(-hide_banner -loglevel error -y
-		-f lavfi -i "color=c=white:s=320x180:r=24:d=$DURATION"
+		-f lavfi -i "color=c=white:s=$video_size:r=24:d=$DURATION"
 		-f lavfi -i "anoisesrc=color=white:duration=$DURATION:sample_rate=48000:amplitude=0.02")
 	if [[ -n "$sub_lang" ]]; then
-		srt="$dir/$base.embedded.$sub_lang.srt"
-		write_srt "$srt" "$base embedded $sub_lang"
+		case "$sub_format" in
+			ass | ssa)
+				srt="$dir/$base.embedded.$sub_lang.ass"
+				write_ass "$srt" "$base embedded $sub_lang $sub_format"
+				;;
+			*)
+				srt="$dir/$base.embedded.$sub_lang.srt"
+				write_srt "$srt" "$base embedded $sub_lang $sub_format"
+				sub_format="subrip"
+				sub_encoder="srt"
+				;;
+		esac
+		if [[ -z "$sub_encoder" ]]; then sub_encoder="$sub_format"; fi
 		args+=(-i "$srt")
 		sub_index="2"
 	fi
@@ -92,14 +121,14 @@ movie_one_audio() {
 	if [[ -n "$chapter_index" ]]; then args+=(-map_metadata "$chapter_index" -map_chapters "$chapter_index"); fi
 	args+=(-t "$DURATION" -c:v libx264 -preset ultrafast -pix_fmt yuv420p
 		-c:a "$audio_codec" -b:a "$audio_bitrate" -ac "$channels")
-	if [[ -n "$sub_index" ]]; then args+=(-c:s srt); fi
+	if [[ -n "$sub_index" ]]; then args+=(-c:s "$sub_encoder"); fi
 	args+=(-metadata:s:v:0 "title=Mock white video")
 	args+=(-metadata:s:a:0 "language=$audio_lang")
 	args+=(-metadata:s:a:0 "title=Mock white noise $audio_lang")
 	args+=(-metadata:s:a:0 "BPS=$(bitrate_bps "$audio_bitrate")")
 	if [[ -n "$sub_index" ]]; then
 		args+=(-metadata:s:s:0 "language=$sub_lang")
-		args+=(-metadata:s:s:0 "title=Mock subtitle $sub_lang")
+		args+=(-metadata:s:s:0 "title=Mock $sub_format subtitle $sub_lang")
 	fi
 	args+=("$out")
 	ffmpeg "${args[@]}"
@@ -115,7 +144,7 @@ movie_two_audio() {
 	srt="$dir/$base.embedded.eng.srt"
 	write_srt "$srt" "$base embedded eng"
 	ffmpeg -hide_banner -loglevel error -y \
-		-f lavfi -i "color=c=white:s=320x180:r=24:d=$DURATION" \
+		-f lavfi -i "color=c=white:s=1920x1080:r=24:d=$DURATION" \
 		-f lavfi -i "anoisesrc=color=white:duration=$DURATION:sample_rate=48000:amplitude=0.02" \
 		-f lavfi -i "anoisesrc=color=white:duration=$DURATION:sample_rate=48000:amplitude=0.02" \
 		-i "$srt" \
@@ -284,6 +313,15 @@ write_profile_refs "13-three-movies-one-folder" \
 movie_one_audio "$MEDIA_DIR/13-three-movies-one-folder/The.Grand.Budapest.Hotel.2014.tmdb-120467.1080p.WEB-DL.AAC2.0.EN.mkv" eng aac 256k 2 eng no
 movie_one_audio "$MEDIA_DIR/13-three-movies-one-folder/Interstellar.2014.tmdb-157336.1080p.WEB-DL.AAC2.0.EN.mkv" eng aac 256k 2 eng no
 movie_one_audio "$MEDIA_DIR/13-three-movies-one-folder/The.Truman.Show.1998.tmdb-37165.1080p.WEB-DL.AAC2.0.EN.mkv" eng aac 256k 2 eng no
+
+scenario "14-subrip-subtitle" "Monsters, Inc. (2001), TMDB 585"
+movie_one_audio "$MEDIA_DIR/14-subrip-subtitle/Monsters.Inc.2001.tmdb-585.1080p.WEB-DL.AAC2.0.EN.SubRip.mkv" eng aac 256k 2 eng no subrip
+
+scenario "15-ass-subtitle" "Up (2009), TMDB 14160"
+movie_one_audio "$MEDIA_DIR/15-ass-subtitle/Up.2009.tmdb-14160.1080p.WEB-DL.AAC2.0.EN.ASS.mkv" eng aac 256k 2 eng no ass
+
+scenario "16-wrong-video-resolution" "Cars (2006), TMDB 920"
+movie_one_audio "$MEDIA_DIR/16-wrong-video-resolution/Cars.2006.tmdb-920.1080p.WEB-DL.AAC2.0.EN.WrongResolution.mkv" eng aac 256k 2 eng no subrip 320x180
 
 cat >"$MEDIA_DIR/README.md" <<'README'
 # Test Movie Fixtures

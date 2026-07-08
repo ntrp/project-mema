@@ -40,6 +40,25 @@ func TestQualitySizeDefinitionsUseSeededDefaults(t *testing.T) {
 	requireQualitySizeAbove(t, definitions, "raw-hd", "br-disk")
 }
 
+func TestQualityResolutionForIDUsesQualityResolution(t *testing.T) {
+	bounds, ok := QualityResolutionForID("webdl-1080p")
+
+	if !ok {
+		t.Fatalf("expected resolution bounds")
+	}
+	if bounds.MinWidth != 1920 || bounds.MinHeight != 1080 {
+		t.Fatalf("bounds = %#v", bounds)
+	}
+}
+
+func TestQualityIDFromPathUsesBestMatchingQuality(t *testing.T) {
+	got := QualityIDFromPath("/media/Movie.2020.1080p.WEBDL.mkv")
+
+	if got != "webdl-1080p" {
+		t.Fatalf("quality id = %q", got)
+	}
+}
+
 func requireQualitySizeMinimum(
 	t *testing.T,
 	settings []QualitySizeSetting,

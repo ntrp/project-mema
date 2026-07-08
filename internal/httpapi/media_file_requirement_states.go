@@ -56,7 +56,7 @@ func trackDetailState(item storage.MediaItem, path string, track MediaFileTrack)
 }
 
 func audioTrackDetailState(item storage.MediaItem, track MediaFileTrack) *MediaFileDetailState {
-	if unwantedLanguage(item.RemoveUnwantedAudio, audioTargetLanguages(item.AudioTargets), optionalStringValue(track.Language)) {
+	if outsideTargetLanguage(audioTargetLanguages(item.AudioTargets), optionalStringValue(track.Language)) {
 		return detailState(MediaFileDetailVisualStateUnwanted, "Unwanted", "Audio language is outside enabled profile targets.")
 	}
 	targets := audioTargetsForTrack(item.AudioTargets, optionalStringValue(track.Language))
@@ -84,9 +84,12 @@ func embeddedSubtitleDetailState(item storage.MediaItem, track MediaFileTrack) *
 	if unwantedLanguage(item.RemoveUnwantedSubtitles, subtitleTargetLanguages(item.SubtitleTargets), language) {
 		return detailState(MediaFileDetailVisualStateUnwanted, "Unwanted", "Subtitle language is outside enabled profile targets.")
 	}
+	if outsideTargetLanguage(subtitleTargetLanguages(item.SubtitleTargets), language) {
+		return detailState(MediaFileDetailVisualStateUnwanted, "Unwanted", "Subtitle language is outside enabled profile targets.")
+	}
 	if len(item.SubtitleTargets) == 0 || subtitleTargetMatches(item.SubtitleTargets, language) {
 		if !subtitleTargetFormatMatches(item.SubtitleTargets, language, optionalStringValue(track.Codec)) {
-			return operationDetailState("Convert subtitle", "Subtitle format does not meet the profile target.")
+			return subtitleFormatMismatchDetailState(item.SubtitleTargets, language, optionalStringValue(track.Codec))
 		}
 		return detailState(MediaFileDetailVisualStateMatching, "Matching", "Embedded subtitle satisfies the subtitle target.")
 	}
@@ -104,16 +107,35 @@ func otherFileDetailState(item storage.MediaItem, mediaPath string, file MediaFi
 	if unwantedLanguage(item.RemoveUnwantedSubtitles, subtitleTargetLanguages(item.SubtitleTargets), language) {
 		return detailState(MediaFileDetailVisualStateUnwanted, "Unwanted", "Subtitle language is outside enabled profile targets.")
 	}
+	if outsideTargetLanguage(subtitleTargetLanguages(item.SubtitleTargets), language) {
+		return detailState(MediaFileDetailVisualStateUnwanted, "Unwanted", "Subtitle language is outside enabled profile targets.")
+	}
 	if !subtitleTargetMatches(item.SubtitleTargets, language) {
 		return nil
 	}
 	if mediaFileSubtitleMode(item.SubtitleMode) == MediaProfileSubtitleModeEmbedded {
 		return operationDetailState("Embed subtitle", "External subtitle can satisfy the target after embedding.")
 	}
-	if !subtitleTargetFormatMatches(item.SubtitleTargets, language, strings.TrimPrefix(filepath.Ext(file.Path), ".")) {
-		return operationDetailState("Convert subtitle", "Subtitle format does not meet the profile target.")
+	format := strings.TrimPrefix(filepath.Ext(file.Path), ".")
+	if !subtitleTargetFormatMatches(item.SubtitleTargets, language, format) {
+		return subtitleFormatMismatchDetailState(item.SubtitleTargets, language, format)
 	}
 	return detailState(MediaFileDetailVisualStateMatching, "Matching", "External subtitle satisfies the subtitle target.")
+}
+
+func subtitleFormatMismatchDetailState(
+	targets []storage.MediaProfileSubtitleTarget,
+	language string,
+	format string,
+) *MediaFileDetailState {
+	if subtitleTargetTextConversionSupported(targets, language, format) {
+		return operationDetailState("Convert subtitle", "Subtitle format does not meet the profile target.")
+	}
+	return detailState(
+		MediaFileDetailVisualStatePartial,
+		"Partial",
+		"Subtitle format requires non-text conversion support.",
+	)
 }
 
 func videoRequirementStatus(item storage.MediaItem, path string, tracks []MediaFileTrack) MediaFileRequirementStatus {

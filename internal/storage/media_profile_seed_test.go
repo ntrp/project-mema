@@ -24,7 +24,7 @@ func TestDefaultMediaProfilesCarryTargetDetails(t *testing.T) {
 	anime := requireMediaProfile(t, ctx, store, "anime-1080p")
 	requireAudioTarget(t, anime, "japanese", "aac", []string{"2.0"}, 160, 256)
 	requireAudioTarget(t, anime, "english", "aac", []string{"2.0"}, 160, 256)
-	requireSubtitleTarget(t, anime, "english", []string{"ass", "srt"})
+	requireSubtitleTarget(t, anime, "english", []string{"ass", "subrip"})
 }
 
 func requireMediaProfile(

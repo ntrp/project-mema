@@ -114,7 +114,7 @@ func GrabManualSubtitle(
 	if err != nil {
 		return err
 	}
-	targetFormat := firstNonEmpty(subtitleTargetFormat(item, request.LanguageID), candidate.Format, "srt")
+	targetFormat := firstNonEmpty(subtitleTargetFormat(item, request.LanguageID), candidate.Format, "subrip")
 	artifact, err := writeSubtitleFile(request, download.Content, targetFormat)
 	if err != nil {
 		return err

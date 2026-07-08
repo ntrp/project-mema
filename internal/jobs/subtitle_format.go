@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"media-manager/internal/storage"
+	"media-manager/internal/subtitleformats"
 )
 
 func subtitleTargetFormat(item storage.MediaItem, languageID string) string {
@@ -13,7 +14,7 @@ func subtitleTargetFormat(item storage.MediaItem, languageID string) string {
 			continue
 		}
 		for _, format := range target.Formats {
-			if normalized := normalizeSubtitleFormat(format); normalized != "" {
+			if normalized := subtitleformats.Normalize(format); normalized != "" {
 				return normalized
 			}
 		}
@@ -22,9 +23,9 @@ func subtitleTargetFormat(item storage.MediaItem, languageID string) string {
 }
 
 func convertSubtitleContent(content []byte, targetFormat string) ([]byte, string, error) {
-	format := normalizeSubtitleFormat(targetFormat)
+	format := subtitleformats.Normalize(targetFormat)
 	switch format {
-	case "srt":
+	case "subrip":
 		return content, format, nil
 	case "vtt":
 		return srtToVTT(content), format, nil
@@ -43,23 +44,6 @@ func convertSubtitleContent(content []byte, targetFormat string) ([]byte, string
 func assSubtitleContent(content []byte) bool {
 	body := strings.TrimSpace(string(content))
 	return strings.HasPrefix(body, "[Script Info]") && strings.Contains(body, "[Events]")
-}
-
-func normalizeSubtitleFormat(value string) string {
-	switch strings.TrimPrefix(strings.ToLower(strings.TrimSpace(value)), ".") {
-	case "", "srt", "subrip":
-		return "srt"
-	case "vtt", "webvtt":
-		return "vtt"
-	case "ass":
-		return "ass"
-	case "ssa":
-		return "ssa"
-	case "pgs", "sup":
-		return "pgs"
-	default:
-		return ""
-	}
 }
 
 func srtToVTT(content []byte) []byte {

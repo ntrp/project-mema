@@ -385,9 +385,9 @@ on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_subtitle_targets (profile_id, language_id, score, formats, sort_order)
 values
-    ('hd-1080p', 'english', 0, array['srt'], 0),
-    ('uhd-4k', 'english', 0, array['srt'], 0),
-    ('anime-1080p', 'english', 25, array['ass', 'srt'], 0)
+    ('hd-1080p', 'english', 0, array['subrip'], 0),
+    ('uhd-4k', 'english', 0, array['subrip'], 0),
+    ('anime-1080p', 'english', 25, array['ass', 'subrip'], 0)
 on conflict (profile_id, language_id) do nothing;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)

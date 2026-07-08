@@ -1,2 +1,2 @@
-export const unwantedMediaRowClass = 'bg-yellow-500/10 text-yellow-800 dark:text-yellow-300';
-export const unwantedMediaBadgeClass = 'border-yellow-300 bg-yellow-100 text-yellow-900';
+export const unwantedMediaRowClass = 'bg-yellow-300/10 text-yellow-600 dark:text-yellow-200';
+export const unwantedMediaBadgeClass = 'border-yellow-200 bg-yellow-50 text-yellow-700';

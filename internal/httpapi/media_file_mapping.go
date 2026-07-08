@@ -241,25 +241,6 @@ func sameSubtitleMediaBase(subtitlePath string, mediaPath string) bool {
 	return strings.HasPrefix(strings.ToLower(subtitleBase), strings.ToLower(mediaBase)+".")
 }
 
-func languageMatchKey(value string) string {
-	normalized := strings.ToLower(strings.TrimSpace(value))
-	normalized = strings.TrimSuffix(normalized, " language")
-	switch normalized {
-	case "en", "eng", "english":
-		return "english"
-	case "de", "deu", "ger", "german":
-		return "german"
-	case "fr", "fra", "fre", "french":
-		return "french"
-	case "es", "spa", "spanish":
-		return "spanish"
-	case "ja", "jpn", "japanese":
-		return "japanese"
-	default:
-		return strings.ReplaceAll(normalized, " ", "-")
-	}
-}
-
 func optionalStringValue(value *string) string {
 	if value == nil {
 		return ""

@@ -42,6 +42,7 @@ func recordImportedFileSidecar(
 		MediaFilePath: mediaPath,
 		FilePath:      sidecar.Path,
 		SidecarType:   sidecar.Type,
+		Subtype:       sidecar.Subtype,
 		LanguageID:    sidecar.LanguageID,
 		Format:        sidecar.Format,
 	}); err != nil {

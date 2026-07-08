@@ -51,7 +51,7 @@ func mockSubtitleFormat(value string) string {
 	case "ssa":
 		return "ssa"
 	default:
-		return "srt"
+		return "subrip"
 	}
 }
 

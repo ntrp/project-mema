@@ -36,6 +36,7 @@ func upsertMediaItemSidecar(
 		MediaFilePath: strings.TrimSpace(input.MediaFilePath),
 		FilePath:      strings.TrimSpace(input.FilePath),
 		SidecarType:   string(input.SidecarType),
+		Subtype:       textValue(optionalTrimmedValue(input.Subtype)),
 		LanguageID:    textValue(optionalTrimmedValue(input.LanguageID)),
 		Format:        textValue(optionalTrimmedValue(input.Format)),
 	})
@@ -49,6 +50,7 @@ func mediaItemSidecarFromRow(row storagegen.AppMediaItemSidecar) MediaItemSideca
 		MediaFilePath: row.MediaFilePath,
 		FilePath:      row.FilePath,
 		SidecarType:   MediaSidecarType(row.SidecarType),
+		Subtype:       textPtr(row.Subtype),
 		LanguageID:    textPtr(row.LanguageID),
 		Format:        textPtr(row.Format),
 		CreatedAt:     row.CreatedAt,

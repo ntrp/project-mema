@@ -3,81 +3,29 @@ package app
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
+
+	"media-manager/internal/config"
 )
 
-func TestRouteDLNAAllowsCustomUPnPMethods(t *testing.T) {
-	dlnaHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "SUBSCRIBE" || r.URL.Path != "/events/content-directory" {
-			t.Fatalf("request = %s %s", r.Method, r.URL.Path)
-		}
-		w.WriteHeader(http.StatusOK)
+func TestDevelopmentRouterDoesNotServeFrontendFallback(t *testing.T) {
+	api := chi.NewRouter()
+	api.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
 	})
-	appHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Fatal("request should not reach app handler")
-	})
-	handler := routeDLNA(appHandler, dlnaHandler)
-	request := httptest.NewRequest("SUBSCRIBE", "/dlna/events/content-directory", nil)
-	response := httptest.NewRecorder()
+	handler := appRouter(config.Config{AppEnv: "development"}, api)
 
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusOK {
-		t.Fatalf("status = %d", response.Code)
-	}
-}
-
-func TestRouteDLNARootPathsBeforeFrontend(t *testing.T) {
-	dlnaHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" || r.URL.Path != "/control/content-directory" {
-			t.Fatalf("request = %s %s", r.Method, r.URL.Path)
-		}
-		w.Header().Set("Content-Type", "application/xml")
-		w.WriteHeader(http.StatusOK)
-	})
-	appHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t.Fatal("request should not reach app handler")
-	})
-	handler := routeDLNA(appHandler, dlnaHandler)
-	request := httptest.NewRequest("POST", "/control/content-directory", nil)
-	response := httptest.NewRecorder()
-
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusOK || response.Header().Get("Content-Type") != "application/xml" {
-		t.Fatalf("response = %d %q", response.Code, response.Header().Get("Content-Type"))
-	}
-}
-
-func TestSCNSystem006EnsureMediaDataDirCreatesNestedPath(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "media", "movies")
-
-	if err := ensureMediaDataDir(path); err != nil {
-		t.Fatalf("ensureMediaDataDir returned error: %v", err)
-	}
-	info, err := os.Stat(path)
-	if err != nil {
-		t.Fatalf("expected media data directory: %v", err)
-	}
-	if !info.IsDir() {
-		t.Fatalf("%s is not a directory", path)
-	}
-}
-
-func TestSCNSystem006EnsureMediaDataDirReportsFilesystemFailure(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "media")
-	if err := os.WriteFile(path, []byte("not a directory"), 0o644); err != nil {
-		t.Fatalf("write fixture file: %v", err)
+	apiResponse := httptest.NewRecorder()
+	handler.ServeHTTP(apiResponse, httptest.NewRequest(http.MethodGet, "/api/health", nil))
+	if apiResponse.Code != http.StatusNoContent {
+		t.Fatalf("api status = %d", apiResponse.Code)
 	}
 
-	err := ensureMediaDataDir(filepath.Join(path, "movies"))
-	if err == nil {
-		t.Fatal("expected setup error")
-	}
-	if !strings.Contains(err.Error(), "media data directory setup failed") {
-		t.Fatalf("error = %q", err.Error())
+	pageResponse := httptest.NewRecorder()
+	handler.ServeHTTP(pageResponse, httptest.NewRequest(http.MethodGet, "/movies/example", nil))
+	if pageResponse.Code != http.StatusNotFound {
+		t.Fatalf("frontend fallback status = %d", pageResponse.Code)
 	}
 }

@@ -13,7 +13,7 @@ import (
 )
 
 const listMediaItemSidecars = `-- name: ListMediaItemSidecars :many
-select id, media_item_id, media_file_path, file_path, sidecar_type, language_id, format, created_at, updated_at
+select id, media_item_id, media_file_path, file_path, sidecar_type, subtype, language_id, format, created_at, updated_at
 from app.media_item_sidecars
 where media_item_id = $1
 order by media_file_path, sidecar_type, file_path
@@ -34,6 +34,7 @@ func (q *Queries) ListMediaItemSidecars(ctx context.Context, mediaItemID uuid.UU
 			&i.MediaFilePath,
 			&i.FilePath,
 			&i.SidecarType,
+			&i.Subtype,
 			&i.LanguageID,
 			&i.Format,
 			&i.CreatedAt,
@@ -56,6 +57,7 @@ insert into app.media_item_sidecars (
     media_file_path,
     file_path,
     sidecar_type,
+    subtype,
     language_id,
     format
 )
@@ -66,15 +68,17 @@ values (
     $4,
     $5,
     $6,
-    $7
+    $7,
+    $8
 )
 on conflict (media_item_id, file_path) do update
 set media_file_path = excluded.media_file_path,
     sidecar_type = excluded.sidecar_type,
+    subtype = excluded.subtype,
     language_id = excluded.language_id,
     format = excluded.format,
     updated_at = now()
-returning id, media_item_id, media_file_path, file_path, sidecar_type, language_id, format, created_at, updated_at
+returning id, media_item_id, media_file_path, file_path, sidecar_type, subtype, language_id, format, created_at, updated_at
 `
 
 type UpsertMediaItemSidecarParams struct {
@@ -83,6 +87,7 @@ type UpsertMediaItemSidecarParams struct {
 	MediaFilePath string
 	FilePath      string
 	SidecarType   string
+	Subtype       pgtype.Text
 	LanguageID    pgtype.Text
 	Format        pgtype.Text
 }
@@ -94,6 +99,7 @@ func (q *Queries) UpsertMediaItemSidecar(ctx context.Context, arg UpsertMediaIte
 		arg.MediaFilePath,
 		arg.FilePath,
 		arg.SidecarType,
+		arg.Subtype,
 		arg.LanguageID,
 		arg.Format,
 	)
@@ -104,6 +110,7 @@ func (q *Queries) UpsertMediaItemSidecar(ctx context.Context, arg UpsertMediaIte
 		&i.MediaFilePath,
 		&i.FilePath,
 		&i.SidecarType,
+		&i.Subtype,
 		&i.LanguageID,
 		&i.Format,
 		&i.CreatedAt,

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"media-manager/internal/subtitleformats"
 )
 
 type MediaSidecarType string
@@ -18,6 +20,7 @@ const (
 type MediaSidecar struct {
 	Type       MediaSidecarType
 	Path       string
+	Subtype    string
 	LanguageID string
 	Format     string
 }
@@ -84,10 +87,14 @@ func MediaSidecarsForFile(mediaPath string) []MediaSidecar {
 			continue
 		}
 		path := filepath.Join(filepath.Dir(mediaPath), entry.Name())
-		sidecar := ClassifyMediaSidecar(mediaPath, path)
-		if sidecar.Type != MediaSidecarUnknown {
-			sidecars = append(sidecars, sidecar)
+		if filepath.Clean(path) == filepath.Clean(mediaPath) {
+			continue
 		}
+		if _, ok := mediaFileExtensions[strings.ToLower(filepath.Ext(path))]; ok {
+			continue
+		}
+		sidecar := ClassifyMediaSidecar(mediaPath, path)
+		sidecars = append(sidecars, sidecar)
 	}
 	sort.Slice(sidecars, func(i, j int) bool { return sidecars[i].Path < sidecars[j].Path })
 	return sidecars
@@ -99,17 +106,60 @@ func ClassifyMediaSidecar(mediaPath string, path string) MediaSidecar {
 	mediaBase := sidecarBase(mediaPath)
 	switch {
 	case isMediaSidecarSubtitleExt(ext):
+		format := strings.TrimPrefix(ext, ".")
 		language := sidecarSubtitleLanguage(mediaBase, base)
 		if language == "" {
 			language = sidecarSubtitleStandaloneLanguage(base)
 		}
 		if language != "" || sidecarRelatedBase(base, mediaBase) {
-			return MediaSidecar{Type: MediaSidecarSubtitle, Path: path, LanguageID: language, Format: strings.TrimPrefix(ext, ".")}
+			return MediaSidecar{
+				Type:       MediaSidecarSubtitle,
+				Path:       path,
+				Subtype:    sidecarSubtitleSubtype(format),
+				LanguageID: language,
+				Format:     format,
+			}
 		}
 	case isMediaSidecarMetadataExt(ext) && sidecarMetadataBase(base, mediaBase, ext):
-		return MediaSidecar{Type: MediaSidecarMetadata, Path: path}
+		return MediaSidecar{Type: MediaSidecarMetadata, Path: path, Subtype: sidecarMetadataSubtype(base, mediaBase, ext)}
 	}
-	return MediaSidecar{Type: MediaSidecarUnknown, Path: path}
+	return MediaSidecar{Type: MediaSidecarUnknown, Path: path, Subtype: strings.TrimPrefix(ext, ".")}
+}
+
+func sidecarSubtitleSubtype(format string) string {
+	if normalized := subtitleformats.Normalize(format); normalized != "" {
+		return normalized
+	}
+	return strings.TrimPrefix(strings.ToLower(strings.TrimSpace(format)), ".")
+}
+
+func sidecarMetadataSubtype(base string, mediaBase string, ext string) string {
+	if ext == ".nfo" {
+		return "nfo"
+	}
+	if subtype := sidecarArtSubtype(base); subtype != "" {
+		return subtype
+	}
+	if suffix, ok := sidecarSuffix(mediaBase, base); ok {
+		if subtype := sidecarArtSubtype(strings.Trim(suffix, ".-_ ")); subtype != "" {
+			return subtype
+		}
+	}
+	return strings.TrimPrefix(ext, ".")
+}
+
+func sidecarArtSubtype(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "background":
+		return "backdrop"
+	case "thumbnail":
+		return "thumb"
+	default:
+		if _, ok := mediaSidecarArtNames[value]; ok {
+			return value
+		}
+	}
+	return ""
 }
 
 func isMediaSidecarSubtitleExt(ext string) bool {

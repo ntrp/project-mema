@@ -19,4 +19,4 @@
   - use `ADDR=0.0.0.0:18080 make dev-api` for the backend
   - `NVIM_LISTEN_ADDRESS=/tmp/project-mema.nvim LAUNCH_EDITOR=/Users/ntrp/_pws/project-mema/scripts/open-in-nvim.sh pnpm exec vite dev --host 0.0.0.0 --port 15173` in /web for the frontend
 - if the backend changes restart it
-- if the database schema or seed changes, reset the db and restart the backend
+- if the database schema or seed changes, reset the db, dev seed, local seed and restart the backend

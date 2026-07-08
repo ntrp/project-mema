@@ -231,7 +231,7 @@ Each subtitle language may define a target format.
 
 Examples:
 
-- `srt`
+- `subrip` (SubRip, `.srt` sidecar files)
 - `ass`
 - `vtt`
 - `pgs`
@@ -320,7 +320,7 @@ render:
       "required": true,
       "score": 25,
       "source": "external",
-      "format": "srt"
+      "format": "subrip"
     }
   ]
 }

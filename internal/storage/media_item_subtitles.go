@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	storagegen "media-manager/internal/storage/generated"
+	"media-manager/internal/subtitleformats"
 )
 
 func (s *SettingsStore) ListMediaItemSubtitles(
@@ -184,12 +185,12 @@ func listMediaItemSubtitles(
 }
 
 func subtitleParams(input MediaItemSubtitleInput) storagegen.UpsertMediaItemSubtitleParams {
-	format := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(input.Format)), ".")
+	format := normalizedSubtitleFormat(input.Format)
 	if format == "" {
-		format = strings.TrimPrefix(strings.ToLower(filepath.Ext(input.FilePath)), ".")
+		format = normalizedSubtitleFormat(filepath.Ext(input.FilePath))
 	}
 	if format == "" {
-		format = "srt"
+		format = "subrip"
 	}
 	downloadedAt := input.DownloadedAt
 	if downloadedAt.IsZero() {
@@ -223,6 +224,14 @@ func subtitleParams(input MediaItemSubtitleInput) storagegen.UpsertMediaItemSubt
 		Selected:           selected,
 		RetentionMode:      string(retentionMode),
 	}
+}
+
+func normalizedSubtitleFormat(value string) string {
+	clean := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(value)), ".")
+	if normalized := subtitleformats.Normalize(clean); normalized != "" {
+		return normalized
+	}
+	return clean
 }
 
 func mediaItemSubtitleFromRow(row storagegen.AppMediaItemSubtitle) MediaItemSubtitle {

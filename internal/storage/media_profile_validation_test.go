@@ -71,7 +71,7 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if len(input.SubtitleTargets) != 2 {
 		t.Fatalf("expected deduped subtitle targets, got %#v", input.SubtitleTargets)
 	}
-	if input.SubtitleTargets[0].LanguageID != "english" || len(input.SubtitleTargets[0].Formats) != 1 || input.SubtitleTargets[0].Formats[0] != "srt" {
+	if input.SubtitleTargets[0].LanguageID != "english" || len(input.SubtitleTargets[0].Formats) != 1 || input.SubtitleTargets[0].Formats[0] != "subrip" {
 		t.Fatalf("unexpected first subtitle target: %#v", input.SubtitleTargets[0])
 	}
 	if input.SubtitleTargets[1].LanguageID != "german" || input.SubtitleTargets[1].Score != 5 {

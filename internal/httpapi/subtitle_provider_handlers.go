@@ -251,7 +251,7 @@ func subtitleProviderMockRowsResponse(rows []storage.MockSubtitleProviderRow) []
 func subtitleProviderMockFormat(value string) string {
 	switch strings.TrimPrefix(strings.ToLower(strings.TrimSpace(value)), ".") {
 	case "", "srt", "subrip":
-		return "srt"
+		return "subrip"
 	case "vtt", "webvtt":
 		return "vtt"
 	case "ass", "ssa":

@@ -71,6 +71,11 @@ profile.
 Use these controls when quality alone is not specific enough. For example, you
 might allow 2160p but prefer a particular HDR format or codec.
 
+The selected quality also sets the expected video resolution. If a file is
+stored as 1080p quality but the probed video track is only 720p, the video state
+is partial. Cropped widescreen files are accepted when either width or height
+matches the selected quality.
+
 ## Audio Targets
 
 Audio targets describe wanted language tracks. Each target has a language and a
@@ -93,6 +98,10 @@ want the app to create different audio tracks.
 
 Subtitle targets work like audio targets. Choose the wanted language, optional
 formats, and score. The subtitle mode controls where subtitles should live.
+
+Text subtitle conversion currently supports SubRip/`subrip`, `vtt`/WebVTT, `ass`,
+and `ssa`. `pgs`/`sup` bitmap subtitles are recognized and can match an existing
+target, but the app does not convert between bitmap and text subtitles yet.
 
 When a release is missing a wanted subtitle language, release search marks it
 with a warning instead of rejecting it outright. Automatic search gives those

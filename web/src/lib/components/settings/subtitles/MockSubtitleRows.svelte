@@ -18,7 +18,7 @@
 	let { rows, onChange }: Props = $props();
 
 	function addRow() {
-		onChange([...rows, { title: '', languageId: 'english', format: 'srt' }]);
+		onChange([...rows, { title: '', languageId: 'english', format: 'subrip' }]);
 	}
 
 	function updateRow(index: number, value: Partial<MockRow>) {
@@ -27,6 +27,9 @@
 
 	function removeRow(index: number) {
 		onChange(rows.filter((_, rowIndex) => rowIndex !== index));
+	}
+	function formatLabel(format: string) {
+		return format === 'subrip' ? 'SubRip' : format.toUpperCase();
 	}
 </script>
 
@@ -74,9 +77,9 @@
 							value={row.format}
 							onValueChange={(format) => updateRow(index, { format })}
 						>
-							<Select.Trigger class="w-full">{row.format.toUpperCase()}</Select.Trigger>
+							<Select.Trigger class="w-full">{formatLabel(row.format)}</Select.Trigger>
 							<Select.Content>
-								<Select.Item value="srt" label="SRT" />
+								<Select.Item value="subrip" label="SubRip" />
 								<Select.Item value="vtt" label="VTT" />
 								<Select.Item value="ass" label="ASS" />
 								<Select.Item value="ssa" label="SSA" />

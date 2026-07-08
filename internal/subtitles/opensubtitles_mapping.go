@@ -120,10 +120,12 @@ func openSubtitlesCandidates(
 
 func subtitleFormat(fileName string) string {
 	ext := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(pathExt(fileName))), ".")
-	if ext == "" {
-		return "srt"
+	switch ext {
+	case "", "srt", "subrip":
+		return "subrip"
+	default:
+		return ext
 	}
-	return ext
 }
 
 func pathExt(fileName string) string {

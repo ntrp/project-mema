@@ -596,6 +596,7 @@ type AppMediaItemSidecar struct {
 	MediaFilePath string
 	FilePath      string
 	SidecarType   string
+	Subtype       pgtype.Text
 	LanguageID    pgtype.Text
 	Format        pgtype.Text
 	CreatedAt     time.Time

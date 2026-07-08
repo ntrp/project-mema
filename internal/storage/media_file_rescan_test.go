@@ -151,6 +151,36 @@ func TestRescanMediaItemFilesDoesNotDuplicateNormalizedPath(t *testing.T) {
 	}
 }
 
+func TestRescanMediaItemFilesPersistsOtherFileSubtypes(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item := rescanMediaItem(t, ctx, store)
+	mediaPath := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.mkv")
+	poster := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026-poster.jpg")
+	subtitle := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.eng.srt")
+	notes := filepath.Join(*item.MediaFolderPath, "notes.bin")
+	for _, path := range []string{mediaPath, poster, subtitle, notes} {
+		writeRescanFile(t, path)
+	}
+
+	updated, err := store.RescanMediaItemFiles(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	metadataSidecar := mediaItemSidecar(updated.Sidecars, MediaSidecarMetadata, poster)
+	if metadataSidecar == nil || metadataSidecar.Subtype == nil || *metadataSidecar.Subtype != "poster" {
+		t.Fatalf("metadata sidecar = %#v", updated.Sidecars)
+	}
+	subtitleSidecar := mediaItemSidecar(updated.Sidecars, MediaSidecarSubtitle, subtitle)
+	if subtitleSidecar == nil || subtitleSidecar.Subtype == nil || *subtitleSidecar.Subtype != "subrip" {
+		t.Fatalf("subtitle sidecar = %#v", updated.Sidecars)
+	}
+	unknownSidecar := mediaItemSidecar(updated.Sidecars, MediaSidecarUnknown, notes)
+	if unknownSidecar == nil || unknownSidecar.Subtype == nil || *unknownSidecar.Subtype != "bin" {
+		t.Fatalf("unknown sidecar = %#v", updated.Sidecars)
+	}
+}
+
 func rescanMediaItem(t *testing.T, ctx context.Context, store *SettingsStore) MediaItem {
 	t.Helper()
 	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")

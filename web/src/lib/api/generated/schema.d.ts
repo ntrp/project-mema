@@ -3235,6 +3235,7 @@ export interface components {
 			type: components['schemas']['MediaFileOtherFileType'];
 			path: string;
 			status: components['schemas']['MediaFileOtherFileStatus'];
+			subtype?: string;
 			language?: string;
 			state?: components['schemas']['MediaFileDetailState'];
 		};

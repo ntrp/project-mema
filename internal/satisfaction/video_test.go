@@ -48,6 +48,24 @@ func TestVideoTargetPartialWithPreciseFailedFields(t *testing.T) {
 	}
 }
 
+func TestVideoTargetPartialWhenTrackResolutionBelowSelectedQuality(t *testing.T) {
+	quality := "webdl-1080p"
+	codec := "h264"
+	pixel := "yuv420p"
+	fact := videoFact(quality, codec, "", pixel, "mkv")
+	fact.Tracks[0].Width = int32Ptr(1280)
+	fact.Tracks[0].Height = int32Ptr(536)
+
+	result := EvaluateVideoTarget(mediaItem(), mediaProfile(), fact)
+
+	if result.Target.State != targets.StatePartial {
+		t.Fatalf("target = %#v", result.Target)
+	}
+	if len(result.FailedRequirements) != 1 || result.FailedRequirements[0] != "video resolution is below selected quality 1080p" {
+		t.Fatalf("failed = %#v", result.FailedRequirements)
+	}
+}
+
 func TestVideoTargetPendingForKnownContainerRemux(t *testing.T) {
 	profile := mediaProfile()
 	profile.FinalContainer = "mp4"
@@ -109,6 +127,12 @@ func videoFact(quality string, codec string, hdr string, pixel string, container
 			Codec:           &codec,
 			HDRFormat:       &hdr,
 			PixelFormat:     &pixel,
+			Width:           int32Ptr(1920),
+			Height:          int32Ptr(800),
 		}},
 	}
+}
+
+func int32Ptr(value int32) *int32 {
+	return &value
 }

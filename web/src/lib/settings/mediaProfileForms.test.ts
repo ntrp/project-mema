@@ -79,7 +79,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{
 					languageId: 'english',
 					score: '25',
-					formats: [' srt ', 'srt', 'ass']
+					formats: [' SRT ', 'subrip', 'ass']
 				},
 				{
 					languageId: 'english',
@@ -120,7 +120,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 				{
 					languageId: 'english',
 					score: 25,
-					formats: ['srt', 'ass']
+					formats: ['subrip', 'ass']
 				}
 			],
 			customFormatScores: [{ customFormatId: 'cf-1', score: 25 }]

@@ -86,6 +86,9 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 			if err := recordMediaFileFactFromPath(ctx, tx, mediaItemID, record.SeasonID, record.EpisodeID, record.Path, "rescan"); err != nil {
 				return MediaItem{}, err
 			}
+			if err := recordImportedFileSidecars(ctx, tx, mediaItemID, record.Path, record.SeasonID, record.EpisodeID, item.SubtitleMode); err != nil {
+				return MediaItem{}, err
+			}
 			continue
 		}
 		if activeMediaFileStatus(record.Status) {
@@ -129,6 +132,9 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 			}
 		}
 		if err := recordMediaFileFactFromPath(ctx, tx, mediaItemID, nil, nil, path, "rescan"); err != nil {
+			return MediaItem{}, err
+		}
+		if err := recordImportedFileSidecars(ctx, tx, mediaItemID, path, nil, nil, item.SubtitleMode); err != nil {
 			return MediaItem{}, err
 		}
 	}

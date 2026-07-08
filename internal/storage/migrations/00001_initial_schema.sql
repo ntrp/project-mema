@@ -885,7 +885,7 @@ create table if not exists app.mock_subtitle_provider_rows (
     provider_id uuid not null references app.subtitle_providers(id) on delete cascade,
     title text not null,
     language_id text not null,
-    format text not null default 'srt',
+    format text not null default 'subrip',
     sort_order integer not null default 0,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
@@ -1211,7 +1211,7 @@ create table if not exists app.media_item_subtitles (
     provider_id uuid references app.subtitle_providers(id) on delete set null,
     provider_name text not null,
     language_id text not null,
-    format text not null default 'srt',
+    format text not null default 'subrip',
     file_path text not null,
     source_url text,
     source_reference text,
@@ -1229,7 +1229,7 @@ create table if not exists app.media_item_subtitles (
 );
 
 alter table app.media_item_subtitles
-    add column if not exists format text not null default 'srt';
+    add column if not exists format text not null default 'subrip';
 
 alter table app.media_item_subtitles
     add column if not exists source_reference text;
@@ -1456,13 +1456,27 @@ create table if not exists app.media_item_sidecars (
     media_item_id uuid not null references app.media_items(id) on delete cascade,
     media_file_path text not null,
     file_path text not null,
-    sidecar_type text not null check (sidecar_type in ('metadata', 'subtitle')),
+    sidecar_type text not null check (sidecar_type in ('metadata', 'subtitle', 'unknown')),
+    subtype text,
     language_id text,
     format text,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     unique (media_item_id, file_path)
 );
+
+alter table app.media_item_sidecars
+    add column if not exists subtype text;
+
+-- +goose StatementBegin
+do $$
+begin
+    alter table app.media_item_sidecars drop constraint if exists media_item_sidecars_sidecar_type_check;
+    alter table app.media_item_sidecars
+        add constraint media_item_sidecars_sidecar_type_check
+        check (sidecar_type in ('metadata', 'subtitle', 'unknown'));
+end $$;
+-- +goose StatementEnd
 
 create index if not exists idx_media_item_sidecars_media
     on app.media_item_sidecars (media_item_id, media_file_path, sidecar_type);

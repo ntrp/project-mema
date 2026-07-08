@@ -66,6 +66,51 @@ func TestSubtitleFormatMismatchNamesConversion(t *testing.T) {
 	}
 }
 
+func TestSubtitleFormatAliasesSatisfyTarget(t *testing.T) {
+	profile := subtitleProfile("mixed")
+	profile.SubtitleTargets[0].Formats = []string{"srt"}
+	evaluation := EvaluateSubtitleTargets(mediaItem(), profile, subtitleFact(
+		subtitleTrackWithFormat(0, "english", "subrip"),
+	))
+
+	result := evaluation.Results[0]
+	if result.Target.State != targets.StateSatisfied {
+		t.Fatalf("result = %#v", result)
+	}
+}
+
+func TestSubtitleFormatMismatchBlocksNonTextConversion(t *testing.T) {
+	profile := subtitleProfile("mixed")
+	profile.SubtitleTargets[0].Formats = []string{"srt"}
+	evaluation := EvaluateSubtitleTargets(mediaItem(), profile, subtitleFact(
+		subtitleTrackWithFormat(0, "english", "pgs"),
+	))
+
+	result := evaluation.Results[0]
+	if result.Target.State != targets.StateBlocked || result.Target.RequiredOperation != nil {
+		t.Fatalf("result = %#v", result)
+	}
+	if result.Target.Reasons[0] != "subtitle format requires non-text conversion support" {
+		t.Fatalf("reasons = %#v", result.Target.Reasons)
+	}
+}
+
+func TestSubtitleFormatMismatchBlocksBitmapTargetConversion(t *testing.T) {
+	profile := subtitleProfile("mixed")
+	profile.SubtitleTargets[0].Formats = []string{"pgs"}
+	evaluation := EvaluateSubtitleTargets(mediaItem(), profile, subtitleFact(
+		subtitleTrackWithFormat(0, "english", "srt"),
+	))
+
+	result := evaluation.Results[0]
+	if result.Target.State != targets.StateBlocked || result.Target.RequiredOperation != nil {
+		t.Fatalf("result = %#v", result)
+	}
+	if result.Target.Reasons[0] != "subtitle target format requires non-text conversion support" {
+		t.Fatalf("reasons = %#v", result.Target.Reasons)
+	}
+}
+
 func TestSubtitleUnwantedCandidatesDoNotChangeTargetState(t *testing.T) {
 	profile := subtitleProfile("mixed")
 	profile.RemoveUnwantedSubtitles = true

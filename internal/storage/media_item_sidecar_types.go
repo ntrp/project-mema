@@ -12,6 +12,7 @@ type MediaItemSidecar struct {
 	MediaFilePath string
 	FilePath      string
 	SidecarType   MediaSidecarType
+	Subtype       *string
 	LanguageID    *string
 	Format        *string
 	CreatedAt     time.Time
@@ -23,6 +24,7 @@ type MediaItemSidecarInput struct {
 	MediaFilePath string
 	FilePath      string
 	SidecarType   MediaSidecarType
+	Subtype       string
 	LanguageID    string
 	Format        string
 }

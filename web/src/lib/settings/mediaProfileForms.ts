@@ -1,4 +1,5 @@
 import type { MediaProfile, MediaProfileForm, MediaProfileRequest } from './types';
+import { uniqueSubtitleFormats } from './mediaProfileSubtitleFormats';
 
 export function emptyMediaProfileForm(): MediaProfileForm {
 	return {
@@ -100,7 +101,7 @@ export function defaultSubtitleTarget(): MediaProfileRequest['subtitleTargets'][
 	return {
 		languageId: 'EN',
 		score: 0,
-		formats: ['srt']
+		formats: ['subrip']
 	};
 }
 
@@ -157,7 +158,7 @@ function subtitleTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['s
 		targets.push({
 			languageId,
 			score: normalizedInteger(value.score),
-			formats: uniqueTrimmed(value.formats ?? [])
+			formats: uniqueSubtitleFormats(value.formats ?? [])
 		});
 	}
 	return targets;

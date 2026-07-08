@@ -46,10 +46,9 @@ export const audioChannelOptions = [
 ];
 
 export const subtitleFormatOptions = [
-	{ value: 'srt', label: 'SRT' },
+	{ value: 'subrip', label: 'SubRip' },
 	{ value: 'ass', label: 'ASS' },
 	{ value: 'ssa', label: 'SSA' },
 	{ value: 'vtt', label: 'WebVTT' },
-	{ value: 'pgs', label: 'PGS' },
-	{ value: 'subrip', label: 'SubRip' }
+	{ value: 'pgs', label: 'PGS' }
 ];

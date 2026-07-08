@@ -3,6 +3,8 @@ package storage
 import (
 	"regexp"
 	"strings"
+
+	"media-manager/internal/subtitleformats"
 )
 
 func normalizeProfileQualityIDs(values []string) ([]string, error) {
@@ -148,10 +150,30 @@ func normalizeSubtitleTargets(values []MediaProfileSubtitleTarget) []MediaProfil
 		targets = append(targets, MediaProfileSubtitleTarget{
 			LanguageID: language,
 			Score:      value.Score,
-			Formats:    normalizedTextList(value.Formats),
+			Formats:    normalizedSubtitleFormatList(value.Formats),
 		})
 	}
 	return targets
+}
+
+func normalizedSubtitleFormatList(values []string) []string {
+	seen := map[string]struct{}{}
+	result := []string{}
+	for _, value := range values {
+		text := strings.ToLower(strings.Join(strings.Fields(value), "-"))
+		if normalized := subtitleformats.Normalize(text); normalized != "" {
+			text = normalized
+		}
+		if text == "" {
+			continue
+		}
+		if _, ok := seen[text]; ok {
+			continue
+		}
+		seen[text] = struct{}{}
+		result = append(result, text)
+	}
+	return result
 }
 
 func normalizeLanguageID(value string) string {

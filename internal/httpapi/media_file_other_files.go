@@ -102,6 +102,7 @@ func availableOtherFile(mediaPath string, path string) MediaFileOtherFile {
 		Type:     fileType,
 		Path:     path,
 		Status:   MediaFileOtherFileStatusAvailable,
+		Subtype:  optionalString(sidecar.Subtype),
 		Language: optionalString(sidecar.LanguageID),
 	}
 }
@@ -123,6 +124,7 @@ func storedOtherFiles(path string, sidecars []storage.MediaItemSidecar) []MediaF
 			Type:     fileType,
 			Path:     sidecar.FilePath,
 			Status:   otherFileStatus(sidecar.FilePath),
+			Subtype:  sidecar.Subtype,
 			Language: sidecar.LanguageID,
 		})
 	}
@@ -138,8 +140,17 @@ func subtitleOtherFile(
 		Type:     MediaFileOtherFileTypeSubtitle,
 		Path:     path,
 		Status:   status,
+		Subtype:  optionalString(subtitleSubtype(path)),
 		Language: optionalString(language),
 	}
+}
+
+func subtitleSubtype(path string) string {
+	ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(path)), ".")
+	if ext == "srt" || ext == "subrip" {
+		return "subrip"
+	}
+	return ext
 }
 
 func missingExternalSubtitleFiles(

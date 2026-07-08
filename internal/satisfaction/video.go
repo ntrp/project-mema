@@ -92,6 +92,9 @@ func videoFailures(
 	if len(profile.QualityIDs) > 0 && !stringListHas(profile.QualityIDs, stringPtrValue(fact.QualityID)) {
 		failed = append(failed, "quality is not enabled in the profile")
 	}
+	if failure := videoResolutionFailure(fact, track); failure != "" {
+		failed = append(failed, failure)
+	}
 	if len(target.Codecs) > 0 && !stringListHasNormalized(target.Codecs, normalizeVideoCodec(stringPtrValue(track.Codec))) {
 		failed = append(failed, "video codec does not meet the profile target")
 	}
@@ -105,6 +108,30 @@ func videoFailures(
 		failed = append(failed, "container does not meet the profile target")
 	}
 	return failed
+}
+
+func videoResolutionFailure(fact storage.MediaFileFact, track storage.MediaFileTrackFact) string {
+	if fact.QualityID == nil {
+		return ""
+	}
+	bounds, ok := storage.QualityResolutionForID(*fact.QualityID)
+	if !ok {
+		return ""
+	}
+	if track.Width == nil && track.Height == nil {
+		return "video resolution is unknown for the selected quality"
+	}
+	if trackResolutionMatchesQuality(track.Width, track.Height, bounds) {
+		return ""
+	}
+	return fmt.Sprintf("video resolution is below selected quality %dp", bounds.MinHeight)
+}
+
+func trackResolutionMatchesQuality(width *int32, height *int32, bounds storage.QualityResolutionBounds) bool {
+	if width != nil && *width >= bounds.MinWidth {
+		return true
+	}
+	return height != nil && *height >= bounds.MinHeight
 }
 
 func pendingVideoOperation(

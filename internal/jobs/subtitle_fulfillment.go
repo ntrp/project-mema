@@ -6,6 +6,7 @@ import (
 
 	"media-manager/internal/decisions"
 	"media-manager/internal/storage"
+	"media-manager/internal/subtitleformats"
 )
 
 type SubtitleFulfillmentNeed struct {
@@ -193,7 +194,7 @@ func subtitleFulfillmentMetadata(release storage.ReleaseCandidateInput, need Sub
 func normalizedSubtitleFormats(values []string) []string {
 	formats := []string{}
 	for _, value := range values {
-		if normalized := normalizeSubtitleFormat(value); normalized != "" {
+		if normalized := subtitleformats.Normalize(value); normalized != "" {
 			formats = append(formats, normalized)
 		}
 	}

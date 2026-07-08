@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"media-manager/internal/storage"
@@ -53,10 +54,51 @@ func videoFailures(item storage.MediaItem, path string, track MediaFileTrack) []
 	if len(target.Codecs) > 0 && !stringListHasNormalized(target.Codecs, normalizeVideoCodec(optionalStringValue(track.Codec))) {
 		failures = append(failures, "Video codec does not meet the profile target")
 	}
+	if failure := videoResolutionFailure(item, path, track); failure != "" {
+		failures = append(failures, failure)
+	}
 	if len(target.PixelFormats) > 0 && !stringListHasNormalized(target.PixelFormats, optionalStringValue(track.PixelFormat)) {
 		failures = append(failures, "Pixel format does not meet the profile target")
 	}
 	return failures
+}
+
+func videoResolutionFailure(item storage.MediaItem, path string, track MediaFileTrack) string {
+	qualityID := mediaFileQualityID(item, path)
+	if qualityID == "" {
+		return ""
+	}
+	bounds, ok := storage.QualityResolutionForID(qualityID)
+	if !ok {
+		return ""
+	}
+	if track.Width == nil && track.Height == nil {
+		return "Video resolution is unknown for the selected quality"
+	}
+	if trackResolutionMatchesQuality(track.Width, track.Height, bounds) {
+		return ""
+	}
+	return fmt.Sprintf("Video resolution is below selected quality %dp", bounds.MinHeight)
+}
+
+func trackResolutionMatchesQuality(width *int32, height *int32, bounds storage.QualityResolutionBounds) bool {
+	if width != nil && *width >= bounds.MinWidth {
+		return true
+	}
+	return height != nil && *height >= bounds.MinHeight
+}
+
+func mediaFileQualityID(item storage.MediaItem, path string) string {
+	for _, fact := range item.FileFacts {
+		if sameMediaFilePath(fact.FilePath, path) && fact.QualityID != nil && strings.TrimSpace(*fact.QualityID) != "" {
+			return strings.TrimSpace(*fact.QualityID)
+		}
+	}
+	return storage.QualityIDFromPath(path)
+}
+
+func sameMediaFilePath(left string, right string) bool {
+	return filepath.Clean(left) == filepath.Clean(right)
 }
 
 func audioTrackFailures(track MediaFileTrack, target storage.MediaProfileAudioTarget) []string {

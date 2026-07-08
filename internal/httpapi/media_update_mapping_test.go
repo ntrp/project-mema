@@ -86,6 +86,7 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 			MediaFilePath: filePath,
 			FilePath:      missingPoster,
 			SidecarType:   storage.MediaSidecarMetadata,
+			Subtype:       stringPtr("fanart"),
 		}},
 	})
 
@@ -99,16 +100,16 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 		t.Fatalf("missing file response = %#v", (*files)[1])
 	}
 	otherFiles := *(*files)[0].OtherFiles
-	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeSubtitle, filepath.Join(dir, "Scenario.Movie.2026.german.srt"), MediaFileOtherFileStatusMissing) {
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeSubtitle, "subrip", filepath.Join(dir, "Scenario.Movie.2026.de.srt"), MediaFileOtherFileStatusMissing) {
 		t.Fatalf("missing subtitle file not derived: %#v", otherFiles)
 	}
-	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeMetadata, filepath.Join(dir, "poster.jpg"), MediaFileOtherFileStatusAvailable) {
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeMetadata, "poster", filepath.Join(dir, "poster.jpg"), MediaFileOtherFileStatusAvailable) {
 		t.Fatalf("metadata file not listed: %#v", otherFiles)
 	}
-	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeUnknown, filepath.Join(dir, "notes.bin"), MediaFileOtherFileStatusAvailable) {
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeUnknown, "bin", filepath.Join(dir, "notes.bin"), MediaFileOtherFileStatusAvailable) {
 		t.Fatalf("unknown file not listed: %#v", otherFiles)
 	}
-	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeMetadata, missingPoster, MediaFileOtherFileStatusMissing) {
+	if !hasOtherFile(otherFiles, MediaFileOtherFileTypeMetadata, "fanart", missingPoster, MediaFileOtherFileStatusMissing) {
 		t.Fatalf("missing metadata sidecar not listed: %#v", otherFiles)
 	}
 }
@@ -132,11 +133,15 @@ func TestSCNMedia001MediaFileProbePathConvertsRelativePaths(t *testing.T) {
 func hasOtherFile(
 	files []MediaFileOtherFile,
 	fileType MediaFileOtherFileType,
+	subtype string,
 	path string,
 	status MediaFileOtherFileStatus,
 ) bool {
 	for _, file := range files {
-		if file.Type == fileType && file.Path == path && file.Status == status {
+		if file.Type == fileType &&
+			optionalStringValue(file.Subtype) == subtype &&
+			file.Path == path &&
+			file.Status == status {
 			return true
 		}
 	}
