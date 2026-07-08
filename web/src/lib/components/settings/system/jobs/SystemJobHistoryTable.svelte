@@ -72,7 +72,12 @@
 					</Table.Cell>
 					<Table.Cell class="w-px font-mono text-xs">{execution.riverJobId}</Table.Cell>
 					<Table.Cell class="max-w-72">
-						<strong class="block truncate">{execution.kind}</strong>
+						<div class="flex min-w-0 items-center gap-2">
+							<strong class="truncate">{execution.kind}</strong>
+							{#if execution.historyPolicy === 'routine'}
+								<Badge variant="outline">routine</Badge>
+							{/if}
+						</div>
 						<span class="block truncate text-xs text-muted-foreground"
 							>{execution.scheduleId || execution.classification}</span
 						>

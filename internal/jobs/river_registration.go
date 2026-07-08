@@ -78,11 +78,13 @@ func fixedJobDefinitions() []fixedJobDefinition {
 		},
 		{
 			SystemJobScheduleDefinition: storage.SystemJobScheduleDefinition{
-				ID:              "download_activity_sync",
-				Name:            "Download activity sync",
-				Kind:            DownloadActivitySyncArgs{}.Kind(),
-				Queue:           queueDownloads,
-				IntervalSeconds: int32((10 * time.Second).Seconds()),
+				ID:                   "download_activity_sync",
+				Name:                 "Download activity sync",
+				Kind:                 DownloadActivitySyncArgs{}.Kind(),
+				Queue:                queueDownloads,
+				IntervalSeconds:      storage.MinSystemJobScheduleIntervalSeconds,
+				IntervalConfigurable: true,
+				HistoryPolicy:        "routine",
 			},
 			args: func() river.JobArgs { return DownloadActivitySyncArgs{} },
 		},
@@ -114,11 +116,21 @@ func periodicJobs(settings *storage.SettingsStore) []*river.PeriodicJob {
 	jobs := make([]*river.PeriodicJob, 0, len(definitions))
 	for _, definition := range definitions {
 		definition := definition
+		interval := time.Duration(definition.IntervalSeconds) * time.Second
+		if definition.IntervalConfigurable {
+			interval = time.Duration(storage.MinSystemJobScheduleIntervalSeconds) * time.Second
+		}
 		jobs = append(jobs, river.NewPeriodicJob(
-			river.PeriodicInterval(time.Duration(definition.IntervalSeconds)*time.Second),
+			river.PeriodicInterval(interval),
 			func() (river.JobArgs, *river.InsertOpts) {
-				if settings != nil && settings.SystemJobSchedulePaused(context.Background(), definition.ID) {
-					return nil, nil
+				if settings != nil {
+					if definition.IntervalConfigurable {
+						if !settings.SystemJobScheduleReady(context.Background(), definition.ID) {
+							return nil, nil
+						}
+					} else if settings.SystemJobSchedulePaused(context.Background(), definition.ID) {
+						return nil, nil
+					}
 				}
 				return definition.args(), &river.InsertOpts{Queue: definition.Queue}
 			},

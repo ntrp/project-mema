@@ -18,6 +18,8 @@
 		loadingMore: boolean;
 		savingRetention: boolean;
 		retentionDays: number;
+		routineRetentionHours: number;
+		includeRoutine: boolean;
 		selectedStatuses: string[];
 		selectedQueues: string[];
 		selectedKinds: string[];
@@ -39,6 +41,8 @@
 		loadingMore,
 		savingRetention,
 		retentionDays = $bindable(),
+		routineRetentionHours = $bindable(),
+		includeRoutine = $bindable(),
 		selectedStatuses = $bindable(),
 		selectedQueues = $bindable(),
 		selectedKinds = $bindable(),
@@ -70,6 +74,14 @@
 					bind:value={retentionDays}
 					aria-label="Retention days"
 				/>
+				<Input
+					class="w-24"
+					type="number"
+					min="1"
+					max="168"
+					bind:value={routineRetentionHours}
+					aria-label="Routine retention hours"
+				/>
 				<Button variant="outline" disabled={savingRetention} onclick={onSaveRetention}
 					>{savingRetention ? 'Saving' : 'Save'}</Button
 				>
@@ -84,6 +96,7 @@
 			bind:selectedQueues
 			bind:selectedKinds
 			bind:query
+			bind:includeRoutine
 			{queueOptions}
 			{kindOptions}
 		/>

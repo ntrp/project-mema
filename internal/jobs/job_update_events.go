@@ -34,6 +34,7 @@ type jobExecutionEvent struct {
 	RiverJobID      int64      `json:"riverJobId"`
 	ScheduleID      string     `json:"scheduleId,omitempty"`
 	Classification  string     `json:"classification"`
+	HistoryPolicy   string     `json:"historyPolicy"`
 	Status          string     `json:"status"`
 	Kind            string     `json:"kind"`
 	Queue           string     `json:"queue"`
@@ -224,6 +225,7 @@ func jobExecutionEventFromStorage(execution storage.SystemJobExecution) jobExecu
 		RiverJobID:      execution.RiverJobID,
 		ScheduleID:      execution.ScheduleID,
 		Classification:  execution.Classification,
+		HistoryPolicy:   execution.HistoryPolicy,
 		Status:          execution.Status,
 		Kind:            execution.Kind,
 		Queue:           execution.Queue,

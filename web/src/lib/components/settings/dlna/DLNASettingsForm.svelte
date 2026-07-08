@@ -85,7 +85,9 @@
 				<Label>Interfaces</Label>
 				<Button type="button" variant="outline" size="sm" onclick={setAllInterfaces}>All</Button>
 			</div>
-			<div class="grid max-h-56 gap-2 overflow-y-auto rounded-md border border-input bg-background p-2">
+			<div
+				class="grid max-h-56 gap-2 overflow-y-auto rounded-md border border-input bg-background p-2"
+			>
 				{#each availableInterfaces as item (item.name)}
 					<label class="grid grid-cols-[18px_minmax(0,1fr)] gap-2 rounded-md p-2 hover:bg-muted">
 						<Checkbox

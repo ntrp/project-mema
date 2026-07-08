@@ -43,19 +43,46 @@ func (s *Server) ResumeSystemJobSchedule(w http.ResponseWriter, r *http.Request,
 	s.updateSystemJobSchedulePaused(w, r, id, false)
 }
 
+func (s *Server) UpdateSystemJobScheduleInterval(w http.ResponseWriter, r *http.Request, id string) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	var body SystemJobScheduleIntervalUpdate
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	schedule, err := s.settings.SetSystemJobScheduleInterval(r.Context(), id, body.IntervalSeconds)
+	if err != nil {
+		if errors.Is(err, storage.ErrInvalidInput) {
+			writeError(w, http.StatusBadRequest, "system_job_schedule_interval_invalid", "Schedule interval must be at least 15 seconds")
+			return
+		}
+		if errors.Is(err, pgx.ErrNoRows) || errors.Is(err, storage.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "system_job_schedule_not_found", "Could not find configurable fixed scheduled job")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "system_job_schedule_update_failed", "Could not update fixed scheduled job interval")
+		return
+	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "jobs", "Scheduled job interval updated", map[string]any{"scheduleId": schedule.ID, "kind": schedule.Kind, "intervalSeconds": schedule.IntervalSeconds})
+	writeJSON(w, http.StatusOK, systemJobScheduleResponse(schedule))
+}
+
 func (s *Server) ListSystemJobExecutions(w http.ResponseWriter, r *http.Request, params ListSystemJobExecutionsParams) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return
 	}
+	includeRoutine := params.IncludeRoutine != nil && *params.IncludeRoutine
 	limit := historyLimit(params.Limit)
 	executions, err := s.settings.ListSystemJobExecutions(r.Context(), storage.SystemJobExecutionFilters{
-		States:     stringList(params.Status),
-		ScheduleID: optionalStringParam(params.ScheduleId),
-		Kind:       optionalStringParam(params.Kind),
-		Queue:      optionalStringParam(params.Queue),
-		Query:      optionalStringParam(params.Query),
-		Before:     params.Before,
-		Limit:      limit + 1,
+		States:         stringList(params.Status),
+		ScheduleID:     optionalStringParam(params.ScheduleId),
+		Kind:           optionalStringParam(params.Kind),
+		Queue:          optionalStringParam(params.Queue),
+		Query:          optionalStringParam(params.Query),
+		IncludeRoutine: includeRoutine,
+		Before:         params.Before,
+		Limit:          limit + 1,
 	})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "system_job_executions_failed", "Could not list job execution history")
@@ -99,7 +126,10 @@ func (s *Server) UpdateSystemJobHistorySettings(w http.ResponseWriter, r *http.R
 	if !decodeJSON(w, r, &body) {
 		return
 	}
-	settings, err := s.settings.UpdateSystemJobHistorySettings(r.Context(), body.RetentionDays)
+	settings, err := s.settings.UpdateSystemJobHistorySettings(r.Context(), storage.SystemJobHistorySettings{
+		RetentionDays:         body.RetentionDays,
+		RoutineRetentionHours: body.RoutineRetentionHours,
+	})
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "system_job_history_settings_invalid", "Could not update job history settings")
 		return

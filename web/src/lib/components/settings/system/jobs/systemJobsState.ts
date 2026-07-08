@@ -18,6 +18,11 @@ export function sortExecutions(executions: SystemJobExecution[]) {
 	});
 }
 
+export function defaultHistoryIncludesExecution(execution: SystemJobExecution) {
+	if (execution.historyPolicy !== 'routine') return true;
+	return ['retryable', 'cancelled', 'discarded'].includes(execution.status);
+}
+
 export function updateOneShotJobs(list: SystemJobExecution[], execution: SystemJobExecution) {
 	if (activeStatuses.includes(execution.status)) {
 		return upsertExecution(list, execution);

@@ -106,7 +106,7 @@ func (q *Queries) GetSystemJob(ctx context.Context, id int64) (GetSystemJobRow, 
 }
 
 const getSystemJobExecution = `-- name: GetSystemJobExecution :one
-select river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+select river_job_id, schedule_id, classification, history_policy, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
 from app.system_job_executions
 where river_job_id = $1
 `
@@ -118,6 +118,7 @@ func (q *Queries) GetSystemJobExecution(ctx context.Context, riverJobID int64) (
 		&i.RiverJobID,
 		&i.ScheduleID,
 		&i.Classification,
+		&i.HistoryPolicy,
 		&i.Status,
 		&i.Kind,
 		&i.Queue,
@@ -141,20 +142,34 @@ func (q *Queries) GetSystemJobExecution(ctx context.Context, riverJobID int64) (
 
 const getSystemJobHistorySettings = `-- name: GetSystemJobHistorySettings :one
 select coalesce(
-    (select retention_days from app.system_job_history_settings where id),
-    $1::int
-)::int as retention_days
+        (select retention_days from app.system_job_history_settings where id),
+        $1::int
+    )::int as retention_days,
+    coalesce(
+        (select routine_retention_hours from app.system_job_history_settings where id),
+        $2::int
+    )::int as routine_retention_hours
 `
 
-func (q *Queries) GetSystemJobHistorySettings(ctx context.Context, retentionDays int32) (int32, error) {
-	row := q.db.QueryRow(ctx, getSystemJobHistorySettings, retentionDays)
-	var retention_days int32
-	err := row.Scan(&retention_days)
-	return retention_days, err
+type GetSystemJobHistorySettingsParams struct {
+	RetentionDays         int32
+	RoutineRetentionHours int32
+}
+
+type GetSystemJobHistorySettingsRow struct {
+	RetentionDays         int32
+	RoutineRetentionHours int32
+}
+
+func (q *Queries) GetSystemJobHistorySettings(ctx context.Context, arg GetSystemJobHistorySettingsParams) (GetSystemJobHistorySettingsRow, error) {
+	row := q.db.QueryRow(ctx, getSystemJobHistorySettings, arg.RetentionDays, arg.RoutineRetentionHours)
+	var i GetSystemJobHistorySettingsRow
+	err := row.Scan(&i.RetentionDays, &i.RoutineRetentionHours)
+	return i, err
 }
 
 const getSystemJobSchedule = `-- name: GetSystemJobSchedule :one
-select id, name, kind, queue, interval_seconds, paused, created_at, updated_at
+select id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
 from app.system_job_schedules
 where id = $1
 `
@@ -168,6 +183,8 @@ func (q *Queries) GetSystemJobSchedule(ctx context.Context, id string) (AppSyste
 		&i.Kind,
 		&i.Queue,
 		&i.IntervalSeconds,
+		&i.IntervalConfigurable,
+		&i.HistoryPolicy,
 		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -176,7 +193,7 @@ func (q *Queries) GetSystemJobSchedule(ctx context.Context, id string) (AppSyste
 }
 
 const listCurrentOneShotJobExecutions = `-- name: ListCurrentOneShotJobExecutions :many
-select river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+select river_job_id, schedule_id, classification, history_policy, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
 from app.system_job_executions
 where classification = 'one_shot'
     and status in ('available', 'scheduled', 'retryable', 'running')
@@ -197,6 +214,7 @@ func (q *Queries) ListCurrentOneShotJobExecutions(ctx context.Context, rowLimit 
 			&i.RiverJobID,
 			&i.ScheduleID,
 			&i.Classification,
+			&i.HistoryPolicy,
 			&i.Status,
 			&i.Kind,
 			&i.Queue,
@@ -266,33 +284,39 @@ func (q *Queries) ListSystemJobExecutionLogs(ctx context.Context, arg ListSystem
 }
 
 const listSystemJobExecutions = `-- name: ListSystemJobExecutions :many
-select river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+select river_job_id, schedule_id, classification, history_policy, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
 from app.system_job_executions
 where (cardinality($1::text[]) = 0 or status = any($1::text[]))
     and ($2::text = '' or coalesce(schedule_id, '') = $2::text)
     and ($3::text = '' or kind = $3::text)
     and ($4::text = '' or queue = $4::text)
-    and ($5::timestamptz is null or updated_at < $5::timestamptz)
     and (
-        $6::text = ''
-        or kind ilike '%' || $6::text || '%'
-        or queue ilike '%' || $6::text || '%'
-        or info_message ilike '%' || $6::text || '%'
-        or args::text ilike '%' || $6::text || '%'
-        or errors::text ilike '%' || $6::text || '%'
+        $5::bool
+        or history_policy <> 'routine'
+        or status in ('retryable', 'cancelled', 'discarded')
+    )
+    and ($6::timestamptz is null or updated_at < $6::timestamptz)
+    and (
+        $7::text = ''
+        or kind ilike '%' || $7::text || '%'
+        or queue ilike '%' || $7::text || '%'
+        or info_message ilike '%' || $7::text || '%'
+        or args::text ilike '%' || $7::text || '%'
+        or errors::text ilike '%' || $7::text || '%'
     )
 order by updated_at desc, river_job_id desc
-limit $7
+limit $8
 `
 
 type ListSystemJobExecutionsParams struct {
-	States      []string
-	ScheduleID  string
-	Kind        string
-	Queue       string
-	Before      *time.Time
-	SearchQuery string
-	RowLimit    int32
+	States         []string
+	ScheduleID     string
+	Kind           string
+	Queue          string
+	IncludeRoutine bool
+	Before         *time.Time
+	SearchQuery    string
+	RowLimit       int32
 }
 
 func (q *Queries) ListSystemJobExecutions(ctx context.Context, arg ListSystemJobExecutionsParams) ([]AppSystemJobExecution, error) {
@@ -301,6 +325,7 @@ func (q *Queries) ListSystemJobExecutions(ctx context.Context, arg ListSystemJob
 		arg.ScheduleID,
 		arg.Kind,
 		arg.Queue,
+		arg.IncludeRoutine,
 		arg.Before,
 		arg.SearchQuery,
 		arg.RowLimit,
@@ -316,6 +341,7 @@ func (q *Queries) ListSystemJobExecutions(ctx context.Context, arg ListSystemJob
 			&i.RiverJobID,
 			&i.ScheduleID,
 			&i.Classification,
+			&i.HistoryPolicy,
 			&i.Status,
 			&i.Kind,
 			&i.Queue,
@@ -350,6 +376,8 @@ select s.id,
     s.kind,
     s.queue,
     s.interval_seconds,
+    s.interval_configurable,
+    s.history_policy,
     s.paused,
     s.created_at,
     s.updated_at,
@@ -387,6 +415,8 @@ type ListSystemJobSchedulesRow struct {
 	Kind                  string
 	Queue                 string
 	IntervalSeconds       int32
+	IntervalConfigurable  bool
+	HistoryPolicy         string
 	Paused                bool
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
@@ -416,6 +446,8 @@ func (q *Queries) ListSystemJobSchedules(ctx context.Context) ([]ListSystemJobSc
 			&i.Kind,
 			&i.Queue,
 			&i.IntervalSeconds,
+			&i.IntervalConfigurable,
+			&i.HistoryPolicy,
 			&i.Paused,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -541,12 +573,57 @@ func (q *Queries) ListSystemJobs(ctx context.Context, arg ListSystemJobsParams) 
 const pruneSystemJobExecutions = `-- name: PruneSystemJobExecutions :exec
 delete from app.system_job_executions
 where finalized_at is not null
-    and finalized_at < now() - make_interval(days => $1::int)
+    and (
+        (
+            history_policy = 'routine'
+            and status = 'completed'
+            and finalized_at < now() - make_interval(hours => $1::int)
+        )
+        or (
+            (history_policy <> 'routine' or status <> 'completed')
+            and finalized_at < now() - make_interval(days => $2::int)
+        )
+    )
 `
 
-func (q *Queries) PruneSystemJobExecutions(ctx context.Context, retentionDays int32) error {
-	_, err := q.db.Exec(ctx, pruneSystemJobExecutions, retentionDays)
+type PruneSystemJobExecutionsParams struct {
+	RoutineRetentionHours int32
+	RetentionDays         int32
+}
+
+func (q *Queries) PruneSystemJobExecutions(ctx context.Context, arg PruneSystemJobExecutionsParams) error {
+	_, err := q.db.Exec(ctx, pruneSystemJobExecutions, arg.RoutineRetentionHours, arg.RetentionDays)
 	return err
+}
+
+const systemJobScheduleReady = `-- name: SystemJobScheduleReady :one
+select exists(
+    select 1
+    from app.system_job_schedules s
+    where s.id = $1
+        and not s.paused
+        and not exists (
+            select 1
+            from app.system_job_executions active
+            where active.schedule_id = s.id
+                and active.status in ('available', 'scheduled', 'retryable', 'running')
+        )
+        and coalesce(
+            (
+                select max(last_run.created_at) + s.interval_seconds * interval '1 second' <= now()
+                from app.system_job_executions last_run
+                where last_run.schedule_id = s.id
+            ),
+            true
+        )
+)
+`
+
+func (q *Queries) SystemJobScheduleReady(ctx context.Context, id string) (bool, error) {
+	row := q.db.QueryRow(ctx, systemJobScheduleReady, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const updateSystemJobExecutionProgress = `-- name: UpdateSystemJobExecutionProgress :one
@@ -556,7 +633,7 @@ set progress_percent = $3,
     info_message = case when $2 = '' then info_message else $2 end,
     updated_at = now()
 where river_job_id = $1
-returning river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+returning river_job_id, schedule_id, classification, history_policy, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
 `
 
 type UpdateSystemJobExecutionProgressParams struct {
@@ -572,6 +649,7 @@ func (q *Queries) UpdateSystemJobExecutionProgress(ctx context.Context, arg Upda
 		&i.RiverJobID,
 		&i.ScheduleID,
 		&i.Classification,
+		&i.HistoryPolicy,
 		&i.Status,
 		&i.Kind,
 		&i.Queue,
@@ -594,20 +672,59 @@ func (q *Queries) UpdateSystemJobExecutionProgress(ctx context.Context, arg Upda
 }
 
 const updateSystemJobHistorySettings = `-- name: UpdateSystemJobHistorySettings :one
-insert into app.system_job_history_settings (id, retention_days)
-values (true, $1)
+insert into app.system_job_history_settings (id, retention_days, routine_retention_hours)
+values (true, $1, $2)
 on conflict (id) do update set
     retention_days = excluded.retention_days,
+    routine_retention_hours = excluded.routine_retention_hours,
     updated_at = now()
-returning id, retention_days, created_at, updated_at
+returning id, retention_days, routine_retention_hours, created_at, updated_at
 `
 
-func (q *Queries) UpdateSystemJobHistorySettings(ctx context.Context, retentionDays int32) (AppSystemJobHistorySetting, error) {
-	row := q.db.QueryRow(ctx, updateSystemJobHistorySettings, retentionDays)
+type UpdateSystemJobHistorySettingsParams struct {
+	RetentionDays         int32
+	RoutineRetentionHours int32
+}
+
+func (q *Queries) UpdateSystemJobHistorySettings(ctx context.Context, arg UpdateSystemJobHistorySettingsParams) (AppSystemJobHistorySetting, error) {
+	row := q.db.QueryRow(ctx, updateSystemJobHistorySettings, arg.RetentionDays, arg.RoutineRetentionHours)
 	var i AppSystemJobHistorySetting
 	err := row.Scan(
 		&i.ID,
 		&i.RetentionDays,
+		&i.RoutineRetentionHours,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateSystemJobScheduleInterval = `-- name: UpdateSystemJobScheduleInterval :one
+update app.system_job_schedules
+set interval_seconds = $2,
+    updated_at = now()
+where id = $1
+    and interval_configurable
+returning id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
+`
+
+type UpdateSystemJobScheduleIntervalParams struct {
+	ID              string
+	IntervalSeconds int32
+}
+
+func (q *Queries) UpdateSystemJobScheduleInterval(ctx context.Context, arg UpdateSystemJobScheduleIntervalParams) (AppSystemJobSchedule, error) {
+	row := q.db.QueryRow(ctx, updateSystemJobScheduleInterval, arg.ID, arg.IntervalSeconds)
+	var i AppSystemJobSchedule
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Kind,
+		&i.Queue,
+		&i.IntervalSeconds,
+		&i.IntervalConfigurable,
+		&i.HistoryPolicy,
+		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -619,7 +736,7 @@ update app.system_job_schedules
 set paused = $2,
     updated_at = now()
 where id = $1
-returning id, name, kind, queue, interval_seconds, paused, created_at, updated_at
+returning id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
 `
 
 type UpdateSystemJobSchedulePausedParams struct {
@@ -636,6 +753,8 @@ func (q *Queries) UpdateSystemJobSchedulePaused(ctx context.Context, arg UpdateS
 		&i.Kind,
 		&i.Queue,
 		&i.IntervalSeconds,
+		&i.IntervalConfigurable,
+		&i.HistoryPolicy,
 		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -648,6 +767,7 @@ insert into app.system_job_executions (
     river_job_id,
     schedule_id,
     classification,
+    history_policy,
     status,
     kind,
     queue,
@@ -666,6 +786,7 @@ insert into app.system_job_executions (
     $1,
     $15,
     $2,
+    coalesce((select history_policy from app.system_job_schedules where id = $15), 'standard'),
     $3,
     $4,
     $5,
@@ -684,6 +805,7 @@ insert into app.system_job_executions (
 on conflict (river_job_id) do update set
     schedule_id = excluded.schedule_id,
     classification = excluded.classification,
+    history_policy = excluded.history_policy,
     status = excluded.status,
     kind = excluded.kind,
     queue = excluded.queue,
@@ -699,7 +821,7 @@ on conflict (river_job_id) do update set
     attempted_at = excluded.attempted_at,
     finalized_at = excluded.finalized_at,
     updated_at = now()
-returning river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+returning river_job_id, schedule_id, classification, history_policy, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
 `
 
 type UpsertSystemJobExecutionParams struct {
@@ -747,6 +869,7 @@ func (q *Queries) UpsertSystemJobExecution(ctx context.Context, arg UpsertSystem
 		&i.RiverJobID,
 		&i.ScheduleID,
 		&i.Classification,
+		&i.HistoryPolicy,
 		&i.Status,
 		&i.Kind,
 		&i.Queue,
@@ -769,23 +892,38 @@ func (q *Queries) UpsertSystemJobExecution(ctx context.Context, arg UpsertSystem
 }
 
 const upsertSystemJobSchedule = `-- name: UpsertSystemJobSchedule :one
-insert into app.system_job_schedules (id, name, kind, queue, interval_seconds)
-values ($1, $2, $3, $4, $5)
+insert into app.system_job_schedules (
+    id,
+    name,
+    kind,
+    queue,
+    interval_seconds,
+    interval_configurable,
+    history_policy
+)
+values ($1, $2, $3, $4, $5, $6, $7)
 on conflict (id) do update set
     name = excluded.name,
     kind = excluded.kind,
     queue = excluded.queue,
-    interval_seconds = excluded.interval_seconds,
+    interval_seconds = case
+        when excluded.interval_configurable then greatest(app.system_job_schedules.interval_seconds, excluded.interval_seconds)
+        else excluded.interval_seconds
+    end,
+    interval_configurable = excluded.interval_configurable,
+    history_policy = excluded.history_policy,
     updated_at = now()
-returning id, name, kind, queue, interval_seconds, paused, created_at, updated_at
+returning id, name, kind, queue, interval_seconds, interval_configurable, history_policy, paused, created_at, updated_at
 `
 
 type UpsertSystemJobScheduleParams struct {
-	ID              string
-	Name            string
-	Kind            string
-	Queue           string
-	IntervalSeconds int32
+	ID                   string
+	Name                 string
+	Kind                 string
+	Queue                string
+	IntervalSeconds      int32
+	IntervalConfigurable bool
+	HistoryPolicy        string
 }
 
 func (q *Queries) UpsertSystemJobSchedule(ctx context.Context, arg UpsertSystemJobScheduleParams) (AppSystemJobSchedule, error) {
@@ -795,6 +933,8 @@ func (q *Queries) UpsertSystemJobSchedule(ctx context.Context, arg UpsertSystemJ
 		arg.Kind,
 		arg.Queue,
 		arg.IntervalSeconds,
+		arg.IntervalConfigurable,
+		arg.HistoryPolicy,
 	)
 	var i AppSystemJobSchedule
 	err := row.Scan(
@@ -803,6 +943,8 @@ func (q *Queries) UpsertSystemJobSchedule(ctx context.Context, arg UpsertSystemJ
 		&i.Kind,
 		&i.Queue,
 		&i.IntervalSeconds,
+		&i.IntervalConfigurable,
+		&i.HistoryPolicy,
 		&i.Paused,
 		&i.CreatedAt,
 		&i.UpdatedAt,

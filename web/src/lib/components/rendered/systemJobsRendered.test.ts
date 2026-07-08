@@ -11,6 +11,7 @@ import SystemJobHistoryTable from '$lib/components/settings/system/jobs/SystemJo
 import SystemOneShotJobsTable from '$lib/components/settings/system/jobs/SystemOneShotJobsTable.svelte';
 import SystemScheduledJobsTable from '$lib/components/settings/system/jobs/SystemScheduledJobsTable.svelte';
 import {
+	defaultHistoryIncludesExecution,
 	mergeExecutions,
 	upsertExecution
 } from '$lib/components/settings/system/jobs/systemJobsState';
@@ -27,16 +28,20 @@ describe('rendered system job dashboard components', () => {
 					activeStatus: 'running',
 					activeRiverJobId: 99,
 					activeProgressPercent: 50,
-					activeProgressLabel: 'Checking indexers'
+					activeProgressLabel: 'Checking indexers',
+					historyPolicy: 'routine',
+					intervalConfigurable: true
 				})
 			],
 			onPause: vi.fn(),
 			onResume: vi.fn(),
+			onSaveInterval: vi.fn(),
 			onAbort: vi.fn()
 		});
 
 		expect(body).toContain('RSS sync');
 		expect(body).toContain('Checking indexers');
+		expect(body).toContain('routine');
 		expect(body).toContain('Pause schedule');
 		expect(body).toContain('Abort active run');
 	});
@@ -91,6 +96,19 @@ describe('rendered system job dashboard components', () => {
 			upsertExecution([newer, older], replacement).map((execution) => execution.riverJobId)
 		).toEqual([1, 2]);
 	});
+
+	it('keeps routine failures in default history and hides routine successes', () => {
+		expect(
+			defaultHistoryIncludesExecution(
+				systemJobExecution({ historyPolicy: 'routine', status: 'completed' })
+			)
+		).toBe(false);
+		expect(
+			defaultHistoryIncludesExecution(
+				systemJobExecution({ historyPolicy: 'routine', status: 'retryable' })
+			)
+		).toBe(true);
+	});
 });
 
 function systemJobSchedule(overrides: Partial<SystemJobSchedule>): SystemJobSchedule {
@@ -100,6 +118,8 @@ function systemJobSchedule(overrides: Partial<SystemJobSchedule>): SystemJobSche
 		kind: 'media.release_search',
 		queue: 'media_search',
 		intervalSeconds: 900,
+		intervalConfigurable: false,
+		historyPolicy: 'standard',
 		paused: false,
 		activeStatus: '',
 		activeProgressLabel: '',
@@ -115,6 +135,7 @@ function systemJobExecution(overrides: Partial<SystemJobExecution>): SystemJobEx
 	return {
 		riverJobId: 1,
 		classification: 'one_shot',
+		historyPolicy: 'standard',
 		status: 'running',
 		kind: 'media.release_search',
 		queue: 'media_search',

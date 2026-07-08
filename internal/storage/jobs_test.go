@@ -1,9 +1,13 @@
 package storage
 
 import (
+	"errors"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	storagegen "media-manager/internal/storage/generated"
@@ -58,6 +62,8 @@ func TestSCNSystem006SystemJobScheduleOverviewMapsActiveAndLastRuns(t *testing.T
 		Kind:                  "media.rss_sync",
 		Queue:                 "media_search",
 		IntervalSeconds:       900,
+		HistoryPolicy:         "routine",
+		IntervalConfigurable:  true,
 		CreatedAt:             createdAt.Add(-time.Hour),
 		UpdatedAt:             createdAt,
 		ActiveRiverJobID:      101,
@@ -79,9 +85,125 @@ func TestSCNSystem006SystemJobScheduleOverviewMapsActiveAndLastRuns(t *testing.T
 	if schedule.NextRunAt == nil || !schedule.NextRunAt.Equal(createdAt.Add(15*time.Minute)) {
 		t.Fatalf("next run = %#v", schedule.NextRunAt)
 	}
+	if schedule.HistoryPolicy != "routine" || !schedule.IntervalConfigurable {
+		t.Fatalf("schedule policy/configurable = %#v", schedule)
+	}
 	if schedule.LastFinalizedAt == nil || !schedule.LastFinalizedAt.Equal(finalizedAt) {
 		t.Fatalf("last finalized = %#v", schedule.LastFinalizedAt)
 	}
+}
+
+func TestSCNSystem006ConfigurableSystemJobScheduleInterval(t *testing.T) {
+	ctx, store := testDBStore(t)
+	err := store.SyncSystemJobSchedules(ctx, []SystemJobScheduleDefinition{
+		{ID: "download_activity_sync", Name: "Download activity sync", Kind: "download.activity_sync", Queue: "downloads", IntervalSeconds: 15, IntervalConfigurable: true, HistoryPolicy: "routine"},
+		{ID: "rss_sync", Name: "RSS sync", Kind: "media.rss_sync", Queue: "media_search", IntervalSeconds: 900},
+	})
+	if err != nil {
+		t.Fatalf("sync schedules: %v", err)
+	}
+
+	if _, err := store.SetSystemJobScheduleInterval(ctx, "download_activity_sync", 10); !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("interval below minimum error = %v, want invalid input", err)
+	}
+	if _, err := store.SetSystemJobScheduleInterval(ctx, "rss_sync", 30); !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("non-configurable interval error = %v, want no rows", err)
+	}
+	schedule, err := store.SetSystemJobScheduleInterval(ctx, "download_activity_sync", 30)
+	if err != nil {
+		t.Fatalf("set configurable interval: %v", err)
+	}
+	if schedule.IntervalSeconds != 30 {
+		t.Fatalf("interval = %d, want 30", schedule.IntervalSeconds)
+	}
+}
+
+func TestSCNSystem006RoutineExecutionsAreHiddenFromDefaultHistory(t *testing.T) {
+	ctx, store := testDBStore(t)
+	err := store.SyncSystemJobSchedules(ctx, []SystemJobScheduleDefinition{
+		{ID: "download_activity_sync", Name: "Download activity sync", Kind: "download.activity_sync", Queue: "downloads", IntervalSeconds: 15, IntervalConfigurable: true, HistoryPolicy: "routine"},
+		{ID: "rss_sync", Name: "RSS sync", Kind: "media.rss_sync", Queue: "media_search", IntervalSeconds: 900},
+	})
+	if err != nil {
+		t.Fatalf("sync schedules: %v", err)
+	}
+	now := time.Now().UTC()
+	finalized := now.Add(time.Minute)
+	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(201, "download_activity_sync", "download.activity_sync", "completed", now, &finalized))
+	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(202, "download_activity_sync", "download.activity_sync", "retryable", now.Add(time.Second), nil))
+	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(203, "rss_sync", "media.rss_sync", "completed", now.Add(2*time.Second), &finalized))
+
+	defaultRows, err := store.ListSystemJobExecutions(ctx, SystemJobExecutionFilters{Limit: 10})
+	if err != nil {
+		t.Fatalf("list default history: %v", err)
+	}
+	if ids(defaultRows) != "203,202" {
+		t.Fatalf("default history ids = %s, want 203,202", ids(defaultRows))
+	}
+	withRoutine, err := store.ListSystemJobExecutions(ctx, SystemJobExecutionFilters{Limit: 10, IncludeRoutine: true})
+	if err != nil {
+		t.Fatalf("list routine history: %v", err)
+	}
+	if ids(withRoutine) != "203,202,201" {
+		t.Fatalf("routine history ids = %s, want 203,202,201", ids(withRoutine))
+	}
+}
+
+func TestSCNSystem006RoutineSuccessfulExecutionsPruneEarly(t *testing.T) {
+	ctx, store := testDBStore(t)
+	err := store.SyncSystemJobSchedules(ctx, []SystemJobScheduleDefinition{
+		{ID: "download_activity_sync", Name: "Download activity sync", Kind: "download.activity_sync", Queue: "downloads", IntervalSeconds: 15, IntervalConfigurable: true, HistoryPolicy: "routine"},
+		{ID: "rss_sync", Name: "RSS sync", Kind: "media.rss_sync", Queue: "media_search", IntervalSeconds: 900},
+	})
+	if err != nil {
+		t.Fatalf("sync schedules: %v", err)
+	}
+	old := time.Now().UTC().Add(-2 * time.Hour)
+	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(301, "download_activity_sync", "download.activity_sync", "completed", old, &old))
+	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(302, "download_activity_sync", "download.activity_sync", "retryable", old, &old))
+	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(303, "rss_sync", "media.rss_sync", "completed", old, &old))
+
+	if _, err := store.UpdateSystemJobHistorySettings(ctx, SystemJobHistorySettings{RetentionDays: 1, RoutineRetentionHours: 1}); err != nil {
+		t.Fatalf("update history settings: %v", err)
+	}
+	if _, err := store.GetSystemJobExecution(ctx, 301); !errors.Is(err, pgx.ErrNoRows) {
+		t.Fatalf("routine success load error = %v, want no rows", err)
+	}
+	if _, err := store.GetSystemJobExecution(ctx, 302); err != nil {
+		t.Fatalf("routine failure should remain: %v", err)
+	}
+	if _, err := store.GetSystemJobExecution(ctx, 303); err != nil {
+		t.Fatalf("standard execution should remain: %v", err)
+	}
+}
+
+func executionInput(id int64, scheduleID string, kind string, status string, createdAt time.Time, finalizedAt *time.Time) SystemJobExecutionInput {
+	return SystemJobExecutionInput{
+		RiverJobID:     id,
+		ScheduleID:     scheduleID,
+		Classification: "fixed",
+		Status:         status,
+		Kind:           kind,
+		Queue:          "downloads",
+		Attempt:        1,
+		MaxAttempts:    3,
+		Priority:       1,
+		Args:           []byte("{}"),
+		Metadata:       []byte("{}"),
+		Errors:         []byte("[]"),
+		InfoMessage:    status,
+		ScheduledAt:    createdAt,
+		CreatedAt:      createdAt,
+		FinalizedAt:    finalizedAt,
+	}
+}
+
+func ids(executions []SystemJobExecution) string {
+	values := make([]string, 0, len(executions))
+	for _, execution := range executions {
+		values = append(values, strconv.FormatInt(execution.RiverJobID, 10))
+	}
+	return strings.Join(values, ",")
 }
 
 func TestSCNSystem006PausedSystemJobScheduleHasNoNextRun(t *testing.T) {

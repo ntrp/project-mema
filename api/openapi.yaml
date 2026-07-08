@@ -4147,6 +4147,42 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+  /system/job-schedules/{id}/interval:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+    put:
+      operationId: updateSystemJobScheduleInterval
+      tags:
+        - System
+      summary: Update a configurable fixed scheduled job interval
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemJobScheduleIntervalUpdate"
+      responses:
+        "200":
+          description: Fixed scheduled job interval updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobSchedule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /system/jobs/{id}/abort:
     parameters:
       - name: id
@@ -4229,6 +4265,11 @@ paths:
             format: int32
             minimum: 1
             maximum: 500
+        - name: includeRoutine
+          in: query
+          required: false
+          schema:
+            type: boolean
       responses:
         "200":
           description: Background job executions
@@ -8358,6 +8399,8 @@ components:
         - kind
         - queue
         - intervalSeconds
+        - intervalConfigurable
+        - historyPolicy
         - paused
         - activeStatus
         - activeProgressLabel
@@ -8377,6 +8420,14 @@ components:
         intervalSeconds:
           type: integer
           format: int32
+          minimum: 15
+        intervalConfigurable:
+          type: boolean
+        historyPolicy:
+          type: string
+          enum:
+            - standard
+            - routine
         paused:
           type: boolean
         nextRunAt:
@@ -8413,6 +8464,16 @@ components:
         updatedAt:
           type: string
           format: date-time
+    SystemJobScheduleIntervalUpdate:
+      type: object
+      additionalProperties: false
+      required:
+        - intervalSeconds
+      properties:
+        intervalSeconds:
+          type: integer
+          format: int32
+          minimum: 15
     SystemJobExecutionListResponse:
       type: object
       additionalProperties: false
@@ -8432,6 +8493,7 @@ components:
       required:
         - riverJobId
         - classification
+        - historyPolicy
         - status
         - kind
         - queue
@@ -8457,6 +8519,11 @@ components:
           enum:
             - fixed
             - one_shot
+        historyPolicy:
+          type: string
+          enum:
+            - standard
+            - routine
         status:
           type: string
         kind:
@@ -8544,12 +8611,18 @@ components:
       additionalProperties: false
       required:
         - retentionDays
+        - routineRetentionHours
       properties:
         retentionDays:
           type: integer
           format: int32
           minimum: 1
           maximum: 365
+        routineRetentionHours:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 168
     DownloadActivityListResponse:
       type: object
       additionalProperties: false

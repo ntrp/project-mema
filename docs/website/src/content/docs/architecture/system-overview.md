@@ -43,6 +43,17 @@ execution logs in `app.system_job_execution_logs`. Fixed scheduled jobs are
 registered from the application catalog and synchronized into
 `app.system_job_schedules`, where pause state is persisted.
 
+Schedules can be marked configurable. Configurable schedules keep the catalog
+minimum as their River tick, but the persisted interval decides whether a run is
+due. This lets the download client activity sync run as often as every 15
+seconds while still allowing administrators to raise the interval without a
+server restart.
+
+Routine schedules, such as download client activity sync, are marked with a
+separate history policy. Routine successful runs are hidden from the default
+history view and use shorter retention, while failures and retryable executions
+remain visible so regular health checks do not bury meaningful background work.
+
 The `/api/events` stream publishes both `system.job.updated` for River row
 changes and `system.job.execution.updated` for dashboard execution/progress
 updates.

@@ -14,7 +14,8 @@
 			statuses: controller.selectedStatuses,
 			queues: controller.selectedQueues,
 			kinds: controller.selectedKinds,
-			query: controller.query
+			query: controller.query,
+			includeRoutine: controller.includeRoutine
 		})
 	);
 
@@ -45,10 +46,13 @@
 		oneShotJobs={controller.oneShotJobs}
 		loadingOverview={controller.loadingOverview}
 		updatingScheduleId={controller.updatingScheduleId}
+		updatingIntervalId={controller.updatingIntervalId}
 		abortingId={controller.abortingId}
 		onRefresh={() => void controller.loadOverview()}
 		onPause={(schedule) => void controller.toggleSchedule(schedule, true)}
 		onResume={(schedule) => void controller.toggleSchedule(schedule, false)}
+		onSaveInterval={(schedule, intervalSeconds) =>
+			void controller.saveScheduleInterval(schedule, intervalSeconds)}
 		onAbort={(id, kind) => (controller.abortCandidate = { id, kind })}
 	/>
 
@@ -59,6 +63,8 @@
 		loadingMore={controller.loadingMore}
 		savingRetention={controller.savingRetention}
 		bind:retentionDays={controller.retentionDays}
+		bind:routineRetentionHours={controller.routineRetentionHours}
+		bind:includeRoutine={controller.includeRoutine}
 		bind:selectedStatuses={controller.selectedStatuses}
 		bind:selectedQueues={controller.selectedQueues}
 		bind:selectedKinds={controller.selectedKinds}

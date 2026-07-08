@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import SystemJobsMultiSelect from './SystemJobsMultiSelect.svelte';
@@ -26,6 +27,7 @@
 		queueOptions: Option[];
 		kindOptions: Option[];
 		query: string;
+		includeRoutine: boolean;
 	}
 
 	let {
@@ -34,7 +36,8 @@
 		selectedKinds = $bindable(),
 		queueOptions,
 		kindOptions,
-		query = $bindable()
+		query = $bindable(),
+		includeRoutine = $bindable()
 	}: Props = $props();
 
 	const statusOptions = statuses.map((status) => ({ value: status, label: status }));
@@ -67,5 +70,9 @@
 			<Label for="job-query-filter">Search</Label>
 			<Input id="job-query-filter" bind:value={query} placeholder="Kind, queue, args, errors" />
 		</div>
+	</div>
+	<div class="flex min-h-9 items-center gap-2">
+		<Checkbox id="job-include-routine" bind:checked={includeRoutine} />
+		<Label for="job-include-routine">Include routine runs</Label>
 	</div>
 </div>

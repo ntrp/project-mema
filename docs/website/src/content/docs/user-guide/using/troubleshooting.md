@@ -42,9 +42,18 @@ Open System > Jobs to see fixed scheduled jobs, current one-shot jobs, and
 execution history. Fixed schedules can be paused or resumed from that page.
 Running or queued executions can be aborted from the row actions.
 
+The download client activity sync is a routine fixed schedule with a
+configurable interval. It can run as often as every 15 seconds; higher values
+can be saved from the fixed schedules table.
+
 Use the execution history logs when a job fails or appears stuck. Each run keeps
 structured messages, progress updates, errors, and relevant IDs so you can see
 which indexer, download client, media item, or path was involved.
+
+Routine successful sync runs are hidden from the normal execution history so
+they do not bury other background work. Turn on Include routine runs when you
+need to inspect them, or use the routine retention setting to keep them for a
+shorter or longer window.
 
 ## The Wrong Indexers Are Used
 

@@ -120,6 +120,7 @@ func TestSCNSystem008JobExecutionEventPreservesProgress(t *testing.T) {
 	execution := jobExecutionEventFromStorage(storage.SystemJobExecution{
 		RiverJobID:      45,
 		Classification:  "one_shot",
+		HistoryPolicy:   "routine",
 		Status:          "running",
 		Kind:            "media.release_search",
 		Queue:           "media_search",
@@ -129,6 +130,9 @@ func TestSCNSystem008JobExecutionEventPreservesProgress(t *testing.T) {
 
 	if execution.RiverJobID != 45 || execution.ProgressPercent == nil || *execution.ProgressPercent != progress {
 		t.Fatalf("execution event = %#v", execution)
+	}
+	if execution.HistoryPolicy != "routine" {
+		t.Fatalf("history policy = %q", execution.HistoryPolicy)
 	}
 	if execution.ProgressLabel != "Searching indexers" {
 		t.Fatalf("progress label = %q", execution.ProgressLabel)

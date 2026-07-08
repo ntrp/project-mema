@@ -318,6 +318,24 @@ export async function resumeSystemJobSchedule(id: string): Promise<SystemJobSche
 	return data;
 }
 
+export async function updateSystemJobScheduleInterval(
+	id: string,
+	intervalSeconds: number
+): Promise<SystemJobSchedule> {
+	const { data, error } = await client.PUT('/system/job-schedules/{id}/interval', {
+		params: { path: { id } },
+		body: { intervalSeconds }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Schedule interval update did not return a schedule');
+	}
+	return data;
+}
+
 export interface SystemJobExecutionFilters {
 	status?: string[];
 	scheduleId?: string;
@@ -326,6 +344,7 @@ export interface SystemJobExecutionFilters {
 	query?: string;
 	before?: string;
 	limit?: number;
+	includeRoutine?: boolean;
 }
 
 export async function listSystemJobExecutions(

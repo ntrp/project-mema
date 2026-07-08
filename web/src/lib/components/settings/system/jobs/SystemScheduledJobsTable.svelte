@@ -2,8 +2,10 @@
 	import BanIcon from '@lucide/svelte/icons/ban';
 	import PauseIcon from '@lucide/svelte/icons/pause';
 	import PlayIcon from '@lucide/svelte/icons/play';
+	import SaveIcon from '@lucide/svelte/icons/save';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import * as Table from '$lib/components/ui/table';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { formatDateTime } from '$lib/settings/dateFormat';
@@ -15,23 +17,37 @@
 	interface Props {
 		schedules: SystemJobSchedule[];
 		updatingId?: string;
+		updatingIntervalId?: string;
 		abortingId?: number;
 		onPause: (schedule: SystemJobSchedule) => void;
 		onResume: (schedule: SystemJobSchedule) => void;
+		onSaveInterval: (schedule: SystemJobSchedule, intervalSeconds: number) => void;
 		onAbort: (id: number) => void;
 	}
 
-	let { schedules, updatingId, abortingId, onPause, onResume, onAbort }: Props = $props();
+	let {
+		schedules,
+		updatingId,
+		updatingIntervalId,
+		abortingId,
+		onPause,
+		onResume,
+		onSaveInterval,
+		onAbort
+	}: Props = $props();
 
 	const rowPulse = createRowPulse();
 	const rowKeys = $derived(schedules.map((schedule) => schedule.id));
+	let intervalDrafts = $state<Record<string, number>>({});
 
 	$effect(() => rowPulse.update(rowKeys));
 
-	function activeLabel(schedule: SystemJobSchedule) {
-		return (
-			schedule.activeProgressLabel || schedule.activeInfoMessage || schedule.activeStatus || 'Idle'
-		);
+	function intervalDraft(schedule: SystemJobSchedule) {
+		return intervalDrafts[schedule.id] ?? schedule.intervalSeconds;
+	}
+
+	function updateIntervalDraft(schedule: SystemJobSchedule, value: number) {
+		intervalDrafts = { ...intervalDrafts, [schedule.id]: value };
 	}
 </script>
 
@@ -52,7 +68,12 @@
 			{#each schedules as schedule (schedule.id)}
 				<Table.Row class={rowPulse.classFor(schedule.id)}>
 					<Table.Cell>
-						<strong class="block truncate">{schedule.name}</strong>
+						<div class="flex min-w-0 items-center gap-2">
+							<strong class="truncate">{schedule.name}</strong>
+							{#if schedule.historyPolicy === 'routine'}
+								<Badge variant="outline">routine</Badge>
+							{/if}
+						</div>
 						<span class="block truncate text-xs text-muted-foreground">{schedule.kind}</span>
 					</Table.Cell>
 					<Table.Cell class="w-px">
@@ -62,11 +83,50 @@
 							>{schedule.paused ? 'paused' : schedule.activeStatus || 'idle'}</Badge
 						>
 					</Table.Cell>
-					<Table.Cell class="w-px">{formatInterval(schedule.intervalSeconds)}</Table.Cell>
+					<Table.Cell class="w-px">
+						{#if schedule.intervalConfigurable}
+							<div class="flex items-center gap-1">
+								<Input
+									class="w-20"
+									type="number"
+									min="15"
+									step="15"
+									value={intervalDraft(schedule)}
+									aria-label={`Interval seconds for ${schedule.name}`}
+									oninput={(event) =>
+										updateIntervalDraft(schedule, event.currentTarget.valueAsNumber)}
+								/>
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										{#snippet child({ props })}
+											<Button
+												{...props}
+												type="button"
+												variant="outline"
+												size="icon-sm"
+												aria-label="Save interval"
+												disabled={updatingIntervalId === schedule.id ||
+													intervalDraft(schedule) === schedule.intervalSeconds}
+												onclick={() => onSaveInterval(schedule, intervalDraft(schedule))}
+											>
+												<SaveIcon aria-hidden="true" />
+											</Button>
+										{/snippet}
+									</Tooltip.Trigger>
+									<Tooltip.Content>Save interval</Tooltip.Content>
+								</Tooltip.Root>
+							</div>
+						{:else}
+							{formatInterval(schedule.intervalSeconds)}
+						{/if}
+					</Table.Cell>
 					<Table.Cell>
 						<SystemJobProgress
 							value={schedule.activeProgressPercent}
-							label={activeLabel(schedule)}
+							label={schedule.activeProgressLabel ||
+								schedule.activeInfoMessage ||
+								schedule.activeStatus ||
+								'Idle'}
 						/>
 					</Table.Cell>
 					<Table.Cell class="w-px whitespace-nowrap">

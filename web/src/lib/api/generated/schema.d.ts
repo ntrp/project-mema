@@ -2289,6 +2289,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/system/job-schedules/{id}/interval': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		/** Update a configurable fixed scheduled job interval */
+		put: operations['updateSystemJobScheduleInterval'];
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/jobs/{id}/abort': {
 		parameters: {
 			query?: never;
@@ -3924,6 +3943,9 @@ export interface components {
 			queue: string;
 			/** Format: int32 */
 			intervalSeconds: number;
+			intervalConfigurable: boolean;
+			/** @enum {string} */
+			historyPolicy: 'standard' | 'routine';
 			paused: boolean;
 			/** Format: date-time */
 			nextRunAt?: string;
@@ -3946,6 +3968,10 @@ export interface components {
 			/** Format: date-time */
 			updatedAt: string;
 		};
+		SystemJobScheduleIntervalUpdate: {
+			/** Format: int32 */
+			intervalSeconds: number;
+		};
 		SystemJobExecutionListResponse: {
 			executions: components['schemas']['SystemJobExecution'][];
 			hasMore: boolean;
@@ -3956,6 +3982,8 @@ export interface components {
 			scheduleId?: string;
 			/** @enum {string} */
 			classification: 'fixed' | 'one_shot';
+			/** @enum {string} */
+			historyPolicy: 'standard' | 'routine';
 			status: string;
 			kind: string;
 			queue: string;
@@ -4002,6 +4030,8 @@ export interface components {
 		SystemJobHistorySettings: {
 			/** Format: int32 */
 			retentionDays: number;
+			/** Format: int32 */
+			routineRetentionHours: number;
 		};
 		DownloadActivityListResponse: {
 			activities: components['schemas']['DownloadActivity'][];
@@ -8893,6 +8923,36 @@ export interface operations {
 			404: components['responses']['NotFound'];
 		};
 	};
+	updateSystemJobScheduleInterval: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SystemJobScheduleIntervalUpdate'];
+			};
+		};
+		responses: {
+			/** @description Fixed scheduled job interval updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobSchedule'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	abortSystemJob: {
 		parameters: {
 			query?: never;
@@ -8929,6 +8989,7 @@ export interface operations {
 				query?: string;
 				before?: string;
 				limit?: number;
+				includeRoutine?: boolean;
 			};
 			header?: never;
 			path?: never;

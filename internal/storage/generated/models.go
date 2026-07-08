@@ -819,6 +819,7 @@ type AppSystemJobExecution struct {
 	RiverJobID      int64
 	ScheduleID      pgtype.Text
 	Classification  string
+	HistoryPolicy   string
 	Status          string
 	Kind            string
 	Queue           string
@@ -848,21 +849,24 @@ type AppSystemJobExecutionLog struct {
 }
 
 type AppSystemJobHistorySetting struct {
-	ID            bool
-	RetentionDays int32
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID                    bool
+	RetentionDays         int32
+	RoutineRetentionHours int32
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
 }
 
 type AppSystemJobSchedule struct {
-	ID              string
-	Name            string
-	Kind            string
-	Queue           string
-	IntervalSeconds int32
-	Paused          bool
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID                   string
+	Name                 string
+	Kind                 string
+	Queue                string
+	IntervalSeconds      int32
+	IntervalConfigurable bool
+	HistoryPolicy        string
+	Paused               bool
+	CreatedAt            time.Time
+	UpdatedAt            time.Time
 }
 
 type AppTag struct {

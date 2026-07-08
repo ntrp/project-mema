@@ -48,13 +48,26 @@ from river_job
 where id = $1;
 
 -- name: UpsertSystemJobSchedule :one
-insert into app.system_job_schedules (id, name, kind, queue, interval_seconds)
-values ($1, $2, $3, $4, $5)
+insert into app.system_job_schedules (
+    id,
+    name,
+    kind,
+    queue,
+    interval_seconds,
+    interval_configurable,
+    history_policy
+)
+values ($1, $2, $3, $4, $5, $6, $7)
 on conflict (id) do update set
     name = excluded.name,
     kind = excluded.kind,
     queue = excluded.queue,
-    interval_seconds = excluded.interval_seconds,
+    interval_seconds = case
+        when excluded.interval_configurable then greatest(app.system_job_schedules.interval_seconds, excluded.interval_seconds)
+        else excluded.interval_seconds
+    end,
+    interval_configurable = excluded.interval_configurable,
+    history_policy = excluded.history_policy,
     updated_at = now()
 returning *;
 
@@ -64,6 +77,8 @@ select s.id,
     s.kind,
     s.queue,
     s.interval_seconds,
+    s.interval_configurable,
+    s.history_policy,
     s.paused,
     s.created_at,
     s.updated_at,
@@ -99,6 +114,28 @@ select *
 from app.system_job_schedules
 where id = $1;
 
+-- name: SystemJobScheduleReady :one
+select exists(
+    select 1
+    from app.system_job_schedules s
+    where s.id = $1
+        and not s.paused
+        and not exists (
+            select 1
+            from app.system_job_executions active
+            where active.schedule_id = s.id
+                and active.status in ('available', 'scheduled', 'retryable', 'running')
+        )
+        and coalesce(
+            (
+                select max(last_run.created_at) + s.interval_seconds * interval '1 second' <= now()
+                from app.system_job_executions last_run
+                where last_run.schedule_id = s.id
+            ),
+            true
+        )
+);
+
 -- name: UpdateSystemJobSchedulePaused :one
 update app.system_job_schedules
 set paused = $2,
@@ -106,11 +143,20 @@ set paused = $2,
 where id = $1
 returning *;
 
+-- name: UpdateSystemJobScheduleInterval :one
+update app.system_job_schedules
+set interval_seconds = $2,
+    updated_at = now()
+where id = $1
+    and interval_configurable
+returning *;
+
 -- name: UpsertSystemJobExecution :one
 insert into app.system_job_executions (
     river_job_id,
     schedule_id,
     classification,
+    history_policy,
     status,
     kind,
     queue,
@@ -129,6 +175,7 @@ insert into app.system_job_executions (
     $1,
     sqlc.narg(schedule_id),
     $2,
+    coalesce((select history_policy from app.system_job_schedules where id = sqlc.narg(schedule_id)), 'standard'),
     $3,
     $4,
     $5,
@@ -147,6 +194,7 @@ insert into app.system_job_executions (
 on conflict (river_job_id) do update set
     schedule_id = excluded.schedule_id,
     classification = excluded.classification,
+    history_policy = excluded.history_policy,
     status = excluded.status,
     kind = excluded.kind,
     queue = excluded.queue,
@@ -188,6 +236,11 @@ where (cardinality(sqlc.arg(states)::text[]) = 0 or status = any(sqlc.arg(states
     and (sqlc.arg(schedule_id)::text = '' or coalesce(schedule_id, '') = sqlc.arg(schedule_id)::text)
     and (sqlc.arg(kind)::text = '' or kind = sqlc.arg(kind)::text)
     and (sqlc.arg(queue)::text = '' or queue = sqlc.arg(queue)::text)
+    and (
+        sqlc.arg(include_routine)::bool
+        or history_policy <> 'routine'
+        or status in ('retryable', 'cancelled', 'discarded')
+    )
     and (sqlc.narg(before)::timestamptz is null or updated_at < sqlc.narg(before)::timestamptz)
     and (
         sqlc.arg(search_query)::text = ''
@@ -219,19 +272,34 @@ limit sqlc.arg(row_limit);
 
 -- name: GetSystemJobHistorySettings :one
 select coalesce(
-    (select retention_days from app.system_job_history_settings where id),
-    sqlc.arg(retention_days)::int
-)::int as retention_days;
+        (select retention_days from app.system_job_history_settings where id),
+        sqlc.arg(retention_days)::int
+    )::int as retention_days,
+    coalesce(
+        (select routine_retention_hours from app.system_job_history_settings where id),
+        sqlc.arg(routine_retention_hours)::int
+    )::int as routine_retention_hours;
 
 -- name: UpdateSystemJobHistorySettings :one
-insert into app.system_job_history_settings (id, retention_days)
-values (true, $1)
+insert into app.system_job_history_settings (id, retention_days, routine_retention_hours)
+values (true, $1, $2)
 on conflict (id) do update set
     retention_days = excluded.retention_days,
+    routine_retention_hours = excluded.routine_retention_hours,
     updated_at = now()
 returning *;
 
 -- name: PruneSystemJobExecutions :exec
 delete from app.system_job_executions
 where finalized_at is not null
-    and finalized_at < now() - make_interval(days => sqlc.arg(retention_days)::int);
+    and (
+        (
+            history_policy = 'routine'
+            and status = 'completed'
+            and finalized_at < now() - make_interval(hours => sqlc.arg(routine_retention_hours)::int)
+        )
+        or (
+            (history_policy <> 'routine' or status <> 'completed')
+            and finalized_at < now() - make_interval(days => sqlc.arg(retention_days)::int)
+        )
+    );

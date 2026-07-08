@@ -10,10 +10,12 @@
 		oneShotJobs: SystemJobExecution[];
 		loadingOverview: boolean;
 		updatingScheduleId?: string;
+		updatingIntervalId?: string;
 		abortingId?: number;
 		onRefresh: () => void;
 		onPause: (schedule: SystemJobSchedule) => void;
 		onResume: (schedule: SystemJobSchedule) => void;
+		onSaveInterval: (schedule: SystemJobSchedule, intervalSeconds: number) => void;
 		onAbort: (id: number, kind: string) => void;
 	}
 
@@ -22,10 +24,12 @@
 		oneShotJobs,
 		loadingOverview,
 		updatingScheduleId,
+		updatingIntervalId,
 		abortingId,
 		onRefresh,
 		onPause,
 		onResume,
+		onSaveInterval,
 		onAbort
 	}: Props = $props();
 </script>
@@ -41,9 +45,11 @@
 		<SystemScheduledJobsTable
 			{schedules}
 			updatingId={updatingScheduleId}
+			{updatingIntervalId}
 			{abortingId}
 			{onPause}
 			{onResume}
+			{onSaveInterval}
 			onAbort={(id) => onAbort(id, 'fixed scheduled job')}
 		/>
 	</Card.Content>

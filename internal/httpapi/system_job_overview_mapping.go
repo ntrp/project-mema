@@ -22,6 +22,8 @@ func systemJobScheduleResponse(schedule storage.SystemJobSchedule) SystemJobSche
 		Kind:                  schedule.Kind,
 		Queue:                 schedule.Queue,
 		IntervalSeconds:       schedule.IntervalSeconds,
+		IntervalConfigurable:  schedule.IntervalConfigurable,
+		HistoryPolicy:         SystemJobScheduleHistoryPolicy(schedule.HistoryPolicy),
 		Paused:                schedule.Paused,
 		NextRunAt:             schedule.NextRunAt,
 		ActiveRiverJobId:      schedule.ActiveRiverJobID,
@@ -51,6 +53,7 @@ func systemJobExecutionResponse(execution storage.SystemJobExecution) SystemJobE
 		RiverJobId:      execution.RiverJobID,
 		ScheduleId:      optionalStringPointer(execution.ScheduleID),
 		Classification:  SystemJobExecutionClassification(execution.Classification),
+		HistoryPolicy:   SystemJobExecutionHistoryPolicy(execution.HistoryPolicy),
 		Status:          execution.Status,
 		Kind:            execution.Kind,
 		Queue:           execution.Queue,
@@ -87,7 +90,10 @@ func systemJobExecutionLogResponses(logs []storage.SystemJobExecutionLog) []Syst
 }
 
 func systemJobHistorySettingsResponse(settings storage.SystemJobHistorySettings) SystemJobHistorySettings {
-	return SystemJobHistorySettings{RetentionDays: settings.RetentionDays}
+	return SystemJobHistorySettings{
+		RetentionDays:         settings.RetentionDays,
+		RoutineRetentionHours: settings.RoutineRetentionHours,
+	}
 }
 
 func systemJobExecutionInputFromJob(job storage.SystemJob, status string) storage.SystemJobExecutionInput {

@@ -620,7 +620,9 @@ create table if not exists app.system_job_schedules (
     name text not null,
     kind text not null,
     queue text not null,
-    interval_seconds integer not null check (interval_seconds > 0),
+    interval_seconds integer not null check (interval_seconds >= 15),
+    interval_configurable boolean not null default false,
+    history_policy text not null default 'standard' check (history_policy in ('standard', 'routine')),
     paused boolean not null default false,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
@@ -630,6 +632,7 @@ create table if not exists app.system_job_executions (
     river_job_id bigint primary key,
     schedule_id text references app.system_job_schedules(id) on delete set null,
     classification text not null check (classification in ('fixed', 'one_shot')),
+    history_policy text not null default 'standard' check (history_policy in ('standard', 'routine')),
     status text not null,
     kind text not null,
     queue text not null,
@@ -670,12 +673,13 @@ create index if not exists idx_system_job_execution_logs_job_created
 create table if not exists app.system_job_history_settings (
     id boolean primary key default true check (id),
     retention_days integer not null default 30 check (retention_days between 1 and 365),
+    routine_retention_hours integer not null default 24 check (routine_retention_hours between 1 and 168),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
-insert into app.system_job_history_settings (id, retention_days)
-values (true, 30)
+insert into app.system_job_history_settings (id, retention_days, routine_retention_hours)
+values (true, 30, 24)
 on conflict (id) do nothing;
 
 create table if not exists app.media_item_tags (

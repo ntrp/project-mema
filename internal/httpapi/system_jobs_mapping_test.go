@@ -80,6 +80,8 @@ func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *te
 		Kind:                  "media.rss_sync",
 		Queue:                 "media_search",
 		IntervalSeconds:       900,
+		IntervalConfigurable:  true,
+		HistoryPolicy:         "routine",
 		ActiveRiverJobID:      &activeID,
 		ActiveStatus:          "running",
 		ActiveProgressPercent: &progress,
@@ -94,7 +96,11 @@ func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *te
 	if schedule.ActiveProgressPercent == nil || *schedule.ActiveProgressPercent != progress {
 		t.Fatalf("progress = %#v", schedule.ActiveProgressPercent)
 	}
-	if settings := systemJobHistorySettingsResponse(storage.SystemJobHistorySettings{RetentionDays: 45}); settings.RetentionDays != 45 {
+	if schedule.HistoryPolicy != SystemJobScheduleHistoryPolicyRoutine || !schedule.IntervalConfigurable {
+		t.Fatalf("schedule policy = %#v", schedule)
+	}
+	settings := systemJobHistorySettingsResponse(storage.SystemJobHistorySettings{RetentionDays: 45, RoutineRetentionHours: 12})
+	if settings.RetentionDays != 45 || settings.RoutineRetentionHours != 12 {
 		t.Fatalf("settings = %#v", settings)
 	}
 }
@@ -106,6 +112,7 @@ func TestSCNSystem006SystemJobExecutionResponsePreservesLogsContract(t *testing.
 		RiverJobID:      77,
 		ScheduleID:      "download_activity_sync",
 		Classification:  "fixed",
+		HistoryPolicy:   "routine",
 		Status:          "running",
 		Kind:            "download.activity_sync",
 		Queue:           "downloads",
@@ -119,7 +126,7 @@ func TestSCNSystem006SystemJobExecutionResponsePreservesLogsContract(t *testing.
 	if response.ScheduleId == nil || *response.ScheduleId != "download_activity_sync" {
 		t.Fatalf("schedule id = %#v", response.ScheduleId)
 	}
-	if response.Classification != Fixed || response.ProgressPercent == nil || *response.ProgressPercent != progress {
+	if response.Classification != Fixed || response.HistoryPolicy != SystemJobExecutionHistoryPolicyRoutine || response.ProgressPercent == nil || *response.ProgressPercent != progress {
 		t.Fatalf("execution response = %#v", response)
 	}
 	logs := systemJobExecutionLogResponses([]storage.SystemJobExecutionLog{{

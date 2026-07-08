@@ -12,14 +12,16 @@ import (
 
 func systemJobScheduleFromRow(row storagegen.ListSystemJobSchedulesRow) SystemJobSchedule {
 	schedule := SystemJobSchedule{
-		ID:              row.ID,
-		Name:            row.Name,
-		Kind:            row.Kind,
-		Queue:           row.Queue,
-		IntervalSeconds: row.IntervalSeconds,
-		Paused:          row.Paused,
-		CreatedAt:       row.CreatedAt,
-		UpdatedAt:       row.UpdatedAt,
+		ID:                   row.ID,
+		Name:                 row.Name,
+		Kind:                 row.Kind,
+		Queue:                row.Queue,
+		IntervalSeconds:      row.IntervalSeconds,
+		IntervalConfigurable: row.IntervalConfigurable,
+		HistoryPolicy:        row.HistoryPolicy,
+		Paused:               row.Paused,
+		CreatedAt:            row.CreatedAt,
+		UpdatedAt:            row.UpdatedAt,
 	}
 	if row.ActiveRiverJobID > 0 {
 		schedule.ActiveRiverJobID = &row.ActiveRiverJobID
@@ -62,6 +64,7 @@ func systemJobExecutionFromRow(row storagegen.AppSystemJobExecution) SystemJobEx
 		RiverJobID:      row.RiverJobID,
 		ScheduleID:      textString(row.ScheduleID),
 		Classification:  row.Classification,
+		HistoryPolicy:   row.HistoryPolicy,
 		Status:          row.Status,
 		Kind:            row.Kind,
 		Queue:           row.Queue,

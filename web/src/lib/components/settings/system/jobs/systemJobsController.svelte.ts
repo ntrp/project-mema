@@ -1,12 +1,3 @@
-import {
-	abortSystemJob,
-	getSystemJobsOverview,
-	listSystemJobExecutionLogs,
-	listSystemJobExecutions,
-	pauseSystemJobSchedule,
-	resumeSystemJobSchedule,
-	updateSystemJobHistorySettings
-} from '$lib/settings/api';
 import type {
 	SystemJobExecution,
 	SystemJobExecutionLog,
@@ -14,16 +5,22 @@ import type {
 } from '$lib/settings/types';
 import { parseSystemEvent } from '../events/systemEventStream';
 import {
+	abortJobState,
+	loadHistoryState,
+	loadOverviewState,
+	openLogsState,
+	saveRetentionState,
+	saveScheduleIntervalState,
+	toggleScheduleState
+} from './systemJobsControllerActions';
+import {
+	defaultHistoryIncludesExecution,
 	matchesExecutionFilters,
-	mergeExecutions,
 	optionList,
-	sortExecutions,
 	updateOneShotJobs,
 	updateScheduleFromExecution,
 	upsertExecution
 } from './systemJobsState';
-
-const historyPageLimit = 20;
 
 export class SystemJobsController {
 	schedules = $state<SystemJobSchedule[]>([]);
@@ -31,6 +28,8 @@ export class SystemJobsController {
 	history = $state<SystemJobExecution[]>([]);
 	historyHasMore = $state(false);
 	retentionDays = $state(30);
+	routineRetentionHours = $state(24);
+	includeRoutine = $state(false);
 	selectedStatuses = $state<string[]>([]);
 	selectedQueues = $state<string[]>([]);
 	selectedKinds = $state<string[]>([]);
@@ -41,6 +40,7 @@ export class SystemJobsController {
 	savingRetention = $state(false);
 	errorMessage = $state('');
 	updatingScheduleId = $state<string | undefined>();
+	updatingIntervalId = $state<string | undefined>();
 	abortingId = $state<number | undefined>();
 	abortCandidate = $state<{ id: number; kind: string } | undefined>();
 	logsExecution = $state<SystemJobExecution | undefined>();
@@ -85,47 +85,11 @@ export class SystemJobsController {
 	}
 
 	async loadOverview() {
-		this.loadingOverview = true;
-		this.errorMessage = '';
-		try {
-			const overview = await getSystemJobsOverview();
-			this.schedules = overview.schedules;
-			this.oneShotJobs = overview.oneShotJobs;
-			this.retentionDays = overview.historySettings.retentionDays;
-		} catch (error) {
-			this.errorMessage = error instanceof Error ? error.message : 'Could not load jobs overview';
-		} finally {
-			this.loadingOverview = false;
-		}
+		await loadOverviewState(this);
 	}
 
 	async loadHistory(reset: boolean) {
-		if (this.loadingHistory || this.loadingMore) return;
-		if (reset) {
-			this.loadingHistory = true;
-		} else {
-			this.loadingMore = true;
-		}
-		this.errorMessage = '';
-		try {
-			const before = reset ? undefined : this.history.at(-1)?.updatedAt;
-			const response = await listSystemJobExecutions({
-				status: this.selectedStatuses.length > 0 ? this.selectedStatuses : undefined,
-				query: this.query.trim() || undefined,
-				before,
-				limit: historyPageLimit
-			});
-			this.history = reset
-				? sortExecutions(response.executions)
-				: mergeExecutions(this.history, response.executions);
-			this.historyHasMore = response.hasMore;
-		} catch (error) {
-			this.errorMessage =
-				error instanceof Error ? error.message : 'Could not load execution history';
-		} finally {
-			this.loadingHistory = false;
-			this.loadingMore = false;
-		}
+		await loadHistoryState(this, reset);
 	}
 
 	applyExecutionUpdate(execution: SystemJobExecution) {
@@ -135,61 +99,30 @@ export class SystemJobsController {
 		if (execution.classification === 'one_shot') {
 			this.oneShotJobs = updateOneShotJobs(this.oneShotJobs, execution);
 		}
+		if (!this.includeRoutine && !defaultHistoryIncludesExecution(execution)) {
+			this.history = this.history.filter((job) => job.riverJobId !== execution.riverJobId);
+			return;
+		}
 		this.history = upsertExecution(this.history, execution).slice(0, 300);
 	}
 
 	async toggleSchedule(schedule: SystemJobSchedule, paused: boolean) {
-		this.updatingScheduleId = schedule.id;
-		this.errorMessage = '';
-		try {
-			const updated = paused
-				? await pauseSystemJobSchedule(schedule.id)
-				: await resumeSystemJobSchedule(schedule.id);
-			this.schedules = this.schedules.map((current) =>
-				current.id === updated.id ? updated : current
-			);
-		} catch (error) {
-			this.errorMessage = error instanceof Error ? error.message : 'Could not update schedule';
-		} finally {
-			this.updatingScheduleId = undefined;
-		}
+		await toggleScheduleState(this, schedule, paused);
+	}
+
+	async saveScheduleInterval(schedule: SystemJobSchedule, intervalSeconds: number) {
+		await saveScheduleIntervalState(this, schedule, intervalSeconds);
 	}
 
 	async abortJob() {
-		if (!this.abortCandidate) return;
-		this.abortingId = this.abortCandidate.id;
-		try {
-			await abortSystemJob(this.abortCandidate.id);
-			this.abortCandidate = undefined;
-			void this.loadOverview();
-			void this.loadHistory(true);
-		} catch (error) {
-			this.errorMessage = error instanceof Error ? error.message : 'Could not abort job';
-		} finally {
-			this.abortingId = undefined;
-		}
+		await abortJobState(this);
 	}
 
 	async openLogs(execution: SystemJobExecution) {
-		this.logsExecution = execution;
-		this.loadingLogsId = execution.riverJobId;
-		try {
-			this.executionLogs = await listSystemJobExecutionLogs(execution.riverJobId);
-		} finally {
-			this.loadingLogsId = undefined;
-		}
+		await openLogsState(this, execution);
 	}
 
 	async saveRetention() {
-		this.savingRetention = true;
-		try {
-			const settings = await updateSystemJobHistorySettings({
-				retentionDays: Number(this.retentionDays)
-			});
-			this.retentionDays = settings.retentionDays;
-			void this.loadHistory(true);
-		} finally {
-			this.savingRetention = false;
-		}
+		await saveRetentionState(this);
 	}
 }

@@ -1552,6 +1552,42 @@ func (e SystemJobExecutionClassification) Valid() bool {
 	}
 }
 
+// Defines values for SystemJobExecutionHistoryPolicy.
+const (
+	SystemJobExecutionHistoryPolicyRoutine  SystemJobExecutionHistoryPolicy = "routine"
+	SystemJobExecutionHistoryPolicyStandard SystemJobExecutionHistoryPolicy = "standard"
+)
+
+// Valid indicates whether the value is a known member of the SystemJobExecutionHistoryPolicy enum.
+func (e SystemJobExecutionHistoryPolicy) Valid() bool {
+	switch e {
+	case SystemJobExecutionHistoryPolicyRoutine:
+		return true
+	case SystemJobExecutionHistoryPolicyStandard:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SystemJobScheduleHistoryPolicy.
+const (
+	SystemJobScheduleHistoryPolicyRoutine  SystemJobScheduleHistoryPolicy = "routine"
+	SystemJobScheduleHistoryPolicyStandard SystemJobScheduleHistoryPolicy = "standard"
+)
+
+// Valid indicates whether the value is a known member of the SystemJobScheduleHistoryPolicy enum.
+func (e SystemJobScheduleHistoryPolicy) Valid() bool {
+	switch e {
+	case SystemJobScheduleHistoryPolicyRoutine:
+		return true
+	case SystemJobScheduleHistoryPolicyStandard:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SystemLogLevel.
 const (
 	Debug SystemLogLevel = "debug"
@@ -3940,6 +3976,7 @@ type SystemJobExecution struct {
 	CreatedAt       time.Time                        `json:"createdAt"`
 	Errors          string                           `json:"errors"`
 	FinalizedAt     *time.Time                       `json:"finalizedAt,omitempty"`
+	HistoryPolicy   SystemJobExecutionHistoryPolicy  `json:"historyPolicy"`
 	InfoMessage     string                           `json:"infoMessage"`
 	Kind            string                           `json:"kind"`
 	MaxAttempts     int32                            `json:"maxAttempts"`
@@ -3957,6 +3994,9 @@ type SystemJobExecution struct {
 
 // SystemJobExecutionClassification defines model for SystemJobExecution.Classification.
 type SystemJobExecutionClassification string
+
+// SystemJobExecutionHistoryPolicy defines model for SystemJobExecution.HistoryPolicy.
+type SystemJobExecutionHistoryPolicy string
 
 // SystemJobExecutionListResponse defines model for SystemJobExecutionListResponse.
 type SystemJobExecutionListResponse struct {
@@ -3981,7 +4021,8 @@ type SystemJobExecutionLogListResponse struct {
 
 // SystemJobHistorySettings defines model for SystemJobHistorySettings.
 type SystemJobHistorySettings struct {
-	RetentionDays int32 `json:"retentionDays"`
+	RetentionDays         int32 `json:"retentionDays"`
+	RoutineRetentionHours int32 `json:"routineRetentionHours"`
 }
 
 // SystemJobListResponse defines model for SystemJobListResponse.
@@ -3991,24 +4032,34 @@ type SystemJobListResponse struct {
 
 // SystemJobSchedule defines model for SystemJobSchedule.
 type SystemJobSchedule struct {
-	ActiveInfoMessage     string     `json:"activeInfoMessage"`
-	ActiveProgressLabel   string     `json:"activeProgressLabel"`
-	ActiveProgressPercent *int32     `json:"activeProgressPercent,omitempty"`
-	ActiveRiverJobId      *int64     `json:"activeRiverJobId,omitempty"`
-	ActiveStatus          string     `json:"activeStatus"`
-	CreatedAt             time.Time  `json:"createdAt"`
-	Id                    string     `json:"id"`
-	IntervalSeconds       int32      `json:"intervalSeconds"`
-	Kind                  string     `json:"kind"`
-	LastCreatedAt         *time.Time `json:"lastCreatedAt,omitempty"`
-	LastFinalizedAt       *time.Time `json:"lastFinalizedAt,omitempty"`
-	LastRiverJobId        *int64     `json:"lastRiverJobId,omitempty"`
-	LastStatus            string     `json:"lastStatus"`
-	Name                  string     `json:"name"`
-	NextRunAt             *time.Time `json:"nextRunAt,omitempty"`
-	Paused                bool       `json:"paused"`
-	Queue                 string     `json:"queue"`
-	UpdatedAt             time.Time  `json:"updatedAt"`
+	ActiveInfoMessage     string                         `json:"activeInfoMessage"`
+	ActiveProgressLabel   string                         `json:"activeProgressLabel"`
+	ActiveProgressPercent *int32                         `json:"activeProgressPercent,omitempty"`
+	ActiveRiverJobId      *int64                         `json:"activeRiverJobId,omitempty"`
+	ActiveStatus          string                         `json:"activeStatus"`
+	CreatedAt             time.Time                      `json:"createdAt"`
+	HistoryPolicy         SystemJobScheduleHistoryPolicy `json:"historyPolicy"`
+	Id                    string                         `json:"id"`
+	IntervalConfigurable  bool                           `json:"intervalConfigurable"`
+	IntervalSeconds       int32                          `json:"intervalSeconds"`
+	Kind                  string                         `json:"kind"`
+	LastCreatedAt         *time.Time                     `json:"lastCreatedAt,omitempty"`
+	LastFinalizedAt       *time.Time                     `json:"lastFinalizedAt,omitempty"`
+	LastRiverJobId        *int64                         `json:"lastRiverJobId,omitempty"`
+	LastStatus            string                         `json:"lastStatus"`
+	Name                  string                         `json:"name"`
+	NextRunAt             *time.Time                     `json:"nextRunAt,omitempty"`
+	Paused                bool                           `json:"paused"`
+	Queue                 string                         `json:"queue"`
+	UpdatedAt             time.Time                      `json:"updatedAt"`
+}
+
+// SystemJobScheduleHistoryPolicy defines model for SystemJobSchedule.HistoryPolicy.
+type SystemJobScheduleHistoryPolicy string
+
+// SystemJobScheduleIntervalUpdate defines model for SystemJobScheduleIntervalUpdate.
+type SystemJobScheduleIntervalUpdate struct {
+	IntervalSeconds int32 `json:"intervalSeconds"`
 }
 
 // SystemJobsOverviewResponse defines model for SystemJobsOverviewResponse.
@@ -4342,13 +4393,14 @@ type ListSystemEventsParams struct {
 
 // ListSystemJobExecutionsParams defines parameters for ListSystemJobExecutions.
 type ListSystemJobExecutionsParams struct {
-	Status     *[]string  `form:"status,omitempty" json:"status,omitempty"`
-	ScheduleId *string    `form:"scheduleId,omitempty" json:"scheduleId,omitempty"`
-	Kind       *string    `form:"kind,omitempty" json:"kind,omitempty"`
-	Queue      *string    `form:"queue,omitempty" json:"queue,omitempty"`
-	Query      *string    `form:"query,omitempty" json:"query,omitempty"`
-	Before     *time.Time `form:"before,omitempty" json:"before,omitempty"`
-	Limit      *int32     `form:"limit,omitempty" json:"limit,omitempty"`
+	Status         *[]string  `form:"status,omitempty" json:"status,omitempty"`
+	ScheduleId     *string    `form:"scheduleId,omitempty" json:"scheduleId,omitempty"`
+	Kind           *string    `form:"kind,omitempty" json:"kind,omitempty"`
+	Queue          *string    `form:"queue,omitempty" json:"queue,omitempty"`
+	Query          *string    `form:"query,omitempty" json:"query,omitempty"`
+	Before         *time.Time `form:"before,omitempty" json:"before,omitempty"`
+	Limit          *int32     `form:"limit,omitempty" json:"limit,omitempty"`
+	IncludeRoutine *bool      `form:"includeRoutine,omitempty" json:"includeRoutine,omitempty"`
 }
 
 // ListSystemJobsParams defines parameters for ListSystemJobs.
@@ -4545,6 +4597,9 @@ type UpdateSystemEventSettingsJSONRequestBody = SystemEventSettingsRequest
 
 // UpdateSystemJobHistorySettingsJSONRequestBody defines body for UpdateSystemJobHistorySettings for application/json ContentType.
 type UpdateSystemJobHistorySettingsJSONRequestBody = SystemJobHistorySettings
+
+// UpdateSystemJobScheduleIntervalJSONRequestBody defines body for UpdateSystemJobScheduleInterval for application/json ContentType.
+type UpdateSystemJobScheduleIntervalJSONRequestBody = SystemJobScheduleIntervalUpdate
 
 // UpdateSystemLogFileSettingsJSONRequestBody defines body for UpdateSystemLogFileSettings for application/json ContentType.
 type UpdateSystemLogFileSettingsJSONRequestBody = SystemLogFileSettingsRequest
@@ -5043,6 +5098,9 @@ type ServerInterface interface {
 	// Update background job history settings
 	// (PUT /system/job-history-settings)
 	UpdateSystemJobHistorySettings(w http.ResponseWriter, r *http.Request)
+	// Update a configurable fixed scheduled job interval
+	// (PUT /system/job-schedules/{id}/interval)
+	UpdateSystemJobScheduleInterval(w http.ResponseWriter, r *http.Request, id string)
 	// Pause a fixed scheduled job
 	// (POST /system/job-schedules/{id}/pause)
 	PauseSystemJobSchedule(w http.ResponseWriter, r *http.Request, id string)
@@ -6066,6 +6124,12 @@ func (_ Unimplemented) ListSystemJobExecutionLogs(w http.ResponseWriter, r *http
 // Update background job history settings
 // (PUT /system/job-history-settings)
 func (_ Unimplemented) UpdateSystemJobHistorySettings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a configurable fixed scheduled job interval
+// (PUT /system/job-schedules/{id}/interval)
+func (_ Unimplemented) UpdateSystemJobScheduleInterval(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -11609,6 +11673,19 @@ func (siw *ServerInterfaceWrapper) ListSystemJobExecutions(w http.ResponseWriter
 		return
 	}
 
+	// ------------- Optional query parameter "includeRoutine" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "includeRoutine", r.URL.Query(), &params.IncludeRoutine, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "includeRoutine"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "includeRoutine", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListSystemJobExecutions(w, r, params)
 	}))
@@ -11663,6 +11740,38 @@ func (siw *ServerInterfaceWrapper) UpdateSystemJobHistorySettings(w http.Respons
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateSystemJobHistorySettings(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSystemJobScheduleInterval operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSystemJobScheduleInterval(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSystemJobScheduleInterval(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12672,6 +12781,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/system/job-history-settings", wrapper.UpdateSystemJobHistorySettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/system/job-schedules/{id}/interval", wrapper.UpdateSystemJobScheduleInterval)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/system/job-schedules/{id}/pause", wrapper.PauseSystemJobSchedule)
