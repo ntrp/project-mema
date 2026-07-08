@@ -399,6 +399,8 @@ Media rows:
 - Show when no usable media file exists for a movie or monitored episode.
 - Include media title and season/episode context when applicable.
 - Drive normal release search/grab workflows.
+- Use row kind `media` so existing no-file wanted cases remain distinct from
+  file-level target repair work.
 
 Target rows:
 
@@ -408,6 +410,8 @@ Target rows:
   or path, target type, target language when applicable, target state, and
   required operation when pending.
 - Recalculate immediately when profile settings change.
+- Use row kind `target`; satisfied, upgradeable, and removed profile targets do
+  not produce target wanted rows.
 
 Custom-format upgrade rows:
 
@@ -415,6 +419,8 @@ Custom-format upgrade rows:
   unmet.
 - Display separately from video, audio, and subtitle target rows.
 - Include current score, target score, and parent media/file context.
+- Use row kind `custom_format_upgrade`; these rows are driven by custom-format
+  score delta instead of video, audio, or subtitle target state.
 
 Wanted table rows should not be produced for targets that no longer exist after
 profile changes.

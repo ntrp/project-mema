@@ -123,7 +123,10 @@ that no usable file exists for the movie or episode. A target row shows a
 specific missing or partial video, audio, or subtitle target for an existing
 media file. Target rows must include enough parent context to make ownership
 clear, such as media title, season and episode when applicable, file path or file
-label, target type, target language when applicable, and target state.
+label, target type, target language when applicable, and target state. Custom
+format upgrades are separate wanted rows with current and target score context,
+not video, audio, or subtitle target rows. Profile changes recalculate rows from
+the current target set, so removed targets disappear from wanted.
 
 ## Canonical Target And Candidate States
 
