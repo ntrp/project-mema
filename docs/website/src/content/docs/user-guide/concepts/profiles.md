@@ -27,6 +27,5 @@ evaluated against subtitle targets and the configured subtitle mode.
 
 ## More Detail
 
-The detailed product direction is tracked in the repository PRD:
-
-[`docs/prd/media-profile-desired-state.md`](https://github.com/ntrp/project-mema/blob/main/docs/prd/media-profile-desired-state.md)
+For the full setup flow, see
+[Qualities, Formats, And Profiles](/user-guide/using/qualities-formats-profiles/).

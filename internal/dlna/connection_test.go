@@ -14,13 +14,13 @@ func TestSourceProtocolInfoAdvertisesServedFormats(t *testing.T) {
 		"video/x-matroska",
 		"video/mp2t",
 		"application/vnd.apple.mpegurl",
+		"image/jpeg",
+		"audio/mpeg",
+		"video/vnd.dlna.mpeg-tts",
 	} {
 		if !strings.Contains(source, want) {
 			t.Fatalf("SourceProtocolInfo missing %q: %s", want, source)
 		}
-	}
-	if strings.Contains(source, "image/") || strings.Contains(source, "audio/") {
-		t.Fatalf("SourceProtocolInfo advertises unsupported class: %s", source)
 	}
 }
 

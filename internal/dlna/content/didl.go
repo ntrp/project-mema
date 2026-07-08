@@ -9,36 +9,43 @@ const didlNamespace = "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"
 type didlLite struct {
 	XMLName xml.Name `xml:"DIDL-Lite"`
 	XMLNS   string   `xml:"xmlns,attr"`
-	DC      string   `xml:"xmlns:dc,attr"`
 	UPNP    string   `xml:"xmlns:upnp,attr"`
-	DLNA    string   `xml:"xmlns:dlna,attr"`
+	DC      string   `xml:"xmlns:dc,attr"`
+	SEC     string   `xml:"xmlns:sec,attr"`
 
 	Containers []didlContainer `xml:"container,omitempty"`
 	Items      []didlItem      `xml:"item,omitempty"`
 }
 
 type didlContainer struct {
-	ID         string `xml:"id,attr"`
-	ParentID   string `xml:"parentID,attr"`
-	Restricted string `xml:"restricted,attr"`
-	Searchable string `xml:"searchable,attr,omitempty"`
-	ChildCount int    `xml:"childCount,attr"`
-	Title      string `xml:"dc:title"`
-	Class      string `xml:"upnp:class"`
+	ID          string `xml:"id,attr"`
+	ParentID    string `xml:"parentID,attr"`
+	Restricted  string `xml:"restricted,attr"`
+	Searchable  string `xml:"searchable,attr,omitempty"`
+	ChildCount  *int   `xml:"childCount,attr,omitempty"`
+	Title       string `xml:"dc:title"`
+	Class       string `xml:"upnp:class"`
+	StorageUsed *int64 `xml:"upnp:storageUsed,omitempty"`
 }
 
 type didlItem struct {
-	ID         string    `xml:"id,attr"`
-	ParentID   string    `xml:"parentID,attr"`
-	Restricted string    `xml:"restricted,attr"`
-	Title      string    `xml:"dc:title"`
-	Class      string    `xml:"upnp:class"`
-	Date       *string   `xml:"dc:date,omitempty"`
-	Genres     []string  `xml:"upnp:genre,omitempty"`
-	Artists    []string  `xml:"upnp:artist,omitempty"`
-	Album      *string   `xml:"upnp:album,omitempty"`
-	Artwork    *string   `xml:"upnp:albumArtURI,omitempty"`
-	Resources  []didlRes `xml:"res,omitempty"`
+	ID         string        `xml:"id,attr"`
+	ParentID   string        `xml:"parentID,attr"`
+	Restricted string        `xml:"restricted,attr"`
+	Title      string        `xml:"dc:title"`
+	Class      string        `xml:"upnp:class"`
+	Date       *string       `xml:"dc:date,omitempty"`
+	Genres     []string      `xml:"upnp:genre,omitempty"`
+	Artists    []string      `xml:"upnp:artist,omitempty"`
+	Album      *string       `xml:"upnp:album,omitempty"`
+	Artwork    *didlAlbumArt `xml:"upnp:albumArtURI,omitempty"`
+	Resources  []didlRes     `xml:"res,omitempty"`
+}
+
+type didlAlbumArt struct {
+	XMLNSDLNA string `xml:"xmlns:dlna,attr,omitempty"`
+	ProfileID string `xml:"dlna:profileID,attr,omitempty"`
+	URL       string `xml:",chardata"`
 }
 
 type didlRes struct {
@@ -55,9 +62,9 @@ type didlRes struct {
 func RenderDIDL(objects []Object, resources map[string][]Resource) ([]byte, error) {
 	doc := didlLite{
 		XMLNS: didlNamespace,
-		DC:    "http://purl.org/dc/elements/1.1/",
 		UPNP:  "urn:schemas-upnp-org:metadata-1-0/upnp/",
-		DLNA:  "urn:schemas-dlna-org:metadata-1-0/",
+		DC:    "http://purl.org/dc/elements/1.1/",
+		SEC:   "http://www.sec.co.kr/",
 	}
 	for _, object := range objects {
 		if object.Kind == ObjectContainer {
@@ -74,15 +81,22 @@ func RenderDIDL(objects []Object, resources map[string][]Resource) ([]byte, erro
 }
 
 func didlContainerFromObject(object Object) didlContainer {
-	return didlContainer{
+	container := didlContainer{
 		ID:         object.ID,
 		ParentID:   object.ParentID,
 		Restricted: "1",
-		Searchable: "1",
-		ChildCount: object.ChildCount,
+		Searchable: "0",
 		Title:      object.Title,
 		Class:      object.Class,
 	}
+	if !object.OmitChildCount {
+		container.ChildCount = &object.ChildCount
+	}
+	if object.Class == "object.container.storageFolder" {
+		storageUsed := int64(0)
+		container.StorageUsed = &storageUsed
+	}
+	return container
 }
 
 func didlItemFromObject(object Object, resources []Resource) didlItem {
@@ -97,8 +111,19 @@ func didlItemFromObject(object Object, resources []Resource) didlItem {
 		Genres:     object.Genres,
 		Artists:    object.Artists,
 		Album:      object.Album,
-		Artwork:    object.Artwork,
+		Artwork:    didlArtwork(object.Artwork),
 		Resources:  didlResources(resources),
+	}
+}
+
+func didlArtwork(url *string) *didlAlbumArt {
+	if url == nil || *url == "" {
+		return nil
+	}
+	return &didlAlbumArt{
+		XMLNSDLNA: "urn:schemas-dlna-org:metadata-1-0/",
+		ProfileID: "JPEG_TN",
+		URL:       *url,
 	}
 }
 

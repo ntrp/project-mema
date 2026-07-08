@@ -13,15 +13,22 @@ import (
 )
 
 type Status struct {
-	Running          bool
-	BoundInterfaces  []string
-	AdvertisedURLs   []string
-	LastError        *string
-	LastSSDPEvent    *string
-	LastSOAPAction   *string
-	RecentClients    []ClientStatus
-	ActiveStreams    []StreamStatus
-	ActiveTranscodes []StreamStatus
+	Running             bool
+	BoundInterfaces     []string
+	AdvertisedURLs      []string
+	AvailableInterfaces []InterfaceStatus
+	LastError           *string
+	LastSSDPEvent       *string
+	LastSOAPAction      *string
+	RecentClients       []ClientStatus
+	ActiveStreams       []StreamStatus
+	ActiveTranscodes    []StreamStatus
+}
+
+type InterfaceStatus struct {
+	Name     string
+	Address  string
+	Location string
 }
 
 type Manager struct {
@@ -30,6 +37,7 @@ type Manager struct {
 	baseURL          string
 	httpPort         string
 	thumbDir         string
+	remuxDir         string
 	events           *EventManager
 	profileOverrides map[string]string
 	recentClients    map[string]ClientStatus
@@ -49,6 +57,7 @@ func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
 		baseURL:          strings.TrimRight(baseURL, "/"),
 		httpPort:         portFromBaseURL(baseURL),
 		thumbDir:         ".data/dlna-thumbnails",
+		remuxDir:         ".data/dlna-remux",
 		events:           NewEventManager(),
 		recentClients:    map[string]ClientStatus{},
 		activeStreams:    map[string]StreamStatus{},
@@ -112,13 +121,14 @@ func (m *Manager) Stop(ctx context.Context) error {
 
 func (m *Manager) Status() Status {
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	status := m.status
 	status.BoundInterfaces = append([]string{}, status.BoundInterfaces...)
 	status.AdvertisedURLs = append([]string{}, status.AdvertisedURLs...)
 	status.RecentClients = sortedClients(m.recentClients)
 	status.ActiveStreams = sortedStreams(m.activeStreams)
 	status.ActiveTranscodes = sortedStreams(m.activeTranscodes)
+	m.mu.Unlock()
+	status.AvailableInterfaces = availableInterfaces(m.httpPort)
 	return status
 }
 
@@ -163,6 +173,22 @@ type ssdpRuntime interface {
 
 func startSSDPRuntime(ctx context.Context, config ssdp.Config) (ssdpRuntime, error) {
 	return ssdp.Start(ctx, config)
+}
+
+func availableInterfaces(httpPort string) []InterfaceStatus {
+	ifaces, err := ssdp.DiscoverInterfaces(ssdp.Config{HTTPPort: httpPort})
+	if err != nil {
+		return []InterfaceStatus{}
+	}
+	statuses := make([]InterfaceStatus, 0, len(ifaces))
+	for _, iface := range ifaces {
+		statuses = append(statuses, InterfaceStatus{
+			Name:     iface.Name,
+			Address:  iface.Addr.String(),
+			Location: iface.Location,
+		})
+	}
+	return statuses
 }
 
 func portFromBaseURL(baseURL string) string {

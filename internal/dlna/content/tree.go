@@ -61,7 +61,7 @@ func (t *Tree) BrowseMetadata(ctx context.Context, id string) (Object, error) {
 }
 
 func (t *Tree) rootChildren(items []storage.MediaItem) []Object {
-	return []Object{
+	candidates := []Object{
 		rootContainer("movies", "Movies", countItems(items, "movie")),
 		rootContainer("series", "TV Shows", countItems(items, "serie")),
 		rootContainer("collections", "Collections", len(collections(items))),
@@ -70,6 +70,13 @@ func (t *Tree) rootChildren(items []storage.MediaItem) []Object {
 		rootContainer("genres", "Genres", len(genres(items))),
 		rootContainer("years", "Years", len(years(items))),
 	}
+	children := make([]Object, 0, len(candidates))
+	for _, candidate := range candidates {
+		if candidate.ChildCount > 0 {
+			children = append(children, candidate)
+		}
+	}
+	return children
 }
 
 func (t *Tree) rootContainerChildren(key string, items []storage.MediaItem) []Object {
@@ -136,11 +143,12 @@ func (t *Tree) allObjects(ctx context.Context) ([]Object, error) {
 func (t *Tree) mediaItemObjects(parentID string, items []storage.MediaItem) []Object {
 	objects := make([]Object, 0, len(items))
 	for _, item := range items {
-		count := len(t.availableFiles(item))
+		files := t.availableFiles(item)
+		count := len(files)
 		if item.Type == "serie" {
-			count = visibleSeasonCount(t.availableFiles(item), item.Seasons)
+			count = visibleSeasonCount(files, item.Seasons)
 		}
-		objects = append(objects, mediaObject(parentID, item, count))
+		objects = append(objects, mediaObject(parentID, item, files, count))
 	}
 	return objects
 }

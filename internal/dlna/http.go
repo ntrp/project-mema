@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"media-manager/internal/storage"
@@ -17,6 +18,9 @@ func (m *Manager) Handler() http.Handler {
 		mux.HandleFunc(prefix+"/contentDirectory.xml", serveXML(ContentDirectorySCPDXML))
 		mux.HandleFunc(prefix+"/connectionManager.xml", serveXML(ConnectionManagerSCPDXML))
 		mux.HandleFunc(prefix+"/mediaReceiverRegistrar.xml", serveXML(MediaReceiverRegistrarSCPDXML))
+		for _, iconPath := range []string{"/icon-256.png", "/icon-128.png", "/icon-120.png", "/icon-48.png"} {
+			mux.HandleFunc(prefix+iconPath, serveFallbackIcon)
+		}
 		mux.Handle(prefix+"/control/content-directory", dispatcher)
 		mux.Handle(prefix+"/control/connection-manager", dispatcher)
 		mux.Handle(prefix+"/control/media-receiver-registrar", dispatcher)
@@ -24,16 +28,29 @@ func (m *Manager) Handler() http.Handler {
 		mux.HandleFunc(prefix+"/artwork/", m.artwork)
 		mux.HandleFunc(prefix+"/subtitle/", m.subtitle)
 		mux.HandleFunc(prefix+"/events/content-directory", m.eventHandler)
+		mux.HandleFunc(prefix+"/events/connection-manager", m.eventHandler)
+		mux.HandleFunc(prefix+"/events/media-receiver-registrar", m.eventHandler)
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !m.allowRequest(r) {
 			http.Error(w, "DLNA client is not allowed", http.StatusForbidden)
 			return
 		}
-		m.recordHTTPClient(r)
+		recorder := &statusResponseWriter{ResponseWriter: w, status: http.StatusOK}
 		applyRendererHeaders(w, m.RendererProfileFromRequest(r))
-		mux.ServeHTTP(w, r)
+		mux.ServeHTTP(recorder, r)
+		m.recordHTTPRequest(r, recorder.status)
 	})
+}
+
+type statusResponseWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusResponseWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
 }
 
 func (m *Manager) eventHandler(w http.ResponseWriter, r *http.Request) {
@@ -77,10 +94,12 @@ func serveXML(build func() ([]byte, error)) http.HandlerFunc {
 }
 
 func writeXML(w http.ResponseWriter, payload []byte) {
+	body := append([]byte(xml.Header), payload...)
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	_, _ = w.Write([]byte(xml.Header))
-	_, _ = w.Write(payload)
+	w.Header().Set("Connection", "close")
+	w.Header().Set("Content-Length", strconv.Itoa(len(body)))
+	_, _ = w.Write(body)
 }
 
 func requestBaseURL(r *http.Request) string {

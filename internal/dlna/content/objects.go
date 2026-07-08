@@ -12,12 +12,13 @@ import (
 func rootContainer(key string, title string, childCount int) Object {
 	id := EncodeID(RootContainerRef(key))
 	return Object{
-		ID:         id,
-		ParentID:   RootID,
-		Title:      title,
-		Class:      "object.container.storageFolder",
-		Kind:       ObjectContainer,
-		ChildCount: childCount,
+		ID:             id,
+		ParentID:       RootID,
+		Title:          title,
+		Class:          "object.container",
+		Kind:           ObjectContainer,
+		ChildCount:     childCount,
+		OmitChildCount: true,
 	}
 }
 
@@ -32,15 +33,18 @@ func groupContainer(parentID string, kind string, title string, childCount int) 
 	}
 }
 
-func mediaObject(parentID string, item storage.MediaItem, childCount int) Object {
+func mediaObject(parentID string, item storage.MediaItem, files []File, childCount int) Object {
 	id := item.ID
 	class := "object.item.videoItem.movie"
 	kind := ObjectItem
 	if item.Type == "serie" {
 		class = "object.container.album.videoAlbum"
 		kind = ObjectContainer
+	} else if len(files) > 1 {
+		class = "object.container.storageFolder"
+		kind = ObjectContainer
 	}
-	return Object{
+	object := Object{
 		ID:          EncodeID(MediaItemRef(item.ID)),
 		ParentID:    parentID,
 		Title:       mediaTitle(item),
@@ -58,6 +62,13 @@ func mediaObject(parentID string, item storage.MediaItem, childCount int) Object
 		UpdatedAt:   item.UpdatedAt,
 		MediaItemID: &id,
 	}
+	if item.Type != "serie" && len(files) == 1 {
+		object.ChildCount = 0
+		object.FileHash = files[0].Hash
+		object.FilePath = files[0].Path
+		object.Subtitles = SubtitlesForFile(item, files[0].Path)
+	}
+	return object
 }
 
 func seasonObject(parentID string, season storage.MediaSeason, childCount int) Object {

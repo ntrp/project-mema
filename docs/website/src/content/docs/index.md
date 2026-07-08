@@ -27,7 +27,8 @@ jobs, contract-first OpenAPI, and local media tools such as `ffmpeg`,
 ## Documentation Sections
 
 - **User Guide** covers local setup, first-run commands, configuration, media
-  lifecycle, profiles, imports, subtitles, audio, and track management.
+  lifecycle, metadata providers, indexers, download clients, profiles, imports,
+  subtitles, audio, and track management.
 - **Dev Guide** captures the development workflow used in this repository.
 - **Architecture** describes runtime structure, storage ownership, and API
   contract rules.

@@ -29,6 +29,12 @@ func (m *Manager) resource(w http.ResponseWriter, r *http.Request) {
 		m.resourcePlaylist(w, r, id, object.FilePath)
 		return
 	}
+	profile := m.RendererProfileFromRequest(r)
+	probe := probeWithPathContainer(delivery.Probe(object.FilePath), object.FilePath)
+	if r.URL.Query().Get("mode") == "transcode" || (profile.ID == "lg" && audioNeedsTranscode(probe)) {
+		m.resourceTranscode(w, r, id, object.FilePath, probe)
+		return
+	}
 	done, ok := m.beginStream(r, id, "direct", false)
 	if !ok {
 		http.Error(w, "too many DLNA streams", http.StatusTooManyRequests)
@@ -36,6 +42,55 @@ func (m *Manager) resource(w http.ResponseWriter, r *http.Request) {
 	}
 	defer done()
 	writeFileError(w, delivery.ServeFile(w, r, object.FilePath))
+}
+
+func (m *Manager) resourceTranscode(w http.ResponseWriter, r *http.Request, id string, target string, probe delivery.ProbeResult) {
+	done, ok := m.beginStream(r, id, "matroska_audio_transcode", true)
+	if !ok {
+		http.Error(w, "too many DLNA streams", http.StatusTooManyRequests)
+		return
+	}
+	defer done()
+	cachePath, cached := m.existingMatroskaRemux(target)
+	if isSeekRange(r.Header.Get("Range")) && !cached {
+		var err error
+		cachePath, err = m.cachedMatroskaRemux(r, target, probe)
+		if err != nil {
+			http.Error(w, "could not prepare DLNA remux", http.StatusInternalServerError)
+			return
+		}
+		cached = true
+	}
+	if cached {
+		w.Header().Set("Content-Type", "video/x-matroska")
+		w.Header().Set("TransferMode.DLNA.ORG", "Streaming")
+		w.Header().Set("ContentFeatures.DLNA.ORG", "DLNA.ORG_OP=01;DLNA.ORG_CI=1")
+		writeFileError(w, delivery.ServeFile(w, r, cachePath))
+		return
+	}
+	w.Header().Set("Content-Type", "video/x-matroska")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.Header().Set("TransferMode.DLNA.ORG", "Streaming")
+	w.Header().Set("ContentFeatures.DLNA.ORG", "DLNA.ORG_OP=01;DLNA.ORG_CI=1")
+	if r.Method == http.MethodHead {
+		return
+	}
+	if !acquireTranscodeSlot(w, r) {
+		return
+	}
+	defer func() { <-dlnaTranscodeSlots }()
+	if err := mediatools.SafePathArg(target); err != nil {
+		http.Error(w, "invalid media path", http.StatusBadRequest)
+		return
+	}
+	writer := flushWriter{w: w}
+	err := mediatools.RunStream(r.Context(), "ffmpeg", matroskaRemuxStreamArgs(target, matroskaAudioTranscodeDecision(probe)), &writer, 64*1024)
+	if err != nil {
+		if !writer.wrote && r.Context().Err() == nil {
+			http.Error(w, "could not start DLNA remux", http.StatusInternalServerError)
+		}
+	}
 }
 
 func (m *Manager) resourcePlaylist(w http.ResponseWriter, r *http.Request, id string, target string) {
@@ -114,6 +169,23 @@ func resourceIDFromPath(path string) (string, bool) {
 		return "", segment
 	}
 	return id, segment
+}
+
+func isSeekRange(value string) bool {
+	value = strings.TrimSpace(strings.ToLower(value))
+	if !strings.HasPrefix(value, "bytes=") {
+		return false
+	}
+	spec := strings.TrimSpace(strings.TrimPrefix(value, "bytes="))
+	if index := strings.Index(spec, ","); index >= 0 {
+		spec = strings.TrimSpace(spec[:index])
+	}
+	start, _, ok := strings.Cut(spec, "-")
+	if !ok || strings.TrimSpace(start) == "" {
+		return false
+	}
+	offset, err := strconv.ParseInt(strings.TrimSpace(start), 10, 64)
+	return err == nil && offset > 0
 }
 
 func segmentRange(r *http.Request) (float64, float64, bool) {

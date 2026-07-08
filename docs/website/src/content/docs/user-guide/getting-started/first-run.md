@@ -54,3 +54,8 @@ make dev-web
 
 The API listens on port `18080` and the frontend listens on port `15173` by
 default.
+
+After the app is running, continue with the
+[Setup Guide](/user-guide/using/setup-guide/). It walks through metadata
+providers, library folders, path mappings, download clients, indexers, quality
+settings, profiles, and subtitle providers in the recommended order.

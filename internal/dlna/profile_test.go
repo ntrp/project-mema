@@ -42,6 +42,20 @@ func TestRendererProfileOverrideBeatsUserAgent(t *testing.T) {
 	}
 }
 
+func TestRendererProfileFallsBackToRecentClientProfile(t *testing.T) {
+	manager := NewManager(nil, "http://127.0.0.1:18080")
+	manager.recentClients["192.0.2.44"] = ClientStatus{IP: "192.0.2.44", ProfileID: "lg"}
+
+	profile := manager.RendererProfile(RendererRequest{
+		ClientIP:  "192.0.2.44",
+		UserAgent: "Mozilla/5.0 (Web0S; Linux/SmartTV) AppleWebKit/537.36",
+	})
+
+	if profile.ID != "lg" {
+		t.Fatalf("profile = %q, want lg", profile.ID)
+	}
+}
+
 func TestProfileDrivesProtocolInfoAndDeliveryPlan(t *testing.T) {
 	generic := MatchRendererProfile(RendererRequest{}, nil)
 	chromecast := MatchRendererProfile(RendererRequest{UserAgent: "Chromecast"}, nil)
@@ -51,6 +65,9 @@ func TestProfileDrivesProtocolInfoAndDeliveryPlan(t *testing.T) {
 	}
 	if !strings.HasPrefix(SourceProtocolInfoForProfile(chromecast), "http-get:*:application/vnd.apple.mpegurl") {
 		t.Fatalf("chromecast protocol info = %s", SourceProtocolInfoForProfile(chromecast))
+	}
+	if strings.Contains(SourceProtocolInfoForProfile(MatchRendererProfile(RendererRequest{UserAgent: "LG webOS TV"}, nil)), "application/vnd.apple.mpegurl") {
+		t.Fatalf("LG protocol info should avoid HLS: %s", SourceProtocolInfoForProfile(MatchRendererProfile(RendererRequest{UserAgent: "LG webOS TV"}, nil)))
 	}
 	if DeliveryClientProfile(generic) != "browser" || DeliveryClientProfile(chromecast) != "webkit" {
 		t.Fatalf("delivery profiles = %s/%s", DeliveryClientProfile(generic), DeliveryClientProfile(chromecast))

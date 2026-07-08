@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -136,14 +137,43 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 
 	router := chi.NewRouter()
 	router.Mount("/api", apiRouter)
-	router.Mount("/dlna", dlnaManager.Handler())
 	router.Handle("/*", web.StaticHandler(cfg.WebDir))
+	handler := routeDLNA(router, dlnaManager.Handler())
 
 	return &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           router,
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}, jobClient, dlnaManager, nil
+}
+
+func routeDLNA(next http.Handler, dlnaHandler http.Handler) http.Handler {
+	stripped := http.StripPrefix("/dlna", dlnaHandler)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/dlna" || strings.HasPrefix(r.URL.Path, "/dlna/") {
+			stripped.ServeHTTP(w, r)
+			return
+		}
+		if isRootDLNAPath(r.URL.Path) {
+			dlnaHandler.ServeHTTP(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func isRootDLNAPath(path string) bool {
+	switch path {
+	case "/rootDesc.xml", "/contentDirectory.xml", "/connectionManager.xml", "/mediaReceiverRegistrar.xml",
+		"/icon-256.png", "/icon-128.png", "/icon-120.png", "/icon-48.png":
+		return true
+	default:
+		return strings.HasPrefix(path, "/control/") ||
+			strings.HasPrefix(path, "/resource/") ||
+			strings.HasPrefix(path, "/artwork/") ||
+			strings.HasPrefix(path, "/subtitle/") ||
+			strings.HasPrefix(path, "/events/")
+	}
 }
 
 func shutdown(server *http.Server, jobClient *jobs.Client, dlnaManager *dlna.Manager) error {

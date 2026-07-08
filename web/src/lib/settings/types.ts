@@ -56,6 +56,7 @@ export type DLNASettings = components['schemas']['DLNASettings'];
 export type DLNASettingsRequest = components['schemas']['DLNASettingsRequest'];
 export type DLNAStatus = components['schemas']['DLNAStatus'];
 export type DLNAClientDiagnostic = components['schemas']['DLNAClientDiagnostic'];
+export type DLNAInterfaceDiagnostic = components['schemas']['DLNAInterfaceDiagnostic'];
 export type DLNAStreamDiagnostic = components['schemas']['DLNAStreamDiagnostic'];
 export type SystemJob = components['schemas']['SystemJob'];
 export type SystemJobListResponse = components['schemas']['SystemJobListResponse'];

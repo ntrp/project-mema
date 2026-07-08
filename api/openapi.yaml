@@ -7444,6 +7444,7 @@ components:
         - running
         - boundInterfaces
         - advertisedUrls
+        - availableInterfaces
         - recentClients
         - activeStreams
         - activeTranscodes
@@ -7458,6 +7459,10 @@ components:
           type: array
           items:
             type: string
+        availableInterfaces:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAInterfaceDiagnostic"
         lastError:
           type: string
         lastSsdpEvent:
@@ -7476,6 +7481,20 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DLNAStreamDiagnostic"
+    DLNAInterfaceDiagnostic:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - address
+        - location
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        location:
+          type: string
     DLNAClientDiagnostic:
       type: object
       additionalProperties: false

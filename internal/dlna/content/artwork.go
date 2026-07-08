@@ -13,7 +13,13 @@ func ApplyArtworkURLs(baseURL string, objects []Object) []Object {
 	updated := make([]Object, len(objects))
 	copy(updated, objects)
 	for index := range updated {
-		if updated[index].Kind == ObjectItem || updated[index].Artwork != nil {
+		if updated[index].Kind == ObjectItem && updated[index].FilePath != "" {
+			artwork := ArtworkURL(baseURL, updated[index].ID)
+			artwork += "?kind=thumbnail"
+			updated[index].Artwork = &artwork
+			continue
+		}
+		if updated[index].Artwork != nil {
 			artwork := ArtworkURL(baseURL, updated[index].ID)
 			updated[index].Artwork = &artwork
 		}

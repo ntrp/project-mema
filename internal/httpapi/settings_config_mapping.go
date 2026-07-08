@@ -58,9 +58,12 @@ func (s *Server) currentDLNAStatus() dlna.Status {
 
 func dlnaStatusResponse(status dlna.Status) DLNAStatus {
 	return DLNAStatus{
-		Running:          status.Running,
-		BoundInterfaces:  append([]string{}, status.BoundInterfaces...),
-		AdvertisedUrls:   append([]string{}, status.AdvertisedURLs...),
+		Running:         status.Running,
+		BoundInterfaces: append([]string{}, status.BoundInterfaces...),
+		AdvertisedUrls:  append([]string{}, status.AdvertisedURLs...),
+		AvailableInterfaces: dlnaInterfaceDiagnostics(
+			status.AvailableInterfaces,
+		),
 		LastError:        status.LastError,
 		LastSsdpEvent:    status.LastSSDPEvent,
 		LastSoapAction:   status.LastSOAPAction,
@@ -68,6 +71,18 @@ func dlnaStatusResponse(status dlna.Status) DLNAStatus {
 		ActiveStreams:    dlnaStreamDiagnostics(status.ActiveStreams),
 		ActiveTranscodes: dlnaStreamDiagnostics(status.ActiveTranscodes),
 	}
+}
+
+func dlnaInterfaceDiagnostics(interfaces []dlna.InterfaceStatus) []DLNAInterfaceDiagnostic {
+	values := make([]DLNAInterfaceDiagnostic, 0, len(interfaces))
+	for _, item := range interfaces {
+		values = append(values, DLNAInterfaceDiagnostic{
+			Name:     item.Name,
+			Address:  item.Address,
+			Location: item.Location,
+		})
+	}
+	return values
 }
 
 func dlnaClientDiagnostics(clients []dlna.ClientStatus) []DLNAClientDiagnostic {

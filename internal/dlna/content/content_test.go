@@ -78,13 +78,17 @@ func TestRootBrowseReturnsExpectedContainersAndSkipsMissingFiles(t *testing.T) {
 	assertContainer(t, root, "Collections", 1)
 	assertContainer(t, root, "Genres", 1)
 	assertContainer(t, root, "Years", 1)
+	assertMissingContainer(t, root, "TV Shows")
 
 	movies, err := tree.BrowseChildren(ctx, EncodeID(RootContainerRef("movies")))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(movies) != 1 || movies[0].Title != "Scenario Movie (2026)" || movies[0].ChildCount != 1 {
+	if len(movies) != 1 || movies[0].Title != "Scenario Movie (2026)" || movies[0].ChildCount != 0 {
 		t.Fatalf("movie browse = %#v", movies)
+	}
+	if movies[0].Kind != ObjectItem || movies[0].FilePath != moviePath || strings.Contains(movies[0].ID, moviePath) {
+		t.Fatalf("movie item = %#v", movies[0])
 	}
 	files, err := tree.BrowseChildren(ctx, movies[0].ID)
 	if err != nil {
@@ -159,10 +163,22 @@ func assertContainer(t *testing.T, objects []Object, title string, childCount in
 			if object.Kind != ObjectContainer || object.ChildCount != childCount {
 				t.Fatalf("%s container = %#v", title, object)
 			}
+			if object.ParentID == RootID && object.Class != "object.container" {
+				t.Fatalf("%s root class = %q", title, object.Class)
+			}
 			return
 		}
 	}
 	t.Fatalf("missing container %q in %#v", title, objects)
+}
+
+func assertMissingContainer(t *testing.T, objects []Object, title string) {
+	t.Helper()
+	for _, object := range objects {
+		if object.Title == title {
+			t.Fatalf("unexpected container %q in %#v", title, objects)
+		}
+	}
 }
 
 func fakeStat(paths ...string) FileStatFunc {

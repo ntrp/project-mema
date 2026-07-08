@@ -97,4 +97,59 @@ func TestDispatcherWritesActionResponse(t *testing.T) {
 	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "<Result>ok</Result>") {
 		t.Fatalf("response = %d %s", response.Code, response.Body.String())
 	}
+	if response.Header().Get("Content-Length") == "" {
+		t.Fatalf("missing Content-Length header")
+	}
+	if !strings.Contains(response.Body.String(), `s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"`) {
+		t.Fatalf("response missing SOAP encoding style:\n%s", response.Body.String())
+	}
+}
+
+func TestWriteResponseUsesUPnPArgumentOrder(t *testing.T) {
+	response := httptest.NewRecorder()
+
+	WriteResponse(response, "urn:test", "Browse", map[string]string{
+		"UpdateID":       "3",
+		"TotalMatches":   "2",
+		"NumberReturned": "1",
+		"Result":         "ok",
+	})
+
+	body := response.Body.String()
+	assertBefore(t, body, "<Result>ok</Result>", "<NumberReturned>1</NumberReturned>")
+	assertBefore(t, body, "<NumberReturned>1</NumberReturned>", "<TotalMatches>2</TotalMatches>")
+	assertBefore(t, body, "<TotalMatches>2</TotalMatches>", "<UpdateID>3</UpdateID>")
+}
+
+func TestWriteResponseKeepsQuotesReadableInResult(t *testing.T) {
+	response := httptest.NewRecorder()
+
+	WriteResponse(response, "urn:test", "Browse", map[string]string{
+		"Result":         `<DIDL-Lite xmlns="urn:test"><item title="A & B"/></DIDL-Lite>`,
+		"NumberReturned": "1",
+		"TotalMatches":   "1",
+		"UpdateID":       "0",
+	})
+
+	body := response.Body.String()
+	for _, want := range []string{
+		`&lt;DIDL-Lite xmlns="urn:test"&gt;`,
+		`title="A &amp; B"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("response missing %q:\n%s", want, body)
+		}
+	}
+	if strings.Contains(body, "&#34;") || strings.Contains(body, "&quot;") {
+		t.Fatalf("response escaped quotes:\n%s", body)
+	}
+}
+
+func assertBefore(t *testing.T, body string, first string, second string) {
+	t.Helper()
+	firstIndex := strings.Index(body, first)
+	secondIndex := strings.Index(body, second)
+	if firstIndex < 0 || secondIndex < 0 || firstIndex > secondIndex {
+		t.Fatalf("expected %q before %q in:\n%s", first, second, body)
+	}
 }

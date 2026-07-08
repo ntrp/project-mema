@@ -15,6 +15,7 @@ type RendererProfile struct {
 	Name            string
 	MatchTokens     []string
 	PreferHLS       bool
+	AvoidHLS        bool
 	DisableEventing bool
 	SubtitleFormats []string
 	ResponseHeaders map[string]string
@@ -33,7 +34,7 @@ func DefaultRendererProfiles() []RendererProfile {
 		{ID: "vlc", Name: "VLC", MatchTokens: []string{"vlc"}, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "kodi", Name: "Kodi", MatchTokens: []string{"kodi", "xbmc"}, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "samsung", Name: "Samsung TV", MatchTokens: []string{"samsung", "tizen"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
-		{ID: "lg", Name: "LG TV", MatchTokens: []string{"lg", "webos"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
+		{ID: "lg", Name: "LG TV", MatchTokens: []string{"lg", "webos"}, AvoidHLS: true, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "sony", Name: "Sony TV", MatchTokens: []string{"sony", "bravia"}, SubtitleFormats: []string{"srt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "bubbleupnp", Name: "BubbleUPnP", MatchTokens: []string{"bubbleupnp"}, SubtitleFormats: []string{"srt", "vtt"}, ResponseHeaders: streamingHeaders()},
 		{ID: "chromecast", Name: "Chromecast", MatchTokens: []string{"chromecast", "google cast"}, PreferHLS: true, DisableEventing: true, SubtitleFormats: []string{"vtt"}, ResponseHeaders: streamingHeaders()},
@@ -60,6 +61,9 @@ func MatchRendererProfile(request RendererRequest, overrides map[string]string) 
 
 func SourceProtocolInfosForProfile(profile RendererProfile) []string {
 	values := SourceProtocolInfos()
+	if profile.AvoidHLS {
+		return protocolInfosWithoutHLS(values)
+	}
 	if !profile.PreferHLS {
 		return values
 	}
@@ -69,6 +73,17 @@ func SourceProtocolInfosForProfile(profile RendererProfile) []string {
 		}
 	}
 	return values
+}
+
+func protocolInfosWithoutHLS(values []string) []string {
+	filtered := make([]string, 0, len(values))
+	for _, value := range values {
+		if strings.Contains(value, "application/vnd.apple.mpegurl") {
+			continue
+		}
+		filtered = append(filtered, value)
+	}
+	return filtered
 }
 
 func SourceProtocolInfoForProfile(profile RendererProfile) string {
@@ -97,8 +112,19 @@ func (m *Manager) RendererProfile(request RendererRequest) RendererProfile {
 	for key, value := range m.profileOverrides {
 		overrides[key] = value
 	}
+	rememberedProfileID := ""
+	if existing, ok := m.recentClients[strings.TrimSpace(request.ClientIP)]; ok {
+		rememberedProfileID = existing.ProfileID
+	}
 	m.mu.Unlock()
-	return MatchRendererProfile(request, overrides)
+	profile := MatchRendererProfile(request, overrides)
+	if profile.ID != "generic" || rememberedProfileID == "" || rememberedProfileID == "generic" {
+		return profile
+	}
+	if remembered, ok := findProfile(DefaultRendererProfiles(), rememberedProfileID); ok {
+		return remembered
+	}
+	return profile
 }
 
 func (m *Manager) RendererProfileFromRequest(r *http.Request) RendererProfile {

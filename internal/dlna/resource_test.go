@@ -55,6 +55,47 @@ func TestResourceHLSHeadDoesNotStartTranscode(t *testing.T) {
 	}
 }
 
+func TestResourceTranscodeRangeUsesSeekableMatroskaCache(t *testing.T) {
+	manager, resourceID := resourceTestManager(t, "0123456789")
+	manager.remuxDir = t.TempDir()
+	installFakeFFmpeg(t)
+	request := httptest.NewRequest("GET", "/dlna/resource/"+url.PathEscape(resourceID)+"?mode=transcode", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
+	request.Header.Set("Range", "bytes=1-3")
+	response := httptest.NewRecorder()
+
+	manager.Handler().ServeHTTP(response, request)
+
+	if response.Code != http.StatusPartialContent {
+		t.Fatalf("status = %d body=%s", response.Code, response.Body.String())
+	}
+	if response.Header().Get("Content-Type") != "video/x-matroska" {
+		t.Fatalf("Content-Type = %q", response.Header().Get("Content-Type"))
+	}
+	if response.Header().Get("ContentFeatures.DLNA.ORG") != "DLNA.ORG_OP=01;DLNA.ORG_CI=1" {
+		t.Fatalf("ContentFeatures = %q", response.Header().Get("ContentFeatures.DLNA.ORG"))
+	}
+	if response.Header().Get("Accept-Ranges") != "bytes" {
+		t.Fatalf("Accept-Ranges = %q", response.Header().Get("Accept-Ranges"))
+	}
+	if response.Body.String() != "emu" {
+		t.Fatalf("body = %q", response.Body.String())
+	}
+}
+
+func TestInitialRangeDoesNotForceRemuxCache(t *testing.T) {
+	for _, value := range []string{"", "bytes=0-", "bytes=0-65535"} {
+		if isSeekRange(value) {
+			t.Fatalf("range %q should not force cache", value)
+		}
+	}
+	for _, value := range []string{"bytes=1-", "bytes=65536-"} {
+		if !isSeekRange(value) {
+			t.Fatalf("range %q should force cache", value)
+		}
+	}
+}
+
 func TestResourceSegmentHeadDoesNotStartTranscode(t *testing.T) {
 	manager, resourceID := resourceTestManager(t, "0123456789")
 	target := "/dlna/resource/" + url.PathEscape(resourceID) +
@@ -103,4 +144,17 @@ func resourceTestManager(t *testing.T, payload string) (*Manager, string) {
 		t.Fatalf("resource id exposes path: %q", files[0].ID)
 	}
 	return manager, files[0].ID
+}
+
+func installFakeFFmpeg(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	path := filepath.Join(dir, "ffmpeg")
+	script := "#!/bin/sh\n" +
+		"for last do :; done\n" +
+		"printf remux > \"$last\"\n"
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }

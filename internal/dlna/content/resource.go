@@ -86,6 +86,8 @@ func resourceMIME(resourceURL string, container delivery.Container, decision del
 func containerFormatMIME(format string) string {
 	format = strings.ToLower(format)
 	switch {
+	case strings.Contains(format, "mpegts-dlna"):
+		return "video/vnd.dlna.mpeg-tts"
 	case strings.Contains(format, "matroska"):
 		return "video/x-matroska"
 	case strings.Contains(format, "mp4") || strings.Contains(format, "quicktime"):

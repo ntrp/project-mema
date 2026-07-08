@@ -3553,12 +3553,18 @@ export interface components {
 			running: boolean;
 			boundInterfaces: string[];
 			advertisedUrls: string[];
+			availableInterfaces: components['schemas']['DLNAInterfaceDiagnostic'][];
 			lastError?: string;
 			lastSsdpEvent?: string;
 			lastSoapAction?: string;
 			recentClients: components['schemas']['DLNAClientDiagnostic'][];
 			activeStreams: components['schemas']['DLNAStreamDiagnostic'][];
 			activeTranscodes: components['schemas']['DLNAStreamDiagnostic'][];
+		};
+		DLNAInterfaceDiagnostic: {
+			name: string;
+			address: string;
+			location: string;
 		};
 		DLNAClientDiagnostic: {
 			ip: string;

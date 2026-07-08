@@ -29,12 +29,13 @@ const (
 )
 
 type Object struct {
-	ID         string
-	ParentID   string
-	Title      string
-	Class      string
-	Kind       ObjectKind
-	ChildCount int
+	ID             string
+	ParentID       string
+	Title          string
+	Class          string
+	Kind           ObjectKind
+	ChildCount     int
+	OmitChildCount bool
 
 	MediaType string
 	Year      *int32

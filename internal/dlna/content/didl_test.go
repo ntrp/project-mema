@@ -22,12 +22,40 @@ func TestRenderDIDLSerializesContainerNamespacesAndEscapesXML(t *testing.T) {
 	got := string(payload)
 	for _, want := range []string{
 		`xmlns="urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/"`,
-		`xmlns:dc="http://purl.org/dc/elements/1.1/"`,
 		`xmlns:upnp="urn:schemas-upnp-org:metadata-1-0/upnp/"`,
-		`xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/"`,
+		`xmlns:dc="http://purl.org/dc/elements/1.1/"`,
+		`xmlns:sec="http://www.sec.co.kr/"`,
 		`<dc:title>Rock &amp; Roll &lt;Movies&gt;</dc:title>`,
+		`searchable="0"`,
 		`childCount="2"`,
+		`<upnp:storageUsed>0</upnp:storageUsed>`,
 	} {
+		if !strings.Contains(got, want) {
+			t.Fatalf("DIDL missing %q:\n%s", want, got)
+		}
+	}
+}
+
+func TestRenderDIDLOmitsRootChildCountForBubbleCompatibleContainers(t *testing.T) {
+	payload, err := RenderDIDL([]Object{{
+		ID:             "0$1",
+		ParentID:       RootID,
+		Title:          "Movies",
+		Class:          "object.container",
+		Kind:           ObjectContainer,
+		ChildCount:     2,
+		OmitChildCount: true,
+	}}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(payload)
+	for _, forbidden := range []string{`childCount=`, `upnp:storageUsed`} {
+		if strings.Contains(got, forbidden) {
+			t.Fatalf("DIDL contains %q:\n%s", forbidden, got)
+		}
+	}
+	for _, want := range []string{`id="0$1"`, `<upnp:class>object.container</upnp:class>`} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("DIDL missing %q:\n%s", want, got)
 		}
@@ -76,7 +104,7 @@ func TestRenderDIDLSerializesItemMetadataAndResources(t *testing.T) {
 		`<upnp:genre>Drama</upnp:genre>`,
 		`<upnp:artist>Actor One</upnp:artist>`,
 		`<upnp:album>Scenario Collection</upnp:album>`,
-		`<upnp:albumArtURI>http://127.0.0.1:18080/dlna/artwork/poster.jpg?size=large</upnp:albumArtURI>`,
+		`<upnp:albumArtURI xmlns:dlna="urn:schemas-dlna-org:metadata-1-0/" dlna:profileID="JPEG_TN">http://127.0.0.1:18080/dlna/artwork/poster.jpg?size=large</upnp:albumArtURI>`,
 		`protocolInfo="http-get:*:video/mp4:DLNA.ORG_OP=01;DLNA.ORG_CI=0"`,
 		`size="4096"`,
 		`duration="0:01:05.250"`,

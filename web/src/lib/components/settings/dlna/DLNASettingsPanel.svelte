@@ -24,7 +24,6 @@
 
 	let settings = $state<DLNASettings>();
 	let form = $state<DLNASettingsRequest>({ ...defaultForm });
-	let interfacesText = $state('');
 	let allowedText = $state(defaultForm.allowedCidrs.join('\n'));
 	let loading = $state(true);
 	let saving = $state(false);
@@ -94,14 +93,12 @@
 			subtitlesEnabled: next.subtitlesEnabled,
 			defaultRendererProfile: next.defaultRendererProfile
 		};
-		interfacesText = form.interfaces.join('\n');
 		allowedText = form.allowedCidrs.join('\n');
 	}
 
 	function normalizedForm(): DLNASettingsRequest {
 		return {
 			...form,
-			interfaces: lines(interfacesText),
 			allowedCidrs: lines(allowedText),
 			announceIntervalSeconds: Number(form.announceIntervalSeconds)
 		};
@@ -155,7 +152,13 @@
 				</div>
 			{/each}
 		</div>
-		<DLNASettingsForm bind:form bind:interfacesText bind:allowedText {saving} onSave={save} />
+		<DLNASettingsForm
+			bind:form
+			bind:allowedText
+			availableInterfaces={status?.availableInterfaces ?? []}
+			{saving}
+			onSave={save}
+		/>
 		<DLNADiagnosticsTables {status} />
 	</Card.Content>
 </Card.Root>

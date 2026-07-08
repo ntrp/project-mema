@@ -2,16 +2,20 @@ package dlna
 
 import (
 	"encoding/xml"
+	"strconv"
 	"strings"
 
 	"media-manager/internal/dlna/ssdp"
 )
 
 type DeviceDocument struct {
-	XMLName xml.Name `xml:"root"`
-	Xmlns   string   `xml:"xmlns,attr"`
-	Spec    Spec     `xml:"specVersion"`
-	Device  Device   `xml:"device"`
+	XMLName   xml.Name `xml:"root"`
+	Xmlns     string   `xml:"xmlns,attr"`
+	XmlnsDLNA string   `xml:"xmlns:dlna,attr,omitempty"`
+	XmlnsSEC  string   `xml:"xmlns:sec,attr,omitempty"`
+	Spec      Spec     `xml:"specVersion"`
+	URLBase   string   `xml:"URLBase,omitempty"`
+	Device    Device   `xml:"device"`
 }
 
 type Spec struct {
@@ -20,14 +24,22 @@ type Spec struct {
 }
 
 type Device struct {
-	DeviceType   string    `xml:"deviceType"`
-	FriendlyName string    `xml:"friendlyName"`
-	Manufacturer string    `xml:"manufacturer"`
-	ModelName    string    `xml:"modelName"`
-	UDN          string    `xml:"UDN"`
-	Presentation string    `xml:"presentationURL"`
-	Icons        []Icon    `xml:"iconList>icon"`
-	Services     []Service `xml:"serviceList>service"`
+	DeviceType       string    `xml:"deviceType"`
+	FriendlyName     string    `xml:"friendlyName"`
+	Manufacturer     string    `xml:"manufacturer"`
+	ManufacturerURL  string    `xml:"manufacturerURL,omitempty"`
+	ModelDescription string    `xml:"modelDescription,omitempty"`
+	ModelName        string    `xml:"modelName"`
+	ModelNumber      string    `xml:"modelNumber,omitempty"`
+	ModelURL         string    `xml:"modelURL,omitempty"`
+	SerialNumber     string    `xml:"serialNumber,omitempty"`
+	UDN              string    `xml:"UDN"`
+	Presentation     string    `xml:"presentationURL"`
+	DLNADOC          []string  `xml:"dlna:X_DLNADOC,omitempty"`
+	DLNACAP          string    `xml:"dlna:X_DLNACAP"`
+	SECProductCap    string    `xml:"sec:ProductCap,omitempty"`
+	Icons            []Icon    `xml:"iconList>icon"`
+	Services         []Service `xml:"serviceList>service"`
 }
 
 type Icon struct {
@@ -43,7 +55,7 @@ type Service struct {
 	ServiceID   string `xml:"serviceId"`
 	SCPDURL     string `xml:"SCPDURL"`
 	ControlURL  string `xml:"controlURL"`
-	EventSubURL string `xml:"eventSubURL"`
+	EventSubURL string `xml:"eventSubURL,omitempty"`
 }
 
 type SCPDDocument struct {
@@ -73,25 +85,30 @@ type StateVariable struct {
 
 func RootDeviceXML(settingsName string, uuid string, baseURL string) ([]byte, error) {
 	doc := DeviceDocument{
-		Xmlns: "urn:schemas-upnp-org:device-1-0",
-		Spec:  Spec{Major: 1, Minor: 0},
+		Xmlns:     "urn:schemas-upnp-org:device-1-0",
+		XmlnsDLNA: "urn:schemas-dlna-org:device-1-0",
+		XmlnsSEC:  "http://www.sec.co.kr/",
+		Spec:      Spec{Major: 1, Minor: 0},
+		URLBase:   baseURL + "/",
 		Device: Device{
-			DeviceType:   ssdp.MediaServer,
-			FriendlyName: settingsName,
-			Manufacturer: "Mema",
-			ModelName:    "Mema Media Server",
-			UDN:          "uuid:" + strings.TrimPrefix(uuid, "uuid:"),
-			Presentation: baseURL + "/",
-			Icons: []Icon{{
-				MimeType: "image/png",
-				Width:    48,
-				Height:   48,
-				Depth:    24,
-				URL:      "/dlna/icon-48.png",
-			}},
+			DeviceType:       ssdp.MediaServer,
+			FriendlyName:     settingsName,
+			Manufacturer:     "Mema",
+			ManufacturerURL:  baseURL + "/",
+			ModelDescription: "Mema - UPnP/AV 1.0 Compliant Media Server",
+			ModelName:        "Mema Media Server",
+			ModelNumber:      "1",
+			ModelURL:         baseURL + "/",
+			SerialNumber:     strings.TrimPrefix(uuid, "uuid:"),
+			UDN:              "uuid:" + strings.TrimPrefix(uuid, "uuid:"),
+			Presentation:     baseURL + "/",
+			DLNADOC:          []string{"DMS-1.50", "M-DMS-1.50"},
+			DLNACAP:          "",
+			SECProductCap:    "smi,DCM10,getMediaInfo.sec,getCaptionInfo.sec",
+			Icons:            iconDescriptors(),
 			Services: []Service{
-				contentDirectoryService(),
 				connectionManagerService(),
+				contentDirectoryService(),
 				mediaReceiverRegistrarService(),
 			},
 		},
@@ -99,13 +116,28 @@ func RootDeviceXML(settingsName string, uuid string, baseURL string) ([]byte, er
 	return xml.MarshalIndent(doc, "", "  ")
 }
 
+func iconDescriptors() []Icon {
+	sizes := []int{256, 128, 120, 48}
+	icons := make([]Icon, 0, len(sizes))
+	for _, size := range sizes {
+		icons = append(icons, Icon{
+			MimeType: "image/png",
+			Width:    size,
+			Height:   size,
+			Depth:    24,
+			URL:      "/dlna/icon-" + strconv.Itoa(size) + ".png",
+		})
+	}
+	return icons
+}
+
 func ContentDirectorySCPDXML() ([]byte, error) {
 	return xml.MarshalIndent(SCPDDocument{
 		Xmlns: "urn:schemas-upnp-org:service-1-0",
 		Spec:  Spec{Major: 1, Minor: 0},
 		Actions: []SCPDAction{
-			action("GetSearchCapabilities", outArg("SearchCaps", "A_ARG_TYPE_SearchCaps")),
-			action("GetSortCapabilities", outArg("SortCaps", "A_ARG_TYPE_SortCaps")),
+			action("GetSearchCapabilities", outArg("SearchCaps", "SearchCapabilities")),
+			action("GetSortCapabilities", outArg("SortCaps", "SortCapabilities")),
 			action("GetSystemUpdateID", outArg("Id", "SystemUpdateID")),
 			action("Browse",
 				inArg("ObjectID", "A_ARG_TYPE_ObjectID"),
@@ -136,8 +168,8 @@ func ContentDirectorySCPDXML() ([]byte, error) {
 			{SendEvents: "yes", Name: "SystemUpdateID", DataType: "ui4"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_ObjectID", DataType: "string"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_Result", DataType: "string"},
-			{SendEvents: "no", Name: "A_ARG_TYPE_SearchCaps", DataType: "string"},
-			{SendEvents: "no", Name: "A_ARG_TYPE_SortCaps", DataType: "string"},
+			{SendEvents: "no", Name: "SearchCapabilities", DataType: "string"},
+			{SendEvents: "no", Name: "SortCapabilities", DataType: "string"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_Count", DataType: "ui4"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_Index", DataType: "ui4"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_UpdateID", DataType: "ui4"},
@@ -145,6 +177,18 @@ func ContentDirectorySCPDXML() ([]byte, error) {
 			{SendEvents: "no", Name: "A_ARG_TYPE_BrowseFlag", DataType: "string"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_SearchCriteria", DataType: "string"},
 			{SendEvents: "no", Name: "A_ARG_TYPE_SortCriteria", DataType: "string"},
+			{SendEvents: "yes", Name: "ContainerUpdateIDs", DataType: "string"},
+			{SendEvents: "yes", Name: "TransferIDs", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_TransferID", DataType: "ui4"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_TransferLength", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_TransferTotal", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_TransferStatus", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_URI", DataType: "uri"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_TagValueList", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_PosSecond", DataType: "ui4"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_CategoryType", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_RID", DataType: "string"},
+			{SendEvents: "no", Name: "A_ARG_TYPE_FeatureList", DataType: "string"},
 		},
 	}, "", "  ")
 }
@@ -199,15 +243,15 @@ func MediaReceiverRegistrarSCPDXML() ([]byte, error) {
 }
 
 func contentDirectoryService() Service {
-	return Service{ServiceType: ssdp.ContentDir, ServiceID: "urn:upnp-org:serviceId:ContentDirectory", SCPDURL: "/dlna/contentDirectory.xml", ControlURL: "/dlna/control/content-directory", EventSubURL: "/dlna/events/content-directory"}
+	return Service{ServiceType: ssdp.ContentDir, ServiceID: "urn:upnp-org:serviceId:ContentDirectory", SCPDURL: "/dlna/contentDirectory.xml", ControlURL: "/dlna/control/content-directory"}
 }
 
 func connectionManagerService() Service {
-	return Service{ServiceType: ssdp.Connection, ServiceID: "urn:upnp-org:serviceId:ConnectionManager", SCPDURL: "/dlna/connectionManager.xml", ControlURL: "/dlna/control/connection-manager", EventSubURL: "/dlna/events/connection-manager"}
+	return Service{ServiceType: ssdp.Connection, ServiceID: "urn:upnp-org:serviceId:ConnectionManager", SCPDURL: "/dlna/connectionManager.xml", ControlURL: "/dlna/control/connection-manager"}
 }
 
 func mediaReceiverRegistrarService() Service {
-	return Service{ServiceType: "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", ServiceID: "urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar", SCPDURL: "/dlna/mediaReceiverRegistrar.xml", ControlURL: "/dlna/control/media-receiver-registrar", EventSubURL: "/dlna/events/media-receiver-registrar"}
+	return Service{ServiceType: "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1", ServiceID: "urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar", SCPDURL: "/dlna/mediaReceiverRegistrar.xml", ControlURL: "/dlna/control/media-receiver-registrar"}
 }
 
 func action(name string, args ...SCPDArgument) SCPDAction {

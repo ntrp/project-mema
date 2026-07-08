@@ -3,6 +3,9 @@ package dlna
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"image"
+	"image/color"
+	"image/png"
 	"net/http"
 	"net/url"
 	"os"
@@ -56,9 +59,49 @@ func serveKnownArtwork(w http.ResponseWriter, r *http.Request, artwork string) b
 func serveFallbackIcon(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
 	w.Header().Set("Cache-Control", "public, max-age=86400")
+	if size := iconSizeFromPath(r.URL.Path); size > 1 {
+		if r.Method != http.MethodHead {
+			_ = writeIconPNG(w, size)
+		}
+		return
+	}
 	if r.Method != http.MethodHead {
 		_, _ = w.Write(fallbackPNG)
 	}
+}
+
+func iconSizeFromPath(path string) int {
+	for _, size := range []int{256, 128, 120, 48} {
+		if strings.HasSuffix(path, "/icon-"+strconv.Itoa(size)+".png") {
+			return size
+		}
+	}
+	return 0
+}
+
+func writeIconPNG(w http.ResponseWriter, size int) error {
+	img := image.NewRGBA(image.Rect(0, 0, size, size))
+	bg := color.RGBA{R: 25, G: 72, B: 92, A: 255}
+	fg := color.RGBA{R: 231, G: 245, B: 241, A: 255}
+	for y := 0; y < size; y++ {
+		for x := 0; x < size; x++ {
+			img.Set(x, y, bg)
+		}
+	}
+	margin := size / 4
+	bar := size / 8
+	for y := margin; y < size-margin; y++ {
+		for x := margin; x < margin+bar; x++ {
+			img.Set(x, y, fg)
+			img.Set(size-margin-bar+x-margin, y, fg)
+		}
+	}
+	for y := margin; y < margin+bar; y++ {
+		for x := margin; x < size-margin; x++ {
+			img.Set(x, y, fg)
+		}
+	}
+	return png.Encode(w, img)
 }
 
 func (m *Manager) thumbnail(w http.ResponseWriter, r *http.Request, target string) {

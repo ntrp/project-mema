@@ -41,3 +41,6 @@ preview, track deletion, subtitles, or assembly flows:
 - `mkvmerge`
 - `mkvextract`
 - `mediainfo`
+
+For in-app setup after the server is running, use the
+[Setup Guide](/user-guide/using/setup-guide/) instead of editing files by hand.

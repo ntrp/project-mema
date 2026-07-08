@@ -1722,6 +1722,13 @@ type DLNAClientDiagnostic struct {
 	UserAgent      string    `json:"userAgent"`
 }
 
+// DLNAInterfaceDiagnostic defines model for DLNAInterfaceDiagnostic.
+type DLNAInterfaceDiagnostic struct {
+	Address  string `json:"address"`
+	Location string `json:"location"`
+	Name     string `json:"name"`
+}
+
 // DLNASettings defines model for DLNASettings.
 type DLNASettings struct {
 	AllowedCidrs            []string   `json:"allowedCidrs"`
@@ -1753,15 +1760,16 @@ type DLNASettingsRequest struct {
 
 // DLNAStatus defines model for DLNAStatus.
 type DLNAStatus struct {
-	ActiveStreams    []DLNAStreamDiagnostic `json:"activeStreams"`
-	ActiveTranscodes []DLNAStreamDiagnostic `json:"activeTranscodes"`
-	AdvertisedUrls   []string               `json:"advertisedUrls"`
-	BoundInterfaces  []string               `json:"boundInterfaces"`
-	LastError        *string                `json:"lastError,omitempty"`
-	LastSoapAction   *string                `json:"lastSoapAction,omitempty"`
-	LastSsdpEvent    *string                `json:"lastSsdpEvent,omitempty"`
-	RecentClients    []DLNAClientDiagnostic `json:"recentClients"`
-	Running          bool                   `json:"running"`
+	ActiveStreams       []DLNAStreamDiagnostic    `json:"activeStreams"`
+	ActiveTranscodes    []DLNAStreamDiagnostic    `json:"activeTranscodes"`
+	AdvertisedUrls      []string                  `json:"advertisedUrls"`
+	AvailableInterfaces []DLNAInterfaceDiagnostic `json:"availableInterfaces"`
+	BoundInterfaces     []string                  `json:"boundInterfaces"`
+	LastError           *string                   `json:"lastError,omitempty"`
+	LastSoapAction      *string                   `json:"lastSoapAction,omitempty"`
+	LastSsdpEvent       *string                   `json:"lastSsdpEvent,omitempty"`
+	RecentClients       []DLNAClientDiagnostic    `json:"recentClients"`
+	Running             bool                      `json:"running"`
 }
 
 // DLNAStreamDiagnostic defines model for DLNAStreamDiagnostic.

@@ -15,6 +15,16 @@ const RootID = "0"
 
 const idPrefix = "cd1_"
 
+var rootContainerIDs = map[string]string{
+	"movies":           "0$1",
+	"series":           "0$2",
+	"collections":      "0$3",
+	"recently-added":   "0$4",
+	"recently-updated": "0$5",
+	"genres":           "0$6",
+	"years":            "0$7",
+}
+
 type Ref struct {
 	Kind string `json:"k"`
 	Key  string `json:"v,omitempty"`
@@ -46,6 +56,11 @@ func GroupRef(kind string, value string) Ref {
 }
 
 func EncodeID(ref Ref) string {
+	if ref.Kind == "root" {
+		if id := rootContainerIDs[ref.Key]; id != "" {
+			return id
+		}
+	}
 	payload, _ := json.Marshal(ref)
 	return idPrefix + base64.RawURLEncoding.EncodeToString(payload)
 }
@@ -53,6 +68,11 @@ func EncodeID(ref Ref) string {
 func DecodeID(id string) (Ref, error) {
 	if id == RootID {
 		return Ref{Kind: "root"}, nil
+	}
+	for key, rootID := range rootContainerIDs {
+		if id == rootID {
+			return RootContainerRef(key), nil
+		}
 	}
 	if !strings.HasPrefix(id, idPrefix) {
 		return Ref{}, errors.New("invalid content directory object id")
