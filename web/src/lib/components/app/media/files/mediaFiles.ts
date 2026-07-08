@@ -130,15 +130,11 @@ export function fileRow(
 		chapters: info?.chapters ?? [],
 		otherFiles: info?.otherFiles ?? [],
 		subtitleSatisfaction: info?.subtitleSatisfaction,
+		requirements: info?.requirements,
+		missingTracks: info?.missingTracks ?? [],
 		rollup: info?.rollup,
 		externalSubtitles: externalSubtitlesForPath(item.externalSubtitles ?? [], path),
 		upgrade,
-		expectedAudioTargets: profile.expectedAudioTargets,
-		expectedLanguages: profile.expectedLanguages,
-		expectedRequiredLanguages: profile.expectedRequiredLanguages,
-		expectedSubtitleLanguages: profile.expectedSubtitleLanguages,
-		removeNonEnabledLanguages: profile.removeNonEnabledLanguages,
-		removeNonEnabledSubtitleLanguages: profile.removeNonEnabledSubtitleLanguages,
 		score: 0
 	};
 }

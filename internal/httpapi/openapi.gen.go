@@ -775,6 +775,33 @@ func (e MediaEpisodeNumberingNumberingScheme) Valid() bool {
 	}
 }
 
+// Defines values for MediaFileDetailVisualState.
+const (
+	MediaFileDetailVisualStateMatching           MediaFileDetailVisualState = "matching"
+	MediaFileDetailVisualStateMissingPlaceholder MediaFileDetailVisualState = "missing_placeholder"
+	MediaFileDetailVisualStatePartial            MediaFileDetailVisualState = "partial"
+	MediaFileDetailVisualStatePendingOperation   MediaFileDetailVisualState = "pending_operation"
+	MediaFileDetailVisualStateUnwanted           MediaFileDetailVisualState = "unwanted"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileDetailVisualState enum.
+func (e MediaFileDetailVisualState) Valid() bool {
+	switch e {
+	case MediaFileDetailVisualStateMatching:
+		return true
+	case MediaFileDetailVisualStateMissingPlaceholder:
+		return true
+	case MediaFileDetailVisualStatePartial:
+		return true
+	case MediaFileDetailVisualStatePendingOperation:
+		return true
+	case MediaFileDetailVisualStateUnwanted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaFileHistoryEntryActorType.
 const (
 	MediaFileHistoryEntryActorTypeJob    MediaFileHistoryEntryActorType = "job"
@@ -874,6 +901,24 @@ func (e MediaFileInfoStatus) Valid() bool {
 	}
 }
 
+// Defines values for MediaFileMissingTrackType.
+const (
+	MediaFileMissingTrackTypeAudio    MediaFileMissingTrackType = "audio"
+	MediaFileMissingTrackTypeSubtitle MediaFileMissingTrackType = "subtitle"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileMissingTrackType enum.
+func (e MediaFileMissingTrackType) Valid() bool {
+	switch e {
+	case MediaFileMissingTrackTypeAudio:
+		return true
+	case MediaFileMissingTrackTypeSubtitle:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MediaFileOtherFileStatus.
 const (
 	MediaFileOtherFileStatusAvailable MediaFileOtherFileStatus = "available"
@@ -964,6 +1009,33 @@ func (e MediaFilePreviewMode) Valid() bool {
 	case Remux:
 		return true
 	case Transcode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MediaFileRequirementState.
+const (
+	MediaFileRequirementStateIgnored   MediaFileRequirementState = "ignored"
+	MediaFileRequirementStateMissing   MediaFileRequirementState = "missing"
+	MediaFileRequirementStatePartial   MediaFileRequirementState = "partial"
+	MediaFileRequirementStatePending   MediaFileRequirementState = "pending"
+	MediaFileRequirementStateSatisfied MediaFileRequirementState = "satisfied"
+)
+
+// Valid indicates whether the value is a known member of the MediaFileRequirementState enum.
+func (e MediaFileRequirementState) Valid() bool {
+	switch e {
+	case MediaFileRequirementStateIgnored:
+		return true
+	case MediaFileRequirementStateMissing:
+		return true
+	case MediaFileRequirementStatePartial:
+		return true
+	case MediaFileRequirementStatePending:
+		return true
+	case MediaFileRequirementStateSatisfied:
 		return true
 	default:
 		return false
@@ -3350,6 +3422,17 @@ type MediaFileDeleteRequest struct {
 	Path string `json:"path"`
 }
 
+// MediaFileDetailState defines model for MediaFileDetailState.
+type MediaFileDetailState struct {
+	Details        []string                   `json:"details"`
+	OperationLabel *string                    `json:"operationLabel,omitempty"`
+	StatusLabel    string                     `json:"statusLabel"`
+	VisualState    MediaFileDetailVisualState `json:"visualState"`
+}
+
+// MediaFileDetailVisualState defines model for MediaFileDetailVisualState.
+type MediaFileDetailVisualState string
+
 // MediaFileHistoryEntry defines model for MediaFileHistoryEntry.
 type MediaFileHistoryEntry struct {
 	ActorId         *string                        `json:"actorId,omitempty"`
@@ -3384,8 +3467,10 @@ type MediaFileHistoryResponse struct {
 // MediaFileInfo defines model for MediaFileInfo.
 type MediaFileInfo struct {
 	Chapters             *[]MediaFileChapter            `json:"chapters,omitempty"`
+	MissingTracks        *[]MediaFileMissingTrack       `json:"missingTracks,omitempty"`
 	OtherFiles           *[]MediaFileOtherFile          `json:"otherFiles,omitempty"`
 	Path                 string                         `json:"path"`
+	Requirements         *MediaFileRequirementSummary   `json:"requirements,omitempty"`
 	Rollup               *MediaRollupSummary            `json:"rollup,omitempty"`
 	SizeBytes            *int64                         `json:"sizeBytes,omitempty"`
 	Status               MediaFileInfoStatus            `json:"status"`
@@ -3397,10 +3482,23 @@ type MediaFileInfo struct {
 // MediaFileInfoStatus defines model for MediaFileInfo.Status.
 type MediaFileInfoStatus string
 
+// MediaFileMissingTrack defines model for MediaFileMissingTrack.
+type MediaFileMissingTrack struct {
+	Description string                    `json:"description"`
+	Key         string                    `json:"key"`
+	Language    string                    `json:"language"`
+	State       MediaFileDetailState      `json:"state"`
+	Type        MediaFileMissingTrackType `json:"type"`
+}
+
+// MediaFileMissingTrackType defines model for MediaFileMissingTrack.Type.
+type MediaFileMissingTrackType string
+
 // MediaFileOtherFile defines model for MediaFileOtherFile.
 type MediaFileOtherFile struct {
 	Language *string                  `json:"language,omitempty"`
 	Path     string                   `json:"path"`
+	State    *MediaFileDetailState    `json:"state,omitempty"`
 	Status   MediaFileOtherFileStatus `json:"status"`
 	Type     MediaFileOtherFileType   `json:"type"`
 }
@@ -3437,6 +3535,23 @@ type MediaFilePreviewInfo struct {
 // MediaFilePreviewMode defines model for MediaFilePreviewMode.
 type MediaFilePreviewMode string
 
+// MediaFileRequirementState defines model for MediaFileRequirementState.
+type MediaFileRequirementState string
+
+// MediaFileRequirementStatus defines model for MediaFileRequirementStatus.
+type MediaFileRequirementStatus struct {
+	Details []string                  `json:"details"`
+	Label   string                    `json:"label"`
+	State   MediaFileRequirementState `json:"state"`
+}
+
+// MediaFileRequirementSummary defines model for MediaFileRequirementSummary.
+type MediaFileRequirementSummary struct {
+	Audio     MediaFileRequirementStatus `json:"audio"`
+	Subtitles MediaFileRequirementStatus `json:"subtitles"`
+	Video     MediaFileRequirementStatus `json:"video"`
+}
+
 // MediaFileSubtitleSatisfaction defines model for MediaFileSubtitleSatisfaction.
 type MediaFileSubtitleSatisfaction struct {
 	MatchedLanguages []string                           `json:"matchedLanguages"`
@@ -3462,6 +3577,7 @@ type MediaFileTrack struct {
 	PixelFormat   *string                   `json:"pixelFormat,omitempty"`
 	Profile       *string                   `json:"profile,omitempty"`
 	Provenance    *MediaFileTrackProvenance `json:"provenance,omitempty"`
+	State         *MediaFileDetailState     `json:"state,omitempty"`
 	Title         *string                   `json:"title,omitempty"`
 	Type          MediaFileTrackType        `json:"type"`
 	Width         *int32                    `json:"width,omitempty"`

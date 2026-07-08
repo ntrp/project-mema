@@ -23,6 +23,7 @@ export function missingRow(
 		tracks: [],
 		chapters: [],
 		otherFiles: [],
+		missingTracks: [],
 		externalSubtitles: [],
 		subtitleSatisfaction: {
 			state: 'missing',
@@ -45,12 +46,6 @@ export function missingRow(
 			reasons: ['File is missing']
 		},
 		upgrade: { state: 'missing', label: 'Missing', reasons: ['File is missing'] },
-		expectedAudioTargets: [],
-		expectedLanguages: [],
-		expectedRequiredLanguages: [],
-		expectedSubtitleLanguages: [],
-		removeNonEnabledLanguages: false,
-		removeNonEnabledSubtitleLanguages: false,
 		score: 0
 	};
 }

@@ -65,12 +65,24 @@ func hydrateMediaItemProfile(
 	if err != nil {
 		return item, err
 	}
-	targets, err := loadMediaProfileSubtitleTargets(ctx, q, *item.QualityProfileID)
+	videoTarget, err := loadMediaProfileVideoTarget(ctx, q, *item.QualityProfileID)
 	if err != nil {
 		return item, err
 	}
-	item.SubtitleTargets = targets
+	audioTargets, err := loadMediaProfileAudioTargets(ctx, q, *item.QualityProfileID)
+	if err != nil {
+		return item, err
+	}
+	subtitleTargets, err := loadMediaProfileSubtitleTargets(ctx, q, *item.QualityProfileID)
+	if err != nil {
+		return item, err
+	}
+	item.VideoTarget = videoTarget
+	item.AudioTargets = audioTargets
+	item.SubtitleTargets = subtitleTargets
 	item.SubtitleMode = profile.SubtitleMode
+	item.RemoveUnwantedAudio = profile.RemoveUnwantedAudio
+	item.RemoveUnwantedSubtitles = profile.RemoveUnwantedSubtitles
 	item.AllowSubtitleReleaseFallback = profile.AllowSubtitleReleaseFallback
 	return item, nil
 }

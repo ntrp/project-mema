@@ -83,7 +83,7 @@
 	function openSubtitleSearch(row: MediaFileRow, languageId?: string) {
 		subtitleSearch = {
 			row,
-			languageId: languageId ?? row.expectedSubtitleLanguages[0] ?? 'english'
+			languageId: languageId ?? row.subtitleSatisfaction?.wantedLanguages[0] ?? 'english'
 		};
 	}
 </script>

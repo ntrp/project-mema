@@ -6234,6 +6234,12 @@ components:
             $ref: "#/components/schemas/MediaFileOtherFile"
         subtitleSatisfaction:
           $ref: "#/components/schemas/MediaFileSubtitleSatisfaction"
+        requirements:
+          $ref: "#/components/schemas/MediaFileRequirementSummary"
+        missingTracks:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaFileMissingTrack"
         rollup:
           $ref: "#/components/schemas/MediaRollupSummary"
         targetSatisfaction:
@@ -6254,6 +6260,8 @@ components:
           $ref: "#/components/schemas/MediaFileOtherFileStatus"
         language:
           type: string
+        state:
+          $ref: "#/components/schemas/MediaFileDetailState"
     MediaFileOtherFileType:
       type: string
       enum:
@@ -6272,6 +6280,96 @@ components:
       x-enum-varnames:
         - MediaFileOtherFileStatusAvailable
         - MediaFileOtherFileStatusMissing
+    MediaFileDetailVisualState:
+      type: string
+      enum:
+        - matching
+        - partial
+        - unwanted
+        - pending_operation
+        - missing_placeholder
+    MediaFileDetailState:
+      type: object
+      additionalProperties: false
+      required:
+        - visualState
+        - statusLabel
+        - details
+      properties:
+        visualState:
+          $ref: "#/components/schemas/MediaFileDetailVisualState"
+        statusLabel:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+        operationLabel:
+          type: string
+    MediaFileMissingTrack:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - type
+        - language
+        - description
+        - state
+      properties:
+        key:
+          type: string
+        type:
+          type: string
+          enum:
+            - audio
+            - subtitle
+          x-enum-varnames:
+            - MediaFileMissingTrackTypeAudio
+            - MediaFileMissingTrackTypeSubtitle
+        language:
+          type: string
+        description:
+          type: string
+        state:
+          $ref: "#/components/schemas/MediaFileDetailState"
+    MediaFileRequirementState:
+      type: string
+      enum:
+        - ignored
+        - missing
+        - partial
+        - pending
+        - satisfied
+    MediaFileRequirementStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - state
+        - label
+        - details
+      properties:
+        state:
+          $ref: "#/components/schemas/MediaFileRequirementState"
+        label:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+    MediaFileRequirementSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - video
+        - audio
+        - subtitles
+      properties:
+        video:
+          $ref: "#/components/schemas/MediaFileRequirementStatus"
+        audio:
+          $ref: "#/components/schemas/MediaFileRequirementStatus"
+        subtitles:
+          $ref: "#/components/schemas/MediaFileRequirementStatus"
     MediaFileSubtitleSatisfaction:
       type: object
       additionalProperties: false
@@ -7062,6 +7160,8 @@ components:
           type: string
         bitRate:
           type: string
+        state:
+          $ref: "#/components/schemas/MediaFileDetailState"
         provenance:
           $ref: "#/components/schemas/MediaFileTrackProvenance"
     MediaFileTrackProvenance:

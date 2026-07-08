@@ -3,15 +3,6 @@ import type {
 	MediaFileDetailRow,
 	TrackDeleteRequest
 } from '$lib/components/app/media/files/mediaFileDetailRows';
-import { relativePath } from '$lib/components/app/media/files/mediaFilePath';
-import {
-	rowsWithMissingAudio,
-	rowsWithMissingSubtitles
-} from '$lib/components/app/media/files/details/mediaFileMissingRows';
-import {
-	externalSubtitleVisualState,
-	trackVisualState
-} from '$lib/components/app/media/files/details/mediaFileVisualStates';
 import { displayLanguage } from '$lib/settings/languageDisplay';
 
 type MediaFileTrack = MediaFileRow['tracks'][number];
@@ -52,7 +43,6 @@ export function fileChapterSummaryRow(row: MediaFileRow): MediaFileDetailRow | u
 }
 
 function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): MediaFileDetailRow {
-	const visual = trackVisualState(row, track);
 	return {
 		key: `${track.type}-${track.index ?? index}`,
 		trackNumber: track.index === undefined ? String(index + 1) : String(track.index),
@@ -60,37 +50,37 @@ function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): Medi
 		language: displayLanguage(track.language),
 		description: trackDescription(row, track),
 		provenance: track.provenance,
-		...visual,
-		unwanted: visual.visualState === 'unwanted',
+		...track.state,
+		missing: track.state?.visualState === 'missing_placeholder',
+		unwanted: track.state?.visualState === 'unwanted',
 		deleteRequest: trackDeleteRequest(track)
 	};
 }
 
 function trackRowsWithMissingTargets(row: MediaFileRow): MediaFileDetailRow[] {
-	const rows = [
-		...row.tracks.map((track, index) => trackRow(row, track, index)),
-		...externalSubtitleTrackRows(row)
+	const trackRows = row.tracks.map((track, index) => trackRow(row, track, index));
+	const audioMissing = missingTrackRows(row, 'audio');
+	const subtitleMissing = missingTrackRows(row, 'subtitle');
+	return [
+		...trackRows.filter((track) => track.type === 'video'),
+		...trackRows.filter((track) => track.type === 'audio'),
+		...audioMissing,
+		...trackRows.filter((track) => track.type === 'subtitle'),
+		...subtitleMissing
 	];
-	return rowsWithMissingSubtitles(row, rowsWithMissingAudio(row, rows));
 }
 
-function externalSubtitleTrackRows(row: MediaFileRow): MediaFileDetailRow[] {
-	return (row.externalSubtitles ?? []).map((subtitle) => {
-		const visual = externalSubtitleVisualState(row, subtitle.languageId);
-		return {
-			key: `external-subtitle-${subtitle.id}`,
-			trackNumber: '-',
-			type: 'subtitle' as const,
-			language: displayLanguage(subtitle.languageId),
-			description: compactParts([
-				'External subtitle',
-				subtitle.format.toUpperCase(),
-				relativePath(row.path ? row.path.replace(/[^/]+$/, '') : undefined, subtitle.filePath)
-			]),
-			...visual,
-			unwanted: visual.visualState === 'unwanted'
-		};
-	});
+function missingTrackRows(row: MediaFileRow, type: 'audio' | 'subtitle'): MediaFileDetailRow[] {
+	return (row.missingTracks ?? []).filter((track) => track.type === type).map((track) => ({
+		key: track.key,
+		trackNumber: '-',
+		type: track.type,
+		language: displayLanguage(track.language),
+		description: track.description,
+		...track.state,
+		missing: true,
+		unwanted: false
+	}));
 }
 
 function trackDeleteRequest(track: MediaFileTrack): TrackDeleteRequest | undefined {

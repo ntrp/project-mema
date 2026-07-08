@@ -3226,6 +3226,8 @@ export interface components {
 			chapters?: components['schemas']['MediaFileChapter'][];
 			otherFiles?: components['schemas']['MediaFileOtherFile'][];
 			subtitleSatisfaction?: components['schemas']['MediaFileSubtitleSatisfaction'];
+			requirements?: components['schemas']['MediaFileRequirementSummary'];
+			missingTracks?: components['schemas']['MediaFileMissingTrack'][];
 			rollup?: components['schemas']['MediaRollupSummary'];
 			targetSatisfaction?: components['schemas']['TargetSatisfactionSummary'];
 		};
@@ -3234,11 +3236,45 @@ export interface components {
 			path: string;
 			status: components['schemas']['MediaFileOtherFileStatus'];
 			language?: string;
+			state?: components['schemas']['MediaFileDetailState'];
 		};
 		/** @enum {string} */
 		MediaFileOtherFileType: 'subtitle' | 'metadata' | 'unknown';
 		/** @enum {string} */
 		MediaFileOtherFileStatus: 'available' | 'missing';
+		/** @enum {string} */
+		MediaFileDetailVisualState:
+			| 'matching'
+			| 'partial'
+			| 'unwanted'
+			| 'pending_operation'
+			| 'missing_placeholder';
+		MediaFileDetailState: {
+			visualState: components['schemas']['MediaFileDetailVisualState'];
+			statusLabel: string;
+			details: string[];
+			operationLabel?: string;
+		};
+		MediaFileMissingTrack: {
+			key: string;
+			/** @enum {string} */
+			type: 'audio' | 'subtitle';
+			language: string;
+			description: string;
+			state: components['schemas']['MediaFileDetailState'];
+		};
+		/** @enum {string} */
+		MediaFileRequirementState: 'ignored' | 'missing' | 'partial' | 'pending' | 'satisfied';
+		MediaFileRequirementStatus: {
+			state: components['schemas']['MediaFileRequirementState'];
+			label: string;
+			details: string[];
+		};
+		MediaFileRequirementSummary: {
+			video: components['schemas']['MediaFileRequirementStatus'];
+			audio: components['schemas']['MediaFileRequirementStatus'];
+			subtitles: components['schemas']['MediaFileRequirementStatus'];
+		};
 		MediaFileSubtitleSatisfaction: {
 			/** @enum {string} */
 			state: 'satisfied' | 'missing' | 'ignored';
@@ -3556,6 +3592,7 @@ export interface components {
 			channels?: number;
 			channelLayout?: string;
 			bitRate?: string;
+			state?: components['schemas']['MediaFileDetailState'];
 			provenance?: components['schemas']['MediaFileTrackProvenance'];
 		};
 		MediaFileTrackProvenance: {

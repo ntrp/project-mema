@@ -57,6 +57,30 @@ func TestImportLibraryScanItemRecordsOriginalFileNameProvenance(t *testing.T) {
 	}
 }
 
+func TestCreateLibraryScanCanonicalizesItemPath(t *testing.T) {
+	ctx, store := testDBStore(t)
+	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(folder.Path, "Nested", "..", "Linked.Movie.2026.mkv")
+
+	scan, err := store.CreateLibraryScan(ctx, folder, []LibraryScanItemInput{{
+		Path:              path,
+		FileName:          "stale-name.mkv",
+		DetectedTitle:     "Linked Movie",
+		DetectedMediaKind: "movie",
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := filepath.Join(folder.Path, "Linked.Movie.2026.mkv")
+	if scan.Items[0].Path != expected || scan.Items[0].FileName != filepath.Base(expected) {
+		t.Fatalf("scan item path = %q, file name = %q", scan.Items[0].Path, scan.Items[0].FileName)
+	}
+}
+
 func TestResetLibraryScanItemImportClearsLinkedLibraryRows(t *testing.T) {
 	ctx, store := testDBStore(t)
 	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")

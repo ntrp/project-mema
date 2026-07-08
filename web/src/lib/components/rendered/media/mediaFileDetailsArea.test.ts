@@ -49,13 +49,12 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Track provenance');
 		expect(body.match(/aria-label="Track provenance"/g) ?? []).toHaveLength(4);
 		expect(body).toContain('Subtitle track');
-		expect(body).toContain('Japanese');
-		expect(body).toContain('Missing expected subtitle track');
 		expect(body).toContain('Signs');
 		expect(body).toContain('Chapter');
 		expect(body).toContain('2-21');
 		expect(body).toContain('20 chapters');
 		expect(body.match(/Delete embedded track/g) ?? []).toHaveLength(4);
+		expect(body).not.toContain('Scenario.Movie.2026.1080p.japanese.srt');
 		expect(body).not.toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
@@ -70,11 +69,19 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		const { body } = renderWithTooltip(MediaFileDetailsAccordion, {
 			row: {
 				...detailedFileRow(),
-				expectedAudioTargets: [
-					{ languageId: 'italian', targetCodec: 'aac', targetChannels: ['2.0'] }
-				],
-				expectedLanguages: ['italian'],
-				expectedRequiredLanguages: []
+				missingTracks: [
+					{
+						key: 'missing-audio-italian',
+						type: 'audio' as const,
+						language: 'italian',
+						description: 'Missing expected audio track',
+						state: {
+							visualState: 'missing_placeholder' as const,
+							statusLabel: 'Missing',
+							details: ['Missing expected audio: italian']
+						}
+					}
+				]
 			}
 		});
 
@@ -86,7 +93,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('bg-destructive/10 text-destructive');
 	});
 
-	it('renders other files with path, type, and status', () => {
+	it('renders other files with path, type, and subtitle state badges', () => {
 		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
 			row: detailedFileRow(),
 			canManage: true,
@@ -96,7 +103,6 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Other files');
 		expect(body).toContain('Type');
 		expect(body).toContain('Language');
-		expect(body).toContain('Status');
 		expect(body).toContain('Subtitle');
 		expect(body).toContain('Metadata');
 		expect(body).toContain('Unknown');
@@ -105,10 +111,10 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('poster.jpg');
 		expect(body).toContain('notes.bin');
 		expect(body).toContain('Missing');
-		expect(otherFilesOrder(body)).toEqual(['Other files', 'Type', 'Language', 'Status', 'Actions']);
+		expect(body).toContain('bg-destructive/10 text-destructive');
+		expect(otherFilesOrder(body)).toEqual(['Other files', 'Type', 'Language', 'Actions']);
 		expect(body.match(/>Type</g) ?? []).toHaveLength(1);
 		expect(body.match(/>Language</g) ?? []).toHaveLength(1);
-		expect(body.match(/>Status</g) ?? []).toHaveLength(1);
 		expect(body.match(/>Actions</g) ?? []).toHaveLength(1);
 		expect(body.match(/Delete other file/g) ?? []).toHaveLength(2);
 	});
@@ -128,14 +134,17 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
 			row: {
 				...detailedFileRow(),
-				removeNonEnabledSubtitleLanguages: false,
-				expectedSubtitleLanguages: ['english'],
 				otherFiles: [
 					{
 						type: 'subtitle' as const,
 						path: '/library/Scenario Movie/Scenario.Movie.2026.1080p.spanish.srt',
 						status: 'available' as const,
-						language: 'spanish'
+						language: 'spanish',
+						state: {
+							visualState: 'unwanted' as const,
+							statusLabel: 'Unwanted',
+							details: ['Subtitle language is outside enabled profile targets.']
+						}
 					}
 				]
 			},
@@ -144,7 +153,8 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		});
 
 		expect(body).toContain('Spanish');
-		expect(body).toContain('bg-secondary/40');
+		expect(body).toContain('bg-yellow-500/10 text-yellow-800 dark:text-yellow-300');
+		expect(body).toContain('Unwanted');
 	});
 
 	it('formats all track provenance fields for the tooltip', () => {
@@ -170,16 +180,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		const { body } = renderWithTooltip(MediaFileSummary, {
 			mediaItemId: 'media-1',
 			mediaTitle: 'Scenario Movie',
-			row: {
-				...detailedFileRow(),
-				subtitleSatisfaction: {
-					state: 'satisfied' as const,
-					mode: 'mixed' as const,
-					wantedLanguages: ['english'],
-					matchedLanguages: ['english'],
-					missingLanguages: []
-				}
-			},
+			row: detailedFileRow(),
 			canManage: true,
 			searching: false,
 			fileLabel: 'Movie file',
@@ -190,34 +191,33 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		});
 
 		expect(body).toContain('Subtitles');
-		expect(body).toContain('Ok');
 		expect(body).toContain('Audio');
 		expect(body).toContain('Other files');
 		expect(body).toContain('poster.jpg');
 		expect(body).toContain('Missing');
+		expect(body).toContain('text-emerald-600');
+		expect(body).toContain('text-orange-500');
+		expect(body).toContain('text-destructive');
+		expect(body).toContain('Video requirements met');
 		expect(body).toContain('Missing required audio: German');
+		expect(body).toContain('Missing subtitles: Japanese');
+		expect(body).not.toContain('>Video</strong>');
+		expect(body).not.toContain('>Audio</strong>');
+		expect(body).not.toContain('>Subtitles</strong>');
 		expect(body).not.toContain('Other File');
 		expect(body).not.toContain('Formats');
-		expect(summaryOrder(body)).toEqual([
-			'File',
-			'Audio',
-			'Subtitles',
-			'Size',
-			'Quality',
-			'Score',
-			'Status'
-		]);
+		expect(summaryOrder(body)).toEqual(['File', 'Size', 'Quality', 'Score', 'Status']);
 	});
 });
 
 function summaryOrder(body: string) {
-	return ['File', 'Audio', 'Subtitles', 'Size', 'Quality', 'Score', 'Status'].sort(
+	return ['File', 'Size', 'Quality', 'Score', 'Status'].sort(
 		(left, right) => body.indexOf(left) - body.indexOf(right)
 	);
 }
 
 function otherFilesOrder(body: string) {
-	return ['Other files', 'Type', 'Language', 'Status', 'Actions'].sort(
+	return ['Other files', 'Type', 'Language', 'Actions'].sort(
 		(left, right) => body.indexOf(left) - body.indexOf(right)
 	);
 }
@@ -236,15 +236,20 @@ function detailedFileRow(): MediaFileRow {
 		quality: '1080p',
 		formats: ['WEB-DL'],
 		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
-		expectedAudioTargets: [],
-		expectedLanguages: ['english', 'german'],
-		expectedRequiredLanguages: ['german'],
-		expectedSubtitleLanguages: ['english'],
-		removeNonEnabledLanguages: true,
-		removeNonEnabledSubtitleLanguages: true,
 		score: 120,
 		tracks: [
-			{ type: 'video', index: 0, codec: 'h264', width: 1920, height: 1080 },
+			{
+				type: 'video',
+				index: 0,
+				codec: 'h264',
+				width: 1920,
+				height: 1080,
+				state: {
+					visualState: 'matching',
+					statusLabel: 'Matching',
+					details: ['Video track satisfies the profile target.']
+				}
+			},
 			{
 				type: 'audio',
 				index: 1,
@@ -265,10 +270,37 @@ function detailedFileRow(): MediaFileRow {
 					transformationChain: [{ kind: 'componentAssembly', inputPath: '/downloads/audio.mka' }],
 					createdAt: '2026-01-02T03:04:05Z',
 					updatedAt: '2026-01-02T04:05:06Z'
+				},
+				state: {
+					visualState: 'matching',
+					statusLabel: 'Matching',
+					details: ['Audio track satisfies a profile target.']
 				}
 			},
-			{ type: 'subtitle', index: 2, codec: 'SRT', language: 'eng', title: 'Signs' },
-			{ type: 'subtitle', index: 3, codec: 'SRT', language: 'spa', title: 'Spanish' }
+			{
+				type: 'subtitle',
+				index: 2,
+				codec: 'SRT',
+				language: 'eng',
+				title: 'Signs',
+				state: {
+					visualState: 'matching',
+					statusLabel: 'Matching',
+					details: ['Embedded subtitle satisfies the subtitle target.']
+				}
+			},
+			{
+				type: 'subtitle',
+				index: 3,
+				codec: 'SRT',
+				language: 'spa',
+				title: 'Spanish',
+				state: {
+					visualState: 'unwanted',
+					statusLabel: 'Unwanted',
+					details: ['Subtitle language is outside enabled profile targets.']
+				}
+			}
 		],
 		chapters: Array.from({ length: 20 }, (_, index) => ({
 			index: index + 1,
@@ -281,7 +313,12 @@ function detailedFileRow(): MediaFileRow {
 				type: 'subtitle',
 				path: '/library/Scenario Movie/Scenario.Movie.2026.1080p.japanese.srt',
 				status: 'missing',
-				language: 'japanese'
+				language: 'japanese',
+				state: {
+					visualState: 'missing_placeholder',
+					statusLabel: 'Missing',
+					details: ['Missing expected external subtitle: japanese']
+				}
 			},
 			{
 				type: 'metadata',
@@ -300,6 +337,24 @@ function detailedFileRow(): MediaFileRow {
 			wantedLanguages: ['english', 'japanese'],
 			matchedLanguages: ['english'],
 			missingLanguages: ['japanese']
+		},
+		missingTracks: [
+			{
+				key: 'missing-audio-german',
+				type: 'audio',
+				language: 'german',
+				description: 'Missing expected audio track',
+				state: {
+					visualState: 'missing_placeholder',
+					statusLabel: 'Missing',
+					details: ['Missing expected audio: german']
+				}
+			}
+		],
+		requirements: {
+			video: { state: 'satisfied', label: 'Ok', details: ['Video requirements met'] },
+			audio: { state: 'missing', label: 'Missing', details: ['Missing required audio: German'] },
+			subtitles: { state: 'partial', label: 'Partial', details: ['Missing subtitles: Japanese'] }
 		}
 	};
 }

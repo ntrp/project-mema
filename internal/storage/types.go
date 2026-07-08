@@ -30,8 +30,12 @@ type MediaItem struct {
 	MediaFolderPath              *string
 	FilePaths                    []string
 	MetadataFilePaths            []string
+	VideoTarget                  MediaProfileVideoTarget
+	AudioTargets                 []MediaProfileAudioTarget
 	SubtitleTargets              []MediaProfileSubtitleTarget
 	SubtitleMode                 string
+	RemoveUnwantedAudio          bool
+	RemoveUnwantedSubtitles      bool
 	AllowSubtitleReleaseFallback bool
 	ExternalSubtitles            []MediaItemSubtitle
 	Sidecars                     []MediaItemSidecar

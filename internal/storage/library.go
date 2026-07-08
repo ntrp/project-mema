@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
@@ -189,6 +190,8 @@ func (s *SettingsStore) CreateLibraryScan(ctx context.Context, folder LibraryFol
 	}
 
 	for _, input := range inputs {
+		input.Path = absoluteCleanPathOrClean(input.Path)
+		input.FileName = filepath.Base(input.Path)
 		manualCount++
 		if err := q.AddLibraryScanItem(ctx, storagegen.AddLibraryScanItemParams{
 			ID:                         uuid.New(),
@@ -255,7 +258,8 @@ func (s *SettingsStore) ActiveImportedPathsForLibraryFolder(ctx context.Context,
 	}
 	result := make(map[string]ActiveImportedPath, len(rows))
 	for _, row := range rows {
-		result[row.Path] = ActiveImportedPath{
+		path := absoluteCleanPathOrClean(row.Path)
+		result[path] = ActiveImportedPath{
 			MediaItemID:   row.MediaItemID,
 			MatchedTitle:  row.MatchedTitle,
 			MatchedYear:   int4Ptr(row.MatchedYear),

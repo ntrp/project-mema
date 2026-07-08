@@ -10,9 +10,9 @@ import (
 
 func TestMediaFileSubtitleSatisfactionUsesEmbeddedTracks(t *testing.T) {
 	result := mediaFileSubtitleSatisfaction([]MediaFileTrack{
-		{Type: Subtitle, Language: stringPtr("eng")},
+		{Type: Subtitle, Language: stringPtr("eng"), Codec: stringPtr("srt")},
 	}, []storage.MediaProfileSubtitleTarget{
-		{LanguageID: "english"},
+		{LanguageID: "english", Formats: []string{"srt"}},
 	}, "mixed", nil)
 
 	if result.State != MediaFileSubtitleSatisfactionStateSatisfied {
@@ -20,6 +20,21 @@ func TestMediaFileSubtitleSatisfactionUsesEmbeddedTracks(t *testing.T) {
 	}
 	if len(result.MatchedLanguages) != 1 || result.MatchedLanguages[0] != "english" {
 		t.Fatalf("expected english match, got %#v", result.MatchedLanguages)
+	}
+}
+
+func TestMediaFileSubtitleSatisfactionRejectsWrongEmbeddedFormat(t *testing.T) {
+	result := mediaFileSubtitleSatisfaction([]MediaFileTrack{
+		{Type: Subtitle, Language: stringPtr("eng"), Codec: stringPtr("subrip")},
+	}, []storage.MediaProfileSubtitleTarget{
+		{LanguageID: "english", Formats: []string{"srt"}},
+	}, "mixed", nil)
+
+	if result.State != MediaFileSubtitleSatisfactionStateMissing {
+		t.Fatalf("expected missing subtitle state, got %#v", result)
+	}
+	if len(result.MissingLanguages) != 1 || result.MissingLanguages[0] != "english" {
+		t.Fatalf("expected english missing, got %#v", result.MissingLanguages)
 	}
 }
 

@@ -63,6 +63,19 @@ func TestSCNMedia010MediaFilesInRootDiscoversOnlyVisibleMediaFiles(t *testing.T)
 	}
 }
 
+func TestAbsoluteCleanPathsDeduplicatesAfterNormalization(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, "Movie.mkv")
+
+	paths := absoluteCleanPaths([]string{
+		path,
+		filepath.Join(root, "Subdir", "..", "Movie.mkv"),
+		"",
+	})
+
+	expectStrings(t, paths, []string{path})
+}
+
 func writeTestFile(t *testing.T, path string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

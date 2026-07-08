@@ -78,18 +78,16 @@ func TestSCNMedia001MediaFileInfoResponsesExposeExistingFileSizes(t *testing.T) 
 	}
 	missingPoster := filepath.Join(dir, "Scenario.Movie.2026-fanart.jpg")
 
-	files := mediaFileInfoResponses(
-		[]string{filePath, missingPath},
-		[]storage.MediaProfileSubtitleTarget{{LanguageID: "german", Formats: []string{"srt"}}},
-		"external",
-		nil,
-		nil,
-		[]storage.MediaItemSidecar{{
+	files := mediaFileInfoResponses(storage.MediaItem{
+		FilePaths:       []string{filePath, missingPath},
+		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{LanguageID: "german", Formats: []string{"srt"}}},
+		SubtitleMode:    "external",
+		Sidecars: []storage.MediaItemSidecar{{
 			MediaFilePath: filePath,
 			FilePath:      missingPoster,
 			SidecarType:   storage.MediaSidecarMetadata,
 		}},
-	)
+	})
 
 	if files == nil || len(*files) != 2 {
 		t.Fatalf("files = %#v", files)

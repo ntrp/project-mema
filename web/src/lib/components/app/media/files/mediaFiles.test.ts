@@ -55,12 +55,7 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 				state: 'upgradeable',
 				label: 'Upgradeable',
 				reasons: ['Upgrade target is bluray-1080p']
-			},
-			expectedLanguages: ['english'],
-			expectedRequiredLanguages: ['english'],
-			expectedSubtitleLanguages: ['english'],
-			removeNonEnabledLanguages: true,
-			removeNonEnabledSubtitleLanguages: true
+			}
 		});
 		expect(row.tracks).toHaveLength(1);
 		expect(row.chapters).toHaveLength(1);

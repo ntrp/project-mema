@@ -116,11 +116,6 @@ describe('media file detail rows (SCN-MEDIA-004)', () => {
 	it('describes tracks, chapters, unwanted streams, and missing expected languages', () => {
 		const rows = fileDetailRows({
 			quality: 'HD-1080p',
-			expectedLanguages: ['English', 'German'],
-			expectedRequiredLanguages: ['German'],
-			expectedSubtitleLanguages: ['English'],
-			removeNonEnabledLanguages: true,
-			removeNonEnabledSubtitleLanguages: true,
 			tracks: [
 				{
 					index: 0,
@@ -142,8 +137,41 @@ describe('media file detail rows (SCN-MEDIA-004)', () => {
 					bitRate: '640000',
 					title: 'Main'
 				},
-				{ index: 2, type: 'audio', language: 'spa', codec: 'aac' },
-				{ index: 3, type: 'subtitle', language: 'spa', codec: 'srt' }
+				{
+					index: 2,
+					type: 'audio',
+					language: 'spa',
+					codec: 'aac',
+					state: {
+						visualState: 'unwanted',
+						statusLabel: 'Unwanted',
+						details: ['Audio language is outside enabled profile targets.']
+					}
+				},
+				{
+					index: 3,
+					type: 'subtitle',
+					language: 'spa',
+					codec: 'srt',
+					state: {
+						visualState: 'unwanted',
+						statusLabel: 'Unwanted',
+						details: ['Subtitle language is outside enabled profile targets.']
+					}
+				}
+			],
+			missingTracks: [
+				{
+					key: 'missing-audio-de',
+					type: 'audio',
+					language: 'German',
+					description: 'Missing expected audio track',
+					state: {
+						visualState: 'missing_placeholder',
+						statusLabel: 'Missing',
+						details: ['Missing expected audio: German']
+					}
+				}
 			],
 			chapters: [{ index: 0, title: 'Opening', startTime: '00:00:00', endTime: '00:01:00' }]
 		} as never);

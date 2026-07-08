@@ -133,12 +133,18 @@ func absoluteStringPtr(value *string) *string {
 }
 
 func absoluteCleanPaths(paths []string) []string {
+	seen := map[string]struct{}{}
 	cleaned := make([]string, 0, len(paths))
 	for _, path := range paths {
 		if strings.TrimSpace(path) == "" {
 			continue
 		}
-		cleaned = append(cleaned, absoluteCleanPathOrClean(path))
+		path = absoluteCleanPathOrClean(path)
+		if _, ok := seen[path]; ok {
+			continue
+		}
+		seen[path] = struct{}{}
+		cleaned = append(cleaned, path)
 	}
 	return cleaned
 }

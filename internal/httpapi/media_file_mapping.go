@@ -10,40 +10,45 @@ import (
 )
 
 func mediaFileInfoResponses(
-	paths []string,
-	subtitleTargets []storage.MediaProfileSubtitleTarget,
-	subtitleMode string,
-	externalSubtitles []storage.MediaItemSubtitle,
-	componentProvenance []storage.MediaComponentProvenance,
-	sidecars []storage.MediaItemSidecar,
+	item storage.MediaItem,
 ) *[]MediaFileInfo {
+	paths := item.FilePaths
 	files := make([]MediaFileInfo, 0, len(paths))
 	for _, path := range paths {
 		file := MediaFileInfo{Path: path, Status: MediaFileInfoStatusMissing}
+		file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(
+			nil,
+			item.SubtitleTargets,
+			item.SubtitleMode,
+			externalSubtitleLanguagesForPath(item.ExternalSubtitles, item.Sidecars, path),
+		)
+		tracks := []MediaFileTrack{}
+		otherFiles := []MediaFileOtherFile{}
 		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
 			file.Status = MediaFileInfoStatusAvailable
 			size := stat.Size()
 			file.SizeBytes = &size
 			probe := delivery.Probe(mediaFileProbePath(path))
-			tracks := mediaFileTracksFromDelivery(probe.Tracks)
+			tracks = mediaFileTracksFromDelivery(probe.Tracks)
 			chapters := mediaFileChaptersFromDelivery(probe.Chapters)
-			hydrateTrackProvenance(path, tracks, componentProvenance)
-			if len(tracks) > 0 {
-				file.Tracks = &tracks
-			}
+			hydrateTrackProvenance(path, tracks, item.ComponentProvenance)
 			if len(chapters) > 0 {
 				file.Chapters = &chapters
 			}
 			file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(
 				tracks,
-				subtitleTargets,
-				subtitleMode,
-				externalSubtitleLanguagesForPath(externalSubtitles, sidecars, path),
+				item.SubtitleTargets,
+				item.SubtitleMode,
+				externalSubtitleLanguagesForPath(item.ExternalSubtitles, item.Sidecars, path),
 			)
-			otherFiles := mediaFileOtherFiles(path, paths, subtitleTargets, subtitleMode, externalSubtitles, sidecars, file.SubtitleSatisfaction)
-			if len(otherFiles) > 0 {
-				file.OtherFiles = &otherFiles
-			}
+			otherFiles = mediaFileOtherFiles(path, paths, item.SubtitleTargets, item.SubtitleMode, item.ExternalSubtitles, item.Sidecars, file.SubtitleSatisfaction)
+		}
+		applyMediaFileRequirementStates(&file, item, tracks, otherFiles)
+		if len(tracks) > 0 {
+			file.Tracks = &tracks
+		}
+		if len(otherFiles) > 0 {
+			file.OtherFiles = &otherFiles
 		}
 		rollup := mediaFileRollupSummary(file.Status)
 		targetSatisfaction := targetSatisfactionSummaryResponse(nil, nil)
@@ -129,11 +134,11 @@ func mediaFileSubtitleMode(value string) MediaProfileSubtitleMode {
 func subtitleTargetSatisfied(
 	target storage.MediaProfileSubtitleTarget,
 	subtitleMode string,
-	embedded map[string]struct{},
+	embedded map[string][]string,
 	external map[string]struct{},
 ) bool {
 	language := languageMatchKey(target.LanguageID)
-	_, embeddedOK := embedded[language]
+	embeddedOK := subtitleFormatsSatisfyTarget(embedded[language], target.Formats)
 	_, externalOK := external[language]
 	switch subtitleMode {
 	case "embedded":
@@ -145,18 +150,35 @@ func subtitleTargetSatisfied(
 	}
 }
 
-func mediaFileSubtitleLanguageSet(tracks []MediaFileTrack) map[string]struct{} {
-	languages := map[string]struct{}{}
+func mediaFileSubtitleLanguageSet(tracks []MediaFileTrack) map[string][]string {
+	languages := map[string][]string{}
 	for _, track := range tracks {
 		if track.Type != Subtitle {
 			continue
 		}
 		language := languageMatchKey(optionalStringValue(track.Language))
 		if language != "" {
-			languages[language] = struct{}{}
+			languages[language] = append(languages[language], strings.ToLower(strings.TrimSpace(optionalStringValue(track.Codec))))
 		}
 	}
 	return languages
+}
+
+func subtitleFormatsSatisfyTarget(candidateFormats []string, targetFormats []string) bool {
+	if len(candidateFormats) == 0 {
+		return false
+	}
+	if len(targetFormats) == 0 {
+		return true
+	}
+	for _, candidate := range candidateFormats {
+		for _, target := range targetFormats {
+			if strings.EqualFold(strings.TrimSpace(candidate), strings.TrimSpace(target)) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func languageSet(values []string) map[string]struct{} {

@@ -65,6 +65,10 @@ func (s *SettingsStore) RescanMediaItemFiles(ctx context.Context, id uuid.UUID) 
 	}); err != nil {
 		return MediaItem{}, err
 	}
+	for index := range existing {
+		existing[index].Path = absoluteCleanPathOrClean(existing[index].Path)
+		existing[index].FileName = filepath.Base(existing[index].Path)
+	}
 	currentPaths := mediaFilePathSet(files)
 	knownPaths := map[string]struct{}{}
 	usedMovedSources := map[uuid.UUID]struct{}{}

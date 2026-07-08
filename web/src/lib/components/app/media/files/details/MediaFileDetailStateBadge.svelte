@@ -5,6 +5,7 @@
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
+	import { unwantedMediaBadgeClass } from './mediaFileVisualClasses';
 	import type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetails';
 
 	interface Props {
@@ -18,7 +19,7 @@
 			'inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[11px] font-medium',
 			row.visualState === 'matching' && 'border-emerald-300 bg-emerald-50 text-emerald-700',
 			row.visualState === 'partial' && 'border-amber-300 bg-amber-50 text-amber-700',
-			row.visualState === 'unwanted' && 'border-secondary bg-secondary text-secondary-foreground',
+			row.visualState === 'unwanted' && unwantedMediaBadgeClass,
 			row.visualState === 'pending_operation' && 'border-sky-300 bg-sky-50 text-sky-700',
 			row.visualState === 'missing_placeholder' &&
 				'border-destructive/40 bg-destructive/10 text-destructive'

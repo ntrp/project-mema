@@ -114,13 +114,8 @@ function playbackRow(): MediaFileRow {
 			{ index: 1, title: 'Middle', startTime: '00:05:00', endTime: '600' }
 		],
 		otherFiles: [],
+		missingTracks: [],
 		upgrade: { state: 'current', label: 'Current', reasons: ['At or above upgrade target'] },
-		expectedAudioTargets: [],
-		expectedLanguages: [],
-		expectedRequiredLanguages: [],
-		expectedSubtitleLanguages: [],
-		removeNonEnabledLanguages: false,
-		removeNonEnabledSubtitleLanguages: false,
 		score: 0
 	};
 }

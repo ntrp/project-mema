@@ -4,8 +4,8 @@ description: Understand profile status, subtitle search, and track actions.
 ---
 
 Media Manager inspects media files after import so you can see what each file
-contains. The file detail area shows video information, audio tracks, subtitle
-tracks, chapters, sidecar files, and compact status badges.
+contains. The file detail area shows backend-computed video, audio, and subtitle
+summary states, plus tracks, chapters, sidecar files, and compact status badges.
 
 Those badges are compared against the selected profile. If a profile wants
 German audio and English subtitles, the file status is judged against those
@@ -13,9 +13,9 @@ targets rather than against a generic idea of what a “good” file is.
 
 ## Audio Status
 
-Audio status checks the profile’s audio targets against the tracks in the file.
-Language is the most important part. Codec, channels, and bitrate matter when
-you configured them.
+Audio status is computed on the backend by checking the profile’s audio targets
+against the tracks in the file. Language is the most important part. Codec,
+channels, and bitrate matter when you configured them.
 
 If audio is marked partial or missing, open the file detail area and compare the
 detected tracks with the selected profile. The file may be perfectly playable
@@ -26,17 +26,20 @@ partial and list the failed requirement in their hover details.
 
 ## Subtitle Status
 
-Subtitle status checks wanted subtitle languages and formats. It also respects
-the subtitle mode from the profile: Embedded, External, or Mixed.
+Subtitle status is computed on the backend from wanted subtitle languages,
+formats, sidecars, embedded tracks, and the subtitle mode from the profile:
+Embedded, External, or Mixed.
 
 When subtitles are missing, use subtitle search from the media page. If a
 subtitle provider is configured, the app can search candidates and attach the
 selected subtitle to the media item.
 
-The subtitle rows reflect subtitle mode immediately. An embedded subtitle can
-show as pending extraction for External mode, while an external sidecar can show
-as pending embedding for Embedded mode. Extra subtitle rows are marked unwanted
-only when the profile settings or subtitle mode make them unwanted.
+The subtitle rows render backend states. An embedded subtitle can show as
+pending extraction for External mode, while an external sidecar can show as
+pending embedding for Embedded mode. A subtitle in the right language but the
+wrong format shows as pending conversion instead of as a missing subtitle. Extra
+subtitle rows are marked unwanted only when the profile settings or subtitle
+mode make them unwanted.
 
 ## Subtitle Providers
 

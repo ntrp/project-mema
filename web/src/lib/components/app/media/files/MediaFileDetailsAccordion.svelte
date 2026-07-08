@@ -8,6 +8,7 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
 	import MediaFileDetailStateBadge from '$lib/components/app/media/files/details/MediaFileDetailStateBadge.svelte';
+	import { unwantedMediaRowClass } from '$lib/components/app/media/files/details/mediaFileVisualClasses';
 	import MediaFileTrackProvenanceIcon from '$lib/components/app/media/files/provenance/MediaFileTrackProvenanceIcon.svelte';
 	import MediaFileTrackTypeIcon from '$lib/components/app/media/files/track-icons/MediaFileTrackTypeIcon.svelte';
 	import {
@@ -88,7 +89,7 @@
 					class={cn(
 						index > 0 && track.type !== rows[index - 1]?.type && 'border-t-4 border-border',
 						track.missing && 'bg-destructive/10 text-destructive',
-						track.unwanted && 'bg-secondary/40',
+						track.unwanted && unwantedMediaRowClass,
 						track.chapterSummary &&
 							'cursor-pointer border-t-4 border-border [&>td]:border-t-4 [&>td]:border-border'
 					)}

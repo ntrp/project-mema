@@ -1,18 +1,12 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
-	import { Badge } from '$lib/components/ui/badge';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
 	import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
 	import MediaFileOtherFilesPanel from '$lib/components/app/media/files/other-files/MediaFileOtherFilesPanel.svelte';
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
-	import MediaFileRequirementBadge from '$lib/components/app/media/files/MediaFileRequirementBadge.svelte';
+	import MediaFileRequirementIcon from '$lib/components/app/media/files/MediaFileRequirementIcon.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
-	import {
-		audioSatisfaction,
-		subtitleSatisfaction
-	} from '$lib/components/app/media/files/mediaFileSummaryStatus';
+	import { fallbackRequirementStatus } from '$lib/components/app/media/files/mediaFileSummaryStatus';
 	import type { MediaFileSummaryProps as Props } from '$lib/components/app/media/file-data/mediaFileComponentTypes';
 
 	let {
@@ -42,13 +36,14 @@
 			activityStatus?.status === 'grabbed' ||
 			activityStatus?.status === 'downloading'
 	);
-	const statusLabel = $derived(activityStatus?.label ?? '-');
-	const audioStatus = $derived(audioSatisfaction(row));
-	const subtitleStatus = $derived(subtitleSatisfaction(row));
-	const upgradeVariant = $derived(row.upgrade.state === 'upgradeable' ? 'secondary' : 'outline');
-	const rollupLabel = $derived(row.rollup?.state ? rollupStateLabel(row.rollup.state) : undefined);
-	const rollupReasons = $derived(
-		row.rollup?.reasons?.length ? row.rollup.reasons : row.upgrade.reasons
+	const videoStatus = $derived(
+		row.requirements?.video ?? fallbackRequirementStatus('Video', row.exists)
+	);
+	const audioStatus = $derived(
+		row.requirements?.audio ?? fallbackRequirementStatus('Audio', row.exists)
+	);
+	const subtitleStatus = $derived(
+		row.requirements?.subtitles ?? fallbackRequirementStatus('Subtitles', row.exists)
 	);
 
 	function toggleDetails() {
@@ -61,13 +56,6 @@
 		if (!row.exists || (event.key !== 'Enter' && event.key !== ' ')) return;
 		event.preventDefault();
 		toggleDetails();
-	}
-
-	function rollupStateLabel(state: string) {
-		return state
-			.split('_')
-			.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-			.join(' ');
 	}
 </script>
 
@@ -83,7 +71,7 @@
 		aria-disabled={!row.exists}
 		aria-expanded={row.exists ? detailsOpen : undefined}
 		class={cn(
-			'relative grid items-start gap-3 p-4 pb-5 lg:grid-cols-[minmax(260px,1fr)_118px_118px_76px_104px_60px_116px_auto]',
+			'relative grid items-start gap-3 p-4 pb-5 lg:grid-cols-[minmax(260px,1fr)_76px_104px_60px_88px_auto]',
 			row.exists &&
 				'cursor-pointer transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-sm focus-visible:border-primary/50 focus-visible:outline-none'
 		)}
@@ -98,14 +86,6 @@
 			<span class="sr-only">{row.exists ? fileLabel : missingLabel}</span>
 		</div>
 		<span class="grid content-start gap-1">
-			<strong class="text-xs font-medium text-muted-foreground uppercase">Audio</strong>
-			<MediaFileRequirementBadge status={audioStatus} />
-		</span>
-		<span class="grid content-start gap-1">
-			<strong class="text-xs font-medium text-muted-foreground uppercase">Subtitles</strong>
-			<MediaFileRequirementBadge status={subtitleStatus} />
-		</span>
-		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Size</strong>
 			<span class="text-sm">{row.size}</span>
 		</span>
@@ -119,31 +99,11 @@
 		</span>
 		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Status</strong>
-			{#if activityStatus}
-				<Badge
-					variant={activityStatus.status === 'failed' ? 'destructive' : 'secondary'}
-					class="justify-self-start"
-				>
-					<RefreshCwIcon aria-hidden="true" />
-					{statusLabel}
-				</Badge>
-			{:else}
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<Badge
-								{...props}
-								variant={upgradeVariant}
-								class="justify-self-start capitalize"
-								aria-label={rollupReasons.join(' ')}
-							>
-								{rollupLabel ?? row.upgrade.label}
-							</Badge>
-						{/snippet}
-					</Tooltip.Trigger>
-					<Tooltip.Content>{rollupReasons.join(', ')}</Tooltip.Content>
-				</Tooltip.Root>
-			{/if}
+			<span class="flex items-center gap-1">
+				<MediaFileRequirementIcon type="video" status={videoStatus} />
+				<MediaFileRequirementIcon type="audio" status={audioStatus} />
+				<MediaFileRequirementIcon type="subtitle" status={subtitleStatus} />
+			</span>
 		</span>
 		<MediaFileSummaryActions
 			{row}

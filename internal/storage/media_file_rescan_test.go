@@ -107,6 +107,50 @@ func TestRescanMediaItemFilesCreatesMovedCandidate(t *testing.T) {
 	requireHistoryOperation(t, ctx, store, item.ID, "moved_candidate")
 }
 
+func TestRescanMediaItemFilesDoesNotDuplicateNormalizedPath(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item := rescanMediaItem(t, ctx, store)
+	cleanPath := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.mkv")
+	rawPath := filepath.Join(*item.MediaFolderPath, "Nested", "..", "Scenario.Movie.2026.mkv")
+	writeRescanFile(t, cleanPath)
+	scanID := uuid.New()
+	if err := storagegen.New(store.pool).CreateImportedFileLibraryScan(ctx, storagegen.CreateImportedFileLibraryScanParams{
+		ID:              scanID,
+		LibraryFolderID: *item.LibraryFolderID,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := storagegen.New(store.pool).CreateImportedFileLibraryScanItem(ctx, storagegen.CreateImportedFileLibraryScanItemParams{
+		ID:                uuid.New(),
+		ScanID:            scanID,
+		Path:              rawPath,
+		FileName:          filepath.Base(rawPath),
+		DetectedTitle:     item.Title,
+		DetectedYear:      int4Value(item.Year),
+		DetectedMediaKind: "movie",
+		MediaItemID:       &item.ID,
+		SeasonID:          nil,
+		EpisodeID:         nil,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	updated, err := store.RescanMediaItemFiles(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(updated.FilePaths) != 1 || updated.FilePaths[0] != cleanPath {
+		t.Fatalf("file paths = %#v, want %#v", updated.FilePaths, []string{cleanPath})
+	}
+	rows, err := storagegen.New(store.pool).ListMediaFileRecordsForItem(ctx, &item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("media file records = %#v", rows)
+	}
+}
+
 func rescanMediaItem(t *testing.T, ctx context.Context, store *SettingsStore) MediaItem {
 	t.Helper()
 	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")

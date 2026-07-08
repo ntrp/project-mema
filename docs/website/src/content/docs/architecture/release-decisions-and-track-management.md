@@ -73,16 +73,20 @@ minimum increment.
 ## File Satisfaction
 
 Media detail pages build `MediaFileRow` values from API media item data and the
-selected profile. Rows combine probed file metadata with profile expectations:
+selected profile. Backend media-file mapping combines probed file metadata with
+profile expectations before the API response is returned:
 
 - `tracks`, `chapters`, and `otherFiles` come from file probing.
 - `subtitleSatisfaction` comes from backend subtitle state.
-- Expected audio targets, subtitle targets, unwanted-track flags, and upgrade
-  settings come from the selected media profile.
+- `requirements` contains backend-computed video, audio, and subtitle summary
+  states for the compact file row.
+- Every track and subtitle sidecar that can affect satisfaction carries a
+  backend-computed row state. Missing audio/subtitle candidates are returned as
+  backend-computed missing rows.
 
-The file row shows separate compact states for audio, subtitles, quality,
-custom score, and status. These states are inspection aids; they do not rewrite
-the backend release decision after import.
+The frontend renders these states and chooses badges, colors, and row placement.
+It must not recompute profile satisfaction from target settings, because the
+same backend results are used by background fulfillment jobs.
 
 ## Target Satisfaction State Matrix
 
@@ -93,11 +97,13 @@ state should come from video, audio, and subtitle satisfaction instead.
 
 Each profile target is evaluated only from data already available in the
 database: stored file records, probed track records, and stored external subtitle
-records. A target is satisfied when at least one database-backed candidate fully
-matches the target. Manually created files become eligible only after a manual or
-automatic rescan discovers them and persists the updated file, track, or subtitle
-data. The media item state is then the rollup of every required video,
-audio, and subtitle target for the file.
+records. File paths are canonicalized before media rows are compared, so rescans
+do not create duplicate file candidates for the same normalized path. A target
+is satisfied when at least one database-backed candidate fully matches the
+target. Manually created files become eligible only after a manual or automatic
+rescan discovers them and persists the updated file, track, or subtitle data.
+The media item state is then the rollup of every required video, audio, and
+subtitle target for the file.
 
 Parsed release data is used to decide whether to fetch a new file. After a file
 is downloaded or imported, video and audio target evaluation uses probed data
@@ -108,7 +114,7 @@ for attributes that cannot be reliably probed, such as release group.
 | --- | --- | --- | --- | --- |
 | Video target | DB file record, DB probed video tracks, probed container/file fields, and stored non-probable release attributes such as release group. | At least one video track plus file-level data matches required codec, HDR, pixel format, resolution, quality, and other configured fields. | A video track exists and matches identity-level fields, but fails one or more required target fields. | No file record exists, no video track record exists, quality is unknown, or no probed/stored file value can match required fields. |
 | Audio target | DB probed audio tracks for the file. | At least one audio track matches target language, codec, channels, and minimum bitrate. | One or more audio tracks match the target language, but none fully satisfy codec, channels, or bitrate. Unwanted audio can also make the audio target set partial when removal is enabled. | No file record exists, no audio track record exists, or no audio track matches the target language. |
-| Subtitle target | DB embedded subtitle tracks, stored external subtitle records, and subtitle mode. | At least one candidate matches target language and the configured subtitle mode: embedded track for embedded mode, external subtitle record for external mode, either for mixed mode. | A subtitle candidate exists for the language but is in the wrong place for the mode, such as an external subtitle that still needs embedding. | No candidate exists for the target language in any allowed location. |
+| Subtitle target | DB embedded subtitle tracks, stored external subtitle records, target formats, and subtitle mode. | At least one candidate matches target language, target format, and the configured subtitle mode: embedded track for embedded mode, external subtitle record for external mode, either for mixed mode. | A subtitle candidate exists for the language but is in the wrong place for the mode or needs format conversion, such as an external subtitle that still needs embedding. | No candidate exists for the target language in any allowed location. |
 
 Target states aggregate upward:
 
@@ -254,14 +260,18 @@ subtitle language is already matched.
 For embedded mode, available external subtitle files can change a missing state
 into `pending` because the subtitle exists but still needs embedding. For
 external mode, an embedded subtitle can become `pending` because extraction is
-required. Mixed or external mode can treat the same stored external subtitle as
-`satisfied`. Missing embedded subtitle targets are inserted into the track list
-as red placeholder subtitle rows.
+required. A language match with the wrong subtitle format becomes a pending
+conversion state. Mixed or external mode can treat the same stored external
+subtitle as `satisfied`. Missing embedded subtitle targets are inserted into the
+track list as red placeholder subtitle rows only when no same-language candidate
+already exists.
 
 ## Track Management
 
 The track table is assembled from detected embedded tracks, external subtitles
-that should be muxed, missing target placeholders, and chapter rows.
+that should be muxed, missing target placeholders, and chapter rows. Track,
+sidecar, and missing-row states are computed by the backend and rendered by the
+frontend.
 
 Rows can be marked:
 
