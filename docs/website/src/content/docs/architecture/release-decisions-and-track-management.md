@@ -166,10 +166,16 @@ engine parses video codec, HDR format, and pixel format from the release name.
 Configured video target fields can either add score or reject the release when
 the field is marked required.
 
-File-time video state is currently represented by quality and upgrade status.
-The detail page shows detected video track metadata in the track table, but it
-does not have a separate video satisfaction badge. If the file quality cannot be
-detected or is outside the profile quality list, the file status becomes blocked.
+File-time video state is calculated by `internal/satisfaction` from persisted
+media file facts, persisted video track rows, profile quality order, final
+container, and video target settings. Live filesystem discovery does not
+participate in satisfaction; imports and rescans must persist file facts first.
+
+No persisted file or no persisted video track returns `missing`. A known
+quality, codec, HDR, pixel format, or container mismatch returns `partial` with
+the failed requirement names. A container mismatch can return `pending` when the
+known operation is a remux. A satisfied file can still return `upgradeable` when
+the profile quality upgrade target is higher than the persisted quality.
 
 ## Audio Satisfaction
 
