@@ -67,6 +67,13 @@ Use metadata refresh when titles, posters, seasons, episodes, or people look
 stale. Use subtitle search when subtitles are missing. Use rename preview when
 you want to review file names before applying naming templates.
 
+Every automatic fulfillment path also has a manual route. You can manually
+search or grab releases, retry import, search or grab subtitles, rescan files,
+and use component actions for remuxing, embedding, extraction, and stream
+sourcing where the current media context supports them. Turning off an automatic
+schedule stops future background runs, but it does not remove the matching
+manual action.
+
 Treat profiles as living rules. If every release you like is being penalized,
 adjust the profile or custom formats. If bad releases score too well, tighten
 quality sizes, custom formats, or language targets.

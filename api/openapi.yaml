@@ -796,6 +796,25 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /media/manual-fulfillment-actions:
+    get:
+      operationId: listManualFulfillmentActions
+      tags:
+        - Media
+      summary: List manual actions for automatic fulfillment operations
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Manual fulfillment action catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ManualFulfillmentActionsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /media/requests:
     get:
       operationId: listMediaRequests
@@ -7421,6 +7440,60 @@ components:
           format: uuid
         reason:
           type: string
+    ManualFulfillmentAction:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - operation
+        - label
+        - description
+        - manual
+        - automatic
+        - available
+        - blockedReason
+        - method
+        - path
+        - workerPath
+        - stateEffect
+      properties:
+        id:
+          type: string
+        operation:
+          $ref: "#/components/schemas/TargetOperationType"
+        label:
+          type: string
+        description:
+          type: string
+        manual:
+          type: boolean
+        automatic:
+          type: boolean
+        available:
+          type: boolean
+        blockedReason:
+          type: string
+          description: Reason a context-specific UI should disable this action.
+        method:
+          type: string
+        path:
+          type: string
+          description: API path template used by the manual action.
+        workerPath:
+          type: string
+          description: Worker or storage path shared with automatic execution.
+        stateEffect:
+          type: string
+    ManualFulfillmentActionsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - actions
+      properties:
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ManualFulfillmentAction"
     TargetSatisfactionTarget:
       type: object
       additionalProperties: false

@@ -128,6 +128,14 @@ format upgrades are separate wanted rows with current and target score context,
 not video, audio, or subtitle target rows. Profile changes recalculate rows from
 the current target set, so removed targets disappear from wanted.
 
+Manual fulfillment actions are kept in a backend catalog keyed by target
+operation type. Release search, release grab/import, video upgrade, video/audio
+transcode, audio sourcing, remux, subtitle download/grab/embed/extraction/
+conversion, and file rescan all advertise a manual API path and the shared
+worker or storage path used by automatic execution. Automatic scheduling flags
+do not remove those manual actions; UI surfaces can disable only
+context-specific invalid actions and must show the catalog blocked reason.
+
 ## Canonical Target And Candidate States
 
 Use a normalized state list for each video, audio, and subtitle target. Keep

@@ -357,6 +357,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/manual-fulfillment-actions': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List manual actions for automatic fulfillment operations */
+		get: operations['listManualFulfillmentActions'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/media/requests': {
 		parameters: {
 			query?: never;
@@ -3605,6 +3622,26 @@ export interface components {
 			jobId?: string;
 			reason: string;
 		};
+		ManualFulfillmentAction: {
+			id: string;
+			operation: components['schemas']['TargetOperationType'];
+			label: string;
+			description: string;
+			manual: boolean;
+			automatic: boolean;
+			available: boolean;
+			/** @description Reason a context-specific UI should disable this action. */
+			blockedReason: string;
+			method: string;
+			/** @description API path template used by the manual action. */
+			path: string;
+			/** @description Worker or storage path shared with automatic execution. */
+			workerPath: string;
+			stateEffect: string;
+		};
+		ManualFulfillmentActionsResponse: {
+			actions: components['schemas']['ManualFulfillmentAction'][];
+		};
 		TargetSatisfactionTarget: {
 			id: string;
 			type: components['schemas']['TargetSatisfactionType'];
@@ -5537,6 +5574,28 @@ export interface operations {
 			};
 			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
+		};
+	};
+	listManualFulfillmentActions: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Manual fulfillment action catalog */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ManualFulfillmentActionsResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
 		};
 	};
 	listMediaRequests: {
