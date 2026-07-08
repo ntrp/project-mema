@@ -107,6 +107,19 @@ Profiles are the most important setup choice because every added media item uses
 one. Start with a simple profile, test it on a few files, then add stricter
 rules once you understand how your indexers name releases.
 
+## Configure DLNA Device Profiles
+
+Open Settings, then DLNA, then Device Profiles when a TV or player needs
+renderer-specific compatibility rules. Search the seeded profile table, edit a
+profile, clone it into a custom profile, or reset a seeded profile back to its
+defaults.
+
+Recent DLNA devices show the IP, last seen time, matched profile, and override
+selector. Use the override selector or manual override form to pin a known
+device, such as an LG TV IP or renderer UUID, to a chosen profile. Use the
+decision trace panel to compare a selected device and media file path against
+the effective profile rules before changing playback settings.
+
 ## Add Subtitle Providers
 
 Open Settings, then Subtitles. Configure OpenSubtitles if you want real subtitle

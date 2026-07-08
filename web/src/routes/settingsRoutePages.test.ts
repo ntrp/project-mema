@@ -8,6 +8,7 @@ import GeneralSettingsPage from './settings/general/+page.svelte';
 import IndexersSettingsPage from './settings/indexers/+page.svelte';
 import LanguagesSettingsPage from './settings/languages/+page.svelte';
 import LibrarySettingsPage from './settings/library/+page.svelte';
+import DLNASettingsPage from './settings/dlna/+page.svelte';
 import MetadataSettingsPage from './settings/metadata/+page.svelte';
 import EditProfileSettingsPage from './settings/profiles/[id]/+page.svelte';
 import NewProfileSettingsPage from './settings/profiles/new/+page.svelte';
@@ -27,6 +28,7 @@ describe('settings route pages (SCN-SETTINGS-024)', () => {
 		[asRoute(DownloadClientsSettingsPage), ['Download clients', 'Add download client']],
 		[asRoute(GeneralSettingsPage), ['General', 'Event retention days']],
 		[asRoute(IndexersSettingsPage), ['Indexers', 'Indexer search settings']],
+		[asRoute(DLNASettingsPage), ['DLNA', 'Device Profiles', 'Decision trace']],
 		[asRoute(LanguagesSettingsPage), ['Languages', 'Add language']],
 		[asRoute(MetadataSettingsPage), ['Metadata', 'TMDB', 'TVDB']],
 		[asRoute(ProfilesSettingsPage), ['Profiles', 'Add profile']],

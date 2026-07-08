@@ -58,6 +58,15 @@ export type DLNAStatus = components['schemas']['DLNAStatus'];
 export type DLNAClientDiagnostic = components['schemas']['DLNAClientDiagnostic'];
 export type DLNAInterfaceDiagnostic = components['schemas']['DLNAInterfaceDiagnostic'];
 export type DLNAStreamDiagnostic = components['schemas']['DLNAStreamDiagnostic'];
+export type DLNARendererProfile = components['schemas']['DLNARendererProfile'];
+export type DLNARendererProfileRequest = components['schemas']['DLNARendererProfileRequest'];
+export type DLNARendererProfileCreateRequest =
+	components['schemas']['DLNARendererProfileCreateRequest'];
+export type DLNARendererProfileCloneRequest =
+	components['schemas']['DLNARendererProfileCloneRequest'];
+export type DLNARendererDeviceOverride = components['schemas']['DLNARendererDeviceOverride'];
+export type DLNARendererDeviceOverrideRequest =
+	components['schemas']['DLNARendererDeviceOverrideRequest'];
 export type SystemJob = components['schemas']['SystemJob'];
 export type SystemJobListResponse = components['schemas']['SystemJobListResponse'];
 export type SystemJobsOverviewResponse = components['schemas']['SystemJobsOverviewResponse'];

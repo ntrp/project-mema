@@ -8,6 +8,7 @@
 	import { getDLNASettings, restartDLNA, updateDLNASettings } from '$lib/settings/api';
 	import type { DLNASettings, DLNASettingsRequest, DLNAStatus } from '$lib/settings/types';
 	import DLNADiagnosticsTables from './DLNADiagnosticsTables.svelte';
+	import DLNADeviceProfilesPanel from './profiles/DLNADeviceProfilesPanel.svelte';
 	import DLNASettingsForm from './DLNASettingsForm.svelte';
 
 	const defaultForm: DLNASettingsRequest = {
@@ -112,53 +113,56 @@
 	}
 </script>
 
-<Card.Root aria-label="DLNA diagnostics">
-	<Card.Header class="border-b border-border">
-		<Card.Title>Server</Card.Title>
-		<Card.Action class="flex gap-2">
-			<Button type="button" variant="secondary" size="sm" disabled={loading} onclick={load}>
-				<RefreshCwIcon class={loading ? 'animate-spin' : ''} />
-				Refresh
-			</Button>
-			<ConfirmActionButton
-				label="Restart DLNA"
-				title="Restart DLNA"
-				description="Active DLNA discovery and subscriptions will be restarted."
-				confirmLabel="Restart"
-				confirmingLabel="Restarting"
-				variant="outline"
-				size="sm"
-				disabled={loading || saving}
-				tooltip="Restart DLNA"
-				onConfirm={restart}
-			>
-				<RotateCwIcon />
-				Restart
-			</ConfirmActionButton>
-		</Card.Action>
-	</Card.Header>
-	<Card.Content class="grid gap-5 pt-5">
-		{#if errorMessage}
-			<p class="text-sm font-medium text-destructive">{errorMessage}</p>
-		{/if}
-		{#if message}
-			<p class="text-sm text-muted-foreground">{message}</p>
-		{/if}
-		<div class="grid gap-3 sm:grid-cols-4">
-			{#each statusCells as cell (cell.label)}
-				<div class="grid gap-1 rounded-md border border-border p-3">
-					<span class="text-xs font-medium text-muted-foreground uppercase">{cell.label}</span>
-					<span class="break-words text-sm font-medium text-foreground">{cell.value}</span>
-				</div>
-			{/each}
-		</div>
-		<DLNASettingsForm
-			bind:form
-			bind:allowedText
-			availableInterfaces={status?.availableInterfaces ?? []}
-			{saving}
-			onSave={save}
-		/>
-		<DLNADiagnosticsTables {status} />
-	</Card.Content>
-</Card.Root>
+<div class="grid gap-6">
+	<Card.Root aria-label="DLNA diagnostics">
+		<Card.Header class="border-b border-border">
+			<Card.Title>Server</Card.Title>
+			<Card.Action class="flex gap-2">
+				<Button type="button" variant="secondary" size="sm" disabled={loading} onclick={load}>
+					<RefreshCwIcon class={loading ? 'animate-spin' : ''} />
+					Refresh
+				</Button>
+				<ConfirmActionButton
+					label="Restart DLNA"
+					title="Restart DLNA"
+					description="Active DLNA discovery and subscriptions will be restarted."
+					confirmLabel="Restart"
+					confirmingLabel="Restarting"
+					variant="outline"
+					size="sm"
+					disabled={loading || saving}
+					tooltip="Restart DLNA"
+					onConfirm={restart}
+				>
+					<RotateCwIcon />
+					Restart
+				</ConfirmActionButton>
+			</Card.Action>
+		</Card.Header>
+		<Card.Content class="grid gap-5 pt-5">
+			{#if errorMessage}
+				<p class="text-sm font-medium text-destructive">{errorMessage}</p>
+			{/if}
+			{#if message}
+				<p class="text-sm text-muted-foreground">{message}</p>
+			{/if}
+			<div class="grid gap-3 sm:grid-cols-4">
+				{#each statusCells as cell (cell.label)}
+					<div class="grid gap-1 rounded-md border border-border p-3">
+						<span class="text-xs font-medium text-muted-foreground uppercase">{cell.label}</span>
+						<span class="break-words text-sm font-medium text-foreground">{cell.value}</span>
+					</div>
+				{/each}
+			</div>
+			<DLNASettingsForm
+				bind:form
+				bind:allowedText
+				availableInterfaces={status?.availableInterfaces ?? []}
+				{saving}
+				onSave={save}
+			/>
+			<DLNADiagnosticsTables {status} />
+		</Card.Content>
+	</Card.Root>
+	<DLNADeviceProfilesPanel />
+</div>

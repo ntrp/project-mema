@@ -134,6 +134,8 @@ describe('settings route wrappers (SCN-SETTINGS-025)', () => {
 		expect(body).toContain('Server');
 		expect(body).toContain('Enable DLNA');
 		expect(body).toContain('Recent clients');
+		expect(body).toContain('Device Profiles');
+		expect(body).toContain('Decision trace');
 		expect(body).toContain('Restart');
 	});
 });

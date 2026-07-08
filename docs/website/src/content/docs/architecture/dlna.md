@@ -250,11 +250,12 @@ export actions, IP/UUID device overrides, and recent renderer devices. Mutating
 profile or override endpoints refresh the DLNA manager cache so running
 matching behavior follows saved settings.
 
-## Planned Settings UI
+## Settings UI
 
-Settings > DLNA will gain a Device profiles panel.
+Settings > DLNA includes a Device Profiles panel over the profile storage and
+matching APIs.
 
-The panel should contain:
+The panel contains:
 
 - searchable seeded profile table
 - recent devices table
@@ -264,7 +265,11 @@ The panel should contain:
 - clone, reset, enable/disable, import, and export actions
 - decision trace viewer for a selected device and media file
 
-The goal is to make device compatibility debuggable without editing code.
+Seeded profiles can be edited in place; reset restores the seed copy, while
+clone creates a user-owned profile. Recent devices can be pinned to a selected
+profile by IP, and manual overrides can target either IP or renderer UUID.
+The trace viewer surfaces the effective profile, override, matching profile,
+and profile rule payloads used when debugging renderer compatibility.
 
 ## Future Delivery Model
 
