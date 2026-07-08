@@ -10,6 +10,10 @@ vi.mock('$lib/components/settings/system/cache/rowPulse.svelte', () => ({
 import SystemJobHistoryTable from '$lib/components/settings/system/jobs/SystemJobHistoryTable.svelte';
 import SystemOneShotJobsTable from '$lib/components/settings/system/jobs/SystemOneShotJobsTable.svelte';
 import SystemScheduledJobsTable from '$lib/components/settings/system/jobs/SystemScheduledJobsTable.svelte';
+import {
+	mergeExecutions,
+	upsertExecution
+} from '$lib/components/settings/system/jobs/systemJobsState';
 import type { SystemJobExecution, SystemJobSchedule } from '$lib/settings/types';
 import { renderWithTooltip } from './renderHelpers';
 
@@ -63,6 +67,29 @@ describe('rendered system job dashboard components', () => {
 
 		expect(body).toContain('completed');
 		expect(body).toContain('Show execution logs');
+	});
+
+	it('keeps execution history ordered by latest update across pagination and SSE', () => {
+		const older = systemJobExecution({
+			riverJobId: 1,
+			updatedAt: '2026-07-03T01:02:03Z'
+		});
+		const newer = systemJobExecution({
+			riverJobId: 2,
+			updatedAt: '2026-07-03T01:04:03Z'
+		});
+		const replacement = systemJobExecution({
+			riverJobId: 1,
+			status: 'completed',
+			updatedAt: '2026-07-03T01:05:03Z'
+		});
+
+		expect(mergeExecutions([newer], [older]).map((execution) => execution.riverJobId)).toEqual([
+			2, 1
+		]);
+		expect(
+			upsertExecution([newer, older], replacement).map((execution) => execution.riverJobId)
+		).toEqual([1, 2]);
 	});
 });
 

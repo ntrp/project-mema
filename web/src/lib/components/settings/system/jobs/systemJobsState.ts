@@ -2,7 +2,20 @@ import type { SystemJobExecution, SystemJobSchedule } from '$lib/settings/types'
 import { activeStatuses } from './systemJobDisplay';
 
 export function upsertExecution(list: SystemJobExecution[], execution: SystemJobExecution) {
-	return [execution, ...list.filter((current) => current.riverJobId !== execution.riverJobId)];
+	return mergeExecutions(list, [execution]);
+}
+
+export function mergeExecutions(list: SystemJobExecution[], executions: SystemJobExecution[]) {
+	const byID = new Map(list.map((execution) => [execution.riverJobId, execution]));
+	for (const execution of executions) byID.set(execution.riverJobId, execution);
+	return sortExecutions(Array.from(byID.values()));
+}
+
+export function sortExecutions(executions: SystemJobExecution[]) {
+	return [...executions].sort((left, right) => {
+		const updated = Date.parse(right.updatedAt) - Date.parse(left.updatedAt);
+		return updated === 0 ? right.riverJobId - left.riverJobId : updated;
+	});
 }
 
 export function updateOneShotJobs(list: SystemJobExecution[], execution: SystemJobExecution) {

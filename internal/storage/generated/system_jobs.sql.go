@@ -272,7 +272,7 @@ where (cardinality($1::text[]) = 0 or status = any($1::text[]))
     and ($2::text = '' or coalesce(schedule_id, '') = $2::text)
     and ($3::text = '' or kind = $3::text)
     and ($4::text = '' or queue = $4::text)
-    and ($5::timestamptz is null or coalesce(finalized_at, updated_at, created_at) < $5::timestamptz)
+    and ($5::timestamptz is null or updated_at < $5::timestamptz)
     and (
         $6::text = ''
         or kind ilike '%' || $6::text || '%'
@@ -281,7 +281,7 @@ where (cardinality($1::text[]) = 0 or status = any($1::text[]))
         or args::text ilike '%' || $6::text || '%'
         or errors::text ilike '%' || $6::text || '%'
     )
-order by coalesce(finalized_at, updated_at, created_at) desc, river_job_id desc
+order by updated_at desc, river_job_id desc
 limit $7
 `
 

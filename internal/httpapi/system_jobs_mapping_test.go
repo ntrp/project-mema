@@ -135,7 +135,7 @@ func TestSCNSystem006HistoryLimitKeepsOneRowForHasMore(t *testing.T) {
 	if got := historyLimit(&limit); got != 499 {
 		t.Fatalf("historyLimit(500) = %d, want 499", got)
 	}
-	if got := historyLimit(nil); got != 100 {
-		t.Fatalf("historyLimit(nil) = %d, want 100", got)
+	if got := historyLimit(nil); got != 20 {
+		t.Fatalf("historyLimit(nil) = %d, want 20", got)
 	}
 }

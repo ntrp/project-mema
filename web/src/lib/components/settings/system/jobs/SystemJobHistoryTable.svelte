@@ -7,6 +7,7 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { formatDateTime } from '$lib/settings/dateFormat';
 	import type { SystemJobExecution } from '$lib/settings/types';
+	import { createRowPulse } from '../cache/rowPulse.svelte';
 	import SystemJobProgress from './SystemJobProgress.svelte';
 	import { canAbortStatus, executionMessage, statusClass } from './systemJobDisplay';
 
@@ -34,6 +35,11 @@
 		onLoadMore
 	}: Props = $props();
 
+	const rowPulse = createRowPulse();
+	const rowKeys = $derived(executions.map((execution) => String(execution.riverJobId)));
+
+	$effect(() => rowPulse.update(rowKeys));
+
 	function handleScroll(event: Event) {
 		const target = event.currentTarget as HTMLDivElement;
 		const remaining = target.scrollHeight - target.scrollTop - target.clientHeight;
@@ -59,7 +65,7 @@
 		</Table.Header>
 		<Table.Body>
 			{#each executions as execution (execution.riverJobId)}
-				<Table.Row>
+				<Table.Row class={rowPulse.classFor(String(execution.riverJobId))}>
 					<Table.Cell class="w-px">
 						<Badge variant="outline" class={statusClass(execution.status)}>{execution.status}</Badge
 						>

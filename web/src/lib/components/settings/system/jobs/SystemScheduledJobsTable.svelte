@@ -8,6 +8,7 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { formatDateTime } from '$lib/settings/dateFormat';
 	import type { SystemJobSchedule } from '$lib/settings/types';
+	import { createRowPulse } from '../cache/rowPulse.svelte';
 	import SystemJobProgress from './SystemJobProgress.svelte';
 	import { canAbortStatus, formatInterval, statusClass } from './systemJobDisplay';
 
@@ -21,6 +22,11 @@
 	}
 
 	let { schedules, updatingId, abortingId, onPause, onResume, onAbort }: Props = $props();
+
+	const rowPulse = createRowPulse();
+	const rowKeys = $derived(schedules.map((schedule) => schedule.id));
+
+	$effect(() => rowPulse.update(rowKeys));
 
 	function activeLabel(schedule: SystemJobSchedule) {
 		return (
@@ -44,7 +50,7 @@
 		</Table.Header>
 		<Table.Body>
 			{#each schedules as schedule (schedule.id)}
-				<Table.Row>
+				<Table.Row class={rowPulse.classFor(schedule.id)}>
 					<Table.Cell>
 						<strong class="block truncate">{schedule.name}</strong>
 						<span class="block truncate text-xs text-muted-foreground">{schedule.kind}</span>

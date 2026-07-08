@@ -6,6 +6,7 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { formatDateTime } from '$lib/settings/dateFormat';
 	import type { SystemJobExecution } from '$lib/settings/types';
+	import { createRowPulse } from '../cache/rowPulse.svelte';
 	import SystemJobProgress from './SystemJobProgress.svelte';
 	import { canAbortStatus, executionMessage, statusClass } from './systemJobDisplay';
 
@@ -16,6 +17,11 @@
 	}
 
 	let { jobs, abortingId, onAbort }: Props = $props();
+
+	const rowPulse = createRowPulse();
+	const rowKeys = $derived(jobs.map((job) => String(job.riverJobId)));
+
+	$effect(() => rowPulse.update(rowKeys));
 </script>
 
 <div class="overflow-auto rounded-md border border-border">
@@ -33,7 +39,7 @@
 		</Table.Header>
 		<Table.Body>
 			{#each jobs as job (job.riverJobId)}
-				<Table.Row>
+				<Table.Row class={rowPulse.classFor(String(job.riverJobId))}>
 					<Table.Cell class="w-px">
 						<Badge variant="outline" class={statusClass(job.status)}>{job.status}</Badge>
 					</Table.Cell>

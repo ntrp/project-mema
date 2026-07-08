@@ -140,7 +140,7 @@ func scheduleIDFromMetadata(metadata string) string {
 func historyLimit(value *int32) int32 {
 	limit := optionalInt32(value)
 	if limit <= 0 {
-		return 100
+		return 20
 	}
 	if limit >= 500 {
 		return 499

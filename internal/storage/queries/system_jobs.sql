@@ -188,7 +188,7 @@ where (cardinality(sqlc.arg(states)::text[]) = 0 or status = any(sqlc.arg(states
     and (sqlc.arg(schedule_id)::text = '' or coalesce(schedule_id, '') = sqlc.arg(schedule_id)::text)
     and (sqlc.arg(kind)::text = '' or kind = sqlc.arg(kind)::text)
     and (sqlc.arg(queue)::text = '' or queue = sqlc.arg(queue)::text)
-    and (sqlc.narg(before)::timestamptz is null or coalesce(finalized_at, updated_at, created_at) < sqlc.narg(before)::timestamptz)
+    and (sqlc.narg(before)::timestamptz is null or updated_at < sqlc.narg(before)::timestamptz)
     and (
         sqlc.arg(search_query)::text = ''
         or kind ilike '%' || sqlc.arg(search_query)::text || '%'
@@ -197,7 +197,7 @@ where (cardinality(sqlc.arg(states)::text[]) = 0 or status = any(sqlc.arg(states
         or args::text ilike '%' || sqlc.arg(search_query)::text || '%'
         or errors::text ilike '%' || sqlc.arg(search_query)::text || '%'
     )
-order by coalesce(finalized_at, updated_at, created_at) desc, river_job_id desc
+order by updated_at desc, river_job_id desc
 limit sqlc.arg(row_limit);
 
 -- name: GetSystemJobExecution :one

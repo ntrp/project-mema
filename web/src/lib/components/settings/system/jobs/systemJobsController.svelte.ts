@@ -15,13 +15,15 @@ import type {
 import { parseSystemEvent } from '../events/systemEventStream';
 import {
 	matchesExecutionFilters,
+	mergeExecutions,
 	optionList,
+	sortExecutions,
 	updateOneShotJobs,
 	updateScheduleFromExecution,
 	upsertExecution
 } from './systemJobsState';
 
-const historyPageLimit = 100;
+const historyPageLimit = 20;
 
 export class SystemJobsController {
 	schedules = $state<SystemJobSchedule[]>([]);
@@ -113,7 +115,9 @@ export class SystemJobsController {
 				before,
 				limit: historyPageLimit
 			});
-			this.history = reset ? response.executions : [...this.history, ...response.executions];
+			this.history = reset
+				? sortExecutions(response.executions)
+				: mergeExecutions(this.history, response.executions);
 			this.historyHasMore = response.hasMore;
 		} catch (error) {
 			this.errorMessage =
