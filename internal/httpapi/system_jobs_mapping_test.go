@@ -69,3 +69,73 @@ func TestSCNSystem006SystemJobFilterParamsAreNormalized(t *testing.T) {
 		t.Fatalf("optionalInt32(nil) = %d, want 0", got)
 	}
 }
+
+func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *testing.T) {
+	now := time.Date(2026, time.July, 8, 10, 0, 0, 0, time.UTC)
+	activeID := int64(101)
+	progress := int32(50)
+	schedule := systemJobScheduleResponse(storage.SystemJobSchedule{
+		ID:                    "rss_sync",
+		Name:                  "RSS sync",
+		Kind:                  "media.rss_sync",
+		Queue:                 "media_search",
+		IntervalSeconds:       900,
+		ActiveRiverJobID:      &activeID,
+		ActiveStatus:          "running",
+		ActiveProgressPercent: &progress,
+		ActiveProgressLabel:   "Checking indexers",
+		CreatedAt:             now,
+		UpdatedAt:             now,
+	})
+
+	if schedule.ActiveRiverJobId == nil || *schedule.ActiveRiverJobId != activeID {
+		t.Fatalf("active job = %#v", schedule)
+	}
+	if schedule.ActiveProgressPercent == nil || *schedule.ActiveProgressPercent != progress {
+		t.Fatalf("progress = %#v", schedule.ActiveProgressPercent)
+	}
+	if settings := systemJobHistorySettingsResponse(storage.SystemJobHistorySettings{RetentionDays: 45}); settings.RetentionDays != 45 {
+		t.Fatalf("settings = %#v", settings)
+	}
+}
+
+func TestSCNSystem006SystemJobExecutionResponsePreservesLogsContract(t *testing.T) {
+	now := time.Date(2026, time.July, 8, 10, 0, 0, 0, time.UTC)
+	progress := int32(75)
+	response := systemJobExecutionResponse(storage.SystemJobExecution{
+		RiverJobID:      77,
+		ScheduleID:      "download_activity_sync",
+		Classification:  "fixed",
+		Status:          "running",
+		Kind:            "download.activity_sync",
+		Queue:           "downloads",
+		ProgressPercent: &progress,
+		ProgressLabel:   "Checking downloads",
+		ScheduledAt:     now,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	})
+
+	if response.ScheduleId == nil || *response.ScheduleId != "download_activity_sync" {
+		t.Fatalf("schedule id = %#v", response.ScheduleId)
+	}
+	if response.Classification != Fixed || response.ProgressPercent == nil || *response.ProgressPercent != progress {
+		t.Fatalf("execution response = %#v", response)
+	}
+	logs := systemJobExecutionLogResponses([]storage.SystemJobExecutionLog{{
+		ID: 1, RiverJobID: 77, Severity: "info", Message: "Started", Data: map[string]any{"queue": "downloads"}, CreatedAt: now,
+	}})
+	if len(logs) != 1 || logs[0].Data["queue"] != "downloads" {
+		t.Fatalf("logs = %#v", logs)
+	}
+}
+
+func TestSCNSystem006HistoryLimitKeepsOneRowForHasMore(t *testing.T) {
+	limit := int32(500)
+	if got := historyLimit(&limit); got != 499 {
+		t.Fatalf("historyLimit(500) = %d, want 499", got)
+	}
+	if got := historyLimit(nil); got != 100 {
+		t.Fatalf("historyLimit(nil) = %d, want 100", got)
+	}
+}

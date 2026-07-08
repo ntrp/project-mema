@@ -31,7 +31,7 @@ func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID
 	if err != nil {
 		return 0, err
 	}
-	publishJobUpdated(c.events, result.Job, "")
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
 	return result.Job.ID, nil
 }
 
@@ -45,7 +45,7 @@ func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid
 	if err != nil {
 		return 0, err
 	}
-	publishJobUpdated(c.events, result.Job, "")
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
 	return result.Job.ID, nil
 }
 
@@ -59,7 +59,7 @@ func (c *Client) EnqueueSubtitleSearch(ctx context.Context, args SubtitleSearchA
 	if err != nil {
 		return 0, err
 	}
-	publishJobUpdated(c.events, result.Job, "")
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
 	return result.Job.ID, nil
 }
 
@@ -73,7 +73,7 @@ func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (
 	if err != nil {
 		return 0, err
 	}
-	publishJobUpdated(c.events, result.Job, "")
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
 	return result.Job.ID, nil
 }
 
@@ -87,7 +87,7 @@ func (c *Client) EnqueueMediaComponentExtraction(ctx context.Context, artifactID
 	if err != nil {
 		return 0, err
 	}
-	publishJobUpdated(c.events, result.Job, "")
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
 	return result.Job.ID, nil
 }
 
@@ -101,6 +101,6 @@ func (c *Client) EnqueueMediaComponentMux(ctx context.Context, runID uuid.UUID) 
 	if err != nil {
 		return 0, err
 	}
-	publishJobUpdated(c.events, result.Job, "")
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
 	return result.Job.ID, nil
 }

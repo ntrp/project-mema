@@ -47,8 +47,9 @@ type AutoSearchDownloadWorker struct {
 }
 
 func (w *AutoSearchDownloadWorker) Work(ctx context.Context, job *river.Job[AutoSearchDownloadArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
 
 	mediaItemID, err := uuid.Parse(job.Args.MediaItemID)
 	if err != nil {
@@ -62,6 +63,7 @@ func (w *AutoSearchDownloadWorker) Work(ctx context.Context, job *river.Job[Auto
 		return fmt.Errorf("load media item: %w", err)
 	}
 	slog.Debug("auto search download started", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
+	recordJobProgress(ctx, w.settings, w.events, nil, "Searching for an automatic download")
 	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Automatic search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
 	return autoSearchDownload(ctx, w.settings, w.indexers, w.downloadClients, w.decisions, w.events, item)
 }

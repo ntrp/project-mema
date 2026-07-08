@@ -2234,6 +2234,61 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/system/jobs/overview': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** Get background jobs overview */
+		get: operations['getSystemJobsOverview'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/job-schedules/{id}/pause': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Pause a fixed scheduled job */
+		post: operations['pauseSystemJobSchedule'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/job-schedules/{id}/resume': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Resume a fixed scheduled job */
+		post: operations['resumeSystemJobSchedule'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/jobs/{id}/abort': {
 		parameters: {
 			query?: never;
@@ -2247,6 +2302,59 @@ export interface paths {
 		put?: never;
 		/** Abort a background job */
 		post: operations['abortSystemJob'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/job-executions': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List background job execution history */
+		get: operations['listSystemJobExecutions'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/job-executions/{riverJobId}/logs': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				riverJobId: number;
+			};
+			cookie?: never;
+		};
+		/** List logs for a background job execution */
+		get: operations['listSystemJobExecutionLogs'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/system/job-history-settings': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		/** Update background job history settings */
+		put: operations['updateSystemJobHistorySettings'];
+		post?: never;
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -3803,6 +3911,97 @@ export interface components {
 			attemptedAt?: string | null;
 			/** Format: date-time */
 			finalizedAt?: string | null;
+		};
+		SystemJobsOverviewResponse: {
+			schedules: components['schemas']['SystemJobSchedule'][];
+			oneShotJobs: components['schemas']['SystemJobExecution'][];
+			historySettings: components['schemas']['SystemJobHistorySettings'];
+		};
+		SystemJobSchedule: {
+			id: string;
+			name: string;
+			kind: string;
+			queue: string;
+			/** Format: int32 */
+			intervalSeconds: number;
+			paused: boolean;
+			/** Format: date-time */
+			nextRunAt?: string;
+			/** Format: int64 */
+			activeRiverJobId?: number;
+			activeStatus: string;
+			/** Format: int32 */
+			activeProgressPercent?: number;
+			activeProgressLabel: string;
+			activeInfoMessage: string;
+			/** Format: int64 */
+			lastRiverJobId?: number;
+			lastStatus: string;
+			/** Format: date-time */
+			lastCreatedAt?: string;
+			/** Format: date-time */
+			lastFinalizedAt?: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		SystemJobExecutionListResponse: {
+			executions: components['schemas']['SystemJobExecution'][];
+			hasMore: boolean;
+		};
+		SystemJobExecution: {
+			/** Format: int64 */
+			riverJobId: number;
+			scheduleId?: string;
+			/** @enum {string} */
+			classification: 'fixed' | 'one_shot';
+			status: string;
+			kind: string;
+			queue: string;
+			/** Format: int32 */
+			attempt: number;
+			/** Format: int32 */
+			maxAttempts: number;
+			/** Format: int32 */
+			priority: number;
+			/** Format: int32 */
+			progressPercent?: number;
+			progressLabel: string;
+			args: string;
+			metadata: string;
+			errors: string;
+			infoMessage: string;
+			/** Format: date-time */
+			scheduledAt: string;
+			/** Format: date-time */
+			createdAt: string;
+			/** Format: date-time */
+			attemptedAt?: string;
+			/** Format: date-time */
+			finalizedAt?: string;
+			/** Format: date-time */
+			updatedAt: string;
+		};
+		SystemJobExecutionLogListResponse: {
+			logs: components['schemas']['SystemJobExecutionLog'][];
+		};
+		SystemJobExecutionLog: {
+			/** Format: int64 */
+			id: number;
+			/** Format: int64 */
+			riverJobId: number;
+			severity: components['schemas']['SystemEventSeverity'];
+			message: string;
+			data: {
+				[key: string]: unknown;
+			};
+			/** Format: date-time */
+			createdAt: string;
+		};
+		SystemJobHistorySettings: {
+			/** Format: int32 */
+			retentionDays: number;
 		};
 		DownloadActivityListResponse: {
 			activities: components['schemas']['DownloadActivity'][];
@@ -8622,6 +8821,78 @@ export interface operations {
 			403: components['responses']['Forbidden'];
 		};
 	};
+	getSystemJobsOverview: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Background jobs overview */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobsOverviewResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	pauseSystemJobSchedule: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Fixed scheduled job paused */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobSchedule'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	resumeSystemJobSchedule: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Fixed scheduled job resumed */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobSchedule'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
 	abortSystemJob: {
 		parameters: {
 			query?: never;
@@ -8646,6 +8917,88 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 			403: components['responses']['Forbidden'];
 			404: components['responses']['NotFound'];
+		};
+	};
+	listSystemJobExecutions: {
+		parameters: {
+			query?: {
+				status?: string[];
+				scheduleId?: string;
+				kind?: string;
+				queue?: string;
+				query?: string;
+				before?: string;
+				limit?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Background job executions */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobExecutionListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+		};
+	};
+	listSystemJobExecutionLogs: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				riverJobId: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Background job execution logs */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobExecutionLogListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	updateSystemJobHistorySettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SystemJobHistorySettings'];
+			};
+		};
+		responses: {
+			/** @description Background job history settings updated */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobHistorySettings'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
 		};
 	};
 	streamSystemLogs: {

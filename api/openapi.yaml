@@ -4072,6 +4072,81 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /system/jobs/overview:
+    get:
+      operationId: getSystemJobsOverview
+      tags:
+        - System
+      summary: Get background jobs overview
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Background jobs overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobsOverviewResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /system/job-schedules/{id}/pause:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+    post:
+      operationId: pauseSystemJobSchedule
+      tags:
+        - System
+      summary: Pause a fixed scheduled job
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Fixed scheduled job paused
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobSchedule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /system/job-schedules/{id}/resume:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+    post:
+      operationId: resumeSystemJobSchedule
+      tags:
+        - System
+      summary: Resume a fixed scheduled job
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Fixed scheduled job resumed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobSchedule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /system/jobs/{id}/abort:
     parameters:
       - name: id
@@ -4102,6 +4177,124 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+  /system/job-executions:
+    get:
+      operationId: listSystemJobExecutions
+      tags:
+        - System
+      summary: List background job execution history
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: scheduleId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: queue
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: query
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: before
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 500
+      responses:
+        "200":
+          description: Background job executions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobExecutionListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /system/job-executions/{riverJobId}/logs:
+    parameters:
+      - name: riverJobId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      operationId: listSystemJobExecutionLogs
+      tags:
+        - System
+      summary: List logs for a background job execution
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Background job execution logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobExecutionLogListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /system/job-history-settings:
+    put:
+      operationId: updateSystemJobHistorySettings
+      tags:
+        - System
+      summary: Update background job history settings
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemJobHistorySettings"
+      responses:
+        "200":
+          description: Background job history settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobHistorySettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /system/logs:
     get:
       operationId: streamSystemLogs
@@ -8138,6 +8331,225 @@ components:
           type: string
           format: date-time
           nullable: true
+    SystemJobsOverviewResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - schedules
+        - oneShotJobs
+        - historySettings
+      properties:
+        schedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemJobSchedule"
+        oneShotJobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemJobExecution"
+        historySettings:
+          $ref: "#/components/schemas/SystemJobHistorySettings"
+    SystemJobSchedule:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - kind
+        - queue
+        - intervalSeconds
+        - paused
+        - activeStatus
+        - activeProgressLabel
+        - activeInfoMessage
+        - lastStatus
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        kind:
+          type: string
+        queue:
+          type: string
+        intervalSeconds:
+          type: integer
+          format: int32
+        paused:
+          type: boolean
+        nextRunAt:
+          type: string
+          format: date-time
+        activeRiverJobId:
+          type: integer
+          format: int64
+        activeStatus:
+          type: string
+        activeProgressPercent:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+        activeProgressLabel:
+          type: string
+        activeInfoMessage:
+          type: string
+        lastRiverJobId:
+          type: integer
+          format: int64
+        lastStatus:
+          type: string
+        lastCreatedAt:
+          type: string
+          format: date-time
+        lastFinalizedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SystemJobExecutionListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - executions
+        - hasMore
+      properties:
+        executions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemJobExecution"
+        hasMore:
+          type: boolean
+    SystemJobExecution:
+      type: object
+      additionalProperties: false
+      required:
+        - riverJobId
+        - classification
+        - status
+        - kind
+        - queue
+        - attempt
+        - maxAttempts
+        - priority
+        - progressLabel
+        - args
+        - metadata
+        - errors
+        - infoMessage
+        - scheduledAt
+        - createdAt
+        - updatedAt
+      properties:
+        riverJobId:
+          type: integer
+          format: int64
+        scheduleId:
+          type: string
+        classification:
+          type: string
+          enum:
+            - fixed
+            - one_shot
+        status:
+          type: string
+        kind:
+          type: string
+        queue:
+          type: string
+        attempt:
+          type: integer
+          format: int32
+        maxAttempts:
+          type: integer
+          format: int32
+        priority:
+          type: integer
+          format: int32
+        progressPercent:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+        progressLabel:
+          type: string
+        args:
+          type: string
+        metadata:
+          type: string
+        errors:
+          type: string
+        infoMessage:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        attemptedAt:
+          type: string
+          format: date-time
+        finalizedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    SystemJobExecutionLogListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - logs
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemJobExecutionLog"
+    SystemJobExecutionLog:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - riverJobId
+        - severity
+        - message
+        - data
+        - createdAt
+      properties:
+        id:
+          type: integer
+          format: int64
+        riverJobId:
+          type: integer
+          format: int64
+        severity:
+          $ref: "#/components/schemas/SystemEventSeverity"
+        message:
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+    SystemJobHistorySettings:
+      type: object
+      additionalProperties: false
+      required:
+        - retentionDays
+      properties:
+        retentionDays:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 365
     DownloadActivityListResponse:
       type: object
       additionalProperties: false

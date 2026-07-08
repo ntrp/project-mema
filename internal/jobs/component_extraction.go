@@ -53,8 +53,10 @@ func (w *ComponentExtractionWorker) Work(
 	ctx context.Context,
 	job *river.Job[MediaComponentExtractionArgs],
 ) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
+	recordJobProgress(ctx, w.settings, w.events, nil, "Extracting media components")
 
 	artifactID, err := uuid.Parse(job.Args.ArtifactID)
 	if err != nil {

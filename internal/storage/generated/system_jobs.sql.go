@@ -8,7 +8,41 @@ package storage
 import (
 	"context"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const createSystemJobExecutionLog = `-- name: CreateSystemJobExecutionLog :one
+insert into app.system_job_execution_logs (river_job_id, severity, message, data)
+values ($1, $2, $3, $4)
+returning id, river_job_id, severity, message, data, created_at
+`
+
+type CreateSystemJobExecutionLogParams struct {
+	RiverJobID int64
+	Severity   string
+	Message    string
+	Data       []byte
+}
+
+func (q *Queries) CreateSystemJobExecutionLog(ctx context.Context, arg CreateSystemJobExecutionLogParams) (AppSystemJobExecutionLog, error) {
+	row := q.db.QueryRow(ctx, createSystemJobExecutionLog,
+		arg.RiverJobID,
+		arg.Severity,
+		arg.Message,
+		arg.Data,
+	)
+	var i AppSystemJobExecutionLog
+	err := row.Scan(
+		&i.ID,
+		&i.RiverJobID,
+		&i.Severity,
+		&i.Message,
+		&i.Data,
+		&i.CreatedAt,
+	)
+	return i, err
+}
 
 const getSystemJob = `-- name: GetSystemJob :one
 select id,
@@ -69,6 +103,340 @@ func (q *Queries) GetSystemJob(ctx context.Context, id int64) (GetSystemJobRow, 
 		&i.FinalizedAt,
 	)
 	return i, err
+}
+
+const getSystemJobExecution = `-- name: GetSystemJobExecution :one
+select river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+from app.system_job_executions
+where river_job_id = $1
+`
+
+func (q *Queries) GetSystemJobExecution(ctx context.Context, riverJobID int64) (AppSystemJobExecution, error) {
+	row := q.db.QueryRow(ctx, getSystemJobExecution, riverJobID)
+	var i AppSystemJobExecution
+	err := row.Scan(
+		&i.RiverJobID,
+		&i.ScheduleID,
+		&i.Classification,
+		&i.Status,
+		&i.Kind,
+		&i.Queue,
+		&i.Attempt,
+		&i.MaxAttempts,
+		&i.Priority,
+		&i.ProgressPercent,
+		&i.ProgressLabel,
+		&i.Args,
+		&i.Metadata,
+		&i.Errors,
+		&i.InfoMessage,
+		&i.ScheduledAt,
+		&i.CreatedAt,
+		&i.AttemptedAt,
+		&i.FinalizedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSystemJobHistorySettings = `-- name: GetSystemJobHistorySettings :one
+select coalesce(
+    (select retention_days from app.system_job_history_settings where id),
+    $1::int
+)::int as retention_days
+`
+
+func (q *Queries) GetSystemJobHistorySettings(ctx context.Context, retentionDays int32) (int32, error) {
+	row := q.db.QueryRow(ctx, getSystemJobHistorySettings, retentionDays)
+	var retention_days int32
+	err := row.Scan(&retention_days)
+	return retention_days, err
+}
+
+const getSystemJobSchedule = `-- name: GetSystemJobSchedule :one
+select id, name, kind, queue, interval_seconds, paused, created_at, updated_at
+from app.system_job_schedules
+where id = $1
+`
+
+func (q *Queries) GetSystemJobSchedule(ctx context.Context, id string) (AppSystemJobSchedule, error) {
+	row := q.db.QueryRow(ctx, getSystemJobSchedule, id)
+	var i AppSystemJobSchedule
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Kind,
+		&i.Queue,
+		&i.IntervalSeconds,
+		&i.Paused,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listCurrentOneShotJobExecutions = `-- name: ListCurrentOneShotJobExecutions :many
+select river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+from app.system_job_executions
+where classification = 'one_shot'
+    and status in ('available', 'scheduled', 'retryable', 'running')
+order by coalesce(attempted_at, scheduled_at, created_at) desc, river_job_id desc
+limit $1
+`
+
+func (q *Queries) ListCurrentOneShotJobExecutions(ctx context.Context, rowLimit int32) ([]AppSystemJobExecution, error) {
+	rows, err := q.db.Query(ctx, listCurrentOneShotJobExecutions, rowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AppSystemJobExecution
+	for rows.Next() {
+		var i AppSystemJobExecution
+		if err := rows.Scan(
+			&i.RiverJobID,
+			&i.ScheduleID,
+			&i.Classification,
+			&i.Status,
+			&i.Kind,
+			&i.Queue,
+			&i.Attempt,
+			&i.MaxAttempts,
+			&i.Priority,
+			&i.ProgressPercent,
+			&i.ProgressLabel,
+			&i.Args,
+			&i.Metadata,
+			&i.Errors,
+			&i.InfoMessage,
+			&i.ScheduledAt,
+			&i.CreatedAt,
+			&i.AttemptedAt,
+			&i.FinalizedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSystemJobExecutionLogs = `-- name: ListSystemJobExecutionLogs :many
+select id, river_job_id, severity, message, data, created_at
+from app.system_job_execution_logs
+where river_job_id = $1
+order by created_at, id
+limit $2
+`
+
+type ListSystemJobExecutionLogsParams struct {
+	RiverJobID int64
+	RowLimit   int32
+}
+
+func (q *Queries) ListSystemJobExecutionLogs(ctx context.Context, arg ListSystemJobExecutionLogsParams) ([]AppSystemJobExecutionLog, error) {
+	rows, err := q.db.Query(ctx, listSystemJobExecutionLogs, arg.RiverJobID, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AppSystemJobExecutionLog
+	for rows.Next() {
+		var i AppSystemJobExecutionLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.RiverJobID,
+			&i.Severity,
+			&i.Message,
+			&i.Data,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSystemJobExecutions = `-- name: ListSystemJobExecutions :many
+select river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+from app.system_job_executions
+where (cardinality($1::text[]) = 0 or status = any($1::text[]))
+    and ($2::text = '' or coalesce(schedule_id, '') = $2::text)
+    and ($3::text = '' or kind = $3::text)
+    and ($4::text = '' or queue = $4::text)
+    and ($5::timestamptz is null or coalesce(finalized_at, updated_at, created_at) < $5::timestamptz)
+    and (
+        $6::text = ''
+        or kind ilike '%' || $6::text || '%'
+        or queue ilike '%' || $6::text || '%'
+        or info_message ilike '%' || $6::text || '%'
+        or args::text ilike '%' || $6::text || '%'
+        or errors::text ilike '%' || $6::text || '%'
+    )
+order by coalesce(finalized_at, updated_at, created_at) desc, river_job_id desc
+limit $7
+`
+
+type ListSystemJobExecutionsParams struct {
+	States      []string
+	ScheduleID  string
+	Kind        string
+	Queue       string
+	Before      *time.Time
+	SearchQuery string
+	RowLimit    int32
+}
+
+func (q *Queries) ListSystemJobExecutions(ctx context.Context, arg ListSystemJobExecutionsParams) ([]AppSystemJobExecution, error) {
+	rows, err := q.db.Query(ctx, listSystemJobExecutions,
+		arg.States,
+		arg.ScheduleID,
+		arg.Kind,
+		arg.Queue,
+		arg.Before,
+		arg.SearchQuery,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AppSystemJobExecution
+	for rows.Next() {
+		var i AppSystemJobExecution
+		if err := rows.Scan(
+			&i.RiverJobID,
+			&i.ScheduleID,
+			&i.Classification,
+			&i.Status,
+			&i.Kind,
+			&i.Queue,
+			&i.Attempt,
+			&i.MaxAttempts,
+			&i.Priority,
+			&i.ProgressPercent,
+			&i.ProgressLabel,
+			&i.Args,
+			&i.Metadata,
+			&i.Errors,
+			&i.InfoMessage,
+			&i.ScheduledAt,
+			&i.CreatedAt,
+			&i.AttemptedAt,
+			&i.FinalizedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSystemJobSchedules = `-- name: ListSystemJobSchedules :many
+select s.id,
+    s.name,
+    s.kind,
+    s.queue,
+    s.interval_seconds,
+    s.paused,
+    s.created_at,
+    s.updated_at,
+    coalesce(active.river_job_id, 0)::bigint as active_river_job_id,
+    coalesce(active.status, '')::text as active_status,
+    active.progress_percent as active_progress_percent,
+    coalesce(active.progress_label, '')::text as active_progress_label,
+    coalesce(active.info_message, '')::text as active_info_message,
+    coalesce(last_run.river_job_id, 0)::bigint as last_river_job_id,
+    coalesce(last_run.status, '')::text as last_status,
+    coalesce(last_run.created_at, 'epoch'::timestamptz) as last_created_at,
+    last_run.finalized_at as last_finalized_at
+from app.system_job_schedules s
+left join lateral (
+    select river_job_id, status, progress_percent, progress_label, info_message
+    from app.system_job_executions
+    where schedule_id = s.id
+        and status in ('available', 'scheduled', 'retryable', 'running')
+    order by updated_at desc, river_job_id desc
+    limit 1
+) active on true
+left join lateral (
+    select river_job_id, status, created_at, finalized_at
+    from app.system_job_executions
+    where schedule_id = s.id
+    order by coalesce(finalized_at, updated_at, created_at) desc, river_job_id desc
+    limit 1
+) last_run on true
+order by s.name
+`
+
+type ListSystemJobSchedulesRow struct {
+	ID                    string
+	Name                  string
+	Kind                  string
+	Queue                 string
+	IntervalSeconds       int32
+	Paused                bool
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	ActiveRiverJobID      int64
+	ActiveStatus          string
+	ActiveProgressPercent pgtype.Int4
+	ActiveProgressLabel   string
+	ActiveInfoMessage     string
+	LastRiverJobID        int64
+	LastStatus            string
+	LastCreatedAt         time.Time
+	LastFinalizedAt       *time.Time
+}
+
+func (q *Queries) ListSystemJobSchedules(ctx context.Context) ([]ListSystemJobSchedulesRow, error) {
+	rows, err := q.db.Query(ctx, listSystemJobSchedules)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListSystemJobSchedulesRow
+	for rows.Next() {
+		var i ListSystemJobSchedulesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Kind,
+			&i.Queue,
+			&i.IntervalSeconds,
+			&i.Paused,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ActiveRiverJobID,
+			&i.ActiveStatus,
+			&i.ActiveProgressPercent,
+			&i.ActiveProgressLabel,
+			&i.ActiveInfoMessage,
+			&i.LastRiverJobID,
+			&i.LastStatus,
+			&i.LastCreatedAt,
+			&i.LastFinalizedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listSystemJobs = `-- name: ListSystemJobs :many
@@ -168,4 +536,276 @@ func (q *Queries) ListSystemJobs(ctx context.Context, arg ListSystemJobsParams) 
 		return nil, err
 	}
 	return items, nil
+}
+
+const pruneSystemJobExecutions = `-- name: PruneSystemJobExecutions :exec
+delete from app.system_job_executions
+where finalized_at is not null
+    and finalized_at < now() - make_interval(days => $1::int)
+`
+
+func (q *Queries) PruneSystemJobExecutions(ctx context.Context, retentionDays int32) error {
+	_, err := q.db.Exec(ctx, pruneSystemJobExecutions, retentionDays)
+	return err
+}
+
+const updateSystemJobExecutionProgress = `-- name: UpdateSystemJobExecutionProgress :one
+update app.system_job_executions
+set progress_percent = $3,
+    progress_label = $2,
+    info_message = case when $2 = '' then info_message else $2 end,
+    updated_at = now()
+where river_job_id = $1
+returning river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+`
+
+type UpdateSystemJobExecutionProgressParams struct {
+	RiverJobID      int64
+	ProgressLabel   string
+	ProgressPercent pgtype.Int4
+}
+
+func (q *Queries) UpdateSystemJobExecutionProgress(ctx context.Context, arg UpdateSystemJobExecutionProgressParams) (AppSystemJobExecution, error) {
+	row := q.db.QueryRow(ctx, updateSystemJobExecutionProgress, arg.RiverJobID, arg.ProgressLabel, arg.ProgressPercent)
+	var i AppSystemJobExecution
+	err := row.Scan(
+		&i.RiverJobID,
+		&i.ScheduleID,
+		&i.Classification,
+		&i.Status,
+		&i.Kind,
+		&i.Queue,
+		&i.Attempt,
+		&i.MaxAttempts,
+		&i.Priority,
+		&i.ProgressPercent,
+		&i.ProgressLabel,
+		&i.Args,
+		&i.Metadata,
+		&i.Errors,
+		&i.InfoMessage,
+		&i.ScheduledAt,
+		&i.CreatedAt,
+		&i.AttemptedAt,
+		&i.FinalizedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateSystemJobHistorySettings = `-- name: UpdateSystemJobHistorySettings :one
+insert into app.system_job_history_settings (id, retention_days)
+values (true, $1)
+on conflict (id) do update set
+    retention_days = excluded.retention_days,
+    updated_at = now()
+returning id, retention_days, created_at, updated_at
+`
+
+func (q *Queries) UpdateSystemJobHistorySettings(ctx context.Context, retentionDays int32) (AppSystemJobHistorySetting, error) {
+	row := q.db.QueryRow(ctx, updateSystemJobHistorySettings, retentionDays)
+	var i AppSystemJobHistorySetting
+	err := row.Scan(
+		&i.ID,
+		&i.RetentionDays,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateSystemJobSchedulePaused = `-- name: UpdateSystemJobSchedulePaused :one
+update app.system_job_schedules
+set paused = $2,
+    updated_at = now()
+where id = $1
+returning id, name, kind, queue, interval_seconds, paused, created_at, updated_at
+`
+
+type UpdateSystemJobSchedulePausedParams struct {
+	ID     string
+	Paused bool
+}
+
+func (q *Queries) UpdateSystemJobSchedulePaused(ctx context.Context, arg UpdateSystemJobSchedulePausedParams) (AppSystemJobSchedule, error) {
+	row := q.db.QueryRow(ctx, updateSystemJobSchedulePaused, arg.ID, arg.Paused)
+	var i AppSystemJobSchedule
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Kind,
+		&i.Queue,
+		&i.IntervalSeconds,
+		&i.Paused,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertSystemJobExecution = `-- name: UpsertSystemJobExecution :one
+insert into app.system_job_executions (
+    river_job_id,
+    schedule_id,
+    classification,
+    status,
+    kind,
+    queue,
+    attempt,
+    max_attempts,
+    priority,
+    args,
+    metadata,
+    errors,
+    info_message,
+    scheduled_at,
+    created_at,
+    attempted_at,
+    finalized_at
+) values (
+    $1,
+    $15,
+    $2,
+    $3,
+    $4,
+    $5,
+    $6,
+    $7,
+    $8,
+    $9,
+    $10,
+    $11,
+    $12,
+    $13,
+    $14,
+    $16,
+    $17
+)
+on conflict (river_job_id) do update set
+    schedule_id = excluded.schedule_id,
+    classification = excluded.classification,
+    status = excluded.status,
+    kind = excluded.kind,
+    queue = excluded.queue,
+    attempt = excluded.attempt,
+    max_attempts = excluded.max_attempts,
+    priority = excluded.priority,
+    args = excluded.args,
+    metadata = excluded.metadata,
+    errors = excluded.errors,
+    info_message = excluded.info_message,
+    scheduled_at = excluded.scheduled_at,
+    created_at = excluded.created_at,
+    attempted_at = excluded.attempted_at,
+    finalized_at = excluded.finalized_at,
+    updated_at = now()
+returning river_job_id, schedule_id, classification, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
+`
+
+type UpsertSystemJobExecutionParams struct {
+	RiverJobID     int64
+	Classification string
+	Status         string
+	Kind           string
+	Queue          string
+	Attempt        int32
+	MaxAttempts    int32
+	Priority       int32
+	Args           []byte
+	Metadata       []byte
+	Errors         []byte
+	InfoMessage    string
+	ScheduledAt    time.Time
+	CreatedAt      time.Time
+	ScheduleID     pgtype.Text
+	AttemptedAt    *time.Time
+	FinalizedAt    *time.Time
+}
+
+func (q *Queries) UpsertSystemJobExecution(ctx context.Context, arg UpsertSystemJobExecutionParams) (AppSystemJobExecution, error) {
+	row := q.db.QueryRow(ctx, upsertSystemJobExecution,
+		arg.RiverJobID,
+		arg.Classification,
+		arg.Status,
+		arg.Kind,
+		arg.Queue,
+		arg.Attempt,
+		arg.MaxAttempts,
+		arg.Priority,
+		arg.Args,
+		arg.Metadata,
+		arg.Errors,
+		arg.InfoMessage,
+		arg.ScheduledAt,
+		arg.CreatedAt,
+		arg.ScheduleID,
+		arg.AttemptedAt,
+		arg.FinalizedAt,
+	)
+	var i AppSystemJobExecution
+	err := row.Scan(
+		&i.RiverJobID,
+		&i.ScheduleID,
+		&i.Classification,
+		&i.Status,
+		&i.Kind,
+		&i.Queue,
+		&i.Attempt,
+		&i.MaxAttempts,
+		&i.Priority,
+		&i.ProgressPercent,
+		&i.ProgressLabel,
+		&i.Args,
+		&i.Metadata,
+		&i.Errors,
+		&i.InfoMessage,
+		&i.ScheduledAt,
+		&i.CreatedAt,
+		&i.AttemptedAt,
+		&i.FinalizedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertSystemJobSchedule = `-- name: UpsertSystemJobSchedule :one
+insert into app.system_job_schedules (id, name, kind, queue, interval_seconds)
+values ($1, $2, $3, $4, $5)
+on conflict (id) do update set
+    name = excluded.name,
+    kind = excluded.kind,
+    queue = excluded.queue,
+    interval_seconds = excluded.interval_seconds,
+    updated_at = now()
+returning id, name, kind, queue, interval_seconds, paused, created_at, updated_at
+`
+
+type UpsertSystemJobScheduleParams struct {
+	ID              string
+	Name            string
+	Kind            string
+	Queue           string
+	IntervalSeconds int32
+}
+
+func (q *Queries) UpsertSystemJobSchedule(ctx context.Context, arg UpsertSystemJobScheduleParams) (AppSystemJobSchedule, error) {
+	row := q.db.QueryRow(ctx, upsertSystemJobSchedule,
+		arg.ID,
+		arg.Name,
+		arg.Kind,
+		arg.Queue,
+		arg.IntervalSeconds,
+	)
+	var i AppSystemJobSchedule
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Kind,
+		&i.Queue,
+		&i.IntervalSeconds,
+		&i.Paused,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

@@ -43,6 +43,8 @@ Acceptance criteria:
 - `.research/` remains git ignored.
 - No copied source code is introduced.
 - The DLNA clean-room spec exists under `docs/prd`.
+- The device profile clean-room spec exists under `docs/prd`.
+- The UMS feature parity plan exists under `docs/prd`.
 - Golden protocol examples are generated from Mema-owned fixtures.
 
 Tests:

@@ -79,6 +79,11 @@ import type {
 	SystemLogFileSettingsRequest,
 	SystemLogLevel,
 	SystemLogLevelResponse,
+	SystemJobExecutionLog,
+	SystemJobExecutionListResponse,
+	SystemJobHistorySettings,
+	SystemJobSchedule,
+	SystemJobsOverviewResponse,
 	SystemStatusResponse,
 	TagForm,
 	UserForm
@@ -269,6 +274,96 @@ export async function abortSystemJob(id: number) {
 	}
 	if (!data) {
 		throw new Error('Job abort did not return a job');
+	}
+	return data;
+}
+
+export async function getSystemJobsOverview(): Promise<SystemJobsOverviewResponse> {
+	const { data, error } = await client.GET('/system/jobs/overview');
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Jobs overview request did not return a result');
+	}
+	return data;
+}
+
+export async function pauseSystemJobSchedule(id: string): Promise<SystemJobSchedule> {
+	const { data, error } = await client.POST('/system/job-schedules/{id}/pause', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Schedule pause did not return a schedule');
+	}
+	return data;
+}
+
+export async function resumeSystemJobSchedule(id: string): Promise<SystemJobSchedule> {
+	const { data, error } = await client.POST('/system/job-schedules/{id}/resume', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Schedule resume did not return a schedule');
+	}
+	return data;
+}
+
+export interface SystemJobExecutionFilters {
+	status?: string[];
+	scheduleId?: string;
+	kind?: string;
+	queue?: string;
+	query?: string;
+	before?: string;
+	limit?: number;
+}
+
+export async function listSystemJobExecutions(
+	filters: SystemJobExecutionFilters = {}
+): Promise<SystemJobExecutionListResponse> {
+	const { data, error } = await client.GET('/system/job-executions', {
+		params: { query: filters }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data ?? { executions: [], hasMore: false };
+}
+
+export async function listSystemJobExecutionLogs(
+	riverJobId: number
+): Promise<SystemJobExecutionLog[]> {
+	const { data, error } = await client.GET('/system/job-executions/{riverJobId}/logs', {
+		params: { path: { riverJobId } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	return data?.logs ?? [];
+}
+
+export async function updateSystemJobHistorySettings(
+	request: SystemJobHistorySettings
+): Promise<SystemJobHistorySettings> {
+	const { data, error } = await client.PUT('/system/job-history-settings', { body: request });
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Job history settings update did not return a result');
 	}
 	return data;
 }

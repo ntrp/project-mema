@@ -815,6 +815,56 @@ type AppSystemEventSetting struct {
 	UpdatedAt     time.Time
 }
 
+type AppSystemJobExecution struct {
+	RiverJobID      int64
+	ScheduleID      pgtype.Text
+	Classification  string
+	Status          string
+	Kind            string
+	Queue           string
+	Attempt         int32
+	MaxAttempts     int32
+	Priority        int32
+	ProgressPercent pgtype.Int4
+	ProgressLabel   string
+	Args            []byte
+	Metadata        []byte
+	Errors          []byte
+	InfoMessage     string
+	ScheduledAt     time.Time
+	CreatedAt       time.Time
+	AttemptedAt     *time.Time
+	FinalizedAt     *time.Time
+	UpdatedAt       time.Time
+}
+
+type AppSystemJobExecutionLog struct {
+	ID         int64
+	RiverJobID int64
+	Severity   string
+	Message    string
+	Data       []byte
+	CreatedAt  time.Time
+}
+
+type AppSystemJobHistorySetting struct {
+	ID            bool
+	RetentionDays int32
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
+type AppSystemJobSchedule struct {
+	ID              string
+	Name            string
+	Kind            string
+	Queue           string
+	IntervalSeconds int32
+	Paused          bool
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
 type AppTag struct {
 	ID        uuid.UUID
 	Name      string

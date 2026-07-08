@@ -51,8 +51,10 @@ func (mkvMergeRunner) Mux(ctx context.Context, command string, args []string) (s
 }
 
 func (w *ComponentMuxWorker) Work(ctx context.Context, job *river.Job[MediaComponentMuxArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
+	recordJobProgress(ctx, w.settings, w.events, nil, "Assembling media components")
 
 	runID, err := uuid.Parse(job.Args.RunID)
 	if err != nil {

@@ -34,8 +34,9 @@ type DownloadActivitySyncWorker struct {
 }
 
 func (w *DownloadActivitySyncWorker) Work(ctx context.Context, job *river.Job[DownloadActivitySyncArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
 
 	activities, err := w.settings.ListActiveDownloadActivity(ctx)
 	if err != nil {
@@ -48,6 +49,7 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, job *river.Job[Do
 		return fmt.Errorf("list enabled download clients: %w", err)
 	}
 	slog.Debug("download activity sync started", "activityCount", len(activities), "clientCount", len(clients))
+	recordJobProgress(ctx, w.settings, w.events, nil, fmt.Sprintf("Checking %d download activity item(s)", len(activities)))
 	clientsByName := map[string]storage.DownloadClient{}
 	for _, client := range clients {
 		clientsByName[client.Name] = client
@@ -67,6 +69,8 @@ func (w *DownloadActivitySyncWorker) Work(ctx context.Context, job *river.Job[Do
 	if len(failures) > 0 {
 		return fmt.Errorf("download activity sync failed for %d item(s): %s", len(failures), strings.Join(failures, "; "))
 	}
+	done := int32(100)
+	recordJobProgress(ctx, w.settings, w.events, &done, "Download activity sync finished")
 	return nil
 }
 

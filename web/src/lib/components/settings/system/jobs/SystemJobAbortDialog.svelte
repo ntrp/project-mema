@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import type { SystemJob } from '$lib/settings/types';
+
+	interface AbortJob {
+		id: number;
+		kind: string;
+	}
 
 	interface Props {
-		job?: SystemJob;
+		job?: AbortJob;
 		onClose: () => void;
 		onAbort: () => void | Promise<void>;
 	}

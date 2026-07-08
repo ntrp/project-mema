@@ -30,8 +30,9 @@ const (
 )
 
 type Client struct {
-	river  *river.Client[pgx.Tx]
-	events *events.Broker
+	river    *river.Client[pgx.Tx]
+	settings *storage.SettingsStore
+	events   *events.Broker
 }
 
 type ReleaseSearchArgs struct {
@@ -52,8 +53,9 @@ type ReleaseSearchWorker struct {
 }
 
 func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSearchArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
 
 	mediaItemID, err := uuid.Parse(job.Args.MediaItemID)
 	if err != nil {
@@ -71,6 +73,7 @@ func (w *ReleaseSearchWorker) Work(ctx context.Context, job *river.Job[ReleaseSe
 		query = decisions.SearchQueryForMediaItem(item)
 	}
 	slog.Debug("release search started", "mediaItemId", item.ID, "title", item.Title, "query", query)
+	recordJobProgress(ctx, w.settings, w.events, nil, "Searching releases")
 	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "jobs", "Release search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "query": query})
 	releases, searchErrors, err := searchReleases(ctx, w.settings, w.indexers, item, query, w.events, true)
 	if err != nil {
@@ -96,8 +99,9 @@ type GrabReleaseWorker struct {
 }
 
 func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabReleaseArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
 
 	activityID, err := uuid.Parse(job.Args.ActivityID)
 	if err != nil {
@@ -115,6 +119,8 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 		return nil
 	}
 	slog.Debug("grab release started", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "releaseTitle", job.Args.Title)
+	progress := int32(20)
+	recordJobProgress(ctx, w.settings, w.events, &progress, "Sending release to download client")
 	publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Download job started", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": job.Args.Title})
 	clients, err := w.settings.ListEnabledDownloadClients(ctx)
 	if err != nil {
@@ -143,6 +149,8 @@ func (w *GrabReleaseWorker) Work(ctx context.Context, job *river.Job[GrabRelease
 	downloadID := optionalString(result.DownloadID)
 	activity, err = w.settings.UpdateDownloadActivityClientState(ctx, activityID, "grabbed", downloadID, nil)
 	if err == nil {
+		done := int32(100)
+		recordJobProgress(ctx, w.settings, w.events, &done, "Download accepted")
 		publishDownloadActivity(w.events, activity)
 		slog.Debug("grab release finished", "activityId", activity.ID, "downloadClientName", client.Name, "downloadId", result.DownloadID)
 		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Download sent to client", map[string]any{"activityId": activity.ID.String(), "downloadClientName": client.Name, "downloadId": result.DownloadID})
@@ -178,6 +186,11 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 	if eventBroker == nil {
 		eventBroker = events.NewBroker()
 	}
+	if settings != nil {
+		if err := settings.SyncSystemJobSchedules(context.Background(), fixedScheduleDefinitions()); err != nil {
+			return nil, err
+		}
+	}
 	addWorkers(workers, workerDependencies{
 		settings:        settings,
 		indexers:        indexerService,
@@ -195,12 +208,12 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 			queueDownloads:     {MaxWorkers: 2},
 			queueMediaAssembly: {MaxWorkers: 2},
 		},
-		PeriodicJobs:    periodicJobs(),
+		PeriodicJobs:    periodicJobs(settings),
 		SoftStopTimeout: 10 * time.Second,
 		Workers:         workers,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &Client{river: riverClient, events: eventBroker}, nil
+	return &Client{river: riverClient, settings: settings, events: eventBroker}, nil
 }

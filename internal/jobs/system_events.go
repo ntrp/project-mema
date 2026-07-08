@@ -36,6 +36,11 @@ func publishSystemEvent(
 		slog.Error("job system event record failed", "severity", severity, "category", category, "message", message, "error", err)
 		return
 	}
+	if riverJobID, ok := jobExecutionID(ctx); ok {
+		if _, err := store.CreateSystemJobExecutionLog(ctx, riverJobID, severity, message, data); err != nil {
+			slog.Debug("job execution log record failed", "riverJobId", riverJobID, "message", message, "error", err)
+		}
+	}
 	if broker != nil {
 		broker.Publish("system.event.created", map[string]any{
 			"id":        event.ID,

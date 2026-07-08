@@ -52,6 +52,10 @@ func (s *Server) AbortSystemJob(w http.ResponseWriter, r *http.Request, id int64
 	}
 	s.recordEvent(r.Context(), eventSeverityWarning, "jobs", "Job aborted", map[string]any{"jobId": id, "kind": job.Kind, "queue": job.Queue})
 	s.events.Publish("system.job.updated", systemJobResponse(job))
+	if execution, err := s.settings.UpsertSystemJobExecution(r.Context(), systemJobExecutionInputFromJob(job, "cancelled")); err == nil {
+		_, _ = s.settings.CreateSystemJobExecutionLog(r.Context(), id, "warning", "Job aborted", map[string]any{"kind": job.Kind, "queue": job.Queue})
+		s.events.Publish("system.job.execution.updated", systemJobExecutionResponse(execution))
+	}
 	writeJSON(w, http.StatusOK, systemJobResponse(job))
 }
 

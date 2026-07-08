@@ -43,8 +43,10 @@ type SubtitleSearchWorker struct {
 }
 
 func (w *SubtitleSearchWorker) Work(ctx context.Context, job *river.Job[SubtitleSearchArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
+	recordJobProgress(ctx, w.settings, w.events, nil, "Searching subtitles")
 	itemID, err := uuid.Parse(job.Args.MediaItemID)
 	if err != nil {
 		return fmt.Errorf("parse media item id: %w", err)
@@ -66,8 +68,10 @@ type SubtitleRetryWorker struct {
 }
 
 func (w *SubtitleRetryWorker) Work(ctx context.Context, job *river.Job[SubtitleRetryArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
+	recordJobProgress(ctx, w.settings, w.events, nil, "Retrying missing subtitles")
 	items, err := w.settings.ListMediaItems(ctx)
 	if err != nil {
 		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "subtitles", "Subtitle retry failed to list media", map[string]any{"error": err.Error()})

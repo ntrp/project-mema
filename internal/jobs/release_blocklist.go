@@ -26,13 +26,16 @@ type ReleaseBlocklistCleanupWorker struct {
 }
 
 func (w *ReleaseBlocklistCleanupWorker) Work(ctx context.Context, job *river.Job[ReleaseBlocklistCleanupArgs]) (err error) {
-	publishJobUpdated(w.events, job.JobRow, "running")
-	defer func() { publishJobFinished(w.events, job.JobRow, err) }()
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
 
 	deleted, err := w.settings.CleanupExpiredReleaseBlocks(ctx)
 	if err != nil {
 		return fmt.Errorf("cleanup expired release blocks: %w", err)
 	}
+	done := int32(100)
+	recordJobProgress(ctx, w.settings, w.events, &done, fmt.Sprintf("Cleaned up %d expired release block(s)", deleted))
 	if deleted > 0 {
 		publishSystemEvent(ctx, w.settings, w.events, jobEventInfo, "downloads", "Expired release blocks cleaned up", map[string]any{"deletedCount": deleted})
 	}

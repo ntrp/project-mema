@@ -36,6 +36,16 @@ Also check the download category. If the client puts media in a different
 category than expected, the app may not pick up the completed download the way
 you expect.
 
+## Background Jobs Look Stuck
+
+Open System > Jobs to see fixed scheduled jobs, current one-shot jobs, and
+execution history. Fixed schedules can be paused or resumed from that page.
+Running or queued executions can be aborted from the row actions.
+
+Use the execution history logs when a job fails or appears stuck. Each run keeps
+structured messages, progress updates, errors, and relevant IDs so you can see
+which indexer, download client, media item, or path was involved.
+
 ## The Wrong Indexers Are Used
 
 Review media scopes and tag scopes. Media without tags can use any enabled

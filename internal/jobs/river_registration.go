@@ -27,6 +27,11 @@ type workerDependencies struct {
 	events          *events.Broker
 }
 
+type fixedJobDefinition struct {
+	storage.SystemJobScheduleDefinition
+	args func() river.JobArgs
+}
+
 func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &ReleaseSearchWorker{settings: deps.settings, indexers: deps.indexers, events: deps.events})
 	river.AddWorker(workers, &AutoSearchDownloadWorker{
@@ -59,37 +64,77 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &ComponentMuxWorker{settings: deps.settings, events: deps.events})
 }
 
-func periodicJobs() []*river.PeriodicJob {
-	return []*river.PeriodicJob{
-		river.NewPeriodicJob(
-			river.PeriodicInterval(15*time.Minute),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return RSSSyncArgs{}, &river.InsertOpts{Queue: queueMediaSearch}
+func fixedJobDefinitions() []fixedJobDefinition {
+	return []fixedJobDefinition{
+		{
+			SystemJobScheduleDefinition: storage.SystemJobScheduleDefinition{
+				ID:              "rss_sync",
+				Name:            "RSS sync",
+				Kind:            RSSSyncArgs{}.Kind(),
+				Queue:           queueMediaSearch,
+				IntervalSeconds: int32((15 * time.Minute).Seconds()),
 			},
-			&river.PeriodicJobOpts{ID: "rss_sync"},
-		),
-		river.NewPeriodicJob(
-			river.PeriodicInterval(10*time.Second),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return DownloadActivitySyncArgs{}, &river.InsertOpts{Queue: queueDownloads}
+			args: func() river.JobArgs { return RSSSyncArgs{} },
+		},
+		{
+			SystemJobScheduleDefinition: storage.SystemJobScheduleDefinition{
+				ID:              "download_activity_sync",
+				Name:            "Download activity sync",
+				Kind:            DownloadActivitySyncArgs{}.Kind(),
+				Queue:           queueDownloads,
+				IntervalSeconds: int32((10 * time.Second).Seconds()),
 			},
-			&river.PeriodicJobOpts{ID: "download_activity_sync"},
-		),
-		river.NewPeriodicJob(
-			river.PeriodicInterval(1*time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return ReleaseBlocklistCleanupArgs{}, &river.InsertOpts{Queue: queueDownloads}
+			args: func() river.JobArgs { return DownloadActivitySyncArgs{} },
+		},
+		{
+			SystemJobScheduleDefinition: storage.SystemJobScheduleDefinition{
+				ID:              "release_blocklist_cleanup",
+				Name:            "Release blocklist cleanup",
+				Kind:            ReleaseBlocklistCleanupArgs{}.Kind(),
+				Queue:           queueDownloads,
+				IntervalSeconds: int32(time.Hour.Seconds()),
 			},
-			&river.PeriodicJobOpts{ID: "release_blocklist_cleanup"},
-		),
-		river.NewPeriodicJob(
-			river.PeriodicInterval(6*time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return SubtitleRetryArgs{}, &river.InsertOpts{Queue: queueMediaSearch}
+			args: func() river.JobArgs { return ReleaseBlocklistCleanupArgs{} },
+		},
+		{
+			SystemJobScheduleDefinition: storage.SystemJobScheduleDefinition{
+				ID:              "subtitle_retry",
+				Name:            "Subtitle retry",
+				Kind:            SubtitleRetryArgs{}.Kind(),
+				Queue:           queueMediaSearch,
+				IntervalSeconds: int32((6 * time.Hour).Seconds()),
 			},
-			&river.PeriodicJobOpts{ID: "subtitle_retry"},
-		),
+			args: func() river.JobArgs { return SubtitleRetryArgs{} },
+		},
 	}
+}
+
+func periodicJobs(settings *storage.SettingsStore) []*river.PeriodicJob {
+	definitions := fixedJobDefinitions()
+	jobs := make([]*river.PeriodicJob, 0, len(definitions))
+	for _, definition := range definitions {
+		definition := definition
+		jobs = append(jobs, river.NewPeriodicJob(
+			river.PeriodicInterval(time.Duration(definition.IntervalSeconds)*time.Second),
+			func() (river.JobArgs, *river.InsertOpts) {
+				if settings != nil && settings.SystemJobSchedulePaused(context.Background(), definition.ID) {
+					return nil, nil
+				}
+				return definition.args(), &river.InsertOpts{Queue: definition.Queue}
+			},
+			&river.PeriodicJobOpts{ID: definition.ID},
+		))
+	}
+	return jobs
+}
+
+func fixedScheduleDefinitions() []storage.SystemJobScheduleDefinition {
+	definitions := fixedJobDefinitions()
+	schedules := make([]storage.SystemJobScheduleDefinition, 0, len(definitions))
+	for _, definition := range definitions {
+		schedules = append(schedules, definition.SystemJobScheduleDefinition)
+	}
+	return schedules
 }
 
 func cleanupLegacyJobs(ctx context.Context, pool *pgxpool.Pool) {

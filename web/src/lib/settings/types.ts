@@ -60,6 +60,13 @@ export type DLNAInterfaceDiagnostic = components['schemas']['DLNAInterfaceDiagno
 export type DLNAStreamDiagnostic = components['schemas']['DLNAStreamDiagnostic'];
 export type SystemJob = components['schemas']['SystemJob'];
 export type SystemJobListResponse = components['schemas']['SystemJobListResponse'];
+export type SystemJobsOverviewResponse = components['schemas']['SystemJobsOverviewResponse'];
+export type SystemJobSchedule = components['schemas']['SystemJobSchedule'];
+export type SystemJobExecution = components['schemas']['SystemJobExecution'];
+export type SystemJobExecutionListResponse =
+	components['schemas']['SystemJobExecutionListResponse'];
+export type SystemJobExecutionLog = components['schemas']['SystemJobExecutionLog'];
+export type SystemJobHistorySettings = components['schemas']['SystemJobHistorySettings'];
 export type LibraryFolder = components['schemas']['LibraryFolder'];
 export type LibraryFolderKind = components['schemas']['LibraryFolderKind'];
 export type LibraryFolderOption = components['schemas']['LibraryFolderOption'];

@@ -41,8 +41,9 @@ func runRSSSyncWorker(
 	decisionEngine decisions.Engine,
 	eventBroker *events.Broker,
 ) (err error) {
-	publishJobUpdated(eventBroker, jobRow, "running")
-	defer func() { publishJobFinished(eventBroker, jobRow, err) }()
+	ctx = withJobExecution(ctx, jobRow.ID)
+	recordJobUpdated(ctx, settings, eventBroker, jobRow, "running")
+	defer func() { recordJobFinished(ctx, settings, eventBroker, jobRow, err) }()
 
 	items, err := settings.ListMissingMediaItems(ctx)
 	if err != nil {
@@ -59,6 +60,7 @@ func runRSSSyncWorker(
 	}
 
 	slog.Debug("rss sync started", "indexerCount", len(configs), "candidateMediaCount", len(items))
+	recordJobProgress(ctx, settings, eventBroker, nil, fmt.Sprintf("Checking %d RSS indexer(s)", len(configs)))
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "RSS sync started", map[string]any{"indexerCount": len(configs), "candidateMediaCount": len(items)})
 	matchesByMedia, failures := fetchRSSMatches(ctx, settings, indexerService, eventBroker, configs, items)
 	if err := processRSSMatches(ctx, settings, downloadClientService, decisionEngine, eventBroker, matchesByMedia); err != nil {
@@ -68,6 +70,8 @@ func runRSSSyncWorker(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "RSS sync finished with indexer failures", map[string]any{"failureCount": len(failures)})
 		return fmt.Errorf("rss sync failed for %d indexer(s): %s", len(failures), strings.Join(failures, "; "))
 	}
+	done := int32(100)
+	recordJobProgress(ctx, settings, eventBroker, &done, "RSS sync finished")
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "RSS sync finished", map[string]any{"matchedMediaCount": len(matchesByMedia)})
 	return nil
 }

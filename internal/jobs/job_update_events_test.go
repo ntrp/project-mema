@@ -9,6 +9,7 @@ import (
 	"github.com/riverqueue/river/rivertype"
 
 	"media-manager/internal/events"
+	"media-manager/internal/storage"
 )
 
 func TestSCNSystem008JobUpdatedPublishesObservablePayload(t *testing.T) {
@@ -87,6 +88,50 @@ func TestSCNSystem008JobFinishedPublishesRetryableAndCompletedStates(t *testing.
 	}
 	if update.Args != "{}" || update.Metadata != "{}" || update.Errors != "[]" {
 		t.Fatalf("completed update fallbacks = %#v", update)
+	}
+}
+
+func TestSCNSystem008JobExecutionInputClassifiesPeriodicJobs(t *testing.T) {
+	row := &rivertype.JobRow{
+		ID:          44,
+		State:       rivertype.JobStateAvailable,
+		Kind:        "media.rss_sync",
+		Queue:       "media_search",
+		MaxAttempts: 3,
+		Metadata:    []byte(`{"river:periodic_job_id":"rss_sync"}`),
+		ScheduledAt: time.Date(2026, 7, 8, 10, 0, 0, 0, time.UTC),
+		CreatedAt:   time.Date(2026, 7, 8, 9, 59, 0, 0, time.UTC),
+	}
+
+	input := jobExecutionInputFromRow(row, "running")
+	if input.ScheduleID != "rss_sync" || input.Classification != "fixed" {
+		t.Fatalf("periodic classification = %#v", input)
+	}
+
+	row.Metadata = []byte(`{"source":"manual"}`)
+	input = jobExecutionInputFromRow(row, "")
+	if input.ScheduleID != "" || input.Classification != "one_shot" || input.Status != "available" {
+		t.Fatalf("one-shot classification = %#v", input)
+	}
+}
+
+func TestSCNSystem008JobExecutionEventPreservesProgress(t *testing.T) {
+	progress := int32(67)
+	execution := jobExecutionEventFromStorage(storage.SystemJobExecution{
+		RiverJobID:      45,
+		Classification:  "one_shot",
+		Status:          "running",
+		Kind:            "media.release_search",
+		Queue:           "media_search",
+		ProgressPercent: &progress,
+		ProgressLabel:   "Searching indexers",
+	})
+
+	if execution.RiverJobID != 45 || execution.ProgressPercent == nil || *execution.ProgressPercent != progress {
+		t.Fatalf("execution event = %#v", execution)
+	}
+	if execution.ProgressLabel != "Searching indexers" {
+		t.Fatalf("progress label = %q", execution.ProgressLabel)
 	}
 }
 

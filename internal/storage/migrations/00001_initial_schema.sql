@@ -615,6 +615,69 @@ insert into app.system_event_settings (id, retention_days)
 values (true, 7)
 on conflict (id) do nothing;
 
+create table if not exists app.system_job_schedules (
+    id text primary key,
+    name text not null,
+    kind text not null,
+    queue text not null,
+    interval_seconds integer not null check (interval_seconds > 0),
+    paused boolean not null default false,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+create table if not exists app.system_job_executions (
+    river_job_id bigint primary key,
+    schedule_id text references app.system_job_schedules(id) on delete set null,
+    classification text not null check (classification in ('fixed', 'one_shot')),
+    status text not null,
+    kind text not null,
+    queue text not null,
+    attempt integer not null default 0,
+    max_attempts integer not null default 0,
+    priority integer not null default 0,
+    progress_percent integer check (progress_percent between 0 and 100),
+    progress_label text not null default '',
+    args jsonb not null default '{}'::jsonb,
+    metadata jsonb not null default '{}'::jsonb,
+    errors jsonb not null default '[]'::jsonb,
+    info_message text not null default '',
+    scheduled_at timestamptz not null,
+    created_at timestamptz not null,
+    attempted_at timestamptz,
+    finalized_at timestamptz,
+    updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_system_job_executions_schedule_created
+    on app.system_job_executions (schedule_id, created_at desc);
+
+create index if not exists idx_system_job_executions_status_updated
+    on app.system_job_executions (status, updated_at desc);
+
+create table if not exists app.system_job_execution_logs (
+    id bigserial primary key,
+    river_job_id bigint not null references app.system_job_executions(river_job_id) on delete cascade,
+    severity text not null check (severity in ('info', 'warning', 'error')),
+    message text not null,
+    data jsonb not null default '{}'::jsonb,
+    created_at timestamptz not null default now()
+);
+
+create index if not exists idx_system_job_execution_logs_job_created
+    on app.system_job_execution_logs (river_job_id, created_at, id);
+
+create table if not exists app.system_job_history_settings (
+    id boolean primary key default true check (id),
+    retention_days integer not null default 30 check (retention_days between 1 and 365),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+
+insert into app.system_job_history_settings (id, retention_days)
+values (true, 30)
+on conflict (id) do nothing;
+
 create table if not exists app.media_item_tags (
     media_item_id uuid not null references app.media_items(id) on delete cascade,
     tag_id uuid not null references app.tags(id) on delete cascade,

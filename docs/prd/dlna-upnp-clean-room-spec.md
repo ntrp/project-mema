@@ -30,11 +30,19 @@ analysis:
   generated MediaServer and MediaRenderer client contracts.
 - `.research/koron-go-ssdp`: SSDP advertiser, monitor, search, alive, byebye,
   and interface-limited multicast behavior.
+- `.research/UniversalMediaServer`: renderer profile coverage and public
+  behavior categories only. UMS configuration text and implementation code must
+  not be copied into Mema.
 
 This specification is clean-room. It defines Mema's desired behavior from
 public protocol concepts, observed feature categories, and current Mema
 architecture. Implementation must be original and tested against protocol
 contracts, not copied from the researched source code.
+
+Related clean-room specifications:
+
+- `docs/prd/dlna-device-profiles-clean-room-spec.md`
+- `docs/prd/dlna-ums-feature-parity-plan.md`
 
 ## Goals
 
