@@ -19,7 +19,9 @@ you configured them.
 
 If audio is marked partial or missing, open the file detail area and compare the
 detected tracks with the selected profile. The file may be perfectly playable
-but still not satisfy the profile you chose.
+but still not satisfy the profile you chose. Missing required audio languages
+appear as placeholder rows in the track table, next to the detected audio
+tracks.
 
 ## Subtitle Status
 

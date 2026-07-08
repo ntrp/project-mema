@@ -318,6 +318,20 @@ export async function resumeSystemJobSchedule(id: string): Promise<SystemJobSche
 	return data;
 }
 
+export async function runSystemJobSchedule(id: string): Promise<SystemJobSchedule> {
+	const { data, error } = await client.POST('/system/job-schedules/{id}/run', {
+		params: { path: { id } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Schedule run did not return a schedule');
+	}
+	return data;
+}
+
 export async function updateSystemJobScheduleInterval(
 	id: string,
 	intervalSeconds: number

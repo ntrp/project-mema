@@ -18,9 +18,11 @@
 		schedules: SystemJobSchedule[];
 		updatingId?: string;
 		updatingIntervalId?: string;
+		runningId?: string;
 		abortingId?: number;
 		onPause: (schedule: SystemJobSchedule) => void;
 		onResume: (schedule: SystemJobSchedule) => void;
+		onRun: (schedule: SystemJobSchedule) => void;
 		onSaveInterval: (schedule: SystemJobSchedule, intervalSeconds: number) => void;
 		onAbort: (id: number) => void;
 	}
@@ -29,9 +31,11 @@
 		schedules,
 		updatingId,
 		updatingIntervalId,
+		runningId,
 		abortingId,
 		onPause,
 		onResume,
+		onRun,
 		onSaveInterval,
 		onAbort
 	}: Props = $props();
@@ -49,7 +53,44 @@
 	function updateIntervalDraft(schedule: SystemJobSchedule, value: number) {
 		intervalDrafts = { ...intervalDrafts, [schedule.id]: value };
 	}
+
+	const hasActiveRun = (schedule: SystemJobSchedule) =>
+		!!schedule.activeRiverJobId && canAbortStatus(schedule.activeStatus);
+
+	const progressValue = (schedule: SystemJobSchedule) =>
+		schedule.activeStatus ? schedule.activeProgressPercent : 0;
 </script>
+
+{#snippet actionButton(label: string, disabled: boolean, onclick: () => void)}
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<Button
+					{...props}
+					type="button"
+					variant={label === 'Abort active run' ? 'destructive' : 'outline'}
+					size="icon-sm"
+					aria-label={label}
+					{disabled}
+					{onclick}
+				>
+					{#if label === 'Run schedule now'}
+						<PlayIcon aria-hidden="true" />
+					{:else if label === 'Abort active run'}
+						<BanIcon aria-hidden="true" />
+					{:else if label === 'Resume schedule'}
+						<PlayIcon aria-hidden="true" />
+					{:else if label === 'Save interval'}
+						<SaveIcon aria-hidden="true" />
+					{:else}
+						<PauseIcon aria-hidden="true" />
+					{/if}
+				</Button>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content>{label}</Tooltip.Content>
+	</Tooltip.Root>
+{/snippet}
 
 <div class="overflow-auto rounded-md border border-border">
 	<Table.Root class="min-w-full table-auto border-collapse">
@@ -96,25 +137,12 @@
 									oninput={(event) =>
 										updateIntervalDraft(schedule, event.currentTarget.valueAsNumber)}
 								/>
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										{#snippet child({ props })}
-											<Button
-												{...props}
-												type="button"
-												variant="outline"
-												size="icon-sm"
-												aria-label="Save interval"
-												disabled={updatingIntervalId === schedule.id ||
-													intervalDraft(schedule) === schedule.intervalSeconds}
-												onclick={() => onSaveInterval(schedule, intervalDraft(schedule))}
-											>
-												<SaveIcon aria-hidden="true" />
-											</Button>
-										{/snippet}
-									</Tooltip.Trigger>
-									<Tooltip.Content>Save interval</Tooltip.Content>
-								</Tooltip.Root>
+								{@render actionButton(
+									'Save interval',
+									updatingIntervalId === schedule.id ||
+										intervalDraft(schedule) === schedule.intervalSeconds,
+									() => onSaveInterval(schedule, intervalDraft(schedule))
+								)}
 							</div>
 						{:else}
 							{formatInterval(schedule.intervalSeconds)}
@@ -122,7 +150,7 @@
 					</Table.Cell>
 					<Table.Cell>
 						<SystemJobProgress
-							value={schedule.activeProgressPercent}
+							value={progressValue(schedule)}
 							label={schedule.activeProgressLabel ||
 								schedule.activeInfoMessage ||
 								schedule.activeStatus ||
@@ -137,49 +165,22 @@
 					</Table.Cell>
 					<Table.Cell class="w-px text-right">
 						<div class="flex justify-end gap-1">
-							<Tooltip.Root>
-								<Tooltip.Trigger>
-									{#snippet child({ props })}
-										<Button
-											{...props}
-											type="button"
-											variant="outline"
-											size="icon-sm"
-											aria-label={schedule.paused ? 'Resume schedule' : 'Pause schedule'}
-											disabled={updatingId === schedule.id}
-											onclick={() => (schedule.paused ? onResume(schedule) : onPause(schedule))}
-										>
-											{#if schedule.paused}
-												<PlayIcon aria-hidden="true" />
-											{:else}
-												<PauseIcon aria-hidden="true" />
-											{/if}
-										</Button>
-									{/snippet}
-								</Tooltip.Trigger>
-								<Tooltip.Content
-									>{schedule.paused ? 'Resume schedule' : 'Pause schedule'}</Tooltip.Content
-								>
-							</Tooltip.Root>
-							{#if schedule.activeRiverJobId && canAbortStatus(schedule.activeStatus)}
-								<Tooltip.Root>
-									<Tooltip.Trigger>
-										{#snippet child({ props })}
-											<Button
-												{...props}
-												type="button"
-												variant="destructive"
-												size="icon-sm"
-												aria-label="Abort active run"
-												disabled={abortingId === schedule.activeRiverJobId}
-												onclick={() => onAbort(schedule.activeRiverJobId!)}
-											>
-												<BanIcon aria-hidden="true" />
-											</Button>
-										{/snippet}
-									</Tooltip.Trigger>
-									<Tooltip.Content>Abort active run</Tooltip.Content>
-								</Tooltip.Root>
+							{@render actionButton(
+								'Run schedule now',
+								runningId === schedule.id || hasActiveRun(schedule),
+								() => onRun(schedule)
+							)}
+							{@render actionButton(
+								schedule.paused ? 'Resume schedule' : 'Pause schedule',
+								updatingId === schedule.id,
+								() => (schedule.paused ? onResume(schedule) : onPause(schedule))
+							)}
+							{#if hasActiveRun(schedule)}
+								{@render actionButton(
+									'Abort active run',
+									abortingId === schedule.activeRiverJobId,
+									() => onAbort(schedule.activeRiverJobId!)
+								)}
 							{/if}
 						</div>
 					</Table.Cell>

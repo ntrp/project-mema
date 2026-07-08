@@ -4214,6 +4214,9 @@ type ResourceId = openapi_types.UUID
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponse
 
+// Conflict defines model for Conflict.
+type Conflict = ErrorResponse
+
 // Forbidden defines model for Forbidden.
 type Forbidden = ErrorResponse
 
@@ -5107,6 +5110,9 @@ type ServerInterface interface {
 	// Resume a fixed scheduled job
 	// (POST /system/job-schedules/{id}/resume)
 	ResumeSystemJobSchedule(w http.ResponseWriter, r *http.Request, id string)
+	// Run a fixed scheduled job now
+	// (POST /system/job-schedules/{id}/run)
+	RunSystemJobSchedule(w http.ResponseWriter, r *http.Request, id string)
 	// List background jobs
 	// (GET /system/jobs)
 	ListSystemJobs(w http.ResponseWriter, r *http.Request, params ListSystemJobsParams)
@@ -6142,6 +6148,12 @@ func (_ Unimplemented) PauseSystemJobSchedule(w http.ResponseWriter, r *http.Req
 // Resume a fixed scheduled job
 // (POST /system/job-schedules/{id}/resume)
 func (_ Unimplemented) ResumeSystemJobSchedule(w http.ResponseWriter, r *http.Request, id string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Run a fixed scheduled job now
+// (POST /system/job-schedules/{id}/run)
+func (_ Unimplemented) RunSystemJobSchedule(w http.ResponseWriter, r *http.Request, id string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -11845,6 +11857,38 @@ func (siw *ServerInterfaceWrapper) ResumeSystemJobSchedule(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// RunSystemJobSchedule operation middleware
+func (siw *ServerInterfaceWrapper) RunSystemJobSchedule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RunSystemJobSchedule(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSystemJobs operation middleware
 func (siw *ServerInterfaceWrapper) ListSystemJobs(w http.ResponseWriter, r *http.Request) {
 
@@ -12790,6 +12834,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/system/job-schedules/{id}/resume", wrapper.ResumeSystemJobSchedule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/system/job-schedules/{id}/run", wrapper.RunSystemJobSchedule)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/system/jobs", wrapper.ListSystemJobs)

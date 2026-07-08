@@ -2289,6 +2289,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/system/job-schedules/{id}/run': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Run a fixed scheduled job now */
+		post: operations['runSystemJobSchedule'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/system/job-schedules/{id}/interval': {
 		parameters: {
 			query?: never;
@@ -4820,6 +4839,15 @@ export interface components {
 		};
 		/** @description Resource not found */
 		NotFound: {
+			headers: {
+				[name: string]: unknown;
+			};
+			content: {
+				'application/json': components['schemas']['ErrorResponse'];
+			};
+		};
+		/** @description Resource state conflict */
+		Conflict: {
 			headers: {
 				[name: string]: unknown;
 			};
@@ -8921,6 +8949,32 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 			403: components['responses']['Forbidden'];
 			404: components['responses']['NotFound'];
+		};
+	};
+	runSystemJobSchedule: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Fixed scheduled job started */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemJobSchedule'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
+			409: components['responses']['Conflict'];
 		};
 	};
 	updateSystemJobScheduleInterval: {

@@ -53,6 +53,9 @@ Routine schedules, such as download client activity sync, are marked with a
 separate history policy. Routine successful runs are hidden from the default
 history view and use shorter retention, while failures and retryable executions
 remain visible so regular health checks do not bury meaningful background work.
+Manual schedule runs enqueue the same fixed job definition with application
+schedule metadata, so they update the fixed schedule's active run, history, and
+next run calculation instead of appearing as unrelated one-shot work.
 
 The `/api/events` stream publishes both `system.job.updated` for River row
 changes and `system.job.execution.updated` for dashboard execution/progress

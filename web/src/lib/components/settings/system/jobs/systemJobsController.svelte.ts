@@ -9,6 +9,7 @@ import {
 	loadHistoryState,
 	loadOverviewState,
 	openLogsState,
+	runScheduleState,
 	saveRetentionState,
 	saveScheduleIntervalState,
 	toggleScheduleState
@@ -41,6 +42,7 @@ export class SystemJobsController {
 	errorMessage = $state('');
 	updatingScheduleId = $state<string | undefined>();
 	updatingIntervalId = $state<string | undefined>();
+	runningScheduleId = $state<string | undefined>();
 	abortingId = $state<number | undefined>();
 	abortCandidate = $state<{ id: number; kind: string } | undefined>();
 	logsExecution = $state<SystemJobExecution | undefined>();
@@ -70,7 +72,6 @@ export class SystemJobsController {
 		void this.loadOverview();
 		void this.loadHistory(true);
 		this.source = new EventSource('/api/events', { withCredentials: true });
-		this.source.addEventListener('system.job.updated', () => void this.loadOverview());
 		this.source.addEventListener('system.job.execution.updated', (event) => {
 			const execution = parseSystemEvent<SystemJobExecution>(event);
 			if (execution) this.applyExecutionUpdate(execution);
@@ -112,6 +113,10 @@ export class SystemJobsController {
 
 	async saveScheduleInterval(schedule: SystemJobSchedule, intervalSeconds: number) {
 		await saveScheduleIntervalState(this, schedule, intervalSeconds);
+	}
+
+	async runSchedule(schedule: SystemJobSchedule) {
+		await runScheduleState(this, schedule);
 	}
 
 	async abortJob() {

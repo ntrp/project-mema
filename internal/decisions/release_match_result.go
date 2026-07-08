@@ -73,6 +73,7 @@ func scoredReleaseMatch(
 	match.MatchedMedia = matchedMedia
 	match.CustomFormatScore = customScore
 	match.CustomFormatContributors = customContributors
+	match.LanguageScore = languageScore
 	match.LanguageContributors = languageContributors
 	match.TargetScore = targetScore
 	match.TargetContributors = targetContributors

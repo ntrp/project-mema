@@ -59,6 +59,9 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).not.toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
+		expect(body.indexOf('Missing expected audio track')).toBeLessThan(
+			body.indexOf('Subtitle track')
+		);
 		expect(body).toContain('border-t-4');
 		expect(body).toContain('[&amp;>td]:border-t-4');
 	});

@@ -159,6 +159,14 @@ describe('media file detail rows (SCN-MEDIA-004)', () => {
 			'Opening · 00:00:00 - 00:01:00'
 		);
 		expect(rows.find((row) => row.missing)?.language).toBe('German');
+		expect(rows.map((row) => row.key)).toEqual([
+			'video-0',
+			'audio-1',
+			'audio-2',
+			'missing-audio-de',
+			'subtitle-3',
+			'chapter-0'
+		]);
 	});
 });
 

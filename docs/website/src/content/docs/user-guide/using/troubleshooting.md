@@ -39,8 +39,8 @@ you expect.
 ## Background Jobs Look Stuck
 
 Open System > Jobs to see fixed scheduled jobs, current one-shot jobs, and
-execution history. Fixed schedules can be paused or resumed from that page.
-Running or queued executions can be aborted from the row actions.
+execution history. Fixed schedules can be run now, paused, or resumed from that
+page. Running or queued executions can be aborted from the row actions.
 
 The download client activity sync is a routine fixed schedule with a
 configurable interval. It can run as often as every 15 seconds; higher values

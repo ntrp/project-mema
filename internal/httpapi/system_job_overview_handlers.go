@@ -1,11 +1,13 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
 
+	"media-manager/internal/jobs"
 	"media-manager/internal/storage"
 )
 
@@ -43,6 +45,32 @@ func (s *Server) ResumeSystemJobSchedule(w http.ResponseWriter, r *http.Request,
 	s.updateSystemJobSchedulePaused(w, r, id, false)
 }
 
+func (s *Server) RunSystemJobSchedule(w http.ResponseWriter, r *http.Request, id string) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	jobID, err := s.jobs.EnqueueFixedSchedule(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, jobs.ErrFixedScheduleNotFound) {
+			writeError(w, http.StatusNotFound, "system_job_schedule_not_found", "Could not find fixed scheduled job")
+			return
+		}
+		if errors.Is(err, jobs.ErrFixedScheduleActive) {
+			writeError(w, http.StatusConflict, "system_job_schedule_active", "Fixed scheduled job already has an active execution")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, "system_job_schedule_run_failed", "Could not run fixed scheduled job")
+		return
+	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "jobs", "Scheduled job started manually", map[string]any{"scheduleId": id, "jobId": jobID})
+	schedule, err := systemJobScheduleByID(r.Context(), s.settings, id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "system_job_schedule_load_failed", "Could not load fixed scheduled job")
+		return
+	}
+	writeJSON(w, http.StatusOK, systemJobScheduleResponse(schedule))
+}
+
 func (s *Server) UpdateSystemJobScheduleInterval(w http.ResponseWriter, r *http.Request, id string) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return
@@ -66,6 +94,19 @@ func (s *Server) UpdateSystemJobScheduleInterval(w http.ResponseWriter, r *http.
 	}
 	s.recordEvent(r.Context(), eventSeverityInfo, "jobs", "Scheduled job interval updated", map[string]any{"scheduleId": schedule.ID, "kind": schedule.Kind, "intervalSeconds": schedule.IntervalSeconds})
 	writeJSON(w, http.StatusOK, systemJobScheduleResponse(schedule))
+}
+
+func systemJobScheduleByID(ctx context.Context, store *storage.SettingsStore, id string) (storage.SystemJobSchedule, error) {
+	schedules, err := store.ListSystemJobSchedules(ctx)
+	if err != nil {
+		return storage.SystemJobSchedule{}, err
+	}
+	for _, schedule := range schedules {
+		if schedule.ID == id {
+			return schedule, nil
+		}
+	}
+	return storage.SystemJobSchedule{}, storage.ErrNotFound
 }
 
 func (s *Server) ListSystemJobExecutions(w http.ResponseWriter, r *http.Request, params ListSystemJobExecutionsParams) {

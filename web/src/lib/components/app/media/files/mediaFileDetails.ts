@@ -5,7 +5,7 @@ import type {
 } from '$lib/components/app/media/files/mediaFileDetailRows';
 import { relativePath } from '$lib/components/app/media/files/mediaFilePath';
 import {
-	missingAudioRows,
+	rowsWithMissingAudio,
 	rowsWithMissingSubtitles
 } from '$lib/components/app/media/files/details/mediaFileMissingRows';
 import { displayLanguage, languageMatchKey } from '$lib/settings/languageDisplay';
@@ -16,13 +16,11 @@ type MediaFileChapter = MediaFileRow['chapters'][number];
 export type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetailRows';
 
 export function fileDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
-	const details = [...trackRowsWithMissingSubtitles(row), ...fileChapterDetailRows(row)];
-	return [...details, ...missingAudioRows(row, details)];
+	return [...trackRowsWithMissingTargets(row), ...fileChapterDetailRows(row)];
 }
 
 export function fileTrackDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
-	const details = trackRowsWithMissingSubtitles(row);
-	return [...details, ...missingAudioRows(row, details)];
+	return trackRowsWithMissingTargets(row);
 }
 
 export function fileChapterDetailRows(row: MediaFileRow): MediaFileDetailRow[] {
@@ -62,12 +60,12 @@ function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): Medi
 	};
 }
 
-function trackRowsWithMissingSubtitles(row: MediaFileRow): MediaFileDetailRow[] {
+function trackRowsWithMissingTargets(row: MediaFileRow): MediaFileDetailRow[] {
 	const rows = [
 		...row.tracks.map((track, index) => trackRow(row, track, index)),
 		...externalSubtitleTrackRows(row)
 	];
-	return rowsWithMissingSubtitles(row, rows);
+	return rowsWithMissingSubtitles(row, rowsWithMissingAudio(row, rows));
 }
 
 function externalSubtitleTrackRows(row: MediaFileRow): MediaFileDetailRow[] {

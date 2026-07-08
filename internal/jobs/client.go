@@ -2,10 +2,18 @@ package jobs
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
+)
+
+var (
+	ErrFixedScheduleNotFound = errors.New("fixed schedule not found")
+	ErrFixedScheduleActive   = errors.New("fixed schedule already has an active execution")
 )
 
 func (c *Client) Start(ctx context.Context) error {
@@ -19,6 +27,56 @@ func (c *Client) Stop(ctx context.Context) error {
 func (c *Client) AbortJob(ctx context.Context, id int64) error {
 	_, err := c.river.JobCancel(ctx, id)
 	return err
+}
+
+func (c *Client) EnqueueFixedSchedule(ctx context.Context, scheduleID string) (int64, error) {
+	definition, ok := fixedJobDefinitionByID(scheduleID)
+	if !ok {
+		return 0, ErrFixedScheduleNotFound
+	}
+	if c.settings != nil {
+		schedules, err := c.settings.ListSystemJobSchedules(ctx)
+		if err != nil {
+			return 0, err
+		}
+		found := false
+		for _, schedule := range schedules {
+			if schedule.ID != definition.ID {
+				continue
+			}
+			found = true
+			if schedule.ActiveRiverJobID != nil {
+				return 0, ErrFixedScheduleActive
+			}
+			break
+		}
+		if !found {
+			return 0, ErrFixedScheduleNotFound
+		}
+	}
+	metadata, _ := json.Marshal(map[string]any{
+		"app:manual_schedule_run": true,
+		"app:system_schedule_id":  definition.ID,
+	})
+	result, err := c.river.Insert(ctx, definition.args(), &river.InsertOpts{
+		Queue:    definition.Queue,
+		Metadata: metadata,
+		UniqueOpts: river.UniqueOpts{
+			ByQueue: true,
+			ByState: []rivertype.JobState{
+				rivertype.JobStateAvailable,
+				rivertype.JobStatePending,
+				rivertype.JobStateRunning,
+				rivertype.JobStateScheduled,
+				rivertype.JobStateRetryable,
+			},
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
+	return result.Job.ID, nil
 }
 
 func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID, query string) (int64, error) {

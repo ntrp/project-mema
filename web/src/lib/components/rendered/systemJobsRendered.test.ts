@@ -35,6 +35,7 @@ describe('rendered system job dashboard components', () => {
 			],
 			onPause: vi.fn(),
 			onResume: vi.fn(),
+			onRun: vi.fn(),
 			onSaveInterval: vi.fn(),
 			onAbort: vi.fn()
 		});
@@ -42,6 +43,7 @@ describe('rendered system job dashboard components', () => {
 		expect(body).toContain('RSS sync');
 		expect(body).toContain('Checking indexers');
 		expect(body).toContain('routine');
+		expect(body).toContain('Run schedule now');
 		expect(body).toContain('Pause schedule');
 		expect(body).toContain('Abort active run');
 	});

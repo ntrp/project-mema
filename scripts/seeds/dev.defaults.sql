@@ -68,6 +68,74 @@ on conflict (path) do update
 set kind = excluded.kind,
     updated_at = now();
 
+drop table if exists dev_test_media_profiles;
+create temporary table dev_test_media_profiles (
+    profile_id text primary key,
+    audio_language_id text not null,
+    audio_codec text not null,
+    audio_channels text[] not null,
+    audio_minimum_kbps integer not null,
+    audio_preferred_kbps integer not null,
+    subtitle_mode text not null,
+    remove_unwanted_audio boolean not null,
+    remove_unwanted_subtitles boolean not null
+) on commit drop;
+
+insert into dev_test_media_profiles (
+    profile_id,
+    audio_language_id,
+    audio_codec,
+    audio_channels,
+    audio_minimum_kbps,
+    audio_preferred_kbps,
+    subtitle_mode,
+    remove_unwanted_audio,
+    remove_unwanted_subtitles
+)
+values
+    ('01-ok-embedded', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('02-missing-italian-audio', 'italian', 'aac', array['2.0'], 160, 256, 'mixed', true, false),
+    ('03-wrong-audio-codec', 'english', 'eac3', array['5.1'], 640, 768, 'mixed', true, false),
+    ('04-wrong-audio-channels', 'japanese', 'aac', array['2.0'], 160, 256, 'mixed', true, false),
+    ('05-low-audio-bitrate', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('06-unwanted-audio', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('07-embedded-subtitle-needed', 'english', 'aac', array['2.0'], 192, 256, 'embedded', true, true),
+    ('08-external-subtitle-mode', 'english', 'aac', array['2.0'], 192, 256, 'external', true, true),
+    ('09-mixed-existing-external', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, true),
+    ('10-unwanted-subtitle', 'korean', 'aac', array['2.0'], 192, 256, 'external', true, true),
+    ('11-chapter-delete-summary', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('12-other-files-actions', 'english', 'aac', array['2.0'], 192, 256, 'external', true, true),
+    ('13-three-movies-one-folder-grand-budapest', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('13-three-movies-one-folder-interstellar', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
+    ('13-three-movies-one-folder-truman-show', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false);
+
+drop table if exists dev_test_media_subtitles;
+create temporary table dev_test_media_subtitles (
+    profile_id text not null,
+    language_id text not null,
+    score integer not null,
+    sort_order integer not null
+) on commit drop;
+
+insert into dev_test_media_subtitles (profile_id, language_id, score, sort_order)
+values
+    ('01-ok-embedded', 'english', 0, 0),
+    ('02-missing-italian-audio', 'italian', 0, 0),
+    ('03-wrong-audio-codec', 'english', 0, 0),
+    ('04-wrong-audio-channels', 'english', 0, 0),
+    ('05-low-audio-bitrate', 'english', 0, 0),
+    ('06-unwanted-audio', 'english', 0, 0),
+    ('07-embedded-subtitle-needed', 'english', 50, 0),
+    ('08-external-subtitle-mode', 'english', 50, 0),
+    ('09-mixed-existing-external', 'english', 50, 0),
+    ('09-mixed-existing-external', 'italian', 50, 1),
+    ('10-unwanted-subtitle', 'english', 50, 0),
+    ('11-chapter-delete-summary', 'english', 0, 0),
+    ('12-other-files-actions', 'english', 50, 0),
+    ('13-three-movies-one-folder-grand-budapest', 'english', 0, 0),
+    ('13-three-movies-one-folder-interstellar', 'english', 0, 0),
+    ('13-three-movies-one-folder-truman-show', 'english', 0, 0);
+
 insert into app.media_profiles (
     id,
     name,
@@ -86,19 +154,33 @@ insert into app.media_profiles (
     preferred_protocol,
     series_pack_preference
 )
-values
-    ('test-audio-aac-stereo', 'Test - Audio AAC stereo EN', false, 'mkv', true, 'bluray-1080p', 0, 0, 1, true, 'lossyToLossy', false, 'mixed', true, 'any', 'auto'),
-    ('test-audio-eac3-51', 'Test - Audio EAC3 5.1 EN', false, 'mkv', true, 'bluray-1080p', 0, 0, 1, true, 'lossyToLossy', false, 'mixed', true, 'any', 'auto'),
-    ('test-audio-italian-aac', 'Test - Audio AAC stereo IT', false, 'mkv', true, 'bluray-1080p', 0, 0, 1, true, 'lossyToLossy', false, 'mixed', true, 'any', 'auto'),
-    ('test-audio-japanese-aac', 'Test - Audio AAC stereo JA', false, 'mkv', true, 'bluray-1080p', 0, 0, 1, true, 'lossyToLossy', false, 'mixed', true, 'any', 'auto'),
-    ('test-subtitle-embedded-en-it', 'Test - Subtitles embedded EN IT', false, 'mkv', true, 'bluray-1080p', 0, 0, 1, true, 'lossyToLossy', true, 'embedded', true, 'any', 'auto'),
-    ('test-subtitle-external-en', 'Test - Subtitles external EN', false, 'mkv', true, 'bluray-1080p', 0, 0, 1, true, 'lossyToLossy', true, 'external', true, 'any', 'auto'),
-    ('test-subtitle-mixed-en-it', 'Test - Subtitles mixed EN IT', false, 'mkv', true, 'bluray-1080p', 0, 0, 1, true, 'lossyToLossy', true, 'mixed', true, 'any', 'auto')
+select
+    profile_id,
+    profile_id,
+    false,
+    'mkv',
+    true,
+    'bluray-1080p',
+    0,
+    0,
+    1,
+    remove_unwanted_audio,
+    'lossyToLossy',
+    remove_unwanted_subtitles,
+    subtitle_mode,
+    true,
+    'any',
+    'auto'
+from dev_test_media_profiles
 on conflict (id) do update
 set name = excluded.name,
+    is_default = excluded.is_default,
     final_container = excluded.final_container,
     upgrades_allowed = excluded.upgrades_allowed,
     upgrade_until_quality_id = excluded.upgrade_until_quality_id,
+    minimum_custom_format_score = excluded.minimum_custom_format_score,
+    upgrade_until_custom_format_score = excluded.upgrade_until_custom_format_score,
+    minimum_custom_format_score_increment = excluded.minimum_custom_format_score_increment,
     remove_unwanted_audio = excluded.remove_unwanted_audio,
     audio_lossy_transcode_policy = excluded.audio_lossy_transcode_policy,
     remove_unwanted_subtitles = excluded.remove_unwanted_subtitles,
@@ -107,6 +189,15 @@ set name = excluded.name,
     preferred_protocol = excluded.preferred_protocol,
     series_pack_preference = excluded.series_pack_preference,
     updated_at = now();
+
+delete from app.media_profile_audio_targets
+where profile_id in (select profile_id from dev_test_media_profiles);
+
+delete from app.media_profile_subtitle_targets
+where profile_id in (select profile_id from dev_test_media_profiles);
+
+delete from app.media_profile_qualities
+where profile_id in (select profile_id from dev_test_media_profiles);
 
 insert into app.media_profile_video_targets (
     profile_id,
@@ -118,15 +209,7 @@ insert into app.media_profile_video_targets (
     pixel_format_score
 )
 select profile_id, array['h264'], 0, array['sdr'], 0, array['yuv420p'], 0
-from (values
-    ('test-audio-aac-stereo'),
-    ('test-audio-eac3-51'),
-    ('test-audio-italian-aac'),
-    ('test-audio-japanese-aac'),
-    ('test-subtitle-embedded-en-it'),
-    ('test-subtitle-external-en'),
-    ('test-subtitle-mixed-en-it')
-) as profiles(profile_id)
+from dev_test_media_profiles
 on conflict (profile_id) do update
 set codecs = excluded.codecs,
     codec_score = excluded.codec_score,
@@ -145,49 +228,24 @@ insert into app.media_profile_audio_targets (
     preferred_bitrate_kbps,
     sort_order
 )
-values
-    ('test-audio-aac-stereo', 'english', 100, 'aac', array['2.0'], 192, 256, 0),
-    ('test-audio-eac3-51', 'english', 100, 'eac3', array['5.1'], 640, 768, 0),
-    ('test-audio-italian-aac', 'italian', 100, 'aac', array['2.0'], 160, 256, 0),
-    ('test-audio-japanese-aac', 'japanese', 100, 'aac', array['2.0'], 160, 256, 0),
-    ('test-subtitle-embedded-en-it', 'english', 100, 'aac', array['2.0'], 192, 256, 0),
-    ('test-subtitle-external-en', 'english', 100, 'aac', array['2.0'], 192, 256, 0),
-    ('test-subtitle-mixed-en-it', 'english', 100, 'aac', array['2.0'], 192, 256, 0)
-on conflict (profile_id, language_id) do update
-set score = excluded.score,
-    target_codec = excluded.target_codec,
-    target_channels = excluded.target_channels,
-    minimum_bitrate_kbps = excluded.minimum_bitrate_kbps,
-    preferred_bitrate_kbps = excluded.preferred_bitrate_kbps,
-    sort_order = excluded.sort_order;
+select
+    profile_id,
+    audio_language_id,
+    100,
+    audio_codec,
+    audio_channels,
+    audio_minimum_kbps,
+    audio_preferred_kbps,
+    0
+from dev_test_media_profiles;
 
 insert into app.media_profile_subtitle_targets (profile_id, language_id, score, formats, sort_order)
-values
-    ('test-audio-aac-stereo', 'english', 0, array['srt'], 0),
-    ('test-audio-eac3-51', 'english', 0, array['srt'], 0),
-    ('test-audio-italian-aac', 'italian', 0, array['srt'], 0),
-    ('test-audio-japanese-aac', 'english', 0, array['srt'], 0),
-    ('test-subtitle-embedded-en-it', 'english', 50, array['srt'], 0),
-    ('test-subtitle-embedded-en-it', 'italian', 50, array['srt'], 1),
-    ('test-subtitle-external-en', 'english', 50, array['srt'], 0),
-    ('test-subtitle-mixed-en-it', 'english', 50, array['srt'], 0),
-    ('test-subtitle-mixed-en-it', 'italian', 50, array['srt'], 1)
-on conflict (profile_id, language_id) do update
-set score = excluded.score,
-    formats = excluded.formats,
-    sort_order = excluded.sort_order;
+select profile_id, language_id, score, array['srt'], sort_order
+from dev_test_media_subtitles;
 
 insert into app.media_profile_qualities (profile_id, quality_id, sort_order)
 select profile_id, quality_id, sort_order
-from (values
-    ('test-audio-aac-stereo'),
-    ('test-audio-eac3-51'),
-    ('test-audio-italian-aac'),
-    ('test-audio-japanese-aac'),
-    ('test-subtitle-embedded-en-it'),
-    ('test-subtitle-external-en'),
-    ('test-subtitle-mixed-en-it')
-) as profiles(profile_id)
+from dev_test_media_profiles
 cross join (values
     ('webdl-720p', 1),
     ('webrip-720p', 2),
@@ -195,4 +253,172 @@ cross join (values
     ('webrip-1080p', 4),
     ('bluray-1080p', 5)
 ) as qualities(quality_id, sort_order)
-on conflict (profile_id, quality_id) do nothing;
+on conflict (profile_id, quality_id) do update
+set sort_order = excluded.sort_order;
+
+drop table if exists dev_test_media_imports;
+create temporary table dev_test_media_imports (
+    sort_order integer primary key,
+    profile_id text not null,
+    media_item_id uuid not null,
+    scan_item_id uuid not null,
+    year integer not null,
+    external_id text not null,
+    original_language text not null,
+    folder_path text not null,
+    file_name text not null,
+    detected_title text not null
+) on commit drop;
+
+insert into dev_test_media_imports (
+    sort_order,
+    profile_id,
+    media_item_id,
+    scan_item_id,
+    year,
+    external_id,
+    original_language,
+    folder_path,
+    file_name,
+    detected_title
+)
+values
+    (1, '01-ok-embedded', '10000000-0000-4000-8000-000000001001', '10000000-0000-4000-8000-000000002001', 2003, '12', 'EN', '.data/media/test-movie/01-ok-embedded', 'Finding.Nemo.2003.tmdb-12.1080p.WEB-DL.AAC2.0.EN.mkv', 'Finding Nemo'),
+    (2, '02-missing-italian-audio', '10000000-0000-4000-8000-000000001002', '10000000-0000-4000-8000-000000002002', 2001, '194', 'FR', '.data/media/test-movie/02-missing-italian-audio', 'Amelie.2001.tmdb-194.1080p.WEB-DL.AAC2.0.EN.mkv', 'Amelie'),
+    (3, '03-wrong-audio-codec', '10000000-0000-4000-8000-000000001003', '10000000-0000-4000-8000-000000002003', 1999, '603', 'EN', '.data/media/test-movie/03-wrong-audio-codec', 'The.Matrix.1999.tmdb-603.1080p.WEB-DL.AC3.5.1.EN.mkv', 'The Matrix'),
+    (4, '04-wrong-audio-channels', '10000000-0000-4000-8000-000000001004', '10000000-0000-4000-8000-000000002004', 2001, '129', 'JA', '.data/media/test-movie/04-wrong-audio-channels', 'Spirited.Away.2001.tmdb-129.1080p.WEB-DL.AAC1.0.JA.mkv', 'Spirited Away'),
+    (5, '05-low-audio-bitrate', '10000000-0000-4000-8000-000000001005', '10000000-0000-4000-8000-000000002005', 2015, '76341', 'EN', '.data/media/test-movie/05-low-audio-bitrate', 'Mad.Max.Fury.Road.2015.tmdb-76341.1080p.WEB-DL.AAC2.0.EN.mkv', 'Mad Max Fury Road'),
+    (6, '06-unwanted-audio', '10000000-0000-4000-8000-000000001006', '10000000-0000-4000-8000-000000002006', 2007, '2062', 'EN', '.data/media/test-movie/06-unwanted-audio', 'Ratatouille.2007.tmdb-2062.1080p.WEB-DL.AAC2.0.EN-ES.mkv', 'Ratatouille'),
+    (7, '07-embedded-subtitle-needed', '10000000-0000-4000-8000-000000001007', '10000000-0000-4000-8000-000000002007', 2014, '116149', 'EN', '.data/media/test-movie/07-embedded-subtitle-needed', 'Paddington.2014.tmdb-116149.1080p.WEB-DL.AAC2.0.EN.mkv', 'Paddington'),
+    (8, '08-external-subtitle-mode', '10000000-0000-4000-8000-000000001008', '10000000-0000-4000-8000-000000002008', 2016, '329865', 'EN', '.data/media/test-movie/08-external-subtitle-mode', 'Arrival.2016.tmdb-329865.1080p.WEB-DL.AAC2.0.EN.mkv', 'Arrival'),
+    (9, '09-mixed-existing-external', '10000000-0000-4000-8000-000000001009', '10000000-0000-4000-8000-000000002009', 2015, '150540', 'EN', '.data/media/test-movie/09-mixed-existing-external', 'Inside.Out.2015.tmdb-150540.1080p.WEB-DL.AAC2.0.EN.mkv', 'Inside Out'),
+    (10, '10-unwanted-subtitle', '10000000-0000-4000-8000-000000001010', '10000000-0000-4000-8000-000000002010', 2019, '496243', 'KO', '.data/media/test-movie/10-unwanted-subtitle', 'Parasite.2019.tmdb-496243.1080p.WEB-DL.AAC2.0.KO.mkv', 'Parasite'),
+    (11, '11-chapter-delete-summary', '10000000-0000-4000-8000-000000001011', '10000000-0000-4000-8000-000000002011', 2010, '27205', 'EN', '.data/media/test-movie/11-chapter-delete-summary', 'Inception.2010.tmdb-27205.1080p.WEB-DL.AAC2.0.EN.Chapters.mkv', 'Inception'),
+    (12, '12-other-files-actions', '10000000-0000-4000-8000-000000001012', '10000000-0000-4000-8000-000000002012', 2008, '10681', 'EN', '.data/media/test-movie/12-other-files-actions', 'WALL-E.2008.tmdb-10681.1080p.WEB-DL.AAC2.0.EN.mkv', 'WALL E'),
+    (13, '13-three-movies-one-folder-grand-budapest', '10000000-0000-4000-8000-000000001013', '10000000-0000-4000-8000-000000002013', 2014, '120467', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'The.Grand.Budapest.Hotel.2014.tmdb-120467.1080p.WEB-DL.AAC2.0.EN.mkv', 'The Grand Budapest Hotel'),
+    (14, '13-three-movies-one-folder-interstellar', '10000000-0000-4000-8000-000000001014', '10000000-0000-4000-8000-000000002014', 2014, '157336', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'Interstellar.2014.tmdb-157336.1080p.WEB-DL.AAC2.0.EN.mkv', 'Interstellar'),
+    (15, '13-three-movies-one-folder-truman-show', '10000000-0000-4000-8000-000000001015', '10000000-0000-4000-8000-000000002015', 1998, '37165', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'The.Truman.Show.1998.tmdb-37165.1080p.WEB-DL.AAC2.0.EN.mkv', 'The Truman Show');
+
+insert into app.media_items (
+    id,
+    media_type,
+    content_kind,
+    title,
+    year,
+    monitored,
+    external_provider,
+    external_id,
+    metadata_status,
+    original_language,
+    quality_profile_id,
+    library_folder_id,
+    media_folder_path,
+    monitor_mode,
+    minimum_availability
+)
+select
+    media_item_id,
+    'movie',
+    'standard',
+    profile_id,
+    year,
+    false,
+    'tmdb',
+    external_id,
+    'seeded',
+    original_language,
+    profile_id,
+    '10000000-0000-4000-8000-000000000100',
+    folder_path,
+    'none',
+    'released'
+from dev_test_media_imports
+on conflict (id) do update
+set media_type = excluded.media_type,
+    content_kind = excluded.content_kind,
+    title = excluded.title,
+    year = excluded.year,
+    monitored = excluded.monitored,
+    external_provider = excluded.external_provider,
+    external_id = excluded.external_id,
+    metadata_status = excluded.metadata_status,
+    original_language = excluded.original_language,
+    quality_profile_id = excluded.quality_profile_id,
+    library_folder_id = excluded.library_folder_id,
+    media_folder_path = excluded.media_folder_path,
+    monitor_mode = excluded.monitor_mode,
+    minimum_availability = excluded.minimum_availability,
+    updated_at = now();
+
+insert into app.library_scans (
+    id,
+    library_folder_id,
+    status,
+    total_files,
+    auto_matched_count,
+    manual_count,
+    completed_at
+)
+select
+    '10000000-0000-4000-8000-000000003001',
+    '10000000-0000-4000-8000-000000000100',
+    'completed',
+    count(*)::integer,
+    count(*)::integer,
+    0,
+    now()
+from dev_test_media_imports
+on conflict (id) do update
+set library_folder_id = excluded.library_folder_id,
+    status = excluded.status,
+    total_files = excluded.total_files,
+    auto_matched_count = excluded.auto_matched_count,
+    manual_count = excluded.manual_count,
+    completed_at = excluded.completed_at;
+
+delete from app.library_scan_items
+where scan_id = '10000000-0000-4000-8000-000000003001';
+
+insert into app.library_scan_items (
+    id,
+    scan_id,
+    path,
+    file_name,
+    size_bytes,
+    detected_title,
+    detected_year,
+    detected_media_kind,
+    status,
+    imported,
+    matched_title,
+    matched_year,
+    matched_media_kind,
+    matched_external_provider,
+    matched_external_id,
+    match_source,
+    selected_metadata_provider_id,
+    duplicate_removal_allowed,
+    media_item_id
+)
+select
+    scan_item_id,
+    '10000000-0000-4000-8000-000000003001',
+    folder_path || '/' || file_name,
+    file_name,
+    0,
+    detected_title,
+    year,
+    'movie',
+    'auto_added',
+    true,
+    profile_id,
+    year,
+    'movie',
+    'tmdb',
+    external_id,
+    'manual',
+    '00000000-0000-4000-8000-000000000101',
+    false,
+    media_item_id
+from dev_test_media_imports
+order by sort_order;

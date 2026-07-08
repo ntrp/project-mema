@@ -22,6 +22,7 @@ type ReleaseMatch struct {
 	MatchedMedia             string
 	CustomFormatScore        int32
 	CustomFormatContributors []ReleaseScoreContributor
+	LanguageScore            int32
 	LanguageContributors     []ReleaseScoreContributor
 	TargetScore              int32
 	TargetContributors       []ReleaseScoreContributor
@@ -194,7 +195,7 @@ func evaluateParsedRelease(
 	details := []string{}
 	matchedMedia := parsedResourceTitle(item.Type, parsed)
 	customScore, customContributors := customFormatScore(parsed, context.Profile, context.Formats)
-	languageScore, languageContributors, languageReject := languageScore(
+	languageScore, languageContributors, languageWarnings, languageReject := languageScore(
 		parsed,
 		context.Profile,
 		context.Languages,
@@ -225,6 +226,7 @@ func evaluateParsedRelease(
 	}
 
 	details = append(details, "Matches the requested resource.")
+	details = append(details, languageWarnings...)
 	upgradeDetails, upgradeReject := upgradeDecisionDetails(
 		item,
 		context.Profile,
@@ -244,7 +246,11 @@ func evaluateParsedRelease(
 		}
 		return decisionMatch(severity, parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, meta, details...)
 	}
-	return decisionMatch("info", parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, meta, details...)
+	severity := "info"
+	if len(languageWarnings) > 0 {
+		severity = "warning"
+	}
+	return decisionMatch(severity, parsed, score, matchedMedia, customScore, customContributors, languageScore, languageContributors, targetScore, targetContributors, meta, details...)
 }
 
 func EvaluateReleaseCandidateInputMatch(

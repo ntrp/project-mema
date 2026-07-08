@@ -80,10 +80,10 @@ func systemJobResponse(job storage.SystemJob) SystemJob {
 }
 
 func stringList(value *[]string) []string {
-	if value == nil {
-		return nil
-	}
 	values := []string{}
+	if value == nil {
+		return values
+	}
 	for _, item := range *value {
 		item = strings.TrimSpace(item)
 		if item != "" {

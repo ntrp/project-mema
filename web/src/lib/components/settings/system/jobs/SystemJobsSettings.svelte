@@ -47,10 +47,12 @@
 		loadingOverview={controller.loadingOverview}
 		updatingScheduleId={controller.updatingScheduleId}
 		updatingIntervalId={controller.updatingIntervalId}
+		runningScheduleId={controller.runningScheduleId}
 		abortingId={controller.abortingId}
 		onRefresh={() => void controller.loadOverview()}
 		onPause={(schedule) => void controller.toggleSchedule(schedule, true)}
 		onResume={(schedule) => void controller.toggleSchedule(schedule, false)}
+		onRun={(schedule) => void controller.runSchedule(schedule)}
 		onSaveInterval={(schedule, intervalSeconds) =>
 			void controller.saveScheduleInterval(schedule, intervalSeconds)}
 		onAbort={(id, kind) => (controller.abortCandidate = { id, kind })}

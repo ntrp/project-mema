@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -109,6 +110,16 @@ func fixedJobDefinitions() []fixedJobDefinition {
 			args: func() river.JobArgs { return SubtitleRetryArgs{} },
 		},
 	}
+}
+
+func fixedJobDefinitionByID(id string) (fixedJobDefinition, bool) {
+	id = strings.TrimSpace(id)
+	for _, definition := range fixedJobDefinitions() {
+		if definition.ID == id {
+			return definition, true
+		}
+	}
+	return fixedJobDefinition{}, false
 }
 
 func periodicJobs(settings *storage.SettingsStore) []*river.PeriodicJob {

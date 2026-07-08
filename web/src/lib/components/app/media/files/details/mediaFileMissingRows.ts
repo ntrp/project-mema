@@ -14,13 +14,20 @@ export function rowsWithMissingSubtitles(
 	return [...rows.slice(0, insertAt), ...missing, ...rows.slice(insertAt)];
 }
 
-export function missingAudioRows(
+export function rowsWithMissingAudio(
 	row: MediaFileRow,
-	existingRows: MediaFileDetailRow[]
+	rows: MediaFileDetailRow[]
 ): MediaFileDetailRow[] {
+	const missing = missingAudioRows(row, rows);
+	if (missing.length === 0) return rows;
+	const insertAt = missingAudioInsertIndex(rows);
+	return [...rows.slice(0, insertAt), ...missing, ...rows.slice(insertAt)];
+}
+
+function missingAudioRows(row: MediaFileRow, rows: MediaFileDetailRow[]): MediaFileDetailRow[] {
 	if (row.expectedRequiredLanguages.length === 0) return [];
 	const audioLanguages = new Set(
-		existingRows
+		rows
 			.filter((track) => track.type === 'audio')
 			.map((track) => languageMatchKey(track.language))
 			.filter(Boolean)
@@ -35,6 +42,13 @@ export function missingAudioRows(
 			description: 'Missing expected audio track',
 			missing: true
 		}));
+}
+
+function missingAudioInsertIndex(rows: MediaFileDetailRow[]) {
+	const lastAudio = lastTrackIndex(rows, 'audio');
+	if (lastAudio >= 0) return lastAudio + 1;
+	const lastVideo = lastTrackIndex(rows, 'video');
+	return lastVideo >= 0 ? lastVideo + 1 : rows.length;
 }
 
 function missingSubtitleRows(row: MediaFileRow): MediaFileDetailRow[] {

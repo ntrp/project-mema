@@ -108,6 +108,12 @@ func TestSCNSystem008JobExecutionInputClassifiesPeriodicJobs(t *testing.T) {
 		t.Fatalf("periodic classification = %#v", input)
 	}
 
+	row.Metadata = []byte(`{"app:system_schedule_id":"rss_sync","app:manual_schedule_run":true}`)
+	input = jobExecutionInputFromRow(row, "available")
+	if input.ScheduleID != "rss_sync" || input.Classification != "fixed" {
+		t.Fatalf("manual schedule classification = %#v", input)
+	}
+
 	row.Metadata = []byte(`{"source":"manual"}`)
 	input = jobExecutionInputFromRow(row, "")
 	if input.ScheduleID != "" || input.Classification != "one_shot" || input.Status != "available" {

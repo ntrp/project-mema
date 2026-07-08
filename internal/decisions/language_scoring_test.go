@@ -42,7 +42,7 @@ func TestSCNMedia002LanguageCatalogAddsAliasesToReleaseMatch(t *testing.T) {
 	}
 }
 
-func TestSCNMedia002TargetLanguageRejectsMissingReleaseLanguage(t *testing.T) {
+func TestSCNMedia002TargetLanguageWarnsOnMissingReleaseLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		AudioTargets: []storage.MediaProfileAudioTarget{
@@ -58,11 +58,14 @@ func TestSCNMedia002TargetLanguageRejectsMissingReleaseLanguage(t *testing.T) {
 		[]storage.Language{{Code: "JA", DisplayName: "Japanese", Aliases: []string{"JPN"}}},
 	)
 
-	if match.Severity != "error" {
-		t.Fatalf("expected language rejection, got %q: %v", match.Severity, match.Details)
+	if match.Severity != "warning" {
+		t.Fatalf("expected language warning, got %q: %v", match.Severity, match.Details)
 	}
-	if len(match.Details) == 0 || !strings.Contains(match.Details[0], "Japanese is missing") {
+	if len(match.Details) == 0 || !strings.Contains(strings.Join(match.Details, " "), "Japanese is missing") {
 		t.Fatalf("details = %#v", match.Details)
+	}
+	if match.LanguageScore >= 0 {
+		t.Fatalf("language score = %d, want penalty", match.LanguageScore)
 	}
 }
 
@@ -93,7 +96,7 @@ func TestSCNMedia002SubtitleLanguageScoreContributesToReleaseMatch(t *testing.T)
 	}
 }
 
-func TestSCNMedia002TargetSubtitleLanguageRejectsMissingReleaseLanguage(t *testing.T) {
+func TestSCNMedia002TargetSubtitleLanguageWarnsOnMissingReleaseLanguage(t *testing.T) {
 	profile := storage.MediaProfile{
 		QualityIDs: []string{"webdl-1080p"},
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
@@ -109,11 +112,14 @@ func TestSCNMedia002TargetSubtitleLanguageRejectsMissingReleaseLanguage(t *testi
 		[]storage.Language{{Code: "JA", DisplayName: "Japanese", Aliases: []string{"JPN"}}},
 	)
 
-	if match.Severity != "error" {
-		t.Fatalf("expected subtitle language rejection, got %q: %v", match.Severity, match.Details)
+	if match.Severity != "warning" {
+		t.Fatalf("expected subtitle language warning, got %q: %v", match.Severity, match.Details)
 	}
-	if len(match.Details) == 0 || !strings.Contains(match.Details[0], "Target subtitle language Japanese is missing") {
+	if len(match.Details) == 0 || !strings.Contains(strings.Join(match.Details, " "), "Target subtitle language Japanese is missing") {
 		t.Fatalf("details = %#v", match.Details)
+	}
+	if match.LanguageScore >= 0 {
+		t.Fatalf("language score = %d, want penalty", match.LanguageScore)
 	}
 }
 
@@ -163,6 +169,32 @@ func TestSCNMedia002ProtocolPreferenceBreaksReleaseTie(t *testing.T) {
 	}
 	if decision.Release.IndexerProtocol != "nzb" {
 		t.Fatalf("expected usenet release, got %#v", decision.Release)
+	}
+}
+
+func TestSCNMedia002AutomaticChoiceDemotesMissingLanguage(t *testing.T) {
+	profile := storage.MediaProfile{
+		QualityIDs: []string{"webdl-1080p"},
+		AudioTargets: []storage.MediaProfileAudioTarget{
+			{LanguageID: "japanese", Score: 100},
+		},
+	}
+	decision, ok := NewEngine().ChooseReleaseWithProfileAndLanguages(
+		storage.MediaItem{Type: "movie", Title: "Scenario Movie"},
+		&profile,
+		nil,
+		[]storage.Language{{Code: "JA", DisplayName: "Japanese", Aliases: []string{"JPN"}}},
+		[]storage.ReleaseCandidateInput{
+			{Title: "Scenario.Movie.2026.English.1080p.WEBDL", SizeBytes: 10},
+			{Title: "Scenario.Movie.2026.JPN.1080p.WEBDL", SizeBytes: 20},
+		},
+	)
+
+	if !ok {
+		t.Fatal("expected release decision")
+	}
+	if decision.Release.Title != "Scenario.Movie.2026.JPN.1080p.WEBDL" {
+		t.Fatalf("expected language-complete release, got %q", decision.Release.Title)
 	}
 }
 

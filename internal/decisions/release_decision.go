@@ -106,6 +106,9 @@ func betterRelease(
 	if leftMatch.CustomFormatScore != rightMatch.CustomFormatScore {
 		return leftMatch.CustomFormatScore > rightMatch.CustomFormatScore
 	}
+	if leftMatch.LanguageScore != rightMatch.LanguageScore {
+		return leftMatch.LanguageScore > rightMatch.LanguageScore
+	}
 	if leftProtocol := protocolRank(left.IndexerProtocol, profile); leftProtocol != protocolRank(right.IndexerProtocol, profile) {
 		return leftProtocol > protocolRank(right.IndexerProtocol, profile)
 	}

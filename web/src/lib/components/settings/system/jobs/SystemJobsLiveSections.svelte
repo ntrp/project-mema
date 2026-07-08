@@ -11,10 +11,12 @@
 		loadingOverview: boolean;
 		updatingScheduleId?: string;
 		updatingIntervalId?: string;
+		runningScheduleId?: string;
 		abortingId?: number;
 		onRefresh: () => void;
 		onPause: (schedule: SystemJobSchedule) => void;
 		onResume: (schedule: SystemJobSchedule) => void;
+		onRun: (schedule: SystemJobSchedule) => void;
 		onSaveInterval: (schedule: SystemJobSchedule, intervalSeconds: number) => void;
 		onAbort: (id: number, kind: string) => void;
 	}
@@ -25,10 +27,12 @@
 		loadingOverview,
 		updatingScheduleId,
 		updatingIntervalId,
+		runningScheduleId,
 		abortingId,
 		onRefresh,
 		onPause,
 		onResume,
+		onRun,
 		onSaveInterval,
 		onAbort
 	}: Props = $props();
@@ -46,9 +50,11 @@
 			{schedules}
 			updatingId={updatingScheduleId}
 			{updatingIntervalId}
+			runningId={runningScheduleId}
 			{abortingId}
 			{onPause}
 			{onResume}
+			{onRun}
 			{onSaveInterval}
 			onAbort={(id) => onAbort(id, 'fixed scheduled job')}
 		/>

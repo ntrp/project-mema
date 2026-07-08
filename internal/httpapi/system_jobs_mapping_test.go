@@ -53,8 +53,8 @@ func TestSCNSystem006SystemJobFilterParamsAreNormalized(t *testing.T) {
 	if got := stringList(&statuses); len(got) != 2 || got[0] != "available" || got[1] != "running" {
 		t.Fatalf("stringList = %#v", got)
 	}
-	if stringList(nil) != nil {
-		t.Fatal("nil string list should stay nil")
+	if got := stringList(nil); len(got) != 0 {
+		t.Fatalf("nil string list = %#v, want empty", got)
 	}
 	if got := optionalStringParam(&query); got != "movie" {
 		t.Fatalf("optionalStringParam = %q, want movie", got)

@@ -77,6 +77,10 @@ Audio targets describe wanted language tracks. Each target has a language and a
 score. It can also include a target codec, target channel layout, and minimum
 bitrate.
 
+When a release is missing a wanted audio language, release search marks it with
+a warning instead of rejecting it outright. Automatic search still prefers
+otherwise comparable releases that include the wanted language.
+
 A profile can remove audio tracks that are not wanted. Treat that setting
 carefully: it is useful for clean final files, but it should only be enabled
 when your profile accurately describes every language you want to keep.
@@ -89,6 +93,10 @@ want the app to create different audio tracks.
 
 Subtitle targets work like audio targets. Choose the wanted language, optional
 formats, and score. The subtitle mode controls where subtitles should live.
+
+When a release is missing a wanted subtitle language, release search marks it
+with a warning instead of rejecting it outright. Automatic search gives those
+releases lower priority than otherwise comparable subtitle-complete releases.
 
 `Embedded` means wanted subtitles should be inside the media file. `External`
 means they should be sidecar files. `Mixed` allows both, keeping existing

@@ -49,7 +49,10 @@
 	}
 </script>
 
-<div class="min-h-0 overflow-auto rounded-md border border-border" onscroll={handleScroll}>
+<div
+	class="max-h-[calc(2.75rem+10*3.25rem)] min-h-0 overflow-auto rounded-md border border-border"
+	onscroll={handleScroll}
+>
 	<Table.Root class="min-w-full table-auto border-collapse">
 		<Table.Header class="sticky top-0 bg-card">
 			<Table.Row>

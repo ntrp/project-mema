@@ -4147,6 +4147,36 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+  /system/job-schedules/{id}/run:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+    post:
+      operationId: runSystemJobSchedule
+      tags:
+        - System
+      summary: Run a fixed scheduled job now
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Fixed scheduled job started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemJobSchedule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /system/job-schedules/{id}/interval:
     parameters:
       - name: id
@@ -4638,6 +4668,12 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Resource state conflict
       content:
         application/json:
           schema:

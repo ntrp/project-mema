@@ -192,6 +192,9 @@ func periodicScheduleID(metadata []byte) string {
 	if err := json.Unmarshal(metadata, &value); err != nil {
 		return ""
 	}
+	if id, _ := value["app:system_schedule_id"].(string); strings.TrimSpace(id) != "" {
+		return strings.TrimSpace(id)
+	}
 	id, _ := value["river:periodic_job_id"].(string)
 	return strings.TrimSpace(id)
 }

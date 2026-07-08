@@ -23,7 +23,10 @@ episode can be treated differently depending on what you want the app to manage.
 
 Manual search shows release candidates from enabled indexers that match the
 media type, tags, and current indexer health. The results include scoring and
-status information so you can see why a release looks good or bad.
+status information so you can see why a release looks good or bad. Missing
+wanted audio or subtitle languages are shown as warnings, not hard rejections.
+Automatic search gives those releases lower priority than otherwise comparable
+releases that satisfy the language targets.
 
 Use manual search when automatic search does not find what you want, when you
 want to compare indexers, or when you want to grab a specific release.

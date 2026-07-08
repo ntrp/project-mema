@@ -54,17 +54,25 @@ func languageScore(
 	parsed ParsedRelease,
 	profile *storage.MediaProfile,
 	languageCatalog []storage.Language,
-) (int32, []ReleaseScoreContributor, string) {
+) (int32, []ReleaseScoreContributor, []string, string) {
 	if profile == nil || (len(profile.AudioTargets) == 0 && len(profile.SubtitleTargets) == 0) {
-		return 0, nil, ""
+		return 0, nil, nil, ""
 	}
 	releaseLanguages := normalizedLanguages(parsed.Languages)
 	var total int32
 	contributors := []ReleaseScoreContributor{}
+	warnings := []string{}
 	for _, target := range profile.AudioTargets {
 		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
 		if _, ok := releaseLanguages[target.LanguageID]; !ok {
-			return 0, nil, fmt.Sprintf("Target language %s is missing.", displayName)
+			penalty := missingLanguagePenalty(target.Score)
+			total += penalty
+			contributors = append(contributors, ReleaseScoreContributor{
+				Label: "Missing audio: " + displayName,
+				Score: penalty,
+			})
+			warnings = append(warnings, fmt.Sprintf("Target language %s is missing.", displayName))
+			continue
 		}
 		total += target.Score
 		contributors = append(contributors, ReleaseScoreContributor{
@@ -75,7 +83,14 @@ func languageScore(
 	for _, target := range profile.SubtitleTargets {
 		displayName := languageScoreDisplayName(target.LanguageID, languageCatalog)
 		if _, ok := releaseLanguages[target.LanguageID]; !ok {
-			return 0, nil, fmt.Sprintf("Target subtitle language %s is missing.", displayName)
+			penalty := missingLanguagePenalty(target.Score)
+			total += penalty
+			contributors = append(contributors, ReleaseScoreContributor{
+				Label: "Missing subtitle: " + displayName,
+				Score: penalty,
+			})
+			warnings = append(warnings, fmt.Sprintf("Target subtitle language %s is missing.", displayName))
+			continue
 		}
 		total += target.Score
 		contributors = append(contributors, ReleaseScoreContributor{
@@ -93,11 +108,21 @@ func languageScore(
 				continue
 			}
 			if _, ok := targets[language]; !ok {
-				return 0, nil, fmt.Sprintf("Language %s is not enabled in the profile.", languageScoreDisplayName(language, languageCatalog))
+				return 0, nil, nil, fmt.Sprintf("Language %s is not enabled in the profile.", languageScoreDisplayName(language, languageCatalog))
 			}
 		}
 	}
-	return total, contributors, ""
+	return total, contributors, warnings, ""
+}
+
+func missingLanguagePenalty(score int32) int32 {
+	if score < 0 {
+		score = -score
+	}
+	if score < 100 {
+		score = 100
+	}
+	return -score
 }
 
 func languageScoreDisplayName(languageID string, catalog []storage.Language) string {

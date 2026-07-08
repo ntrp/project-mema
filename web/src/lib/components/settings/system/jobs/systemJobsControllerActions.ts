@@ -5,6 +5,7 @@ import {
 	listSystemJobExecutions,
 	pauseSystemJobSchedule,
 	resumeSystemJobSchedule,
+	runSystemJobSchedule,
 	updateSystemJobHistorySettings,
 	updateSystemJobScheduleInterval
 } from '$lib/settings/api';
@@ -34,6 +35,7 @@ interface ControllerState {
 	errorMessage: string;
 	updatingScheduleId?: string;
 	updatingIntervalId?: string;
+	runningScheduleId?: string;
 	abortingId?: number;
 	abortCandidate?: { id: number; kind: string };
 	logsExecution?: SystemJobExecution;
@@ -121,6 +123,21 @@ export async function saveScheduleIntervalState(
 			error instanceof Error ? error.message : 'Could not update schedule interval';
 	} finally {
 		state.updatingIntervalId = undefined;
+	}
+}
+
+export async function runScheduleState(state: ControllerState, schedule: SystemJobSchedule) {
+	state.runningScheduleId = schedule.id;
+	state.errorMessage = '';
+	try {
+		const updated = await runSystemJobSchedule(schedule.id);
+		state.schedules = state.schedules.map((current) =>
+			current.id === updated.id ? updated : current
+		);
+	} catch (error) {
+		state.errorMessage = error instanceof Error ? error.message : 'Could not run schedule';
+	} finally {
+		state.runningScheduleId = undefined;
 	}
 }
 
