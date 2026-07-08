@@ -45,14 +45,16 @@
 				</button>
 			{/snippet}
 		</Tooltip.Trigger>
-		<Tooltip.Content>
+		<Tooltip.Content class="max-w-96">
 			<div class="grid gap-1">
 				{#if row.operationLabel}
 					<strong>{row.operationLabel}</strong>
 				{/if}
-				{#each row.details ?? [] as detail (detail)}
-					<span>{detail}</span>
-				{/each}
+				<ul class="list-disc space-y-1 pl-4">
+					{#each row.details ?? [] as detail (detail)}
+						<li>{detail}</li>
+					{/each}
+				</ul>
 			</div>
 		</Tooltip.Content>
 	</Tooltip.Root>

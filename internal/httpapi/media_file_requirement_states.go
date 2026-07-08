@@ -156,9 +156,11 @@ func audioRequirementStatus(item storage.MediaItem, tracks []MediaFileTrack) Med
 		return requirementStatus(MediaFileRequirementStateMissing, "Missing", "Audio track is missing")
 	}
 	issues := []string{}
+	missingTargets := 0
 	for _, target := range item.AudioTargets {
 		candidates := audioTargetsCandidates(audio, target.LanguageID)
 		if len(candidates) == 0 {
+			missingTargets++
 			issues = append(issues, "Missing required audio: "+target.LanguageID)
 			continue
 		}
@@ -168,7 +170,7 @@ func audioRequirementStatus(item storage.MediaItem, tracks []MediaFileTrack) Med
 	}
 	if len(issues) > 0 {
 		state := MediaFileRequirementStatePartial
-		if len(item.AudioTargets) > 0 && len(issues) == len(item.AudioTargets) {
+		if len(item.AudioTargets) > 0 && missingTargets == len(item.AudioTargets) {
 			state = MediaFileRequirementStateMissing
 		}
 		return requirementStatus(state, requirementLabel(state), issues...)

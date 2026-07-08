@@ -57,6 +57,48 @@ func TestMediaFileRequirementStatesComputeTrackSidecarAndMissingRows(t *testing.
 	}
 }
 
+func TestMediaFileRequirementStatesKeepAudioSummaryPartialForExistingBadTrack(t *testing.T) {
+	minBitrate := int32(384)
+	item := storage.MediaItem{
+		AudioTargets: []storage.MediaProfileAudioTarget{{
+			LanguageID:         "english",
+			TargetCodec:        stringPtr("aac"),
+			TargetChannels:     []string{"5.1"},
+			MinimumBitrateKbps: &minBitrate,
+		}},
+	}
+	file := MediaFileInfo{
+		Path:   "/media/movie.mkv",
+		Status: MediaFileInfoStatusAvailable,
+		SubtitleSatisfaction: &MediaFileSubtitleSatisfaction{
+			Mode:  MediaProfileSubtitleModeMixed,
+			State: MediaFileSubtitleSatisfactionStateIgnored,
+		},
+	}
+	tracks := []MediaFileTrack{
+		{
+			Type:          MediaFileTrackTypeAudio,
+			Language:      stringPtr("eng"),
+			Codec:         stringPtr("ac3"),
+			Channels:      int32Ptr(2),
+			ChannelLayout: stringPtr("stereo"),
+			BitRate:       stringPtr("192000"),
+		},
+	}
+
+	applyMediaFileRequirementStates(&file, item, tracks, nil)
+
+	if file.Requirements.Audio.State != MediaFileRequirementStatePartial {
+		t.Fatalf("audio requirement = %#v", file.Requirements.Audio)
+	}
+	if file.MissingTracks != nil {
+		t.Fatalf("partial audio track should not create missing rows: %#v", file.MissingTracks)
+	}
+	if tracks[0].State == nil || tracks[0].State.VisualState != MediaFileDetailVisualStatePartial {
+		t.Fatalf("audio track state = %#v", tracks[0].State)
+	}
+}
+
 func TestMediaFileRequirementStatesMarkMissingExternalSubtitle(t *testing.T) {
 	item := storage.MediaItem{
 		SubtitleTargets: []storage.MediaProfileSubtitleTarget{{LanguageID: "japanese", Formats: []string{"srt"}}},

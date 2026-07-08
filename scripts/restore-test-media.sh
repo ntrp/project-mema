@@ -323,6 +323,15 @@ movie_one_audio "$MEDIA_DIR/15-ass-subtitle/Up.2009.tmdb-14160.1080p.WEB-DL.AAC2
 scenario "16-wrong-video-resolution" "Cars (2006), TMDB 920"
 movie_one_audio "$MEDIA_DIR/16-wrong-video-resolution/Cars.2006.tmdb-920.1080p.WEB-DL.AAC2.0.EN.WrongResolution.mkv" eng aac 256k 2 eng no subrip 320x180
 
+scenario "17-audio-conversion-disabled" "Toy Story (1995), TMDB 862"
+movie_one_audio "$MEDIA_DIR/17-audio-conversion-disabled/Toy.Story.1995.tmdb-862.1080p.WEB-DL.FLAC2.0.EN.AudioConversionDisabled.mkv" eng flac 768k 2 eng no
+
+scenario "18-audio-conversion-lossless" "A Bug's Life (1998), TMDB 9487"
+movie_one_audio "$MEDIA_DIR/18-audio-conversion-lossless/A.Bugs.Life.1998.tmdb-9487.1080p.WEB-DL.FLAC2.0.EN.AudioConversionLossless.mkv" eng flac 768k 2 eng no
+
+scenario "19-audio-conversion-lossy" "Brave (2012), TMDB 62177"
+movie_one_audio "$MEDIA_DIR/19-audio-conversion-lossy/Brave.2012.tmdb-62177.1080p.WEB-DL.AC3.2.0.EN.AudioConversionLossy.mkv" eng ac3 384k 2 eng no
+
 cat >"$MEDIA_DIR/README.md" <<'README'
 # Test Movie Fixtures
 
@@ -333,7 +342,7 @@ The dev seed pre-imports those media items with the matching profile attached an
 
 Use the seeded case media/profile combinations to exercise audio status, subtitle modes,
 external subtitle import, unwanted subtitle/audio marking, chapter actions, other-file actions,
-and multiple movies in one folder.
+multiple movies in one folder, and audio conversion policy behavior.
 All videos are white test clips, all audio is generated white noise, and all subtitles/posters are mock data.
 README
 

@@ -76,6 +76,7 @@ create temporary table dev_test_media_profiles (
     audio_channels text[] not null,
     audio_minimum_kbps integer not null,
     audio_preferred_kbps integer not null,
+    audio_lossy_transcode_policy text not null,
     subtitle_mode text not null,
     remove_unwanted_audio boolean not null,
     remove_unwanted_subtitles boolean not null
@@ -88,29 +89,33 @@ insert into dev_test_media_profiles (
     audio_channels,
     audio_minimum_kbps,
     audio_preferred_kbps,
+    audio_lossy_transcode_policy,
     subtitle_mode,
     remove_unwanted_audio,
     remove_unwanted_subtitles
 )
 values
-    ('01-ok-embedded', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('02-missing-italian-audio', 'italian', 'aac', array['2.0'], 160, 256, 'mixed', true, false),
-    ('03-wrong-audio-codec', 'english', 'eac3', array['5.1'], 640, 768, 'mixed', true, false),
-    ('04-wrong-audio-channels', 'japanese', 'aac', array['2.0'], 160, 256, 'mixed', true, false),
-    ('05-low-audio-bitrate', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('06-unwanted-audio', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('07-embedded-subtitle-needed', 'english', 'aac', array['2.0'], 192, 256, 'embedded', true, true),
-    ('08-external-subtitle-mode', 'english', 'aac', array['2.0'], 192, 256, 'external', true, true),
-    ('09-mixed-existing-external', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, true),
-    ('10-unwanted-subtitle', 'korean', 'aac', array['2.0'], 192, 256, 'external', true, true),
-    ('11-chapter-delete-summary', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('12-other-files-actions', 'english', 'aac', array['2.0'], 192, 256, 'external', true, true),
-    ('13-three-movies-one-folder-grand-budapest', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('13-three-movies-one-folder-interstellar', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('13-three-movies-one-folder-truman-show', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('14-subrip-subtitle', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('15-ass-subtitle', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false),
-    ('16-wrong-video-resolution', 'english', 'aac', array['2.0'], 192, 256, 'mixed', true, false);
+    ('01-ok-embedded', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('02-missing-italian-audio', 'italian', 'aac', array['2.0'], 160, 256, 'lossyToLossy', 'mixed', true, false),
+    ('03-wrong-audio-codec', 'english', 'eac3', array['5.1'], 640, 768, 'lossyToLossy', 'mixed', true, false),
+    ('04-wrong-audio-channels', 'japanese', 'aac', array['2.0'], 160, 256, 'lossyToLossy', 'mixed', true, false),
+    ('05-low-audio-bitrate', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('06-unwanted-audio', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('07-embedded-subtitle-needed', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'embedded', true, true),
+    ('08-external-subtitle-mode', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'external', true, true),
+    ('09-mixed-existing-external', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, true),
+    ('10-unwanted-subtitle', 'korean', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'external', true, true),
+    ('11-chapter-delete-summary', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('12-other-files-actions', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'external', true, true),
+    ('13-three-movies-one-folder-grand-budapest', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('13-three-movies-one-folder-interstellar', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('13-three-movies-one-folder-truman-show', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('14-subrip-subtitle', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('15-ass-subtitle', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('16-wrong-video-resolution', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('17-audio-conversion-disabled', 'english', 'aac', array['stereo'], 192, 256, 'disabled', 'mixed', true, false),
+    ('18-audio-conversion-lossless', 'english', 'aac', array['stereo'], 192, 256, 'losslessToLossy', 'mixed', true, false),
+    ('19-audio-conversion-lossy', 'english', 'aac', array['stereo'], 192, 256, 'lossyToLossy', 'mixed', true, false);
 
 drop table if exists dev_test_media_subtitles;
 create temporary table dev_test_media_subtitles (
@@ -140,7 +145,10 @@ values
     ('13-three-movies-one-folder-truman-show', 'english', 0, 0),
     ('14-subrip-subtitle', 'english', 0, 0),
     ('15-ass-subtitle', 'english', 0, 0),
-    ('16-wrong-video-resolution', 'english', 0, 0);
+    ('16-wrong-video-resolution', 'english', 0, 0),
+    ('17-audio-conversion-disabled', 'english', 0, 0),
+    ('18-audio-conversion-lossless', 'english', 0, 0),
+    ('19-audio-conversion-lossy', 'english', 0, 0);
 
 insert into app.media_profiles (
     id,
@@ -171,7 +179,7 @@ select
     0,
     1,
     remove_unwanted_audio,
-    'lossyToLossy',
+    audio_lossy_transcode_policy,
     remove_unwanted_subtitles,
     subtitle_mode,
     true,
@@ -306,7 +314,10 @@ values
     (15, '13-three-movies-one-folder-truman-show', '10000000-0000-4000-8000-000000001015', '10000000-0000-4000-8000-000000002015', 1998, '37165', 'EN', '.data/media/test-movie/13-three-movies-one-folder', 'The.Truman.Show.1998.tmdb-37165.1080p.WEB-DL.AAC2.0.EN.mkv', 'The Truman Show'),
     (16, '14-subrip-subtitle', '10000000-0000-4000-8000-000000001016', '10000000-0000-4000-8000-000000002016', 2001, '585', 'EN', '.data/media/test-movie/14-subrip-subtitle', 'Monsters.Inc.2001.tmdb-585.1080p.WEB-DL.AAC2.0.EN.SubRip.mkv', 'Monsters Inc'),
     (17, '15-ass-subtitle', '10000000-0000-4000-8000-000000001017', '10000000-0000-4000-8000-000000002017', 2009, '14160', 'EN', '.data/media/test-movie/15-ass-subtitle', 'Up.2009.tmdb-14160.1080p.WEB-DL.AAC2.0.EN.ASS.mkv', 'Up'),
-    (18, '16-wrong-video-resolution', '10000000-0000-4000-8000-000000001018', '10000000-0000-4000-8000-000000002018', 2006, '920', 'EN', '.data/media/test-movie/16-wrong-video-resolution', 'Cars.2006.tmdb-920.1080p.WEB-DL.AAC2.0.EN.WrongResolution.mkv', 'Cars');
+    (18, '16-wrong-video-resolution', '10000000-0000-4000-8000-000000001018', '10000000-0000-4000-8000-000000002018', 2006, '920', 'EN', '.data/media/test-movie/16-wrong-video-resolution', 'Cars.2006.tmdb-920.1080p.WEB-DL.AAC2.0.EN.WrongResolution.mkv', 'Cars'),
+    (19, '17-audio-conversion-disabled', '10000000-0000-4000-8000-000000001019', '10000000-0000-4000-8000-000000002019', 1995, '862', 'EN', '.data/media/test-movie/17-audio-conversion-disabled', 'Toy.Story.1995.tmdb-862.1080p.WEB-DL.FLAC2.0.EN.AudioConversionDisabled.mkv', 'Toy Story'),
+    (20, '18-audio-conversion-lossless', '10000000-0000-4000-8000-000000001020', '10000000-0000-4000-8000-000000002020', 1998, '9487', 'EN', '.data/media/test-movie/18-audio-conversion-lossless', 'A.Bugs.Life.1998.tmdb-9487.1080p.WEB-DL.FLAC2.0.EN.AudioConversionLossless.mkv', 'A Bugs Life'),
+    (21, '19-audio-conversion-lossy', '10000000-0000-4000-8000-000000001021', '10000000-0000-4000-8000-000000002021', 2012, '62177', 'EN', '.data/media/test-movie/19-audio-conversion-lossy', 'Brave.2012.tmdb-62177.1080p.WEB-DL.AC3.2.0.EN.AudioConversionLossy.mkv', 'Brave');
 
 insert into app.media_items (
     id,

@@ -209,15 +209,61 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('text-emerald-600');
 		expect(body).toContain('text-orange-500');
 		expect(body).toContain('text-destructive');
-		expect(body).toContain('Video requirements met');
-		expect(body).toContain('Missing required audio: German');
-		expect(body).toContain('Missing subtitles: Japanese');
+		expect(body).toContain('Video track satisfies the profile target.');
+		expect(body).toContain('Missing expected audio track');
+		expect(body).toContain('Missing expected external subtitle: japanese');
 		expect(body).not.toContain('>Video</strong>');
 		expect(body).not.toContain('>Audio</strong>');
 		expect(body).not.toContain('>Subtitles</strong>');
 		expect(body).not.toContain('Other File');
 		expect(body).not.toContain('Formats');
 		expect(summaryOrder(body)).toEqual(['File', 'Size', 'Quality', 'Score', 'Status']);
+	});
+
+	it('renders status icon tooltips with a list per track', () => {
+		const base = detailedFileRow();
+		const row = {
+			...base,
+			tracks: base.tracks.map((track) =>
+				track.type === 'audio'
+					? {
+							...track,
+							state: {
+								visualState: 'partial' as const,
+								statusLabel: 'Partial',
+								details: [
+									'Audio codec does not meet the profile target',
+									'Audio channels do not meet the profile target'
+								]
+							}
+						}
+					: track
+			),
+			missingTracks: [],
+			requirements: {
+				...base.requirements!,
+				audio: {
+					state: 'partial' as const,
+					label: 'Partial',
+					details: ['Audio track does not meet the profile target']
+				}
+			}
+		};
+
+		const { body } = renderWithTooltip(MediaFileSummary, {
+			mediaItemId: 'media-1',
+			mediaTitle: 'Scenario Movie',
+			row,
+			canManage: true,
+			searching: false,
+			onAutoSearch: vi.fn(),
+			onManualSearch: vi.fn(),
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Audio track 1 - English');
+		expect(body).toContain('Audio codec does not meet the profile target');
+		expect(body).toContain('Audio channels do not meet the profile target');
 	});
 });
 

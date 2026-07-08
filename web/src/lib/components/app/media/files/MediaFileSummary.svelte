@@ -100,9 +100,9 @@
 		<span class="grid content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">Status</strong>
 			<span class="flex items-center gap-1">
-				<MediaFileRequirementIcon type="video" status={videoStatus} />
-				<MediaFileRequirementIcon type="audio" status={audioStatus} />
-				<MediaFileRequirementIcon type="subtitle" status={subtitleStatus} />
+				<MediaFileRequirementIcon type="video" status={videoStatus} {row} />
+				<MediaFileRequirementIcon type="audio" status={audioStatus} {row} />
+				<MediaFileRequirementIcon type="subtitle" status={subtitleStatus} {row} />
 			</span>
 		</span>
 		<MediaFileSummaryActions
