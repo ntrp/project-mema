@@ -91,8 +91,15 @@ func dlnaClientDiagnostics(clients []dlna.ClientStatus) []DLNAClientDiagnostic {
 		values = append(values, DLNAClientDiagnostic{
 			Ip:             client.IP,
 			UserAgent:      client.UserAgent,
+			FriendlyName:   client.FriendlyName,
+			RendererUuid:   client.RendererUUID,
+			HeadersSummary: append([]string{}, client.HeadersSummary...),
 			ProfileId:      client.ProfileID,
+			MatchReason:    client.MatchReason,
 			LastSoapAction: client.LastSOAPAction,
+			LastObjectId:   client.LastObjectID,
+			LastResourceId: client.LastResourceID,
+			LastStreamMode: client.LastStreamMode,
 			LastError:      client.LastError,
 			LastSeen:       client.LastSeen,
 		})

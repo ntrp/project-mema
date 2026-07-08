@@ -3191,6 +3191,56 @@ paths:
                 $ref: "#/components/schemas/DLNARecentDeviceListResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/dlna/profile-match-trace:
+    post:
+      operationId: traceDLNAProfileMatch
+      tags:
+        - Settings
+      summary: Trace DLNA renderer profile matching
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNAProfileMatchTraceRequest"
+      responses:
+        "200":
+          description: DLNA profile match trace
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNAProfileMatchTraceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/dlna/delivery-trace:
+    post:
+      operationId: traceDLNADeliveryDecision
+      tags:
+        - Settings
+      summary: Trace DLNA media delivery decision
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DLNADeliveryTraceRequest"
+      responses:
+        "200":
+          description: DLNA delivery decision trace
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DLNADeliveryTraceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/profiles:
     get:
       operationId: listMediaProfiles
@@ -8473,17 +8523,40 @@ components:
       required:
         - ip
         - userAgent
+        - friendlyName
+        - rendererUuid
+        - headersSummary
         - profileId
+        - matchReason
         - lastSoapAction
+        - lastObjectId
+        - lastResourceId
+        - lastStreamMode
         - lastSeen
       properties:
         ip:
           type: string
         userAgent:
           type: string
+        friendlyName:
+          type: string
+        rendererUuid:
+          type: string
+        headersSummary:
+          type: array
+          items:
+            type: string
         profileId:
           type: string
+        matchReason:
+          type: string
         lastSoapAction:
+          type: string
+        lastObjectId:
+          type: string
+        lastResourceId:
+          type: string
+        lastStreamMode:
           type: string
         lastError:
           type: string
@@ -8770,6 +8843,214 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DLNAClientDiagnostic"
+    DLNAProfileMatchTraceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        deviceIp:
+          type: string
+        rendererUuid:
+          type: string
+        friendlyName:
+          type: string
+        userAgent:
+          type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+    DLNAProfileRuleTrace:
+      type: object
+      additionalProperties: false
+      required:
+        - profileId
+        - profileName
+        - field
+        - value
+        - rule
+        - score
+        - result
+      properties:
+        profileId:
+          type: string
+        profileName:
+          type: string
+        field:
+          type: string
+        value:
+          type: string
+        rule:
+          type: string
+        score:
+          type: integer
+          format: int32
+        result:
+          type: string
+          enum: [pass, fail]
+          x-enum-varnames:
+            - DLNAProfileRulePass
+            - DLNAProfileRuleFail
+    DLNAProfileMatchTraceResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - profileId
+        - profileName
+        - sourceProfileId
+        - matchSource
+        - matchReason
+        - winningRule
+        - fallbackPath
+        - score
+        - candidateProfileIds
+        - headersSummary
+        - ruleTrace
+      properties:
+        profileId:
+          type: string
+        profileName:
+          type: string
+        sourceProfileId:
+          type: string
+        matchSource:
+          type: string
+        matchReason:
+          type: string
+        winningRule:
+          type: string
+        fallbackPath:
+          type: string
+        score:
+          type: integer
+          format: int32
+        candidateProfileIds:
+          type: array
+          items:
+            type: string
+        headersSummary:
+          type: array
+          items:
+            type: string
+        ruleTrace:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAProfileRuleTrace"
+    DLNAMediaProbeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        container:
+          type: string
+        videoCodec:
+          type: string
+        audioCodec:
+          type: string
+        height:
+          type: integer
+          format: int32
+    DLNADeliveryTraceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        deviceIp:
+          type: string
+        rendererUuid:
+          type: string
+        friendlyName:
+          type: string
+        userAgent:
+          type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        profileId:
+          type: string
+        mediaPath:
+          type: string
+        objectId:
+          type: string
+        resourceId:
+          type: string
+        streamMode:
+          type: string
+        probe:
+          $ref: "#/components/schemas/DLNAMediaProbeRequest"
+    DLNACapabilityTrace:
+      type: object
+      additionalProperties: false
+      required:
+        - field
+        - value
+        - rule
+        - result
+      properties:
+        field:
+          type: string
+        value:
+          type: string
+        rule:
+          type: string
+        result:
+          type: string
+          enum: [pass, fail]
+          x-enum-varnames:
+            - DLNACapabilityPass
+            - DLNACapabilityFail
+    DLNADeliveryTraceResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - profileId
+        - profileName
+        - mediaFileName
+        - objectId
+        - resourceId
+        - streamMode
+        - deliveryProtocol
+        - mode
+        - videoCodec
+        - audioCodec
+        - reasonCodes
+        - capabilityTrace
+      properties:
+        profileId:
+          type: string
+        profileName:
+          type: string
+        mediaFileName:
+          type: string
+        objectId:
+          type: string
+        resourceId:
+          type: string
+        streamMode:
+          type: string
+        deliveryProtocol:
+          type: string
+          enum: [file, hls]
+          x-enum-varnames:
+            - DLNADeliveryProtocolFile
+            - DLNADeliveryProtocolHLS
+        mode:
+          type: string
+          enum: [direct, remux, transcode]
+          x-enum-varnames:
+            - DLNADeliveryModeDirect
+            - DLNADeliveryModeRemux
+            - DLNADeliveryModeTranscode
+        videoCodec:
+          type: string
+        audioCodec:
+          type: string
+        reasonCodes:
+          type: array
+          items:
+            type: string
+        capabilityTrace:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNACapabilityTrace"
     MediaRequestApproveRequest:
       type: object
       additionalProperties: false

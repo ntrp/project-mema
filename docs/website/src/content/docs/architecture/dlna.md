@@ -253,9 +253,10 @@ The evaluator returns a delivery decision, reason codes, and trace rows that
 feed DIDL resources, `ConnectionManager` protocol info, and diagnostics.
 
 Settings API endpoints expose renderer profiles, profile clone/reset/import/
-export actions, IP/UUID device overrides, and recent renderer devices. Mutating
-profile or override endpoints refresh the DLNA manager cache so running
-matching behavior follows saved settings.
+export actions, IP/UUID device overrides, recent renderer devices, profile
+match traces, and delivery decision traces. Mutating profile or override
+endpoints refresh the DLNA manager cache so running matching behavior follows
+saved settings.
 
 ## Settings UI
 
@@ -275,8 +276,11 @@ The panel contains:
 Seeded profiles can be edited in place; reset restores the seed copy, while
 clone creates a user-owned profile. Recent devices can be pinned to a selected
 profile by IP, and manual overrides can target either IP or renderer UUID.
-The trace viewer surfaces the effective profile, override, matching profile,
-and profile rule payloads used when debugging renderer compatibility.
+The trace viewer calls the diagnostics API and surfaces match source, winning
+rule, accepted/rejected profile rules, delivery mode, protocol, transcode
+codecs, and capability checks for the selected renderer and media file.
+Responses return file names, object IDs, resource IDs, and stream mode when
+useful, but do not echo absolute media paths.
 
 ## Future Delivery Model
 

@@ -64,6 +64,81 @@ func (e CustomFormatSpecType) Valid() bool {
 	}
 }
 
+// Defines values for DLNACapabilityTraceResult.
+const (
+	DLNACapabilityFail DLNACapabilityTraceResult = "fail"
+	DLNACapabilityPass DLNACapabilityTraceResult = "pass"
+)
+
+// Valid indicates whether the value is a known member of the DLNACapabilityTraceResult enum.
+func (e DLNACapabilityTraceResult) Valid() bool {
+	switch e {
+	case DLNACapabilityFail:
+		return true
+	case DLNACapabilityPass:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DLNADeliveryTraceResponseDeliveryProtocol.
+const (
+	DLNADeliveryProtocolFile DLNADeliveryTraceResponseDeliveryProtocol = "file"
+	DLNADeliveryProtocolHLS  DLNADeliveryTraceResponseDeliveryProtocol = "hls"
+)
+
+// Valid indicates whether the value is a known member of the DLNADeliveryTraceResponseDeliveryProtocol enum.
+func (e DLNADeliveryTraceResponseDeliveryProtocol) Valid() bool {
+	switch e {
+	case DLNADeliveryProtocolFile:
+		return true
+	case DLNADeliveryProtocolHLS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DLNADeliveryTraceResponseMode.
+const (
+	DLNADeliveryModeDirect    DLNADeliveryTraceResponseMode = "direct"
+	DLNADeliveryModeRemux     DLNADeliveryTraceResponseMode = "remux"
+	DLNADeliveryModeTranscode DLNADeliveryTraceResponseMode = "transcode"
+)
+
+// Valid indicates whether the value is a known member of the DLNADeliveryTraceResponseMode enum.
+func (e DLNADeliveryTraceResponseMode) Valid() bool {
+	switch e {
+	case DLNADeliveryModeDirect:
+		return true
+	case DLNADeliveryModeRemux:
+		return true
+	case DLNADeliveryModeTranscode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DLNAProfileRuleTraceResult.
+const (
+	DLNAProfileRuleFail DLNAProfileRuleTraceResult = "fail"
+	DLNAProfileRulePass DLNAProfileRuleTraceResult = "pass"
+)
+
+// Valid indicates whether the value is a known member of the DLNAProfileRuleTraceResult enum.
+func (e DLNAProfileRuleTraceResult) Valid() bool {
+	switch e {
+	case DLNAProfileRuleFail:
+		return true
+	case DLNAProfileRulePass:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DLNARendererProfileSource.
 const (
 	DLNARendererProfileSourceImportedCleanRoom DLNARendererProfileSource = "imported_clean_room"
@@ -1985,15 +2060,70 @@ type CustomFormatSpec struct {
 // CustomFormatSpecType defines model for CustomFormatSpecType.
 type CustomFormatSpecType string
 
+// DLNACapabilityTrace defines model for DLNACapabilityTrace.
+type DLNACapabilityTrace struct {
+	Field  string                    `json:"field"`
+	Result DLNACapabilityTraceResult `json:"result"`
+	Rule   string                    `json:"rule"`
+	Value  string                    `json:"value"`
+}
+
+// DLNACapabilityTraceResult defines model for DLNACapabilityTrace.Result.
+type DLNACapabilityTraceResult string
+
 // DLNAClientDiagnostic defines model for DLNAClientDiagnostic.
 type DLNAClientDiagnostic struct {
+	FriendlyName   string    `json:"friendlyName"`
+	HeadersSummary []string  `json:"headersSummary"`
 	Ip             string    `json:"ip"`
 	LastError      *string   `json:"lastError,omitempty"`
+	LastObjectId   string    `json:"lastObjectId"`
+	LastResourceId string    `json:"lastResourceId"`
 	LastSeen       time.Time `json:"lastSeen"`
 	LastSoapAction string    `json:"lastSoapAction"`
+	LastStreamMode string    `json:"lastStreamMode"`
+	MatchReason    string    `json:"matchReason"`
 	ProfileId      string    `json:"profileId"`
+	RendererUuid   string    `json:"rendererUuid"`
 	UserAgent      string    `json:"userAgent"`
 }
+
+// DLNADeliveryTraceRequest defines model for DLNADeliveryTraceRequest.
+type DLNADeliveryTraceRequest struct {
+	DeviceIp     *string                `json:"deviceIp,omitempty"`
+	FriendlyName *string                `json:"friendlyName,omitempty"`
+	Headers      *map[string]string     `json:"headers,omitempty"`
+	MediaPath    *string                `json:"mediaPath,omitempty"`
+	ObjectId     *string                `json:"objectId,omitempty"`
+	Probe        *DLNAMediaProbeRequest `json:"probe,omitempty"`
+	ProfileId    *string                `json:"profileId,omitempty"`
+	RendererUuid *string                `json:"rendererUuid,omitempty"`
+	ResourceId   *string                `json:"resourceId,omitempty"`
+	StreamMode   *string                `json:"streamMode,omitempty"`
+	UserAgent    *string                `json:"userAgent,omitempty"`
+}
+
+// DLNADeliveryTraceResponse defines model for DLNADeliveryTraceResponse.
+type DLNADeliveryTraceResponse struct {
+	AudioCodec       string                                    `json:"audioCodec"`
+	CapabilityTrace  []DLNACapabilityTrace                     `json:"capabilityTrace"`
+	DeliveryProtocol DLNADeliveryTraceResponseDeliveryProtocol `json:"deliveryProtocol"`
+	MediaFileName    string                                    `json:"mediaFileName"`
+	Mode             DLNADeliveryTraceResponseMode             `json:"mode"`
+	ObjectId         string                                    `json:"objectId"`
+	ProfileId        string                                    `json:"profileId"`
+	ProfileName      string                                    `json:"profileName"`
+	ReasonCodes      []string                                  `json:"reasonCodes"`
+	ResourceId       string                                    `json:"resourceId"`
+	StreamMode       string                                    `json:"streamMode"`
+	VideoCodec       string                                    `json:"videoCodec"`
+}
+
+// DLNADeliveryTraceResponseDeliveryProtocol defines model for DLNADeliveryTraceResponse.DeliveryProtocol.
+type DLNADeliveryTraceResponseDeliveryProtocol string
+
+// DLNADeliveryTraceResponseMode defines model for DLNADeliveryTraceResponse.Mode.
+type DLNADeliveryTraceResponseMode string
 
 // DLNAInterfaceDiagnostic defines model for DLNAInterfaceDiagnostic.
 type DLNAInterfaceDiagnostic struct {
@@ -2004,6 +2134,52 @@ type DLNAInterfaceDiagnostic struct {
 
 // DLNAJsonObject defines model for DLNAJsonObject.
 type DLNAJsonObject map[string]interface{}
+
+// DLNAMediaProbeRequest defines model for DLNAMediaProbeRequest.
+type DLNAMediaProbeRequest struct {
+	AudioCodec *string `json:"audioCodec,omitempty"`
+	Container  *string `json:"container,omitempty"`
+	Height     *int32  `json:"height,omitempty"`
+	VideoCodec *string `json:"videoCodec,omitempty"`
+}
+
+// DLNAProfileMatchTraceRequest defines model for DLNAProfileMatchTraceRequest.
+type DLNAProfileMatchTraceRequest struct {
+	DeviceIp     *string            `json:"deviceIp,omitempty"`
+	FriendlyName *string            `json:"friendlyName,omitempty"`
+	Headers      *map[string]string `json:"headers,omitempty"`
+	RendererUuid *string            `json:"rendererUuid,omitempty"`
+	UserAgent    *string            `json:"userAgent,omitempty"`
+}
+
+// DLNAProfileMatchTraceResponse defines model for DLNAProfileMatchTraceResponse.
+type DLNAProfileMatchTraceResponse struct {
+	CandidateProfileIds []string               `json:"candidateProfileIds"`
+	FallbackPath        string                 `json:"fallbackPath"`
+	HeadersSummary      []string               `json:"headersSummary"`
+	MatchReason         string                 `json:"matchReason"`
+	MatchSource         string                 `json:"matchSource"`
+	ProfileId           string                 `json:"profileId"`
+	ProfileName         string                 `json:"profileName"`
+	RuleTrace           []DLNAProfileRuleTrace `json:"ruleTrace"`
+	Score               int32                  `json:"score"`
+	SourceProfileId     string                 `json:"sourceProfileId"`
+	WinningRule         string                 `json:"winningRule"`
+}
+
+// DLNAProfileRuleTrace defines model for DLNAProfileRuleTrace.
+type DLNAProfileRuleTrace struct {
+	Field       string                     `json:"field"`
+	ProfileId   string                     `json:"profileId"`
+	ProfileName string                     `json:"profileName"`
+	Result      DLNAProfileRuleTraceResult `json:"result"`
+	Rule        string                     `json:"rule"`
+	Score       int32                      `json:"score"`
+	Value       string                     `json:"value"`
+}
+
+// DLNAProfileRuleTraceResult defines model for DLNAProfileRuleTrace.Result.
+type DLNAProfileRuleTraceResult string
 
 // DLNARecentDeviceListResponse defines model for DLNARecentDeviceListResponse.
 type DLNARecentDeviceListResponse struct {
@@ -4978,8 +5154,14 @@ type UpdateCustomFormatJSONRequestBody = CustomFormatRequest
 // UpdateDLNASettingsJSONRequestBody defines body for UpdateDLNASettings for application/json ContentType.
 type UpdateDLNASettingsJSONRequestBody = DLNASettingsRequest
 
+// TraceDLNADeliveryDecisionJSONRequestBody defines body for TraceDLNADeliveryDecision for application/json ContentType.
+type TraceDLNADeliveryDecisionJSONRequestBody = DLNADeliveryTraceRequest
+
 // UpsertDLNARendererDeviceOverrideJSONRequestBody defines body for UpsertDLNARendererDeviceOverride for application/json ContentType.
 type UpsertDLNARendererDeviceOverrideJSONRequestBody = DLNARendererDeviceOverrideRequest
+
+// TraceDLNAProfileMatchJSONRequestBody defines body for TraceDLNAProfileMatch for application/json ContentType.
+type TraceDLNAProfileMatchJSONRequestBody = DLNAProfileMatchTraceRequest
 
 // CreateDLNARendererProfileJSONRequestBody defines body for CreateDLNARendererProfile for application/json ContentType.
 type CreateDLNARendererProfileJSONRequestBody = DLNARendererProfileCreateRequest
@@ -5340,6 +5522,9 @@ type ServerInterface interface {
 	// Update DLNA server settings
 	// (PUT /settings/dlna)
 	UpdateDLNASettings(w http.ResponseWriter, r *http.Request)
+	// Trace DLNA media delivery decision
+	// (POST /settings/dlna/delivery-trace)
+	TraceDLNADeliveryDecision(w http.ResponseWriter, r *http.Request)
 	// List DLNA renderer device overrides
 	// (GET /settings/dlna/device-overrides)
 	ListDLNARendererDeviceOverrides(w http.ResponseWriter, r *http.Request)
@@ -5349,6 +5534,9 @@ type ServerInterface interface {
 	// Delete a DLNA renderer device override
 	// (DELETE /settings/dlna/device-overrides/{id})
 	DeleteDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// Trace DLNA renderer profile matching
+	// (POST /settings/dlna/profile-match-trace)
+	TraceDLNAProfileMatch(w http.ResponseWriter, r *http.Request)
 	// List DLNA renderer profiles
 	// (GET /settings/dlna/profiles)
 	ListDLNARendererProfiles(w http.ResponseWriter, r *http.Request)
@@ -6162,6 +6350,12 @@ func (_ Unimplemented) UpdateDLNASettings(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Trace DLNA media delivery decision
+// (POST /settings/dlna/delivery-trace)
+func (_ Unimplemented) TraceDLNADeliveryDecision(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List DLNA renderer device overrides
 // (GET /settings/dlna/device-overrides)
 func (_ Unimplemented) ListDLNARendererDeviceOverrides(w http.ResponseWriter, r *http.Request) {
@@ -6177,6 +6371,12 @@ func (_ Unimplemented) UpsertDLNARendererDeviceOverride(w http.ResponseWriter, r
 // Delete a DLNA renderer device override
 // (DELETE /settings/dlna/device-overrides/{id})
 func (_ Unimplemented) DeleteDLNARendererDeviceOverride(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Trace DLNA renderer profile matching
+// (POST /settings/dlna/profile-match-trace)
+func (_ Unimplemented) TraceDLNAProfileMatch(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9936,6 +10136,26 @@ func (siw *ServerInterfaceWrapper) UpdateDLNASettings(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// TraceDLNADeliveryDecision operation middleware
+func (siw *ServerInterfaceWrapper) TraceDLNADeliveryDecision(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TraceDLNADeliveryDecision(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListDLNARendererDeviceOverrides operation middleware
 func (siw *ServerInterfaceWrapper) ListDLNARendererDeviceOverrides(w http.ResponseWriter, r *http.Request) {
 
@@ -9999,6 +10219,26 @@ func (siw *ServerInterfaceWrapper) DeleteDLNARendererDeviceOverride(w http.Respo
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteDLNARendererDeviceOverride(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TraceDLNAProfileMatch operation middleware
+func (siw *ServerInterfaceWrapper) TraceDLNAProfileMatch(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TraceDLNAProfileMatch(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -13585,6 +13825,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/settings/dlna", wrapper.UpdateDLNASettings)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/delivery-trace", wrapper.TraceDLNADeliveryDecision)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/dlna/device-overrides", wrapper.ListDLNARendererDeviceOverrides)
 	})
 	r.Group(func(r chi.Router) {
@@ -13592,6 +13835,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/dlna/device-overrides/{id}", wrapper.DeleteDLNARendererDeviceOverride)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/profile-match-trace", wrapper.TraceDLNAProfileMatch)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/dlna/profiles", wrapper.ListDLNARendererProfiles)

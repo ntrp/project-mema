@@ -15,8 +15,15 @@ import (
 type ClientStatus struct {
 	IP             string
 	UserAgent      string
+	FriendlyName   string
+	RendererUUID   string
+	HeadersSummary []string
 	ProfileID      string
+	MatchReason    string
 	LastSOAPAction string
+	LastObjectID   string
+	LastResourceID string
+	LastStreamMode string
 	LastError      *string
 	LastSeen       time.Time
 }
@@ -69,13 +76,18 @@ func (m *Manager) recordClient(r *http.Request, action string, args map[string]s
 	request := RendererRequestFromHTTP(r)
 	match := m.ExplainRendererProfile(r.Context(), request)
 	status := ClientStatus{
-		IP:        request.ClientIP,
-		UserAgent: request.UserAgent,
-		ProfileID: match.Profile.ID,
-		LastSeen:  time.Now().UTC(),
+		IP:             request.ClientIP,
+		UserAgent:      request.UserAgent,
+		FriendlyName:   request.FriendlyName,
+		RendererUUID:   request.RendererUUID,
+		HeadersSummary: SafeHeadersSummary(request.Headers),
+		ProfileID:      match.Profile.ID,
+		MatchReason:    RendererMatchReason(match.Explanation),
+		LastSeen:       time.Now().UTC(),
 	}
 	if action != "" {
 		status.LastSOAPAction = action
+		status.LastObjectID = objectIDFromSOAPArgs(args)
 	}
 	if err != nil {
 		message := err.Error()
@@ -88,8 +100,26 @@ func (m *Manager) recordClient(r *http.Request, action string, args map[string]s
 		if status.UserAgent == "" {
 			status.UserAgent = existing.UserAgent
 		}
+		if status.FriendlyName == "" {
+			status.FriendlyName = existing.FriendlyName
+		}
+		if status.RendererUUID == "" {
+			status.RendererUUID = existing.RendererUUID
+		}
+		if len(status.HeadersSummary) == 0 {
+			status.HeadersSummary = existing.HeadersSummary
+		}
 		if status.LastSOAPAction == "" {
 			status.LastSOAPAction = existing.LastSOAPAction
+		}
+		if status.LastObjectID == "" {
+			status.LastObjectID = existing.LastObjectID
+		}
+		if status.LastResourceID == "" {
+			status.LastResourceID = existing.LastResourceID
+		}
+		if status.LastStreamMode == "" {
+			status.LastStreamMode = existing.LastStreamMode
 		}
 		if status.LastError == nil {
 			status.LastError = existing.LastError
@@ -109,6 +139,15 @@ func (m *Manager) recordClient(r *http.Request, action string, args map[string]s
 		m.audit(r.Context(), "DLNA SOAP action", data)
 	}
 	m.recentClients[status.IP] = status
+}
+
+func objectIDFromSOAPArgs(args map[string]string) string {
+	for _, key := range []string{"ObjectID", "ContainerID"} {
+		if value := strings.TrimSpace(args[key]); value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func safeSOAPArgs(action string, args map[string]string) map[string]string {
@@ -161,6 +200,14 @@ func (m *Manager) beginStream(r *http.Request, objectID string, delivery string,
 	m.activeStreams[stream.ID] = stream
 	if transcode {
 		m.activeTranscodes[stream.ID] = stream
+	}
+	if status, ok := m.recentClients[request.ClientIP]; ok {
+		status.LastObjectID = objectID
+		status.LastResourceID = objectID
+		status.LastStreamMode = delivery
+		status.ProfileID = profile.ID
+		status.LastSeen = time.Now().UTC()
+		m.recentClients[request.ClientIP] = status
 	}
 	m.mu.Unlock()
 	m.audit(r.Context(), "DLNA stream started", map[string]any{

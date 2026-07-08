@@ -38,8 +38,15 @@ describe('DLNA device profile settings UI (SCN-SETTINGS-025)', () => {
 				{
 					ip: '192.168.1.55',
 					userAgent: 'LG TV',
+					friendlyName: 'Living Room TV',
+					rendererUuid: 'uuid:lg-tv',
+					headersSummary: ['X-Device: LG'],
 					profileId: sampleProfile.id,
+					matchReason: 'match:userAgent:lg',
 					lastSoapAction: 'Browse',
+					lastObjectId: 'movie:1',
+					lastResourceId: 'movie:1',
+					lastStreamMode: 'direct',
 					lastSeen: '2026-07-08T08:00:00Z'
 				}
 			],

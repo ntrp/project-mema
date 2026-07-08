@@ -1797,6 +1797,40 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/dlna/profile-match-trace': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Trace DLNA renderer profile matching */
+		post: operations['traceDLNAProfileMatch'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/dlna/delivery-trace': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Trace DLNA media delivery decision */
+		post: operations['traceDLNADeliveryDecision'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/profiles': {
 		parameters: {
 			query?: never;
@@ -4052,8 +4086,15 @@ export interface components {
 		DLNAClientDiagnostic: {
 			ip: string;
 			userAgent: string;
+			friendlyName: string;
+			rendererUuid: string;
+			headersSummary: string[];
 			profileId: string;
+			matchReason: string;
 			lastSoapAction: string;
+			lastObjectId: string;
+			lastResourceId: string;
+			lastStreamMode: string;
 			lastError?: string;
 			/** Format: date-time */
 			lastSeen: string;
@@ -4152,6 +4193,85 @@ export interface components {
 		};
 		DLNARecentDeviceListResponse: {
 			devices: components['schemas']['DLNAClientDiagnostic'][];
+		};
+		DLNAProfileMatchTraceRequest: {
+			deviceIp?: string;
+			rendererUuid?: string;
+			friendlyName?: string;
+			userAgent?: string;
+			headers?: {
+				[key: string]: string;
+			};
+		};
+		DLNAProfileRuleTrace: {
+			profileId: string;
+			profileName: string;
+			field: string;
+			value: string;
+			rule: string;
+			/** Format: int32 */
+			score: number;
+			/** @enum {string} */
+			result: 'pass' | 'fail';
+		};
+		DLNAProfileMatchTraceResponse: {
+			profileId: string;
+			profileName: string;
+			sourceProfileId: string;
+			matchSource: string;
+			matchReason: string;
+			winningRule: string;
+			fallbackPath: string;
+			/** Format: int32 */
+			score: number;
+			candidateProfileIds: string[];
+			headersSummary: string[];
+			ruleTrace: components['schemas']['DLNAProfileRuleTrace'][];
+		};
+		DLNAMediaProbeRequest: {
+			container?: string;
+			videoCodec?: string;
+			audioCodec?: string;
+			/** Format: int32 */
+			height?: number;
+		};
+		DLNADeliveryTraceRequest: {
+			deviceIp?: string;
+			rendererUuid?: string;
+			friendlyName?: string;
+			userAgent?: string;
+			headers?: {
+				[key: string]: string;
+			};
+			profileId?: string;
+			mediaPath?: string;
+			objectId?: string;
+			resourceId?: string;
+			streamMode?: string;
+			probe?: components['schemas']['DLNAMediaProbeRequest'];
+		};
+		DLNACapabilityTrace: {
+			field: string;
+			value: string;
+			rule: string;
+			/** @enum {string} */
+			result: 'pass' | 'fail';
+		};
+		DLNADeliveryTraceResponse: {
+			profileId: string;
+			profileName: string;
+			mediaFileName: string;
+			objectId: string;
+			resourceId: string;
+			streamMode: string;
+			/** @enum {string} */
+			deliveryProtocol: 'file' | 'hls';
+			/** @enum {string} */
+			mode: 'direct' | 'remux' | 'transcode';
+			videoCodec: string;
+			audioCodec: string;
+			reasonCodes: string[];
+			capabilityTrace: components['schemas']['DLNACapabilityTrace'][];
 		};
 		MediaRequestApproveRequest: {
 			qualityProfileId: string;
@@ -8367,6 +8487,58 @@ export interface operations {
 					'application/json': components['schemas']['DLNARecentDeviceListResponse'];
 				};
 			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	traceDLNAProfileMatch: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNAProfileMatchTraceRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA profile match trace */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNAProfileMatchTraceResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	traceDLNADeliveryDecision: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['DLNADeliveryTraceRequest'];
+			};
+		};
+		responses: {
+			/** @description DLNA delivery decision trace */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DLNADeliveryTraceResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 		};
 	};

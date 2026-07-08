@@ -54,6 +54,44 @@ type RendererProfileMatch struct {
 	Explanation RendererProfileExplanation
 }
 
+type RendererProfileRuleTrace struct {
+	ProfileID   string
+	ProfileName string
+	Field       string
+	Value       string
+	Rule        string
+	Score       int
+	Result      string
+}
+
+type RendererProfileTrace struct {
+	Match          RendererProfileMatch
+	HeadersSummary []string
+	Rules          []RendererProfileRuleTrace
+}
+
+type DeliveryDecisionTrace struct {
+	ProfileID     string
+	ProfileName   string
+	MediaFileName string
+	ObjectID      string
+	ResourceID    string
+	StreamMode    string
+	Decision      delivery.Decision
+	ReasonCodes   []string
+	Trace         []RendererCapabilityTrace
+}
+
+type DeliveryTraceInput struct {
+	Request    RendererRequest
+	ProfileID  string
+	MediaPath  string
+	ObjectID   string
+	ResourceID string
+	StreamMode string
+	Probe      delivery.ProbeResult
+}
+
 type RendererRequest struct {
 	UserAgent    string
 	FriendlyName string
@@ -112,6 +150,7 @@ func (m *Manager) rendererProfileFromContext(ctx context.Context) RendererProfil
 func RendererRequestFromHTTP(r *http.Request) RendererRequest {
 	return RendererRequest{
 		UserAgent:    r.UserAgent(),
+		FriendlyName: friendlyNameFromHeaders(r.Header),
 		Headers:      r.Header,
 		ClientIP:     clientIP(r),
 		RendererUUID: rendererUUIDFromHeaders(r.Header),
@@ -184,6 +223,15 @@ func clientIP(r *http.Request) string {
 		return host
 	}
 	return strings.TrimSpace(r.RemoteAddr)
+}
+
+func friendlyNameFromHeaders(headers http.Header) string {
+	for _, name := range []string{"X-Mema-DLNA-Friendly-Name", "X-Renderer-Name", "FriendlyName"} {
+		if value := strings.TrimSpace(headers.Get(name)); value != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func streamingHeaders() map[string]string {

@@ -1,6 +1,10 @@
 import { client } from '$lib/api/client';
 import type {
 	DLNAClientDiagnostic,
+	DLNADeliveryTraceRequest,
+	DLNADeliveryTraceResponse,
+	DLNAProfileMatchTraceRequest,
+	DLNAProfileMatchTraceResponse,
 	DLNARendererDeviceOverride,
 	DLNARendererDeviceOverrideRequest,
 	DLNARendererProfile,
@@ -110,4 +114,24 @@ export async function listDLNARecentDevices(): Promise<DLNAClientDiagnostic[]> {
 	const { data, error } = await client.GET('/settings/dlna/recent-devices');
 	if (error) throw new Error(error.message);
 	return data?.devices ?? [];
+}
+
+export async function traceDLNAProfileMatch(
+	request: DLNAProfileMatchTraceRequest
+): Promise<DLNAProfileMatchTraceResponse> {
+	const { data, error } = await client.POST('/settings/dlna/profile-match-trace', {
+		body: request
+	});
+	if (error) throw new Error(error.message);
+	if (!data) throw new Error('DLNA profile match trace did not return a result');
+	return data;
+}
+
+export async function traceDLNADeliveryDecision(
+	request: DLNADeliveryTraceRequest
+): Promise<DLNADeliveryTraceResponse> {
+	const { data, error } = await client.POST('/settings/dlna/delivery-trace', { body: request });
+	if (error) throw new Error(error.message);
+	if (!data) throw new Error('DLNA delivery trace did not return a result');
+	return data;
 }

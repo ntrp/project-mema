@@ -60,13 +60,14 @@ export type DLNAInterfaceDiagnostic = components['schemas']['DLNAInterfaceDiagno
 export type DLNAStreamDiagnostic = components['schemas']['DLNAStreamDiagnostic'];
 export type DLNARendererProfile = components['schemas']['DLNARendererProfile'];
 export type DLNARendererProfileRequest = components['schemas']['DLNARendererProfileRequest'];
-export type DLNARendererProfileCreateRequest =
-	components['schemas']['DLNARendererProfileCreateRequest'];
-export type DLNARendererProfileCloneRequest =
-	components['schemas']['DLNARendererProfileCloneRequest'];
+export type DLNARendererProfileCreateRequest = components['schemas']['DLNARendererProfileCreateRequest'];
+export type DLNARendererProfileCloneRequest = components['schemas']['DLNARendererProfileCloneRequest'];
 export type DLNARendererDeviceOverride = components['schemas']['DLNARendererDeviceOverride'];
-export type DLNARendererDeviceOverrideRequest =
-	components['schemas']['DLNARendererDeviceOverrideRequest'];
+export type DLNARendererDeviceOverrideRequest = components['schemas']['DLNARendererDeviceOverrideRequest'];
+export type DLNAProfileMatchTraceRequest = components['schemas']['DLNAProfileMatchTraceRequest'];
+export type DLNAProfileMatchTraceResponse = components['schemas']['DLNAProfileMatchTraceResponse'];
+export type DLNADeliveryTraceRequest = components['schemas']['DLNADeliveryTraceRequest'];
+export type DLNADeliveryTraceResponse = components['schemas']['DLNADeliveryTraceResponse'];
 export type SystemJob = components['schemas']['SystemJob'];
 export type SystemJobListResponse = components['schemas']['SystemJobListResponse'];
 export type SystemJobsOverviewResponse = components['schemas']['SystemJobsOverviewResponse'];
@@ -194,27 +195,4 @@ export type CustomFormatParsingResponse = components['schemas']['CustomFormatPar
 export type CustomFormatSpec = components['schemas']['CustomFormatSpec'];
 export type CustomFormatSpecType = components['schemas']['CustomFormatSpecType'];
 
-export type {
-	ActivitySection,
-	AppView,
-	CustomFormatForm,
-	DownloadClientForm,
-	HomeSection,
-	IndexerForm,
-	IndexerProxyForm,
-	IntegrationTestResults,
-	LanguageForm,
-	LibraryFolderForm,
-	MediaProfileForm,
-	MetadataProviderForm,
-	PathMappingForm,
-	QualityProfileOption,
-	ReleaseSearchResults,
-	ReleaseSearchState,
-	SettingsData,
-	SettingsSection,
-	SubtitleProviderForm,
-	SystemSection,
-	TagForm,
-	UserForm
-} from './formTypes';
+export type { ActivitySection, AppView, CustomFormatForm, DownloadClientForm, HomeSection, IndexerForm, IndexerProxyForm, IntegrationTestResults, LanguageForm, LibraryFolderForm, MediaProfileForm, MetadataProviderForm, PathMappingForm, QualityProfileOption, ReleaseSearchResults, ReleaseSearchState, SettingsData, SettingsSection, SubtitleProviderForm, SystemSection, TagForm, UserForm } from './formTypes';

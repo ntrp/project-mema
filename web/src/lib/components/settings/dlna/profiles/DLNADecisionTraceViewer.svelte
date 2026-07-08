@@ -1,7 +1,13 @@
 <script lang="ts">
+	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import {
+		traceDLNADeliveryDecision,
+		traceDLNAProfileMatch
+	} from '$lib/settings/dlnaProfilesApi';
 	import type {
 		DLNAClientDiagnostic,
 		DLNARendererDeviceOverride,
@@ -21,6 +27,10 @@
 	let { devices, overrides, profiles, selectedIp, mediaPath, onSelectedIp, onMediaPath }: Props =
 		$props();
 
+	let loading = $state(false);
+	let errorMessage = $state('');
+	let traceText = $state('Select a device, enter a media path, then run trace.');
+
 	const selectedDevice = $derived(devices.find((device) => device.ip === selectedIp));
 	const selectedOverride = $derived(
 		overrides.find((override) => override.ipAddress === selectedIp)
@@ -30,27 +40,46 @@
 			(profile) => profile.id === (selectedOverride?.profileId ?? selectedDevice?.profileId)
 		)
 	);
-	const traceText = $derived(
-		JSON.stringify(
-			{
-				deviceIp: selectedIp || null,
-				mediaFile: mediaPath || null,
-				overrideProfileId: selectedOverride?.profileId ?? null,
-				matchedProfileId: selectedDevice?.profileId ?? null,
-				effectiveProfileId: selectedProfile?.id ?? null,
-				effectiveProfileName: selectedProfile?.name ?? null,
-				directPlayRules: selectedProfile?.capabilityRules ?? {},
-				deliverySettings: selectedProfile?.deliverySettings ?? {},
-				quirks: selectedProfile?.quirks ?? {}
-			},
-			null,
-			2
-		)
-	);
+
+	async function refreshTrace() {
+		loading = true;
+		errorMessage = '';
+		try {
+			const profileMatch = await traceDLNAProfileMatch({
+				deviceIp: selectedIp || undefined,
+				rendererUuid: selectedDevice?.rendererUuid || undefined,
+				friendlyName: selectedDevice?.friendlyName || undefined,
+				userAgent: selectedDevice?.userAgent || undefined
+			});
+			const deliveryDecision = await traceDLNADeliveryDecision({
+				deviceIp: selectedIp || undefined,
+				profileId: selectedProfile?.id,
+				mediaPath: mediaPath || undefined,
+				objectId: selectedDevice?.lastObjectId || undefined,
+				resourceId: selectedDevice?.lastResourceId || undefined,
+				streamMode: selectedDevice?.lastStreamMode || undefined,
+				userAgent: selectedDevice?.userAgent || undefined
+			});
+			traceText = JSON.stringify({ profileMatch, deliveryDecision }, null, 2);
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Could not run DLNA trace';
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <section class="grid gap-3" aria-label="DLNA decision trace">
-	<h3 class="m-0 text-sm font-semibold">Decision trace</h3>
+	<div class="flex items-center justify-between gap-3">
+		<h3 class="m-0 text-sm font-semibold">Decision trace</h3>
+		<Button type="button" variant="secondary" size="sm" disabled={loading} onclick={refreshTrace}>
+			<RefreshCwIcon class={loading ? 'animate-spin' : ''} />
+			Run trace
+		</Button>
+	</div>
+	{#if errorMessage}
+		<p class="m-0 text-sm font-medium text-destructive">{errorMessage}</p>
+	{/if}
 	<div class="grid gap-4 sm:grid-cols-2">
 		<div class="space-y-2">
 			<Label for="dlna-trace-device">Device</Label>

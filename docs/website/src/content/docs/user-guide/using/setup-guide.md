@@ -118,7 +118,10 @@ Recent DLNA devices show the IP, last seen time, matched profile, and override
 selector. Use the override selector or manual override form to pin a known
 device, such as an LG TV IP or renderer UUID, to a chosen profile. Use the
 decision trace panel to compare a selected device and media file path against
-the effective profile rules before changing playback settings.
+the effective profile rules before changing playback settings. Run trace shows
+why a renderer matched a profile and why the selected media will direct play,
+remux, transcode, or use HLS; the output uses the file name instead of exposing
+the full media path.
 
 ## Add Subtitle Providers
 
