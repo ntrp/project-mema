@@ -44,3 +44,8 @@ preview, track deletion, subtitles, or assembly flows:
 
 For in-app setup after the server is running, use the
 [Setup Guide](/user-guide/using/setup-guide/) instead of editing files by hand.
+
+## API Docs
+
+The backend exposes Swagger UI at `/api/docs`. The viewer loads the current
+OpenAPI contract from `/api/openapi.yaml`.

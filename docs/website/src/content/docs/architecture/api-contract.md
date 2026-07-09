@@ -21,6 +21,9 @@ The frontend schema types are generated under:
 web/src/lib/api/generated/schema.d.ts
 ```
 
+The running API serves the same contract source at `/api/openapi.yaml` and a
+Swagger UI viewer at `/api/docs`.
+
 ## Contract Workflow
 
 After editing `api/openapi.yaml`, regenerate both sides:

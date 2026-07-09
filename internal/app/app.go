@@ -133,6 +133,8 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 	dlnaManager := dlna.NewManager(settingsStore, "http://"+cfg.Addr)
 	apiServer := httpapi.NewServer(cfg, settingsStore, downloadClientService, indexerService, metadataService, jobClient, eventBroker)
 	apiServer.SetDLNAManager(dlnaManager)
+	apiRouter.Get("/docs", httpapi.SwaggerUIHandler)
+	apiRouter.Get("/openapi.yaml", httpapi.OpenAPISpecHandler)
 	httpapi.HandlerFromMux(apiServer, apiRouter)
 
 	handler := routeDLNA(appRouter(cfg, apiRouter), dlnaManager.Handler())
