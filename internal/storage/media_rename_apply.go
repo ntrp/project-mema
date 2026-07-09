@@ -119,47 +119,10 @@ func validateRenameApplyPaths(item MediaItem, row MediaRenamePreviewRow) error {
 }
 
 func (s *SettingsStore) commitAppliedRename(ctx context.Context, mediaItemID uuid.UUID, source string, destination string) error {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = tx.Rollback(ctx)
-	}()
-	queries := storagegen.New(s.pool).WithTx(tx)
-	updated, err := queries.RenameMediaFileRecord(ctx, storagegen.RenameMediaFileRecordParams{
-		MediaItemID:     &mediaItemID,
-		SourcePath:      source,
-		DestinationPath: destination,
-		FileName:        filepath.Base(destination),
+	return s.moveMediaFileRecord(ctx, mediaItemID, source, destination, mediaFileMoveHistory{
+		Operation: "renamed",
+		ActorType: "user",
 	})
-	if err != nil {
-		return err
-	}
-	if updated == 0 {
-		updated, err = renameRelativeMediaFileRecord(ctx, queries, mediaItemID, source, destination)
-		if err != nil {
-			return err
-		}
-	}
-	if updated == 0 {
-		return ErrInvalidInput
-	}
-	if _, err := createMediaFileHistory(ctx, tx, MediaFileHistoryInput{
-		MediaItemID:     &mediaItemID,
-		FilePath:        destination,
-		SourcePath:      &source,
-		DestinationPath: &destination,
-		Operation:       "renamed",
-		Status:          "succeeded",
-		ActorType:       "user",
-	}); err != nil {
-		return err
-	}
-	if err := queries.TouchMediaItem(ctx, mediaItemID); err != nil {
-		return err
-	}
-	return tx.Commit(ctx)
 }
 
 func renameRelativeMediaFileRecord(

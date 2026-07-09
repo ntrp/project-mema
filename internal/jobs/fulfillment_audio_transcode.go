@@ -186,9 +186,6 @@ func audioTrackTranscodeArgs(
 	if channels := ffmpegChannelCount(decision.TargetChannels); channels != "" {
 		args = append(args, "-ac:"+stream, channels)
 	}
-	if decision.TargetBitrateKbps > 0 {
-		args = append(args, "-b:"+stream, strconv.Itoa(int(decision.TargetBitrateKbps))+"k")
-	}
 	return append(args, outputPath), nil
 }
 

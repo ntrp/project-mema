@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"media-manager/internal/storage"
@@ -75,7 +74,7 @@ func audioConversionHasExecutableWork(decision AudioConversionDecision) bool {
 	if ffmpegChannelCount(decision.TargetChannels) != "" {
 		return true
 	}
-	return decision.TargetBitrateKbps > 0
+	return false
 }
 
 func audioConversionNeed(input AudioConversionInput) AudioConversionDecision {
@@ -91,11 +90,6 @@ func audioConversionNeed(input AudioConversionInput) AudioConversionDecision {
 	}
 	decision.TargetChannels = firstMissingChannelTarget(input.SourceChannels, input.TargetChannels)
 	if decision.TargetChannels != "" {
-		decision.Needed = true
-	}
-	decision.TargetBitrateKbps = desiredAudioBitrate(input)
-	if decision.TargetBitrateKbps > 0 && input.SourceBitrateKbps > 0 &&
-		input.SourceBitrateKbps < decision.TargetBitrateKbps {
 		decision.Needed = true
 	}
 	return decision
@@ -142,9 +136,6 @@ func FfmpegAudioConversionArgs(
 	if channels := ffmpegChannelCount(decision.TargetChannels); channels != "" {
 		args = append(args, "-ac", channels)
 	}
-	if decision.TargetBitrateKbps > 0 {
-		args = append(args, "-b:a", strconv.Itoa(int(decision.TargetBitrateKbps))+"k")
-	}
 	return append(args, outputPath), nil
 }
 
@@ -165,16 +156,6 @@ func firstMissingChannelTarget(source string, targets []string) string {
 		}
 	}
 	return ""
-}
-
-func desiredAudioBitrate(input AudioConversionInput) int32 {
-	if input.PreferredBitrateKbps != nil {
-		return *input.PreferredBitrateKbps
-	}
-	if input.MinimumBitrateKbps != nil {
-		return *input.MinimumBitrateKbps
-	}
-	return 0
 }
 
 func audioCodecIsLossless(value string) bool {

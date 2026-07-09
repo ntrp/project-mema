@@ -164,12 +164,13 @@ worker path:
 The Media Fulfillment scheduled job is a planner, not a file mutator. It loads
 live file facts, walks persisted tracks and files, checks matching profile
 targets, and asks each operation planner whether the target can be fixed. Audio
-planning considers codec, channel, and bitrate changes, then applies the profile
-audio conversion policy. Video planning considers supported codec and
-pixel-format changes. HDR-only or resolution-only video mismatches are not
-queued because the current video tool path does not safely satisfy those
-targets. The planner reports scan progress as processed media entries over total
-media entries, plus the queued child job count. Each allowed track is enqueued
+planning considers codec and channel changes, then applies the profile audio
+conversion policy. It does not convert audio only to raise bitrate. Video
+planning considers supported codec and pixel-format changes. HDR-only or
+resolution-only video mismatches are not queued because the current video tool
+path does not safely satisfy those targets. The planner reports scan progress as
+processed media entries over total media entries, plus the queued child job
+count. Each allowed track is enqueued
 as a normal one-shot fulfillment job with media item id, file path, target type,
 optional target language, and track id.
 
@@ -207,8 +208,10 @@ container extension. MP4 output converts embedded text subtitle streams to
 fast-start metadata. MKV output is copied directly. Progress is streamed from
 the media tool, normalized against persisted or probed file duration, and
 mirrored into `app.system_job_executions`. On success, the temporary output
-becomes the new media file path, the old container file is removed, and the
-media item is rescanned.
+becomes the new media file path. Before the old container file is removed, the
+worker moves the library scan record and persisted file facts to the target
+path, then rescans the media item so the remuxed file does not appear as a new
+unmatched file while the old path remains missing.
 
 ### Subtitle Fulfillment
 

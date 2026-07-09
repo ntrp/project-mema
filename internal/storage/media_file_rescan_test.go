@@ -107,6 +107,52 @@ func TestRescanMediaItemFilesCreatesMovedCandidate(t *testing.T) {
 	requireHistoryOperation(t, ctx, store, item.ID, "moved_candidate")
 }
 
+func TestRecordContainerRemuxedMediaFileKeepsRescanOnMovedPath(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item := rescanMediaItem(t, ctx, store)
+	oldPath := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.mkv")
+	newPath := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.mp4")
+	writeRescanFile(t, oldPath)
+	if err := store.RecordImportedMediaFile(ctx, item, oldPath); err != nil {
+		t.Fatal(err)
+	}
+	bitrate := int64(512)
+	if _, err := store.UpsertMediaFileFact(ctx, MediaFileFactInput{
+		MediaItemID:      item.ID,
+		FilePath:         oldPath,
+		ContainerFormat:  stringPtr("matroska"),
+		ContainerBitrate: &bitrate,
+		SourceKind:       "probe",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	writeRescanFile(t, newPath)
+	if err := store.RecordContainerRemuxedMediaFile(ctx, item.ID, oldPath, newPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(oldPath); err != nil {
+		t.Fatal(err)
+	}
+
+	updated, err := store.RescanMediaItemFiles(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(updated.FilePaths) != 1 || updated.FilePaths[0] != newPath {
+		t.Fatalf("file paths = %#v, want %#v", updated.FilePaths, []string{newPath})
+	}
+	facts, err := store.ListMediaFileFacts(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(facts) != 1 || facts[0].FilePath != newPath {
+		t.Fatalf("facts = %#v, want one fact for %s", facts, newPath)
+	}
+	requireLibraryScanItemStatus(t, ctx, store, item.ID, newPath, "restored")
+	requireHistoryOperation(t, ctx, store, item.ID, "container_remux")
+}
+
 func TestRescanMediaItemFilesDoesNotDuplicateNormalizedPath(t *testing.T) {
 	ctx, store := testDBStore(t)
 	item := rescanMediaItem(t, ctx, store)

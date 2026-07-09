@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -149,10 +150,9 @@ func TestFulfillmentActionDetailsIncludeManualScope(t *testing.T) {
 
 func TestAudioTrackTranscodeArgsTargetsSelectedAudioStream(t *testing.T) {
 	args, err := audioTrackTranscodeArgs("/library/movie.mkv", "/library/.movie.tmp.mkv", 1, AudioConversionDecision{
-		Allowed:           true,
-		TargetCodec:       "eac3",
-		TargetChannels:    "5.1",
-		TargetBitrateKbps: 640,
+		Allowed:        true,
+		TargetCodec:    "eac3",
+		TargetChannels: "5.1",
 	})
 	if err != nil {
 		t.Fatalf("audio track transcode args: %v", err)
@@ -163,8 +163,8 @@ func TestAudioTrackTranscodeArgsTargetsSelectedAudioStream(t *testing.T) {
 	if !hasArgPair(args, "-ac:a:1", "6") {
 		t.Fatalf("expected selected audio channel args, got %#v", args)
 	}
-	if !hasArgPair(args, "-b:a:1", "640k") {
-		t.Fatalf("expected selected audio bitrate args, got %#v", args)
+	if hasArgPrefix(args, "-b:a:") {
+		t.Fatalf("audio transcode should not set bitrate args, got %#v", args)
 	}
 	if !slices.Contains(args, "-map") || !slices.Contains(args, "-c") {
 		t.Fatalf("expected full-file remux args, got %#v", args)
@@ -247,6 +247,15 @@ func TestVideoOrdinalFindsSelectedTrackVideoIndex(t *testing.T) {
 func hasArgPair(args []string, key string, value string) bool {
 	for index := 0; index+1 < len(args); index++ {
 		if args[index] == key && args[index+1] == value {
+			return true
+		}
+	}
+	return false
+}
+
+func hasArgPrefix(args []string, prefix string) bool {
+	for _, arg := range args {
+		if strings.HasPrefix(arg, prefix) {
 			return true
 		}
 	}

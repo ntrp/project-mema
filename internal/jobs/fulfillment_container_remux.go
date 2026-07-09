@@ -55,6 +55,15 @@ func executeContainerRemuxFile(
 	if err := replaceRemuxedMediaFile(outputPath, fact.FilePath, targetPath); err != nil {
 		return err
 	}
+	if err := settings.RecordContainerRemuxedMediaFile(ctx, item.ID, fact.FilePath, targetPath); err != nil {
+		if fact.FilePath != targetPath {
+			_ = os.Remove(targetPath)
+		}
+		return err
+	}
+	if err := removeRemuxSourceFile(fact.FilePath, targetPath); err != nil {
+		return err
+	}
 	if _, err := settings.RescanMediaItemFiles(ctx, item.ID); err != nil {
 		return fmt.Errorf("rescan media after container remux: %w", err)
 	}
@@ -120,14 +129,28 @@ func tempRemuxOutputPath(inputPath string, targetContainer string) (string, func
 }
 
 func replaceRemuxedMediaFile(outputPath string, sourcePath string, targetPath string) error {
+	if sourcePath != targetPath {
+		if _, err := os.Stat(targetPath); err == nil {
+			return fmt.Errorf("remux target already exists: %s", targetPath)
+		} else if !os.IsNotExist(err) {
+			return fmt.Errorf("check remux target: %w", err)
+		}
+	}
 	if info, err := os.Stat(sourcePath); err == nil {
 		_ = os.Chmod(outputPath, info.Mode())
 	}
 	if err := os.Rename(outputPath, targetPath); err != nil {
 		return fmt.Errorf("replace remuxed media file: %w", err)
 	}
-	if sourcePath != targetPath {
-		_ = os.Remove(sourcePath)
+	return nil
+}
+
+func removeRemuxSourceFile(sourcePath string, targetPath string) error {
+	if sourcePath == targetPath {
+		return nil
+	}
+	if err := os.Remove(sourcePath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("remove remux source: %w", err)
 	}
 	return nil
 }
