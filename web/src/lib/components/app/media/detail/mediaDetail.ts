@@ -4,6 +4,7 @@ import type {
 	Language,
 	LibraryFolder,
 	MediaFileTrackDeleteRequest,
+	MediaFulfillmentActionRequest,
 	MediaItem,
 	MediaItemSubtitleSelectionRequest,
 	MediaItemUpdateRequest,
@@ -57,6 +58,10 @@ export interface MediaDetailProps {
 	onDeleteMediaFileTrack?: (
 		_item: MediaItem,
 		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
+	onFulfillmentAction?: (
+		_item: MediaItem,
+		_request: MediaFulfillmentActionRequest
 	) => void | Promise<void>;
 	onAssembleMediaComponents?: (
 		_item: MediaItem,

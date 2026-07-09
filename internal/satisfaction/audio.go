@@ -30,7 +30,7 @@ func EvaluateAudioTargets(
 	audioTracks := tracksByType(fact, "audio")
 	targetLanguages := map[string]struct{}{}
 	for _, target := range profile.AudioTargets {
-		targetLanguages[target.LanguageID] = struct{}{}
+		targetLanguages[languageMatchKey(target.LanguageID)] = struct{}{}
 		result, candidates := evaluateAudioTarget(item, profile, fact, target, audioTracks)
 		evaluation.Results = append(evaluation.Results, result)
 		evaluation.Candidates = append(evaluation.Candidates, candidates...)
@@ -115,7 +115,7 @@ func tracksByType(fact storage.MediaFileFact, trackType string) []storage.MediaF
 func relatedAudioTracks(tracks []storage.MediaFileTrackFact, languageID string) []storage.MediaFileTrackFact {
 	related := []storage.MediaFileTrackFact{}
 	for _, track := range tracks {
-		if strings.EqualFold(stringPtrValue(track.LanguageID), languageID) {
+		if LanguageMatches(stringPtrValue(track.LanguageID), languageID) {
 			related = append(related, track)
 		}
 	}
@@ -160,7 +160,7 @@ func unwantedAudioCandidates(
 	candidates := []targets.Candidate{}
 	for _, track := range tracks {
 		language := stringPtrValue(track.LanguageID)
-		if _, ok := targetLanguages[language]; ok {
+		if _, ok := targetLanguages[languageMatchKey(language)]; ok {
 			continue
 		}
 		candidates = append(candidates, targets.Candidate{

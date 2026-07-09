@@ -78,14 +78,17 @@ func recordJobUpdated(ctx context.Context, store *storage.SettingsStore, broker 
 	if store == nil || row == nil {
 		return
 	}
+	previous, previousErr := store.GetSystemJobExecution(ctx, row.ID)
 	execution, err := store.UpsertSystemJobExecution(ctx, jobExecutionInputFromRow(row, status))
 	if err != nil {
 		return
 	}
-	_, _ = store.CreateSystemJobExecutionLog(ctx, execution.RiverJobID, severityForJobStatus(execution.Status), messageForJobStatus(execution.Status), map[string]any{
-		"kind":  execution.Kind,
-		"queue": execution.Queue,
-	})
+	if previousErr != nil || previous.Status != execution.Status {
+		_, _ = store.CreateSystemJobExecutionLog(ctx, execution.RiverJobID, severityForJobStatus(execution.Status), messageForJobStatus(execution.Status), map[string]any{
+			"kind":  execution.Kind,
+			"queue": execution.Queue,
+		})
+	}
 	publishJobExecutionUpdated(broker, execution)
 }
 

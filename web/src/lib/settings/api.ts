@@ -43,6 +43,7 @@ import type {
 	ManualImportRequest,
 	MediaAdvancedSearchRequest,
 	MediaFileHistoryResponse,
+	MediaFulfillmentActionRequest,
 	MediaFileTrackDeleteRequest,
 	MediaItemCreateRequest,
 	MediaItemSubtitleListResponse,
@@ -1184,6 +1185,24 @@ export async function enqueueMediaAutomaticSearch(id: string) {
 	}
 	if (!data) {
 		throw new Error('Automatic search job was not returned');
+	}
+	return data;
+}
+
+export async function enqueueMediaFulfillmentAction(
+	id: string,
+	request: MediaFulfillmentActionRequest
+) {
+	const { data, error } = await client.POST('/media/items/{id}/fulfillment-actions', {
+		params: { path: { id } },
+		body: request
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Fulfillment job was not returned');
 	}
 	return data;
 }

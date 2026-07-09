@@ -357,17 +357,19 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	'/media/manual-fulfillment-actions': {
+	'/media/items/{id}/fulfillment-actions': {
 		parameters: {
 			query?: never;
 			header?: never;
-			path?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
 			cookie?: never;
 		};
-		/** List manual actions for automatic fulfillment operations */
-		get: operations['listManualFulfillmentActions'];
+		get?: never;
 		put?: never;
-		post?: never;
+		/** Queue a targeted media fulfillment operation */
+		post: operations['enqueueMediaFulfillmentAction'];
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -3232,6 +3234,8 @@ export interface components {
 			targetSatisfaction?: components['schemas']['TargetSatisfactionSummary'];
 		};
 		MediaFileOtherFile: {
+			/** Format: uuid */
+			id?: string;
 			type: components['schemas']['MediaFileOtherFileType'];
 			path: string;
 			status: components['schemas']['MediaFileOtherFileStatus'];
@@ -3575,6 +3579,8 @@ export interface components {
 			endTime?: string;
 		};
 		MediaFileTrack: {
+			/** Format: uuid */
+			id?: string;
 			/** @enum {string} */
 			type: 'video' | 'audio' | 'subtitle';
 			/** Format: int32 */
@@ -3864,8 +3870,7 @@ export interface components {
 			| 'subtitle_download'
 			| 'subtitle_embed'
 			| 'subtitle_extraction'
-			| 'subtitle_conversion'
-			| 'file_rescan';
+			| 'subtitle_conversion';
 		TargetOperationMetadata: {
 			type: components['schemas']['TargetOperationType'];
 			manual: boolean;
@@ -3874,25 +3879,17 @@ export interface components {
 			jobId?: string;
 			reason: string;
 		};
-		ManualFulfillmentAction: {
-			id: string;
+		MediaFulfillmentActionRequest: {
 			operation: components['schemas']['TargetOperationType'];
-			label: string;
-			description: string;
-			manual: boolean;
-			automatic: boolean;
-			available: boolean;
-			/** @description Reason a context-specific UI should disable this action. */
-			blockedReason: string;
-			method: string;
-			/** @description API path template used by the manual action. */
-			path: string;
-			/** @description Worker or storage path shared with automatic execution. */
-			workerPath: string;
-			stateEffect: string;
-		};
-		ManualFulfillmentActionsResponse: {
-			actions: components['schemas']['ManualFulfillmentAction'][];
+			filePath?: string;
+			targetType?: components['schemas']['TargetSatisfactionType'];
+			languageId?: string;
+			/** Format: uuid */
+			trackId?: string;
+			/** Format: uuid */
+			otherFileId?: string;
+			/** Format: uuid */
+			externalSubtitleId?: string;
 		};
 		TargetSatisfactionTarget: {
 			id: string;
@@ -6038,26 +6035,34 @@ export interface operations {
 			401: components['responses']['Unauthorized'];
 		};
 	};
-	listManualFulfillmentActions: {
+	enqueueMediaFulfillmentAction: {
 		parameters: {
 			query?: never;
 			header?: never;
-			path?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
 			cookie?: never;
 		};
-		requestBody?: never;
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['MediaFulfillmentActionRequest'];
+			};
+		};
 		responses: {
-			/** @description Manual fulfillment action catalog */
-			200: {
+			/** @description Fulfillment operation queued */
+			202: {
 				headers: {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': components['schemas']['ManualFulfillmentActionsResponse'];
+					'application/json': components['schemas']['JobEnqueueResponse'];
 				};
 			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			403: components['responses']['Forbidden'];
+			404: components['responses']['NotFound'];
 		};
 	};
 	listWantedRows: {

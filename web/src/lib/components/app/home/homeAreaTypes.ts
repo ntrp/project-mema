@@ -7,6 +7,7 @@ import type {
 	Language,
 	LibraryFolder,
 	MediaFileTrackDeleteRequest,
+	MediaFulfillmentActionRequest,
 	MediaDiscoverSection,
 	MediaItem,
 	MediaItemSubtitleSelectionRequest,
@@ -81,6 +82,10 @@ export interface HomeAreaProps {
 	onDeleteMediaFileTrack?: (
 		_item: MediaItem,
 		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
+	onFulfillmentAction?: (
+		_item: MediaItem,
+		_request: MediaFulfillmentActionRequest
 	) => void | Promise<void>;
 	onAssembleMediaComponents?: (
 		_item: MediaItem,

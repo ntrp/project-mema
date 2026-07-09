@@ -70,6 +70,9 @@ Use the file detail area when the row says partial or missing. It will show
 which tracks and sidecars were detected and what the profile still wants. Track
 rows show whether they match the profile, partially match it, need a follow-up
 operation, are unwanted by current settings, or stand in for a missing target.
+Rows with repairable work expose action buttons for the specific operation,
+such as video transcode, audio transcode or source, subtitle download, embed,
+extract, or convert.
 
 ## Refresh And Maintain
 
@@ -77,15 +80,11 @@ Use metadata refresh when titles, posters, seasons, episodes, or people look
 stale. Use subtitle search when subtitles are missing. Use rename preview when
 you want to review file names before applying naming templates.
 
-Every automatic fulfillment path also has a manual route. You can manually
-search or grab releases, retry import, search or grab subtitles, rescan files,
-and use component actions for remuxing, embedding, extraction, and stream
-sourcing where the current media context supports them. Turning off an automatic
-schedule stops future background runs, but it does not remove the matching
-manual action.
-
-System > Jobs lists the manual fulfillment action catalog next to scheduled job
-controls, including the API route and worker path used by each action.
+Every automatic fulfillment path also has a manual route on the relevant media
+row. System > Jobs lists the disabled-by-default fulfillment schedules for
+video, audio, container, and subtitle operations. Turning off an automatic
+schedule stops future background runs, but it does not remove row-level manual
+actions.
 
 Treat profiles as living rules. If every release you like is being penalized,
 adjust the profile or custom formats. If bad releases score too well, tighten

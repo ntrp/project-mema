@@ -8,9 +8,12 @@ export type TrackDeleteRequest = Omit<MediaFileTrackDeleteRequest, 'path'>;
 
 export interface MediaFileDetailRow {
 	key: string;
+	trackId?: string;
+	otherFileId?: string;
 	trackNumber: string;
 	type: TrackType;
 	language: string;
+	languageId?: string;
 	description: string;
 	provenance?: MediaFileTrack['provenance'];
 	visualState?: 'matching' | 'partial' | 'unwanted' | 'pending_operation' | 'missing_placeholder';

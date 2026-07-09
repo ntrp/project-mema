@@ -35,7 +35,7 @@ func EvaluateSubtitleTargets(
 	evaluation := SubtitleEvaluation{}
 	targetLanguages := map[string]struct{}{}
 	for _, target := range profile.SubtitleTargets {
-		targetLanguages[target.LanguageID] = struct{}{}
+		targetLanguages[languageMatchKey(target.LanguageID)] = struct{}{}
 		result, candidates := evaluateSubtitleTarget(item, profile, fact, target, embedded)
 		evaluation.Results = append(evaluation.Results, result)
 		evaluation.Candidates = append(evaluation.Candidates, candidates...)
@@ -109,7 +109,7 @@ func subtitleCandidates(
 ) []subtitleCandidateFact {
 	candidates := []subtitleCandidateFact{}
 	for _, track := range embedded {
-		if stringPtrValue(track.LanguageID) != languageID {
+		if !LanguageMatches(stringPtrValue(track.LanguageID), languageID) {
 			continue
 		}
 		candidates = append(candidates, subtitleCandidateFact{
@@ -124,7 +124,7 @@ func subtitleCandidates(
 		})
 	}
 	for _, subtitle := range item.ExternalSubtitles {
-		if !subtitle.Selected || subtitle.LanguageID != languageID {
+		if !subtitle.Selected || !LanguageMatches(subtitle.LanguageID, languageID) {
 			continue
 		}
 		candidates = append(candidates, subtitleCandidateFact{
@@ -200,12 +200,12 @@ func unwantedSubtitleCandidates(
 	candidates := []targets.Candidate{}
 	for _, track := range embedded {
 		language := stringPtrValue(track.LanguageID)
-		if _, ok := targetLanguages[language]; !ok {
+		if _, ok := targetLanguages[languageMatchKey(language)]; !ok {
 			candidates = append(candidates, unwantedSubtitleCandidate(candidateID(fact, track), targets.CandidateEmbeddedSubtitle, language))
 		}
 	}
 	for _, subtitle := range item.ExternalSubtitles {
-		if _, ok := targetLanguages[subtitle.LanguageID]; !ok {
+		if _, ok := targetLanguages[languageMatchKey(subtitle.LanguageID)]; !ok {
 			candidates = append(candidates, unwantedSubtitleCandidate(subtitle.ID.String(), targets.CandidateExternalSubtitle, subtitle.LanguageID))
 		}
 	}

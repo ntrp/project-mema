@@ -54,6 +54,7 @@
 		onSaveMediaItemOptions,
 		onDeleteMediaFile,
 		onDeleteMediaFileTrack = () => {},
+		onFulfillmentAction = () => {},
 		onAssembleMediaComponents = () => {},
 		onReviewComponentCompatibility = () => {},
 		onDeleteMedia,
@@ -137,6 +138,7 @@
 								onUpdateSubtitle={onUpdateMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
 								onDeleteFileTrack={onDeleteMediaFileTrack}
+								{onFulfillmentAction}
 								{onGrabRelease}
 							/>
 						{/if}
@@ -162,6 +164,7 @@
 								onUpdateSubtitle={onUpdateMediaSubtitle}
 								onDeleteFile={onDeleteMediaFile}
 								onDeleteFileTrack={onDeleteMediaFileTrack}
+								{onFulfillmentAction}
 								{onGrabRelease}
 							/>
 						{/if}

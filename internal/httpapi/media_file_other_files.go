@@ -6,6 +6,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
+
+	"media-manager/internal/mediafacts"
 	"media-manager/internal/storage"
 )
 
@@ -27,6 +31,7 @@ var metadataFileExtensions = map[string]struct{}{
 }
 
 func mediaFileOtherFiles(
+	mediaItemID uuid.UUID,
 	path string,
 	mediaPaths []string,
 	subtitleTargets []storage.MediaProfileSubtitleTarget,
@@ -37,9 +42,11 @@ func mediaFileOtherFiles(
 ) []MediaFileOtherFile {
 	seen := map[string]MediaFileOtherFile{}
 	for _, file := range availableOtherFiles(path, mediaPaths) {
+		ensureOtherFileID(mediaItemID, path, &file)
 		seen[file.pathKey()] = file
 	}
 	for _, file := range storedOtherFiles(path, sidecars) {
+		ensureOtherFileID(mediaItemID, path, &file)
 		seen[file.pathKey()] = file
 	}
 	for _, subtitle := range externalSubtitles {
@@ -47,10 +54,13 @@ func mediaFileOtherFiles(
 			continue
 		}
 		file := subtitleOtherFile(subtitle.FilePath, subtitle.LanguageID, otherFileStatus(subtitle.FilePath))
+		id := openapi_types.UUID(subtitle.ID)
+		file.Id = &id
 		seen[file.pathKey()] = file
 	}
 	if mediaFileSubtitleMode(subtitleMode) == MediaProfileSubtitleModeExternal {
 		for _, file := range missingExternalSubtitleFiles(path, subtitleTargets, satisfaction) {
+			ensureOtherFileID(mediaItemID, path, &file)
 			seen[file.pathKey()] = file
 		}
 	}
@@ -126,6 +136,7 @@ func storedOtherFiles(path string, sidecars []storage.MediaItemSidecar) []MediaF
 			Status:   otherFileStatus(sidecar.FilePath),
 			Subtype:  sidecar.Subtype,
 			Language: sidecar.LanguageID,
+			Id:       openapiUUID(sidecar.ID),
 		})
 	}
 	return files
@@ -221,4 +232,18 @@ func otherFileStatus(path string) MediaFileOtherFileStatus {
 
 func (file MediaFileOtherFile) pathKey() string {
 	return strings.ToLower(file.Path)
+}
+
+func ensureOtherFileID(mediaItemID uuid.UUID, mediaPath string, file *MediaFileOtherFile) {
+	if file.Id != nil {
+		return
+	}
+	id := mediafacts.OtherFileID(mediaItemID, mediaPath, file.Path, string(file.Type))
+	value := openapi_types.UUID(id)
+	file.Id = &value
+}
+
+func openapiUUID(value uuid.UUID) *openapi_types.UUID {
+	id := openapi_types.UUID(value)
+	return &id
 }

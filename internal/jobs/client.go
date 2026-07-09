@@ -162,3 +162,45 @@ func (c *Client) EnqueueMediaComponentMux(ctx context.Context, runID uuid.UUID) 
 	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
 	return result.Job.ID, nil
 }
+
+func (c *Client) EnqueueFulfillmentAction(
+	ctx context.Context,
+	operation string,
+	args FulfillmentActionArgs,
+) (int64, error) {
+	jobArgs, queue, err := fulfillmentJobArgs(operation, args)
+	if err != nil {
+		return 0, err
+	}
+	result, err := c.river.Insert(ctx, jobArgs, &river.InsertOpts{
+		Queue: queue,
+	})
+	if err != nil {
+		return 0, err
+	}
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
+	return result.Job.ID, nil
+}
+
+func fulfillmentJobArgs(operation string, args FulfillmentActionArgs) (river.JobArgs, string, error) {
+	switch strings.TrimSpace(operation) {
+	case "video_transcode":
+		return VideoTranscodeArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
+	case "audio_transcode":
+		return AudioTranscodeArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
+	case "audio_sourcing":
+		return AudioSourceArgs{FulfillmentActionArgs: args}, queueMediaSearch, nil
+	case "container_remux":
+		return ContainerRemuxArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
+	case "subtitle_download":
+		return SubtitleDownloadArgs{FulfillmentActionArgs: args}, queueMediaSearch, nil
+	case "subtitle_embed":
+		return SubtitleEmbedArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
+	case "subtitle_extraction":
+		return SubtitleExtractArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
+	case "subtitle_conversion":
+		return SubtitleConvertArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
+	default:
+		return nil, "", ErrFixedScheduleNotFound
+	}
+}

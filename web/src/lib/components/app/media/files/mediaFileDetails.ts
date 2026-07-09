@@ -45,9 +45,11 @@ export function fileChapterSummaryRow(row: MediaFileRow): MediaFileDetailRow | u
 function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): MediaFileDetailRow {
 	return {
 		key: `${track.type}-${track.index ?? index}`,
+		trackId: track.id,
 		trackNumber: track.index === undefined ? String(index + 1) : String(track.index),
 		type: track.type,
 		language: displayLanguage(track.language),
+		languageId: track.language,
 		description: trackDescription(row, track),
 		provenance: track.provenance,
 		...track.state,
@@ -71,16 +73,19 @@ function trackRowsWithMissingTargets(row: MediaFileRow): MediaFileDetailRow[] {
 }
 
 function missingTrackRows(row: MediaFileRow, type: 'audio' | 'subtitle'): MediaFileDetailRow[] {
-	return (row.missingTracks ?? []).filter((track) => track.type === type).map((track) => ({
-		key: track.key,
-		trackNumber: '-',
-		type: track.type,
-		language: displayLanguage(track.language),
-		description: track.description,
-		...track.state,
-		missing: true,
-		unwanted: false
-	}));
+	return (row.missingTracks ?? [])
+		.filter((track) => track.type === type)
+		.map((track) => ({
+			key: track.key,
+			trackNumber: '-',
+			type: track.type,
+			language: displayLanguage(track.language),
+			languageId: track.language,
+			description: track.description,
+			...track.state,
+			missing: true,
+			unwanted: false
+		}));
 }
 
 function trackDeleteRequest(track: MediaFileTrack): TrackDeleteRequest | undefined {

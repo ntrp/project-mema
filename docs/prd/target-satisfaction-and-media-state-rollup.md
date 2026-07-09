@@ -368,8 +368,10 @@ Possible jobs:
   required or preferred.
 - **Subtitle transformation/conversion**: converts subtitle format when target
   format requires it and tooling supports it.
-- **File rescan**: refreshes file, track, subtitle, and provenance facts after
-  manual changes or completed jobs.
+
+V1 implements only these eight operations. Each operation has its own River
+worker and fixed system schedule, inserted disabled by default until an
+administrator enables periodic execution.
 
 Job states should influence target state:
 
@@ -386,9 +388,10 @@ pending external tool command or provider request. Logs should be visible from
 the system job history and from media-specific activity surfaces.
 
 Every operation that an automatic job can perform must also be available as a
-manual action from the relevant UI. Manual actions should use the same
-underlying worker path, persist the same facts, emit the same progress/log
-events, and recalculate satisfaction with the same rules as automatic jobs.
+manual action from the relevant media row, track row, or external subtitle row.
+Manual actions enqueue the operation-specific worker with media/file/track or
+subtitle scope, persist the same facts, emit the same progress/log events, and
+recalculate satisfaction with the same rules as automatic jobs.
 
 ## Wanted Table
 

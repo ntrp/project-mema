@@ -1866,7 +1866,6 @@ const (
 	TargetOperationTypeAudioSourcing      TargetOperationType = "audio_sourcing"
 	TargetOperationTypeAudioTranscode     TargetOperationType = "audio_transcode"
 	TargetOperationTypeContainerRemux     TargetOperationType = "container_remux"
-	TargetOperationTypeFileRescan         TargetOperationType = "file_rescan"
 	TargetOperationTypeReleaseSearch      TargetOperationType = "release_search"
 	TargetOperationTypeSubtitleConversion TargetOperationType = "subtitle_conversion"
 	TargetOperationTypeSubtitleDownload   TargetOperationType = "subtitle_download"
@@ -1883,8 +1882,6 @@ func (e TargetOperationType) Valid() bool {
 	case TargetOperationTypeAudioTranscode:
 		return true
 	case TargetOperationTypeContainerRemux:
-		return true
-	case TargetOperationTypeFileRescan:
 		return true
 	case TargetOperationTypeReleaseSearch:
 		return true
@@ -3120,33 +3117,6 @@ type ManagedUser struct {
 	Username  string             `json:"username"`
 }
 
-// ManualFulfillmentAction defines model for ManualFulfillmentAction.
-type ManualFulfillmentAction struct {
-	Automatic bool `json:"automatic"`
-	Available bool `json:"available"`
-
-	// BlockedReason Reason a context-specific UI should disable this action.
-	BlockedReason string              `json:"blockedReason"`
-	Description   string              `json:"description"`
-	Id            string              `json:"id"`
-	Label         string              `json:"label"`
-	Manual        bool                `json:"manual"`
-	Method        string              `json:"method"`
-	Operation     TargetOperationType `json:"operation"`
-
-	// Path API path template used by the manual action.
-	Path        string `json:"path"`
-	StateEffect string `json:"stateEffect"`
-
-	// WorkerPath Worker or storage path shared with automatic execution.
-	WorkerPath string `json:"workerPath"`
-}
-
-// ManualFulfillmentActionsResponse defines model for ManualFulfillmentActionsResponse.
-type ManualFulfillmentActionsResponse struct {
-	Actions []ManualFulfillmentAction `json:"actions"`
-}
-
 // ManualImportRequest defines model for ManualImportRequest.
 type ManualImportRequest struct {
 	Edition        *string     `json:"edition,omitempty"`
@@ -3496,6 +3466,7 @@ type MediaFileMissingTrackType string
 
 // MediaFileOtherFile defines model for MediaFileOtherFile.
 type MediaFileOtherFile struct {
+	Id       *openapi_types.UUID      `json:"id,omitempty"`
 	Language *string                  `json:"language,omitempty"`
 	Path     string                   `json:"path"`
 	State    *MediaFileDetailState    `json:"state,omitempty"`
@@ -3573,6 +3544,7 @@ type MediaFileTrack struct {
 	Codec         *string                   `json:"codec,omitempty"`
 	FrameRate     *string                   `json:"frameRate,omitempty"`
 	Height        *int32                    `json:"height,omitempty"`
+	Id            *openapi_types.UUID       `json:"id,omitempty"`
 	Index         *int32                    `json:"index,omitempty"`
 	Language      *string                   `json:"language,omitempty"`
 	PixelFormat   *string                   `json:"pixelFormat,omitempty"`
@@ -3614,6 +3586,17 @@ type MediaFileTrackProvenance struct {
 	SourceStreamId      *int32                   `json:"sourceStreamId,omitempty"`
 	TransformationChain []map[string]interface{} `json:"transformationChain"`
 	UpdatedAt           time.Time                `json:"updatedAt"`
+}
+
+// MediaFulfillmentActionRequest defines model for MediaFulfillmentActionRequest.
+type MediaFulfillmentActionRequest struct {
+	ExternalSubtitleId *openapi_types.UUID     `json:"externalSubtitleId,omitempty"`
+	FilePath           *string                 `json:"filePath,omitempty"`
+	LanguageId         *string                 `json:"languageId,omitempty"`
+	Operation          TargetOperationType     `json:"operation"`
+	OtherFileId        *openapi_types.UUID     `json:"otherFileId,omitempty"`
+	TargetType         *TargetSatisfactionType `json:"targetType,omitempty"`
+	TrackId            *openapi_types.UUID     `json:"trackId,omitempty"`
 }
 
 // MediaGroupedSearchResponse defines model for MediaGroupedSearchResponse.
@@ -5227,6 +5210,9 @@ type DeleteMediaItemFileJSONRequestBody = MediaFileDeleteRequest
 // DeleteMediaItemFileTrackJSONRequestBody defines body for DeleteMediaItemFileTrack for application/json ContentType.
 type DeleteMediaItemFileTrackJSONRequestBody = MediaFileTrackDeleteRequest
 
+// EnqueueMediaFulfillmentActionJSONRequestBody defines body for EnqueueMediaFulfillmentAction for application/json ContentType.
+type EnqueueMediaFulfillmentActionJSONRequestBody = MediaFulfillmentActionRequest
+
 // GrabMediaReleaseJSONRequestBody defines body for GrabMediaRelease for application/json ContentType.
 type GrabMediaReleaseJSONRequestBody = GrabReleaseRequest
 
@@ -5547,6 +5533,9 @@ type ServerInterface interface {
 	// Open a VLC-compatible remote streaming playlist
 	// (GET /media/items/{id}/files/vlc)
 	PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, id ResourceId, params PlayMediaItemFileInVlcParams)
+	// Queue a targeted media fulfillment operation
+	// (POST /media/items/{id}/fulfillment-actions)
+	EnqueueMediaFulfillmentAction(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Enqueue a release grab with a compatible enabled download client
 	// (POST /media/items/{id}/grab)
 	GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -5586,9 +5575,6 @@ type ServerInterface interface {
 	// Update external subtitle selection
 	// (PUT /media/items/{id}/subtitles/{subtitleId})
 	UpdateMediaItemSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, subtitleId openapi_types.UUID)
-	// List manual actions for automatic fulfillment operations
-	// (GET /media/manual-fulfillment-actions)
-	ListManualFulfillmentActions(w http.ResponseWriter, r *http.Request)
 	// Get provider metadata details for a media candidate
 	// (GET /media/metadata/{provider}/{type}/{externalId})
 	GetMediaMetadataDetails(w http.ResponseWriter, r *http.Request, provider MetadataProviderType, pType MediaType, externalId string)
@@ -6282,6 +6268,12 @@ func (_ Unimplemented) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Queue a targeted media fulfillment operation
+// (POST /media/items/{id}/fulfillment-actions)
+func (_ Unimplemented) EnqueueMediaFulfillmentAction(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Enqueue a release grab with a compatible enabled download client
 // (POST /media/items/{id}/grab)
 func (_ Unimplemented) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -6357,12 +6349,6 @@ func (_ Unimplemented) DeleteMediaItemSubtitle(w http.ResponseWriter, r *http.Re
 // Update external subtitle selection
 // (PUT /media/items/{id}/subtitles/{subtitleId})
 func (_ Unimplemented) UpdateMediaItemSubtitle(w http.ResponseWriter, r *http.Request, id ResourceId, subtitleId openapi_types.UUID) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// List manual actions for automatic fulfillment operations
-// (GET /media/manual-fulfillment-actions)
-func (_ Unimplemented) ListManualFulfillmentActions(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9345,6 +9331,38 @@ func (siw *ServerInterfaceWrapper) PlayMediaItemFileInVlc(w http.ResponseWriter,
 	handler.ServeHTTP(w, r)
 }
 
+// EnqueueMediaFulfillmentAction operation middleware
+func (siw *ServerInterfaceWrapper) EnqueueMediaFulfillmentAction(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnqueueMediaFulfillmentAction(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GrabMediaRelease operation middleware
 func (siw *ServerInterfaceWrapper) GrabMediaRelease(w http.ResponseWriter, r *http.Request) {
 
@@ -9786,26 +9804,6 @@ func (siw *ServerInterfaceWrapper) UpdateMediaItemSubtitle(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateMediaItemSubtitle(w, r, id, subtitleId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListManualFulfillmentActions operation middleware
-func (siw *ServerInterfaceWrapper) ListManualFulfillmentActions(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListManualFulfillmentActions(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -13850,6 +13848,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/media/items/{id}/files/vlc", wrapper.PlayMediaItemFileInVlc)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/media/items/{id}/fulfillment-actions", wrapper.EnqueueMediaFulfillmentAction)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/items/{id}/grab", wrapper.GrabMediaRelease)
 	})
 	r.Group(func(r chi.Router) {
@@ -13887,9 +13888,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/media/items/{id}/subtitles/{subtitleId}", wrapper.UpdateMediaItemSubtitle)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/media/manual-fulfillment-actions", wrapper.ListManualFulfillmentActions)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/metadata/{provider}/{type}/{externalId}", wrapper.GetMediaMetadataDetails)

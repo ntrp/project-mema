@@ -52,7 +52,6 @@ const (
 	OperationSubtitleEmbed      OperationType = "subtitle_embed"
 	OperationSubtitleExtraction OperationType = "subtitle_extraction"
 	OperationSubtitleConversion OperationType = "subtitle_conversion"
-	OperationFileRescan         OperationType = "file_rescan"
 )
 
 type Target struct {

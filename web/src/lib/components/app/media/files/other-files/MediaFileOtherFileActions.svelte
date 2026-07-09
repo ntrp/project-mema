@@ -6,8 +6,14 @@
 	import UserIcon from '@lucide/svelte/icons/user';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
+	import MediaFileFulfillmentActions from '$lib/components/app/media/files/MediaFileFulfillmentActions.svelte';
+	import type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetails';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import type { MediaItemSubtitle, MediaItemSubtitleSelectionRequest } from '$lib/settings/types';
+	import type {
+		MediaFulfillmentActionRequest,
+		MediaItemSubtitle,
+		MediaItemSubtitleSelectionRequest
+	} from '$lib/settings/types';
 
 	type OtherFile = MediaFileRow['otherFiles'][number];
 
@@ -25,6 +31,7 @@
 			_subtitle: MediaItemSubtitle,
 			_request: MediaItemSubtitleSelectionRequest
 		) => void | Promise<void>;
+		onFulfillmentAction: (_request: MediaFulfillmentActionRequest) => void | Promise<void>;
 	}
 
 	let {
@@ -37,8 +44,25 @@
 		onSearch,
 		onManualSearch,
 		onDelete,
-		onUpdateSubtitle
+		onUpdateSubtitle,
+		onFulfillmentAction
 	}: Props = $props();
+
+	const fulfillmentRow = $derived.by((): MediaFileDetailRow | undefined =>
+		file.type === 'subtitle'
+			? {
+					key: file.path,
+					otherFileId: file.id,
+					trackNumber: '-',
+					type: 'subtitle',
+					language: languageId ?? '-',
+					description: file.path,
+					missing: file.state?.visualState === 'missing_placeholder',
+					unwanted: file.state?.visualState === 'unwanted',
+					...file.state
+				}
+			: undefined
+	);
 
 	function updateRetention(retentionMode: 'external' | 'mux') {
 		if (!subtitle) return;
@@ -51,6 +75,9 @@
 
 <span class="flex min-h-8 min-w-0 flex-wrap items-center gap-2 lg:justify-end">
 	{#if file.type === 'subtitle'}
+		{#if fulfillmentRow}
+			<MediaFileFulfillmentActions row={fulfillmentRow} {canManage} {onFulfillmentAction} />
+		{/if}
 		<Tooltip.Root>
 			<Tooltip.Trigger>
 				{#snippet child({ props })}

@@ -25,7 +25,7 @@ describe('rendered system area sections (SCN-SYSTEM-001)', () => {
 		expect(body).toContain('Kind');
 		expect(body).toContain('Search');
 		expect(body).toContain('No one-shot jobs are running or scheduled.');
-		expect(body).toContain('Manual Fulfillment Actions');
+		expect(body).not.toContain('Manual Fulfillment Actions');
 	});
 
 	it('renders live events controls and initial loading state', () => {

@@ -11,7 +11,11 @@
 	} from '$lib/components/app/media/files/other-files/mediaFileOtherFiles';
 	import type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetails';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import type { MediaItemSubtitle, MediaItemSubtitleSelectionRequest } from '$lib/settings/types';
+	import type {
+		MediaFulfillmentActionRequest,
+		MediaItemSubtitle,
+		MediaItemSubtitleSelectionRequest
+	} from '$lib/settings/types';
 
 	interface Props {
 		row: MediaFileRow;
@@ -23,6 +27,10 @@
 			_subtitle: MediaItemSubtitle,
 			_request: MediaItemSubtitleSelectionRequest
 		) => void | Promise<void>;
+		onFulfillmentAction?: (
+			_row: MediaFileRow,
+			_request: MediaFulfillmentActionRequest
+		) => void | Promise<void>;
 		onDelete: (_row: MediaFileRow) => void;
 	}
 
@@ -33,6 +41,7 @@
 		onManualSearch = () => {},
 		onDeleteSubtitle = async () => {},
 		onUpdateSubtitle = async () => {},
+		onFulfillmentAction = async () => {},
 		onDelete
 	}: Props = $props();
 	const files = $derived(row.otherFiles ?? []);
@@ -59,6 +68,7 @@
 		if (!languageId) return undefined;
 		return {
 			key: file.path,
+			otherFileId: file.id,
 			trackNumber: '-',
 			type: 'subtitle',
 			language: languageId,
@@ -115,6 +125,13 @@
 					{onManualSearch}
 					onDelete={() => (subtitle ? onDeleteSubtitle(subtitle) : deleteFile(file))}
 					{onUpdateSubtitle}
+					onFulfillmentAction={(request) =>
+						onFulfillmentAction(row, {
+							...request,
+							filePath: row.path ?? request.filePath,
+							otherFileId: file.id ?? request.otherFileId,
+							externalSubtitleId: subtitle?.id
+						})}
 				/>
 			</div>
 		{/each}

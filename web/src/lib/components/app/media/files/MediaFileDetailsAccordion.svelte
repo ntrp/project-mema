@@ -1,12 +1,12 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
-	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
+	import MediaFileDeleteTrackButton from '$lib/components/app/media/files/MediaFileDeleteTrackButton.svelte';
+	import MediaFileFulfillmentActions from '$lib/components/app/media/files/MediaFileFulfillmentActions.svelte';
 	import MediaFileDetailStateBadge from '$lib/components/app/media/files/details/MediaFileDetailStateBadge.svelte';
 	import { unwantedMediaRowClass } from '$lib/components/app/media/files/details/mediaFileVisualClasses';
 	import MediaFileTrackProvenanceIcon from '$lib/components/app/media/files/provenance/MediaFileTrackProvenanceIcon.svelte';
@@ -18,7 +18,10 @@
 		type MediaFileDetailRow
 	} from '$lib/components/app/media/files/mediaFileDetails';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import type { MediaFileTrackDeleteRequest } from '$lib/settings/types';
+	import type {
+		MediaFileTrackDeleteRequest,
+		MediaFulfillmentActionRequest
+	} from '$lib/settings/types';
 
 	interface Props {
 		row: MediaFileRow;
@@ -27,9 +30,18 @@
 			_row: MediaFileRow,
 			_request: MediaFileTrackDeleteRequest
 		) => void | Promise<void>;
+		onFulfillmentAction?: (
+			_row: MediaFileRow,
+			_request: MediaFulfillmentActionRequest
+		) => void | Promise<void>;
 	}
 
-	let { row, canManage = false, onDeleteTrack = async () => {} }: Props = $props();
+	let {
+		row,
+		canManage = false,
+		onDeleteTrack = async () => {},
+		onFulfillmentAction = async () => {}
+	}: Props = $props();
 
 	let chaptersExpanded = $state(false);
 	let deleteTarget = $state<MediaFileDetailRow | undefined>();
@@ -134,27 +146,14 @@
 						{/if}
 					</Table.Cell>
 					<Table.Cell class="text-right">
-						{#if track.deleteRequest}
-							<Tooltip.Root>
-								<Tooltip.Trigger>
-									{#snippet child({ props })}
-										<Button
-											{...props}
-											type="button"
-											variant="destructive"
-											size="icon-sm"
-											aria-label="Delete embedded track"
-											disabled={!canManage}
-											onclick={(event) => requestDelete(event, track)}
-											onkeydown={(event) => event.stopPropagation()}
-										>
-											<TrashIcon aria-hidden="true" />
-										</Button>
-									{/snippet}
-								</Tooltip.Trigger>
-								<Tooltip.Content>Delete embedded track</Tooltip.Content>
-							</Tooltip.Root>
-						{/if}
+						<span class="inline-flex justify-end gap-1">
+							<MediaFileFulfillmentActions
+								row={track}
+								{canManage}
+								onFulfillmentAction={(request) => onFulfillmentAction(row, request)}
+							/>
+							<MediaFileDeleteTrackButton {track} {canManage} onRequestDelete={requestDelete} />
+						</span>
 					</Table.Cell>
 				</Table.Row>
 			{:else}

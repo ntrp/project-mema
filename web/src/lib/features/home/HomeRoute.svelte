@@ -69,6 +69,7 @@
 	onSaveMediaItemOptions={app.saveMediaItemOptions}
 	onDeleteMediaFile={app.deleteMediaFile}
 	onDeleteMediaFileTrack={app.deleteMediaFileTrack}
+	onFulfillmentAction={app.enqueueMediaFulfillment}
 	onAssembleMediaComponents={app.assembleMediaComponents}
 	onReviewComponentCompatibility={app.reviewComponentCompatibility}
 	onDeleteMedia={app.deleteMediaItem}

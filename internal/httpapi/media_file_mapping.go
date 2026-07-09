@@ -31,6 +31,7 @@ func mediaFileInfoResponses(
 			probe := delivery.Probe(mediaFileProbePath(path))
 			tracks = mediaFileTracksFromDelivery(probe.Tracks)
 			chapters := mediaFileChaptersFromDelivery(probe.Chapters)
+			hydrateFileTrackIDs(item, path, tracks)
 			hydrateTrackProvenance(path, tracks, item.ComponentProvenance)
 			if len(chapters) > 0 {
 				file.Chapters = &chapters
@@ -41,7 +42,7 @@ func mediaFileInfoResponses(
 				item.SubtitleMode,
 				externalSubtitleLanguagesForPath(item.ExternalSubtitles, item.Sidecars, path),
 			)
-			otherFiles = mediaFileOtherFiles(path, paths, item.SubtitleTargets, item.SubtitleMode, item.ExternalSubtitles, item.Sidecars, file.SubtitleSatisfaction)
+			otherFiles = mediaFileOtherFiles(item.ID, path, paths, item.SubtitleTargets, item.SubtitleMode, item.ExternalSubtitles, item.Sidecars, file.SubtitleSatisfaction)
 		}
 		applyMediaFileRequirementStates(&file, item, tracks, otherFiles)
 		if len(tracks) > 0 {

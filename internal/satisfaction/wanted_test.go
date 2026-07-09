@@ -25,6 +25,29 @@ func TestBuildWantedRowsKeepsMissingMediaAsMediaRow(t *testing.T) {
 	}
 }
 
+func TestBuildWantedRowsForItemIncludesMissingAudioTarget(t *testing.T) {
+	item := wantedTestItem()
+	item.FilePaths = []string{"/media/movie.mkv"}
+	item.AudioTargets = []storage.MediaProfileAudioTarget{{LanguageID: "english"}}
+	item.FileFacts = []storage.MediaFileFact{{
+		ID:          uuid.New(),
+		MediaItemID: item.ID,
+		FilePath:    "/media/movie.mkv",
+		Tracks: []storage.MediaFileTrackFact{{
+			ID:        uuid.New(),
+			TrackType: "video",
+		}},
+	}}
+
+	rows := BuildWantedRowsForItem(item)
+	if len(rows) != 1 || rows[0].Kind != WantedRowTarget || rows[0].TargetType != targets.TypeAudio {
+		t.Fatalf("wanted rows = %#v", rows)
+	}
+	if rows[0].TargetState != targets.StateMissing || rows[0].LanguageID != "english" {
+		t.Fatalf("wanted target = %#v", rows[0])
+	}
+}
+
 func TestBuildWantedRowsAddsExistingFileTargetProblems(t *testing.T) {
 	operation := &targets.Operation{
 		Type:      targets.OperationAudioTranscode,

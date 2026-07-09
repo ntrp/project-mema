@@ -4,6 +4,7 @@ import type {
 	Language,
 	LibraryFolder,
 	MediaFileTrackDeleteRequest,
+	MediaFulfillmentActionRequest,
 	MediaItem,
 	MediaItemSubtitleSelectionRequest,
 	MediaItemUpdateRequest,
@@ -37,6 +38,10 @@ export interface MediaSeriesSeasonsProps {
 	onDeleteFileTrack: (
 		_item: MediaItem,
 		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
+	onFulfillmentAction?: (
+		_item: MediaItem,
+		_request: MediaFulfillmentActionRequest
 	) => void | Promise<void>;
 	onGrabRelease: (
 		_item: MediaItem,

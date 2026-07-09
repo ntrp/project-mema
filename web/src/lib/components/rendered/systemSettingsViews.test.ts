@@ -34,7 +34,7 @@ describe('rendered system settings views (SCN-SYSTEM-008)', () => {
 		expect(body).toContain('Kind');
 		expect(body).toContain('Search');
 		expect(body).toContain('No one-shot jobs are running or scheduled.');
-		expect(body).toContain('Manual Fulfillment Actions');
+		expect(body).not.toContain('Manual Fulfillment Actions');
 	});
 
 	it('renders live log controls and waiting state before events arrive', () => {

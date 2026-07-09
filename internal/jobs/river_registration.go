@@ -63,6 +63,14 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &SubtitleRetryWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
 	river.AddWorker(workers, &ComponentExtractionWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &ComponentMuxWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &VideoTranscodeWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &AudioTranscodeWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &AudioSourceWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &ContainerRemuxWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &SubtitleDownloadWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
+	river.AddWorker(workers, &SubtitleEmbedWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &SubtitleExtractWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &SubtitleConvertWorker{settings: deps.settings, events: deps.events})
 }
 
 func fixedJobDefinitions() []fixedJobDefinition {
@@ -128,6 +136,33 @@ func fixedJobDefinitions() []fixedJobDefinition {
 			},
 			args: func() river.JobArgs { return SubtitleRetryArgs{} },
 		},
+		fulfillmentSchedule("video_transcode", "Video transcoding", "Transforms video codec, resolution, HDR, or pixel format when policy allows.", queueMediaAssembly, VideoTranscodeArgs{}),
+		fulfillmentSchedule("audio_transcode", "Audio transcoding", "Transforms audio codec, channels, or bitrate when policy allows.", queueMediaAssembly, AudioTranscodeArgs{}),
+		fulfillmentSchedule("audio_source", "Audio sourcing", "Sources desired audio tracks from alternate releases.", queueMediaSearch, AudioSourceArgs{}),
+		fulfillmentSchedule("container_remux", "Container remuxing", "Moves selected streams into the target container.", queueMediaAssembly, ContainerRemuxArgs{}),
+		fulfillmentSchedule("subtitle_download", "Subtitle download", "Downloads stored external subtitles for missing subtitle targets.", queueMediaSearch, SubtitleDownloadArgs{}),
+		fulfillmentSchedule("subtitle_embed", "Subtitle merge/embed", "Embeds external subtitles when embedded mode requires it.", queueMediaAssembly, SubtitleEmbedArgs{}),
+		fulfillmentSchedule("subtitle_extract", "Subtitle extraction", "Extracts embedded subtitles when external subtitles are required.", queueMediaAssembly, SubtitleExtractArgs{}),
+		fulfillmentSchedule("subtitle_convert", "Subtitle conversion", "Converts subtitle format when tooling supports it.", queueMediaAssembly, SubtitleConvertArgs{}),
+	}
+}
+
+func fulfillmentSchedule(id string, name string, description string, queue string, args river.JobArgs) fixedJobDefinition {
+	return fixedJobDefinition{
+		SystemJobScheduleDefinition: storage.SystemJobScheduleDefinition{
+			ID:                    id,
+			Name:                  name,
+			Category:              "fulfillment",
+			Description:           description,
+			Kind:                  args.Kind(),
+			Queue:                 queue,
+			IntervalSeconds:       int32((6 * time.Hour).Seconds()),
+			IntervalConfigurable:  true,
+			Automatic:             true,
+			ManualActionAvailable: true,
+			PausedByDefault:       true,
+		},
+		args: func() river.JobArgs { return args },
 	}
 }
 

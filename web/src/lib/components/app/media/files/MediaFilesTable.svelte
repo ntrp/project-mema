@@ -30,6 +30,7 @@
 		onUpdateSubtitle,
 		onDeleteFile,
 		onDeleteFileTrack,
+		onFulfillmentAction = () => {},
 		onGrabRelease
 	}: Props = $props();
 
@@ -114,6 +115,8 @@
 						onUpdateSubtitle={(subtitle, request) => updateSubtitle(subtitle.id, request)}
 						onDeleteTrack={(row, request) =>
 							onDeleteFileTrack(item, { ...request, path: row.path ?? '' })}
+						onFulfillmentAction={(row, request) =>
+							onFulfillmentAction(item, { ...request, filePath: row.path ?? request.filePath })}
 						onDelete={requestDelete}
 					/>
 				{/each}

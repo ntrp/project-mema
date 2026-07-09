@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import MediaFileDetailsAccordion from '$lib/components/app/media/files/MediaFileDetailsAccordion.svelte';
 import MediaFileOtherFilesPanel from '$lib/components/app/media/files/other-files/MediaFileOtherFilesPanel.svelte';
 import MediaFileSummary from '$lib/components/app/media/files/MediaFileSummary.svelte';
+import { fileTrackDetailRows } from '$lib/components/app/media/files/mediaFileDetails';
 import { provenanceFields } from '$lib/components/app/media/files/provenance/mediaFileTrackProvenance';
 import { missingRow, type MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 import { renderWithTooltip } from '$lib/components/rendered/renderHelpers';
@@ -58,6 +59,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).not.toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
+		expect(body).toContain('Source audio');
 		expect(body.indexOf('Missing expected audio track')).toBeLessThan(
 			body.indexOf('Subtitle track')
 		);
@@ -93,6 +95,17 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('bg-destructive/10 text-destructive');
 	});
 
+	it('keeps raw language ids for fulfillment action payloads', () => {
+		const rows = fileTrackDetailRows(detailedFileRow());
+
+		const audio = rows.find((row) => row.type === 'audio' && row.language === 'English');
+		const missing = rows.find((row) => row.type === 'audio' && row.missing);
+
+		expect(audio?.languageId).toBe('eng');
+		expect(audio?.trackId).toBe('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+		expect(missing?.languageId).toBe('german');
+	});
+
 	it('renders other files with path, type, and subtitle state badges', () => {
 		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
 			row: detailedFileRow(),
@@ -115,6 +128,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('poster.jpg');
 		expect(body).toContain('notes.bin');
 		expect(body).toContain('Missing');
+		expect(body).toContain('Download subtitle');
 		expect(body).toContain('bg-destructive/10 text-destructive');
 		expect(otherFilesOrder(body)).toEqual([
 			'Other files',
@@ -308,6 +322,7 @@ function detailedFileRow(): MediaFileRow {
 				}
 			},
 			{
+				id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
 				type: 'audio',
 				index: 1,
 				codec: 'DTS',

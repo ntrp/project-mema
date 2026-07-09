@@ -141,21 +141,21 @@ format upgrades are separate wanted rows with current and target score context,
 not video, audio, or subtitle target rows. Profile changes recalculate rows from
 the current target set, so removed targets disappear from wanted.
 
-Manual fulfillment actions are kept in a backend catalog keyed by target
-operation type. Release search, release grab/import, video upgrade, video/audio
-transcode, audio sourcing, remux, subtitle download/grab/embed/extraction/
-conversion, and file rescan all advertise a manual API path and the shared
-worker or storage path used by automatic execution. Automatic scheduling flags
-do not remove those manual actions; UI surfaces can disable only
-context-specific invalid actions and must show the catalog blocked reason.
+Fulfillment operations are scheduled as operation-specific River workers for
+video transcode, audio transcode, audio sourcing, container remux, subtitle
+download, subtitle embed, subtitle extraction, and subtitle conversion. These
+schedules are registered disabled by default so administrators can opt into
+background repair work one operation at a time. Manual media actions use
+`POST /media/items/{id}/fulfillment-actions` with the same operation type and
+media/file/track context, then enqueue the corresponding worker kind.
 
 The API contract exposes rollup and satisfaction data separately. Media item
 and media file payloads can carry a `rollup` summary with the aggregate state,
 target-state counts, and reasons, plus a `targetSatisfaction` summary with
 target rows and candidate rows. `/media/wanted` returns a normalized wanted-row
-list that can contain missing media rows, target rows, and custom-format upgrade
-rows with parent media, file, season, episode, state, score, and operation
-context.
+list built from persisted media items and file facts. It can contain missing
+media rows, target rows, and custom-format upgrade rows with parent media, file,
+season, episode, state, score, and operation context.
 
 ## Canonical Target And Candidate States
 

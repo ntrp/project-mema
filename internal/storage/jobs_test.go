@@ -141,6 +141,44 @@ func TestSCNSystem006ConfigurableSystemJobScheduleInterval(t *testing.T) {
 	}
 }
 
+func TestSCNSystem006ScheduleSyncPreservesDisabledFulfillmentDefault(t *testing.T) {
+	ctx, store := testDBStore(t)
+	definition := SystemJobScheduleDefinition{
+		ID:                    "subtitle_embed",
+		Name:                  "Subtitle embed",
+		Kind:                  "media.fulfillment.subtitle_embed",
+		Queue:                 "media_assembly",
+		IntervalSeconds:       3600,
+		IntervalConfigurable:  true,
+		Automatic:             true,
+		ManualActionAvailable: true,
+		PausedByDefault:       true,
+	}
+	if err := store.SyncSystemJobSchedules(ctx, []SystemJobScheduleDefinition{definition}); err != nil {
+		t.Fatalf("sync schedule: %v", err)
+	}
+	schedules, err := store.ListSystemJobSchedules(ctx)
+	if err != nil {
+		t.Fatalf("list schedules: %v", err)
+	}
+	if schedule := scheduleByID(schedules, "subtitle_embed"); schedule.Enabled || !schedule.Paused {
+		t.Fatalf("new fulfillment schedule should be disabled: %#v", schedule)
+	}
+	if _, err := store.SetSystemJobSchedulePaused(ctx, "subtitle_embed", false); err != nil {
+		t.Fatalf("enable schedule: %v", err)
+	}
+	if err := store.SyncSystemJobSchedules(ctx, []SystemJobScheduleDefinition{definition}); err != nil {
+		t.Fatalf("resync schedule: %v", err)
+	}
+	schedules, err = store.ListSystemJobSchedules(ctx)
+	if err != nil {
+		t.Fatalf("list schedules after resync: %v", err)
+	}
+	if schedule := scheduleByID(schedules, "subtitle_embed"); !schedule.Enabled || schedule.Paused {
+		t.Fatalf("resync overwrote enabled state: %#v", schedule)
+	}
+}
+
 func TestSCNSystem006RoutineExecutionsAreHiddenFromDefaultHistory(t *testing.T) {
 	ctx, store := testDBStore(t)
 	err := store.SyncSystemJobSchedules(ctx, []SystemJobScheduleDefinition{

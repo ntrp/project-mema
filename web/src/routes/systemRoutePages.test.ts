@@ -13,10 +13,7 @@ describe('system route pages (SCN-SYSTEM-005)', () => {
 		[StatusPage, ['Status', 'Loading system status']],
 		[IndexingPage, ['Indexing', 'Query Cache', 'Query History']],
 		[MetadataPage, ['Metadata', 'Metadata Cache', 'Query History']],
-		[
-			JobsPage,
-			['Jobs', 'No one-shot jobs are running or scheduled.', 'Manual Fulfillment Actions']
-		],
+		[JobsPage, ['Jobs', 'Fixed Scheduled Jobs', 'No one-shot jobs are running or scheduled.']],
 		[EventsPage, ['Events', 'Loading events']],
 		[LogsPage, ['Logs', 'Waiting for log entries', 'No log files retained.']]
 	])('renders the system route section', (component, expectedText) => {

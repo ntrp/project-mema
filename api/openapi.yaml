@@ -796,25 +796,37 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /media/manual-fulfillment-actions:
-    get:
-      operationId: listManualFulfillmentActions
+  /media/items/{id}/fulfillment-actions:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: enqueueMediaFulfillmentAction
       tags:
         - Media
-      summary: List manual actions for automatic fulfillment operations
+      summary: Queue a targeted media fulfillment operation
       security:
         - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MediaFulfillmentActionRequest"
       responses:
-        "200":
-          description: Manual fulfillment action catalog
+        "202":
+          description: Fulfillment operation queued
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ManualFulfillmentActionsResponse"
+                $ref: "#/components/schemas/JobEnqueueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /media/wanted:
     get:
       operationId: listWantedRows
@@ -6252,6 +6264,9 @@ components:
         - path
         - status
       properties:
+        id:
+          type: string
+          format: uuid
         type:
           $ref: "#/components/schemas/MediaFileOtherFileType"
         path:
@@ -7127,6 +7142,9 @@ components:
       required:
         - type
       properties:
+        id:
+          type: string
+          format: uuid
         type:
           type: string
           enum:
@@ -7882,7 +7900,6 @@ components:
         - subtitle_embed
         - subtitle_extraction
         - subtitle_conversion
-        - file_rescan
       x-enum-varnames:
         - TargetOperationTypeReleaseSearch
         - TargetOperationTypeVideoTranscode
@@ -7893,7 +7910,6 @@ components:
         - TargetOperationTypeSubtitleEmbed
         - TargetOperationTypeSubtitleExtraction
         - TargetOperationTypeSubtitleConversion
-        - TargetOperationTypeFileRescan
     TargetOperationMetadata:
       type: object
       additionalProperties: false
@@ -7914,60 +7930,29 @@ components:
           format: uuid
         reason:
           type: string
-    ManualFulfillmentAction:
+    MediaFulfillmentActionRequest:
       type: object
       additionalProperties: false
       required:
-        - id
         - operation
-        - label
-        - description
-        - manual
-        - automatic
-        - available
-        - blockedReason
-        - method
-        - path
-        - workerPath
-        - stateEffect
       properties:
-        id:
-          type: string
         operation:
           $ref: "#/components/schemas/TargetOperationType"
-        label:
+        filePath:
           type: string
-        description:
+        targetType:
+          $ref: "#/components/schemas/TargetSatisfactionType"
+        languageId:
           type: string
-        manual:
-          type: boolean
-        automatic:
-          type: boolean
-        available:
-          type: boolean
-        blockedReason:
+        trackId:
           type: string
-          description: Reason a context-specific UI should disable this action.
-        method:
+          format: uuid
+        otherFileId:
           type: string
-        path:
+          format: uuid
+        externalSubtitleId:
           type: string
-          description: API path template used by the manual action.
-        workerPath:
-          type: string
-          description: Worker or storage path shared with automatic execution.
-        stateEffect:
-          type: string
-    ManualFulfillmentActionsResponse:
-      type: object
-      additionalProperties: false
-      required:
-        - actions
-      properties:
-        actions:
-          type: array
-          items:
-            $ref: "#/components/schemas/ManualFulfillmentAction"
+          format: uuid
     TargetSatisfactionTarget:
       type: object
       additionalProperties: false

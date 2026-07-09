@@ -59,9 +59,10 @@ insert into app.system_job_schedules (
     interval_configurable,
     history_policy,
     automatic,
-    manual_action_available
+    manual_action_available,
+    paused
 )
-values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 on conflict (id) do update set
     name = excluded.name,
     category = excluded.category,

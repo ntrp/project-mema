@@ -10,8 +10,6 @@ vi.mock('$lib/components/settings/system/cache/rowPulse.svelte', () => ({
 import SystemJobHistoryTable from '$lib/components/settings/system/jobs/SystemJobHistoryTable.svelte';
 import SystemOneShotJobsTable from '$lib/components/settings/system/jobs/SystemOneShotJobsTable.svelte';
 import SystemScheduledJobsTable from '$lib/components/settings/system/jobs/SystemScheduledJobsTable.svelte';
-import ManualFulfillmentActionsTable from '$lib/components/settings/system/jobs/manual-actions/ManualFulfillmentActionsTable.svelte';
-import type { ManualFulfillmentAction } from '$lib/components/settings/system/jobs/manual-actions/manualFulfillmentActions';
 import {
 	defaultHistoryIncludesExecution,
 	mergeExecutions,
@@ -78,33 +76,6 @@ describe('rendered system job dashboard components', () => {
 
 		expect(body).toContain('completed');
 		expect(body).toContain('Show execution logs');
-	});
-
-	it('renders manual fulfillment action controls with context blocking', () => {
-		const actions = [
-			{
-				id: 'file_rescan',
-				operation: 'file_rescan',
-				label: 'Rescan files',
-				description: 'Persist current file facts.',
-				manual: true,
-				automatic: true,
-				available: true,
-				blockedReason: '',
-				method: 'POST',
-				path: '/media/items/{id}/files/rescan',
-				workerPath: 'MediaFileRescan',
-				stateEffect: 'refresh_file_facts'
-			}
-		] satisfies ManualFulfillmentAction[];
-		const { body } = renderWithTooltip(ManualFulfillmentActionsTable, {
-			actions
-		});
-
-		expect(body).toContain('Rescan files');
-		expect(body).toContain('/media/items/{id}/files/rescan');
-		expect(body).toContain('aria-label="Run Rescan files"');
-		expect(body).toContain('disabled');
 	});
 
 	it('keeps execution history ordered by latest update across pagination and SSE', () => {

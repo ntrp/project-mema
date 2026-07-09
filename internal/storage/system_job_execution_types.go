@@ -20,6 +20,7 @@ type SystemJobScheduleDefinition struct {
 	HistoryPolicy         string
 	Automatic             bool
 	ManualActionAvailable bool
+	PausedByDefault       bool
 }
 
 type SystemJobSchedule struct {

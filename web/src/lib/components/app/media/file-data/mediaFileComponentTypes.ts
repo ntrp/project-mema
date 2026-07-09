@@ -5,6 +5,7 @@ import type {
 	Language,
 	LibraryFolder,
 	MediaFileTrackDeleteRequest,
+	MediaFulfillmentActionRequest,
 	MediaItem,
 	MediaItemSubtitle,
 	MediaItemSubtitleSelectionRequest,
@@ -40,6 +41,10 @@ export interface MediaFileSummaryProps {
 		_row: MediaFileRow,
 		_request: MediaFileTrackDeleteRequest
 	) => void | Promise<void>;
+	onFulfillmentAction?: (
+		_row: MediaFileRow,
+		_request: MediaFulfillmentActionRequest
+	) => void | Promise<void>;
 	onDelete: (_row: MediaFileRow) => void;
 }
 
@@ -68,6 +73,10 @@ export interface MediaFilesTableProps {
 	onDeleteFileTrack: (
 		_item: MediaItem,
 		_request: MediaFileTrackDeleteRequest
+	) => void | Promise<void>;
+	onFulfillmentAction?: (
+		_item: MediaItem,
+		_request: MediaFulfillmentActionRequest
 	) => void | Promise<void>;
 	onGrabRelease: (
 		_item: MediaItem,

@@ -24,8 +24,9 @@ func (s *SettingsStore) SyncSystemJobSchedules(ctx context.Context, definitions 
 			IntervalSeconds:       definition.IntervalSeconds,
 			IntervalConfigurable:  definition.IntervalConfigurable,
 			HistoryPolicy:         systemJobHistoryPolicy(definition.HistoryPolicy),
-			Automatic:             true,
-			ManualActionAvailable: true,
+			Automatic:             definition.Automatic,
+			ManualActionAvailable: definition.ManualActionAvailable,
+			Paused:                definition.PausedByDefault,
 		})
 		if err != nil {
 			return err

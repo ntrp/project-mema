@@ -26,6 +26,7 @@
 		onDeleteSubtitle = async () => {},
 		onUpdateSubtitle = async () => {},
 		onDeleteTrack = async () => {},
+		onFulfillmentAction = async () => {},
 		onDelete
 	}: Props = $props();
 	let detailsOpen = $state(false);
@@ -126,7 +127,7 @@
 	</div>
 
 	{#if row.exists && detailsOpen}
-		<MediaFileDetailsAccordion {row} {canManage} {onDeleteTrack} />
+		<MediaFileDetailsAccordion {row} {canManage} {onDeleteTrack} {onFulfillmentAction} />
 	{/if}
 	<MediaFileOtherFilesPanel
 		{row}
@@ -135,6 +136,7 @@
 		onManualSearch={(languageId) => onManualSubtitleSearch(row, languageId)}
 		{onDeleteSubtitle}
 		{onUpdateSubtitle}
+		{onFulfillmentAction}
 		{onDelete}
 	/>
 </div>
