@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+	import { createGetSystemStatus } from '$lib/api/generated/tanstack';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import { getSystemStatus } from '$lib/settings/api';
 	import type { SystemStatusResponse } from '$lib/settings/types';
 
-	let status = $state<SystemStatusResponse>();
-	let loading = $state(true);
-	let errorMessage = $state('');
+	const statusQuery = createGetSystemStatus();
+	const status = $derived(statusQuery.data);
+	const loading = $derived(statusQuery.isPending || statusQuery.isFetching);
+	const errorMessage = $derived(queryErrorMessage(statusQuery.error));
 
 	const details = $derived(
 		status
@@ -20,22 +20,6 @@
 				]
 			: []
 	);
-
-	onMount(() => {
-		void load();
-	});
-
-	async function load() {
-		loading = true;
-		errorMessage = '';
-		try {
-			status = await getSystemStatus();
-		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Could not load system status';
-		} finally {
-			loading = false;
-		}
-	}
 
 	function sourceLink(nextStatus: SystemStatusResponse) {
 		if (/^https?:\/\//.test(nextStatus.sourceLocation)) {
@@ -50,13 +34,24 @@
 		}
 		return `${nextStatus.version} (${nextStatus.commit})`;
 	}
+
+	function queryErrorMessage(error: unknown) {
+		if (!error) return '';
+		return error instanceof Error ? error.message : 'Could not load system status';
+	}
 </script>
 
 <Card.Root aria-label="About">
 	<Card.Header class="border-b border-border">
 		<Card.Title>About</Card.Title>
 		<Card.Action>
-			<Button type="button" variant="secondary" size="sm" disabled={loading} onclick={load}>
+			<Button
+				type="button"
+				variant="secondary"
+				size="sm"
+				disabled={loading}
+				onclick={() => void statusQuery.refetch()}
+			>
 				<RefreshCwIcon class={loading ? 'animate-spin' : ''} />
 				Refresh
 			</Button>

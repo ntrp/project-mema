@@ -21,6 +21,12 @@ The frontend schema types are generated under:
 web/src/lib/api/generated/schema.d.ts
 ```
 
+TanStack Svelte Query hooks are generated under:
+
+```txt
+web/src/lib/api/generated/tanstack.ts
+```
+
 The running API serves the same contract source at `/api/openapi.yaml` and a
 Swagger UI viewer at `/api/docs`.
 
@@ -38,5 +44,5 @@ Before finishing contract work, verify generated artifacts:
 make verify-generated
 ```
 
-API-facing frontend code should use the generated schema types instead of
-handwritten request or response shapes.
+API-facing frontend code should use generated schema types and generated
+TanStack query hooks instead of handwritten request or response shapes.

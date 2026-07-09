@@ -49,7 +49,14 @@ export default [
 	js.configs.recommended,
 	...svelte.configs['flat/recommended'],
 	{
-		ignores: ['.svelte-kit/**', 'build/**', 'coverage/**', 'node_modules/**', 'test-results/**']
+		ignores: [
+			'.svelte-kit/**',
+			'build/**',
+			'coverage/**',
+			'node_modules/**',
+			'src/lib/api/generated/**',
+			'test-results/**'
+		]
 	},
 	{
 		files: ['**/*.{js,ts}'],
