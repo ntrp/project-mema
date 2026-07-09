@@ -49,24 +49,27 @@ func executeContainerRemuxFile(
 	}
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Container remux started", details)
 	if err := runContainerRemuxCommand(ctx, settings, eventBroker, item, fact, argsList); err != nil {
-		publishFulfillmentExecutionError(ctx, settings, eventBroker, targets.OperationContainerRemux, item, args, err)
-		return err
+		return failContainerRemux(ctx, settings, eventBroker, item, args, err)
+	}
+	if err := validateRemuxOutput(outputPath); err != nil {
+		return failContainerRemux(ctx, settings, eventBroker, item, args, err)
 	}
 	if err := replaceRemuxedMediaFile(outputPath, fact.FilePath, targetPath); err != nil {
-		return err
+		return failContainerRemux(ctx, settings, eventBroker, item, args, err)
 	}
 	if err := settings.RecordContainerRemuxedMediaFile(ctx, item.ID, fact.FilePath, targetPath); err != nil {
 		if fact.FilePath != targetPath {
 			_ = os.Remove(targetPath)
 		}
-		return err
+		return failContainerRemux(ctx, settings, eventBroker, item, args, err)
 	}
 	if err := removeRemuxSourceFile(fact.FilePath, targetPath); err != nil {
-		return err
+		return failContainerRemux(ctx, settings, eventBroker, item, args, err)
 	}
 	if _, err := settings.RescanMediaItemFiles(ctx, item.ID); err != nil {
-		return fmt.Errorf("rescan media after container remux: %w", err)
+		return failContainerRemux(ctx, settings, eventBroker, item, args, fmt.Errorf("rescan media after container remux: %w", err))
 	}
+	finalizeContainerRemuxProgress(ctx, settings, eventBroker, item, fact)
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Container remux finished", details)
 	return nil
 }
@@ -145,6 +148,17 @@ func replaceRemuxedMediaFile(outputPath string, sourcePath string, targetPath st
 	return nil
 }
 
+func validateRemuxOutput(outputPath string) error {
+	info, err := os.Stat(outputPath)
+	if err != nil {
+		return fmt.Errorf("validate remux output: %w", err)
+	}
+	if info.IsDir() || info.Size() == 0 {
+		return fmt.Errorf("remux output is empty: %s", outputPath)
+	}
+	return nil
+}
+
 func removeRemuxSourceFile(sourcePath string, targetPath string) error {
 	if sourcePath == targetPath {
 		return nil
@@ -168,4 +182,16 @@ func containerRemuxDetails(
 	details["sourceContainer"] = normalizedContainer(mediaFactContainer(fact))
 	details["targetContainer"] = targetContainer
 	return details
+}
+
+func failContainerRemux(
+	ctx context.Context,
+	settings *storage.SettingsStore,
+	eventBroker *events.Broker,
+	item storage.MediaItem,
+	args FulfillmentActionArgs,
+	err error,
+) error {
+	publishFulfillmentExecutionError(ctx, settings, eventBroker, targets.OperationContainerRemux, item, args, err)
+	return err
 }

@@ -74,12 +74,8 @@ function fulfillmentOperationFromKind(kind: string): MediaFulfillmentActionReque
 			return 'video_transcode';
 		case 'audio_transcode':
 			return 'audio_transcode';
-		case 'audio_source':
-			return 'audio_sourcing';
 		case 'container_remux':
 			return 'container_remux';
-		case 'subtitle_download':
-			return 'subtitle_download';
 		case 'subtitle_embed':
 			return 'subtitle_embed';
 		case 'subtitle_extract':

@@ -141,11 +141,10 @@ format upgrades are separate wanted rows with current and target score context,
 not video, audio, or subtitle target rows. Profile changes recalculate rows from
 the current target set, so removed targets disappear from wanted.
 
-Fulfillment operations are scheduled as operation-specific River workers for
-video transcode, audio transcode, audio sourcing, container remux, subtitle
-download, subtitle embed, subtitle extraction, and subtitle conversion. These
-schedules are registered disabled by default so administrators can opt into
-background repair work one operation at a time. Manual media actions use
+Fulfillment operations run through the disabled-by-default Media Fulfillment
+planner and operation-specific one-shot River workers for video transcode,
+audio transcode, container remux, subtitle embed, subtitle extraction, and
+subtitle conversion. Manual media actions use
 `POST /media/items/{id}/fulfillment-actions` with the same operation type and
 media/file/track context, then enqueue the corresponding worker kind.
 
@@ -215,13 +214,15 @@ unmatched file while the old path remains missing.
 
 ### Subtitle Fulfillment
 
-Media Fulfillment also scans subtitle target rows. Missing subtitle targets can
-queue subtitle download one-shot jobs. Pending embedded candidates in external
-mode queue subtitle extraction jobs, pending external candidates in embedded
-mode queue subtitle merge jobs, and text subtitle format mismatches queue
-subtitle conversion jobs. The one-shot workers re-resolve the current file,
-track, or sidecar before mutating files so manual actions and automatic planner
-children use the same execution path.
+Media Fulfillment also scans subtitle target rows. Pending embedded candidates
+in external mode queue subtitle extraction jobs, pending external candidates in
+embedded mode queue subtitle merge jobs, and text subtitle format mismatches
+queue subtitle conversion jobs. The one-shot workers re-resolve the current
+file, track, or sidecar before mutating files so manual actions and automatic
+planner children use the same execution path. Subtitle merge writes the target
+language on the embedded subtitle stream, removes the external subtitle file and
+database records after the media file is replaced, and persists a fresh file
+probe so target state updates without a separate manual metadata refresh.
 
 The API contract exposes rollup and satisfaction data separately. Media item
 and media file payloads can carry a `rollup` summary with the aggregate state,

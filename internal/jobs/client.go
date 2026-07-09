@@ -204,12 +204,8 @@ func fulfillmentJobArgs(operation string, args FulfillmentActionArgs) (river.Job
 		return VideoTranscodeArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
 	case "audio_transcode":
 		return AudioTranscodeArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
-	case "audio_sourcing":
-		return AudioSourceArgs{FulfillmentActionArgs: args}, queueMediaSearch, nil
 	case "container_remux":
 		return ContainerRemuxArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
-	case "subtitle_download":
-		return SubtitleDownloadArgs{FulfillmentActionArgs: args}, queueMediaSearch, nil
 	case "subtitle_embed":
 		return SubtitleEmbedArgs{FulfillmentActionArgs: args}, queueMediaAssembly, nil
 	case "subtitle_extraction":

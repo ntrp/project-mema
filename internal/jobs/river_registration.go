@@ -67,9 +67,7 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &MediaFulfillmentWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &VideoTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
-	river.AddWorker(workers, &AudioSourceWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &ContainerRemuxWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
-	river.AddWorker(workers, &SubtitleDownloadWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
 	river.AddWorker(workers, &SubtitleEmbedWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &SubtitleExtractWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &SubtitleConvertWorker{settings: deps.settings, events: deps.events})
@@ -155,8 +153,6 @@ func fixedJobDefinitions() []fixedJobDefinition {
 			args: func() river.JobArgs { return MediaRefreshArgs{} },
 		},
 		fulfillmentSchedule("media_fulfillment", "Media Fulfillment", "Scans media and queues one-shot jobs for needed media operations.", queueMediaAssembly, MediaFulfillmentArgs{}),
-		fulfillmentSchedule("audio_source", "Audio sourcing", "Sources desired audio tracks from alternate releases.", queueMediaSearch, AudioSourceArgs{}),
-		fulfillmentSchedule("subtitle_download", "Subtitle download", "Downloads stored external subtitles for missing subtitle targets.", queueMediaSearch, SubtitleDownloadArgs{}),
 	}
 }
 

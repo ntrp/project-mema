@@ -5,7 +5,6 @@ import (
 
 	"media-manager/internal/events"
 	"media-manager/internal/storage"
-	"media-manager/internal/subtitles"
 )
 
 type MediaFulfillmentWorker struct {
@@ -29,24 +28,11 @@ type AudioTranscodeWorker struct {
 	enqueueFulfillment fulfillmentEnqueueFunc
 }
 
-type AudioSourceWorker struct {
-	river.WorkerDefaults[AudioSourceArgs]
-	settings *storage.SettingsStore
-	events   *events.Broker
-}
-
 type ContainerRemuxWorker struct {
 	river.WorkerDefaults[ContainerRemuxArgs]
 	settings           *storage.SettingsStore
 	events             *events.Broker
 	enqueueFulfillment fulfillmentEnqueueFunc
-}
-
-type SubtitleDownloadWorker struct {
-	river.WorkerDefaults[SubtitleDownloadArgs]
-	settings  *storage.SettingsStore
-	subtitles *subtitles.Service
-	events    *events.Broker
 }
 
 type SubtitleEmbedWorker struct {

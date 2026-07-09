@@ -1436,7 +1436,7 @@ create table if not exists app.media_file_history (
     file_path text not null,
     source_path text,
     destination_path text,
-    operation text not null check (operation in ('imported', 'renamed', 'moved', 'replaced', 'deleted', 'missing', 'moved_candidate', 'restored', 'superseded')),
+    operation text not null check (operation in ('imported', 'renamed', 'moved', 'replaced', 'deleted', 'missing', 'moved_candidate', 'restored', 'superseded', 'container_remux')),
     status text not null check (status in ('succeeded', 'failed', 'skipped')),
     actor_type text not null default 'system' check (actor_type in ('system', 'user', 'job')),
     actor_id text,
@@ -1445,6 +1445,12 @@ create table if not exists app.media_file_history (
     failure_details text,
     created_at timestamptz not null default now()
 );
+
+alter table app.media_file_history drop constraint if exists media_file_history_operation_check;
+
+alter table app.media_file_history
+    add constraint media_file_history_operation_check
+    check (operation in ('imported', 'renamed', 'moved', 'replaced', 'deleted', 'missing', 'moved_candidate', 'restored', 'superseded', 'container_remux'));
 
 create index if not exists idx_media_file_history_media_item
     on app.media_file_history (media_item_id, created_at desc);

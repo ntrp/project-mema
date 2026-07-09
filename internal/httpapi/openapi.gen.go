@@ -1863,12 +1863,10 @@ func (e TargetCandidateVisualState) Valid() bool {
 
 // Defines values for TargetOperationType.
 const (
-	TargetOperationTypeAudioSourcing      TargetOperationType = "audio_sourcing"
 	TargetOperationTypeAudioTranscode     TargetOperationType = "audio_transcode"
 	TargetOperationTypeContainerRemux     TargetOperationType = "container_remux"
 	TargetOperationTypeReleaseSearch      TargetOperationType = "release_search"
 	TargetOperationTypeSubtitleConversion TargetOperationType = "subtitle_conversion"
-	TargetOperationTypeSubtitleDownload   TargetOperationType = "subtitle_download"
 	TargetOperationTypeSubtitleEmbed      TargetOperationType = "subtitle_embed"
 	TargetOperationTypeSubtitleExtraction TargetOperationType = "subtitle_extraction"
 	TargetOperationTypeVideoTranscode     TargetOperationType = "video_transcode"
@@ -1877,8 +1875,6 @@ const (
 // Valid indicates whether the value is a known member of the TargetOperationType enum.
 func (e TargetOperationType) Valid() bool {
 	switch e {
-	case TargetOperationTypeAudioSourcing:
-		return true
 	case TargetOperationTypeAudioTranscode:
 		return true
 	case TargetOperationTypeContainerRemux:
@@ -1886,8 +1882,6 @@ func (e TargetOperationType) Valid() bool {
 	case TargetOperationTypeReleaseSearch:
 		return true
 	case TargetOperationTypeSubtitleConversion:
-		return true
-	case TargetOperationTypeSubtitleDownload:
 		return true
 	case TargetOperationTypeSubtitleEmbed:
 		return true

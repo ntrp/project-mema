@@ -103,15 +103,28 @@ func executeSubtitleEmbed(
 		return err
 	}
 	defer cleanup()
-	if err := runSubtitleEmbedCommand(ctx, args.FilePath, subtitle.FilePath, outputPath); err != nil {
+	subtitleIndex := outputSubtitleIndex(item, args.FilePath)
+	if err := runSubtitleEmbedCommand(ctx, args.FilePath, subtitle.FilePath, outputPath, subtitle.LanguageID, subtitleIndex); err != nil {
 		return err
 	}
 	if err := replaceMediaFile(outputPath, args.FilePath); err != nil {
 		return err
 	}
+	if err := settings.RemoveExternalSubtitleAfterEmbed(ctx, item.ID, subtitle.ID, subtitle.FilePath); err != nil {
+		return err
+	}
 	if _, err := settings.RescanMediaItemFiles(ctx, item.ID); err != nil {
 		return fmt.Errorf("rescan media after subtitle merge: %w", err)
 	}
+	if err := persistLiveMediaFileFact(ctx, settings, item, args.FilePath); err != nil {
+		return fmt.Errorf("refresh media facts after subtitle merge: %w", err)
+	}
+	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Media file refreshed after subtitle merge", map[string]any{
+		"mediaItemId": item.ID.String(),
+		"title":       item.Title,
+		"filePath":    args.FilePath,
+		"languageId":  subtitle.LanguageID,
+	})
 	recordJobProgress(ctx, settings, eventBroker, progressInt32(100), "Subtitle merge complete")
 	return nil
 }
@@ -158,10 +171,15 @@ func runSubtitleExtractCommand(ctx context.Context, inputPath string, subtitleIn
 	return err
 }
 
-func runSubtitleEmbedCommand(ctx context.Context, mediaPath string, subtitlePath string, outputPath string) error {
+func runSubtitleEmbedCommand(ctx context.Context, mediaPath string, subtitlePath string, outputPath string, languageID string, subtitleIndex int) error {
+	args := []string{"-y", "-i", mediaPath, "-i", subtitlePath, "-map", "0", "-map", "1:0", "-c", "copy"}
+	if language := ffmpegSubtitleLanguageTag(languageID); language != "" {
+		args = append(args, fmt.Sprintf("-metadata:s:s:%d", subtitleIndex), "language="+language)
+	}
+	args = append(args, outputPath)
 	_, err := mediatools.RunOutput(ctx, mediatools.CommandSpec{
 		Name:           "ffmpeg",
-		Args:           []string{"-y", "-i", mediaPath, "-i", subtitlePath, "-map", "0", "-map", "1:0", "-c", "copy", outputPath},
+		Args:           args,
 		Timeout:        2 * time.Hour,
 		MaxOutputBytes: 16 * 1024,
 		MaxStderrBytes: 128 * 1024,

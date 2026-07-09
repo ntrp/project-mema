@@ -3866,9 +3866,7 @@ export interface components {
 			| 'release_search'
 			| 'video_transcode'
 			| 'audio_transcode'
-			| 'audio_sourcing'
 			| 'container_remux'
-			| 'subtitle_download'
 			| 'subtitle_embed'
 			| 'subtitle_extraction'
 			| 'subtitle_conversion';

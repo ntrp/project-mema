@@ -59,7 +59,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).not.toContain('Opening');
 		expect(body).toContain('German');
 		expect(body).toContain('Missing expected audio track');
-		expect(body).toContain('Source audio');
+		expect(body).not.toContain('Source audio');
 		expect(body.indexOf('Missing expected audio track')).toBeLessThan(
 			body.indexOf('Subtitle track')
 		);
@@ -250,7 +250,7 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('poster.jpg');
 		expect(body).toContain('notes.bin');
 		expect(body).toContain('Missing');
-		expect(body).toContain('Download subtitle');
+		expect(body).not.toContain('Download subtitle');
 		expect(body).toContain('bg-destructive/10 text-destructive');
 		expect(otherFilesOrder(body)).toEqual([
 			'Other files',

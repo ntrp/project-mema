@@ -57,8 +57,8 @@ func enqueueMediaFulfillmentJobs(
 	}
 	done := int32(100)
 	recordJobProgressData(ctx, settings, eventBroker, &done, "Media fulfillment scan complete", map[string]any{
-		"queuedJobCount": queued,
-		"mediaItemCount": total,
+		"queuedJobCount":          queued,
+		"mediaItemCount":          total,
 		"processedMediaItemCount": total,
 	})
 	return nil
@@ -101,23 +101,6 @@ func enqueueSubtitleFulfillmentJobs(
 	item storage.MediaItem,
 ) (int, error) {
 	count := 0
-	pendingOps := subtitleOperationKeys(item)
-	for _, args := range subtitleSearchRequestsForItem(item) {
-		if pendingOps[fulfillmentTaskKey(args.FilePath, args.LanguageID)] {
-			continue
-		}
-		jobID, err := enqueue(ctx, "subtitle_download", FulfillmentActionArgs{
-			MediaItemID: item.ID.String(),
-			FilePath:    args.FilePath,
-			TargetType:  "subtitle",
-			LanguageID:  args.LanguageID,
-		})
-		if err != nil {
-			return count, err
-		}
-		initializeQueuedFulfillmentProgress(ctx, settings, eventBroker, jobID, "Waiting to download subtitle", args.FilePath, args.LanguageID)
-		count++
-	}
 	for _, input := range satisfaction.WantedTargetInputsForItem(item) {
 		operation := input.Target.RequiredOperation
 		if operation == nil || input.Target.Type != targets.TypeSubtitle {
@@ -136,17 +119,6 @@ func enqueueSubtitleFulfillmentJobs(
 		count++
 	}
 	return count, nil
-}
-
-func subtitleOperationKeys(item storage.MediaItem) map[string]bool {
-	keys := map[string]bool{}
-	for _, input := range satisfaction.WantedTargetInputsForItem(item) {
-		operation := input.Target.RequiredOperation
-		if operation != nil && input.Target.Type == targets.TypeSubtitle {
-			keys[fulfillmentTaskKey(input.FilePath, input.Target.LanguageID)] = true
-		}
-	}
-	return keys
 }
 
 func fulfillmentTaskKey(filePath string, languageID string) string {

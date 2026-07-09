@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import CaptionsIcon from '@lucide/svelte/icons/captions';
-	import DownloadIcon from '@lucide/svelte/icons/download';
 	import FileOutputIcon from '@lucide/svelte/icons/file-output';
 	import FileVideoIcon from '@lucide/svelte/icons/file-video';
 	import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
@@ -50,9 +49,7 @@
 	}
 
 	function audioActions(track: MediaFileDetailRow): Action[] {
-		if (track.missing) {
-			return [action('Source audio', 'audio_sourcing', 'audio', track.languageId, 'lens')];
-		}
+		if (track.missing) return [];
 		if (track.visualState !== 'partial' && track.visualState !== 'pending_operation') return [];
 		if (!track.trackId) return [];
 		if (!hasTargetCodecMismatch(track)) return [];
@@ -60,11 +57,7 @@
 	}
 
 	function subtitleActions(track: MediaFileDetailRow): Action[] {
-		if (track.missing) {
-			return [
-				action('Download subtitle', 'subtitle_download', 'subtitle', track.languageId, 'download')
-			];
-		}
+		if (track.missing) return [];
 		if (matchesOperation(track, 'embed')) {
 			return [action('Embed subtitle', 'subtitle_embed', 'subtitle', track.languageId, 'captions')];
 		}
@@ -168,8 +161,6 @@
 								<FileVideoIcon aria-hidden="true" />
 							{:else if item.icon === 'music'}
 								<MusicIcon aria-hidden="true" />
-							{:else if item.icon === 'download'}
-								<DownloadIcon aria-hidden="true" />
 							{:else if item.icon === 'captions'}
 								<CaptionsIcon aria-hidden="true" />
 							{:else if item.icon === 'output'}

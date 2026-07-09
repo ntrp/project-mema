@@ -71,8 +71,7 @@ which tracks and sidecars were detected and what the profile still wants. Track
 rows show whether they match the profile, partially match it, need a follow-up
 operation, are unwanted by current settings, or stand in for a missing target.
 Rows with repairable work expose action buttons for the specific operation,
-such as video transcode, audio transcode or source, subtitle download, embed,
-extract, or convert.
+such as video transcode, audio transcode, subtitle embed, extract, or convert.
 
 ## Refresh And Maintain
 

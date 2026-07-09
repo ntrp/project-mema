@@ -66,6 +66,66 @@ func TestMediaItemSubtitlesStoreProvenanceAndDeleteManagedFile(t *testing.T) {
 	}
 }
 
+func TestRemoveExternalSubtitleAfterEmbedDeletesRecordsAndFile(t *testing.T) {
+	ctx, store := testDBStore(t)
+	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type:            "movie",
+		Title:           "Embedded Subtitle Movie " + uuid.NewString(),
+		Monitored:       true,
+		LibraryFolderID: &folder.ID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mediaPath := filepath.Join(*item.MediaFolderPath, "Embedded Subtitle Movie.mkv")
+	subtitlePath := filepath.Join(*item.MediaFolderPath, "Embedded Subtitle Movie.eng.srt")
+	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(subtitlePath, []byte("subtitle"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	record, err := store.UpsertMediaItemSubtitle(ctx, MediaItemSubtitleInput{
+		MediaItemID:  item.ID,
+		ProviderName: "local",
+		LanguageID:   "english",
+		Format:       "srt",
+		FilePath:     subtitlePath,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := upsertMediaItemSidecar(ctx, store.pool, MediaItemSidecarInput{
+		MediaItemID:   item.ID,
+		MediaFilePath: mediaPath,
+		FilePath:      subtitlePath,
+		SidecarType:   MediaSidecarSubtitle,
+		LanguageID:    "english",
+		Format:        "subrip",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.RemoveExternalSubtitleAfterEmbed(ctx, item.ID, record.ID, subtitlePath); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(subtitlePath); !os.IsNotExist(err) {
+		t.Fatalf("expected subtitle file removed, err=%v", err)
+	}
+	loaded, err := store.GetMediaItem(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(loaded.ExternalSubtitles) != 0 || len(loaded.Sidecars) != 0 {
+		t.Fatalf("expected external subtitle records removed, subtitles=%#v sidecars=%#v", loaded.ExternalSubtitles, loaded.Sidecars)
+	}
+}
+
 func TestMediaItemSubtitleDeleteRejectsTraversal(t *testing.T) {
 	ctx, store := testDBStore(t)
 	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")

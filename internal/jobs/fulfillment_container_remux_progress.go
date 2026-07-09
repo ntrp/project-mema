@@ -58,9 +58,20 @@ func runContainerRemuxCommand(
 	if err != nil {
 		return err
 	}
-	done := int32(100)
-	recordJobProgressData(ctx, settings, eventBroker, &done, "Container remux complete", containerRemuxProgressData(item, fact, progress.durationMs))
+	finalizing := int32(99)
+	recordJobProgressData(ctx, settings, eventBroker, &finalizing, "Finalizing container remux", containerRemuxProgressData(item, fact, progress.durationMs))
 	return nil
+}
+
+func finalizeContainerRemuxProgress(
+	ctx context.Context,
+	settings *storage.SettingsStore,
+	eventBroker *events.Broker,
+	item storage.MediaItem,
+	fact storage.MediaFileFact,
+) {
+	done := int32(100)
+	recordJobProgressData(ctx, settings, eventBroker, &done, "Container remux complete", containerRemuxProgressData(item, fact, containerRemuxDurationMs(fact)))
 }
 
 type containerRemuxProgress struct {

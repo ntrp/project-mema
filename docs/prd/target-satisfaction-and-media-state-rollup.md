@@ -355,13 +355,8 @@ Possible jobs:
   format upgrade rules remain unmet.
 - **Video transcoding**: transforms video codec, resolution, HDR, pixel format, or
   related fields when policy and tooling allow.
-- **Audio transcoding**: transforms audio codec, channels, or bitrate when policy
-  allows.
-- **Audio sourcing from another release**: fetches another release to extract or
-  merge a desired audio track.
+- **Audio transcoding**: transforms audio codec or channels when policy allows.
 - **Container remuxing**: moves selected streams into the target container.
-- **Subtitle download**: fetches stored external subtitle records for missing
-  subtitle targets.
 - **Subtitle merge/embed**: embeds an external subtitle when mode requires
   embedded subtitles.
 - **Subtitle extraction**: extracts embedded subtitles when external subtitles are

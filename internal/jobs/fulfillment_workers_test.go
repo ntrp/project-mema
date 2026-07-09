@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -19,16 +21,16 @@ func TestFulfillmentSchedulesUseUnifiedMediaPlanner(t *testing.T) {
 		queue string
 	}{
 		"media_fulfillment": {kind: MediaFulfillmentArgs{}.Kind(), queue: queueMediaAssembly},
-		"audio_source":      {kind: AudioSourceArgs{}.Kind(), queue: queueMediaSearch},
-		"subtitle_download": {kind: SubtitleDownloadArgs{}.Kind(), queue: queueMediaSearch},
 	}
 	removed := map[string]struct{}{
-		"video_transcode":  {},
-		"audio_transcode":  {},
-		"container_remux":  {},
-		"subtitle_embed":   {},
-		"subtitle_extract": {},
-		"subtitle_convert": {},
+		"video_transcode":   {},
+		"audio_transcode":   {},
+		"container_remux":   {},
+		"audio_source":      {},
+		"subtitle_download": {},
+		"subtitle_embed":    {},
+		"subtitle_extract":  {},
+		"subtitle_convert":  {},
 	}
 	for _, definition := range fixedJobDefinitions() {
 		if _, ok := removed[definition.ID]; ok {
@@ -207,6 +209,17 @@ func TestContainerRemuxArgsCopyStreamsToTargetContainer(t *testing.T) {
 	}
 	if args[len(args)-1] != "/library/.movie.tmp.mp4" {
 		t.Fatalf("output arg = %q", args[len(args)-1])
+	}
+}
+
+func TestValidateRemuxOutputRejectsEmptyFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "movie.mp4")
+	if err := os.WriteFile(path, nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := validateRemuxOutput(path); err == nil {
+		t.Fatalf("empty remux output should fail validation")
 	}
 }
 

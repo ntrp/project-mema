@@ -18,8 +18,8 @@ Audio status checks the selected profile requirements:
 Audio tracks can be deleted from the file detail view when the media toolchain
 supports the operation.
 
-When a row is missing or partial, action buttons can queue audio transcoding or
-audio sourcing. These manual buttons use the same background workers as the
+When an existing audio row is partial, action buttons can queue audio
+transcoding. These manual buttons use the same background workers as the
 disabled-by-default automatic fulfillment jobs.
 
 ## Subtitles
@@ -35,9 +35,10 @@ External subtitles can be searched manually or automatically from subtitle track
 rows and external file rows.
 
 Subtitle rows and external subtitle files can also expose fulfillment actions:
-download missing subtitles, embed external subtitles, extract embedded
-subtitles, or convert text subtitle formats. Available actions depend on the
-current subtitle mode, target format, and known file context.
+embed external subtitles, extract embedded subtitles, or convert text subtitle
+formats. Available actions depend on the current subtitle mode, target format,
+and known file context. Embedding an external subtitle tags the embedded stream
+with the subtitle language, then removes the external subtitle file and row.
 
 ## Video And Container
 
