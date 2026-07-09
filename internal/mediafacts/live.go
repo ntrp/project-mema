@@ -86,12 +86,21 @@ func liveTrack(
 		LanguageID:      track.Language,
 		Codec:           track.Codec,
 		Channels:        track.ChannelLayout,
+		DurationMs:      durationMs(track.Duration),
 		BitrateKbps:     bitrateKbps(track.BitRate),
 		Width:           track.Width,
 		Height:          track.Height,
 		PixelFormat:     track.PixelFormat,
 		Title:           track.Title,
 	}
+}
+
+func durationMs(value *float64) *int64 {
+	if value == nil || *value <= 0 {
+		return nil
+	}
+	ms := int64(*value * 1000)
+	return &ms
 }
 
 func int32Value(value *int32) int32 {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LivePulseDot from '$lib/components/shared/LivePulseDot.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { SystemJobExecution, SystemJobSchedule } from '$lib/settings/types';
@@ -40,6 +41,9 @@
 
 <Card.Root>
 	<Card.Header>
+		<Card.Description class="flex items-center gap-2">
+			<LivePulseDot /><span>Live</span>
+		</Card.Description>
 		<Card.Title>Fixed Scheduled Jobs</Card.Title>
 		<Card.Action>
 			<Button variant="outline" disabled={loadingOverview} onclick={onRefresh}>Refresh</Button>
@@ -62,7 +66,12 @@
 </Card.Root>
 
 <Card.Root>
-	<Card.Header><Card.Title>Current And Planned One-Shot Jobs</Card.Title></Card.Header>
+	<Card.Header>
+		<Card.Description class="flex items-center gap-2">
+			<LivePulseDot /><span>Live</span>
+		</Card.Description>
+		<Card.Title>Current And Planned One-Shot Jobs</Card.Title>
+	</Card.Header>
 	<Card.Content>
 		<SystemOneShotJobsTable
 			jobs={oneShotJobs}

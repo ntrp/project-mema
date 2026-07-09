@@ -18,6 +18,7 @@
 		scanningMediaItemId,
 		grabbingKey,
 		canManage,
+		pendingFulfillmentActionKeys = [],
 		libraryFolders,
 		languages,
 		qualityProfiles,
@@ -104,6 +105,7 @@
 						{row}
 						{activityStatus}
 						{canManage}
+						{pendingFulfillmentActionKeys}
 						searching={busy}
 						fileLabel="Movie file"
 						missingLabel="No matched file for this movie"

@@ -1,50 +1,43 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-	import { Button } from '$lib/components/ui/button';
-	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
 	import MediaFileDeleteTrackButton from '$lib/components/app/media/files/MediaFileDeleteTrackButton.svelte';
 	import MediaFileFulfillmentActions from '$lib/components/app/media/files/MediaFileFulfillmentActions.svelte';
+	import MediaFileTrackDeleteDialog from '$lib/components/app/media/files/MediaFileTrackDeleteDialog.svelte';
 	import MediaFileDetailStateBadge from '$lib/components/app/media/files/details/MediaFileDetailStateBadge.svelte';
 	import { unwantedMediaRowClass } from '$lib/components/app/media/files/details/mediaFileVisualClasses';
 	import MediaFileTrackProvenanceIcon from '$lib/components/app/media/files/provenance/MediaFileTrackProvenanceIcon.svelte';
 	import MediaFileTrackTypeIcon from '$lib/components/app/media/files/track-icons/MediaFileTrackTypeIcon.svelte';
 	import {
-		fileChapterDetailRows,
-		fileChapterSummaryRow,
-		fileTrackDetailRows,
+		fileChapterDetailRows, fileChapterSummaryRow, fileTrackDetailRows,
 		type MediaFileDetailRow
 	} from '$lib/components/app/media/files/mediaFileDetails';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import type {
-		MediaFileTrackDeleteRequest,
-		MediaFulfillmentActionRequest
-	} from '$lib/settings/types';
+	import type { MediaFileTrackDeleteRequest, MediaFulfillmentActionRequest } from '$lib/settings/types';
 
 	interface Props {
 		row: MediaFileRow;
 		canManage?: boolean;
-		onDeleteTrack?: (
-			_row: MediaFileRow,
-			_request: MediaFileTrackDeleteRequest
-		) => void | Promise<void>;
-		onFulfillmentAction?: (
-			_row: MediaFileRow,
-			_request: MediaFulfillmentActionRequest
-		) => void | Promise<void>;
+		pendingFulfillmentActionKeys?: string[];
+		onDeleteTrack?: (_row: MediaFileRow, _request: MediaFileTrackDeleteRequest) => void | Promise<void>;
+		onFulfillmentAction?: (_row: MediaFileRow, _request: MediaFulfillmentActionRequest) => void | Promise<void>;
 	}
 
 	let {
 		row,
 		canManage = false,
+		pendingFulfillmentActionKeys = [],
 		onDeleteTrack = async () => {},
 		onFulfillmentAction = async () => {}
 	}: Props = $props();
 
 	let chaptersExpanded = $state(false);
 	let deleteTarget = $state<MediaFileDetailRow | undefined>();
+	let pulsingRows = $state(new Set<string>());
+	let rowSignatures = new Map<string, string>();
+	const pulseTimers = new Map<string, number>();
 
 	const trackRows = $derived(fileTrackDetailRows(row));
 	const chapterRows = $derived(fileChapterDetailRows(row));
@@ -53,6 +46,17 @@
 		...trackRows,
 		...(chapterSummary ? [chapterSummary, ...(chaptersExpanded ? chapterRows : [])] : [])
 	]);
+
+	$effect(() => {
+		const next = new Map(rows.map((track) => [track.key, rowChangeSignature(track)]));
+		for (const [key, signature] of next) {
+			const previous = rowSignatures.get(key);
+			if (previous && previous !== signature) {
+				pulseRow(key);
+			}
+		}
+		rowSignatures = next;
+	});
 
 	function toggleChapters() {
 		chaptersExpanded = !chaptersExpanded;
@@ -76,10 +80,29 @@
 		deleteTarget = undefined;
 	}
 
-	function deleteDescription(track: MediaFileDetailRow) {
-		if (track.chapterSummary) return 'Delete all chapters from this file?';
-		if (track.type === 'chapter') return `Delete chapter ${track.trackNumber} from this file?`;
-		return `Delete ${track.type} track ${track.trackNumber} from this file?`;
+	function rowChangeSignature(track: MediaFileDetailRow) {
+		return [
+			track.description,
+			track.visualState,
+			track.statusLabel,
+			track.operationLabel,
+			...(track.details ?? [])
+		].join('\u001f');
+	}
+
+	function pulseRow(key: string) {
+		const activeTimer = pulseTimers.get(key);
+		if (activeTimer) window.clearTimeout(activeTimer);
+		pulsingRows = new Set(pulsingRows).add(key);
+		pulseTimers.set(
+			key,
+			window.setTimeout(() => {
+				const next = new Set(pulsingRows);
+				next.delete(key);
+				pulsingRows = next;
+				pulseTimers.delete(key);
+			}, 1200)
+		);
 	}
 </script>
 
@@ -102,6 +125,7 @@
 						index > 0 && track.type !== rows[index - 1]?.type && 'border-t-4 border-border',
 						track.missing && 'bg-destructive/10 text-destructive',
 						track.unwanted && unwantedMediaRowClass,
+						pulsingRows.has(track.key) && 'live-row-pulse',
 						track.chapterSummary &&
 							'cursor-pointer border-t-4 border-border [&>td]:border-t-4 [&>td]:border-border'
 					)}
@@ -147,11 +171,7 @@
 					</Table.Cell>
 					<Table.Cell class="text-right">
 						<span class="inline-flex justify-end gap-1">
-							<MediaFileFulfillmentActions
-								row={track}
-								{canManage}
-								onFulfillmentAction={(request) => onFulfillmentAction(row, request)}
-							/>
+							<MediaFileFulfillmentActions row={track} {canManage} {pendingFulfillmentActionKeys} onFulfillmentAction={(request) => onFulfillmentAction(row, request)} />
 							<MediaFileDeleteTrackButton {track} {canManage} onRequestDelete={requestDelete} />
 						</span>
 					</Table.Cell>
@@ -165,19 +185,6 @@
 	</Table.Root>
 </div>
 
-<Dialog.Root open={!!deleteTarget} onOpenChange={(open) => !open && (deleteTarget = undefined)}>
-	<Dialog.Content>
-		<Dialog.Header>
-			<Dialog.Title>Delete embedded track</Dialog.Title>
-			<Dialog.Description>
-				{deleteTarget ? deleteDescription(deleteTarget) : ''}
-			</Dialog.Description>
-		</Dialog.Header>
-		<Dialog.Footer>
-			<Button type="button" variant="outline" onclick={() => (deleteTarget = undefined)}>
-				Cancel
-			</Button>
-			<Button type="button" variant="destructive" onclick={confirmDelete}>Delete</Button>
-		</Dialog.Footer>
-	</Dialog.Content>
-</Dialog.Root>
+{#if deleteTarget}
+	<MediaFileTrackDeleteDialog track={deleteTarget} onCancel={() => (deleteTarget = undefined)} onConfirm={confirmDelete} />
+{/if}

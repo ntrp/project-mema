@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"media-manager/internal/events"
 	"media-manager/internal/satisfaction"
@@ -66,7 +65,7 @@ func executeAudioTranscodeTrack(
 		publishFulfillmentExecutionError(ctx, settings, eventBroker, targets.OperationAudioTranscode, item, args, err)
 		return err
 	}
-	policy, err := audioTranscodePolicy(ctx, settings, item)
+	policy, err := audioTranscodePolicy(ctx, settings, item, args.Manual && args.TrackID != "")
 	if err != nil {
 		publishFulfillmentExecutionError(ctx, settings, eventBroker, targets.OperationAudioTranscode, item, args, err)
 		return err
@@ -93,14 +92,7 @@ func executeAudioTranscodeTrack(
 		return err
 	}
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Audio transcode started", details)
-	_, err = mediatools.RunOutput(ctx, mediatools.CommandSpec{
-		Name:           "ffmpeg",
-		Args:           argsList,
-		Timeout:        2 * time.Hour,
-		MaxOutputBytes: 64 * 1024,
-		MaxStderrBytes: 128 * 1024,
-	})
-	if err != nil {
+	if err := runAudioTranscodeCommand(ctx, settings, eventBroker, item, track, argsList); err != nil {
 		publishFulfillmentExecutionError(ctx, settings, eventBroker, targets.OperationAudioTranscode, item, args, err)
 		return err
 	}
@@ -136,7 +128,15 @@ func audioConversionInputForTrack(
 	}
 }
 
-func audioTranscodePolicy(ctx context.Context, settings *storage.SettingsStore, item storage.MediaItem) (string, error) {
+func audioTranscodePolicy(
+	ctx context.Context,
+	settings *storage.SettingsStore,
+	item storage.MediaItem,
+	manualTrackAction bool,
+) (string, error) {
+	if manualTrackAction {
+		return "manual", nil
+	}
 	if item.QualityProfileID == nil || strings.TrimSpace(*item.QualityProfileID) == "" {
 		return "disabled", nil
 	}

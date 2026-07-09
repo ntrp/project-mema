@@ -15,6 +15,7 @@
 		row,
 		activityStatus,
 		canManage,
+		pendingFulfillmentActionKeys = [],
 		searching,
 		fileLabel = 'Episode file',
 		missingLabel = 'No matched file for this episode',
@@ -127,11 +128,18 @@
 	</div>
 
 	{#if row.exists && detailsOpen}
-		<MediaFileDetailsAccordion {row} {canManage} {onDeleteTrack} {onFulfillmentAction} />
+		<MediaFileDetailsAccordion
+			{row}
+			{canManage}
+			{pendingFulfillmentActionKeys}
+			{onDeleteTrack}
+			{onFulfillmentAction}
+		/>
 	{/if}
 	<MediaFileOtherFilesPanel
 		{row}
 		{canManage}
+		{pendingFulfillmentActionKeys}
 		onSearch={(languageId) => onSearchSubtitle(row, languageId)}
 		onManualSearch={(languageId) => onManualSubtitleSearch(row, languageId)}
 		{onDeleteSubtitle}

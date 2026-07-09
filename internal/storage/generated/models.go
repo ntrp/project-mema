@@ -522,6 +522,7 @@ type AppMediaFileTrack struct {
 	LanguageID      pgtype.Text
 	Codec           pgtype.Text
 	Channels        pgtype.Text
+	DurationMs      pgtype.Int8
 	BitrateKbps     pgtype.Int4
 	Width           pgtype.Int4
 	Height          pgtype.Int4

@@ -52,6 +52,7 @@ export interface HomeAreaProps {
 	deletingMediaItemId?: string;
 	assemblingMediaItemId?: string;
 	reviewingComponentDecisionId?: string;
+	pendingFulfillmentActionKeys?: string[];
 	cancellingActivityId?: string;
 	deletingActivityId?: string;
 	deletingReleaseBlocklistId?: string;

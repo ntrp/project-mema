@@ -147,7 +147,13 @@ download, subtitle embed, subtitle extraction, and subtitle conversion. These
 schedules are registered disabled by default so administrators can opt into
 background repair work one operation at a time. Manual media actions use
 `POST /media/items/{id}/fulfillment-actions` with the same operation type and
-media/file/track context, then enqueue the corresponding worker kind.
+media/file/track context, then enqueue the corresponding worker kind. Profile
+audio conversion policy is enforced for automatic audio fulfillment; manual
+track-scoped audio transcode actions bypass that policy because the user has
+selected the specific track and operation. The scheduled audio transcode worker
+does not rewrite files directly: it scans tracks, checks the profile conversion
+policy for each required conversion, and queues a track-scoped one-shot
+transcode job for every eligible track.
 
 The API contract exposes rollup and satisfaction data separately. Media item
 and media file payloads can carry a `rollup` summary with the aggregate state,
@@ -205,9 +211,10 @@ Configured video target fields can either add score or reject the release when
 the field is marked required.
 
 File-time video state is calculated by `internal/satisfaction` from persisted
-media file facts, persisted video track rows, profile quality order, final
-container, and video target settings. Live filesystem discovery does not
-participate in satisfaction; imports and rescans must persist file facts first.
+media file facts, persisted video track rows (including track duration), profile
+quality order, final container, and video target settings. Live filesystem
+discovery does not participate in satisfaction; imports and rescans must persist
+file facts first.
 
 No persisted file or no persisted video track returns `missing`. A known
 quality, selected-quality resolution, codec, HDR, pixel format, or container
@@ -221,7 +228,7 @@ than the persisted quality.
 ## Audio Satisfaction
 
 Audio satisfaction is calculated by `internal/satisfaction` from persisted audio
-track facts and profile audio targets.
+track facts, including track duration, and profile audio targets.
 
 If no file exists, audio is missing. If the file has no audio tracks, audio is
 missing. Otherwise each target is matched against detected audio tracks by

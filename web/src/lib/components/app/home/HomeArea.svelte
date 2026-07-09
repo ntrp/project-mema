@@ -37,6 +37,7 @@
 		deletingMediaItemId,
 		assemblingMediaItemId,
 		reviewingComponentDecisionId,
+		pendingFulfillmentActionKeys = [],
 		cancellingActivityId,
 		deletingActivityId,
 		deletingReleaseBlocklistId,
@@ -136,6 +137,7 @@
 				{deletingMediaItemId}
 				{assemblingMediaItemId}
 				{reviewingComponentDecisionId}
+				{pendingFulfillmentActionKeys}
 				{canManage}
 				actionLabel={canManage ? 'Add' : 'Request'}
 				{onAutoSearchMedia}

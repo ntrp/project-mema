@@ -40,6 +40,11 @@ func DecideAudioConversion(input AudioConversionInput) AudioConversionDecision {
 		return decision
 	}
 	switch input.Policy {
+	case "manual":
+		decision.Allowed = true
+		decision.Status = "allowed"
+		decision.Reason = "Manual audio conversion requested."
+		return decision
 	case "losslessToLossy":
 		if audioCodecIsLossless(input.SourceCodec) {
 			decision.Allowed = true

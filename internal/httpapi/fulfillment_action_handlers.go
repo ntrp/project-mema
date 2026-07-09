@@ -74,6 +74,7 @@ func (s *Server) EnqueueMediaFulfillmentAction(w http.ResponseWriter, r *http.Re
 		TrackID:            trackID,
 		OtherFileID:        otherFileID,
 		ExternalSubtitleID: externalSubtitleID,
+		Manual:             true,
 	}
 	jobID, err := s.jobs.EnqueueFulfillmentAction(r.Context(), string(body.Operation), args)
 	if err != nil {

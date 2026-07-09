@@ -81,7 +81,7 @@ dev-watch:
 	./scripts/dev-watch.sh
 
 dev-web:
-	cd web && pnpm exec vite dev --host 127.0.0.1 --port 15173
+	cd web && NVIM_LISTEN_ADDRESS=/tmp/project-mema.nvim LAUNCH_EDITOR=/Users/ntrp/_pws/project-mema/scripts/open-in-nvim.sh pnpm exec vite dev --host 0.0.0.0 --port 15173
 
 docs-install:
 	cd docs/website && pnpm install

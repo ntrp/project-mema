@@ -92,7 +92,9 @@ when your profile accurately describes every language you want to keep.
 
 Lossy audio conversion controls how willing the app should be to convert audio
 when a target codec is requested. Keep conversion disabled unless you know you
-want the app to create different audio tracks.
+want the app to create different audio tracks. This setting controls automatic
+jobs only; manual audio conversion actions are explicit one-off choices and can
+still run when profile conversion is disabled.
 
 ## Subtitle Targets
 

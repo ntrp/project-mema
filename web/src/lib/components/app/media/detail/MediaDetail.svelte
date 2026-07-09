@@ -43,6 +43,7 @@
 		addingKey,
 		deletingMediaItemId,
 		canManage,
+		pendingFulfillmentActionKeys = [],
 		actionLabel,
 		onAutoSearchMedia,
 		onSearchMediaSubtitle = () => {},
@@ -130,6 +131,7 @@
 								{searchingItemId}
 								{grabbingKey}
 								{canManage}
+								{pendingFulfillmentActionKeys}
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
 								onSearchSubtitle={onSearchMediaSubtitle}
@@ -155,6 +157,7 @@
 								{scanningMediaItemId}
 								{grabbingKey}
 								{canManage}
+								{pendingFulfillmentActionKeys}
 								onSaveOptions={onSaveMediaItemOptions}
 								onAutoSearch={onAutoSearchMedia}
 								{onRescanMediaFiles}

@@ -39,11 +39,11 @@ you expect.
 ## Background Jobs Look Stuck
 
 Open System > Jobs to see fixed scheduled jobs, current one-shot jobs, and
-execution history. Fixed schedules can be run now, paused, or resumed from that
-page. The schedule table groups automatic jobs by category and shows whether
-the automatic path is enabled. Disabling a schedule stops future automatic runs,
-while manual runs and media-level manual actions remain available. Running or
-queued executions can be aborted from the row actions.
+finished execution history. Fixed schedules can be run now, paused, or resumed
+from that page. The schedule table groups automatic jobs by category and shows
+whether the automatic path is enabled. Disabling a schedule stops future
+automatic runs, while manual runs and media-level manual actions remain
+available. Running or queued executions can be aborted from the row actions.
 
 Automatic job intervals can be edited from the fixed schedules table. If
 activity is too chatty or too slow, change the interval and save it from the

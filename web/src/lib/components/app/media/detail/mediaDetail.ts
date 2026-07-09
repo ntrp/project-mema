@@ -37,6 +37,7 @@ export interface MediaDetailProps {
 	deletingMediaItemId?: string;
 	assemblingMediaItemId?: string;
 	reviewingComponentDecisionId?: string;
+	pendingFulfillmentActionKeys?: string[];
 	canManage: boolean;
 	actionLabel: string;
 	onAutoSearchMedia: (_item: MediaItem) => void;

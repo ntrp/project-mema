@@ -24,6 +24,7 @@ export interface MediaFileSummaryProps {
 	row: MediaFileRow;
 	activityStatus?: ActivityQueueStatus;
 	canManage: boolean;
+	pendingFulfillmentActionKeys?: string[];
 	searching: boolean;
 	fileLabel?: string;
 	missingLabel?: string;
@@ -55,6 +56,7 @@ export interface MediaFilesTableProps {
 	scanningMediaItemId?: string;
 	grabbingKey?: string;
 	canManage: boolean;
+	pendingFulfillmentActionKeys?: string[];
 	libraryFolders: LibraryFolder[];
 	languages: Language[];
 	qualityProfiles: QualityProfileOption[];

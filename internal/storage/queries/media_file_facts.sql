@@ -59,6 +59,7 @@ insert into app.media_file_tracks (
     language_id,
     codec,
     channels,
+    duration_ms,
     bitrate_kbps,
     width,
     height,
@@ -86,10 +87,11 @@ insert into app.media_file_tracks (
     $15,
     $16,
     $17,
+    $18,
     sqlc.arg(disposition)::jsonb
 )
 returning id, media_file_fact_id, media_item_id, file_path, stream_index, track_type,
-    language_id, codec, channels, bitrate_kbps, width, height, hdr_format, pixel_format,
+    language_id, codec, channels, duration_ms, bitrate_kbps, width, height, hdr_format, pixel_format,
     bit_depth, format, title, disposition, created_at, updated_at;
 
 -- name: ListMediaFileFactsForItem :many
@@ -102,7 +104,7 @@ order by file_path;
 
 -- name: ListMediaFileTracksForItem :many
 select id, media_file_fact_id, media_item_id, file_path, stream_index, track_type,
-    language_id, codec, channels, bitrate_kbps, width, height, hdr_format, pixel_format,
+    language_id, codec, channels, duration_ms, bitrate_kbps, width, height, hdr_format, pixel_format,
     bit_depth, format, title, disposition, created_at, updated_at
 from app.media_file_tracks
 where media_item_id = $1

@@ -109,6 +109,7 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 			upsertIndexerSearchCache: events.upsertIndexerSearchCache,
 			upsertMetadataCache: events.upsertMetadataCache,
 			appendMetadataSearchHistory: events.appendMetadataSearchHistory,
+			updateFulfillmentJobExecution: mediaFulfillment.updateFulfillmentJobExecution,
 			parseEventData: events.parseEventData
 		}
 	});

@@ -7,8 +7,12 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/rivertype"
+
+	"media-manager/internal/events"
+	"media-manager/internal/storage"
 )
 
 var (
@@ -58,10 +62,10 @@ func (c *Client) EnqueueFixedSchedule(ctx context.Context, scheduleID string) (i
 		"app:manual_schedule_run": true,
 		"app:system_schedule_id":  definition.ID,
 	})
-	result, err := c.river.Insert(ctx, definition.args(), &river.InsertOpts{
-		Queue:    definition.Queue,
-		Metadata: metadata,
-		UniqueOpts: river.UniqueOpts{
+	result, err := c.river.Insert(ctx, definition.args(), jobInsertOptsWithMetadataAndUnique(
+		definition.Queue,
+		metadata,
+		river.UniqueOpts{
 			ByQueue: true,
 			ByState: []rivertype.JobState{
 				rivertype.JobStateAvailable,
@@ -71,7 +75,7 @@ func (c *Client) EnqueueFixedSchedule(ctx context.Context, scheduleID string) (i
 				rivertype.JobStateRetryable,
 			},
 		},
-	})
+	))
 	if err != nil {
 		return 0, err
 	}
@@ -80,12 +84,12 @@ func (c *Client) EnqueueFixedSchedule(ctx context.Context, scheduleID string) (i
 }
 
 func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID, query string) (int64, error) {
-	result, err := c.river.Insert(ctx, ReleaseSearchArgs{MediaItemID: mediaItemID.String(), Query: strings.TrimSpace(query)}, &river.InsertOpts{
-		Queue: queueMediaSearch,
-		UniqueOpts: river.UniqueOpts{
+	result, err := c.river.Insert(ctx, ReleaseSearchArgs{MediaItemID: mediaItemID.String(), Query: strings.TrimSpace(query)}, jobInsertOptsWithUnique(
+		queueMediaSearch,
+		river.UniqueOpts{
 			ByArgs: true,
 		},
-	})
+	))
 	if err != nil {
 		return 0, err
 	}
@@ -94,12 +98,12 @@ func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID
 }
 
 func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid.UUID) (int64, error) {
-	result, err := c.river.Insert(ctx, AutoSearchDownloadArgs{MediaItemID: mediaItemID.String()}, &river.InsertOpts{
-		Queue: queueMediaSearch,
-		UniqueOpts: river.UniqueOpts{
+	result, err := c.river.Insert(ctx, AutoSearchDownloadArgs{MediaItemID: mediaItemID.String()}, jobInsertOptsWithUnique(
+		queueMediaSearch,
+		river.UniqueOpts{
 			ByArgs: true,
 		},
-	})
+	))
 	if err != nil {
 		return 0, err
 	}
@@ -108,12 +112,12 @@ func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid
 }
 
 func (c *Client) EnqueueSubtitleSearch(ctx context.Context, args SubtitleSearchArgs) (int64, error) {
-	result, err := c.river.Insert(ctx, args, &river.InsertOpts{
-		Queue: queueMediaSearch,
-		UniqueOpts: river.UniqueOpts{
+	result, err := c.river.Insert(ctx, args, jobInsertOptsWithUnique(
+		queueMediaSearch,
+		river.UniqueOpts{
 			ByArgs: true,
 		},
-	})
+	))
 	if err != nil {
 		return 0, err
 	}
@@ -122,12 +126,12 @@ func (c *Client) EnqueueSubtitleSearch(ctx context.Context, args SubtitleSearchA
 }
 
 func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (int64, error) {
-	result, err := c.river.Insert(ctx, args, &river.InsertOpts{
-		Queue: queueDownloads,
-		UniqueOpts: river.UniqueOpts{
+	result, err := c.river.Insert(ctx, args, jobInsertOptsWithUnique(
+		queueDownloads,
+		river.UniqueOpts{
 			ByArgs: true,
 		},
-	})
+	))
 	if err != nil {
 		return 0, err
 	}
@@ -136,12 +140,12 @@ func (c *Client) EnqueueGrabRelease(ctx context.Context, args GrabReleaseArgs) (
 }
 
 func (c *Client) EnqueueMediaComponentExtraction(ctx context.Context, artifactID uuid.UUID) (int64, error) {
-	result, err := c.river.Insert(ctx, MediaComponentExtractionArgs{ArtifactID: artifactID.String()}, &river.InsertOpts{
-		Queue: queueMediaAssembly,
-		UniqueOpts: river.UniqueOpts{
+	result, err := c.river.Insert(ctx, MediaComponentExtractionArgs{ArtifactID: artifactID.String()}, jobInsertOptsWithUnique(
+		queueMediaAssembly,
+		river.UniqueOpts{
 			ByArgs: true,
 		},
-	})
+	))
 	if err != nil {
 		return 0, err
 	}
@@ -150,12 +154,12 @@ func (c *Client) EnqueueMediaComponentExtraction(ctx context.Context, artifactID
 }
 
 func (c *Client) EnqueueMediaComponentMux(ctx context.Context, runID uuid.UUID) (int64, error) {
-	result, err := c.river.Insert(ctx, MediaComponentMuxArgs{RunID: runID.String()}, &river.InsertOpts{
-		Queue: queueMediaAssembly,
-		UniqueOpts: river.UniqueOpts{
+	result, err := c.river.Insert(ctx, MediaComponentMuxArgs{RunID: runID.String()}, jobInsertOptsWithUnique(
+		queueMediaAssembly,
+		river.UniqueOpts{
 			ByArgs: true,
 		},
-	})
+	))
 	if err != nil {
 		return 0, err
 	}
@@ -168,17 +172,29 @@ func (c *Client) EnqueueFulfillmentAction(
 	operation string,
 	args FulfillmentActionArgs,
 ) (int64, error) {
+	return enqueueFulfillmentAction(ctx, c.river, c.settings, c.events, operation, args)
+}
+
+func enqueueFulfillmentAction(
+	ctx context.Context,
+	riverClient *river.Client[pgx.Tx],
+	settings *storage.SettingsStore,
+	eventBroker *events.Broker,
+	operation string,
+	args FulfillmentActionArgs,
+) (int64, error) {
+	if riverClient == nil {
+		return 0, errors.New("fulfillment enqueue unavailable")
+	}
 	jobArgs, queue, err := fulfillmentJobArgs(operation, args)
 	if err != nil {
 		return 0, err
 	}
-	result, err := c.river.Insert(ctx, jobArgs, &river.InsertOpts{
-		Queue: queue,
-	})
+	result, err := riverClient.Insert(ctx, jobArgs, jobInsertOpts(queue))
 	if err != nil {
 		return 0, err
 	}
-	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
+	recordJobUpdated(ctx, settings, eventBroker, result.Job, "")
 	return result.Job.ID, nil
 }
 

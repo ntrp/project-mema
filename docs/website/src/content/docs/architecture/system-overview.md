@@ -14,7 +14,8 @@ description: Runtime architecture and repository layout.
 - River runs background jobs.
 - System job schedules, execution snapshots, and per-run structured logs are
   stored in PostgreSQL so the System > Jobs view can show fixed schedules,
-  one-shot work, and execution history independently from River's queue table.
+  active one-shot work, and finished execution history independently from
+  River's queue table.
 - Metadata, indexer, subtitle, and download-client services integrate with
   external providers.
 - Media tools inspect and modify local files.
@@ -53,7 +54,9 @@ execution logs in `app.system_job_execution_logs`. Execution rows keep
 structured progress data alongside the progress label and percent. Progress data
 can identify media item, media title, file path, target, phase, unit counts,
 timestamps, and pending provider or tool operation when a worker knows those
-fields. Fixed scheduled jobs are registered from the application catalog and synchronized into
+fields. Jobs are currently inserted with one maximum attempt, so worker failures
+are surfaced directly instead of River retrying them. Fixed scheduled jobs are
+registered from the application catalog and synchronized into
 `app.system_job_schedules`, where category, description, automatic/manual flags,
 pause state, and interval settings are persisted.
 

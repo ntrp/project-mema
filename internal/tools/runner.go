@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -21,6 +22,11 @@ type CommandSpec struct {
 	Timeout        time.Duration
 	MaxOutputBytes int64
 	MaxStderrBytes int64
+}
+
+type ProgressCommandSpec struct {
+	CommandSpec
+	Progress func(string)
 }
 
 func LookPath(name string) (string, error) {
@@ -52,6 +58,60 @@ func RunOutput(ctx context.Context, spec CommandSpec) ([]byte, error) {
 		return stdout.Bytes(), ErrOutputLimit
 	}
 	return stdout.Bytes(), nil
+}
+
+func RunOutputProgress(ctx context.Context, spec ProgressCommandSpec) ([]byte, error) {
+	if spec.Progress == nil {
+		return RunOutput(ctx, spec.CommandSpec)
+	}
+	if err := validateToolName(spec.Name); err != nil {
+		return nil, err
+	}
+	if spec.Timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, spec.Timeout)
+		defer cancel()
+	}
+	cmd := exec.CommandContext(ctx, spec.Name, spec.Args...)
+	cmd.Env = mediaToolEnv()
+	stderr := newLimitedBuffer(spec.MaxStderrBytes)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	cmd.Stderr = stderr
+	if err := cmd.Start(); err != nil {
+		return nil, err
+	}
+	output, readErr := readProgressOutput(stdout, spec.MaxOutputBytes, spec.Progress)
+	waitErr := cmd.Wait()
+	if readErr != nil {
+		return output, readErr
+	}
+	if waitErr != nil {
+		return output, toolRunError(ctx, waitErr, stderr)
+	}
+	if stderr.Limited() {
+		return output, ErrOutputLimit
+	}
+	return output, nil
+}
+
+func readProgressOutput(stdout io.Reader, maxOutputBytes int64, progress func(string)) ([]byte, error) {
+	output := newLimitedBuffer(maxOutputBytes)
+	scanner := bufio.NewScanner(stdout)
+	for scanner.Scan() {
+		line := scanner.Text()
+		_, _ = output.Write(append([]byte(line), '\n'))
+		progress(line)
+	}
+	if err := scanner.Err(); err != nil {
+		return output.Bytes(), err
+	}
+	if output.Limited() {
+		return output.Bytes(), ErrOutputLimit
+	}
+	return output.Bytes(), nil
 }
 
 func RunStream(ctx context.Context, name string, args []string, stdout io.Writer, maxStderrBytes int64) error {

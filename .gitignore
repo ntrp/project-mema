@@ -23,6 +23,7 @@ docs/website/node_modules/
 .pnpm-store/
 
 # Local verification artifacts
+.tmp/
 .playwright-cli/
 output/playwright/
 

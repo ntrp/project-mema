@@ -32,6 +32,7 @@
 		searchingItemId,
 		grabbingKey,
 		canManage,
+		pendingFulfillmentActionKeys = [],
 		libraryFolders,
 		languages,
 		qualityProfiles,
@@ -138,6 +139,7 @@
 										row={file.row}
 										activityStatus={file.activityStatus}
 										{canManage}
+										{pendingFulfillmentActionKeys}
 										searching={searchingItemId === item.id}
 										onAutoSearch={() => onAutoSearch(item)}
 										onManualSearch={() => (searchContext = episodeReleaseSearchContext(file.row))}

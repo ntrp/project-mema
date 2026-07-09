@@ -248,13 +248,14 @@ limit sqlc.arg(row_limit);
 select *
 from app.system_job_executions
 where (cardinality(sqlc.arg(states)::text[]) = 0 or status = any(sqlc.arg(states)::text[]))
+    and status in ('completed', 'cancelled', 'discarded')
     and (sqlc.arg(schedule_id)::text = '' or coalesce(schedule_id, '') = sqlc.arg(schedule_id)::text)
     and (sqlc.arg(kind)::text = '' or kind = sqlc.arg(kind)::text)
     and (sqlc.arg(queue)::text = '' or queue = sqlc.arg(queue)::text)
     and (
         sqlc.arg(include_routine)::bool
         or history_policy <> 'routine'
-        or status in ('retryable', 'cancelled', 'discarded')
+        or status in ('cancelled', 'discarded')
     )
     and (sqlc.narg(before)::timestamptz is null or updated_at < sqlc.narg(before)::timestamptz)
     and (

@@ -1,4 +1,4 @@
-import type { DownloadActivity, SystemEvent } from '$lib/settings/types';
+import type { DownloadActivity, SystemEvent, SystemJobExecution } from '$lib/settings/types';
 import type { createEventActions } from './events';
 import type { AppShellState } from './state.svelte';
 
@@ -12,6 +12,7 @@ export interface EventConnectionDeps {
 	upsertIndexerSearchCache: EventActions['upsertIndexerSearchCache'];
 	upsertMetadataCache: EventActions['upsertMetadataCache'];
 	appendMetadataSearchHistory: EventActions['appendMetadataSearchHistory'];
+	updateFulfillmentJobExecution: (_execution: SystemJobExecution) => void;
 	parseEventData: EventActions['parseEventData'];
 }
 
@@ -31,6 +32,19 @@ export function connectAppEvents(state: AppShellState, deps: EventConnectionDeps
 	source.addEventListener('system.event.created', (event) => {
 		const systemEvent = deps.parseEventData<SystemEvent>(event);
 		if (systemEvent?.category === 'subtitles' || systemEvent?.category === 'media') {
+			void deps.loadMediaItems();
+		}
+	});
+	source.addEventListener('system.job.execution.updated', (event) => {
+		const execution = deps.parseEventData<SystemJobExecution>(event);
+		if (!execution) return;
+		deps.updateFulfillmentJobExecution(execution);
+		if (
+			execution.kind.startsWith('media.fulfillment.') &&
+			(execution.status === 'completed' ||
+				execution.status === 'cancelled' ||
+				execution.status === 'discarded')
+		) {
 			void deps.loadMediaItems();
 		}
 	});

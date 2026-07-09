@@ -48,6 +48,7 @@
 	deletingMediaItemId={app.deletingMediaItemId}
 	assemblingMediaItemId={app.assemblingMediaItemId}
 	reviewingComponentDecisionId={app.reviewingComponentDecisionId}
+	pendingFulfillmentActionKeys={Object.keys(app.pendingFulfillmentActions ?? {})}
 	cancellingActivityId={app.cancellingActivityId}
 	deletingActivityId={app.deletingActivityId}
 	deletingReleaseBlocklistId={app.deletingReleaseBlocklistId}

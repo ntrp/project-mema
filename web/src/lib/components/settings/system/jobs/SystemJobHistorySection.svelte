@@ -1,4 +1,5 @@
 <script lang="ts">
+	import LivePulseDot from '$lib/components/shared/LivePulseDot.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
@@ -61,7 +62,9 @@
 <Card.Root>
 	<Card.Header>
 		<div>
-			<Card.Description>Filtered execution history</Card.Description>
+			<Card.Description class="flex items-center gap-2">
+				<LivePulseDot /><span>Live</span>
+			</Card.Description>
 			<Card.Title>Execution History</Card.Title>
 		</div>
 		<Card.Action>

@@ -129,6 +129,7 @@ func trackFromStream(stream ffprobeStream) (Track, bool) {
 		Codec:         optionalString(stream.CodecName),
 		Language:      optionalString(languageTag(stream.Tags)),
 		Title:         optionalString(stream.Tags["title"]),
+		Duration:      optionalTrackDuration(stream),
 		BitRate:       streamBitRate(stream),
 		ChannelLayout: optionalString(stream.ChannelLayout),
 		FrameRate:     optionalString(normalFrameRate(stream.FrameRate)),
@@ -138,6 +139,14 @@ func trackFromStream(stream ffprobeStream) (Track, bool) {
 		Profile:       optionalString(stream.Profile),
 		Channels:      optionalInt(stream.Channels),
 	}, true
+}
+
+func optionalTrackDuration(stream ffprobeStream) *float64 {
+	duration := streamDurationSeconds(stream)
+	if duration <= 0 {
+		return nil
+	}
+	return &duration
 }
 
 func streamBitRate(stream ffprobeStream) *string {

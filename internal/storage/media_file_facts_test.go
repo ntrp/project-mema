@@ -35,6 +35,7 @@ func TestUpsertMediaFileFactPersistsProbeTracksForSatisfaction(t *testing.T) {
 	item := rescanMediaItem(t, ctx, store)
 	path := filepath.Join(*item.MediaFolderPath, "Scenario.Movie.2026.1080p-ARR.mkv")
 	bitrate := int32(768)
+	duration := int64(7_200_500)
 	width := int32(1920)
 
 	_, err := store.UpsertMediaFileFact(ctx, MediaFileFactInput{
@@ -44,8 +45,8 @@ func TestUpsertMediaFileFactPersistsProbeTracksForSatisfaction(t *testing.T) {
 		ContainerFormatName: stringPtr("Matroska / WebM"),
 		SourceKind:          "probe",
 		Tracks: []MediaFileTrackFactInput{
-			{StreamIndex: 0, TrackType: "video", Codec: stringPtr("h264"), Width: &width},
-			{StreamIndex: 1, TrackType: "audio", LanguageID: stringPtr("english"), Codec: stringPtr("aac"), BitrateKbps: &bitrate},
+			{StreamIndex: 0, TrackType: "video", Codec: stringPtr("h264"), Width: &width, DurationMs: &duration},
+			{StreamIndex: 1, TrackType: "audio", LanguageID: stringPtr("english"), Codec: stringPtr("aac"), BitrateKbps: &bitrate, DurationMs: &duration},
 		},
 	})
 	if err != nil {
@@ -61,6 +62,12 @@ func TestUpsertMediaFileFactPersistsProbeTracksForSatisfaction(t *testing.T) {
 	}
 	if facts[0].Tracks[1].LanguageID == nil || *facts[0].Tracks[1].LanguageID != "english" {
 		t.Fatalf("audio track facts = %#v", facts[0].Tracks)
+	}
+	if facts[0].Tracks[0].DurationMs == nil || *facts[0].Tracks[0].DurationMs != duration {
+		t.Fatalf("video track duration = %#v", facts[0].Tracks[0].DurationMs)
+	}
+	if facts[0].Tracks[1].DurationMs == nil || *facts[0].Tracks[1].DurationMs != duration {
+		t.Fatalf("audio track duration = %#v", facts[0].Tracks[1].DurationMs)
 	}
 }
 

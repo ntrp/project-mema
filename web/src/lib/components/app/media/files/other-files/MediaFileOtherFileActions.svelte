@@ -23,6 +23,7 @@
 		languageId?: string;
 		subtitleMode: 'embedded' | 'external' | 'mixed';
 		canManage: boolean;
+		pendingFulfillmentActionKeys?: string[];
 		canSearch: boolean;
 		onSearch: (_languageId?: string) => void | Promise<void>;
 		onManualSearch: (_languageId?: string) => void;
@@ -40,6 +41,7 @@
 		languageId,
 		subtitleMode,
 		canManage,
+		pendingFulfillmentActionKeys = [],
 		canSearch,
 		onSearch,
 		onManualSearch,
@@ -52,6 +54,7 @@
 		file.type === 'subtitle'
 			? {
 					key: file.path,
+					filePath: undefined,
 					otherFileId: file.id,
 					trackNumber: '-',
 					type: 'subtitle',
@@ -76,7 +79,12 @@
 <span class="flex min-h-8 min-w-0 flex-wrap items-center gap-2 lg:justify-end">
 	{#if file.type === 'subtitle'}
 		{#if fulfillmentRow}
-			<MediaFileFulfillmentActions row={fulfillmentRow} {canManage} {onFulfillmentAction} />
+			<MediaFileFulfillmentActions
+				row={fulfillmentRow}
+				{canManage}
+				{pendingFulfillmentActionKeys}
+				{onFulfillmentAction}
+			/>
 		{/if}
 		<Tooltip.Root>
 			<Tooltip.Trigger>

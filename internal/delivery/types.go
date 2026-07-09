@@ -36,6 +36,7 @@ type Track struct {
 	Codec         *string
 	Language      *string
 	Title         *string
+	Duration      *float64
 	BitRate       *string
 	ChannelLayout *string
 	FrameRate     *string

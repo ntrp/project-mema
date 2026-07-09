@@ -1291,6 +1291,7 @@ create table if not exists app.media_file_tracks (
     language_id text,
     codec text,
     channels text,
+    duration_ms bigint check (duration_ms is null or duration_ms >= 0),
     bitrate_kbps integer check (bitrate_kbps is null or bitrate_kbps >= 0),
     width integer check (width is null or width >= 0),
     height integer check (height is null or height >= 0),

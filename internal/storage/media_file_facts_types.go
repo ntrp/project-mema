@@ -35,6 +35,7 @@ type MediaFileTrackFact struct {
 	LanguageID      *string
 	Codec           *string
 	Channels        *string
+	DurationMs      *int64
 	BitrateKbps     *int32
 	Width           *int32
 	Height          *int32
@@ -70,6 +71,7 @@ type MediaFileTrackFactInput struct {
 	LanguageID  *string
 	Codec       *string
 	Channels    *string
+	DurationMs  *int64
 	BitrateKbps *int32
 	Width       *int32
 	Height      *int32

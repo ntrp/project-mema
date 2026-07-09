@@ -197,6 +197,7 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 	decisionEngine := decisions.NewEngine()
 	importService := imports.NewService(settings)
 	subtitleService := subtitles.NewService(nil)
+	var riverClient *river.Client[pgx.Tx]
 	if eventBroker == nil {
 		eventBroker = events.NewBroker()
 	}
@@ -213,15 +214,21 @@ func NewClient(pool *pgxpool.Pool, settings *storage.SettingsStore, indexerServi
 		imports:         importService,
 		subtitles:       subtitleService,
 		events:          eventBroker,
+		enqueueFulfillment: func(ctx context.Context, operation string, args FulfillmentActionArgs) (int64, error) {
+			return enqueueFulfillmentAction(ctx, riverClient, settings, eventBroker, operation, args)
+		},
 	})
 	cleanupLegacyJobs(context.Background(), pool)
+	reconcileActiveJobsNonRetryable(context.Background(), pool)
 
-	riverClient, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
+	var err error
+	riverClient, err = river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{
 			queueMediaSearch:   {MaxWorkers: 2},
 			queueDownloads:     {MaxWorkers: 2},
 			queueMediaAssembly: {MaxWorkers: 2},
 		},
+		MaxAttempts:     nonRetryableJobMaxAttempts,
 		PeriodicJobs:    periodicJobs(settings),
 		SoftStopTimeout: 10 * time.Second,
 		Workers:         workers,

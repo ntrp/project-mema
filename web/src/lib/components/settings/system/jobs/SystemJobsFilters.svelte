@@ -4,16 +4,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import SystemJobsMultiSelect from './SystemJobsMultiSelect.svelte';
 
-	const statuses = [
-		'running',
-		'available',
-		'scheduled',
-		'retryable',
-		'pending',
-		'completed',
-		'cancelled',
-		'discarded'
-	];
+	import { finalStatuses } from './systemJobDisplay';
 
 	interface Option {
 		value: string;
@@ -40,7 +31,7 @@
 		includeRoutine = $bindable()
 	}: Props = $props();
 
-	const statusOptions = statuses.map((status) => ({ value: status, label: status }));
+	const statusOptions = finalStatuses.map((status) => ({ value: status, label: status }));
 </script>
 
 <div class="grid gap-4 rounded-md border border-border p-4">

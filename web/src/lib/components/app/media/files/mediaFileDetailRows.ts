@@ -8,6 +8,7 @@ export type TrackDeleteRequest = Omit<MediaFileTrackDeleteRequest, 'path'>;
 
 export interface MediaFileDetailRow {
 	key: string;
+	filePath?: string;
 	trackId?: string;
 	otherFileId?: string;
 	trackNumber: string;

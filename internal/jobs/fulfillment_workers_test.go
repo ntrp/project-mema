@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 
 	"media-manager/internal/storage"
 	"media-manager/internal/targets"
@@ -39,6 +41,20 @@ func TestFulfillmentSchedulesAreDisabledAndOperationSpecific(t *testing.T) {
 	}
 	if len(want) > 0 {
 		t.Fatalf("missing fulfillment schedule definitions: %#v", want)
+	}
+}
+
+func TestJobInsertOptsAreNonRetryable(t *testing.T) {
+	metadata := []byte(`{"manual":true}`)
+	opts := jobInsertOptsWithMetadataAndUnique(queueMediaSearch, metadata, river.UniqueOpts{
+		ByState: []rivertype.JobState{rivertype.JobStateAvailable},
+	})
+
+	if opts.Queue != queueMediaSearch || opts.MaxAttempts != nonRetryableJobMaxAttempts {
+		t.Fatalf("insert opts = %#v", opts)
+	}
+	if string(opts.Metadata) != string(metadata) || len(opts.UniqueOpts.ByState) != 1 {
+		t.Fatalf("insert opts lost metadata/unique fields: %#v", opts)
 	}
 }
 

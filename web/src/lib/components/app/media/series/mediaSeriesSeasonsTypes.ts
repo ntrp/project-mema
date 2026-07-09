@@ -21,6 +21,7 @@ export interface MediaSeriesSeasonsProps {
 	searchingItemId?: string;
 	grabbingKey?: string;
 	canManage: boolean;
+	pendingFulfillmentActionKeys?: string[];
 	libraryFolders: LibraryFolder[];
 	languages: Language[];
 	qualityProfiles: QualityProfileOption[];

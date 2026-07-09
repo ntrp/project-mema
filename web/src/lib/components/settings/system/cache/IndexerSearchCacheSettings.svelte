@@ -1,6 +1,7 @@
 <script lang="ts">
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
+	import LivePulseDot from '$lib/components/shared/LivePulseDot.svelte';
 	import * as Card from '$lib/components/ui/card';
 	import type { IndexerSearchCacheEntry, IndexerSearchResponse } from '$lib/settings/types';
 	import IndexerSearchCacheTable from './IndexerSearchCacheTable.svelte';
@@ -46,12 +47,7 @@
 		<Card.Header>
 			<div>
 				<Card.Description class="flex items-center gap-2">
-					<span class="relative flex size-2.5">
-						<span
-							class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"
-						></span>
-						<span class="relative inline-flex size-2.5 rounded-full bg-emerald-500"></span>
-					</span>
+					<LivePulseDot />
 					<span>Live</span>
 				</Card.Description>
 				<Card.Title id="indexer-cache-title">Query Cache</Card.Title>
@@ -105,12 +101,7 @@
 		<Card.Header>
 			<div>
 				<Card.Description class="flex items-center gap-2">
-					<span class="relative flex size-2.5">
-						<span
-							class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"
-						></span>
-						<span class="relative inline-flex size-2.5 rounded-full bg-emerald-500"></span>
-					</span>
+					<LivePulseDot />
 					<span>Live</span>
 				</Card.Description>
 				<Card.Title id="indexer-history-title">Query History</Card.Title>

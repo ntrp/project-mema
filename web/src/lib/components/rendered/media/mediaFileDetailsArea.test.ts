@@ -106,6 +106,63 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(missing?.languageId).toBe('german');
 	});
 
+	it('shows transcode only when an existing track has a codec mismatch', () => {
+		const codecMismatch = detailedFileRow();
+		codecMismatch.tracks[1] = {
+			...codecMismatch.tracks[1],
+			state: {
+				visualState: 'partial',
+				statusLabel: 'Partial',
+				details: ['Audio codec does not meet the profile target']
+			}
+		};
+		const channelMismatch = detailedFileRow();
+		channelMismatch.tracks[1] = {
+			...channelMismatch.tracks[1],
+			state: {
+				visualState: 'partial',
+				statusLabel: 'Partial',
+				details: ['Audio channels do not meet the profile target']
+			}
+		};
+
+		expect(
+			renderWithTooltip(MediaFileDetailsAccordion, {
+				row: codecMismatch,
+				canManage: true
+			}).body
+		).toContain('Transcode audio');
+		expect(
+			renderWithTooltip(MediaFileDetailsAccordion, {
+				row: channelMismatch,
+				canManage: true
+			}).body
+		).not.toContain('Transcode audio');
+	});
+
+	it('shows pending fulfillment actions as busy buttons', () => {
+		const row = detailedFileRow();
+		row.tracks[1] = {
+			...row.tracks[1],
+			state: {
+				visualState: 'partial',
+				statusLabel: 'Partial',
+				details: ['Audio codec does not meet the profile target']
+			}
+		};
+
+		const { body } = renderWithTooltip(MediaFileDetailsAccordion, {
+			row,
+			canManage: true,
+			pendingFulfillmentActionKeys: [
+				'audio_transcode|aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa|audio|eng'
+			]
+		});
+
+		expect(body).toContain('aria-busy="true"');
+		expect(body).toContain('animate-spin');
+	});
+
 	it('renders other files with path, type, and subtitle state badges', () => {
 		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
 			row: detailedFileRow(),

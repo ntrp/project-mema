@@ -39,13 +39,20 @@ describe('app shell event connection (SCN-SYSTEM-008)', () => {
 		source.emit('metadata.cache.updated', { data: { entry: { query: 'movie' }, stats: {} } });
 		source.emit('metadata.search.history.created', { data: { id: 'metadata-history-1' } });
 		source.emit('system.event.created', { data: { category: 'media' } });
+		source.emit('system.job.execution.updated', {
+			data: { kind: 'media.fulfillment.audio_transcode', status: 'completed' }
+		});
 
 		expect(dependencies.upsertActivity).toHaveBeenCalledWith({
 			id: 'activity-1',
 			status: 'completed'
 		});
 		expect(dependencies.updateMediaStatusFromActivity).toHaveBeenCalled();
-		expect(dependencies.loadMediaItems).toHaveBeenCalledTimes(2);
+		expect(dependencies.loadMediaItems).toHaveBeenCalledTimes(3);
+		expect(dependencies.updateFulfillmentJobExecution).toHaveBeenCalledWith({
+			kind: 'media.fulfillment.audio_transcode',
+			status: 'completed'
+		});
 		expect(dependencies.appendIndexerSearchHistory).toHaveBeenCalledWith({ id: 'history-1' });
 		expect(dependencies.upsertIndexerSearchCache).toHaveBeenCalledWith({
 			entry: { query: 'movie' },
@@ -87,6 +94,7 @@ function deps(): EventConnectionDeps {
 		upsertIndexerSearchCache: vi.fn(),
 		upsertMetadataCache: vi.fn(),
 		appendMetadataSearchHistory: vi.fn(),
+		updateFulfillmentJobExecution: vi.fn(),
 		parseEventData: vi.fn((event: Event) => JSON.parse((event as MessageEvent<string>).data).data)
 	};
 }

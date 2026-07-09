@@ -17,7 +17,7 @@
 </script>
 
 <Dialog.Root open={!!job} onOpenChange={(open) => !open && onClose()}>
-	<Dialog.Content>
+	<Dialog.Content class="w-[min(300px,calc(100vw-32px))]">
 		<Dialog.Header>
 			<Dialog.Title>Abort job</Dialog.Title>
 			<Dialog.Description>

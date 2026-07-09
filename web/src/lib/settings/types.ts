@@ -135,6 +135,7 @@ export type DownloadActivityStatus = S['DownloadActivity']['status'];
 export type ImportMode = S['ImportMode'];
 export type ManualImportRequest = S['ManualImportRequest'];
 export type JobEnqueueResponse = S['JobEnqueueResponse'];
+export type SystemJobExecution = S['SystemJobExecution'];
 export type MediaFulfillmentActionRequest = S['MediaFulfillmentActionRequest'];
 export type Tag = S['Tag'];
 export type TagRequest = S['TagRequest'];

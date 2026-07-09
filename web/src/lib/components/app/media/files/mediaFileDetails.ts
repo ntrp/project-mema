@@ -45,6 +45,7 @@ export function fileChapterSummaryRow(row: MediaFileRow): MediaFileDetailRow | u
 function trackRow(row: MediaFileRow, track: MediaFileTrack, index: number): MediaFileDetailRow {
 	return {
 		key: `${track.type}-${track.index ?? index}`,
+		filePath: row.path,
 		trackId: track.id,
 		trackNumber: track.index === undefined ? String(index + 1) : String(track.index),
 		type: track.type,
@@ -77,6 +78,7 @@ function missingTrackRows(row: MediaFileRow, type: 'audio' | 'subtitle'): MediaF
 		.filter((track) => track.type === type)
 		.map((track) => ({
 			key: track.key,
+			filePath: row.path,
 			trackNumber: '-',
 			type: track.type,
 			language: displayLanguage(track.language),

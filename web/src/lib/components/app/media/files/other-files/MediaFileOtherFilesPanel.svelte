@@ -20,6 +20,7 @@
 	interface Props {
 		row: MediaFileRow;
 		canManage: boolean;
+		pendingFulfillmentActionKeys?: string[];
 		onSearch?: (_languageId?: string) => void | Promise<void>;
 		onManualSearch?: (_languageId?: string) => void;
 		onDeleteSubtitle?: (_subtitle: MediaItemSubtitle) => void | Promise<void>;
@@ -37,6 +38,7 @@
 	let {
 		row,
 		canManage,
+		pendingFulfillmentActionKeys = [],
 		onSearch = async () => {},
 		onManualSearch = () => {},
 		onDeleteSubtitle = async () => {},
@@ -68,6 +70,7 @@
 		if (!languageId) return undefined;
 		return {
 			key: file.path,
+			filePath: row.path,
 			otherFileId: file.id,
 			trackNumber: '-',
 			type: 'subtitle',
@@ -120,6 +123,7 @@
 					{languageId}
 					{subtitleMode}
 					{canManage}
+					{pendingFulfillmentActionKeys}
 					canSearch={Boolean(row.path)}
 					{onSearch}
 					{onManualSearch}

@@ -61,6 +61,19 @@ func TestAudioConversionPolicyAllowsLossySourceWhenConfigured(t *testing.T) {
 	}
 }
 
+func TestAudioConversionPolicyAllowsManualConversion(t *testing.T) {
+	codec := "eac3"
+	decision := DecideAudioConversion(AudioConversionInput{
+		Policy:      "manual",
+		SourceCodec: "aac",
+		TargetCodec: &codec,
+	})
+
+	if decision.Status != "allowed" || !decision.Allowed {
+		t.Fatalf("decision = %#v", decision)
+	}
+}
+
 func TestFfmpegAudioConversionArgs(t *testing.T) {
 	decision := AudioConversionDecision{
 		Allowed:           true,

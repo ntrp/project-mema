@@ -19,13 +19,14 @@ import (
 )
 
 type workerDependencies struct {
-	settings        *storage.SettingsStore
-	indexers        *indexers.Service
-	downloadClients *downloadclients.Service
-	decisions       decisions.Engine
-	imports         *imports.Service
-	subtitles       *subtitles.Service
-	events          *events.Broker
+	settings           *storage.SettingsStore
+	indexers           *indexers.Service
+	downloadClients    *downloadclients.Service
+	decisions          decisions.Engine
+	imports            *imports.Service
+	subtitles          *subtitles.Service
+	events             *events.Broker
+	enqueueFulfillment fulfillmentEnqueueFunc
 }
 
 type fixedJobDefinition struct {
@@ -64,7 +65,7 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &ComponentExtractionWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &ComponentMuxWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &VideoTranscodeWorker{settings: deps.settings, events: deps.events})
-	river.AddWorker(workers, &AudioTranscodeWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &AudioTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioSourceWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &ContainerRemuxWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &SubtitleDownloadWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
@@ -197,7 +198,7 @@ func periodicJobs(settings *storage.SettingsStore) []*river.PeriodicJob {
 						return nil, nil
 					}
 				}
-				return definition.args(), &river.InsertOpts{Queue: definition.Queue}
+				return definition.args(), jobInsertOpts(definition.Queue)
 			},
 			&river.PeriodicJobOpts{ID: definition.ID},
 		))

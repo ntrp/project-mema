@@ -198,15 +198,15 @@ func TestSCNSystem006RoutineExecutionsAreHiddenFromDefaultHistory(t *testing.T) 
 	if err != nil {
 		t.Fatalf("list default history: %v", err)
 	}
-	if ids(defaultRows) != "203,202" {
-		t.Fatalf("default history ids = %s, want 203,202", ids(defaultRows))
+	if ids(defaultRows) != "203" {
+		t.Fatalf("default history ids = %s, want 203", ids(defaultRows))
 	}
 	withRoutine, err := store.ListSystemJobExecutions(ctx, SystemJobExecutionFilters{Limit: 10, IncludeRoutine: true})
 	if err != nil {
 		t.Fatalf("list routine history: %v", err)
 	}
-	if ids(withRoutine) != "203,202,201" {
-		t.Fatalf("routine history ids = %s, want 203,202,201", ids(withRoutine))
+	if ids(withRoutine) != "203,201" {
+		t.Fatalf("routine history ids = %s, want 203,201", ids(withRoutine))
 	}
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 func fulfillmentActionDetails(operation targets.OperationType, args FulfillmentActionArgs) map[string]any {
-	return map[string]any{
+	details := map[string]any{
 		"operation":          operation,
 		"mediaItemId":        args.MediaItemID,
 		"filePath":           args.FilePath,
@@ -17,6 +17,10 @@ func fulfillmentActionDetails(operation targets.OperationType, args FulfillmentA
 		"otherFileId":        args.OtherFileID,
 		"externalSubtitleId": args.ExternalSubtitleID,
 	}
+	if args.Manual {
+		details["manual"] = true
+	}
+	return details
 }
 
 func fulfillmentTrackCount(item storage.MediaItem) int {

@@ -165,6 +165,7 @@ export class AppShellState {
 	deletingMediaItemId = $state<string | undefined>();
 	assemblingMediaItemId = $state<string | undefined>();
 	reviewingComponentDecisionId = $state<string | undefined>();
+	pendingFulfillmentActions = $state<Record<string, number>>({});
 	cancellingActivityId = $state<string | undefined>();
 	deletingActivityId = $state<string | undefined>();
 	deletingReleaseBlocklistId = $state<string | undefined>();

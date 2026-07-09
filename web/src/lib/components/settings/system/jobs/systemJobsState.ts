@@ -1,5 +1,5 @@
 import type { SystemJobExecution, SystemJobSchedule } from '$lib/settings/types';
-import { activeStatuses } from './systemJobDisplay';
+import { activeStatuses, finalStatuses } from './systemJobDisplay';
 
 export function upsertExecution(list: SystemJobExecution[], execution: SystemJobExecution) {
 	return mergeExecutions(list, [execution]);
@@ -19,8 +19,9 @@ export function sortExecutions(executions: SystemJobExecution[]) {
 }
 
 export function defaultHistoryIncludesExecution(execution: SystemJobExecution) {
+	if (!finalStatuses.includes(execution.status)) return false;
 	if (execution.historyPolicy !== 'routine') return true;
-	return ['retryable', 'cancelled', 'discarded'].includes(execution.status);
+	return ['cancelled', 'discarded'].includes(execution.status);
 }
 
 export function updateOneShotJobs(list: SystemJobExecution[], execution: SystemJobExecution) {

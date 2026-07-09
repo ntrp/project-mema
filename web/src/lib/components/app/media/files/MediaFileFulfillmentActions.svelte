@@ -1,25 +1,36 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import CaptionsIcon from '@lucide/svelte/icons/captions';
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import FileOutputIcon from '@lucide/svelte/icons/file-output';
 	import FileVideoIcon from '@lucide/svelte/icons/file-video';
+	import LoaderCircleIcon from '@lucide/svelte/icons/loader-circle';
 	import MusicIcon from '@lucide/svelte/icons/music';
 	import PackageIcon from '@lucide/svelte/icons/package';
 	import WandIcon from '@lucide/svelte/icons/wand-sparkles';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import type { MediaFileDetailRow } from '$lib/components/app/media/files/mediaFileDetails';
+	import { mediaFulfillmentActionKey } from '$lib/settings/mediaFulfillmentActionKey';
 	import type { MediaFulfillmentActionRequest } from '$lib/settings/types';
 
 	interface Props {
 		row: MediaFileDetailRow;
 		canManage: boolean;
+		pendingFulfillmentActionKeys?: string[];
 		onFulfillmentAction: (_request: MediaFulfillmentActionRequest) => void | Promise<void>;
 	}
 
-	let { row, canManage, onFulfillmentAction }: Props = $props();
+	let { row, canManage, pendingFulfillmentActionKeys = [], onFulfillmentAction }: Props = $props();
+	let pendingAction = $state<string | undefined>();
 
-	type Action = { label: string; request: MediaFulfillmentActionRequest; icon: string };
+	type Action = {
+		key: string;
+		label: string;
+		request: MediaFulfillmentActionRequest;
+		icon: string;
+	};
 
 	const actions = $derived(fulfillmentActions(row));
 
@@ -36,15 +47,17 @@
 		if (matchesOperation(track, 'remux')) {
 			return [action('Remux container', 'container_remux', 'video', track.languageId, 'package')];
 		}
+		if (!hasTargetCodecMismatch(track)) return [];
 		return [action('Transcode video', 'video_transcode', 'video', track.languageId, 'video')];
 	}
 
 	function audioActions(track: MediaFileDetailRow): Action[] {
 		if (track.missing) {
-			return [action('Source audio', 'audio_sourcing', 'audio', track.languageId, 'music')];
+			return [action('Source audio', 'audio_sourcing', 'audio', track.languageId, 'lens')];
 		}
 		if (track.visualState !== 'partial' && track.visualState !== 'pending_operation') return [];
-		return [action('Transcode audio', 'audio_transcode', 'audio', track.languageId, 'music')];
+		if (!hasTargetCodecMismatch(track)) return [];
+		return [action('Transcode audio', 'audio_transcode', 'audio', track.languageId, 'binary')];
 	}
 
 	function subtitleActions(track: MediaFileDetailRow): Action[] {
@@ -77,10 +90,12 @@
 		icon: string
 	): Action {
 		return {
+			key: `${operation}:${row.trackId ?? row.otherFileId ?? row.key}`,
 			label,
 			icon,
 			request: {
 				operation,
+				filePath: row.filePath,
 				targetType,
 				languageId,
 				trackId: row.trackId,
@@ -89,33 +104,61 @@
 		};
 	}
 
+	function actionKey(request: MediaFulfillmentActionRequest) {
+		return mediaFulfillmentActionKey(request);
+	}
+
 	function matchesOperation(track: MediaFileDetailRow, value: string) {
 		return (track.operationLabel ?? '').toLowerCase().includes(value);
 	}
 
-	function clickAction(event: MouseEvent, request: MediaFulfillmentActionRequest) {
+	function hasTargetCodecMismatch(track: MediaFileDetailRow) {
+		return (track.details ?? []).some((detail) => detail.toLowerCase().includes('codec'));
+	}
+
+	function isPending(item: Action) {
+		const key = actionKey(item.request);
+		return pendingAction === key || pendingFulfillmentActionKeys.includes(key);
+	}
+
+	async function clickAction(event: MouseEvent, item: Action) {
 		event.stopPropagation();
-		void onFulfillmentAction(request);
+		if (isPending(item)) {
+			await goto(resolve('/system/jobs'));
+			return;
+		}
+		pendingAction = actionKey(item.request);
+		try {
+			await onFulfillmentAction(item.request);
+		} finally {
+			if (pendingAction === actionKey(item.request)) {
+				pendingAction = undefined;
+			}
+		}
 	}
 </script>
 
 {#if actions.length > 0}
 	<span class="inline-flex justify-end gap-1">
-		{#each actions as item (item.label)}
+		{#each actions as item (item.key)}
 			<Tooltip.Root>
 				<Tooltip.Trigger>
 					{#snippet child({ props })}
+						{@const pending = isPending(item)}
 						<Button
 							{...props}
 							type="button"
 							size="icon-sm"
 							variant="outline"
-							disabled={!canManage}
+							disabled={!canManage || (!!pendingAction && !pending)}
 							aria-label={item.label}
-							onclick={(event) => clickAction(event, item.request)}
+							aria-busy={pending}
+							onclick={(event) => clickAction(event, item)}
 							onkeydown={(event) => event.stopPropagation()}
 						>
-							{#if item.icon === 'video'}
+							{#if pending}
+								<LoaderCircleIcon class="animate-spin" aria-hidden="true" />
+							{:else if item.icon === 'video'}
 								<FileVideoIcon aria-hidden="true" />
 							{:else if item.icon === 'music'}
 								<MusicIcon aria-hidden="true" />
