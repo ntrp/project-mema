@@ -147,13 +147,42 @@ download, subtitle embed, subtitle extraction, and subtitle conversion. These
 schedules are registered disabled by default so administrators can opt into
 background repair work one operation at a time. Manual media actions use
 `POST /media/items/{id}/fulfillment-actions` with the same operation type and
-media/file/track context, then enqueue the corresponding worker kind. Profile
-audio conversion policy is enforced for automatic audio fulfillment; manual
-track-scoped audio transcode actions bypass that policy because the user has
-selected the specific track and operation. The scheduled audio transcode worker
-does not rewrite files directly: it scans tracks, checks the profile conversion
-policy for each required conversion, and queues a track-scoped one-shot
-transcode job for every eligible track.
+media/file/track context, then enqueue the corresponding worker kind.
+
+### Audio Transcode Fulfillment
+
+Audio transcoding has two entry points that share the same final worker path:
+
+| Entry point | Queue request | Policy mode | Execution scope |
+| --- | --- | --- | --- |
+| Scheduled audio transcode job | Fixed `audio_transcode` schedule enqueues an unscoped `media.fulfillment.audio_transcode` worker. | Automatic profile policy from `audio_lossy_transcode_policy`. | Planner scans matching media/file/audio tracks, then queues one one-shot job per eligible track. |
+| Manual track action | `POST /media/items/{id}/fulfillment-actions` with `operation=audio_transcode` and `trackId`. | Manual conversion policy for that selected track. | Direct one-shot job resolves the track and transcodes only that track. |
+
+The scheduled job is a planner, not the file mutator. When its unscoped worker
+runs, it loads live file facts, walks persisted audio tracks, finds the matching
+profile audio target for each track language, and asks the audio conversion
+decision code whether the target requires codec, channel, or bitrate changes.
+Tracks blocked by the profile policy are skipped. Each allowed track is enqueued
+as a normal one-shot `audio_transcode` fulfillment job with media item id, file
+path, target type `audio`, target language, and track id. These child jobs are
+not marked manual, so execution still enforces the automatic profile conversion
+policy.
+
+Manual actions validate the media item, optional file path, selected track,
+target type, and language at the HTTP boundary. The request is stored in
+`FulfillmentActionArgs` with `Manual=true`. During execution, only
+track-scoped manual audio transcode jobs switch to manual conversion policy.
+This lets an explicit user action run even when automatic lossy conversion is
+disabled for the profile, while scheduled jobs remain governed by the profile.
+
+The track-scoped worker resolves the track from live file facts, rechecks the
+matching target and conversion decision, then runs the media tool command
+against a temporary output file. Audio transcode progress is streamed from the
+tool with progress output, normalized against the track or file duration, and
+mirrored into `app.system_job_executions` for the System > Jobs view. On
+success, the temporary file replaces the original media file and the media item
+is rescanned so persisted track facts, duration, and satisfaction state reflect
+the new file.
 
 The API contract exposes rollup and satisfaction data separately. Media item
 and media file payloads can carry a `rollup` summary with the aggregate state,
