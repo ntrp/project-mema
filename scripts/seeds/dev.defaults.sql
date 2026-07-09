@@ -115,7 +115,8 @@ values
     ('16-wrong-video-resolution', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
     ('17-audio-conversion-disabled', 'english', 'aac', array['stereo'], 192, 256, 'disabled', 'mixed', true, false),
     ('18-audio-conversion-lossless', 'english', 'aac', array['stereo'], 192, 256, 'losslessToLossy', 'mixed', true, false),
-    ('19-audio-conversion-lossy', 'english', 'aac', array['stereo'], 192, 256, 'lossyToLossy', 'mixed', true, false);
+    ('19-audio-conversion-lossy', 'english', 'aac', array['stereo'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('20-wrong-video-codec', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false);
 
 drop table if exists dev_test_media_subtitles;
 create temporary table dev_test_media_subtitles (
@@ -148,7 +149,8 @@ values
     ('16-wrong-video-resolution', 'english', 0, 0),
     ('17-audio-conversion-disabled', 'english', 0, 0),
     ('18-audio-conversion-lossless', 'english', 0, 0),
-    ('19-audio-conversion-lossy', 'english', 0, 0);
+    ('19-audio-conversion-lossy', 'english', 0, 0),
+    ('20-wrong-video-codec', 'english', 0, 0);
 
 insert into app.media_profiles (
     id,
@@ -317,7 +319,8 @@ values
     (18, '16-wrong-video-resolution', '10000000-0000-4000-8000-000000001018', '10000000-0000-4000-8000-000000002018', 2006, '920', 'EN', '.data/media/test-movie/16-wrong-video-resolution', 'Cars.2006.tmdb-920.1080p.WEB-DL.AAC2.0.EN.WrongResolution.mkv', 'Cars'),
     (19, '17-audio-conversion-disabled', '10000000-0000-4000-8000-000000001019', '10000000-0000-4000-8000-000000002019', 1995, '862', 'EN', '.data/media/test-movie/17-audio-conversion-disabled', 'Toy.Story.1995.tmdb-862.1080p.WEB-DL.FLAC2.0.EN.AudioConversionDisabled.mkv', 'Toy Story'),
     (20, '18-audio-conversion-lossless', '10000000-0000-4000-8000-000000001020', '10000000-0000-4000-8000-000000002020', 1998, '9487', 'EN', '.data/media/test-movie/18-audio-conversion-lossless', 'A.Bugs.Life.1998.tmdb-9487.1080p.WEB-DL.FLAC2.0.EN.AudioConversionLossless.mkv', 'A Bugs Life'),
-    (21, '19-audio-conversion-lossy', '10000000-0000-4000-8000-000000001021', '10000000-0000-4000-8000-000000002021', 2012, '62177', 'EN', '.data/media/test-movie/19-audio-conversion-lossy', 'Brave.2012.tmdb-62177.1080p.WEB-DL.AC3.2.0.EN.AudioConversionLossy.mkv', 'Brave');
+    (21, '19-audio-conversion-lossy', '10000000-0000-4000-8000-000000001021', '10000000-0000-4000-8000-000000002021', 2012, '62177', 'EN', '.data/media/test-movie/19-audio-conversion-lossy', 'Brave.2012.tmdb-62177.1080p.WEB-DL.AC3.2.0.EN.AudioConversionLossy.mkv', 'Brave'),
+    (22, '20-wrong-video-codec', '10000000-0000-4000-8000-000000001022', '10000000-0000-4000-8000-000000002022', 2017, '354912', 'EN', '.data/media/test-movie/20-wrong-video-codec', 'Coco.2017.tmdb-354912.1080p.WEB-DL.MPEG4.AAC2.0.EN.WrongVideoCodec.mkv', 'Coco');
 
 insert into app.media_items (
     id,

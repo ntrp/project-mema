@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 
 const apiProxyTarget = env.VITE_API_PROXY_TARGET ?? 'http://127.0.0.1:18080';
 const inspectorExcludedComponentDirs = ['/src/lib/components/ui/'];
+const inspectorCompileExclusionEnabled = env.VITEST !== 'true';
 
 function inspectorExcluded(filename?: string) {
 	if (!filename) return false;
@@ -23,7 +24,7 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			dynamicCompileOptions: ({ filename }) =>
-				inspectorExcluded(filename) ? { dev: false } : undefined,
+				inspectorCompileExclusionEnabled && inspectorExcluded(filename) ? { dev: false } : undefined,
 			inspector: {
 				showToggleButton: 'always',
 				toggleButtonPos: 'bottom-right'

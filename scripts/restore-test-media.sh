@@ -85,7 +85,7 @@ poster() {
 }
 
 movie_one_audio() {
-	local out="$1" audio_lang="$2" audio_codec="$3" audio_bitrate="$4" channels="$5" sub_lang="${6:-}" chapters="${7:-no}" sub_format="${8:-subrip}" video_size="${9:-1920x1080}"
+	local out="$1" audio_lang="$2" audio_codec="$3" audio_bitrate="$4" channels="$5" sub_lang="${6:-}" chapters="${7:-no}" sub_format="${8:-subrip}" video_size="${9:-1920x1080}" video_encoder="${10:-libx264}"
 	local dir base srt="" meta="" sub_index="" chapter_index="" sub_encoder=""
 	dir="$(dirname "$out")"
 	base="$(clean_name "$(basename "$out")")"
@@ -119,8 +119,9 @@ movie_one_audio() {
 	args+=(-map 0:v:0 -map 1:a:0)
 	if [[ -n "$sub_index" ]]; then args+=(-map "$sub_index:s:0"); fi
 	if [[ -n "$chapter_index" ]]; then args+=(-map_metadata "$chapter_index" -map_chapters "$chapter_index"); fi
-	args+=(-t "$DURATION" -c:v libx264 -preset ultrafast -pix_fmt yuv420p
-		-c:a "$audio_codec" -b:a "$audio_bitrate" -ac "$channels")
+	args+=(-t "$DURATION" -c:v "$video_encoder")
+	if [[ "$video_encoder" == "libx264" ]]; then args+=(-preset ultrafast); fi
+	args+=(-pix_fmt yuv420p -c:a "$audio_codec" -b:a "$audio_bitrate" -ac "$channels")
 	if [[ -n "$sub_index" ]]; then args+=(-c:s "$sub_encoder"); fi
 	args+=(-metadata:s:v:0 "title=Mock white video")
 	args+=(-metadata:s:a:0 "language=$audio_lang")
@@ -331,6 +332,9 @@ movie_one_audio "$MEDIA_DIR/18-audio-conversion-lossless/A.Bugs.Life.1998.tmdb-9
 
 scenario "19-audio-conversion-lossy" "Brave (2012), TMDB 62177"
 movie_one_audio "$MEDIA_DIR/19-audio-conversion-lossy/Brave.2012.tmdb-62177.1080p.WEB-DL.AC3.2.0.EN.AudioConversionLossy.mkv" eng ac3 384k 2 eng no
+
+scenario "20-wrong-video-codec" "Coco (2017), TMDB 354912"
+movie_one_audio "$MEDIA_DIR/20-wrong-video-codec/Coco.2017.tmdb-354912.1080p.WEB-DL.MPEG4.AAC2.0.EN.WrongVideoCodec.mkv" eng aac 256k 2 eng no subrip 1920x1080 mpeg4
 
 cat >"$MEDIA_DIR/README.md" <<'README'
 # Test Movie Fixtures

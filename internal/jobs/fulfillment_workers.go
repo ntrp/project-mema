@@ -47,8 +47,9 @@ func (SubtitleConvertArgs) Kind() string  { return "media.fulfillment.subtitle_c
 
 type VideoTranscodeWorker struct {
 	river.WorkerDefaults[VideoTranscodeArgs]
-	settings *storage.SettingsStore
-	events   *events.Broker
+	settings           *storage.SettingsStore
+	events             *events.Broker
+	enqueueFulfillment fulfillmentEnqueueFunc
 }
 
 type AudioTranscodeWorker struct {
@@ -96,7 +97,7 @@ type SubtitleConvertWorker struct {
 }
 
 func (w *VideoTranscodeWorker) Work(ctx context.Context, job *river.Job[VideoTranscodeArgs]) (err error) {
-	return runFulfillmentWorker(ctx, job.JobRow, w.settings, w.events, nil, nil, targets.OperationVideoTranscode, job.Args.FulfillmentActionArgs)
+	return runFulfillmentWorker(ctx, job.JobRow, w.settings, w.events, nil, w.enqueueFulfillment, targets.OperationVideoTranscode, job.Args.FulfillmentActionArgs)
 }
 
 func (w *AudioTranscodeWorker) Work(ctx context.Context, job *river.Job[AudioTranscodeArgs]) (err error) {
@@ -185,8 +186,8 @@ func runFulfillmentWorker(
 			count++
 			continue
 		}
-		if operation == targets.OperationAudioTranscode {
-			added, err := enqueueAudioTranscodeTrackJobs(ctx, settings, eventBroker, enqueueFulfillment, item, activeArgs)
+		if operation == targets.OperationVideoTranscode || operation == targets.OperationAudioTranscode {
+			added, err := enqueueTrackTranscodeJobs(ctx, settings, eventBroker, enqueueFulfillment, operation, item, activeArgs)
 			if err != nil {
 				return err
 			}

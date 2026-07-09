@@ -101,7 +101,7 @@ describe('rendered system job dashboard components', () => {
 		).toEqual([1, 2]);
 	});
 
-	it('keeps routine failures in default history and hides routine successes', () => {
+	it('keeps only finished routine executions in default history', () => {
 		expect(
 			defaultHistoryIncludesExecution(
 				systemJobExecution({ historyPolicy: 'routine', status: 'completed' })
@@ -110,6 +110,11 @@ describe('rendered system job dashboard components', () => {
 		expect(
 			defaultHistoryIncludesExecution(
 				systemJobExecution({ historyPolicy: 'routine', status: 'retryable' })
+			)
+		).toBe(false);
+		expect(
+			defaultHistoryIncludesExecution(
+				systemJobExecution({ historyPolicy: 'routine', status: 'cancelled' })
 			)
 		).toBe(true);
 	});

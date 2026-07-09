@@ -58,6 +58,9 @@ func (s *Server) EnqueueMediaFulfillmentAction(w http.ResponseWriter, r *http.Re
 			filePath = track.FilePath
 		}
 	}
+	if !validTrackScopedFulfillmentAction(w, string(body.Operation), track) {
+		return
+	}
 	targetType := targetTypeString(body.TargetType)
 	if targetType == "" && track != nil {
 		targetType = track.TrackType
@@ -88,6 +91,27 @@ func (s *Server) EnqueueMediaFulfillmentAction(w http.ResponseWriter, r *http.Re
 	}
 	s.recordEvent(r.Context(), eventSeverityInfo, "media", "Fulfillment queued", map[string]any{"mediaItemId": mediaItemID.String(), "operation": body.Operation, "jobId": jobID})
 	writeJSON(w, http.StatusAccepted, JobEnqueueResponse{JobId: jobID, Message: "Fulfillment queued"})
+}
+
+func validTrackScopedFulfillmentAction(w http.ResponseWriter, operation string, track *storage.MediaFileTrackFact) bool {
+	requiredType := ""
+	switch operation {
+	case "audio_transcode":
+		requiredType = "audio"
+	case "video_transcode":
+		requiredType = "video"
+	default:
+		return true
+	}
+	if track == nil {
+		writeError(w, http.StatusBadRequest, "media_track_required", "Fulfillment operation requires a selected media track")
+		return false
+	}
+	if track.TrackType != requiredType {
+		writeError(w, http.StatusBadRequest, "media_track_type_invalid", "Fulfillment operation does not support the selected track type")
+		return false
+	}
+	return true
 }
 
 func targetTypeString(value *TargetSatisfactionType) string {

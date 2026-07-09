@@ -24,6 +24,9 @@ func executeTrackFulfillmentOperation(
 	args FulfillmentActionArgs,
 	track storage.MediaFileTrackFact,
 ) error {
+	if operation == targets.OperationVideoTranscode {
+		return executeVideoTranscodeTrack(ctx, settings, eventBroker, item, args, track)
+	}
 	if operation == targets.OperationAudioTranscode {
 		return executeAudioTranscodeTrack(ctx, settings, eventBroker, item, args, track)
 	}

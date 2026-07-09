@@ -140,6 +140,26 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		).not.toContain('Transcode audio');
 	});
 
+	it('shows video transcode for supported video codec or pixel mismatches', () => {
+		const row = detailedFileRow();
+		row.tracks[0] = {
+			...row.tracks[0],
+			id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+			state: {
+				visualState: 'partial',
+				statusLabel: 'Partial',
+				details: ['Pixel format does not meet the profile target']
+			}
+		};
+
+		expect(
+			renderWithTooltip(MediaFileDetailsAccordion, {
+				row,
+				canManage: true
+			}).body
+		).toContain('Transcode video');
+	});
+
 	it('shows pending fulfillment actions as busy buttons', () => {
 		const row = detailedFileRow();
 		row.tracks[1] = {

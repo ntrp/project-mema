@@ -165,6 +165,26 @@ func TestAudioTrackTranscodeArgsTargetsSelectedAudioStream(t *testing.T) {
 	}
 }
 
+func TestVideoTrackTranscodeArgsTargetsSelectedVideoStream(t *testing.T) {
+	args, err := videoTrackTranscodeArgs("/library/movie.mkv", "/library/.movie.tmp.mkv", 1, VideoConversionDecision{
+		Allowed:     true,
+		TargetCodec: "hevc",
+		TargetPixel: "yuv420p10le",
+	})
+	if err != nil {
+		t.Fatalf("video track transcode args: %v", err)
+	}
+	if !hasArgPair(args, "-c:v:1", "libx265") {
+		t.Fatalf("expected selected video codec args, got %#v", args)
+	}
+	if !hasArgPair(args, "-pix_fmt:v:1", "yuv420p10le") {
+		t.Fatalf("expected selected video pixel args, got %#v", args)
+	}
+	if !slices.Contains(args, "-map") || !slices.Contains(args, "-c") {
+		t.Fatalf("expected full-file remux args, got %#v", args)
+	}
+}
+
 func TestAudioOrdinalFindsSelectedTrackAudioIndex(t *testing.T) {
 	selected := uuid.New()
 	item := storage.MediaItem{FileFacts: []storage.MediaFileFact{{
@@ -179,6 +199,23 @@ func TestAudioOrdinalFindsSelectedTrackAudioIndex(t *testing.T) {
 
 	if got != 1 {
 		t.Fatalf("audio ordinal = %d, want 1", got)
+	}
+}
+
+func TestVideoOrdinalFindsSelectedTrackVideoIndex(t *testing.T) {
+	selected := uuid.New()
+	item := storage.MediaItem{FileFacts: []storage.MediaFileFact{{
+		FilePath: "/library/movie.mkv",
+		Tracks: []storage.MediaFileTrackFact{
+			{ID: uuid.New(), FilePath: "/library/movie.mkv", TrackType: "video"},
+			{ID: uuid.New(), FilePath: "/library/movie.mkv", TrackType: "audio"},
+			{ID: selected, FilePath: "/library/movie.mkv", TrackType: "video"},
+		},
+	}}}
+	got := videoOrdinal(item, storage.MediaFileTrackFact{ID: selected, FilePath: "/library/movie.mkv"})
+
+	if got != 1 {
+		t.Fatalf("video ordinal = %d, want 1", got)
 	}
 }
 

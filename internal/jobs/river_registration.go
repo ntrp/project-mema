@@ -64,7 +64,7 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &SubtitleRetryWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
 	river.AddWorker(workers, &ComponentExtractionWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &ComponentMuxWorker{settings: deps.settings, events: deps.events})
-	river.AddWorker(workers, &VideoTranscodeWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &VideoTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioSourceWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &ContainerRemuxWorker{settings: deps.settings, events: deps.events})
@@ -137,7 +137,7 @@ func fixedJobDefinitions() []fixedJobDefinition {
 			},
 			args: func() river.JobArgs { return SubtitleRetryArgs{} },
 		},
-		fulfillmentSchedule("video_transcode", "Video transcoding", "Transforms video codec, resolution, HDR, or pixel format when policy allows.", queueMediaAssembly, VideoTranscodeArgs{}),
+		fulfillmentSchedule("video_transcode", "Video transcoding", "Transforms supported video codec or pixel format mismatches.", queueMediaAssembly, VideoTranscodeArgs{}),
 		fulfillmentSchedule("audio_transcode", "Audio transcoding", "Transforms audio codec, channels, or bitrate when policy allows.", queueMediaAssembly, AudioTranscodeArgs{}),
 		fulfillmentSchedule("audio_source", "Audio sourcing", "Sources desired audio tracks from alternate releases.", queueMediaSearch, AudioSourceArgs{}),
 		fulfillmentSchedule("container_remux", "Container remuxing", "Moves selected streams into the target container.", queueMediaAssembly, ContainerRemuxArgs{}),

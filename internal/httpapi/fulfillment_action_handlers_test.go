@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/uuid"
@@ -38,5 +39,23 @@ func TestFulfillmentActionScopeHelpers(t *testing.T) {
 	}
 	if mediaItemHasSubtitle(item, uuid.New().String()) {
 		t.Fatalf("unknown subtitle should not match")
+	}
+}
+
+func TestValidTrackScopedFulfillmentActionRequiresMatchingTrack(t *testing.T) {
+	audioTrack := &storage.MediaFileTrackFact{TrackType: "audio"}
+	videoTrack := &storage.MediaFileTrackFact{TrackType: "video"}
+
+	if !validTrackScopedFulfillmentAction(httptest.NewRecorder(), "audio_transcode", audioTrack) {
+		t.Fatalf("audio track should be valid for audio transcode")
+	}
+	if !validTrackScopedFulfillmentAction(httptest.NewRecorder(), "video_transcode", videoTrack) {
+		t.Fatalf("video track should be valid for video transcode")
+	}
+	if validTrackScopedFulfillmentAction(httptest.NewRecorder(), "video_transcode", audioTrack) {
+		t.Fatalf("audio track should not be valid for video transcode")
+	}
+	if validTrackScopedFulfillmentAction(httptest.NewRecorder(), "audio_transcode", nil) {
+		t.Fatalf("missing track should not be valid for audio transcode")
 	}
 }

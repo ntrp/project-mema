@@ -149,24 +149,28 @@ background repair work one operation at a time. Manual media actions use
 `POST /media/items/{id}/fulfillment-actions` with the same operation type and
 media/file/track context, then enqueue the corresponding worker kind.
 
-### Audio Transcode Fulfillment
+### Track Transcode Fulfillment
 
-Audio transcoding has two entry points that share the same final worker path:
+Audio and video transcoding have two entry points that share the same final
+worker path:
 
 | Entry point | Queue request | Policy mode | Execution scope |
 | --- | --- | --- | --- |
 | Scheduled audio transcode job | Fixed `audio_transcode` schedule enqueues an unscoped `media.fulfillment.audio_transcode` worker. | Automatic profile policy from `audio_lossy_transcode_policy`. | Planner scans matching media/file/audio tracks, then queues one one-shot job per eligible track. |
 | Manual track action | `POST /media/items/{id}/fulfillment-actions` with `operation=audio_transcode` and `trackId`. | Manual conversion policy for that selected track. | Direct one-shot job resolves the track and transcodes only that track. |
+| Scheduled video transcode job | Fixed `video_transcode` schedule enqueues an unscoped `media.fulfillment.video_transcode` worker. | Profile video target. | Planner scans matching media/file/video tracks, then queues one one-shot job per eligible track that has a supported codec or pixel-format fix. |
+| Manual video track action | `POST /media/items/{id}/fulfillment-actions` with `operation=video_transcode` and `trackId`. | Profile video target. | Direct one-shot job resolves the video track and transcodes only that track. |
 
-The scheduled job is a planner, not the file mutator. When its unscoped worker
-runs, it loads live file facts, walks persisted audio tracks, finds the matching
-profile audio target for each track language, and asks the audio conversion
-decision code whether the target requires codec, channel, or bitrate changes.
-Tracks blocked by the profile policy are skipped. Each allowed track is enqueued
-as a normal one-shot `audio_transcode` fulfillment job with media item id, file
-path, target type `audio`, target language, and track id. These child jobs are
-not marked manual, so execution still enforces the automatic profile conversion
-policy.
+The scheduled jobs are planners, not file mutators. When an unscoped worker
+runs, it loads live file facts, walks persisted tracks, checks the matching
+profile target, and asks the conversion decision code whether the target can be
+fixed. Audio planning considers codec, channel, and bitrate changes, then
+applies the profile audio conversion policy. Video planning considers supported
+codec and pixel-format changes. HDR-only or resolution-only video mismatches are
+not queued because the current video tool path does not safely satisfy those
+targets. Each allowed track is enqueued as a normal one-shot fulfillment job
+with media item id, file path, target type, optional target language, and track
+id.
 
 Manual actions validate the media item, optional file path, selected track,
 target type, and language at the HTTP boundary. The request is stored in
@@ -174,11 +178,13 @@ target type, and language at the HTTP boundary. The request is stored in
 track-scoped manual audio transcode jobs switch to manual conversion policy.
 This lets an explicit user action run even when automatic lossy conversion is
 disabled for the profile, while scheduled jobs remain governed by the profile.
+Manual video transcode actions use the same profile target decision as
+scheduled video child jobs, but they execute only the selected track.
 
 The track-scoped worker resolves the track from live file facts, rechecks the
 matching target and conversion decision, then runs the media tool command
-against a temporary output file. Audio transcode progress is streamed from the
-tool with progress output, normalized against the track or file duration, and
+against a temporary output file. Transcode progress is streamed from the tool
+with progress output, normalized against the track or file duration, and
 mirrored into `app.system_job_executions` for the System > Jobs view. On
 success, the temporary file replaces the original media file and the media item
 is rescanned so persisted track facts, duration, and satisfaction state reflect

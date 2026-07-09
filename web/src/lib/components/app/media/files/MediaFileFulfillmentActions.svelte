@@ -47,7 +47,8 @@
 		if (matchesOperation(track, 'remux')) {
 			return [action('Remux container', 'container_remux', 'video', track.languageId, 'package')];
 		}
-		if (!hasTargetCodecMismatch(track)) return [];
+		if (!track.trackId) return [];
+		if (!hasSupportedVideoTranscodeMismatch(track)) return [];
 		return [action('Transcode video', 'video_transcode', 'video', track.languageId, 'video')];
 	}
 
@@ -56,6 +57,7 @@
 			return [action('Source audio', 'audio_sourcing', 'audio', track.languageId, 'lens')];
 		}
 		if (track.visualState !== 'partial' && track.visualState !== 'pending_operation') return [];
+		if (!track.trackId) return [];
 		if (!hasTargetCodecMismatch(track)) return [];
 		return [action('Transcode audio', 'audio_transcode', 'audio', track.languageId, 'binary')];
 	}
@@ -114,6 +116,13 @@
 
 	function hasTargetCodecMismatch(track: MediaFileDetailRow) {
 		return (track.details ?? []).some((detail) => detail.toLowerCase().includes('codec'));
+	}
+
+	function hasSupportedVideoTranscodeMismatch(track: MediaFileDetailRow) {
+		return (track.details ?? []).some((detail) => {
+			const normalized = detail.toLowerCase();
+			return normalized.includes('codec') || normalized.includes('pixel format');
+		});
 	}
 
 	function isPending(item: Action) {
