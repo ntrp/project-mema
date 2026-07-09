@@ -44,9 +44,6 @@
 
 	function videoActions(track: MediaFileDetailRow): Action[] {
 		if (track.visualState !== 'partial' && track.visualState !== 'pending_operation') return [];
-		if (matchesOperation(track, 'remux')) {
-			return [action('Remux container', 'container_remux', 'video', track.languageId, 'package')];
-		}
 		if (!track.trackId) return [];
 		if (!hasSupportedVideoTranscodeMismatch(track)) return [];
 		return [action('Transcode video', 'video_transcode', 'video', track.languageId, 'video')];

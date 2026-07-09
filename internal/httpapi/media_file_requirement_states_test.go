@@ -162,6 +162,38 @@ func TestMediaFileRequirementStatesCheckVideoResolutionAgainstQuality(t *testing
 	}
 }
 
+func TestMediaFileRequirementStatesMarkContainerRemuxPending(t *testing.T) {
+	container := "mkv"
+	item := storage.MediaItem{
+		FinalContainer: "mp4",
+		FileFacts: []storage.MediaFileFact{{
+			FilePath:        "/media/movie.mkv",
+			ContainerFormat: &container,
+		}},
+	}
+	file := MediaFileInfo{
+		Path:   "/media/movie.mkv",
+		Status: MediaFileInfoStatusAvailable,
+		SubtitleSatisfaction: &MediaFileSubtitleSatisfaction{
+			Mode:  MediaProfileSubtitleModeMixed,
+			State: MediaFileSubtitleSatisfactionStateIgnored,
+		},
+	}
+	tracks := []MediaFileTrack{{Type: MediaFileTrackTypeVideo}}
+
+	applyMediaFileRequirementStates(&file, item, tracks, nil)
+
+	if file.Requirements.Video.State != MediaFileRequirementStateSatisfied {
+		t.Fatalf("video requirement = %#v", file.Requirements.Video)
+	}
+	if file.Requirements.Container.State != MediaFileRequirementStatePending {
+		t.Fatalf("container requirement = %#v", file.Requirements.Container)
+	}
+	if tracks[0].State == nil || tracks[0].State.VisualState != MediaFileDetailVisualStateMatching || tracks[0].State.OperationLabel != nil {
+		t.Fatalf("video track state = %#v", tracks[0].State)
+	}
+}
+
 func TestMediaFileRequirementStatesAcceptCroppedVideoAtQualityWidth(t *testing.T) {
 	qualityID := "webdl-1080p"
 	item := storage.MediaItem{

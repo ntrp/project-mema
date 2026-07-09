@@ -1,5 +1,6 @@
 <script lang="ts">
 	import BanIcon from '@lucide/svelte/icons/ban';
+	import ScrollTextIcon from '@lucide/svelte/icons/scroll-text';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import * as Table from '$lib/components/ui/table';
@@ -13,10 +14,12 @@
 	interface Props {
 		jobs: SystemJobExecution[];
 		abortingId?: number;
+		loadingLogsId?: number;
 		onAbort: (id: number) => void;
+		onLogs: (execution: SystemJobExecution) => void;
 	}
 
-	let { jobs, abortingId, onAbort }: Props = $props();
+	let { jobs, abortingId, loadingLogsId, onAbort, onLogs }: Props = $props();
 
 	const rowPulse = createRowPulse();
 	const rowKeys = $derived(jobs.map((job) => String(job.riverJobId)));
@@ -56,26 +59,46 @@
 					</Table.Cell>
 					<Table.Cell class="w-px whitespace-nowrap">{formatDateTime(job.scheduledAt)}</Table.Cell>
 					<Table.Cell class="w-px text-right">
-						{#if canAbortStatus(job.status)}
+						<div class="flex justify-end gap-1">
 							<Tooltip.Root>
 								<Tooltip.Trigger>
 									{#snippet child({ props })}
 										<Button
 											{...props}
 											type="button"
-											variant="destructive"
+											variant="outline"
 											size="icon-sm"
-											aria-label="Abort job"
-											disabled={abortingId === job.riverJobId}
-											onclick={() => onAbort(job.riverJobId)}
+											aria-label="Show execution logs"
+											disabled={loadingLogsId === job.riverJobId}
+											onclick={() => onLogs(job)}
 										>
-											<BanIcon aria-hidden="true" />
+											<ScrollTextIcon aria-hidden="true" />
 										</Button>
 									{/snippet}
 								</Tooltip.Trigger>
-								<Tooltip.Content>Abort job</Tooltip.Content>
+								<Tooltip.Content>Show execution logs</Tooltip.Content>
 							</Tooltip.Root>
-						{/if}
+							{#if canAbortStatus(job.status)}
+								<Tooltip.Root>
+									<Tooltip.Trigger>
+										{#snippet child({ props })}
+											<Button
+												{...props}
+												type="button"
+												variant="destructive"
+												size="icon-sm"
+												aria-label="Abort job"
+												disabled={abortingId === job.riverJobId}
+												onclick={() => onAbort(job.riverJobId)}
+											>
+												<BanIcon aria-hidden="true" />
+											</Button>
+										{/snippet}
+									</Tooltip.Trigger>
+									<Tooltip.Content>Abort job</Tooltip.Content>
+								</Tooltip.Root>
+							{/if}
+						</div>
 					</Table.Cell>
 				</Table.Row>
 			{:else}

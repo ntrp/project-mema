@@ -185,6 +185,22 @@ func TestVideoTrackTranscodeArgsTargetsSelectedVideoStream(t *testing.T) {
 	}
 }
 
+func TestContainerRemuxArgsCopyStreamsToTargetContainer(t *testing.T) {
+	args, err := containerRemuxArgs("/library/movie.mkv", "/library/.movie.tmp.mp4", "mp4")
+	if err != nil {
+		t.Fatalf("container remux args: %v", err)
+	}
+	if !slices.Contains(args, "-map") || !slices.Contains(args, "-c") {
+		t.Fatalf("expected full-file remux args, got %#v", args)
+	}
+	if !hasArgPair(args, "-movflags", "+faststart") {
+		t.Fatalf("expected mp4 faststart args, got %#v", args)
+	}
+	if args[len(args)-1] != "/library/.movie.tmp.mp4" {
+		t.Fatalf("output arg = %q", args[len(args)-1])
+	}
+}
+
 func TestAudioOrdinalFindsSelectedTrackAudioIndex(t *testing.T) {
 	selected := uuid.New()
 	item := storage.MediaItem{FileFacts: []storage.MediaFileFact{{

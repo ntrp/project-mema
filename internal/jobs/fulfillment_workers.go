@@ -45,57 +45,6 @@ func (SubtitleEmbedArgs) Kind() string    { return "media.fulfillment.subtitle_e
 func (SubtitleExtractArgs) Kind() string  { return "media.fulfillment.subtitle_extract" }
 func (SubtitleConvertArgs) Kind() string  { return "media.fulfillment.subtitle_convert" }
 
-type VideoTranscodeWorker struct {
-	river.WorkerDefaults[VideoTranscodeArgs]
-	settings           *storage.SettingsStore
-	events             *events.Broker
-	enqueueFulfillment fulfillmentEnqueueFunc
-}
-
-type AudioTranscodeWorker struct {
-	river.WorkerDefaults[AudioTranscodeArgs]
-	settings           *storage.SettingsStore
-	events             *events.Broker
-	enqueueFulfillment fulfillmentEnqueueFunc
-}
-
-type AudioSourceWorker struct {
-	river.WorkerDefaults[AudioSourceArgs]
-	settings *storage.SettingsStore
-	events   *events.Broker
-}
-
-type ContainerRemuxWorker struct {
-	river.WorkerDefaults[ContainerRemuxArgs]
-	settings *storage.SettingsStore
-	events   *events.Broker
-}
-
-type SubtitleDownloadWorker struct {
-	river.WorkerDefaults[SubtitleDownloadArgs]
-	settings  *storage.SettingsStore
-	subtitles *subtitles.Service
-	events    *events.Broker
-}
-
-type SubtitleEmbedWorker struct {
-	river.WorkerDefaults[SubtitleEmbedArgs]
-	settings *storage.SettingsStore
-	events   *events.Broker
-}
-
-type SubtitleExtractWorker struct {
-	river.WorkerDefaults[SubtitleExtractArgs]
-	settings *storage.SettingsStore
-	events   *events.Broker
-}
-
-type SubtitleConvertWorker struct {
-	river.WorkerDefaults[SubtitleConvertArgs]
-	settings *storage.SettingsStore
-	events   *events.Broker
-}
-
 func (w *VideoTranscodeWorker) Work(ctx context.Context, job *river.Job[VideoTranscodeArgs]) (err error) {
 	return runFulfillmentWorker(ctx, job.JobRow, w.settings, w.events, nil, w.enqueueFulfillment, targets.OperationVideoTranscode, job.Args.FulfillmentActionArgs)
 }
@@ -109,7 +58,7 @@ func (w *AudioSourceWorker) Work(ctx context.Context, job *river.Job[AudioSource
 }
 
 func (w *ContainerRemuxWorker) Work(ctx context.Context, job *river.Job[ContainerRemuxArgs]) (err error) {
-	return runFulfillmentWorker(ctx, job.JobRow, w.settings, w.events, nil, nil, targets.OperationContainerRemux, job.Args.FulfillmentActionArgs)
+	return runFulfillmentWorker(ctx, job.JobRow, w.settings, w.events, nil, w.enqueueFulfillment, targets.OperationContainerRemux, job.Args.FulfillmentActionArgs)
 }
 
 func (w *SubtitleDownloadWorker) Work(ctx context.Context, job *river.Job[SubtitleDownloadArgs]) (err error) {
@@ -184,6 +133,21 @@ func runFulfillmentWorker(
 				return err
 			}
 			count++
+			continue
+		}
+		if operation == targets.OperationContainerRemux {
+			if activeArgs.FilePath != "" {
+				if err := executeContainerRemuxFile(ctx, settings, eventBroker, item, activeArgs); err != nil {
+					return err
+				}
+				count++
+				continue
+			}
+			added, err := enqueueContainerRemuxFileJobs(ctx, settings, eventBroker, enqueueFulfillment, item, activeArgs)
+			if err != nil {
+				return err
+			}
+			count += added
 			continue
 		}
 		if operation == targets.OperationVideoTranscode || operation == targets.OperationAudioTranscode {

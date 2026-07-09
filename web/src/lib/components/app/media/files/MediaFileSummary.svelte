@@ -6,6 +6,7 @@
 	import MediaFilePreviewModal from '$lib/components/app/media/files/preview/MediaFilePreviewModal.svelte';
 	import MediaFileRequirementIcon from '$lib/components/app/media/files/MediaFileRequirementIcon.svelte';
 	import MediaFileSummaryActions from '$lib/components/app/media/files/MediaFileSummaryActions.svelte';
+	import MediaFileContainerStatus from '$lib/components/app/media/files/summary/MediaFileContainerStatus.svelte';
 	import { fallbackRequirementStatus } from '$lib/components/app/media/files/mediaFileSummaryStatus';
 	import type { MediaFileSummaryProps as Props } from '$lib/components/app/media/file-data/mediaFileComponentTypes';
 
@@ -82,8 +83,11 @@
 	>
 		<div class="grid min-w-0 content-start gap-1">
 			<strong class="text-xs font-medium text-muted-foreground uppercase">File</strong>
-			<span class="break-anywhere text-sm font-semibold">
-				{row.exists ? row.relativePath : 'Missing file'}
+			<span class="break-anywhere inline-flex flex-wrap items-center gap-2 text-sm font-semibold">
+				<span>{row.exists ? row.relativePath : 'Missing file'}</span>
+				{#if row.exists}
+					<MediaFileContainerStatus {row} />
+				{/if}
 			</span>
 			<span class="sr-only">{row.exists ? fileLabel : missingLabel}</span>
 		</div>
@@ -115,6 +119,8 @@
 			{onAutoSearch}
 			{onManualSearch}
 			onPreview={() => (previewOpen = true)}
+			{pendingFulfillmentActionKeys}
+			{onFulfillmentAction}
 			{onDelete}
 		/>
 		{#if row.exists}

@@ -40,7 +40,7 @@ func WantedTargetsForItem(item storage.MediaItem) []targets.Target {
 
 func mediaProfileForItem(item storage.MediaItem) storage.MediaProfile {
 	return storage.MediaProfile{
-		FinalContainer:                "",
+		FinalContainer:                item.FinalContainer,
 		RemoveUnwantedAudio:           item.RemoveUnwantedAudio,
 		AudioLossyTranscodePolicy:     "lossyToLossy",
 		RemoveUnwantedSubtitles:       item.RemoveUnwantedSubtitles,

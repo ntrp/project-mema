@@ -49,6 +49,7 @@
 		updatingIntervalId={controller.updatingIntervalId}
 		runningScheduleId={controller.runningScheduleId}
 		abortingId={controller.abortingId}
+		loadingLogsId={controller.loadingLogsId}
 		onRefresh={() => void controller.loadOverview()}
 		onPause={(schedule) => void controller.toggleSchedule(schedule, true)}
 		onResume={(schedule) => void controller.toggleSchedule(schedule, false)}
@@ -56,6 +57,7 @@
 		onSaveInterval={(schedule, intervalSeconds) =>
 			void controller.saveScheduleInterval(schedule, intervalSeconds)}
 		onAbort={(id, kind) => (controller.abortCandidate = { id, kind })}
+		onLogs={(execution) => void controller.openLogs(execution)}
 	/>
 
 	<SystemJobHistorySection

@@ -3277,6 +3277,7 @@ export interface components {
 		};
 		MediaFileRequirementSummary: {
 			video: components['schemas']['MediaFileRequirementStatus'];
+			container: components['schemas']['MediaFileRequirementStatus'];
 			audio: components['schemas']['MediaFileRequirementStatus'];
 			subtitles: components['schemas']['MediaFileRequirementStatus'];
 		};

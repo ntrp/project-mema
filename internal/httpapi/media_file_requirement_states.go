@@ -16,6 +16,7 @@ func applyMediaFileRequirementStates(
 	if file.Status == MediaFileInfoStatusMissing {
 		file.Requirements = &MediaFileRequirementSummary{
 			Video:     requirementStatus(MediaFileRequirementStateMissing, "Missing", "File is missing"),
+			Container: requirementStatus(MediaFileRequirementStateMissing, "Missing", "File is missing"),
 			Audio:     requirementStatus(MediaFileRequirementStateMissing, "Missing", "File is missing"),
 			Subtitles: subtitleRequirementStatus(file.SubtitleSatisfaction, nil, nil),
 		}
@@ -33,6 +34,7 @@ func applyMediaFileRequirementStates(
 	}
 	file.Requirements = &MediaFileRequirementSummary{
 		Video:     videoRequirementStatus(item, file.Path, tracks),
+		Container: containerRequirementStatus(item, file.Path),
 		Audio:     audioRequirementStatus(item, tracks),
 		Subtitles: subtitleRequirementStatus(file.SubtitleSatisfaction, tracks, otherFiles),
 	}
@@ -41,7 +43,7 @@ func applyMediaFileRequirementStates(
 func trackDetailState(item storage.MediaItem, path string, track MediaFileTrack) *MediaFileDetailState {
 	switch track.Type {
 	case MediaFileTrackTypeVideo:
-		failures := videoFailures(item, path, track)
+		failures := videoTrackFailures(item, path, track)
 		if len(failures) > 0 {
 			return detailState(MediaFileDetailVisualStatePartial, "Partial", failures...)
 		}
@@ -143,11 +145,25 @@ func videoRequirementStatus(item storage.MediaItem, path string, tracks []MediaF
 	if video == nil {
 		return requirementStatus(MediaFileRequirementStateMissing, "Missing", "Video track is missing")
 	}
-	failures := videoFailures(item, path, *video)
+	failures := videoTrackFailures(item, path, *video)
 	if len(failures) > 0 {
 		return requirementStatus(MediaFileRequirementStatePartial, "Partial", failures...)
 	}
 	return requirementStatus(MediaFileRequirementStateSatisfied, "Ok", "Video requirements met")
+}
+
+func containerRequirementStatus(item storage.MediaItem, path string) MediaFileRequirementStatus {
+	if item.FinalContainer == "" {
+		return requirementStatus(MediaFileRequirementStateIgnored, "Ignored", "No container target")
+	}
+	container := mediaFileContainer(item, path)
+	if container == "" {
+		return requirementStatus(MediaFileRequirementStateMissing, "Missing", "Container format is unknown")
+	}
+	if videoContainerMismatch(item, path) {
+		return requirementStatus(MediaFileRequirementStatePending, "Pending", "Container does not meet the profile target")
+	}
+	return requirementStatus(MediaFileRequirementStateSatisfied, "Ok", "Container requirements met")
 }
 
 func audioRequirementStatus(item storage.MediaItem, tracks []MediaFileTrack) MediaFileRequirementStatus {

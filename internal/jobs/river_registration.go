@@ -67,7 +67,7 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &VideoTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioSourceWorker{settings: deps.settings, events: deps.events})
-	river.AddWorker(workers, &ContainerRemuxWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &ContainerRemuxWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &SubtitleDownloadWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
 	river.AddWorker(workers, &SubtitleEmbedWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &SubtitleExtractWorker{settings: deps.settings, events: deps.events})

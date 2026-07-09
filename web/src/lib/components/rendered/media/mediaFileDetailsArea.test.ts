@@ -160,6 +160,51 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		).toContain('Transcode video');
 	});
 
+	it('shows container remux on the file overview row', () => {
+		const row = detailedFileRow();
+		row.requirements = {
+			...row.requirements!,
+			video: { state: 'satisfied', label: 'Ok', details: ['Video requirements met'] },
+			container: {
+				state: 'pending',
+				label: 'Pending',
+				details: ['Container does not meet the profile target']
+			}
+		};
+
+		const summary = renderWithTooltip(MediaFileSummary, {
+			mediaItemId: 'media-1',
+			mediaTitle: 'Scenario Movie',
+			row,
+			canManage: true,
+			searching: false,
+			onAutoSearch: vi.fn(),
+			onManualSearch: vi.fn(),
+			onDelete: vi.fn()
+		}).body;
+		const details = renderWithTooltip(MediaFileDetailsAccordion, { row, canManage: true }).body;
+
+		expect(summary).toContain('Remux container');
+		expect(summary).toContain('Pending');
+		expect(details).not.toContain('Remux container');
+	});
+
+	it('hides the container badge when the container is ok', () => {
+		const summary = renderWithTooltip(MediaFileSummary, {
+			mediaItemId: 'media-1',
+			mediaTitle: 'Scenario Movie',
+			row: detailedFileRow(),
+			canManage: true,
+			searching: false,
+			onAutoSearch: vi.fn(),
+			onManualSearch: vi.fn(),
+			onDelete: vi.fn()
+		}).body;
+
+		expect(summary).not.toContain('Container requirements met');
+		expect(summary).not.toContain('Remux container');
+	});
+
 	it('shows pending fulfillment actions as busy buttons', () => {
 		const row = detailedFileRow();
 		row.tracks[1] = {
@@ -505,6 +550,7 @@ function detailedFileRow(): MediaFileRow {
 		],
 		requirements: {
 			video: { state: 'satisfied', label: 'Ok', details: ['Video requirements met'] },
+			container: { state: 'satisfied', label: 'Ok', details: ['Container requirements met'] },
 			audio: { state: 'missing', label: 'Missing', details: ['Missing required audio: German'] },
 			subtitles: { state: 'partial', label: 'Partial', details: ['Missing subtitles: Japanese'] }
 		}

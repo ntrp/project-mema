@@ -60,7 +60,28 @@ func videoFailures(item storage.MediaItem, path string, track MediaFileTrack) []
 	if len(target.PixelFormats) > 0 && !stringListHasNormalized(target.PixelFormats, optionalStringValue(track.PixelFormat)) {
 		failures = append(failures, "Pixel format does not meet the profile target")
 	}
+	if videoContainerMismatch(item, path) {
+		failures = append(failures, "Container does not meet the profile target")
+	}
 	return failures
+}
+
+func videoTrackFailures(item storage.MediaItem, path string, track MediaFileTrack) []string {
+	failures := []string{}
+	for _, failure := range videoFailures(item, path, track) {
+		if strings.Contains(strings.ToLower(failure), "container") {
+			continue
+		}
+		failures = append(failures, failure)
+	}
+	return failures
+}
+
+func videoContainerMismatch(item storage.MediaItem, path string) bool {
+	if item.FinalContainer == "" {
+		return false
+	}
+	return mediaFileContainer(item, path) != "" && mediaFileContainer(item, path) != item.FinalContainer
 }
 
 func videoResolutionFailure(item storage.MediaItem, path string, track MediaFileTrack) string {
@@ -95,6 +116,15 @@ func mediaFileQualityID(item storage.MediaItem, path string) string {
 		}
 	}
 	return storage.QualityIDFromPath(path)
+}
+
+func mediaFileContainer(item storage.MediaItem, path string) string {
+	for _, fact := range item.FileFacts {
+		if sameMediaFilePath(fact.FilePath, path) && fact.ContainerFormat != nil {
+			return strings.TrimPrefix(strings.ToLower(strings.TrimSpace(*fact.ContainerFormat)), ".")
+		}
+	}
+	return strings.TrimPrefix(strings.ToLower(filepath.Ext(path)), ".")
 }
 
 func sameMediaFilePath(left string, right string) bool {

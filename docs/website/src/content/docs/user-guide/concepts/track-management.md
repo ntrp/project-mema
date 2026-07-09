@@ -48,6 +48,11 @@ supported codec and pixel-format mismatches. HDR-only or resolution-only
 mismatches are shown as profile problems, but they are not queued for automatic
 transcoding until a safe tool path exists.
 
+Container remuxing copies every stream into the profile final container without
+re-encoding. The scheduled remux job scans files that need only a container
+change and creates one current one-shot job per file. Manual remux buttons
+create the same file-scoped one-shot job from the file overview row.
+
 Scheduled video transcoding scans the library and creates one current one-shot
 job for each eligible video track. Manual video transcode buttons create the
 same track-scoped one-shot job for the selected row. Progress appears in System

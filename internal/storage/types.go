@@ -24,6 +24,7 @@ type MediaItem struct {
 	MinimumAvailability          string
 	QualityProfileID             *string
 	QualityProfileName           *string
+	FinalContainer               string
 	Status                       string
 	LibraryFolderID              *uuid.UUID
 	LibraryFolderPath            *string

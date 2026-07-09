@@ -80,6 +80,7 @@ func hydrateMediaItemProfile(
 	item.VideoTarget = videoTarget
 	item.AudioTargets = audioTargets
 	item.SubtitleTargets = subtitleTargets
+	item.FinalContainer = profile.FinalContainer
 	item.SubtitleMode = profile.SubtitleMode
 	item.RemoveUnwantedAudio = profile.RemoveUnwantedAudio
 	item.RemoveUnwantedSubtitles = profile.RemoveUnwantedSubtitles

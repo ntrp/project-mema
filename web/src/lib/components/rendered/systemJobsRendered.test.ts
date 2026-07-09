@@ -53,11 +53,13 @@ describe('rendered system job dashboard components', () => {
 	it('renders one-shot jobs with progress and abort controls', () => {
 		const { body } = renderWithTooltip(SystemOneShotJobsTable, {
 			jobs: [systemJobExecution({ riverJobId: 51, status: 'scheduled', progressLabel: 'Waiting' })],
-			onAbort: vi.fn()
+			onAbort: vi.fn(),
+			onLogs: vi.fn()
 		});
 
 		expect(body).toContain('media.release_search');
 		expect(body).toContain('Waiting');
+		expect(body).toContain('Show execution logs');
 		expect(body).toContain('Abort job');
 	});
 

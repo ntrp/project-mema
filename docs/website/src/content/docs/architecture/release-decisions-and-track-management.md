@@ -190,6 +190,24 @@ success, the temporary file replaces the original media file and the media item
 is rescanned so persisted track facts, duration, and satisfaction state reflect
 the new file.
 
+### Container Remux Fulfillment
+
+Container remuxing follows the same planner plus one-shot model, but its scope
+is the media file rather than a single embedded track.
+
+| Entry point | Queue request | Execution scope |
+| --- | --- | --- |
+| Scheduled container remux job | Fixed `container_remux` schedule enqueues an unscoped `media.fulfillment.container_remux` worker. | Planner scans media files whose container differs from the profile final container and queues one file-scoped one-shot job per file. |
+| Manual remux action | `POST /media/items/{id}/fulfillment-actions` with `operation=container_remux` and `filePath`. | Direct one-shot job remuxes that file to the profile final container. |
+
+The remux worker copies all streams into a temporary output file with the target
+container extension. It does not re-encode streams. MP4 output gets fast-start
+metadata, while MKV output is copied directly. Progress is streamed from the
+media tool, normalized against persisted or probed file duration, and mirrored
+into `app.system_job_executions`. On success, the temporary output becomes the
+new media file path, the old container file is removed, and the media item is
+rescanned.
+
 The API contract exposes rollup and satisfaction data separately. Media item
 and media file payloads can carry a `rollup` summary with the aggregate state,
 target-state counts, and reasons, plus a `targetSatisfaction` summary with

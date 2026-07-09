@@ -30,6 +30,9 @@ func executeTrackFulfillmentOperation(
 	if operation == targets.OperationAudioTranscode {
 		return executeAudioTranscodeTrack(ctx, settings, eventBroker, item, args, track)
 	}
+	if operation == targets.OperationContainerRemux {
+		return executeContainerRemuxFile(ctx, settings, eventBroker, item, args)
+	}
 	err := fmt.Errorf("fulfillment operation %s is not executable for a selected track yet", operation)
 	publishFulfillmentExecutionError(ctx, settings, eventBroker, operation, item, args, err)
 	return err

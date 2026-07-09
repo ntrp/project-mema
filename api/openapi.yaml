@@ -6378,10 +6378,13 @@ components:
       additionalProperties: false
       required:
         - video
+        - container
         - audio
         - subtitles
       properties:
         video:
+          $ref: "#/components/schemas/MediaFileRequirementStatus"
+        container:
           $ref: "#/components/schemas/MediaFileRequirementStatus"
         audio:
           $ref: "#/components/schemas/MediaFileRequirementStatus"

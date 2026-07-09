@@ -3520,6 +3520,7 @@ type MediaFileRequirementStatus struct {
 // MediaFileRequirementSummary defines model for MediaFileRequirementSummary.
 type MediaFileRequirementSummary struct {
 	Audio     MediaFileRequirementStatus `json:"audio"`
+	Container MediaFileRequirementStatus `json:"container"`
 	Subtitles MediaFileRequirementStatus `json:"subtitles"`
 	Video     MediaFileRequirementStatus `json:"video"`
 }

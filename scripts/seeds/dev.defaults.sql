@@ -116,7 +116,15 @@ values
     ('17-audio-conversion-disabled', 'english', 'aac', array['stereo'], 192, 256, 'disabled', 'mixed', true, false),
     ('18-audio-conversion-lossless', 'english', 'aac', array['stereo'], 192, 256, 'losslessToLossy', 'mixed', true, false),
     ('19-audio-conversion-lossy', 'english', 'aac', array['stereo'], 192, 256, 'lossyToLossy', 'mixed', true, false),
-    ('20-wrong-video-codec', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false);
+    ('20-wrong-video-codec', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false),
+    ('21-wrong-container', 'english', 'aac', array['2.0'], 192, 256, 'lossyToLossy', 'mixed', true, false);
+
+alter table dev_test_media_profiles
+add column final_container text not null default 'mkv';
+
+update dev_test_media_profiles
+set final_container = 'mp4'
+where profile_id = '21-wrong-container';
 
 drop table if exists dev_test_media_subtitles;
 create temporary table dev_test_media_subtitles (
@@ -150,7 +158,8 @@ values
     ('17-audio-conversion-disabled', 'english', 0, 0),
     ('18-audio-conversion-lossless', 'english', 0, 0),
     ('19-audio-conversion-lossy', 'english', 0, 0),
-    ('20-wrong-video-codec', 'english', 0, 0);
+    ('20-wrong-video-codec', 'english', 0, 0),
+    ('21-wrong-container', 'english', 0, 0);
 
 insert into app.media_profiles (
     id,
@@ -174,7 +183,7 @@ select
     profile_id,
     profile_id,
     false,
-    'mkv',
+    final_container,
     true,
     'bluray-1080p',
     0,
@@ -320,7 +329,8 @@ values
     (19, '17-audio-conversion-disabled', '10000000-0000-4000-8000-000000001019', '10000000-0000-4000-8000-000000002019', 1995, '862', 'EN', '.data/media/test-movie/17-audio-conversion-disabled', 'Toy.Story.1995.tmdb-862.1080p.WEB-DL.FLAC2.0.EN.AudioConversionDisabled.mkv', 'Toy Story'),
     (20, '18-audio-conversion-lossless', '10000000-0000-4000-8000-000000001020', '10000000-0000-4000-8000-000000002020', 1998, '9487', 'EN', '.data/media/test-movie/18-audio-conversion-lossless', 'A.Bugs.Life.1998.tmdb-9487.1080p.WEB-DL.FLAC2.0.EN.AudioConversionLossless.mkv', 'A Bugs Life'),
     (21, '19-audio-conversion-lossy', '10000000-0000-4000-8000-000000001021', '10000000-0000-4000-8000-000000002021', 2012, '62177', 'EN', '.data/media/test-movie/19-audio-conversion-lossy', 'Brave.2012.tmdb-62177.1080p.WEB-DL.AC3.2.0.EN.AudioConversionLossy.mkv', 'Brave'),
-    (22, '20-wrong-video-codec', '10000000-0000-4000-8000-000000001022', '10000000-0000-4000-8000-000000002022', 2017, '354912', 'EN', '.data/media/test-movie/20-wrong-video-codec', 'Coco.2017.tmdb-354912.1080p.WEB-DL.MPEG4.AAC2.0.EN.WrongVideoCodec.mkv', 'Coco');
+    (22, '20-wrong-video-codec', '10000000-0000-4000-8000-000000001022', '10000000-0000-4000-8000-000000002022', 2017, '354912', 'EN', '.data/media/test-movie/20-wrong-video-codec', 'Coco.2017.tmdb-354912.1080p.WEB-DL.MPEG4.AAC2.0.EN.WrongVideoCodec.mkv', 'Coco'),
+    (23, '21-wrong-container', '10000000-0000-4000-8000-000000001023', '10000000-0000-4000-8000-000000002023', 2021, '508943', 'EN', '.data/media/test-movie/21-wrong-container', 'Luca.2021.tmdb-508943.1080p.WEB-DL.AAC2.0.EN.WrongContainer.mkv', 'Luca');
 
 insert into app.media_items (
     id,

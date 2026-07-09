@@ -1,6 +1,7 @@
 <script lang="ts">
 	import CaptionsIcon from '@lucide/svelte/icons/captions';
 	import MusicIcon from '@lucide/svelte/icons/music';
+	import PackageIcon from '@lucide/svelte/icons/package';
 	import VideoIcon from '@lucide/svelte/icons/video';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { cn } from '$lib/utils';
@@ -9,7 +10,7 @@
 	import type { MediaFileSummaryStatus } from '$lib/components/app/media/files/mediaFileSummaryStatus';
 
 	interface Props {
-		type: 'video' | 'audio' | 'subtitle';
+		type: 'video' | 'container' | 'audio' | 'subtitle';
 		status: MediaFileSummaryStatus;
 		row: MediaFileRow;
 	}
@@ -37,6 +38,7 @@
 
 	function typeLabel(value: Props['type']) {
 		if (value === 'video') return 'Video';
+		if (value === 'container') return 'Container';
 		if (value === 'audio') return 'Audio';
 		return 'Subtitles';
 	}
@@ -47,6 +49,7 @@
 		fileRow: MediaFileRow
 	): TooltipSection[] {
 		const sections: TooltipSection[] = [];
+		if (value === 'container') return [{ title: label, details: summary.details }];
 		const trackType = value === 'subtitle' ? 'subtitle' : value;
 		for (const track of fileRow.tracks.filter((track) => track.type === trackType)) {
 			if (summary.state !== 'satisfied' && track.state?.visualState === 'matching') continue;
@@ -102,6 +105,8 @@
 			>
 				{#if type === 'video'}
 					<VideoIcon class={iconClass} aria-hidden="true" />
+				{:else if type === 'container'}
+					<PackageIcon class={iconClass} aria-hidden="true" />
 				{:else if type === 'audio'}
 					<MusicIcon class={iconClass} aria-hidden="true" />
 				{:else}

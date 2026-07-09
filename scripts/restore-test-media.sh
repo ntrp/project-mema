@@ -336,6 +336,9 @@ movie_one_audio "$MEDIA_DIR/19-audio-conversion-lossy/Brave.2012.tmdb-62177.1080
 scenario "20-wrong-video-codec" "Coco (2017), TMDB 354912"
 movie_one_audio "$MEDIA_DIR/20-wrong-video-codec/Coco.2017.tmdb-354912.1080p.WEB-DL.MPEG4.AAC2.0.EN.WrongVideoCodec.mkv" eng aac 256k 2 eng no subrip 1920x1080 mpeg4
 
+scenario "21-wrong-container" "Luca (2021), TMDB 508943"
+movie_one_audio "$MEDIA_DIR/21-wrong-container/Luca.2021.tmdb-508943.1080p.WEB-DL.AAC2.0.EN.WrongContainer.mkv" eng aac 256k 2 eng no
+
 cat >"$MEDIA_DIR/README.md" <<'README'
 # Test Movie Fixtures
 

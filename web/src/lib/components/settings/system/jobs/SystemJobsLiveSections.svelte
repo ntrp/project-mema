@@ -14,12 +14,14 @@
 		updatingIntervalId?: string;
 		runningScheduleId?: string;
 		abortingId?: number;
+		loadingLogsId?: number;
 		onRefresh: () => void;
 		onPause: (schedule: SystemJobSchedule) => void;
 		onResume: (schedule: SystemJobSchedule) => void;
 		onRun: (schedule: SystemJobSchedule) => void;
 		onSaveInterval: (schedule: SystemJobSchedule, intervalSeconds: number) => void;
 		onAbort: (id: number, kind: string) => void;
+		onLogs: (execution: SystemJobExecution) => void;
 	}
 
 	let {
@@ -30,12 +32,14 @@
 		updatingIntervalId,
 		runningScheduleId,
 		abortingId,
+		loadingLogsId,
 		onRefresh,
 		onPause,
 		onResume,
 		onRun,
 		onSaveInterval,
-		onAbort
+		onAbort,
+		onLogs
 	}: Props = $props();
 </script>
 
@@ -76,7 +80,9 @@
 		<SystemOneShotJobsTable
 			jobs={oneShotJobs}
 			{abortingId}
+			{loadingLogsId}
 			onAbort={(id) => onAbort(id, oneShotJobs.find((job) => job.riverJobId === id)?.kind ?? 'job')}
+			{onLogs}
 		/>
 	</Card.Content>
 </Card.Root>

@@ -49,9 +49,10 @@ Automatic job intervals can be edited from the fixed schedules table. If
 activity is too chatty or too slow, change the interval and save it from the
 same row.
 
-Use the execution history logs when a job fails or appears stuck. Each run keeps
-structured messages, progress updates, errors, and relevant IDs so you can see
-which indexer, download client, media item, or path was involved.
+Use the row log action when a current one-shot job or finished execution appears
+stuck. Each run keeps structured messages, progress updates, errors, and
+relevant IDs so you can see which indexer, download client, media item, or path
+was involved.
 Progress details may include the current phase, percent or item counts, the
 affected media, and a pending provider or tool operation when the worker can
 report it.
