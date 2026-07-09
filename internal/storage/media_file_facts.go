@@ -120,7 +120,7 @@ func mediaFileTrackParams(fact MediaFileFact, input MediaFileTrackFactInput) sto
 		TrackType:       strings.TrimSpace(input.TrackType),
 		LanguageID:      textValue(input.LanguageID),
 		Codec:           textValue(input.Codec),
-		Channels:        textValue(input.Channels),
+		Channels:        textValue(normalizedTrackChannels(input.Channels)),
 		DurationMs:      int8Value(input.DurationMs),
 		BitrateKbps:     int4Value(input.BitrateKbps),
 		Width:           int4Value(input.Width),
@@ -132,6 +132,17 @@ func mediaFileTrackParams(fact MediaFileFact, input MediaFileTrackFactInput) sto
 		Title:           textValue(input.Title),
 		Disposition:     jsonObject(input.Disposition),
 	}
+}
+
+func normalizedTrackChannels(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	normalized := NormalizeAudioChannelDefinition(*value)
+	if normalized != "" {
+		return &normalized
+	}
+	return value
 }
 
 func mediaFileFactFromRow(row storagegen.AppMediaFileFact) MediaFileFact {

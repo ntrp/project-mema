@@ -57,6 +57,11 @@ Progress details may include the current phase, percent or item counts, the
 affected media, and a pending provider or tool operation when the worker can
 report it.
 
+Jobs do not retry inside River. A failed one-shot job leaves the current list and
+appears in finished history as a failed/discarded execution. A failed recurring
+schedule run also finalizes, then the schedule can create a fresh run at the next
+configured interval.
+
 Routine successful sync runs are hidden from the normal execution history so
 they do not bury other background work. Turn on Include routine runs when you
 need to inspect them, or use the routine retention setting to keep them for a

@@ -27,6 +27,7 @@ type FulfillmentActionArgs struct {
 
 type fulfillmentEnqueueFunc func(context.Context, string, FulfillmentActionArgs) (int64, error)
 
+type MediaFulfillmentArgs struct{}
 type VideoTranscodeArgs struct{ FulfillmentActionArgs }
 type AudioTranscodeArgs struct{ FulfillmentActionArgs }
 type AudioSourceArgs struct{ FulfillmentActionArgs }
@@ -36,6 +37,7 @@ type SubtitleEmbedArgs struct{ FulfillmentActionArgs }
 type SubtitleExtractArgs struct{ FulfillmentActionArgs }
 type SubtitleConvertArgs struct{ FulfillmentActionArgs }
 
+func (MediaFulfillmentArgs) Kind() string { return "media.fulfillment" }
 func (VideoTranscodeArgs) Kind() string   { return "media.fulfillment.video_transcode" }
 func (AudioTranscodeArgs) Kind() string   { return "media.fulfillment.audio_transcode" }
 func (AudioSourceArgs) Kind() string      { return "media.fulfillment.audio_source" }
@@ -44,6 +46,13 @@ func (SubtitleDownloadArgs) Kind() string { return "media.fulfillment.subtitle_d
 func (SubtitleEmbedArgs) Kind() string    { return "media.fulfillment.subtitle_embed" }
 func (SubtitleExtractArgs) Kind() string  { return "media.fulfillment.subtitle_extract" }
 func (SubtitleConvertArgs) Kind() string  { return "media.fulfillment.subtitle_convert" }
+
+func (w *MediaFulfillmentWorker) Work(ctx context.Context, job *river.Job[MediaFulfillmentArgs]) (err error) {
+	ctx = withJobExecution(ctx, job.JobRow.ID)
+	recordJobUpdated(ctx, w.settings, w.events, job.JobRow, "running")
+	defer func() { recordJobFinished(ctx, w.settings, w.events, job.JobRow, err) }()
+	return enqueueMediaFulfillmentJobs(ctx, w.settings, w.events, w.enqueueFulfillment)
+}
 
 func (w *VideoTranscodeWorker) Work(ctx context.Context, job *river.Job[VideoTranscodeArgs]) (err error) {
 	return runFulfillmentWorker(ctx, job.JobRow, w.settings, w.events, nil, w.enqueueFulfillment, targets.OperationVideoTranscode, job.Args.FulfillmentActionArgs)

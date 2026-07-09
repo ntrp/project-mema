@@ -95,7 +95,7 @@ func audioTranscodePlansForPolicy(
 				continue
 			}
 			decision := DecideAudioConversion(audioConversionInputForTrack(policy, target, track))
-			if !decision.Needed || !decision.Allowed {
+			if !audioConversionHasExecutableWork(decision) {
 				continue
 			}
 			plans = append(plans, audioTranscodePlan{

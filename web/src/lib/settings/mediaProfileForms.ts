@@ -1,5 +1,6 @@
 import type { MediaProfile, MediaProfileForm, MediaProfileRequest } from './types';
 import { uniqueSubtitleFormats } from './mediaProfileSubtitleFormats';
+import { uniqueAudioChannels } from './profileAudioChannels';
 
 export function emptyMediaProfileForm(): MediaProfileForm {
 	return {
@@ -140,7 +141,7 @@ function audioTargetsFromForm(form: MediaProfileForm): MediaProfileRequest['audi
 			languageId,
 			score: normalizedInteger(value.score),
 			targetCodec: trimmedValue(value.targetCodec),
-			targetChannels: uniqueTrimmed(value.targetChannels ?? []),
+			targetChannels: uniqueAudioChannels(value.targetChannels ?? []),
 			minimumBitrateKbps: positiveInteger(value.minimumBitrateKbps),
 			preferredBitrateKbps: positiveInteger(value.preferredBitrateKbps)
 		});

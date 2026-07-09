@@ -72,3 +72,32 @@ func TestAudioTranscodePlansSkipPolicyBlockedTracks(t *testing.T) {
 		t.Fatalf("plans = %#v", plans)
 	}
 }
+
+func TestAudioTranscodePlansSkipInvalidNoOpChannelTarget(t *testing.T) {
+	language := "eng"
+	sourceCodec := "aac"
+	channels := "2.0"
+	item := storage.MediaItem{
+		ID: uuid.New(),
+		AudioTargets: []storage.MediaProfileAudioTarget{{
+			LanguageID:     "eng",
+			TargetChannels: []string{"objectaudio"},
+		}},
+		FileFacts: []storage.MediaFileFact{{
+			ID:       uuid.New(),
+			FilePath: "/library/movie.mkv",
+			Tracks: []storage.MediaFileTrackFact{{
+				ID:         uuid.New(),
+				FilePath:   "/library/movie.mkv",
+				TrackType:  "audio",
+				LanguageID: &language,
+				Codec:      &sourceCodec,
+				Channels:   &channels,
+			}},
+		}},
+	}
+
+	if plans := audioTranscodePlansForPolicy("lossyToLossy", item, FulfillmentActionArgs{}); len(plans) != 0 {
+		t.Fatalf("plans = %#v", plans)
+	}
+}

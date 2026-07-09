@@ -156,21 +156,22 @@ worker path:
 
 | Entry point | Queue request | Policy mode | Execution scope |
 | --- | --- | --- | --- |
-| Scheduled audio transcode job | Fixed `audio_transcode` schedule enqueues an unscoped `media.fulfillment.audio_transcode` worker. | Automatic profile policy from `audio_lossy_transcode_policy`. | Planner scans matching media/file/audio tracks, then queues one one-shot job per eligible track. |
+| Media Fulfillment schedule | Fixed `media_fulfillment` schedule scans media and enqueues one-shot `media.fulfillment.audio_transcode` jobs. | Automatic profile policy from `audio_lossy_transcode_policy`. | Planner scans matching media/file/audio tracks, then queues one one-shot job per eligible track. |
 | Manual track action | `POST /media/items/{id}/fulfillment-actions` with `operation=audio_transcode` and `trackId`. | Manual conversion policy for that selected track. | Direct one-shot job resolves the track and transcodes only that track. |
-| Scheduled video transcode job | Fixed `video_transcode` schedule enqueues an unscoped `media.fulfillment.video_transcode` worker. | Profile video target. | Planner scans matching media/file/video tracks, then queues one one-shot job per eligible track that has a supported codec or pixel-format fix. |
+| Media Fulfillment schedule | Fixed `media_fulfillment` schedule scans media and enqueues one-shot `media.fulfillment.video_transcode` jobs. | Profile video target. | Planner scans matching media/file/video tracks, then queues one one-shot job per eligible track that has a supported codec or pixel-format fix. |
 | Manual video track action | `POST /media/items/{id}/fulfillment-actions` with `operation=video_transcode` and `trackId`. | Profile video target. | Direct one-shot job resolves the video track and transcodes only that track. |
 
-The scheduled jobs are planners, not file mutators. When an unscoped worker
-runs, it loads live file facts, walks persisted tracks, checks the matching
-profile target, and asks the conversion decision code whether the target can be
-fixed. Audio planning considers codec, channel, and bitrate changes, then
-applies the profile audio conversion policy. Video planning considers supported
-codec and pixel-format changes. HDR-only or resolution-only video mismatches are
-not queued because the current video tool path does not safely satisfy those
-targets. Each allowed track is enqueued as a normal one-shot fulfillment job
-with media item id, file path, target type, optional target language, and track
-id.
+The Media Fulfillment scheduled job is a planner, not a file mutator. It loads
+live file facts, walks persisted tracks and files, checks matching profile
+targets, and asks each operation planner whether the target can be fixed. Audio
+planning considers codec, channel, and bitrate changes, then applies the profile
+audio conversion policy. Video planning considers supported codec and
+pixel-format changes. HDR-only or resolution-only video mismatches are not
+queued because the current video tool path does not safely satisfy those
+targets. The planner reports scan progress as processed media entries over total
+media entries, plus the queued child job count. Each allowed track is enqueued
+as a normal one-shot fulfillment job with media item id, file path, target type,
+optional target language, and track id.
 
 Manual actions validate the media item, optional file path, selected track,
 target type, and language at the HTTP boundary. The request is stored in
@@ -178,8 +179,8 @@ target type, and language at the HTTP boundary. The request is stored in
 track-scoped manual audio transcode jobs switch to manual conversion policy.
 This lets an explicit user action run even when automatic lossy conversion is
 disabled for the profile, while scheduled jobs remain governed by the profile.
-Manual video transcode actions use the same profile target decision as
-scheduled video child jobs, but they execute only the selected track.
+Manual video transcode actions use the same profile target decision as the
+Media Fulfillment child jobs, but they execute only the selected track.
 
 The track-scoped worker resolves the track from live file facts, rechecks the
 matching target and conversion decision, then runs the media tool command
@@ -197,16 +198,27 @@ is the media file rather than a single embedded track.
 
 | Entry point | Queue request | Execution scope |
 | --- | --- | --- |
-| Scheduled container remux job | Fixed `container_remux` schedule enqueues an unscoped `media.fulfillment.container_remux` worker. | Planner scans media files whose container differs from the profile final container and queues one file-scoped one-shot job per file. |
+| Media Fulfillment schedule | Fixed `media_fulfillment` schedule scans media and enqueues one-shot `media.fulfillment.container_remux` jobs. | Planner scans media files whose container differs from the profile final container and queues one file-scoped one-shot job per file. |
 | Manual remux action | `POST /media/items/{id}/fulfillment-actions` with `operation=container_remux` and `filePath`. | Direct one-shot job remuxes that file to the profile final container. |
 
-The remux worker copies all streams into a temporary output file with the target
-container extension. It does not re-encode streams. MP4 output gets fast-start
-metadata, while MKV output is copied directly. Progress is streamed from the
-media tool, normalized against persisted or probed file duration, and mirrored
-into `app.system_job_executions`. On success, the temporary output becomes the
-new media file path, the old container file is removed, and the media item is
-rescanned.
+The remux worker copies streams into a temporary output file with the target
+container extension. MP4 output converts embedded text subtitle streams to
+`mov_text`, because MP4 cannot store SubRip streams directly, and writes
+fast-start metadata. MKV output is copied directly. Progress is streamed from
+the media tool, normalized against persisted or probed file duration, and
+mirrored into `app.system_job_executions`. On success, the temporary output
+becomes the new media file path, the old container file is removed, and the
+media item is rescanned.
+
+### Subtitle Fulfillment
+
+Media Fulfillment also scans subtitle target rows. Missing subtitle targets can
+queue subtitle download one-shot jobs. Pending embedded candidates in external
+mode queue subtitle extraction jobs, pending external candidates in embedded
+mode queue subtitle merge jobs, and text subtitle format mismatches queue
+subtitle conversion jobs. The one-shot workers re-resolve the current file,
+track, or sidecar before mutating files so manual actions and automatic planner
+children use the same execution path.
 
 The API contract exposes rollup and satisfaction data separately. Media item
 and media file payloads can carry a `rollup` summary with the aggregate state,
@@ -288,7 +300,7 @@ missing. Otherwise each target is matched against detected audio tracks by
 language first, then target details:
 
 - target codec
-- target channel list
+- numeric target channel list, such as `2.0`, `5.1`, or `7.1`
 - minimum bitrate
 
 If a target language is absent, the file is missing that audio target. If the

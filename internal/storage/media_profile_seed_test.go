@@ -19,7 +19,7 @@ func TestDefaultMediaProfilesCarryTargetDetails(t *testing.T) {
 	uhd := requireMediaProfile(t, ctx, store, "uhd-4k")
 	expectStrings(t, uhd.VideoTarget.Codecs, []string{"hevc", "av1"})
 	expectStrings(t, uhd.VideoTarget.HDRFormats, []string{"hdr10", "hdr10plus", "dolby-vision"})
-	requireAudioTarget(t, uhd, "english", "eac3", []string{"5.1", "7.1", "atmos"}, 640, 1536)
+	requireAudioTarget(t, uhd, "english", "eac3", []string{"5.1", "7.1"}, 640, 1536)
 
 	anime := requireMediaProfile(t, ctx, store, "anime-1080p")
 	requireAudioTarget(t, anime, "japanese", "aac", []string{"2.0"}, 160, 256)

@@ -169,7 +169,6 @@ Examples:
 - `2.0`
 - `5.1`
 - `7.1`
-- `atmos`
 
 Acceptance criteria:
 

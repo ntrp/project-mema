@@ -378,7 +378,7 @@ insert into app.media_profile_audio_targets (
 values
     ('any', 'english', 0, null, '{}', null, null, 0),
     ('hd-1080p', 'english', 25, 'aac', array['2.0', '5.1'], 192, 640, 0),
-    ('uhd-4k', 'english', 50, 'eac3', array['5.1', '7.1', 'atmos'], 640, 1536, 0),
+    ('uhd-4k', 'english', 50, 'eac3', array['5.1', '7.1'], 640, 1536, 0),
     ('anime-1080p', 'japanese', 50, 'aac', array['2.0'], 160, 256, 0),
     ('anime-1080p', 'english', 25, 'aac', array['2.0'], 160, 256, 1)
 on conflict (profile_id, language_id) do nothing;

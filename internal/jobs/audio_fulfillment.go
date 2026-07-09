@@ -207,7 +207,11 @@ func int32PtrValue(value *int32) int32 {
 }
 
 func stringListHas(values []string, candidate string) bool {
+	candidateChannel := storage.NormalizeAudioChannelDefinition(candidate)
 	for _, value := range values {
+		if candidateChannel != "" && storage.NormalizeAudioChannelDefinition(value) == candidateChannel {
+			return true
+		}
 		if strings.EqualFold(strings.TrimSpace(value), strings.TrimSpace(candidate)) {
 			return true
 		}

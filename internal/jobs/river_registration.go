@@ -64,6 +64,7 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &SubtitleRetryWorker{settings: deps.settings, subtitles: deps.subtitles, events: deps.events})
 	river.AddWorker(workers, &ComponentExtractionWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &ComponentMuxWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &MediaFulfillmentWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &VideoTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioTranscodeWorker{settings: deps.settings, events: deps.events, enqueueFulfillment: deps.enqueueFulfillment})
 	river.AddWorker(workers, &AudioSourceWorker{settings: deps.settings, events: deps.events})
@@ -72,6 +73,7 @@ func addWorkers(workers *river.Workers, deps workerDependencies) {
 	river.AddWorker(workers, &SubtitleEmbedWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &SubtitleExtractWorker{settings: deps.settings, events: deps.events})
 	river.AddWorker(workers, &SubtitleConvertWorker{settings: deps.settings, events: deps.events})
+	river.AddWorker(workers, &MediaRefreshWorker{settings: deps.settings, events: deps.events})
 }
 
 func fixedJobDefinitions() []fixedJobDefinition {
@@ -137,14 +139,24 @@ func fixedJobDefinitions() []fixedJobDefinition {
 			},
 			args: func() river.JobArgs { return SubtitleRetryArgs{} },
 		},
-		fulfillmentSchedule("video_transcode", "Video transcoding", "Transforms supported video codec or pixel format mismatches.", queueMediaAssembly, VideoTranscodeArgs{}),
-		fulfillmentSchedule("audio_transcode", "Audio transcoding", "Transforms audio codec, channels, or bitrate when policy allows.", queueMediaAssembly, AudioTranscodeArgs{}),
+		{
+			SystemJobScheduleDefinition: storage.SystemJobScheduleDefinition{
+				ID:                    "media_refresh",
+				Name:                  "Media Refresh",
+				Category:              "maintenance",
+				Description:           "Refreshes file metadata for all media items.",
+				Kind:                  MediaRefreshArgs{}.Kind(),
+				Queue:                 queueMediaAssembly,
+				IntervalSeconds:       int32((24 * time.Hour).Seconds()),
+				IntervalConfigurable:  true,
+				Automatic:             true,
+				ManualActionAvailable: true,
+			},
+			args: func() river.JobArgs { return MediaRefreshArgs{} },
+		},
+		fulfillmentSchedule("media_fulfillment", "Media Fulfillment", "Scans media and queues one-shot jobs for needed media operations.", queueMediaAssembly, MediaFulfillmentArgs{}),
 		fulfillmentSchedule("audio_source", "Audio sourcing", "Sources desired audio tracks from alternate releases.", queueMediaSearch, AudioSourceArgs{}),
-		fulfillmentSchedule("container_remux", "Container remuxing", "Moves selected streams into the target container.", queueMediaAssembly, ContainerRemuxArgs{}),
 		fulfillmentSchedule("subtitle_download", "Subtitle download", "Downloads stored external subtitles for missing subtitle targets.", queueMediaSearch, SubtitleDownloadArgs{}),
-		fulfillmentSchedule("subtitle_embed", "Subtitle merge/embed", "Embeds external subtitles when embedded mode requires it.", queueMediaAssembly, SubtitleEmbedArgs{}),
-		fulfillmentSchedule("subtitle_extract", "Subtitle extraction", "Extracts embedded subtitles when external subtitles are required.", queueMediaAssembly, SubtitleExtractArgs{}),
-		fulfillmentSchedule("subtitle_convert", "Subtitle conversion", "Converts subtitle format when tooling supports it.", queueMediaAssembly, SubtitleConvertArgs{}),
 	}
 }
 

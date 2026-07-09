@@ -8,6 +8,13 @@ import (
 	"media-manager/internal/subtitles"
 )
 
+type MediaFulfillmentWorker struct {
+	river.WorkerDefaults[MediaFulfillmentArgs]
+	settings           *storage.SettingsStore
+	events             *events.Broker
+	enqueueFulfillment fulfillmentEnqueueFunc
+}
+
 type VideoTranscodeWorker struct {
 	river.WorkerDefaults[VideoTranscodeArgs]
 	settings           *storage.SettingsStore

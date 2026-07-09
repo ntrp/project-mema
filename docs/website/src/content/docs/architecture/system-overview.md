@@ -60,23 +60,27 @@ registered from the application catalog and synchronized into
 `app.system_job_schedules`, where category, description, automatic/manual flags,
 pause state, and interval settings are persisted.
 
-Schedules can be disabled by pausing them. Fulfillment schedules for video
-transcode, audio transcode, audio sourcing, remuxing, subtitle download,
-subtitle embed, subtitle extraction, and subtitle conversion are registered
-disabled by default. Disabled automatic schedules do not enqueue periodic work,
-but media-detail manual actions can still enqueue the matching operation when
-the current row has enough context. Schedules can also be marked configurable.
+Schedules can be disabled by pausing them. Media Refresh is enabled by default
+and refreshes file metadata for every media item using the same rescan path as
+the media-detail Refresh file metadata action. Media Fulfillment is registered
+disabled by default and scans for needed media operations when enabled or run
+manually. Disabled automatic schedules do not enqueue periodic work, but
+media-detail manual actions can still enqueue the matching operation when the
+current row has enough context. Schedules can also be marked configurable.
 Configurable schedules keep the catalog minimum as their River tick, but the
 persisted interval decides whether a run is due. This lets administrators raise
 or lower automatic fulfillment intervals without a server restart.
 
 Routine schedules, such as download client activity sync, are marked with a
 separate history policy. Routine successful runs are hidden from the default
-history view and use shorter retention, while failures and retryable executions
-remain visible so regular health checks do not bury meaningful background work.
-Manual schedule runs enqueue the same fixed job definition with application
-schedule metadata, so they update the fixed schedule's active run, history, and
-next run calculation instead of appearing as unrelated one-shot work.
+history view and use shorter retention, while failures remain visible so regular
+health checks do not bury meaningful background work. All River jobs are
+non-retryable. A failed one-shot execution is finalized as discarded, while a
+failed recurring execution is finalized and can be enqueued again by its
+schedule after the configured interval. Manual schedule runs enqueue the same
+fixed job definition with application schedule metadata, so they update the
+fixed schedule's active run, history, and next run calculation instead of
+appearing as unrelated one-shot work.
 
 The `/api/events` stream publishes both `system.job.updated` for River row
 changes and `system.job.execution.updated` for dashboard execution/progress

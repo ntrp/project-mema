@@ -33,6 +33,9 @@ func executeTrackFulfillmentOperation(
 	if operation == targets.OperationContainerRemux {
 		return executeContainerRemuxFile(ctx, settings, eventBroker, item, args)
 	}
+	if operation == targets.OperationSubtitleExtraction || operation == targets.OperationSubtitleConversion {
+		return executeSubtitleFulfillmentOperation(ctx, settings, eventBroker, operation, item, args)
+	}
 	err := fmt.Errorf("fulfillment operation %s is not executable for a selected track yet", operation)
 	publishFulfillmentExecutionError(ctx, settings, eventBroker, operation, item, args, err)
 	return err
@@ -47,6 +50,14 @@ func executeTargetFulfillmentOperation(
 	args FulfillmentActionArgs,
 	filePath string,
 ) error {
+	if operation == targets.OperationSubtitleEmbed ||
+		operation == targets.OperationSubtitleExtraction ||
+		operation == targets.OperationSubtitleConversion {
+		if args.FilePath == "" {
+			args.FilePath = filePath
+		}
+		return executeSubtitleFulfillmentOperation(ctx, settings, eventBroker, operation, item, args)
+	}
 	err := fmt.Errorf("fulfillment operation %s needs a direct track or file id before execution", operation)
 	details := fulfillmentActionDetails(operation, args)
 	details["mediaItemId"] = item.ID.String()
@@ -88,6 +99,10 @@ func executeAudioTranscodeTrack(
 		publishFulfillmentExecutionError(ctx, settings, eventBroker, targets.OperationAudioTranscode, item, args, err)
 		return err
 	}
+	if !audioConversionHasExecutableWork(decision) {
+		publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Audio transcode skipped", details)
+		return nil
+	}
 	outputPath, cleanup, err := tempOutputPath(track.FilePath)
 	if err != nil {
 		return err
@@ -110,28 +125,6 @@ func executeAudioTranscodeTrack(
 	}
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Audio transcode finished", details)
 	return nil
-}
-
-func audioConversionInputForTrack(
-	policy string,
-	target storage.MediaProfileAudioTarget,
-	track storage.MediaFileTrackFact,
-) AudioConversionInput {
-	targetCodec := target.TargetCodec
-	if targetCodec == nil && track.Codec != nil {
-		codec := *track.Codec
-		targetCodec = &codec
-	}
-	return AudioConversionInput{
-		Policy:               policy,
-		SourceCodec:          stringPtrValue(track.Codec),
-		SourceChannels:       stringPtrValue(track.Channels),
-		SourceBitrateKbps:    int32PtrValue(track.BitrateKbps),
-		TargetCodec:          targetCodec,
-		TargetChannels:       target.TargetChannels,
-		MinimumBitrateKbps:   target.MinimumBitrateKbps,
-		PreferredBitrateKbps: target.PreferredBitrateKbps,
-	}
 }
 
 func audioTranscodePolicy(

@@ -304,6 +304,45 @@ describe('rendered media file details (SCN-MEDIA-004)', () => {
 		expect(body).toContain('Unwanted');
 	});
 
+	it('hides auto subtitle search actions for existing subtitle files', () => {
+		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
+			row: {
+				...detailedFileRow(),
+				otherFiles: [
+					{
+						type: 'subtitle' as const,
+						path: '/library/Scenario Movie/Scenario.Movie.2026.1080p.english.srt',
+						status: 'available' as const,
+						subtype: 'subrip',
+						language: 'english',
+						state: {
+							visualState: 'matching' as const,
+							statusLabel: 'Matching',
+							details: ['External subtitle satisfies the subtitle target.']
+						}
+					}
+				]
+			},
+			canManage: true,
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Scenario.Movie.2026.1080p.english.srt');
+		expect(body).not.toContain('Auto search subtitle');
+		expect(body).toContain('Manual search subtitle');
+	});
+
+	it('keeps auto subtitle search actions for missing subtitle files', () => {
+		const { body } = renderWithTooltip(MediaFileOtherFilesPanel, {
+			row: detailedFileRow(),
+			canManage: true,
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Auto search subtitle');
+		expect(body).toContain('Manual search subtitle');
+	});
+
 	it('formats all track provenance fields for the tooltip', () => {
 		const fields = provenanceFields(detailedFileRow().tracks[1].provenance!);
 		const values = fields.map((field) => `${field.label}: ${field.value}`);

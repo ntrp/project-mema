@@ -1,8 +1,9 @@
 <script lang="ts">
-	import BanIcon from '@lucide/svelte/icons/ban';
 	import PauseIcon from '@lucide/svelte/icons/pause';
 	import PlayIcon from '@lucide/svelte/icons/play';
 	import SaveIcon from '@lucide/svelte/icons/save';
+	import CalendarCheckIcon from '@lucide/svelte/icons/calendar-check-2';
+	import CalendarRemoveIcon from '@lucide/svelte/icons/calendar-x-2';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
@@ -73,14 +74,12 @@
 				>
 					{#if label === 'Run schedule now'}
 						<PlayIcon aria-hidden="true" />
-					{:else if label === 'Abort active run'}
-						<BanIcon aria-hidden="true" />
 					{:else if label === 'Enable automatic job'}
-						<PlayIcon aria-hidden="true" />
+						<CalendarCheckIcon aria-hidden="true" />
 					{:else if label === 'Save interval'}
 						<SaveIcon aria-hidden="true" />
 					{:else}
-						<PauseIcon aria-hidden="true" />
+						<CalendarRemoveIcon aria-hidden="true" />
 					{/if}
 				</Button>
 			{/snippet}
@@ -98,7 +97,7 @@
 				<Table.Head>Progress</Table.Head>
 				<Table.Head class="w-px">Next</Table.Head>
 				<Table.Head class="w-px">Last</Table.Head>
-				<Table.Head class="w-px text-right">Actions</Table.Head>
+				<Table.Head class="w-28 text-right">Actions</Table.Head>
 			</Table.Row>
 		</Table.Header>
 		<Table.Body>
@@ -174,13 +173,6 @@
 								updatingId === schedule.id,
 								() => (schedule.paused ? onResume(schedule) : onPause(schedule))
 							)}
-							{#if hasActiveRun(schedule)}
-								{@render actionButton(
-									'Abort active run',
-									abortingId === schedule.activeRiverJobId,
-									() => onAbort(schedule.activeRiverJobId!)
-								)}
-							{/if}
 						</div>
 					</Table.Cell>
 				</Table.Row>

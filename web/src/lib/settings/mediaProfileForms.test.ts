@@ -67,7 +67,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 					languageId: 'english',
 					score: '100',
 					targetCodec: ' AAC ',
-					targetChannels: ['5.1', '7.1'],
+					targetChannels: [' Stereo ', '2.0', 'Atmos', '7.1'],
 					minimumBitrateKbps: '384'
 				},
 				{
@@ -112,7 +112,7 @@ describe('media profile forms (SCN-SETTINGS-012)', () => {
 					languageId: 'english',
 					score: 100,
 					targetCodec: 'AAC',
-					targetChannels: ['5.1', '7.1'],
+					targetChannels: ['2.0', '7.1'],
 					minimumBitrateKbps: 384
 				}
 			],

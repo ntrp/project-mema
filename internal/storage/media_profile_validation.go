@@ -127,7 +127,7 @@ func normalizeAudioTargets(values []MediaProfileAudioTarget) []MediaProfileAudio
 			LanguageID:           language,
 			Score:                value.Score,
 			TargetCodec:          normalizedTextPtr(value.TargetCodec),
-			TargetChannels:       normalizedTextList(value.TargetChannels),
+			TargetChannels:       NormalizeAudioChannelDefinitions(value.TargetChannels),
 			MinimumBitrateKbps:   positiveInt32Ptr(value.MinimumBitrateKbps),
 			PreferredBitrateKbps: positiveInt32Ptr(value.PreferredBitrateKbps),
 		})

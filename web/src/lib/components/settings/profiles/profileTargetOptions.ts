@@ -39,10 +39,11 @@ export const audioChannelOptions = [
 	{ value: '1.0', label: '1.0 Mono' },
 	{ value: '2.0', label: '2.0 Stereo' },
 	{ value: '3.0', label: '3.0' },
+	{ value: '4.0', label: '4.0' },
+	{ value: '5.0', label: '5.0' },
 	{ value: '5.1', label: '5.1' },
 	{ value: '6.1', label: '6.1' },
-	{ value: '7.1', label: '7.1' },
-	{ value: 'atmos', label: 'Atmos' }
+	{ value: '7.1', label: '7.1' }
 ];
 
 export const subtitleFormatOptions = [

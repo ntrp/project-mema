@@ -10,10 +10,12 @@ import (
 
 func (s *SettingsStore) SyncSystemJobSchedules(ctx context.Context, definitions []SystemJobScheduleDefinition) error {
 	queries := storagegen.New(s.pool)
+	ids := make([]string, 0, len(definitions))
 	for _, definition := range definitions {
 		if strings.TrimSpace(definition.ID) == "" || definition.IntervalSeconds < MinSystemJobScheduleIntervalSeconds {
 			return ErrInvalidInput
 		}
+		ids = append(ids, definition.ID)
 		_, err := queries.UpsertSystemJobSchedule(ctx, storagegen.UpsertSystemJobScheduleParams{
 			ID:                    definition.ID,
 			Name:                  definition.Name,
@@ -31,6 +33,9 @@ func (s *SettingsStore) SyncSystemJobSchedules(ctx context.Context, definitions 
 		if err != nil {
 			return err
 		}
+	}
+	if _, err := s.pool.Exec(ctx, "delete from app.system_job_schedules where not (id = any($1))", ids); err != nil {
+		return err
 	}
 	return nil
 }

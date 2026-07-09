@@ -127,7 +127,7 @@ func audioFailures(target storage.MediaProfileAudioTarget, track storage.MediaFi
 	if target.TargetCodec != nil && normalizeAudioCodec(stringPtrValue(track.Codec)) != normalizeAudioCodec(*target.TargetCodec) {
 		failures = append(failures, "audio codec does not meet the profile target")
 	}
-	if len(target.TargetChannels) > 0 && !stringListHasNormalized(target.TargetChannels, stringPtrValue(track.Channels)) {
+	if len(target.TargetChannels) > 0 && !audioChannelListHas(target.TargetChannels, stringPtrValue(track.Channels)) {
 		failures = append(failures, "audio channels do not meet the profile target")
 	}
 	bitrateTarget := target.MinimumBitrateKbps
@@ -138,6 +138,19 @@ func audioFailures(target storage.MediaProfileAudioTarget, track storage.MediaFi
 		failures = append(failures, "audio bitrate does not meet the profile target")
 	}
 	return failures
+}
+
+func audioChannelListHas(values []string, candidate string) bool {
+	candidate = storage.NormalizeAudioChannelDefinition(candidate)
+	if candidate == "" {
+		return false
+	}
+	for _, value := range values {
+		if storage.NormalizeAudioChannelDefinition(value) == candidate {
+			return true
+		}
+	}
+	return false
 }
 
 func pendingAudioOperation(profile *storage.MediaProfile, failed []string) *targets.Operation {

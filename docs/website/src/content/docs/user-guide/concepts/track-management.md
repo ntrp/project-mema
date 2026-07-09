@@ -42,22 +42,23 @@ current subtitle mode, target format, and known file context.
 ## Video And Container
 
 Partial video rows can queue video transcoding. Rows that need only a container
-change can queue container remuxing. Automatic background schedules for these
-operations exist in System > Jobs but start disabled. Video transcoding can fix
+change can queue container remuxing. The automatic Media Fulfillment schedule in
+System > Jobs scans for these operations and starts disabled. Video transcoding can fix
 supported codec and pixel-format mismatches. HDR-only or resolution-only
 mismatches are shown as profile problems, but they are not queued for automatic
 transcoding until a safe tool path exists.
 
 Container remuxing copies every stream into the profile final container without
-re-encoding. The scheduled remux job scans files that need only a container
-change and creates one current one-shot job per file. Manual remux buttons
-create the same file-scoped one-shot job from the file overview row.
+re-encoding. Media Fulfillment scans files that need only a container change and
+creates one current one-shot job per file. Manual remux buttons create the same
+file-scoped one-shot job from the file overview row.
 
-Scheduled video transcoding scans the library and creates one current one-shot
-job for each eligible video track. Manual video transcode buttons create the
-same track-scoped one-shot job for the selected row. Progress appears in System
-> Jobs while the media tool reports transcoding progress, then the file is
-rescanned when replacement finishes.
+Media Fulfillment also creates one current one-shot job for each eligible video
+or audio track, subtitle extraction, subtitle conversion, or subtitle merge.
+Manual buttons create the same scoped one-shot jobs for selected rows. System >
+Jobs shows Media Fulfillment scan progress as processed media entries out of the
+total, and child job progress while each media tool runs. Files are rescanned
+when replacement finishes.
 
 ## Chapters
 

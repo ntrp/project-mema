@@ -65,6 +65,19 @@ func DecideAudioConversion(input AudioConversionInput) AudioConversionDecision {
 	return decision
 }
 
+func audioConversionHasExecutableWork(decision AudioConversionDecision) bool {
+	if !decision.Needed || !decision.Allowed || decision.TargetCodec == "" {
+		return false
+	}
+	if decision.SourceCodec == "" || decision.SourceCodec != decision.TargetCodec {
+		return true
+	}
+	if ffmpegChannelCount(decision.TargetChannels) != "" {
+		return true
+	}
+	return decision.TargetBitrateKbps > 0
+}
+
 func audioConversionNeed(input AudioConversionInput) AudioConversionDecision {
 	decision := AudioConversionDecision{
 		Policy:      input.Policy,
@@ -136,17 +149,22 @@ func FfmpegAudioConversionArgs(
 }
 
 func firstMissingChannelTarget(source string, targets []string) string {
-	source = strings.ToLower(strings.TrimSpace(source))
+	source = storage.NormalizeAudioChannelDefinition(source)
 	if source == "" || len(targets) == 0 {
 		return ""
 	}
 	for _, target := range targets {
-		normalized := strings.ToLower(strings.TrimSpace(target))
+		normalized := storage.NormalizeAudioChannelDefinition(target)
 		if source == normalized {
 			return ""
 		}
 	}
-	return strings.ToLower(strings.TrimSpace(targets[0]))
+	for _, target := range targets {
+		if normalized := storage.NormalizeAudioChannelDefinition(target); normalized != "" {
+			return normalized
+		}
+	}
+	return ""
 }
 
 func desiredAudioBitrate(input AudioConversionInput) int32 {

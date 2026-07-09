@@ -93,11 +93,7 @@ func recordJobUpdated(ctx context.Context, store *storage.SettingsStore, broker 
 }
 
 func recordJobFinished(ctx context.Context, store *storage.SettingsStore, broker *events.Broker, row *rivertype.JobRow, err error) {
-	if err != nil {
-		recordJobUpdated(ctx, store, broker, row, "retryable")
-		return
-	}
-	recordJobUpdated(ctx, store, broker, row, "completed")
+	recordJobUpdated(ctx, store, broker, row, finalJobStatusForResult(err))
 }
 
 func jobUpdateFromRow(row *rivertype.JobRow, status string) jobUpdateEvent {
@@ -129,11 +125,14 @@ func jobUpdateFromRow(row *rivertype.JobRow, status string) jobUpdateEvent {
 }
 
 func publishJobFinished(broker *events.Broker, row *rivertype.JobRow, err error) {
+	publishJobUpdated(broker, row, finalJobStatusForResult(err))
+}
+
+func finalJobStatusForResult(err error) string {
 	if err != nil {
-		publishJobUpdated(broker, row, "retryable")
-		return
+		return "discarded"
 	}
-	publishJobUpdated(broker, row, "completed")
+	return "completed"
 }
 
 func publishJobExecutionUpdated(broker *events.Broker, execution storage.SystemJobExecution) {
@@ -208,7 +207,7 @@ func messageForJobStatus(status string) string {
 	case "cancelled":
 		return "Job cancelled"
 	case "discarded":
-		return "Job discarded"
+		return "Job failed"
 	default:
 		return "Job updated"
 	}

@@ -71,7 +71,7 @@ func containerRemuxArgs(inputPath string, outputPath string, targetContainer str
 	}
 	args := []string{"-hide_banner", "-loglevel", "error", "-y", "-i", inputPath, "-map", "0", "-c", "copy"}
 	if normalizedContainer(targetContainer) == "mp4" {
-		args = append(args, "-movflags", "+faststart")
+		args = append(args, "-c:s", "mov_text", "-movflags", "+faststart")
 	}
 	return append(args, outputPath), nil
 }

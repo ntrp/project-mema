@@ -12,21 +12,27 @@ import (
 	"media-manager/internal/targets"
 )
 
-func TestFulfillmentSchedulesAreDisabledAndOperationSpecific(t *testing.T) {
+func TestFulfillmentSchedulesUseUnifiedMediaPlanner(t *testing.T) {
 	want := map[string]struct {
 		kind  string
 		queue string
 	}{
-		"video_transcode":   {kind: VideoTranscodeArgs{}.Kind(), queue: queueMediaAssembly},
-		"audio_transcode":   {kind: AudioTranscodeArgs{}.Kind(), queue: queueMediaAssembly},
+		"media_fulfillment": {kind: MediaFulfillmentArgs{}.Kind(), queue: queueMediaAssembly},
 		"audio_source":      {kind: AudioSourceArgs{}.Kind(), queue: queueMediaSearch},
-		"container_remux":   {kind: ContainerRemuxArgs{}.Kind(), queue: queueMediaAssembly},
 		"subtitle_download": {kind: SubtitleDownloadArgs{}.Kind(), queue: queueMediaSearch},
-		"subtitle_embed":    {kind: SubtitleEmbedArgs{}.Kind(), queue: queueMediaAssembly},
-		"subtitle_extract":  {kind: SubtitleExtractArgs{}.Kind(), queue: queueMediaAssembly},
-		"subtitle_convert":  {kind: SubtitleConvertArgs{}.Kind(), queue: queueMediaAssembly},
+	}
+	removed := map[string]struct{}{
+		"video_transcode":  {},
+		"audio_transcode":  {},
+		"container_remux":  {},
+		"subtitle_embed":   {},
+		"subtitle_extract": {},
+		"subtitle_convert": {},
 	}
 	for _, definition := range fixedJobDefinitions() {
+		if _, ok := removed[definition.ID]; ok {
+			t.Fatalf("removed fulfillment schedule still registered: %s", definition.ID)
+		}
 		expected, ok := want[definition.ID]
 		if !ok {
 			continue
@@ -195,6 +201,9 @@ func TestContainerRemuxArgsCopyStreamsToTargetContainer(t *testing.T) {
 	}
 	if !hasArgPair(args, "-movflags", "+faststart") {
 		t.Fatalf("expected mp4 faststart args, got %#v", args)
+	}
+	if !hasArgPair(args, "-c:s", "mov_text") {
+		t.Fatalf("expected mp4 subtitle conversion args, got %#v", args)
 	}
 	if args[len(args)-1] != "/library/.movie.tmp.mp4" {
 		t.Fatalf("output arg = %q", args[len(args)-1])

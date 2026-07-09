@@ -81,10 +81,11 @@ stale. Use subtitle search when subtitles are missing. Use rename preview when
 you want to review file names before applying naming templates.
 
 Every automatic fulfillment path also has a manual route on the relevant media
-row. System > Jobs lists the disabled-by-default fulfillment schedules for
-video, audio, container, and subtitle operations. Turning off an automatic
-schedule stops future background runs, but it does not remove row-level manual
-actions.
+row. System > Jobs lists Media Refresh, which is enabled by default and refreshes
+file metadata for all media, and the disabled-by-default Media Fulfillment
+schedule, which scans for video, audio, container, and subtitle operations and
+queues one-shot workers. Turning off an automatic schedule stops future
+background scans, but it does not remove row-level manual actions.
 
 Treat profiles as living rules. If every release you like is being penalized,
 adjust the profile or custom formats. If bad releases score too well, tighten

@@ -58,7 +58,7 @@ func TestSCNSystem008JobUpdatedPublishesObservablePayload(t *testing.T) {
 	}
 }
 
-func TestSCNSystem008JobFinishedPublishesRetryableAndCompletedStates(t *testing.T) {
+func TestSCNSystem008JobFinishedPublishesDiscardedAndCompletedStates(t *testing.T) {
 	broker := events.NewBroker()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -74,8 +74,8 @@ func TestSCNSystem008JobFinishedPublishesRetryableAndCompletedStates(t *testing.
 	}
 
 	publishJobFinished(broker, row, errors.New("download client unavailable"))
-	if update := readJobUpdate(t, updates); update.Status != "retryable" || update.FinalizedAt != nil {
-		t.Fatalf("retryable update = %#v", update)
+	if update := readJobUpdate(t, updates); update.Status != "discarded" || update.FinalizedAt == nil {
+		t.Fatalf("discarded update = %#v", update)
 	}
 
 	publishJobFinished(broker, row, nil)

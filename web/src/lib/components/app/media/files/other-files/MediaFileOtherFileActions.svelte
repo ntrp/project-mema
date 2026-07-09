@@ -66,6 +66,7 @@
 				}
 			: undefined
 	);
+	const canSearchSubtitle = $derived(file.type === 'subtitle' && file.status === 'missing');
 
 	function updateRetention(retentionMode: 'external' | 'mux') {
 		if (!subtitle) return;
@@ -86,24 +87,26 @@
 				{onFulfillmentAction}
 			/>
 		{/if}
-		<Tooltip.Root>
-			<Tooltip.Trigger>
-				{#snippet child({ props })}
-					<Button
-						{...props}
-						type="button"
-						variant="outline"
-						size="icon-sm"
-						aria-label="Auto search subtitle"
-						disabled={!canManage || !canSearch}
-						onclick={() => onSearch(languageId)}
-					>
-						<SearchIcon aria-hidden="true" />
-					</Button>
-				{/snippet}
-			</Tooltip.Trigger>
-			<Tooltip.Content>Auto search subtitle</Tooltip.Content>
-		</Tooltip.Root>
+		{#if canSearchSubtitle}
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					{#snippet child({ props })}
+						<Button
+							{...props}
+							type="button"
+							variant="outline"
+							size="icon-sm"
+							aria-label="Auto search subtitle"
+							disabled={!canManage || !canSearch}
+							onclick={() => onSearch(languageId)}
+						>
+							<SearchIcon aria-hidden="true" />
+						</Button>
+					{/snippet}
+				</Tooltip.Trigger>
+				<Tooltip.Content>Auto search subtitle</Tooltip.Content>
+			</Tooltip.Root>
+		{/if}
 		<Tooltip.Root>
 			<Tooltip.Trigger>
 				{#snippet child({ props })}

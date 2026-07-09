@@ -31,7 +31,7 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 		AudioLossyTranscodePolicy:         "lossyToLossy",
 		MinimumCustomFormatScoreIncrement: 5,
 		AudioTargets: []MediaProfileAudioTarget{
-			{LanguageID: " English ", Score: 100, TargetCodec: stringPtr(" AAC "), TargetChannels: []string{"5.1"}},
+			{LanguageID: " English ", Score: 100, TargetCodec: stringPtr(" AAC "), TargetChannels: []string{" Stereo ", "2.0", "Atmos", "5.1"}},
 			{LanguageID: "english", Score: 80},
 			{LanguageID: "Brazilian Portuguese", Score: 50},
 		},
@@ -68,6 +68,7 @@ func TestNormalizeMediaProfileInput(t *testing.T) {
 	if input.AudioTargets[0].Score != 100 || input.AudioTargets[0].TargetCodec == nil || *input.AudioTargets[0].TargetCodec != "aac" {
 		t.Fatalf("expected first audio target to retain fields: %#v", input.AudioTargets[0])
 	}
+	expectStrings(t, input.AudioTargets[0].TargetChannels, []string{"2.0", "5.1"})
 	if len(input.SubtitleTargets) != 2 {
 		t.Fatalf("expected deduped subtitle targets, got %#v", input.SubtitleTargets)
 	}
@@ -96,6 +97,11 @@ func TestNormalizeMediaProfileInputRejectsMissingAudioTarget(t *testing.T) {
 	if !errors.Is(err, ErrInvalidInput) {
 		t.Fatalf("expected missing audio target error, got %v", err)
 	}
+}
+
+func TestNormalizeAudioChannelDefinitions(t *testing.T) {
+	got := NormalizeAudioChannelDefinitions([]string{" Stereo ", "2.0", "5.1 Surround", "Atmos", "7.1 Surround"})
+	expectStrings(t, got, []string{"2.0", "5.1", "7.1"})
 }
 
 func TestMediaProfileSlug(t *testing.T) {
