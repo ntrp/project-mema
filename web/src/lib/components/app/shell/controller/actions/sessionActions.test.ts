@@ -36,6 +36,16 @@ function shellState(overrides: Record<string, unknown> = {}) {
 		currentUser: undefined,
 		activeView: 'home',
 		activeHomeSection: 'discover',
+		route: {
+			view: 'home',
+			homeSection: 'discover',
+			activitySection: 'queue',
+			settingsSection: 'general',
+			systemSection: 'status',
+			advancedQuery: '',
+			relatedSectionKind: 'recommendations',
+			peopleSectionKind: 'cast'
+		},
 		downloadClients: [{ id: 'download-1' }],
 		indexers: [{ id: 'indexer-1' }],
 		metadataProviders: [{ id: 'metadata-1' }],
@@ -75,15 +85,23 @@ function shellState(overrides: Record<string, unknown> = {}) {
 }
 
 function deps() {
-	return {
-		clearNotice: vi.fn(),
+	const routeData = {
 		loadSettings: vi.fn(),
 		loadDiscoverBlacklist: vi.fn(),
-		loadLibrary: vi.fn(),
 		loadDiscoverSections: vi.fn(),
-		loadMetadataDetail: vi.fn(),
-		loadMediaCollection: vi.fn(),
 		loadDiscoverSection: vi.fn(),
+		loadMediaItems: vi.fn(),
+		loadMediaRequests: vi.fn(),
+		loadDownloadActivity: vi.fn(),
+		loadReleaseBlocklist: vi.fn(),
+		loadMetadataDetail: vi.fn(),
+		loadPersonDetail: vi.fn(),
+		loadMediaCollection: vi.fn(),
+		loadProfile: vi.fn()
+	};
+	return {
+		clearNotice: vi.fn(),
+		routeData,
 		events: {
 			connect: vi.fn(),
 			disconnect: vi.fn()
@@ -102,8 +120,22 @@ describe('session actions (SCN-AUTH-002)', () => {
 		eventsMock.disconnectAppEvents.mockReset();
 	});
 
-	it('initialises an authenticated admin and loads privileged app data', async () => {
-		const state = shellState({ activeView: 'media-collection' });
+	it('initialises an authenticated admin and loads route data only', async () => {
+		const state = shellState({
+			activeView: 'media-collection',
+			route: {
+				view: 'media-collection',
+				homeSection: 'discover',
+				activitySection: 'queue',
+				settingsSection: 'general',
+				systemSection: 'status',
+				advancedQuery: '',
+				collectionProvider: 'tmdb',
+				collectionId: 'collection-1',
+				relatedSectionKind: 'recommendations',
+				peopleSectionKind: 'cast'
+			}
+		});
 		const actionDeps = deps();
 		apiMock.currentSession.mockResolvedValue({
 			authenticated: true,
@@ -114,10 +146,10 @@ describe('session actions (SCN-AUTH-002)', () => {
 
 		expect(state.loading).toBe(false);
 		expect(state.authenticated).toBe(true);
-		expect(actionDeps.loadSettings).toHaveBeenCalledOnce();
-		expect(actionDeps.loadDiscoverBlacklist).toHaveBeenCalledOnce();
-		expect(actionDeps.loadLibrary).toHaveBeenCalledOnce();
-		expect(actionDeps.loadMediaCollection).toHaveBeenCalledOnce();
+		expect(actionDeps.routeData.loadSettings).not.toHaveBeenCalled();
+		expect(actionDeps.routeData.loadDiscoverBlacklist).not.toHaveBeenCalled();
+		expect(actionDeps.routeData.loadMediaCollection).toHaveBeenCalledOnce();
+		expect(actionDeps.routeData.loadMediaItems).toHaveBeenCalledOnce();
 		expect(eventsMock.connectAppEvents).toHaveBeenCalledWith(state, actionDeps.events);
 	});
 
@@ -135,8 +167,9 @@ describe('session actions (SCN-AUTH-002)', () => {
 		expect(state.activeView).toBe('home');
 		expect(state.activeHomeSection).toBe('discover');
 		expect(navigationMock.goto).toHaveBeenCalledWith('/discover');
-		expect(actionDeps.loadSettings).not.toHaveBeenCalled();
-		expect(actionDeps.loadLibrary).toHaveBeenCalledOnce();
+		expect(actionDeps.routeData.loadSettings).not.toHaveBeenCalled();
+		expect(actionDeps.routeData.loadDiscoverSections).toHaveBeenCalledOnce();
+		expect(actionDeps.routeData.loadMediaItems).toHaveBeenCalledOnce();
 		expect(eventsMock.connectAppEvents).toHaveBeenCalledOnce();
 	});
 

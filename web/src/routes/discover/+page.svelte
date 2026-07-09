@@ -1,5 +1,5 @@
 <script lang="ts">
-	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
+	import DiscoverHomeRoute from '$lib/features/discovery/DiscoverHomeRoute.svelte';
 </script>
 
-<HomeRoute section="discover" />
+<DiscoverHomeRoute />

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
+	import RequestsRoute from '$lib/features/requests/RequestsRoute.svelte';
 </script>
 
-<HomeRoute section="requests" />
+<RequestsRoute />

@@ -160,11 +160,20 @@ describe('navigation and route actions (SCN-AUTH-003)', () => {
 			}
 		});
 		const deps = {
-			loadDiscoverSection: vi.fn(),
-			loadMediaCollection: vi.fn(),
-			loadMetadataDetail: vi.fn(),
-			loadPersonDetail: vi.fn(),
-			loadProfile: vi.fn()
+			routeData: {
+				loadSettings: vi.fn(),
+				loadDiscoverBlacklist: vi.fn(),
+				loadDiscoverSections: vi.fn(),
+				loadDiscoverSection: vi.fn(),
+				loadMediaItems: vi.fn(),
+				loadMediaRequests: vi.fn(),
+				loadDownloadActivity: vi.fn(),
+				loadReleaseBlocklist: vi.fn(),
+				loadMetadataDetail: vi.fn(),
+				loadPersonDetail: vi.fn(),
+				loadMediaCollection: vi.fn(),
+				loadProfile: vi.fn()
+			}
 		};
 		const actions = createRouteActions(shell, deps);
 
@@ -179,6 +188,6 @@ describe('navigation and route actions (SCN-AUTH-003)', () => {
 		expect(shell.searchQuery).toBe('scenario');
 		expect(shell.activeView).toBe('settings');
 		expect(navigationMock.goto).toHaveBeenCalledWith('/discover');
-		expect(deps.loadMetadataDetail).not.toHaveBeenCalled();
+		expect(deps.routeData.loadMetadataDetail).not.toHaveBeenCalled();
 	});
 });

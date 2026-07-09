@@ -1,7 +1,6 @@
 <script lang="ts">
 	import BellIcon from '@lucide/svelte/icons/bell';
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
 	import { listSystemEvents } from '$lib/settings/api';
 	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
@@ -16,12 +15,23 @@
 	let events = $state<SystemEvent[]>([]);
 	let errorTotal = $state(0);
 	let loaded = $state(false);
+	let source: EventSource | undefined;
 
 	const visibleEvents = $derived(events.slice(0, maxEvents));
 
-	onMount(() => {
+	$effect(() => {
+		if (!open) {
+			closeEvents();
+			return;
+		}
 		void load();
-		const source = new EventSource('/api/events', { withCredentials: true });
+		connectEvents();
+		return closeEvents;
+	});
+
+	function connectEvents() {
+		if (source) return;
+		source = new EventSource('/api/events', { withCredentials: true });
 		source.addEventListener('system.event.created', (event) => {
 			const nextEvent = parseSystemEvent<SystemEvent>(event);
 			if (!nextEvent || (nextEvent.severity !== 'warning' && nextEvent.severity !== 'error')) {
@@ -41,10 +51,15 @@
 			events = [];
 			errorTotal = 0;
 		});
-		return () => source.close();
-	});
+	}
+
+	function closeEvents() {
+		source?.close();
+		source = undefined;
+	}
 
 	async function load() {
+		loaded = false;
 		try {
 			const response = await listSystemEvents();
 			events = response.events.filter(

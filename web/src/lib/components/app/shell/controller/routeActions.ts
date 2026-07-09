@@ -2,13 +2,10 @@ import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import type { AppShellState } from './state.svelte';
 import { appRouteKey, type AppRouteState } from './routeState';
+import { loadAppRouteData, type RouteDataDeps } from './routeData';
 
 interface RouteDeps {
-	loadDiscoverSection: () => Promise<void>;
-	loadMediaCollection: () => Promise<void>;
-	loadMetadataDetail: () => Promise<void>;
-	loadPersonDetail: () => Promise<void>;
-	loadProfile: () => Promise<void>;
+	routeData: RouteDataDeps;
 }
 
 export function createRouteActions(state: AppShellState, deps: RouteDeps) {
@@ -61,25 +58,7 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 			void goto(resolve('/discover'));
 			return;
 		}
-		await loadRouteData(route);
-	}
-
-	async function loadRouteData(route: AppRouteState) {
-		if (
-			route.view === 'metadata-detail' ||
-			route.view === 'media-people' ||
-			route.view === 'related-section'
-		) {
-			await deps.loadMetadataDetail();
-		} else if (route.view === 'media-collection') {
-			await deps.loadMediaCollection();
-		} else if (route.view === 'person-detail') {
-			await deps.loadPersonDetail();
-		} else if (route.view === 'discover-section') {
-			await deps.loadDiscoverSection();
-		} else if (route.view === 'profile') {
-			await deps.loadProfile();
-		}
+		await loadAppRouteData(route, state.isAdmin, deps.routeData);
 	}
 
 	return { applyRoute };

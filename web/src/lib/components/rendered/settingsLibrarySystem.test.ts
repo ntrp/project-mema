@@ -130,7 +130,7 @@ describe('rendered system and quality settings (SCN-SETTINGS-009)', () => {
 	});
 
 	it('renders initial system status and log file states', () => {
-		const status = render(SystemStatusSettings);
+		const status = renderWithTooltip(SystemStatusSettings, {});
 		const logFiles = render(SystemLogFilesSettings);
 
 		expect(status.body).toContain('About');

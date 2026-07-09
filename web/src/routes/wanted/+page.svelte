@@ -1,5 +1,5 @@
 <script lang="ts">
-	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
+	import WantedRoute from '$lib/features/library/WantedRoute.svelte';
 </script>
 
-<HomeRoute section="wanted" />
+<WantedRoute />

@@ -81,26 +81,26 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 	});
 	const settingsEdit = createSettingsEditActions(state);
 	const routeActions = createRouteActions(state, {
-		loadDiscoverSection: discovery.loadDiscoverSection,
-		loadMediaCollection: loads.loadMediaCollection,
-		loadMetadataDetail: loads.loadMetadataDetail,
-		loadPersonDetail: loads.loadPersonDetail,
-		loadProfile: profile.loadProfile
+		routeData: {
+			loadSettings: loads.loadSettings,
+			loadDiscoverBlacklist: discovery.loadDiscoverBlacklist,
+			loadDiscoverSections: discovery.loadDiscoverSections,
+			loadDiscoverSection: discovery.loadDiscoverSection,
+			loadMediaItems: loads.loadMediaItems,
+			loadMediaRequests: loads.loadMediaRequests,
+			loadDownloadActivity: loads.loadDownloadActivity,
+			loadReleaseBlocklist: loads.loadReleaseBlocklist,
+			loadMetadataDetail: loads.loadMetadataDetail,
+			loadPersonDetail: loads.loadPersonDetail,
+			loadMediaCollection: loads.loadMediaCollection,
+			loadProfile: profile.loadProfile
+		}
 	});
 	const navigation = createNavigationActions(state, {
 		loadDiscoverSection: discovery.loadDiscoverSection
 	});
 	const session = createSessionActions(state, {
 		...notices,
-		loadSettings: loads.loadSettings,
-		loadDiscoverBlacklist: discovery.loadDiscoverBlacklist,
-		loadLibrary: loads.loadLibrary,
-		loadDiscoverSections: discovery.loadDiscoverSections,
-		loadMetadataDetail: loads.loadMetadataDetail,
-		loadPersonDetail: loads.loadPersonDetail,
-		loadMediaCollection: loads.loadMediaCollection,
-		loadDiscoverSection: discovery.loadDiscoverSection,
-		loadProfile: profile.loadProfile,
 		events: {
 			loadMediaItems: loads.loadMediaItems,
 			upsertActivity: events.upsertActivity,
@@ -111,6 +111,20 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 			appendMetadataSearchHistory: events.appendMetadataSearchHistory,
 			updateFulfillmentJobExecution: mediaFulfillment.updateFulfillmentJobExecution,
 			parseEventData: events.parseEventData
+		},
+		routeData: {
+			loadSettings: loads.loadSettings,
+			loadDiscoverBlacklist: discovery.loadDiscoverBlacklist,
+			loadDiscoverSections: discovery.loadDiscoverSections,
+			loadDiscoverSection: discovery.loadDiscoverSection,
+			loadMediaItems: loads.loadMediaItems,
+			loadMediaRequests: loads.loadMediaRequests,
+			loadDownloadActivity: loads.loadDownloadActivity,
+			loadReleaseBlocklist: loads.loadReleaseBlocklist,
+			loadMetadataDetail: loads.loadMetadataDetail,
+			loadPersonDetail: loads.loadPersonDetail,
+			loadMediaCollection: loads.loadMediaCollection,
+			loadProfile: profile.loadProfile
 		}
 	});
 	function cancelDownloadClient() {

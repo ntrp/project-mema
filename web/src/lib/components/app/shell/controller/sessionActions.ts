@@ -16,33 +16,19 @@ import {
 } from '$lib/settings/forms';
 import { connectAppEvents, disconnectAppEvents, type EventConnectionDeps } from './eventConnection';
 import { emptyTagForm, errorMessageFrom } from './helpers';
+import { loadAppRouteData, type RouteDataDeps } from './routeData';
+import { defaultRouteState } from './routeState';
 import type { AppShellState } from './state.svelte';
 
 interface SessionDeps {
 	clearNotice: () => void;
-	loadSettings: () => Promise<void>;
-	loadDiscoverBlacklist: () => Promise<void>;
-	loadLibrary: () => Promise<void>;
-	loadDiscoverSections: () => Promise<void>;
-	loadMetadataDetail: () => Promise<void>;
-	loadPersonDetail: () => Promise<void>;
-	loadMediaCollection: () => Promise<void>;
-	loadDiscoverSection: () => Promise<void>;
-	loadProfile: () => Promise<void>;
 	events: EventConnectionDeps;
+	routeData: RouteDataDeps;
 }
 
 export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 	const clearNotice = deps.clearNotice;
-	const loadSettings = deps.loadSettings;
-	const loadDiscoverBlacklist = deps.loadDiscoverBlacklist;
-	const loadLibrary = deps.loadLibrary;
-	const loadDiscoverSections = deps.loadDiscoverSections;
-	const loadMetadataDetail = deps.loadMetadataDetail;
-	const loadPersonDetail = deps.loadPersonDetail;
-	const loadMediaCollection = deps.loadMediaCollection;
-	const loadDiscoverSection = deps.loadDiscoverSection;
-	const loadProfile = deps.loadProfile;
+	const routeData = deps.routeData;
 	const eventDeps = deps.events;
 	async function initialise() {
 		state.loading = true;
@@ -52,34 +38,15 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 		state.authenticated = Boolean(session?.authenticated);
 		state.currentUser = session?.user;
 		if (state.authenticated) {
-			if (state.currentUser?.role === 'admin') {
-				await loadSettings();
-				await loadDiscoverBlacklist();
-			} else if (state.activeView === 'settings' || state.activeView === 'system') {
-				state.activeView = 'home';
-				state.activeHomeSection = 'discover';
-				void goto(resolve('/discover'));
-			} else if (state.activeHomeSection === 'blacklist') {
-				state.activeHomeSection = 'discover';
-				void goto(resolve('/discover'));
-			}
-			await loadLibrary();
-			await loadDiscoverSections();
 			if (
-				state.activeView === 'metadata-detail' ||
-				state.activeView === 'media-people' ||
-				state.activeView === 'related-section'
+				state.currentUser?.role !== 'admin' &&
+				(state.activeView === 'settings' || state.activeView === 'system')
 			) {
-				await loadMetadataDetail();
-			} else if (state.activeView === 'media-collection') {
-				await loadMediaCollection();
-			} else if (state.activeView === 'person-detail') {
-				await loadPersonDetail();
-			} else if (state.activeView === 'discover-section') {
-				await loadDiscoverSection();
-			} else if (state.activeView === 'profile') {
-				await loadProfile();
+				redirectToDiscover();
+			} else if (state.activeHomeSection === 'blacklist') {
+				redirectToDiscover();
 			}
+			await loadAppRouteData(state.route, state.currentUser?.role === 'admin', routeData);
 			connectEvents();
 		}
 
@@ -102,30 +69,13 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			const session = await loginRequest(state.username, state.password);
 			state.authenticated = true;
 			state.currentUser = session.user;
-			if (state.currentUser?.role === 'admin') {
-				await loadSettings();
-			} else if (state.activeView === 'settings' || state.activeView === 'system') {
-				state.activeView = 'home';
-				state.activeHomeSection = 'discover';
-				void goto(resolve('/discover'));
-			}
-			await loadLibrary();
-			await loadDiscoverSections();
 			if (
-				state.activeView === 'metadata-detail' ||
-				state.activeView === 'media-people' ||
-				state.activeView === 'related-section'
+				state.currentUser?.role !== 'admin' &&
+				(state.activeView === 'settings' || state.activeView === 'system')
 			) {
-				await loadMetadataDetail();
-			} else if (state.activeView === 'media-collection') {
-				await loadMediaCollection();
-			} else if (state.activeView === 'person-detail') {
-				await loadPersonDetail();
-			} else if (state.activeView === 'discover-section') {
-				await loadDiscoverSection();
-			} else if (state.activeView === 'profile') {
-				await loadProfile();
+				redirectToDiscover();
 			}
+			await loadAppRouteData(state.route, state.currentUser?.role === 'admin', routeData);
 			connectEvents();
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Login failed');
@@ -181,6 +131,13 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			state.tagForm = emptyTagForm();
 			state.userForm = emptyUserForm();
 		}
+	}
+
+	function redirectToDiscover() {
+		state.route = defaultRouteState();
+		state.activeView = 'home';
+		state.activeHomeSection = 'discover';
+		void goto(resolve('/discover'));
 	}
 
 	return { initialise, connectEvents, disconnectEvents, login, logout };

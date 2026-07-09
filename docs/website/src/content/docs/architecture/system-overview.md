@@ -22,16 +22,16 @@ description: Runtime architecture and repository layout.
 
 ## Repository Layout
 
-| Path | Purpose |
-| --- | --- |
-| `api/openapi.yaml` | API contract source of truth. |
-| `cmd/server` | Final application entrypoint. |
-| `cmd/devdb` | External development database tooling. |
-| `internal` | Go application packages. |
-| `web` | SvelteKit browser application. |
-| `docs` | ADRs, PRDs, and this documentation website. |
-| `features` | Behavior specifications and planning artifacts. |
-| `scripts` | Verification and development helper scripts. |
+| Path               | Purpose                                         |
+| ------------------ | ----------------------------------------------- |
+| `api/openapi.yaml` | API contract source of truth.                   |
+| `cmd/server`       | Final application entrypoint.                   |
+| `cmd/devdb`        | External development database tooling.          |
+| `internal`         | Go application packages.                        |
+| `web`              | SvelteKit browser application.                  |
+| `docs`             | ADRs, PRDs, and this documentation website.     |
+| `features`         | Behavior specifications and planning artifacts. |
+| `scripts`          | Verification and development helper scripts.    |
 
 ## Development Boundary
 
@@ -45,6 +45,16 @@ The root `Dockerfile` is the supported unified image build. It copies the
 SvelteKit static output to `/app/web`, sets `WEB_DIR=/app/web`, and runs the Go
 server on `ADDR=:18080`. API and DLNA routes are handled by backend routers;
 other paths fall back to the SPA shell.
+
+## Frontend Route Ownership
+
+The SvelteKit shell owns authentication, navigation, global search, notices, and
+shared modals. Route components own route-specific surfaces and should request
+only the backend data needed by the active route. The app shell controller uses
+`routeData.ts` to load route-scoped data instead of preloading settings,
+library, activity, and system data for every page. New route work should add a
+dedicated route component under `web/src/lib/features` and avoid routing through
+generic section switches when the route has its own page.
 
 ## Background Jobs
 

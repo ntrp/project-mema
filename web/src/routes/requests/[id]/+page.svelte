@@ -1,5 +1,5 @@
 <script lang="ts">
-	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
+	import RequestsRoute from '$lib/features/requests/RequestsRoute.svelte';
 
 	interface Props {
 		data: {
@@ -10,4 +10,4 @@
 	let { data }: Props = $props();
 </script>
 
-<HomeRoute section="requests" selectedRequestId={data.id} />
+<RequestsRoute selectedRequestId={data.id} />

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
+	import LibraryListRoute from '$lib/features/library/LibraryListRoute.svelte';
 </script>
 
-<HomeRoute section="series" />
+<LibraryListRoute mediaType="serie" />

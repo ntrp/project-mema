@@ -78,6 +78,8 @@
 						<CalendarCheckIcon aria-hidden="true" />
 					{:else if label === 'Save interval'}
 						<SaveIcon aria-hidden="true" />
+					{:else if label === 'Abort active run'}
+						<PauseIcon aria-hidden="true" />
 					{:else}
 						<CalendarRemoveIcon aria-hidden="true" />
 					{/if}
@@ -172,6 +174,11 @@
 								schedule.enabled ? 'Disable automatic job' : 'Enable automatic job',
 								updatingId === schedule.id,
 								() => (schedule.paused ? onResume(schedule) : onPause(schedule))
+							)}
+							{@render actionButton(
+								'Abort active run',
+								!schedule.activeRiverJobId || abortingId === schedule.activeRiverJobId,
+								() => schedule.activeRiverJobId && onAbort(schedule.activeRiverJobId)
 							)}
 						</div>
 					</Table.Cell>

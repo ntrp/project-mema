@@ -1,8 +1,8 @@
 <script lang="ts">
-	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
+	import MediaItemDetailRoute from '$lib/features/library/MediaItemDetailRoute.svelte';
 	import type { PageProps } from './$types';
 
 	let { params }: PageProps = $props();
 </script>
 
-<HomeRoute section="movies" selectedMediaItemId={params.id} />
+<MediaItemDetailRoute mediaType="movie" id={params.id} />

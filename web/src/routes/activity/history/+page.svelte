@@ -1,5 +1,5 @@
 <script lang="ts">
-	import HomeRoute from '$lib/features/home/HomeRoute.svelte';
+	import ActivityRoute from '$lib/features/activity/ActivityRoute.svelte';
 </script>
 
-<HomeRoute section="activity" activitySection="history" />
+<ActivityRoute section="history" />

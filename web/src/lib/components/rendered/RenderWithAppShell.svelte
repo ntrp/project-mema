@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
 	import type { Component as SvelteComponent } from 'svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { setAppShellContext, type AppShellController } from '$lib/features/app/appShellContext';
@@ -10,11 +11,14 @@
 	}
 
 	let { app, component: Component, componentProps = {} }: Props = $props();
+	const queryClient = new QueryClient();
 
 	// svelte-ignore state_referenced_locally
 	setAppShellContext(app);
 </script>
 
-<Tooltip.Provider>
-	<Component {...componentProps} />
-</Tooltip.Provider>
+<QueryClientProvider client={queryClient}>
+	<Tooltip.Provider>
+		<Component {...componentProps} />
+	</Tooltip.Provider>
+</QueryClientProvider>
