@@ -8,9 +8,13 @@ description: Commands and repository rules for contributors.
 ```sh
 docker compose up -d postgres
 make db-reset
-make dev-api
-make dev-web
+make dev-watch
 ```
+
+`make dev-watch` starts the frontend through Vite dev server and runs the API
+watcher. Backend source changes rebuild and restart the API. Changes to
+`api/openapi.yaml` regenerate both Go and TypeScript API bindings before the API
+restarts.
 
 ## Verification
 

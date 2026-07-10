@@ -14,7 +14,4 @@
 
 ## Dev workflow
 
-- When working on tasks start the backend
-- Start backend with ADDR=0.0.0.0:18080 make dev-api` for the backend
-- if the backend changes restart it
-- if the database schema or seed changes, reset the db, dev seed, local seed and restart the backend
+- if the database schema or seed changes, reset the db, dev seed, local seed

@@ -2,75 +2,62 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-GOCACHE="${GOCACHE:-$ROOT_DIR/.cache/go-build}"
+MEDIA_DATA_DIR="${MEDIA_DATA_DIR:-$ROOT_DIR/.data/media}"
 ADDR="${ADDR:-:18080}"
-DATABASE_URL="${DATABASE_URL:-postgres://media_manager:media_manager@localhost:15432/media_manager?sslmode=disable}"
-WEB_DIR="${WEB_DIR:-web/build}"
-APP_ENV="${APP_ENV:-development}"
+WEB_PORT="${WEB_PORT:-15173}"
 
-server_pid=""
-last_fingerprint=""
+api_pid=""
+cleaned_up=0
+
+kill_tree() {
+	local pid="$1"
+	local child
+
+	if [[ -z "$pid" ]] || ! kill -0 "$pid" 2>/dev/null; then
+		return
+	fi
+
+	for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+		kill_tree "$child"
+	done
+	kill "$pid" 2>/dev/null || true
+}
 
 cleanup() {
-	if [[ -n "$server_pid" ]] && kill -0 "$server_pid" 2>/dev/null; then
-		kill "$server_pid" 2>/dev/null || true
-		wait "$server_pid" 2>/dev/null || true
+	if [[ "$cleaned_up" -eq 1 ]]; then
+		return
+	fi
+	cleaned_up=1
+
+	kill_tree "$api_pid"
+	if [[ -n "$api_pid" ]]; then
+		wait "$api_pid" 2>/dev/null || true
 	fi
 }
 
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
 
-fingerprint_sources() {
+start_api() {
 	(
 		cd "$ROOT_DIR"
-		{
-			find api cmd internal web/src \
-				-type f \
-				-not -path '*/node_modules/*' \
-				-not -path '*/.svelte-kit/*' \
-				-print0 2>/dev/null
-			find web \
-				-maxdepth 1 \
-				-type f \
-				\( -name 'package.json' -o -name 'pnpm-lock.yaml' -o -name 'vite.config.ts' -o -name 'svelte.config.*' \) \
-				-print0
-		} |
-			sort -z |
-			xargs -0 shasum
-	) | shasum
-}
-
-restart_app() {
-	echo "==> rebuilding contract, web assets, and Go server"
-	(
-		cd "$ROOT_DIR"
-		GOCACHE="$GOCACHE" make build
-	)
-
-	if [[ -n "$server_pid" ]] && kill -0 "$server_pid" 2>/dev/null; then
-		echo "==> stopping server pid $server_pid"
-		kill "$server_pid" 2>/dev/null || true
-		wait "$server_pid" 2>/dev/null || true
-	fi
-
-	echo "==> starting app on $ADDR"
-	(
-		cd "$ROOT_DIR"
-		ADDR="$ADDR" \
-			APP_ENV="$APP_ENV" \
-			DATABASE_URL="$DATABASE_URL" \
-			WEB_DIR="$WEB_DIR" \
-			"$ROOT_DIR/bin/server"
+		MEDIA_DATA_DIR="$MEDIA_DATA_DIR" ADDR="$ADDR" ./scripts/dev-api-watch.sh
 	) &
-	server_pid="$!"
+	api_pid="$!"
 }
 
-echo "==> watching source changes; app default URL is http://127.0.0.1${ADDR/:/:}"
-while true; do
-	current_fingerprint="$(fingerprint_sources)"
-	if [[ "$current_fingerprint" != "$last_fingerprint" ]]; then
-		last_fingerprint="$current_fingerprint"
-		restart_app
-	fi
-	sleep 1
-done
+start_web() {
+	(
+		cd "$ROOT_DIR/web"
+		NVIM_LISTEN_ADDRESS=/tmp/project-mema.nvim \
+			LAUNCH_EDITOR="$ROOT_DIR/scripts/open-in-nvim.sh" \
+			pnpm exec vite dev --host 0.0.0.0 --port "$WEB_PORT" --clearScreen=false
+	)
+}
+
+echo "==> starting API watcher on http://127.0.0.1${ADDR/:/:}"
+start_api
+
+echo "==> starting frontend dev server on http://127.0.0.1:$WEB_PORT"
+start_web
