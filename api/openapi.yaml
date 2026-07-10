@@ -7343,6 +7343,8 @@ components:
             - status
             - requestedByUserId
             - requestedByUsername
+            - monitorMode
+            - minimumAvailability
             - createdAt
             - updatedAt
           properties:
@@ -7356,6 +7358,18 @@ components:
               format: uuid
             requestedByUsername:
               type: string
+            monitorMode:
+              $ref: "#/components/schemas/MediaMonitorMode"
+            seriesType:
+              $ref: "#/components/schemas/SeriesType"
+            minimumAvailability:
+              $ref: "#/components/schemas/MinimumAvailability"
+            tags:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 80
             qualityProfileId:
               type: string
               maxLength: 100
@@ -7385,8 +7399,6 @@ components:
       required:
         - title
         - type
-        - monitorMode
-        - minimumAvailability
       properties:
         title:
           type: string
@@ -7394,12 +7406,6 @@ components:
           maxLength: 500
         type:
           $ref: "#/components/schemas/MediaType"
-        monitorMode:
-          $ref: "#/components/schemas/MediaMonitorMode"
-        seriesType:
-          $ref: "#/components/schemas/SeriesType"
-        minimumAvailability:
-          $ref: "#/components/schemas/MinimumAvailability"
         year:
           type: integer
           format: int32
@@ -7417,12 +7423,6 @@ components:
         posterPath:
           type: string
           maxLength: 2000
-        tags:
-          type: array
-          items:
-            type: string
-            minLength: 1
-            maxLength: 80
     TagListResponse:
       type: object
       additionalProperties: false
@@ -9148,6 +9148,9 @@ components:
       required:
         - qualityProfileId
         - libraryFolderId
+        - monitorMode
+        - minimumAvailability
+        - startSearch
       properties:
         qualityProfileId:
           type: string
@@ -9156,6 +9159,20 @@ components:
         libraryFolderId:
           type: string
           format: uuid
+        monitorMode:
+          $ref: "#/components/schemas/MediaMonitorMode"
+        seriesType:
+          $ref: "#/components/schemas/SeriesType"
+        minimumAvailability:
+          $ref: "#/components/schemas/MinimumAvailability"
+        startSearch:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
     MediaRequestApproveResponse:
       type: object
       additionalProperties: false

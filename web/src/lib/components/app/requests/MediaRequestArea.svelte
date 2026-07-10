@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
-	import { Button } from '$lib/components/ui/button';
+	import MediaRequestApprovalForm from './MediaRequestApprovalForm.svelte';
 	import MediaRequestCard from './MediaRequestCard.svelte';
 	import type {
 		LibraryFolder,
 		MediaRequest,
 		MediaRequestApproveRequest,
-		QualityProfileOption
+		QualityProfileOption,
+		Tag
 	} from '$lib/settings/types';
 
 	interface Props {
@@ -19,6 +19,7 @@
 		selectedRequestId?: string;
 		libraryFolders: LibraryFolder[];
 		qualityProfiles: QualityProfileOption[];
+		tags?: Tag[];
 		canManage: boolean;
 		approvingRequestId?: string;
 		onApprove: (_request: MediaRequest, _approval: MediaRequestApproveRequest) => void;
@@ -29,6 +30,7 @@
 		selectedRequestId,
 		libraryFolders,
 		qualityProfiles,
+		tags = [],
 		canManage,
 		approvingRequestId,
 		onApprove
@@ -38,16 +40,6 @@
 		selectedRequestId ? requests.find((request) => request.id === selectedRequestId) : undefined
 	);
 
-	let qualityProfileId = $state('');
-	let libraryFolderId = $state('');
-	let qualityProfileOptions = $derived([
-		{ value: '', label: 'Select profile' },
-		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
-	]);
-	let libraryFolderOptions = $derived([
-		{ value: '', label: 'Select folder' },
-		...libraryFolders.map((folder) => ({ value: folder.id, label: folder.path }))
-	]);
 	let requestFacts = $derived(
 		selectedRequest
 			? [
@@ -71,14 +63,6 @@
 			return 'Not selected';
 		}
 		return qualityProfiles.find((profile) => profile.id === id)?.name ?? id;
-	}
-
-	function approve(event: SubmitEvent) {
-		event.preventDefault();
-		if (!selectedRequest || !qualityProfileId || !libraryFolderId) {
-			return;
-		}
-		onApprove(selectedRequest, { qualityProfileId, libraryFolderId });
 	}
 </script>
 
@@ -117,32 +101,16 @@
 			{/if}
 
 			{#if canManage && selectedRequest.status === 'pending'}
-				<form class="grid gap-4 md:grid-cols-2" onsubmit={approve}>
-					<label class="grid gap-1.5">
-						<span class="text-sm font-bold text-muted-foreground">Quality profile</span>
-						<SettingsSelect
-							value={qualityProfileId}
-							options={qualityProfileOptions}
-							onValueChange={(value) => (qualityProfileId = value)}
-						/>
-					</label>
-					<label class="grid gap-1.5">
-						<span class="text-sm font-bold text-muted-foreground">Library folder</span>
-						<SettingsSelect
-							value={libraryFolderId}
-							options={libraryFolderOptions}
-							onValueChange={(value) => (libraryFolderId = value)}
-						/>
-					</label>
-					<div class="flex items-center gap-3 md:col-span-2">
-						<Button
-							type="submit"
-							disabled={approvingRequestId === selectedRequest.id || libraryFolders.length === 0}
-						>
-							{approvingRequestId === selectedRequest.id ? 'Approving' : 'Approve'}
-						</Button>
-					</div>
-				</form>
+				{#key selectedRequest.id}
+					<MediaRequestApprovalForm
+						request={selectedRequest}
+						{libraryFolders}
+						{qualityProfiles}
+						{tags}
+						{approvingRequestId}
+						{onApprove}
+					/>
+				{/key}
 			{/if}
 		</section>
 	{:else}

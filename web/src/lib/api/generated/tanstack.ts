@@ -1364,9 +1364,6 @@ export interface MediaRequestCreateRequest {
 	 */
 	title: string;
 	type: MediaType;
-	monitorMode: MediaMonitorMode;
-	seriesType?: SeriesType;
-	minimumAvailability: MinimumAvailability;
 	/**
 	 * @minimum 1800
 	 * @maximum 3000
@@ -1380,11 +1377,6 @@ export interface MediaRequestCreateRequest {
 	overview?: string;
 	/** @maxLength 2000 */
 	posterPath?: string;
-	/**
-	 * @items.minLength 1
-	 * @items.maxLength 80
-	 */
-	tags?: string[];
 }
 
 export type MediaRequestStatus = (typeof MediaRequestStatus)[keyof typeof MediaRequestStatus];
@@ -1399,6 +1391,14 @@ export type MediaRequest = MediaRequestCreateRequest & {
 	status: MediaRequestStatus;
 	requestedByUserId: string;
 	requestedByUsername: string;
+	monitorMode: MediaMonitorMode;
+	seriesType?: SeriesType;
+	minimumAvailability: MinimumAvailability;
+	/**
+	 * @items.minLength 1
+	 * @items.maxLength 80
+	 */
+	tags?: string[];
 	/** @maxLength 100 */
 	qualityProfileId?: string;
 	libraryFolderId?: string;
@@ -2191,6 +2191,15 @@ export interface MediaRequestApproveRequest {
 	 */
 	qualityProfileId: string;
 	libraryFolderId: string;
+	monitorMode: MediaMonitorMode;
+	seriesType?: SeriesType;
+	minimumAvailability: MinimumAvailability;
+	startSearch: boolean;
+	/**
+	 * @items.minLength 1
+	 * @items.maxLength 80
+	 */
+	tags?: string[];
 }
 
 export interface MediaRequestApproveResponse {

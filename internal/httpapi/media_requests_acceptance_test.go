@@ -45,8 +45,11 @@ func TestScenarioSCNMedia006SignedInUsersCreateAndInspectMediaRequests(t *testin
 
 	var approved MediaRequestApproveResponse
 	client.doJSON(t, http.MethodPost, "/media/requests/"+created.Id.String()+"/approve", MediaRequestApproveRequest{
-		QualityProfileId: profiles.Profiles[0].Id,
-		LibraryFolderId:  folder.Folder.Id,
+		QualityProfileId:    profiles.Profiles[0].Id,
+		LibraryFolderId:     folder.Folder.Id,
+		MonitorMode:         OnlyMedia,
+		MinimumAvailability: Released,
+		StartSearch:         true,
 	}, http.StatusOK, &approved)
 	if approved.Request.Status != Approved {
 		t.Fatalf("approved request = %#v", approved.Request)
@@ -57,16 +60,12 @@ func TestScenarioSCNMedia006SignedInUsersCreateAndInspectMediaRequests(t *testin
 }
 
 func mediaRequestCreateRequest() MediaRequestCreateRequest {
-	tags := []string{"family", "uhd"}
 	overview := "A requested movie waiting for approval."
 	return MediaRequestCreateRequest{
-		Type:                MediaTypeMovie,
-		Title:               "Requested Scenario Movie",
-		Year:                int32Ptr(2026),
-		Overview:            &overview,
-		MonitorMode:         OnlyMedia,
-		MinimumAvailability: Released,
-		Tags:                &tags,
+		Type:     MediaTypeMovie,
+		Title:    "Requested Scenario Movie",
+		Year:     int32Ptr(2026),
+		Overview: &overview,
 	}
 }
 

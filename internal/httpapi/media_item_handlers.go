@@ -191,9 +191,25 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 		return
 	}
 	qualityProfileID := strings.TrimSpace(body.QualityProfileId)
+	if !body.MonitorMode.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_media_monitor_mode", "Monitor mode is not supported")
+		return
+	}
+	if !body.MinimumAvailability.Valid() {
+		writeError(w, http.StatusBadRequest, "invalid_media_item_settings", "Minimum availability is not supported")
+		return
+	}
 	input := storage.MediaRequestApprovalInput{
-		QualityProfileID: qualityProfileID,
-		LibraryFolderID:  uuid.UUID(body.LibraryFolderId),
+		QualityProfileID:    qualityProfileID,
+		LibraryFolderID:     uuid.UUID(body.LibraryFolderId),
+		MonitorMode:         string(body.MonitorMode),
+		SeriesType:          nil,
+		MinimumAvailability: string(body.MinimumAvailability),
+		Tags:                optionalStringSlice(body.Tags),
+	}
+	if body.SeriesType != nil {
+		seriesType := string(*body.SeriesType)
+		input.SeriesType = &seriesType
 	}
 	if err := s.validateMediaTarget(r.Context(), &input.QualityProfileID, &input.LibraryFolderID); err != nil {
 		writeMediaTargetError(w, err)
@@ -203,6 +219,11 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 	existingRequest, err := s.settings.GetMediaRequest(r.Context(), uuid.UUID(id), uuid.UUID(session.user.Id), true)
 	if err != nil {
 		writeSettingsError(w, err, "Could not find media request")
+		return
+	}
+	input = storage.NormalizeMediaRequestApprovalOptions(existingRequest.Type, input)
+	if err := s.validateMediaRequestLibraryFolderKind(r.Context(), input.LibraryFolderID, existingRequest.Type); err != nil {
+		writeMediaTargetError(w, err)
 		return
 	}
 	addInputs, err := s.mediaAddInputs(r.Context(), mediaInputFromRequest(existingRequest, input))
@@ -239,7 +260,7 @@ func (s *Server) ApproveMediaRequest(w http.ResponseWriter, r *http.Request, id 
 			return
 		}
 	}
-	if existingRequest.MonitorMode != "none" {
+	if input.MonitorMode != "none" && body.StartSearch {
 		s.enqueueAutomaticSearch(r.Context(), items)
 	}
 	writeJSON(w, http.StatusOK, MediaRequestApproveResponse{

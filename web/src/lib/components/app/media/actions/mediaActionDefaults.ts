@@ -1,19 +1,25 @@
-import type { LibraryFolder, MediaSearchResult, QualityProfileOption } from '$lib/settings/types';
+import type { LibraryFolder, MediaType, QualityProfileOption } from '$lib/settings/types';
 
-type SmartMediaCandidate = MediaSearchResult & {
+type MediaCandidate = {
+	type: MediaType;
+	title: string;
+	overview?: string;
+};
+
+type SmartMediaCandidate = MediaCandidate & {
 	genres?: string[];
 	originalLanguage?: string;
 };
 
 export function preselectQualityProfileId(
-	candidate: MediaSearchResult,
+	candidate: MediaCandidate,
 	qualityProfiles: QualityProfileOption[]
 ) {
 	return bestScored(qualityProfiles, (profile) => profileScore(candidate, profile))?.id ?? '';
 }
 
 export function preselectLibraryFolderId(
-	candidate: MediaSearchResult,
+	candidate: MediaCandidate,
 	libraryFolders: LibraryFolder[]
 ) {
 	return (
@@ -23,10 +29,7 @@ export function preselectLibraryFolderId(
 	);
 }
 
-export function matchingLibraryFolders(
-	type: MediaSearchResult['type'],
-	libraryFolders: LibraryFolder[]
-) {
+export function matchingLibraryFolders(type: MediaType, libraryFolders: LibraryFolder[]) {
 	const kind = type === 'serie' ? 'series' : 'movie';
 	return libraryFolders.filter((folder) => folder.kind === kind);
 }
@@ -41,7 +44,7 @@ export function mediaPosterUrl(path?: string) {
 	return `https://image.tmdb.org/t/p/w780${path}`;
 }
 
-function profileScore(candidate: MediaSearchResult, profile: QualityProfileOption) {
+function profileScore(candidate: MediaCandidate, profile: QualityProfileOption) {
 	const text = normalizedText(`${profile.id} ${profile.name}`);
 	let score = 0;
 	if (isAnimeCandidate(candidate)) {
@@ -56,7 +59,7 @@ function profileScore(candidate: MediaSearchResult, profile: QualityProfileOptio
 	return score;
 }
 
-function folderScore(candidate: MediaSearchResult, folder: LibraryFolder) {
+function folderScore(candidate: MediaCandidate, folder: LibraryFolder) {
 	const path = normalizedText(folder.path);
 	const hasAnime = hasAny(path, ['anime']);
 	const hasMovie = hasAny(path, ['movie', 'movies', 'film', 'films']);
@@ -79,7 +82,7 @@ function folderScore(candidate: MediaSearchResult, folder: LibraryFolder) {
 	return (hasMovie ? 100 : 0) - (hasAnime ? 15 : 0) - (hasSeries ? 25 : 0);
 }
 
-function isAnimeCandidate(candidate: MediaSearchResult) {
+function isAnimeCandidate(candidate: MediaCandidate) {
 	const smartCandidate = candidate as SmartMediaCandidate;
 	const genres = smartCandidate.genres ?? [];
 	const text = normalizedText(

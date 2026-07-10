@@ -49,6 +49,21 @@ func (s *Server) validateMediaTarget(ctx context.Context, qualityProfileID *stri
 	return nil
 }
 
+func (s *Server) validateMediaRequestLibraryFolderKind(ctx context.Context, libraryFolderID uuid.UUID, mediaType string) error {
+	folder, err := s.settings.GetLibraryFolder(ctx, libraryFolderID)
+	if err != nil {
+		return err
+	}
+	mediaKind := "movie"
+	if mediaType == "serie" {
+		mediaKind = "series"
+	}
+	if !libraryFolderKindAllowsMediaKind(folder.Kind, mediaKind) {
+		return errInvalidLibraryFolderKind
+	}
+	return nil
+}
+
 func writeMediaTargetError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, errMissingQualityProfile):
@@ -59,6 +74,8 @@ func writeMediaTargetError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, "library_folder_required", "Library folder is required")
 	case errors.Is(err, storage.ErrNotFound):
 		writeError(w, http.StatusNotFound, "library_folder_not_found", "Library folder was not found")
+	case errors.Is(err, errInvalidLibraryFolderKind):
+		writeError(w, http.StatusBadRequest, "library_folder_kind_invalid", "Library folder type must match the requested media type")
 	default:
 		writeError(w, http.StatusInternalServerError, "media_target_validation_failed", "Could not validate media target")
 	}
@@ -79,4 +96,5 @@ var (
 	errMissingQualityProfile     = errors.New("quality profile is required")
 	errUnsupportedQualityProfile = errors.New("quality profile is not supported")
 	errMissingLibraryFolder      = errors.New("library folder is required")
+	errInvalidLibraryFolderKind  = errors.New("library folder kind does not match media type")
 )

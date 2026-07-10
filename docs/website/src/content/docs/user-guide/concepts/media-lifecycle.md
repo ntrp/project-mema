@@ -20,6 +20,19 @@ its files.
 8. Follow-up actions can search subtitles, import external subtitles, delete
    tracks, or prepare future processing jobs.
 
+## Request Approval
+
+Normal users can request discovered media without choosing monitoring options,
+quality profiles, library folders, availability, search behavior, or tags. The
+request records the selected title and provider metadata only.
+
+Admins review pending requests from **Requests**. During approval, the admin
+chooses the same options available when adding media directly, including the
+quality profile, the library folder, monitoring mode, series type, minimum
+availability, tags, and whether to start searching immediately. Folder choices
+are limited to folders that match the requested media type: movie folders for
+movies and series folders for series.
+
 ## Important Surfaces
 
 - **Discovery** is for finding media and adding it to the library.

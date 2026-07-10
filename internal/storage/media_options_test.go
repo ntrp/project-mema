@@ -43,10 +43,33 @@ func TestNormalizeMediaRequestOptions(t *testing.T) {
 		MonitorMode:         "future_episodes",
 		SeriesType:          &seriesType,
 		MinimumAvailability: "in_cinema",
+		Tags:                []string{"ignored"},
+	})
+
+	if input.MonitorMode != "all_episodes" {
+		t.Fatalf("expected request monitor mode to use default, got %q", input.MonitorMode)
+	}
+	if input.SeriesType != nil {
+		t.Fatalf("expected request series type to be cleared, got %#v", input.SeriesType)
+	}
+	if input.MinimumAvailability != "released" {
+		t.Fatalf("expected released availability default, got %q", input.MinimumAvailability)
+	}
+	if input.Tags != nil {
+		t.Fatalf("expected request tags to be cleared, got %#v", input.Tags)
+	}
+}
+
+func TestNormalizeMediaRequestApprovalOptions(t *testing.T) {
+	seriesType := "daily"
+	input := NormalizeMediaRequestApprovalOptions("serie", MediaRequestApprovalInput{
+		MonitorMode:         "future_episodes",
+		SeriesType:          &seriesType,
+		MinimumAvailability: "in_cinema",
 	})
 
 	if input.MonitorMode != "future_episodes" {
-		t.Fatalf("expected request monitor mode to be preserved, got %q", input.MonitorMode)
+		t.Fatalf("expected approval monitor mode to be preserved, got %q", input.MonitorMode)
 	}
 	if input.SeriesType == nil || *input.SeriesType != "daily" {
 		t.Fatalf("expected daily series type, got %#v", input.SeriesType)

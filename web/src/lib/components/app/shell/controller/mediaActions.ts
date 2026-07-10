@@ -93,15 +93,11 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 			const request = await createMediaRequestRequest({
 				title: candidate.title,
 				type: candidate.type,
-				monitorMode: selection.monitorMode,
-				seriesType: candidate.type === 'serie' ? selection.seriesType : undefined,
-				minimumAvailability: selection.minimumAvailability,
 				year: candidate.year,
 				externalProvider: candidate.externalProvider,
 				externalId: candidate.externalId,
 				overview: candidate.overview,
-				posterPath: candidate.posterPath,
-				tags: selection.tags
+				posterPath: candidate.posterPath
 			});
 			state.mediaRequests = [
 				request,

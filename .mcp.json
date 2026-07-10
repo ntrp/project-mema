@@ -1,8 +1,19 @@
 {
-	"mcpServers": {
-		"shadcn": {
-			"command": "sh",
-			"args": ["-lc", "cd web && exec npx -y shadcn@latest mcp"]
-		}
-	}
+  "mcpServers": {
+    "shadcn": {
+      "command": "sh",
+      "args": [
+        "-lc",
+        "cd web && exec npx -y shadcn@latest mcp"
+      ]
+    },
+    "svelte": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sveltejs/mcp@latest"
+      ],
+      "directTools": true
+    }
+  }
 }

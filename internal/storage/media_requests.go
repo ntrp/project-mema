@@ -51,9 +51,13 @@ type MediaRequestInput struct {
 }
 
 type MediaRequestApprovalInput struct {
-	QualityProfileID string
-	LibraryFolderID  uuid.UUID
-	MediaInput       *MediaItemInput
+	QualityProfileID    string
+	LibraryFolderID     uuid.UUID
+	MonitorMode         string
+	SeriesType          *string
+	MinimumAvailability string
+	Tags                []string
+	MediaInput          *MediaItemInput
 }
 
 func (s *SettingsStore) ListMediaRequests(ctx context.Context, userID uuid.UUID, includeAll bool) ([]MediaRequest, error) {
@@ -146,31 +150,19 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 	if request.Status != "pending" {
 		return MediaRequest{}, MediaItem{}, ErrRequestClosed
 	}
+	input = NormalizeMediaRequestApprovalOptions(request.Type, input)
 
 	qualityProfileID := input.QualityProfileID
 	libraryFolderID := input.LibraryFolderID
-	mediaInput := MediaItemInput{
-		Type:                request.Type,
-		Title:               request.Title,
-		Year:                request.Year,
-		Monitored:           true,
-		ExternalProvider:    request.ExternalProvider,
-		ExternalID:          request.ExternalID,
-		Overview:            request.Overview,
-		PosterPath:          request.PosterPath,
-		MonitorMode:         request.MonitorMode,
-		SeriesType:          request.SeriesType,
-		MinimumAvailability: request.MinimumAvailability,
-		Tags:                request.Tags,
-		QualityProfileID:    &qualityProfileID,
-		LibraryFolderID:     &libraryFolderID,
-	}
+	mediaInput := mediaInputFromApproval(request, input)
 	if input.MediaInput != nil {
 		mediaInput = *input.MediaInput
 		mediaInput.QualityProfileID = &qualityProfileID
 		mediaInput.LibraryFolderID = &libraryFolderID
-		mediaInput.Tags = request.Tags
-		mediaInput.SeriesType = request.SeriesType
+		mediaInput.MonitorMode = input.MonitorMode
+		mediaInput.SeriesType = input.SeriesType
+		mediaInput.MinimumAvailability = input.MinimumAvailability
+		mediaInput.Tags = input.Tags
 	}
 	item, err := createMediaItemIfMissing(ctx, tx, mediaInput)
 	if err != nil {
@@ -191,6 +183,27 @@ func (s *SettingsStore) ApproveMediaRequest(ctx context.Context, id uuid.UUID, i
 		return MediaRequest{}, MediaItem{}, err
 	}
 	return updated, item, nil
+}
+
+func mediaInputFromApproval(request MediaRequest, input MediaRequestApprovalInput) MediaItemInput {
+	qualityProfileID := input.QualityProfileID
+	libraryFolderID := input.LibraryFolderID
+	return MediaItemInput{
+		Type:                request.Type,
+		Title:               request.Title,
+		Year:                request.Year,
+		Monitored:           true,
+		ExternalProvider:    request.ExternalProvider,
+		ExternalID:          request.ExternalID,
+		Overview:            request.Overview,
+		PosterPath:          request.PosterPath,
+		MonitorMode:         input.MonitorMode,
+		SeriesType:          input.SeriesType,
+		MinimumAvailability: input.MinimumAvailability,
+		Tags:                input.Tags,
+		QualityProfileID:    &qualityProfileID,
+		LibraryFolderID:     &libraryFolderID,
+	}
 }
 
 func mediaRequestCreateParams(id uuid.UUID, input MediaRequestInput) storagegen.CreateMediaRequestParams {

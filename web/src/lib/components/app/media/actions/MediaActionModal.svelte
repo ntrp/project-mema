@@ -45,8 +45,8 @@
 		onConfirm
 	}: Props = $props();
 
-	let qualityProfileId = $state('');
-	let libraryFolderId = $state('');
+	let qualityProfileId = $derived(preselectQualityProfileId(candidate, qualityProfiles));
+	let libraryFolderId = $derived(preselectLibraryFolderId(candidate, libraryFolders));
 	let selectedMonitorMode = $state<MediaMonitorMode | undefined>();
 	let selectedSeriesType = $state<SeriesType | undefined>();
 	let minimumAvailability = $state<MinimumAvailability>('released');
@@ -56,15 +56,6 @@
 	const canConfirm = $derived(!isAdmin || (qualityProfileId !== '' && libraryFolderId !== ''));
 	const monitorMode = $derived(selectedMonitorMode ?? defaultMonitorMode(candidate.type));
 	const seriesType = $derived(selectedSeriesType ?? 'standard');
-
-	$effect(() => {
-		if (qualityProfileId === '') {
-			qualityProfileId = preselectQualityProfileId(candidate, qualityProfiles);
-		}
-		if (libraryFolderId === '') {
-			libraryFolderId = preselectLibraryFolderId(candidate, libraryFolders);
-		}
-	});
 
 	function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -116,26 +107,15 @@
 				</p>
 			{/if}
 		{:else}
-			<MediaActionOptions
-				{isAdmin}
-				mediaType={candidate.type}
-				{libraryFolders}
-				{qualityProfiles}
-				bind:qualityProfileId
-				bind:libraryFolderId
-				{monitorMode}
-				{seriesType}
-				bind:minimumAvailability
-				onMonitorModeChange={(mode) => (selectedMonitorMode = mode)}
-				onSeriesTypeChange={(type) => (selectedSeriesType = type)}
-			/>
 			<p class="m-0 text-sm leading-6 text-muted-foreground">
-				Your request will be visible under Requests. An admin will choose the folder and quality
-				profile before approval.
+				Your request will be visible under Requests. An admin will choose the folder, quality
+				profile, monitoring, availability, and tags before approval.
 			</p>
 		{/if}
 
-		<MediaTagSelector {tags} bind:selectedTags />
+		{#if isAdmin}
+			<MediaTagSelector {tags} bind:selectedTags />
+		{/if}
 
 		<div class="flex flex-wrap items-center justify-end gap-3">
 			{#if isAdmin}

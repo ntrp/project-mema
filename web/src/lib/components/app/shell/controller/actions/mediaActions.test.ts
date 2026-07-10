@@ -120,7 +120,10 @@ describe('media actions (SCN-MEDIA-001)', () => {
 		await actions.confirmMediaAction({ monitorMode: 'none', tags: ['later'] } as never);
 
 		expect(apiMock.createMediaRequest).toHaveBeenCalledWith(
-			expect.objectContaining({ title: 'Scenario Movie', monitorMode: 'none' })
+			expect.not.objectContaining({ monitorMode: 'none', tags: ['later'] })
+		);
+		expect(apiMock.createMediaRequest).toHaveBeenCalledWith(
+			expect.objectContaining({ title: 'Scenario Movie', type: 'movie' })
 		);
 		expect(shell.mediaRequests).toEqual([request, { id: 'old-request' }]);
 		expect(shell.message).toBe('Media request created');
@@ -179,7 +182,11 @@ describe('media actions (SCN-MEDIA-001)', () => {
 		await actions.confirmMediaDelete(false);
 		await actions.approveMediaRequest({ id: 'request-1' } as never, {
 			qualityProfileId: 'p1',
-			libraryFolderId: 'folder-1'
+			libraryFolderId: 'folder-1',
+			monitorMode: 'only_media',
+			minimumAvailability: 'released',
+			startSearch: true,
+			tags: []
 		});
 
 		expect(shell.mediaItems.map((item) => item.id)).toEqual(['media-2']);

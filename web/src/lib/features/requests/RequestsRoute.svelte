@@ -15,6 +15,7 @@
 	{selectedRequestId}
 	libraryFolders={app.libraryFolders}
 	qualityProfiles={app.mediaProfiles}
+	tags={app.tags}
 	canManage={app.isAdmin}
 	approvingRequestId={app.approvingRequestId}
 	onApprove={app.approveMediaRequest}

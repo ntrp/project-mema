@@ -3675,6 +3675,10 @@ export interface components {
 			/** Format: uuid */
 			requestedByUserId: string;
 			requestedByUsername: string;
+			monitorMode: components['schemas']['MediaMonitorMode'];
+			seriesType?: components['schemas']['SeriesType'];
+			minimumAvailability: components['schemas']['MinimumAvailability'];
+			tags?: string[];
 			qualityProfileId?: string;
 			/** Format: uuid */
 			libraryFolderId?: string;
@@ -3692,16 +3696,12 @@ export interface components {
 		MediaRequestCreateRequest: {
 			title: string;
 			type: components['schemas']['MediaType'];
-			monitorMode: components['schemas']['MediaMonitorMode'];
-			seriesType?: components['schemas']['SeriesType'];
-			minimumAvailability: components['schemas']['MinimumAvailability'];
 			/** Format: int32 */
 			year?: number;
 			externalProvider?: string;
 			externalId?: string;
 			overview?: string;
 			posterPath?: string;
-			tags?: string[];
 		};
 		TagListResponse: {
 			tags: components['schemas']['Tag'][];
@@ -4313,6 +4313,11 @@ export interface components {
 			qualityProfileId: string;
 			/** Format: uuid */
 			libraryFolderId: string;
+			monitorMode: components['schemas']['MediaMonitorMode'];
+			seriesType?: components['schemas']['SeriesType'];
+			minimumAvailability: components['schemas']['MinimumAvailability'];
+			startSearch: boolean;
+			tags?: string[];
 		};
 		MediaRequestApproveResponse: {
 			request: components['schemas']['MediaRequest'];

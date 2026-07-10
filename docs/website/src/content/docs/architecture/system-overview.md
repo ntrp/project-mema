@@ -46,6 +46,15 @@ SvelteKit static output to `/app/web`, sets `WEB_DIR=/app/web`, and runs the Go
 server on `ADDR=:18080`. API and DLNA routes are handled by backend routers;
 other paths fall back to the SPA shell.
 
+## Media Request Ownership
+
+Media request creation intentionally stores only the requester, title, media
+type, and provider metadata. Request option defaults are normalized in storage
+so non-admin clients cannot influence monitoring, availability, series type, or
+tags at creation time. Approval is admin-only and uses the media-add option set
+at the approval boundary before creating the monitored media item. The API also
+validates that the selected library folder kind matches the requested media type.
+
 ## Frontend Route Ownership
 
 The SvelteKit shell owns authentication, navigation, global search, notices, and

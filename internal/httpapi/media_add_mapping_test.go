@@ -138,8 +138,11 @@ func TestSCNMedia006MediaInputFromRequestCarriesApprovalChoices(t *testing.T) {
 	}
 
 	input := mediaInputFromRequest(request, storage.MediaRequestApprovalInput{
-		QualityProfileID: "profile-1",
-		LibraryFolderID:  folderID,
+		QualityProfileID:    "profile-1",
+		LibraryFolderID:     folderID,
+		MonitorMode:         "collection",
+		MinimumAvailability: "in_cinema",
+		Tags:                []string{"favorite"},
 	})
 
 	if input.Type != "movie" || input.Title != "Requested Movie" || !input.Monitored {
@@ -150,6 +153,9 @@ func TestSCNMedia006MediaInputFromRequestCarriesApprovalChoices(t *testing.T) {
 	}
 	if input.LibraryFolderID == nil || *input.LibraryFolderID != folderID {
 		t.Fatalf("library folder = %v", input.LibraryFolderID)
+	}
+	if input.MonitorMode != "collection" || input.MinimumAvailability != "in_cinema" {
+		t.Fatalf("approval options = %#v", input)
 	}
 	if len(input.Tags) != 1 || input.Tags[0] != "favorite" {
 		t.Fatalf("tags = %#v", input.Tags)

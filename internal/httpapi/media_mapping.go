@@ -116,18 +116,14 @@ func mediaRequestInput(request MediaRequestCreateRequest, requestedByUserID uuid
 		return storage.MediaRequestInput{}, false
 	}
 	return storage.MediaRequestInput{
-		RequestedByUserID:   requestedByUserID,
-		Type:                string(request.Type),
-		Title:               title,
-		Year:                request.Year,
-		ExternalProvider:    optionalTrimmedString(request.ExternalProvider),
-		ExternalID:          optionalTrimmedString(request.ExternalId),
-		Overview:            optionalTrimmedString(request.Overview),
-		PosterPath:          optionalTrimmedString(request.PosterPath),
-		MonitorMode:         string(request.MonitorMode),
-		SeriesType:          optionalSeriesType(request.Type, request.SeriesType),
-		MinimumAvailability: string(request.MinimumAvailability),
-		Tags:                optionalStringSlice(request.Tags),
+		RequestedByUserID: requestedByUserID,
+		Type:              string(request.Type),
+		Title:             title,
+		Year:              request.Year,
+		ExternalProvider:  optionalTrimmedString(request.ExternalProvider),
+		ExternalID:        optionalTrimmedString(request.ExternalId),
+		Overview:          optionalTrimmedString(request.Overview),
+		PosterPath:        optionalTrimmedString(request.PosterPath),
 	}, true
 }
 

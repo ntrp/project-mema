@@ -11,8 +11,16 @@ func normalizeMediaItemOptions(input MediaItemInput) MediaItemInput {
 }
 
 func normalizeMediaRequestOptions(input MediaRequestInput) MediaRequestInput {
-	input.MonitorMode = normalizeMonitorMode(input.Type, input.MonitorMode)
-	input.SeriesType = normalizeSeriesType(input.Type, input.SeriesType)
+	input.MonitorMode = normalizeMonitorMode(input.Type, "")
+	input.SeriesType = normalizeSeriesType(input.Type, nil)
+	input.MinimumAvailability = normalizeMinimumAvailability("")
+	input.Tags = nil
+	return input
+}
+
+func NormalizeMediaRequestApprovalOptions(mediaType string, input MediaRequestApprovalInput) MediaRequestApprovalInput {
+	input.MonitorMode = normalizeMonitorMode(mediaType, input.MonitorMode)
+	input.SeriesType = normalizeSeriesType(mediaType, input.SeriesType)
 	input.MinimumAvailability = normalizeMinimumAvailability(input.MinimumAvailability)
 	return input
 }

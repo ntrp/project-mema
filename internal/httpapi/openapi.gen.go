@@ -4031,8 +4031,13 @@ type MediaRequest struct {
 
 // MediaRequestApproveRequest defines model for MediaRequestApproveRequest.
 type MediaRequestApproveRequest struct {
-	LibraryFolderId  openapi_types.UUID `json:"libraryFolderId"`
-	QualityProfileId string             `json:"qualityProfileId"`
+	LibraryFolderId     openapi_types.UUID  `json:"libraryFolderId"`
+	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
+	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
+	QualityProfileId    string              `json:"qualityProfileId"`
+	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
+	StartSearch         bool                `json:"startSearch"`
+	Tags                *[]string           `json:"tags,omitempty"`
 }
 
 // MediaRequestApproveResponse defines model for MediaRequestApproveResponse.
@@ -4043,17 +4048,13 @@ type MediaRequestApproveResponse struct {
 
 // MediaRequestCreateRequest defines model for MediaRequestCreateRequest.
 type MediaRequestCreateRequest struct {
-	ExternalId          *string             `json:"externalId,omitempty"`
-	ExternalProvider    *string             `json:"externalProvider,omitempty"`
-	MinimumAvailability MinimumAvailability `json:"minimumAvailability"`
-	MonitorMode         MediaMonitorMode    `json:"monitorMode"`
-	Overview            *string             `json:"overview,omitempty"`
-	PosterPath          *string             `json:"posterPath,omitempty"`
-	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
-	Tags                *[]string           `json:"tags,omitempty"`
-	Title               string              `json:"title"`
-	Type                MediaType           `json:"type"`
-	Year                *int32              `json:"year,omitempty"`
+	ExternalId       *string   `json:"externalId,omitempty"`
+	ExternalProvider *string   `json:"externalProvider,omitempty"`
+	Overview         *string   `json:"overview,omitempty"`
+	PosterPath       *string   `json:"posterPath,omitempty"`
+	Title            string    `json:"title"`
+	Type             MediaType `json:"type"`
+	Year             *int32    `json:"year,omitempty"`
 }
 
 // MediaRequestListResponse defines model for MediaRequestListResponse.
