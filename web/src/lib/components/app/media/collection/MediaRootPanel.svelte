@@ -4,7 +4,7 @@
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { getFileNamingSettings } from '$lib/settings/api';
+	import { getFileNamingSettings } from '$lib/components/settings/library/filePoliciesApi';
 	import { mediaRootWarning } from '$lib/components/app/media/collection/mediaRootPreview';
 	import { matchingLibraryFolders } from '$lib/components/app/media/actions/mediaActionDefaults';
 	import type {

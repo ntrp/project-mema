@@ -1,101 +1,41 @@
 import {
 	addDiscoverBlacklistItem as addDiscoverBlacklistItemRequest,
-	deleteDiscoverBlacklistItem as deleteDiscoverBlacklistItemRequest,
-	listDiscoverBlacklist as listDiscoverBlacklistRequest,
-	loadMediaDiscoverSection as loadMediaDiscoverSectionRequest,
-	loadMediaDiscoverSections as loadMediaDiscoverSectionsRequest
-} from '$lib/settings/api';
+	deleteDiscoverBlacklistItem as deleteDiscoverBlacklistItemRequest
+} from '$lib/features/discovery/blacklist/api';
 import type { DiscoverBlacklistItem, MediaSearchResult } from '$lib/settings/types';
+import type { MediaDiscoverSection } from '$lib/features/discovery/content/api';
 import {
 	discoverResultKey,
 	filterDiscoverSection,
-	filterDiscoverSections,
-	sameDiscoverBlacklistItem
+	filterDiscoverSections
 } from './discoverFilters';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
-export function createDiscoveryActions(state: AppShellState) {
-	async function loadDiscoverSections() {
-		state.loadingDiscover = true;
-		try {
-			state.discoverSections = await loadMediaDiscoverSectionsRequest();
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not load discover sections');
-		} finally {
-			state.loadingDiscover = false;
-		}
-	}
+export interface DiscoveryBlacklistCache {
+	items: () => DiscoverBlacklistItem[];
+	upsert: (_item: DiscoverBlacklistItem) => void;
+	remove: (_id: string) => void;
+}
 
-	async function loadDiscoverSection() {
-		if (!state.activeDiscoverSectionId) {
-			return;
-		}
-		state.loadingDiscoverSection = true;
-		state.discoverSectionPage = 1;
-		state.discoverSectionHasMore = true;
-		try {
-			state.discoverSection = await loadMediaDiscoverSectionRequest(
-				state.activeDiscoverSectionId,
-				1
-			);
-			state.discoverSectionHasMore = (state.discoverSection.results ?? []).length > 0;
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not load discover section');
-		} finally {
-			state.loadingDiscoverSection = false;
-		}
-	}
+export interface DiscoveryContentCache {
+	mapSections: (_map: (_sections: MediaDiscoverSection[]) => MediaDiscoverSection[]) => void;
+	mapSection: (_id: string, _map: (_section: MediaDiscoverSection) => MediaDiscoverSection) => void;
+	refresh: (_id?: string) => void;
+	loadMore: (_id: string) => Promise<void>;
+}
 
+export function createDiscoveryActions(
+	state: AppShellState,
+	blacklist: DiscoveryBlacklistCache,
+	content: DiscoveryContentCache
+) {
 	async function loadMoreDiscoverSection() {
-		if (
-			!state.activeDiscoverSectionId ||
-			state.loadingDiscoverSection ||
-			state.loadingMoreDiscoverSection ||
-			!state.discoverSectionHasMore
-		) {
-			return;
-		}
-		state.loadingMoreDiscoverSection = true;
-		const nextPage = state.discoverSectionPage + 1;
+		if (!state.activeDiscoverSectionId) return;
 		try {
-			const nextSection = await loadMediaDiscoverSectionRequest(
-				state.activeDiscoverSectionId,
-				nextPage
-			);
-			const existingKeys = (state.discoverSection?.results ?? []).map(discoverResultKey);
-			const nextResults = (nextSection.results ?? []).filter((result) => {
-				const key = discoverResultKey(result);
-				if (existingKeys.includes(key)) {
-					return false;
-				}
-				existingKeys.push(key);
-				return true;
-			});
-			state.discoverSectionPage = nextPage;
-			state.discoverSectionHasMore = nextResults.length > 0;
-			state.discoverSection = {
-				...nextSection,
-				results: [...(state.discoverSection?.results ?? []), ...nextResults]
-			};
+			await content.loadMore(state.activeDiscoverSectionId);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load more discover results');
-		} finally {
-			state.loadingMoreDiscoverSection = false;
-		}
-	}
-
-	async function loadDiscoverBlacklist() {
-		if (!state.isAdmin) {
-			return;
-		}
-		state.loadingBlacklist = true;
-		try {
-			state.discoverBlacklist = await listDiscoverBlacklistRequest();
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not load discover blacklist');
-		} finally {
-			state.loadingBlacklist = false;
 		}
 	}
 
@@ -114,20 +54,13 @@ export function createDiscoveryActions(state: AppShellState) {
 				overview: candidate.overview,
 				posterPath: candidate.posterPath
 			});
-			state.discoverBlacklist = [
-				item,
-				...state.discoverBlacklist.filter((entry) => !sameDiscoverBlacklistItem(entry, item))
-			];
-			state.discoverSections = filterDiscoverSections(
-				state.discoverSections,
-				state.discoverBlacklist
-			);
-			if (state.discoverSection) {
-				state.discoverSection = filterDiscoverSection(
-					state.discoverSection,
-					state.discoverBlacklist
+			blacklist.upsert(item);
+			const blacklistItems = blacklist.items();
+			content.mapSections((sections) => filterDiscoverSections(sections, blacklistItems));
+			if (state.activeDiscoverSectionId)
+				content.mapSection(state.activeDiscoverSectionId, (section) =>
+					filterDiscoverSection(section, blacklistItems)
 				);
-			}
 			state.message = `${candidate.title} hidden from discover`;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not add media to discover blacklist');
@@ -143,12 +76,9 @@ export function createDiscoveryActions(state: AppShellState) {
 		state.removingBlacklistId = item.id;
 		try {
 			await deleteDiscoverBlacklistItemRequest(item.id);
-			state.discoverBlacklist = state.discoverBlacklist.filter((entry) => entry.id !== item.id);
+			blacklist.remove(item.id);
 			state.message = `${item.title} removed from blacklist`;
-			await loadDiscoverSections();
-			if (state.activeView === 'discover-section') {
-				await loadDiscoverSection();
-			}
+			content.refresh(state.activeDiscoverSectionId);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(
 				error,
@@ -160,10 +90,7 @@ export function createDiscoveryActions(state: AppShellState) {
 	}
 
 	return {
-		loadDiscoverSections,
-		loadDiscoverSection,
 		loadMoreDiscoverSection,
-		loadDiscoverBlacklist,
 		blacklistDiscoverMedia,
 		removeDiscoverBlacklistItem
 	};

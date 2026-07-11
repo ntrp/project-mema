@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { AppShellState } from './state.svelte';
 import { routeStateFromPath } from './routeState';
-import type { MediaMetadataDetails } from '$lib/settings/types';
 
 const noQuery = { get: () => null };
 
@@ -28,20 +27,5 @@ describe('app shell state (SCN-MEDIA-004)', () => {
 		expect(state.isAdmin).toBe(true);
 		expect(state.primaryItems.map((item) => item.value)).toContain('settings');
 		expect(state.primaryItems.map((item) => item.value)).toContain('system');
-	});
-
-	it('derives related detail from metadata detail', () => {
-		const state = new AppShellState(
-			routeStateFromPath('/movies/movie-1/cast', { id: 'movie-1' }, noQuery)
-		);
-		expect(state.relatedMediaSection).toBeUndefined();
-
-		state.metadataDetail = {
-			type: 'movie',
-			title: 'Metadata Movie',
-			externalProvider: 'tmdb',
-			recommendations: [{ type: 'movie', title: 'Related Movie' }]
-		} as MediaMetadataDetails;
-		expect(state.relatedMediaSection?.results[0].title).toBe('Related Movie');
 	});
 });

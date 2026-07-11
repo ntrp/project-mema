@@ -7,7 +7,8 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
-	import { applyMediaRename, getFileNamingSettings, previewMediaRename } from '$lib/settings/api';
+	import { applyMediaRename, previewMediaRename } from '$lib/features/library/filesApi';
+	import { getFileNamingSettings } from '$lib/components/settings/library/filePoliciesApi';
 	import { defaultFileNamingTemplates } from '$lib/settings/fileNamingTemplates';
 	import { relativePath } from '$lib/components/app/media/files/mediaFilePath';
 	import type { FileNamingSettings, MediaItem, MediaRenamePreviewRow } from '$lib/settings/types';

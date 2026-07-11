@@ -10,7 +10,7 @@
 		defaultFileNamingTemplates,
 		fileNamingTemplateExample
 	} from '$lib/settings/fileNamingTemplates';
-	import { getFileNamingSettings, updateFileNamingSettings } from '$lib/settings/api';
+	import { getFileNamingSettings, updateFileNamingSettings } from './filePoliciesApi';
 	import type { FileNamingSettingsRequest } from '$lib/settings/types';
 
 	type TemplateField = keyof FileNamingSettingsRequest;

@@ -1,13 +1,10 @@
 import type { AppRouteState } from './routeState';
+import type { SettingsSection, SystemSection } from '$lib/settings/types';
 
 export interface RouteDataDeps {
-	loadSettings: () => Promise<void>;
-	loadDiscoverBlacklist: () => Promise<void>;
-	loadDiscoverSections: () => Promise<void>;
-	loadDiscoverSection: () => Promise<void>;
-	loadMetadataDetail: () => Promise<void>;
-	loadPersonDetail: () => Promise<void>;
-	loadMediaCollection: () => Promise<void>;
+	loadSettingsSection: (_section: SettingsSection) => Promise<void>;
+	loadSystemSettings: (_section: SystemSection) => Promise<void>;
+	loadMediaActionSettings: () => Promise<void>;
 	loadProfile: () => Promise<void>;
 }
 
@@ -19,12 +16,12 @@ export async function loadAppRouteData(
 	const tasks: Array<Promise<void>> = [];
 
 	if (route.view === 'settings') {
-		if (isAdmin) tasks.push(deps.loadSettings());
+		if (isAdmin) tasks.push(deps.loadSettingsSection(route.settingsSection));
 		return run(tasks);
 	}
 	if (route.view === 'system') {
 		if (isAdmin && (route.systemSection === 'indexing' || route.systemSection === 'metadata')) {
-			tasks.push(deps.loadSettings());
+			tasks.push(deps.loadSystemSettings(route.systemSection));
 		}
 		return run(tasks);
 	}
@@ -37,25 +34,15 @@ export async function loadAppRouteData(
 		route.view === 'media-people' ||
 		route.view === 'related-section'
 	) {
-		tasks.push(deps.loadMetadataDetail());
-		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
 		return run(tasks);
 	}
-	if (route.view === 'media-collection') {
-		tasks.push(deps.loadMediaCollection());
-		return run(tasks);
-	}
-	if (route.view === 'person-detail') {
-		tasks.push(deps.loadPersonDetail());
+	if (route.view === 'media-collection' || route.view === 'person-detail') {
 		return run(tasks);
 	}
 	if (route.view === 'discover-section') {
-		tasks.push(deps.loadDiscoverSection());
-		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
 		return run(tasks);
 	}
 	if (route.view === 'discover-movies' || route.view === 'discover-series') {
-		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
 		return run(tasks);
 	}
 
@@ -64,15 +51,10 @@ export async function loadAppRouteData(
 
 function loadPrimaryRouteData(route: AppRouteState, isAdmin: boolean, deps: RouteDataDeps) {
 	const tasks: Array<Promise<void>> = [];
-	if (route.homeSection === 'discover') {
-		tasks.push(deps.loadDiscoverSections());
-		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
-	} else if (route.homeSection === 'movies' || route.homeSection === 'series') {
-		if (route.selectedMediaItemId && isAdmin) tasks.push(deps.loadSettings());
+	if (route.homeSection === 'movies' || route.homeSection === 'series') {
+		if (route.selectedMediaItemId && isAdmin) tasks.push(deps.loadMediaActionSettings());
 	} else if (route.homeSection === 'requests') {
-		if (isAdmin) tasks.push(deps.loadSettings());
-	} else if (route.homeSection === 'blacklist') {
-		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
+		if (isAdmin) tasks.push(deps.loadMediaActionSettings());
 	}
 	return run(tasks);
 }

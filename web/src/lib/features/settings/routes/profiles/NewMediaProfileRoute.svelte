@@ -43,7 +43,7 @@
 		try {
 			await saveMediaProfileForm(form);
 			app.message = 'Profile saved';
-			await app.loadSettings();
+			await app.loadSettingsSection('profiles');
 			await returnToMediaProfiles();
 		} catch (error) {
 			saveError = errorMessageFrom(error, 'Could not save profile');

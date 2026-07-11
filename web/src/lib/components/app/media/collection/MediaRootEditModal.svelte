@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
-	import { getFileNamingSettings } from '$lib/settings/api';
+	import { getFileNamingSettings } from '$lib/components/settings/library/filePoliciesApi';
 	import { mediaRootPreview } from '$lib/components/app/media/collection/mediaRootPreview';
 	import type { FileNamingSettings, LibraryFolder, MediaItem } from '$lib/settings/types';
 

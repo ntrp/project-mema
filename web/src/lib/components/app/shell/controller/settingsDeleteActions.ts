@@ -18,15 +18,36 @@ interface SettingsDeleteDeps {
 	clearNotice: () => void;
 	loadSettings: () => Promise<void>;
 	refreshMediaItems?: () => Promise<void>;
+	removeLanguage?: (_code: string) => void;
+	removeTag?: (_id: string) => void;
+	removeUser?: (_id: string) => void;
+	removeDownloadClient?: (_id: string) => void;
+	removeIndexer?: (_id: string) => void;
+	removeSubtitleProvider?: (_id: string) => void;
+	removeLibraryFolder?: (_id: string) => void;
+	removePathMapping?: (_id: string) => void;
+	removeMediaProfile?: (_id: string) => void;
+	removeCustomFormat?: (_id: string) => void;
+	upsertLibraryScan?: (_scan: import('$lib/settings/types').LibraryScan) => void;
+	removeLibraryScan?: (_folderId: string) => void;
 }
 
 export function createSettingsDeleteActions(state: AppShellState, deps: SettingsDeleteDeps) {
 	const clearNotice = deps.clearNotice;
 	const loadSettings = deps.loadSettings;
-	const entityDeleteActions = createSettingsEntityDeleteActions(state, { clearNotice });
+	const entityDeleteActions = createSettingsEntityDeleteActions(state, {
+		clearNotice,
+		removeLanguage: deps.removeLanguage,
+		removeTag: deps.removeTag,
+		removeUser: deps.removeUser,
+		removePathMapping: deps.removePathMapping,
+		removeMediaProfile: deps.removeMediaProfile,
+		removeCustomFormat: deps.removeCustomFormat
+	});
 	const libraryScanActions = createSettingsLibraryScanActions(state, {
 		clearNotice,
-		refreshMediaItems: deps.refreshMediaItems ?? (async () => {})
+		refreshMediaItems: deps.refreshMediaItems ?? (async () => {}),
+		upsertScan: deps.upsertLibraryScan ?? (() => {})
 	});
 	async function deleteDownloadClient(id: string) {
 		clearNotice();
@@ -37,6 +58,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 				state.downloadForm = emptyDownloadClientForm();
 			}
 			state.message = 'Download client deleted';
+			deps.removeDownloadClient?.(id);
 			await loadSettings();
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete download client');
@@ -53,6 +75,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 			}
 			state.indexerTests = omitResult(state.indexerTests, id);
 			state.message = 'Indexer deleted';
+			deps.removeIndexer?.(id);
 			await loadSettings();
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete indexer');
@@ -69,6 +92,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 			}
 			state.subtitleProviderTests = omitResult(state.subtitleProviderTests, id);
 			state.message = 'Subtitle provider deleted';
+			deps.removeSubtitleProvider?.(id);
 			await loadSettings();
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete subtitle provider');
@@ -80,10 +104,8 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 
 		try {
 			await deleteLibraryFolderRequest(id);
-			state.libraryFolders = state.libraryFolders.filter((folder) => folder.id !== id);
-			const remainingScans = { ...state.libraryScansByFolder };
-			delete remainingScans[id];
-			state.libraryScansByFolder = remainingScans;
+			deps.removeLibraryFolder?.(id);
+			deps.removeLibraryScan?.(id);
 			if (state.openLibraryFolderId === id) {
 				state.openLibraryFolderId = undefined;
 			}

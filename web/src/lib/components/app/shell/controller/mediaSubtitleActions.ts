@@ -1,9 +1,11 @@
 import {
 	deleteMediaItemSubtitle as deleteMediaItemSubtitleRequest,
-	grabMediaSubtitle as grabMediaSubtitleRequest,
-	enqueueMediaSubtitleSearch as enqueueMediaSubtitleSearchRequest,
 	updateMediaItemSubtitle as updateMediaItemSubtitleRequest
-} from '$lib/settings/api';
+} from '$lib/features/library/filesApi';
+import {
+	grabMediaSubtitle as grabMediaSubtitleRequest,
+	enqueueMediaSubtitleSearch as enqueueMediaSubtitleSearchRequest
+} from '$lib/features/releases/api';
 import type {
 	GrabSubtitleRequest,
 	MediaItem,

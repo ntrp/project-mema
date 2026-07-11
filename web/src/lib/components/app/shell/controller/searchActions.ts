@@ -1,51 +1,24 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
-import {
-	advancedSearchMedia as advancedSearchMediaRequest,
-	autocompleteMedia as autocompleteMediaRequest
-} from '$lib/settings/api';
 import type { MediaAdvancedSearchRequest, MediaSearchResult } from '$lib/settings/types';
-import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
 interface SearchDeps {
 	clearNotice: () => void;
+	setAutocompleteQuery: (_query: string) => void;
+	setAdvancedRequest: (_request: MediaAdvancedSearchRequest) => void;
 }
 
 export function createSearchActions(state: AppShellState, deps: SearchDeps) {
 	const clearNotice = deps.clearNotice;
-	async function autocompleteMedia(query: string) {
+	function autocompleteMedia(query: string) {
 		const trimmed = query.trim();
-		if (trimmed.length < 2) {
-			state.autocompleteGroups = [];
-			return;
-		}
-		state.loadingAutocomplete = true;
-		state.autocompleteGroups = [];
-		try {
-			const groups = await autocompleteMediaRequest(trimmed, 'library');
-			if (state.searchQuery.trim() !== trimmed) {
-				return;
-			}
-			state.autocompleteGroups = groups;
-		} catch {
-			state.autocompleteGroups = [];
-		} finally {
-			state.loadingAutocomplete = false;
-		}
+		deps.setAutocompleteQuery(trimmed.length >= 2 ? trimmed : '');
 	}
 
-	async function advancedSearch(request: MediaAdvancedSearchRequest) {
-		state.searchingAdvanced = true;
+	function advancedSearch(request: MediaAdvancedSearchRequest) {
 		clearNotice();
-
-		try {
-			state.advancedSearchGroups = await advancedSearchMediaRequest(request);
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not search media');
-		} finally {
-			state.searchingAdvanced = false;
-		}
+		deps.setAdvancedRequest(request);
 	}
 
 	function selectAutocompleteResult(result: MediaSearchResult) {

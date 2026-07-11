@@ -6,7 +6,7 @@
 	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import { Card } from '$lib/components/ui/card';
-	import { listQualitySizeSettings } from '$lib/settings/api';
+	import { listQualitySizeSettings } from '$lib/components/settings/quality/api';
 	import type { MediaProfile, QualitySizeSetting } from '$lib/settings/types';
 
 	interface Props {

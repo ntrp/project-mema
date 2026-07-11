@@ -2,9 +2,8 @@ import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
 import {
 	enqueueMediaReleaseSearch as enqueueMediaReleaseSearchRequest,
-	grabMediaRelease as grabMediaReleaseRequest,
-	searchMediaReleases as searchMediaReleasesRequest
-} from '$lib/settings/api';
+	grabMediaRelease as grabMediaReleaseRequest
+} from '$lib/features/releases/api';
 import type {
 	DownloadActivity,
 	MediaItem,
@@ -22,6 +21,11 @@ interface ReleaseDeps {
 	upsertActivity: (_activity: DownloadActivity) => void;
 	refreshActivity: () => Promise<void>;
 	updateMediaStatusFromActivity: (activity: DownloadActivity) => void;
+	setReleaseResult: (
+		_id: string,
+		_result: import('$lib/features/releases/cache').ReleaseSearchResult
+	) => void;
+	loadReleaseResult: (_id: string) => Promise<{ releases: ReleaseCandidate[]; errors: string[] }>;
 }
 
 export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
@@ -35,10 +39,7 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 		try {
 			const job = await enqueueMediaReleaseSearchRequest(item.id, query);
 			const queuedMessage = `${job.message} (#${job.jobId})`;
-			state.releaseResults = {
-				...state.releaseResults,
-				[item.id]: { loaded: false, releases: [], errors: [queuedMessage] }
-			};
+			deps.setReleaseResult(item.id, { loaded: false, releases: [], errors: [queuedMessage] });
 			state.message = job.message;
 			await pollReleaseResults(item.id, queuedMessage);
 		} catch (error) {
@@ -53,28 +54,27 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 			await sleep(RELEASE_SEARCH_POLL_MS);
 			const loaded = await loadReleaseResults(id, false);
 			if (loaded) return;
-			state.releaseResults = {
-				...state.releaseResults,
-				[id]: { loaded: false, releases: [], errors: [queuedMessage] }
-			};
+			deps.setReleaseResult(id, { loaded: false, releases: [], errors: [queuedMessage] });
 		}
-		state.releaseResults = {
-			...state.releaseResults,
-			[id]: { loaded: true, releases: [], errors: ['Release search is still running.'] }
-		};
+		deps.setReleaseResult(id, {
+			loaded: true,
+			releases: [],
+			errors: ['Release search is still running.']
+		});
 	}
 
 	async function loadReleaseResults(id: string, markEmptyLoaded = true) {
 		try {
-			const results = await searchMediaReleasesRequest(id);
+			const results = await deps.loadReleaseResult(id);
 			const complete = results.releases.length > 0 || results.errors.length > 0;
 			if (!complete && !markEmptyLoaded) {
 				return false;
 			}
-			state.releaseResults = {
-				...state.releaseResults,
-				[id]: { loaded: true, releases: results.releases, errors: results.errors }
-			};
+			deps.setReleaseResult(id, {
+				loaded: true,
+				releases: results.releases,
+				errors: results.errors
+			});
 			return true;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load release results');

@@ -3,7 +3,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
-	import { getSystemLogFileSettings, updateSystemLogFileSettings } from '$lib/settings/api';
+	import { getSystemLogFileSettings, updateSystemLogFileSettings } from './api';
 	import type { SystemLogFileSettings } from '$lib/settings/types';
 
 	let settings = $state<SystemLogFileSettings>();

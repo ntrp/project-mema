@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
-	import { getDLNASettings, restartDLNA, updateDLNASettings } from '$lib/settings/api';
+	import { getDLNASettings, restartDLNA, updateDLNASettings } from './api';
 	import type { DLNASettings, DLNASettingsRequest, DLNAStatus } from '$lib/settings/types';
 	import DLNADiagnosticsTables from './DLNADiagnosticsTables.svelte';
 	import DLNADeviceProfilesPanel from './profiles/DLNADeviceProfilesPanel.svelte';

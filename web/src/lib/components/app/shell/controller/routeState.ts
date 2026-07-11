@@ -6,7 +6,7 @@ import type {
 	SystemSection
 } from '$lib/settings/types';
 import type { PeopleSectionKind, RelatedSectionKind } from './types';
-import { discoverSubmenu } from './routeStateHelpers';
+import { discoverSubmenu, settingsRouteSection, systemRouteSection } from './routeStateHelpers';
 
 export { appRouteKey } from './routeStateHelpers';
 
@@ -36,30 +36,6 @@ export interface AppRouteState {
 	peopleSectionKind: PeopleSectionKind;
 }
 
-const settingsSections = new Set<SettingsSection>([
-	'general',
-	'library',
-	'download-clients',
-	'indexers',
-	'quality',
-	'profiles',
-	'custom-formats',
-	'metadata',
-	'subtitles',
-	'dlna',
-	'languages',
-	'tags',
-	'users'
-]);
-const systemSections = new Set<SystemSection>([
-	'status',
-	'indexing',
-	'metadata',
-	'jobs',
-	'logs',
-	'events'
-]);
-
 export function defaultRouteState(): AppRouteState {
 	return {
 		view: 'home',
@@ -78,7 +54,8 @@ export function routeStateFromPath(
 	params: Record<string, string>,
 	searchParams: QueryParams
 ): AppRouteState {
-	const path = normalise(pathname);
+	const trimmedPath = pathname.replace(/\/+$/, '');
+	const path = trimmedPath.length > 0 ? trimmedPath : '/';
 	const segments = path.split('/').filter(Boolean);
 	const route = defaultRouteState();
 
@@ -119,16 +96,10 @@ export function routeStateFromPath(
 		};
 	}
 	if (segments[0] === 'settings') {
-		const section = settingsSections.has(segments[1] as SettingsSection)
-			? (segments[1] as SettingsSection)
-			: 'general';
-		return { ...route, view: 'settings', settingsSection: section };
+		return { ...route, view: 'settings', settingsSection: settingsRouteSection(segments[1]) };
 	}
 	if (segments[0] === 'system') {
-		const section = systemSections.has(segments[1] as SystemSection)
-			? (segments[1] as SystemSection)
-			: 'status';
-		return { ...route, view: 'system', systemSection: section };
+		return { ...route, view: 'system', systemSection: systemRouteSection(segments[1]) };
 	}
 	if (segments[0] === 'media' && segments[1] === 'collections') {
 		return {
@@ -203,9 +174,4 @@ function libraryRoute(
 		return { ...base, view: 'media-people', peopleSectionKind: child };
 	}
 	return base;
-}
-
-function normalise(pathname: string) {
-	const path = pathname.replace(/\/+$/, '');
-	return path.length > 0 ? path : '/';
 }

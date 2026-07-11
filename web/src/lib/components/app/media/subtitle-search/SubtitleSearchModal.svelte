@@ -14,7 +14,7 @@
 		subtitleSearchQuery,
 		subtitleSearchQueryVariants
 	} from '$lib/components/app/media/subtitle-search/subtitleSearchQuery';
-	import { searchMediaSubtitles } from '$lib/settings/api';
+	import { searchMediaSubtitles } from '$lib/features/releases/api';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import type { GrabSubtitleRequest, MediaItem, SubtitleCandidate } from '$lib/settings/types';
 

@@ -1,4 +1,29 @@
 import type { AppRouteState } from './routeState';
+import type { SettingsSection, SystemSection } from '$lib/settings/types';
+
+const settingsSections = new Set<SettingsSection>([
+	'general',
+	'library',
+	'download-clients',
+	'indexers',
+	'quality',
+	'profiles',
+	'custom-formats',
+	'metadata',
+	'subtitles',
+	'dlna',
+	'languages',
+	'tags',
+	'users'
+]);
+const systemSections = new Set<SystemSection>([
+	'status',
+	'indexing',
+	'metadata',
+	'jobs',
+	'logs',
+	'events'
+]);
 
 interface QueryParams {
 	get: (_name: string) => string | null;
@@ -33,4 +58,12 @@ export function discoverSubmenu(searchParams: QueryParams, kind: 'movies' | 'ser
 	if (searchParams.get('keywords') === 'anime') return `anime-${kind}`;
 	if (searchParams.get('withoutKeywords') === 'anime') return `animated-${kind}`;
 	return kind;
+}
+
+export function settingsRouteSection(value?: string): SettingsSection {
+	return settingsSections.has(value as SettingsSection) ? (value as SettingsSection) : 'general';
+}
+
+export function systemRouteSection(value?: string): SystemSection {
+	return systemSections.has(value as SystemSection) ? (value as SystemSection) : 'status';
 }

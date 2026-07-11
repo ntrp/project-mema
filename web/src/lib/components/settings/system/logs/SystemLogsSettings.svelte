@@ -2,7 +2,7 @@
 	import { onMount, tick } from 'svelte';
 
 	import { Card } from '$lib/components/ui/card';
-	import { getSystemLogLevel, updateSystemLogLevel } from '$lib/settings/api';
+	import { getSystemLogLevel, updateSystemLogLevel } from './api';
 	import type { SystemLogEntry, SystemLogLevel } from '$lib/settings/types';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import SystemLogRow from './SystemLogRow.svelte';

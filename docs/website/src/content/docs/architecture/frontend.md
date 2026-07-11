@@ -18,6 +18,13 @@ Generated Orval bindings remain read-only. Feature API modules wrap them with
 stable query keys, response mapping, error normalization, and invalidation rules.
 New handwritten frontend modules and components must stay below 200 lines.
 
+Settings routes load data by active section. A route requests only the resources
+rendered by that section instead of calling the legacy aggregate settings loader.
+Shared dependencies are explicit: indexers also load indexer-search configuration
+and tags; library loads folders, path mappings, profiles, and metadata providers;
+and profile editing loads profiles, custom formats, and languages. Sections whose
+content is local or loaded by a nested component make no aggregate request.
+
 ## State Ownership
 
 TanStack Query owns remote resources, including remote search results. Query
@@ -52,13 +59,13 @@ connections. Cross-tab connection sharing is intentionally out of scope.
 
 Keep this table current as each vertical slice moves out of the legacy shell.
 
-| Slice             | Owner                                | Operations                                             | Query/cache policy                                             | SSE interaction                                         | Status      |
-| ----------------- | ------------------------------------ | ------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------- | ----------- |
-| Activity          | `features/activity`                  | queue/blocklist reads; cancel, delete, import commands | Stable activity keys; commands invalidate affected lists       | Application events reconcile queue and blocklist caches | Complete    |
-| Library and media | `features/library`, `features/media` | lists/requests migrated; detail/files/releases pending | Collection keys; commands update or invalidate related caches  | Media and job events reconcile affected resources       | In progress |
-| Discovery         | `features/discovery`                 | discovery, search, people, collections, blacklist      | Search inputs are part of stable keys                          | Application events invalidate affected saved resources  | Planned     |
-| Settings          | one feature per settings domain      | settings reads and administrative commands             | Domain-owned keys; no monolithic settings cache                | Job/system events update relevant domains               | Planned     |
-| Session           | `app/session`                        | session lookup/login/logout API extracted              | Clear privileged cache on logout or expiry                     | Owns application SSE start and stop                     | In progress |
+| Slice             | Owner                                | Operations                                             | Query/cache policy                                            | SSE interaction                                         | Status      |
+| ----------------- | ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------- | ----------- |
+| Activity          | `features/activity`                  | queue/blocklist reads; cancel, delete, import commands | Stable activity keys; commands invalidate affected lists      | Application events reconcile queue and blocklist caches | Complete    |
+| Library and media | `features/library`, `features/media` | lists, requests, details, files, releases, and commands | Collection/detail keys; commands reconcile affected caches    | Media and job events reconcile affected resources       | Complete |
+| Discovery         | `features/discovery`, `features/search` | sections, pagination, blacklist, and keyed searches  | Inputs and section pages are part of stable query keys         | Blacklist mutations filter or invalidate discovery data | Complete |
+| Settings          | focused settings features            | section reads, scans, caches, profile, and admin commands | Authenticated domain keys; section-specific loading only    | System events update cache-owned inspection resources   | Complete |
+| Session           | `app/session`                        | session lookup, login, logout, and cache lifecycle     | Logout clears every privileged feature namespace              | Owns application SSE start and stop                     | Complete |
 
 For every migrated operation, record its generated API operation, semantic type
 (query or mutation), exact key factory, invalidation/update behavior, and event

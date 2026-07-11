@@ -1,4 +1,4 @@
-import { enqueueMediaFulfillmentAction } from '$lib/settings/api';
+import { enqueueMediaFulfillmentAction } from '$lib/features/releases/api';
 import { mediaFulfillmentActionKey } from '$lib/settings/mediaFulfillmentActionKey';
 import type {
 	MediaFulfillmentActionRequest,

@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
-	import { listQualitySizeSettings, updateQualitySizeSettings } from '$lib/settings/api';
+	import { listQualitySizeSettings, updateQualitySizeSettings } from './api';
 	import { groupQualitiesByResolution } from '$lib/settings/qualityGroups';
 	import type { QualitySizeSetting } from '$lib/settings/types';
 	import QualitySizeRow from './QualitySizeRow.svelte';

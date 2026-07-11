@@ -26,6 +26,13 @@ interface SessionDeps {
 	routeData: RouteDataDeps;
 	clearActivityCache: () => void;
 	clearLibraryCache: () => void;
+	clearReleaseCache: () => void;
+	clearDiscoverBlacklistCache: () => void;
+	clearDiscoverContentCache: () => void;
+	clearSearchCache: () => void;
+	clearSettingsCatalogCache: () => void;
+	clearServerResourceCache: () => void;
+	clearLibraryScanCache: () => void;
 }
 
 export function createSessionActions(state: AppShellState, deps: SessionDeps) {
@@ -99,29 +106,15 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			state.profileErrorMessage = '';
 			state.activeView = 'home';
 			state.activeHomeSection = 'discover';
-			state.downloadClients = [];
-			state.indexers = [];
-			state.metadataProviders = [];
-			state.mediaProfiles = [];
-			state.customFormats = [];
-			state.users = [];
-			state.tags = [];
-			state.languages = [];
 			deps.clearLibraryCache();
-			state.discoverSections = [];
-			state.discoverSection = undefined;
-			state.discoverSectionPage = 1;
-			state.discoverSectionHasMore = true;
-			state.metadataDetail = undefined;
-			state.personDetail = undefined;
-			state.mediaCollection = undefined;
-			state.autocompleteGroups = [];
-			state.advancedSearchGroups = [];
-			state.releaseResults = {};
+			deps.clearDiscoverBlacklistCache();
+			deps.clearDiscoverContentCache();
+			deps.clearSearchCache();
+			deps.clearSettingsCatalogCache();
+			deps.clearServerResourceCache();
+			deps.clearLibraryScanCache();
+			deps.clearReleaseCache();
 			deps.clearActivityCache();
-			state.libraryFolders = [];
-			state.pathMappings = [];
-			state.libraryScansByFolder = {};
 			state.openLibraryFolderId = undefined;
 			state.downloadForm = emptyDownloadClientForm();
 			state.indexerForm = emptyIndexerForm();

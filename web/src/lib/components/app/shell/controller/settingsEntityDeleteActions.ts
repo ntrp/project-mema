@@ -1,11 +1,11 @@
 import {
-	deleteCustomFormat as deleteCustomFormatRequest,
-	deleteLanguage as deleteLanguageRequest,
 	deleteMediaProfile as deleteMediaProfileRequest,
-	deletePathMapping as deletePathMappingRequest,
-	deleteUser as deleteUserRequest
+	deletePathMapping as deletePathMappingRequest
 } from '$lib/settings/api';
 import { deleteTag as deleteTagRequest } from '$lib/components/settings/tags/api';
+import { deleteCustomFormat as deleteCustomFormatRequest } from '$lib/settings/domains/customFormats';
+import { deleteLanguage as deleteLanguageRequest } from '$lib/settings/domains/languages';
+import { deleteUser as deleteUserRequest } from '$lib/settings/domains/users';
 import {
 	emptyCustomFormatForm,
 	emptyLanguageForm,
@@ -17,6 +17,12 @@ import type { AppShellState } from './state.svelte';
 
 interface SettingsEntityDeleteDeps {
 	clearNotice: () => void;
+	removeLanguage?: (_code: string) => void;
+	removeTag?: (_id: string) => void;
+	removeUser?: (_id: string) => void;
+	removePathMapping?: (_id: string) => void;
+	removeMediaProfile?: (_id: string) => void;
+	removeCustomFormat?: (_id: string) => void;
 }
 
 export function createSettingsEntityDeleteActions(
@@ -31,7 +37,7 @@ export function createSettingsEntityDeleteActions(
 
 		try {
 			await deletePathMappingRequest(id);
-			state.pathMappings = state.pathMappings.filter((mapping) => mapping.id !== id);
+			deps.removePathMapping?.(id);
 			state.message = 'Path mapping deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete path mapping');
@@ -48,7 +54,7 @@ export function createSettingsEntityDeleteActions(
 			if (state.userForm.id === id) {
 				state.userForm = emptyUserForm();
 			}
-			state.users = state.users.filter((user) => user.id !== id);
+			deps.removeUser?.(id);
 			state.message = 'User deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete user');
@@ -64,7 +70,7 @@ export function createSettingsEntityDeleteActions(
 			if (state.tagForm.id === id) {
 				state.tagForm = emptyTagForm();
 			}
-			state.tags = state.tags.filter((tag) => tag.id !== id);
+			deps.removeTag?.(id);
 			state.message = 'Tag deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete tag');
@@ -82,7 +88,7 @@ export function createSettingsEntityDeleteActions(
 			if (state.languageForm.originalCode === code) {
 				state.languageForm = emptyLanguageForm();
 			}
-			state.languages = state.languages.filter((language) => language.code !== code);
+			deps.removeLanguage?.(code);
 			state.message = 'Language deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete language');
@@ -100,7 +106,7 @@ export function createSettingsEntityDeleteActions(
 			if (state.mediaProfileForm.id === id) {
 				state.mediaProfileForm = emptyMediaProfileForm();
 			}
-			state.mediaProfiles = state.mediaProfiles.filter((profile) => profile.id !== id);
+			deps.removeMediaProfile?.(id);
 			state.message = 'Profile deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete profile');
@@ -118,7 +124,7 @@ export function createSettingsEntityDeleteActions(
 			if (state.customFormatForm.id === id) {
 				state.customFormatForm = emptyCustomFormatForm();
 			}
-			state.customFormats = state.customFormats.filter((format) => format.id !== id);
+			deps.removeCustomFormat?.(id);
 			state.message = 'Custom format deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete custom format');

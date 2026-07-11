@@ -56,15 +56,6 @@ function shellState(overrides: Record<string, unknown> = {}) {
 		languages: [{ code: 'EN' }],
 		mediaItems: [{ id: 'media-1' }],
 		mediaRequests: [{ id: 'request-1' }],
-		discoverSections: [{ id: 'popular' }],
-		discoverSection: { id: 'popular' },
-		discoverSectionPage: 4,
-		discoverSectionHasMore: false,
-		metadataDetail: { title: 'Detail' },
-		mediaCollection: { title: 'Collection' },
-		autocompleteGroups: [{ title: 'Auto' }],
-		advancedSearchGroups: [{ title: 'Advanced' }],
-		releaseResults: { media: [] },
 		activities: [{ id: 'activity-1' }],
 		libraryFolders: [{ id: 'folder-1' }],
 		pathMappings: [{ id: 'mapping-1' }],
@@ -86,10 +77,9 @@ function shellState(overrides: Record<string, unknown> = {}) {
 
 function deps() {
 	const routeData = {
-		loadSettings: vi.fn(),
-		loadDiscoverBlacklist: vi.fn(),
-		loadDiscoverSections: vi.fn(),
-		loadDiscoverSection: vi.fn(),
+		loadSettingsSection: vi.fn(),
+		loadSystemSettings: vi.fn(),
+		loadMediaActionSettings: vi.fn(),
 		loadMediaItems: vi.fn(),
 		loadMediaRequests: vi.fn(),
 		loadDownloadActivity: vi.fn(),
@@ -103,6 +93,13 @@ function deps() {
 		clearNotice: vi.fn(),
 		clearActivityCache: vi.fn(),
 		clearLibraryCache: vi.fn(),
+		clearReleaseCache: vi.fn(),
+		clearDiscoverBlacklistCache: vi.fn(),
+		clearDiscoverContentCache: vi.fn(),
+		clearSearchCache: vi.fn(),
+		clearSettingsCatalogCache: vi.fn(),
+		clearServerResourceCache: vi.fn(),
+		clearLibraryScanCache: vi.fn(),
 		routeData,
 		events: {
 			connect: vi.fn(),
@@ -148,9 +145,7 @@ describe('session actions (SCN-AUTH-002)', () => {
 
 		expect(state.loading).toBe(false);
 		expect(state.authenticated).toBe(true);
-		expect(actionDeps.routeData.loadSettings).not.toHaveBeenCalled();
-		expect(actionDeps.routeData.loadDiscoverBlacklist).not.toHaveBeenCalled();
-		expect(actionDeps.routeData.loadMediaCollection).toHaveBeenCalledOnce();
+		expect(actionDeps.routeData.loadSystemSettings).not.toHaveBeenCalled();
 		expect(eventsMock.connectAppEvents).toHaveBeenCalledWith(state, actionDeps.events);
 	});
 
@@ -168,8 +163,7 @@ describe('session actions (SCN-AUTH-002)', () => {
 		expect(state.activeView).toBe('home');
 		expect(state.activeHomeSection).toBe('discover');
 		expect(navigationMock.goto).toHaveBeenCalledWith('/discover');
-		expect(actionDeps.routeData.loadSettings).not.toHaveBeenCalled();
-		expect(actionDeps.routeData.loadDiscoverSections).toHaveBeenCalledOnce();
+		expect(actionDeps.routeData.loadSystemSettings).not.toHaveBeenCalled();
 		expect(eventsMock.connectAppEvents).toHaveBeenCalledOnce();
 	});
 
@@ -178,17 +172,20 @@ describe('session actions (SCN-AUTH-002)', () => {
 			authenticated: true,
 			currentUser: { id: 'admin-1', role: 'admin' }
 		});
+		const actionDeps = deps();
 		apiMock.logout.mockRejectedValue(new Error('network down'));
 
-		await createSessionActions(state, deps()).logout();
+		await createSessionActions(state, actionDeps).logout();
 
 		expect(eventsMock.disconnectAppEvents).toHaveBeenCalledWith(state);
 		expect(state.authenticated).toBe(false);
 		expect(state.currentUser).toBeUndefined();
 		expect(state.activeView).toBe('home');
-		expect(state.downloadClients).toEqual([]);
-		expect(state.libraryScansByFolder).toEqual({});
 		expect(state.openLibraryFolderId).toBeUndefined();
+		expect(actionDeps.clearReleaseCache).toHaveBeenCalledOnce();
+		expect(actionDeps.clearDiscoverBlacklistCache).toHaveBeenCalledOnce();
+		expect(actionDeps.clearDiscoverContentCache).toHaveBeenCalledOnce();
+		expect(actionDeps.clearSearchCache).toHaveBeenCalledOnce();
 		expect(state.errorMessage).toBe('network down');
 	});
 });

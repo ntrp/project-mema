@@ -8,7 +8,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import { getFileDeleteSettings, updateFileDeleteSettings } from '$lib/settings/api';
+	import { getFileDeleteSettings, updateFileDeleteSettings } from './filePoliciesApi';
 	import type { FileDeleteMode, FileDeleteSettingsRequest } from '$lib/settings/types';
 
 	const modeOptions: { value: FileDeleteMode; label: string; description: string }[] = [

@@ -25,7 +25,6 @@ import {
 	listCustomFormats,
 	listMediaItems,
 	listSystemJobs,
-	loadSettings,
 	login,
 	mediaTypeForLibraryKind,
 	saveDownloadClient,
@@ -195,15 +194,8 @@ describe('UI API helpers', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('SCN-SETTINGS-009 aggregates settings data from the individual endpoints', async () => {
+	it('SCN-SETTINGS-009 maps empty custom format lists', async () => {
 		clientMock.GET.mockResolvedValue({ data: {} });
-		const settings = await loadSettings();
-		expect(settings.downloadClients).toEqual([]);
-		expect(settings.indexers).toEqual([]);
-		expect(settings.indexerSearch).toEqual({});
-		expect(settings.metadataCache).toEqual({});
-		expect(settings.languages).toEqual([]);
-		expect(clientMock.GET).toHaveBeenCalledTimes(13);
 		await expect(listCustomFormats()).resolves.toEqual([]);
 	});
 });

@@ -1,6 +1,7 @@
 import { goto } from '$app/navigation';
 import { resolve } from '$app/paths';
-import { listQualitySizeSettings, saveMediaProfile } from '$lib/settings/api';
+import { saveMediaProfile } from '$lib/settings/api';
+import { listQualitySizeSettings } from '$lib/components/settings/quality/api';
 import type { MediaProfileForm } from '$lib/settings/types';
 
 export async function loadMediaProfileQualities() {

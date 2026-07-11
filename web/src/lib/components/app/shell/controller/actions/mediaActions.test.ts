@@ -17,6 +17,21 @@ const navigationMock = vi.hoisted(() => ({
 }));
 
 vi.mock('$lib/settings/api', () => apiMock);
+vi.mock('$lib/features/library/commands', () => ({
+	approveMediaRequest: apiMock.approveMediaRequest,
+	createMediaItem: apiMock.createMediaItem,
+	createMediaRequest: apiMock.createMediaRequest,
+	deleteMediaItem: apiMock.deleteMediaItem,
+	rescanMediaItemFiles: apiMock.rescanMediaItemFiles,
+	updateMediaItem: apiMock.updateMediaItem
+}));
+vi.mock('$lib/features/library/filesApi', () => ({
+	deleteMediaItemFile: apiMock.deleteMediaItemFile,
+	deleteMediaItemFileTrack: vi.fn()
+}));
+vi.mock('$lib/features/releases/api', () => ({
+	enqueueMediaAutomaticSearch: apiMock.enqueueMediaAutomaticSearch
+}));
 vi.mock('$app/navigation', () => ({ goto: navigationMock.goto }));
 vi.mock('$app/paths', () => ({ resolve: navigationMock.resolve }));
 
@@ -35,7 +50,6 @@ function state(overrides: Record<string, unknown> = {}) {
 		savingMediaAction: false,
 		mediaItems: [mediaItem()],
 		mediaRequests: [],
-		releaseResults: { 'media-1': { loaded: true, releases: [], errors: [] } },
 		selectedMediaItemId: undefined,
 		...overrides
 	} as unknown as AppShellState & {
@@ -48,8 +62,8 @@ function deps(shell: ReturnType<typeof state>) {
 	return {
 		clearNotice: vi.fn(),
 		loadMediaItems: vi.fn(),
-		loadSettings: vi.fn(),
 		removeActivityForMedia: vi.fn(),
+		removeReleaseResults: vi.fn(),
 		mediaItems: () => shell.mediaItems,
 		upsertMediaItem: vi.fn((item) => {
 			shell.mediaItems = [
@@ -129,7 +143,6 @@ describe('media actions (SCN-MEDIA-001)', () => {
 			expect.objectContaining({ type: 'serie', seriesType: 'standard', startSearch: true })
 		);
 		expect(actionDeps.loadMediaItems).toHaveBeenCalledOnce();
-		expect(actionDeps.loadSettings).toHaveBeenCalledOnce();
 		expect(shell.message).toBe('Media item added to monitored');
 		expect(shell.activeHomeSection).toBe('series');
 		expect(shell.activeMediaCandidate).toBeUndefined();
@@ -219,7 +232,7 @@ describe('media actions (SCN-MEDIA-001)', () => {
 		});
 
 		expect(shell.mediaItems.map((item) => item.id)).toEqual(['media-2']);
-		expect(shell.releaseResults).toEqual({});
+		expect(actionDeps.removeReleaseResults).toHaveBeenCalledWith('media-1');
 		expect(actionDeps.removeActivityForMedia).toHaveBeenCalledWith('media-1');
 		expect(shell.selectedMediaItemId).toBeUndefined();
 		expect(shell.mediaRequests[0]).toMatchObject({ id: 'request-1', status: 'approved' });

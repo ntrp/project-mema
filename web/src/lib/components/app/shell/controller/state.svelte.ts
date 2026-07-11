@@ -3,7 +3,6 @@ import {
 	settingsPrimaryItem,
 	systemPrimaryItem
 } from '$lib/components/app/navigation/appNavigation';
-import { emptyIndexerSearch, emptyMetadataCache } from '$lib/settings/api';
 import {
 	emptyCustomFormatForm,
 	emptyDownloadClientForm,
@@ -18,51 +17,38 @@ import {
 import type {
 	ActivitySection,
 	AppView,
-	CustomFormat,
 	CustomFormatForm as CustomFormatFormValue,
-	DiscoverBlacklistItem,
-	DownloadClient,
 	DownloadClientForm as DownloadClientFormValue,
 	HomeSection,
-	Indexer,
 	IndexerForm as IndexerFormValue,
-	IndexerSearchResponse,
 	IntegrationTestResults,
-	Language,
+	IndexerSearchResponse,
 	LanguageForm,
-	LibraryFolder,
 	LibraryFolderForm as LibraryFolderFormValue,
-	LibraryScan,
-	ManagedUser,
-	MediaCollection,
 	MediaItem,
-	MediaDiscoverSection,
-	MediaMetadataDetails,
-	PersonDetails,
-	MediaProfile,
-	MediaProfileForm as MediaProfileFormValue,
-	MediaSearchGroup,
-	MediaSearchResult,
 	MetadataCacheResponse,
-	MetadataProvider,
-	PathMapping,
+	MediaProfileForm as MediaProfileFormValue,
+	MediaSearchResult,
 	PathMappingForm,
-	ReleaseSearchResults,
 	SettingsSection,
-	SubtitleProvider,
 	SubtitleProviderForm,
 	SystemSection,
-	Tag,
 	TagForm,
-	UserProfile,
 	UserForm as UserFormValue,
 	UserSummary
 } from '$lib/settings/types';
-import { relatedSectionFromDetail } from './discoverFilters';
+import type { UserProfile } from '$lib/profile/types';
 import { defaultRouteState, type AppRouteState } from './routeState';
 import type { PeopleSectionKind, RelatedSectionKind } from './types';
+import { initialiseRouteState } from './stateInitializers';
 
 export class AppShellState {
+	declare indexerSearch: IndexerSearchResponse;
+	declare metadataCache: MetadataCacheResponse;
+	declare profile: UserProfile | undefined;
+	declare loadingIndexerSearch: boolean;
+	declare loadingMetadataCache: boolean;
+	declare loadingProfile: boolean;
 	authenticated = $state(false);
 	loading = $state(true);
 	savingDownloadClient = $state(false);
@@ -81,37 +67,13 @@ export class AppShellState {
 	savingLanguage = $state(false);
 	deletingLanguageCode = $state<string | undefined>();
 	savingUser = $state(false);
-	loadingProfile = $state(false);
 	savingProfile = $state(false);
 	profileErrorMessage = $state('');
 	message = $state('');
 	errorMessage = $state('');
 	username = $state('admin');
 	password = $state('admin');
-	downloadClients = $state<DownloadClient[]>([]);
-	indexers = $state<Indexer[]>([]);
-	indexerSearch = $state<IndexerSearchResponse>(emptyIndexerSearch());
-	metadataProviders = $state<MetadataProvider[]>([]);
-	subtitleProviders = $state<SubtitleProvider[]>([]);
-	metadataCache = $state<MetadataCacheResponse>(emptyMetadataCache());
-	libraryFolders = $state<LibraryFolder[]>([]);
-	pathMappings = $state<PathMapping[]>([]);
-	mediaProfiles = $state<MediaProfile[]>([]);
-	customFormats = $state<CustomFormat[]>([]);
-	users = $state<ManagedUser[]>([]);
-	profile = $state<UserProfile | undefined>();
-	tags = $state<Tag[]>([]);
-	languages = $state<Language[]>([]);
 	currentUser = $state<UserSummary | undefined>();
-	discoverSections = $state<MediaDiscoverSection[]>([]);
-	discoverSection = $state<MediaDiscoverSection | undefined>();
-	discoverBlacklist = $state<DiscoverBlacklistItem[]>([]);
-	metadataDetail = $state<MediaMetadataDetails | undefined>();
-	personDetail = $state<PersonDetails | undefined>();
-	mediaCollection = $state<MediaCollection | undefined>();
-	autocompleteGroups = $state<MediaSearchGroup[]>([]);
-	advancedSearchGroups = $state<MediaSearchGroup[]>([]);
-	releaseResults = $state<ReleaseSearchResults>({});
 	downloadForm = $state<DownloadClientFormValue>(emptyDownloadClientForm());
 	indexerForm = $state<IndexerFormValue>(emptyIndexerForm());
 	libraryFolderForm = $state<LibraryFolderFormValue>(emptyLibraryFolderForm());
@@ -125,22 +87,9 @@ export class AppShellState {
 	testingIndexerId = $state<string | undefined>();
 	testingMetadataProviderId = $state<string | undefined>();
 	testingSubtitleProviderId = $state<string | undefined>();
-	loadingMetadataCache = $state(false);
 	clearingMetadataCache = $state(false);
-	loadingIndexerSearch = $state(false);
 	clearingIndexerSearchCache = $state(false);
 	savingIndexerSearchSettings = $state(false);
-	loadingDiscover = $state(false);
-	loadingDiscoverSection = $state(false);
-	loadingMoreDiscoverSection = $state(false);
-	discoverSectionPage = $state(1);
-	discoverSectionHasMore = $state(true);
-	loadingBlacklist = $state(false);
-	loadingMetadataDetail = $state(false);
-	loadingPersonDetail = $state(false);
-	loadingMediaCollection = $state(false);
-	loadingAutocomplete = $state(false);
-	searchingAdvanced = $state(false);
 	addingKey = $state<string | undefined>();
 	blacklistingKey = $state<string | undefined>();
 	removingBlacklistId = $state<string | undefined>();
@@ -158,7 +107,6 @@ export class AppShellState {
 	reviewingComponentDecisionId = $state<string | undefined>();
 	pendingFulfillmentActions = $state<Record<string, number>>({});
 	scanningLibraryFolderId = $state<string | undefined>();
-	libraryScansByFolder = $state<Record<string, LibraryScan>>({});
 	openLibraryFolderId = $state<string | undefined>();
 	indexerTests = $state<IntegrationTestResults>({});
 	metadataProviderTests = $state<IntegrationTestResults>({});
@@ -176,13 +124,6 @@ export class AppShellState {
 	selectedRequestId = $state<string | undefined>();
 	searchQuery = $state('');
 	route = $state<AppRouteState>(defaultRouteState());
-	relatedMediaSection = $derived(
-		relatedSectionFromDetail(
-			this.metadataDetail,
-			this.activeRelatedSectionKind,
-			this.discoverBlacklist
-		)
-	);
 	isAdmin = $derived(this.currentUser?.role === 'admin');
 	activePrimarySection = $derived(
 		this.activeView === 'settings'
@@ -223,18 +164,6 @@ export class AppShellState {
 	);
 
 	constructor(route: AppRouteState = defaultRouteState()) {
-		this.route = route;
-		this.activeView = route.view;
-		this.activeHomeSection = route.homeSection;
-		this.activeActivitySection = route.activitySection;
-		this.activeSettingsSection = route.settingsSection;
-		this.activeSystemSection = route.systemSection;
-		this.activeDiscoverSectionId = route.discoverSectionId;
-		this.activeDiscoverSubmenuSection = route.discoverSubmenuSection;
-		this.activeRelatedSectionKind = route.relatedSectionKind;
-		this.activePeopleSectionKind = route.peopleSectionKind;
-		this.selectedMediaItemId = route.selectedMediaItemId;
-		this.selectedRequestId = route.selectedRequestId;
-		this.searchQuery = route.advancedQuery;
+		initialiseRouteState(this, route);
 	}
 }

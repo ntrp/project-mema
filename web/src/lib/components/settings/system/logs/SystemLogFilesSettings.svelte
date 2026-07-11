@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
-	import { downloadSystemLogFile, listSystemLogFiles } from '$lib/settings/api';
+	import { downloadSystemLogFile, listSystemLogFiles } from './api';
 	import { formatLongDateTime } from '$lib/settings/dateFormat';
 	import type { SystemLogFile } from '$lib/settings/types';
 

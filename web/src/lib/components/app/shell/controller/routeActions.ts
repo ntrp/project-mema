@@ -17,10 +17,6 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 			return;
 		}
 
-		const previousMetadataKey = metadataKey(state.route);
-		const previousPersonKey = personKey(state.route);
-		const previousCollectionKey = collectionKey(state.route);
-		const previousDiscoverId = state.route.discoverSectionId;
 		state.route = route;
 		currentRouteKey = nextRouteKey;
 
@@ -37,20 +33,6 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 		state.selectedRequestId = route.selectedRequestId;
 		state.searchQuery = route.view === 'advanced-search' ? route.advancedQuery : state.searchQuery;
 
-		if (metadataKey(route) !== previousMetadataKey) {
-			state.metadataDetail = undefined;
-		}
-		if (personKey(route) !== previousPersonKey) {
-			state.personDetail = undefined;
-		}
-		if (collectionKey(route) !== previousCollectionKey) {
-			state.mediaCollection = undefined;
-		}
-		if (route.discoverSectionId !== previousDiscoverId) {
-			state.discoverSection = undefined;
-			state.discoverSectionPage = 1;
-			state.discoverSectionHasMore = true;
-		}
 		if (!state.authenticated) {
 			return;
 		}
@@ -66,16 +48,4 @@ export function createRouteActions(state: AppShellState, deps: RouteDeps) {
 
 function forbiddenForUser(route: AppRouteState) {
 	return route.view === 'settings' || route.view === 'system' || route.homeSection === 'blacklist';
-}
-
-function metadataKey(route: AppRouteState) {
-	return `${route.metadataProvider ?? ''}:${route.metadataType ?? ''}:${route.metadataExternalId ?? ''}`;
-}
-
-function collectionKey(route: AppRouteState) {
-	return `${route.collectionProvider ?? ''}:${route.collectionId ?? ''}`;
-}
-
-function personKey(route: AppRouteState) {
-	return `${route.personProvider ?? ''}:${route.personId ?? ''}`;
 }

@@ -17,14 +17,26 @@
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { setAppShellContext } from '$lib/features/app/appShellContext';
 	import { createMediaItemsQuery } from '$lib/features/library/queries.svelte';
+	import {
+		createMetadataDetailQuery,
+		createPersonDetailQuery
+	} from '$lib/features/media/queries.svelte';
 	import type { MediaItem, PersonAppearance } from '$lib/settings/types';
-	const library = createMediaItemsQuery();
-
 	let { children } = $props();
 	const route = $derived(routeStateFromPath(page.url.pathname, page.params, page.url.searchParams));
 	// svelte-ignore state_referenced_locally
 	let app = $state(createAppShellController(route));
 	setAppShellContext(app);
+	const library = createMediaItemsQuery();
+	const metadata = createMetadataDetailQuery({
+		provider: () => app.route.metadataProvider,
+		type: () => app.route.metadataType,
+		id: () => app.route.metadataExternalId
+	});
+	const person = createPersonDetailQuery(
+		() => app.route.personProvider,
+		() => app.route.personId
+	);
 	let personBackdropIndex = $state(0);
 	const personBackdropPaths = $derived(personAppearanceBackdrops());
 	const mainBackdropUrl = $derived(imageUrl(activeMainBackdropPath(), 'original'));
@@ -49,7 +61,7 @@
 	});
 
 	function personAppearanceBackdrops(): string[] {
-		const appearances: PersonAppearance[] = app.personDetail?.appearances ?? [];
+		const appearances: PersonAppearance[] = person.data?.appearances ?? [];
 		const paths = appearances
 			.map((appearance: PersonAppearance) => appearance.backdropPath)
 			.filter((path: string | undefined): path is string => Boolean(path));
@@ -64,7 +76,7 @@
 			return (library.data ?? []).find((item) => item.id === app.selectedMediaItemId)?.backdropPath;
 		}
 		if (app.activeView === 'metadata-detail' || app.activeView === 'related-section') {
-			return app.metadataDetail?.backdropPath;
+			return metadata.data?.backdropPath;
 		}
 		if (!app.selectedMediaItemId || !['movies', 'series'].includes(app.activeHomeSection)) {
 			return undefined;

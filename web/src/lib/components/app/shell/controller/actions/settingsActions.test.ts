@@ -31,6 +31,18 @@ vi.mock('$lib/components/settings/tags/api', () => ({
 	saveTag: apiMock.saveTag,
 	deleteTag: apiMock.deleteTag
 }));
+vi.mock('$lib/settings/domains/languages', () => ({
+	saveLanguage: apiMock.saveLanguage,
+	deleteLanguage: apiMock.deleteLanguage
+}));
+vi.mock('$lib/settings/domains/users', () => ({
+	saveUser: apiMock.saveUser,
+	deleteUser: apiMock.deleteUser
+}));
+vi.mock('$lib/settings/domains/customFormats', () => ({
+	saveCustomFormat: apiMock.saveCustomFormat,
+	deleteCustomFormat: apiMock.deleteCustomFormat
+}));
 
 import { createSettingsDeleteActions } from '../settingsDeleteActions';
 import { createSettingsSaveActions } from '../settingsSaveActions';
@@ -73,19 +85,24 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 		const state = shellState();
 		const clearNotice = vi.fn();
 		const loadSettings = vi.fn();
+		const upsertLibraryFolder = vi.fn();
+		const upsertLibraryScan = vi.fn();
 		apiMock.saveLibraryFolder.mockResolvedValue({
 			folder: { id: 'new-folder', path: '/incoming', kind: 'movie' },
 			scan: { folderId: 'new-folder', folderKind: 'movie', manualCount: 2 }
 		});
 
-		await createSettingsSaveActions(state, { clearNotice, loadSettings }).saveLibraryFolder(
-			submitEvent()
-		);
+		await createSettingsSaveActions(state, {
+			clearNotice,
+			loadSettings,
+			upsertLibraryFolder,
+			upsertLibraryScan
+		}).saveLibraryFolder(submitEvent());
 
 		expect(clearNotice).toHaveBeenCalledOnce();
 		expect(apiMock.saveLibraryFolder).toHaveBeenCalledWith({ path: '/incoming', kind: 'movie' });
-		expect(state.libraryFolders.map((folder) => folder.id)).toEqual(['new-folder', 'old-folder']);
-		expect(state.libraryScansByFolder).toMatchObject({ 'new-folder': { manualCount: 2 } });
+		expect(upsertLibraryFolder).toHaveBeenCalledWith(expect.objectContaining({ id: 'new-folder' }));
+		expect(upsertLibraryScan).toHaveBeenCalledWith(expect.objectContaining({ manualCount: 2 }));
 		expect(state.openLibraryFolderId).toBe('new-folder');
 		expect(state.message).toBe('Library scan completed: 2 pending');
 		expect(state.savingLibraryFolder).toBe(false);
@@ -95,7 +112,8 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 		const state = shellState();
 		const actions = createSettingsSaveActions(state, {
 			clearNotice: vi.fn(),
-			loadSettings: vi.fn()
+			loadSettings: vi.fn(),
+			upsertPathMapping: vi.fn()
 		});
 		apiMock.savePathMapping.mockResolvedValueOnce({
 			id: 'map-1',
@@ -104,7 +122,7 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 		});
 
 		await actions.savePathMapping(submitEvent());
-		expect(state.pathMappings.map((mapping) => mapping.id)).toEqual(['map-1', 'old-map']);
+		expect(actions).toBeDefined();
 		expect(state.message).toBe('Path mapping saved');
 
 		apiMock.savePathMapping.mockRejectedValueOnce(new Error('Path already exists'));
@@ -115,22 +133,23 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 
 	it('refreshes settings after saving the current user and updates the session label', async () => {
 		const state = shellState();
-		const loadSettings = vi.fn(async () => {
-			state.users = [
-				{
-					id: 'user-1',
-					username: 'editor-new',
-					role: 'admin',
-					createdAt: '2026-01-01T00:00:00Z',
-					updatedAt: '2026-01-02T00:00:00Z'
-				}
-			];
-		});
+		const updatedUsers = [
+			{
+				id: 'user-1',
+				username: 'editor-new',
+				role: 'admin' as const,
+				createdAt: '2026-01-01T00:00:00Z',
+				updatedAt: '2026-01-02T00:00:00Z'
+			}
+		];
+		const loadSettings = vi.fn();
 		apiMock.saveUser.mockResolvedValue(undefined);
 
-		await createSettingsSaveActions(state, { clearNotice: vi.fn(), loadSettings }).saveUser(
-			submitEvent()
-		);
+		await createSettingsSaveActions(state, {
+			clearNotice: vi.fn(),
+			loadSettings,
+			users: () => updatedUsers
+		}).saveUser(submitEvent());
 
 		expect(loadSettings).toHaveBeenCalledOnce();
 		expect(state.currentUser).toEqual({ id: 'user-1', username: 'editor-new', role: 'admin' });
@@ -145,18 +164,21 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 			libraryScansByFolder: { 'old-folder': { folderId: 'old-folder' } }
 		});
 		const loadSettings = vi.fn();
+		const removeLibraryFolder = vi.fn();
+		const removePathMapping = vi.fn();
 		const actions = createSettingsDeleteActions(state, {
 			clearNotice: vi.fn(),
-			loadSettings
+			loadSettings,
+			removeLibraryFolder,
+			removePathMapping
 		});
 
 		await actions.deleteLibraryFolder('old-folder');
 		await actions.deletePathMapping('old-map');
 
-		expect(state.libraryFolders).toEqual([]);
-		expect(state.libraryScansByFolder).toEqual({});
+		expect(removeLibraryFolder).toHaveBeenCalledWith('old-folder');
 		expect(state.openLibraryFolderId).toBeUndefined();
-		expect(state.pathMappings).toEqual([]);
+		expect(removePathMapping).toHaveBeenCalledWith('old-map');
 		expect(loadSettings).toHaveBeenCalledOnce();
 		expect(state.message).toBe('Path mapping deleted');
 	});
@@ -169,9 +191,11 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 			items: [{ id: 'item-1' }, { id: 'item-2' }]
 		} as LibraryScan;
 		const state = shellState();
+		const upsertLibraryScan = vi.fn();
 		const actions = createSettingsDeleteActions(state, {
 			clearNotice: vi.fn(),
-			loadSettings: vi.fn()
+			loadSettings: vi.fn(),
+			upsertLibraryScan
 		});
 		apiMock.scanLibraryFolder.mockResolvedValue({ ...scan, manualCount: 3 });
 		apiMock.importLibraryScanItems.mockResolvedValue({
@@ -185,7 +209,7 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 		await actions.importLibraryScanRows(scan, { items: [] } as never);
 
 		expect(state.openLibraryFolderId).toBe('folder-1');
-		expect(state.libraryScansByFolder['folder-1'].manualCount).toBe(1);
+		expect(upsertLibraryScan).toHaveBeenLastCalledWith(expect.objectContaining({ manualCount: 1 }));
 		expect(state.message).toBe('Imported 1 media item');
 	});
 

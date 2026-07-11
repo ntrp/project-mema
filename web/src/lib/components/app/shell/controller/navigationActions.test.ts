@@ -18,7 +18,7 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 
 	it('guards admin-only sections and routes public library sections', () => {
 		const state = testState({ isAdmin: false });
-		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+		const actions = createNavigationActions(state);
 
 		actions.selectHomeSection('blacklist');
 		expect(gotoMock).not.toHaveBeenCalled();
@@ -36,7 +36,7 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 
 	it('routes admin settings and system sections', () => {
 		const state = testState({ isAdmin: true });
-		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+		const actions = createNavigationActions(state);
 
 		actions.selectPrimarySection('settings');
 		expect(state.activeView).toBe('settings');
@@ -57,32 +57,24 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 		expect(gotoMock).toHaveBeenLastCalledWith('/system/jobs');
 	});
 
-	it('opens discover subsections and resets pagination before loading', () => {
-		const loadDiscoverSection = vi.fn();
+	it('opens discover subsections through their query-owned route', () => {
 		const state = testState({
 			activeView: 'home',
-			activePrimarySection: 'discover',
-			discoverSectionPage: 4,
-			discoverSectionHasMore: false
+			activePrimarySection: 'discover'
 		});
-		const actions = createNavigationActions(state, { loadDiscoverSection });
+		const actions = createNavigationActions(state);
 
 		actions.selectSubmenuSection('trending');
 
 		expect(state.activeView).toBe('discover-section');
 		expect(state.activeHomeSection).toBe('discover');
 		expect(state.activeDiscoverSectionId).toBe('trending');
-		expect(state.discoverSection).toBeUndefined();
-		expect(state.discoverSectionPage).toBe(1);
-		expect(state.discoverSectionHasMore).toBe(true);
 		expect(gotoMock).toHaveBeenLastCalledWith('/discover/trending');
-		expect(loadDiscoverSection).toHaveBeenCalledTimes(1);
 	});
 
 	it('routes discover preset entries to filtered movie and series pages', () => {
-		const loadDiscoverSection = vi.fn();
 		const state = testState({ activePrimarySection: 'discover' });
-		const actions = createNavigationActions(state, { loadDiscoverSection });
+		const actions = createNavigationActions(state);
 
 		actions.selectSubmenuSection('animated-movies');
 		expect(state.activeView).toBe('discover-movies');
@@ -95,12 +87,11 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 		expect(state.activeView).toBe('discover-series');
 		expect(state.activeDiscoverSubmenuSection).toBe('anime-series');
 		expect(gotoMock).toHaveBeenLastCalledWith('/discover/series?genres=Animation&keywords=anime');
-		expect(loadDiscoverSection).not.toHaveBeenCalled();
 	});
 
 	it('routes activity submenu sections', () => {
 		const state = testState({ activePrimarySection: 'activity' });
-		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+		const actions = createNavigationActions(state);
 
 		actions.selectSubmenuSection('history');
 		expect(state.activeView).toBe('home');
@@ -111,7 +102,7 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 
 	it('opens the current user profile route', () => {
 		const state = testState();
-		const actions = createNavigationActions(state, { loadDiscoverSection: vi.fn() });
+		const actions = createNavigationActions(state);
 
 		actions.showProfile();
 
@@ -129,8 +120,6 @@ function testState(overrides: Partial<AppShellState> = {}): AppShellState {
 		activeActivitySection: 'queue',
 		activeSettingsSection: 'general',
 		activeSystemSection: 'status',
-		discoverSectionPage: 1,
-		discoverSectionHasMore: true,
 		...overrides
 	} as AppShellState;
 }

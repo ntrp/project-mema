@@ -12,6 +12,7 @@ import type { AppShellState } from './state.svelte';
 interface SettingsLibraryScanDeps {
 	clearNotice: () => void;
 	refreshMediaItems: () => Promise<void>;
+	upsertScan: (_scan: LibraryScan) => void;
 }
 
 export function createSettingsLibraryScanActions(
@@ -26,7 +27,7 @@ export function createSettingsLibraryScanActions(
 
 		try {
 			const scan = await scanLibraryFolderRequest(id);
-			state.libraryScansByFolder = { ...state.libraryScansByFolder, [scan.folderId]: scan };
+			deps.upsertScan(scan);
 			state.openLibraryFolderId = scan.folderId;
 			state.message = `Library scan completed: ${scan.manualCount} pending`;
 		} catch (error) {
@@ -57,10 +58,7 @@ export function createSettingsLibraryScanActions(
 		try {
 			const result = await importLibraryScanItemsRequest(scan.id, request);
 			await deps.refreshMediaItems();
-			state.libraryScansByFolder = {
-				...state.libraryScansByFolder,
-				[scan.folderId]: result.scan
-			};
+			deps.upsertScan(result.scan);
 			state.message = `Imported ${result.importedCount} media item${result.importedCount === 1 ? '' : 's'}`;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not import library items');
@@ -75,10 +73,7 @@ export function createSettingsLibraryScanActions(
 			if (result.removedMediaItemId) {
 				await deps.refreshMediaItems();
 			}
-			state.libraryScansByFolder = {
-				...state.libraryScansByFolder,
-				[scan.folderId]: result.scan
-			};
+			deps.upsertScan(result.scan);
 			state.message = 'Library import reset';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not reset library import');

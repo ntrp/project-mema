@@ -31,6 +31,18 @@ vi.mock('$lib/components/settings/tags/api', () => ({
 	saveTag: apiMock.saveTag,
 	deleteTag: apiMock.deleteTag
 }));
+vi.mock('$lib/settings/domains/languages', () => ({
+	saveLanguage: apiMock.saveLanguage,
+	deleteLanguage: apiMock.deleteLanguage
+}));
+vi.mock('$lib/settings/domains/users', () => ({
+	saveUser: apiMock.saveUser,
+	deleteUser: apiMock.deleteUser
+}));
+vi.mock('$lib/settings/domains/customFormats', () => ({
+	saveCustomFormat: apiMock.saveCustomFormat,
+	deleteCustomFormat: apiMock.deleteCustomFormat
+}));
 
 import { createSettingsDeleteActions } from '../settingsDeleteActions';
 import { createSettingsSaveActions } from '../settingsSaveActions';
@@ -212,9 +224,17 @@ describe('settings entity delete actions (SCN-SETTINGS-009)', () => {
 
 	it('deletes catalog entities from visible state and resets spinners', async () => {
 		const state = shellState();
+		const removeTag = vi.fn();
+		const removeLanguage = vi.fn();
+		const removeMediaProfile = vi.fn();
+		const removeCustomFormat = vi.fn();
 		const actions = createSettingsDeleteActions(state, {
 			clearNotice: vi.fn(),
-			loadSettings: vi.fn()
+			loadSettings: vi.fn(),
+			removeTag,
+			removeLanguage,
+			removeMediaProfile,
+			removeCustomFormat
 		});
 
 		await actions.deleteTag('tag-1');
@@ -222,10 +242,10 @@ describe('settings entity delete actions (SCN-SETTINGS-009)', () => {
 		await actions.deleteMediaProfile('profile-1');
 		await actions.deleteCustomFormat('format-1');
 
-		expect(state.tags).toEqual([]);
-		expect(state.languages).toEqual([{ code: 'en' }]);
-		expect(state.mediaProfiles).toEqual([]);
-		expect(state.customFormats).toEqual([]);
+		expect(removeTag).toHaveBeenCalledWith('tag-1');
+		expect(removeLanguage).toHaveBeenCalledWith('de');
+		expect(removeMediaProfile).toHaveBeenCalledWith('profile-1');
+		expect(removeCustomFormat).toHaveBeenCalledWith('format-1');
 		expect(state.message).toBe('Custom format deleted');
 		expect(state.deletingTagId).toBeUndefined();
 		expect(state.deletingLanguageCode).toBeUndefined();

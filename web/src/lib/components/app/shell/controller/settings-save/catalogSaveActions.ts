@@ -1,8 +1,6 @@
-import {
-	saveCustomFormat as saveCustomFormatRequest,
-	saveLanguage as saveLanguageRequest,
-	saveMediaProfile as saveMediaProfileRequest
-} from '$lib/settings/api';
+import { saveCustomFormat as saveCustomFormatRequest } from '$lib/settings/domains/customFormats';
+import { saveLanguage as saveLanguageRequest } from '$lib/settings/domains/languages';
+import { saveMediaProfile as saveMediaProfileRequest } from '$lib/settings/api';
 import { saveTag as saveTagFocusedRequest } from '$lib/components/settings/tags/api';
 import {
 	emptyCustomFormatForm,

@@ -18,9 +18,9 @@
 	import {
 		episodeReleaseSearchContext,
 		episodeTitle,
-		seasonReleaseSearchContext,
 		seasonEpisodeRows,
-		seasonMonitored
+		seasonMonitored,
+		seasonReleaseSearchContext
 	} from '$lib/components/app/media/series/mediaSeriesRows';
 	import type { ReleaseSearchContext } from '$lib/components/app/media/release-search/releaseSearchQuery';
 	import type { MediaSeriesSeasonsProps as Props } from './mediaSeriesSeasonsTypes';
@@ -76,10 +76,6 @@
 	async function searchSubtitle(row: MediaFileRow, languageId?: string) {
 		if (!row.path) return;
 		await onSearchSubtitle(item, { languageId, filePath: row.path });
-	}
-
-	function deleteSubtitle(subtitleId: string) {
-		return onDeleteSubtitle(item, subtitleId);
 	}
 
 	function openSubtitleSearch(row: MediaFileRow, languageId?: string) {
@@ -145,7 +141,7 @@
 										onManualSearch={() => (searchContext = episodeReleaseSearchContext(file.row))}
 										onSearchSubtitle={searchSubtitle}
 										onManualSubtitleSearch={openSubtitleSearch}
-										onDeleteSubtitle={(subtitle) => deleteSubtitle(subtitle.id)}
+										onDeleteSubtitle={(subtitle) => onDeleteSubtitle(item, subtitle.id)}
 										onUpdateSubtitle={(subtitle, request) =>
 											onUpdateSubtitle(item, subtitle.id, request)}
 										onDeleteTrack={(row, request) =>

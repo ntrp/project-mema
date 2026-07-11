@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const apiMock = vi.hoisted(() => ({
 	addDiscoverBlacklistItem: vi.fn(),
 	deleteDiscoverBlacklistItem: vi.fn(),
-	listDiscoverBlacklist: vi.fn(),
 	loadMediaDiscoverSection: vi.fn(),
 	loadMediaDiscoverSections: vi.fn()
 }));
@@ -16,10 +15,12 @@ const navigationMock = vi.hoisted(() => ({
 }));
 
 vi.mock('$lib/settings/api', () => apiMock);
+vi.mock('$lib/features/discovery/blacklist/api', () => apiMock);
 vi.mock('$app/navigation', () => ({ goto: navigationMock.goto }));
 vi.mock('$app/paths', () => ({ resolve: navigationMock.resolve }));
 
-import { createDiscoveryActions } from '../discoveryActions';
+import { createDiscoveryActions, type DiscoveryBlacklistCache } from '../discoveryActions';
+import type { DiscoverBlacklistItem } from '$lib/settings/types';
 import { createNavigationActions } from '../navigationActions';
 import { createRouteActions } from '../routeActions';
 import type { AppShellState } from '../state.svelte';
@@ -38,11 +39,9 @@ function state(overrides: Record<string, unknown> = {}) {
 		discoverSection: undefined,
 		discoverSectionPage: 1,
 		discoverSectionHasMore: true,
-		discoverBlacklist: [],
 		loadingDiscover: false,
 		loadingDiscoverSection: false,
 		loadingMoreDiscoverSection: false,
-		loadingBlacklist: false,
 		message: '',
 		errorMessage: '',
 		route: { view: 'home', homeSection: 'discover' },
@@ -68,27 +67,13 @@ describe('discovery actions (SCN-MEDIA-003)', () => {
 		navigationMock.goto.mockReset();
 	});
 
-	it('loads sections and appends only new paginated results', async () => {
-		const shell = state({
-			discoverSection: { id: 'popular', results: [result({ externalId: '1' })] }
-		});
-		apiMock.loadMediaDiscoverSections.mockResolvedValue([{ id: 'popular', title: 'Popular' }]);
-		apiMock.loadMediaDiscoverSection
-			.mockResolvedValueOnce({ id: 'popular', results: [result({ externalId: '1' })] })
-			.mockResolvedValueOnce({
-				id: 'popular',
-				results: [result({ externalId: '1' }), result({ externalId: '2' })]
-			});
-		const actions = createDiscoveryActions(shell);
-
-		await actions.loadDiscoverSections();
-		await actions.loadDiscoverSection();
+	it('delegates pagination to the feature cache', async () => {
+		const shell = state();
+		const content = contentCache();
+		const actions = createDiscoveryActions(shell, blacklistCache(), content);
 		await actions.loadMoreDiscoverSection();
 
-		expect(shell.discoverSections).toEqual([{ id: 'popular', title: 'Popular' }]);
-		expect(shell.discoverSection?.results?.map((item) => item.externalId)).toEqual(['1', '2']);
-		expect(shell.discoverSectionPage).toBe(2);
-		expect(shell.loadingDiscoverSection).toBe(false);
+		expect(content.loadMore).toHaveBeenCalledWith('popular');
 	});
 
 	it('blacklists and removes discover results for admins only', async () => {
@@ -97,33 +82,33 @@ describe('discovery actions (SCN-MEDIA-003)', () => {
 			discoverSections: [{ id: 'popular', results: [result()] }],
 			discoverSection: { id: 'popular', results: [result()] }
 		});
-		apiMock.listDiscoverBlacklist.mockResolvedValue([blocked]);
 		apiMock.addDiscoverBlacklistItem.mockResolvedValue(blocked);
 		apiMock.deleteDiscoverBlacklistItem.mockResolvedValue(undefined);
-		const actions = createDiscoveryActions(shell);
+		const blacklist = blacklistCache();
+		const content = contentCache();
+		const actions = createDiscoveryActions(shell, blacklist, content);
 
-		await actions.loadDiscoverBlacklist();
 		await actions.blacklistDiscoverMedia(result() as never);
 		await actions.removeDiscoverBlacklistItem(blocked as never);
 
 		expect(apiMock.addDiscoverBlacklistItem).toHaveBeenCalledWith(
 			expect.objectContaining({ title: 'Scenario Pick', externalId: '123' })
 		);
-		expect(shell.discoverSection?.results).toEqual([]);
-		expect(shell.discoverBlacklist).toEqual([]);
+		expect(content.mapSections).toHaveBeenCalledOnce();
+		expect(content.mapSection).toHaveBeenCalledWith('popular', expect.any(Function));
+		expect(content.refresh).toHaveBeenCalledWith('popular');
+		expect(blacklist.items()).toEqual([]);
 		expect(shell.message).toBe('Scenario Pick removed from blacklist');
 		expect(shell.removingBlacklistId).toBeUndefined();
 	});
 
 	it('does not expose blacklist controls to non-admin users', async () => {
 		const shell = state({ isAdmin: false });
-		const actions = createDiscoveryActions(shell);
+		const actions = createDiscoveryActions(shell, blacklistCache(), contentCache());
 
-		await actions.loadDiscoverBlacklist();
 		await actions.blacklistDiscoverMedia(result() as never);
 		await actions.removeDiscoverBlacklistItem({ id: 'blacklist-1' } as never);
 
-		expect(apiMock.listDiscoverBlacklist).not.toHaveBeenCalled();
 		expect(apiMock.addDiscoverBlacklistItem).not.toHaveBeenCalled();
 		expect(apiMock.deleteDiscoverBlacklistItem).not.toHaveBeenCalled();
 	});
@@ -132,8 +117,7 @@ describe('discovery actions (SCN-MEDIA-003)', () => {
 describe('navigation and route actions (SCN-AUTH-003)', () => {
 	it('routes primary and submenu selections through the correct app sections', async () => {
 		const shell = state({ activePrimarySection: 'discover' });
-		const loadDiscoverSection = vi.fn();
-		const actions = createNavigationActions(shell, { loadDiscoverSection });
+		const actions = createNavigationActions(shell);
 
 		actions.selectPrimarySection('settings');
 		actions.selectSystemSection('events');
@@ -142,15 +126,12 @@ describe('navigation and route actions (SCN-AUTH-003)', () => {
 		expect(shell.activeSettingsSection).toBe('general');
 		expect(shell.activeSystemSection).toBe('events');
 		expect(shell.activeDiscoverSectionId).toBe('trending');
-		expect(loadDiscoverSection).toHaveBeenCalledOnce();
 		expect(navigationMock.goto).toHaveBeenLastCalledWith('/discover/trending');
 	});
 
 	it('applies routes, clears stale detail data, and redirects forbidden user views', async () => {
 		const shell = state({
 			isAdmin: false,
-			metadataDetail: { title: 'Old detail' },
-			mediaCollection: { title: 'Old collection' },
 			route: {
 				view: 'metadata-detail',
 				homeSection: 'discover',
@@ -161,17 +142,11 @@ describe('navigation and route actions (SCN-AUTH-003)', () => {
 		});
 		const deps = {
 			routeData: {
-				loadSettings: vi.fn(),
-				loadDiscoverBlacklist: vi.fn(),
+				loadSettingsSection: vi.fn(),
+				loadSystemSettings: vi.fn(),
+				loadMediaActionSettings: vi.fn(),
 				loadDiscoverSections: vi.fn(),
 				loadDiscoverSection: vi.fn(),
-				loadMediaItems: vi.fn(),
-				loadMediaRequests: vi.fn(),
-				loadDownloadActivity: vi.fn(),
-				loadReleaseBlocklist: vi.fn(),
-				loadMetadataDetail: vi.fn(),
-				loadPersonDetail: vi.fn(),
-				loadMediaCollection: vi.fn(),
 				loadProfile: vi.fn()
 			}
 		};
@@ -184,10 +159,31 @@ describe('navigation and route actions (SCN-AUTH-003)', () => {
 		} as never);
 		await actions.applyRoute({ view: 'settings', homeSection: 'settings' } as never);
 
-		expect(shell.metadataDetail).toBeUndefined();
 		expect(shell.searchQuery).toBe('scenario');
 		expect(shell.activeView).toBe('settings');
 		expect(navigationMock.goto).toHaveBeenCalledWith('/discover');
-		expect(deps.routeData.loadMetadataDetail).not.toHaveBeenCalled();
+		expect(deps.routeData.loadMediaActionSettings).not.toHaveBeenCalled();
 	});
 });
+
+function blacklistCache() {
+	let entries: DiscoverBlacklistItem[] = [];
+	return {
+		items: () => entries,
+		upsert: (item: DiscoverBlacklistItem) => {
+			entries = [item, ...entries.filter((entry) => entry.id !== item.id)];
+		},
+		remove: (id: string) => {
+			entries = entries.filter((entry) => entry.id !== id);
+		}
+	} satisfies DiscoveryBlacklistCache;
+}
+
+function contentCache() {
+	return {
+		mapSections: vi.fn(),
+		mapSection: vi.fn(),
+		refresh: vi.fn(),
+		loadMore: vi.fn()
+	};
+}

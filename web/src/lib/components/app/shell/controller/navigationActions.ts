@@ -14,12 +14,7 @@ import type {
 } from '$lib/settings/types';
 import type { AppShellState } from './state.svelte';
 
-interface NavigationDeps {
-	loadDiscoverSection: () => Promise<void>;
-}
-
-export function createNavigationActions(state: AppShellState, deps: NavigationDeps) {
-	const loadDiscoverSection = deps.loadDiscoverSection;
+export function createNavigationActions(state: AppShellState) {
 	function selectHomeSection(section: HomeSection) {
 		if (section === 'blacklist' && !state.isAdmin) {
 			return;
@@ -79,11 +74,7 @@ export function createNavigationActions(state: AppShellState, deps: NavigationDe
 			state.activeHomeSection = 'discover';
 			state.activeDiscoverSectionId = section;
 			state.activeDiscoverSubmenuSection = undefined;
-			state.discoverSection = undefined;
-			state.discoverSectionPage = 1;
-			state.discoverSectionHasMore = true;
 			void goto(resolve('/discover/[sectionId]', { sectionId: section }));
-			void loadDiscoverSection();
 			return;
 		}
 		if (state.activePrimarySection === 'activity') {

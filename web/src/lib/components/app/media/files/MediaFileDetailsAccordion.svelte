@@ -1,7 +1,6 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
-	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
 	import MediaFileDeleteTrackButton from '$lib/components/app/media/files/MediaFileDeleteTrackButton.svelte';
@@ -22,6 +21,8 @@
 		MediaFileTrackDeleteRequest,
 		MediaFulfillmentActionRequest
 	} from '$lib/settings/types';
+	import MediaFileDetailsHeader from './details/MediaFileDetailsHeader.svelte';
+	import { createMediaFileRowPulse } from './details/mediaFileRowPulse';
 
 	interface Props {
 		row: MediaFileRow;
@@ -47,9 +48,6 @@
 
 	let chaptersExpanded = $state(false);
 	let deleteTarget = $state<MediaFileDetailRow | undefined>();
-	const pulsingRows = new SvelteSet<string>();
-	let rowSignatures = new SvelteMap<string, string>();
-	const pulseTimers = new SvelteMap<string, number>();
 
 	const trackRows = $derived(fileTrackDetailRows(row));
 	const chapterRows = $derived(fileChapterDetailRows(row));
@@ -58,17 +56,8 @@
 		...trackRows,
 		...(chapterSummary ? [chapterSummary, ...(chaptersExpanded ? chapterRows : [])] : [])
 	]);
-
-	$effect(() => {
-		const next = new SvelteMap(rows.map((track) => [track.key, rowChangeSignature(track)]));
-		for (const [key, signature] of next) {
-			const previous = rowSignatures.get(key);
-			if (previous && previous !== signature) {
-				pulseRow(key);
-			}
-		}
-		rowSignatures = next;
-	});
+	const trackPulses = createMediaFileRowPulse();
+	const pulsingRows = $derived(trackPulses(rows));
 
 	function toggleChapters() {
 		chaptersExpanded = !chaptersExpanded;
@@ -91,43 +80,11 @@
 		await onDeleteTrack(row, { path: row.path ?? '', ...deleteTarget.deleteRequest });
 		deleteTarget = undefined;
 	}
-
-	function rowChangeSignature(track: MediaFileDetailRow) {
-		return [
-			track.description,
-			track.visualState,
-			track.statusLabel,
-			track.operationLabel,
-			...(track.details ?? [])
-		].join('\u001f');
-	}
-
-	function pulseRow(key: string) {
-		const activeTimer = pulseTimers.get(key);
-		if (activeTimer) window.clearTimeout(activeTimer);
-		pulsingRows.add(key);
-		pulseTimers.set(
-			key,
-			window.setTimeout(() => {
-				pulsingRows.delete(key);
-				pulseTimers.delete(key);
-			}, 1200)
-		);
-	}
 </script>
 
 <div class="overflow-x-auto border-t border-border bg-background" aria-label="Track details">
 	<Table.Root class="min-w-170 text-sm">
-		<Table.Header>
-			<Table.Row>
-				<Table.Head class="w-24">Track Nr.</Table.Head>
-				<Table.Head class="w-20">Type</Table.Head>
-				<Table.Head class="w-36">Language</Table.Head>
-				<Table.Head>Track description</Table.Head>
-				<Table.Head class="w-24">Provenance</Table.Head>
-				<Table.Head class="w-20 text-right">Actions</Table.Head>
-			</Table.Row>
-		</Table.Header>
+		<MediaFileDetailsHeader />
 		<Table.Body>
 			{#each rows as track, index (track.key)}
 				<Table.Row
