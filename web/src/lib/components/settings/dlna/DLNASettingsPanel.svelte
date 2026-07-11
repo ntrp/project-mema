@@ -4,44 +4,33 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
-	import type { DLNASettingsRequest, DLNAStatus } from '$lib/settings/types';
+	import type { DLNASettingsRequest } from '$lib/settings/types';
+	import { createDLNASettingsForm, allowedCidrsText } from './dlnaSettingsFormState';
 	import { createDLNAResources } from './dlnaResources.svelte';
-	import DLNADiagnosticsTables from './DLNADiagnosticsTables.svelte';
 	import DLNADeviceProfilesPanel from './profiles/DLNADeviceProfilesPanel.svelte';
 	import DLNASettingsForm from './DLNASettingsForm.svelte';
 
-	const defaultForm: DLNASettingsRequest = {
-		enabled: false,
-		friendlyName: 'Mema',
-		interfaces: [],
-		allowedCidrs: ['127.0.0.1/32', '::1/128'],
-		announceIntervalSeconds: 1800,
-		transcodeEnabled: true,
-		thumbnailsEnabled: true,
-		subtitlesEnabled: true,
-		defaultRendererProfile: 'generic'
-	};
-
-	const resources = createDLNAResources();
-	let form = $derived(settingsForm(resources.settings.data));
-	let allowedText = $derived(form.allowedCidrs.join('\n'));
+	const initialForm = createDLNASettingsForm();
+	let form = $state(initialForm);
+	let allowedText = $state(allowedCidrsText(initialForm.allowedCidrs));
 	let errorMessage = $state('');
+	const resources = createDLNAResources();
 	let message = $state('');
 
 	const loading = $derived(resources.settings.isFetching);
 	const saving = $derived(resources.updateSettings.isPending);
-	const status = $derived<DLNAStatus | undefined>(resources.settings.data?.status);
-	const statusCells = $derived([
-		{ label: 'State', value: status?.running ? 'Running' : 'Stopped' },
-		{ label: 'SSDP', value: status?.lastSsdpEvent ?? 'None' },
-		{ label: 'Last SOAP', value: status?.lastSoapAction ?? 'None' },
-		{ label: 'Last error', value: status?.lastError ?? 'None' }
-	]);
+	const status = $derived(resources.settings.data?.status);
+
+	$effect(() => {
+		const settings = resources.settings.data;
+		if (settings) syncSettings(settings);
+	});
 
 	async function load() {
 		errorMessage = '';
 		try {
-			await resources.settings.refetch();
+			const result = await resources.settings.refetch();
+			syncSettings(result.data);
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load DLNA settings';
 		}
@@ -52,7 +41,8 @@
 		errorMessage = '';
 		message = '';
 		try {
-			await resources.updateSettings.mutateAsync(normalizedForm());
+			const saved = await resources.updateSettings.mutateAsync(normalizedForm());
+			syncSettings(saved);
 			message = 'DLNA settings saved';
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not save DLNA settings';
@@ -70,6 +60,12 @@
 		}
 	}
 
+	function syncSettings(settings?: DLNASettingsRequest) {
+		const next = createDLNASettingsForm(settings);
+		form = next;
+		allowedText = allowedCidrsText(next.allowedCidrs);
+	}
+
 	function normalizedForm(): DLNASettingsRequest {
 		return {
 			...form,
@@ -84,25 +80,10 @@
 			.map((line) => line.trim())
 			.filter(Boolean);
 	}
-
-	function settingsForm(settings = resources.settings.data): DLNASettingsRequest {
-		if (!settings) return { ...defaultForm };
-		return {
-			enabled: settings.enabled,
-			friendlyName: settings.friendlyName,
-			interfaces: [...settings.interfaces],
-			allowedCidrs: [...settings.allowedCidrs],
-			announceIntervalSeconds: settings.announceIntervalSeconds,
-			transcodeEnabled: settings.transcodeEnabled,
-			thumbnailsEnabled: settings.thumbnailsEnabled,
-			subtitlesEnabled: settings.subtitlesEnabled,
-			defaultRendererProfile: settings.defaultRendererProfile
-		};
-	}
 </script>
 
 <div class="grid gap-6">
-	<Card.Root aria-label="DLNA diagnostics">
+	<Card.Root aria-label="DLNA server configuration">
 		<Card.Header class="border-b border-border">
 			<Card.Title>Server</Card.Title>
 			<Card.Action class="flex gap-2">
@@ -134,22 +115,14 @@
 			{#if message}
 				<p class="text-sm text-muted-foreground">{message}</p>
 			{/if}
-			<div class="grid gap-3 sm:grid-cols-4">
-				{#each statusCells as cell (cell.label)}
-					<div class="grid gap-1 rounded-md border border-border p-3">
-						<span class="text-xs font-medium text-muted-foreground uppercase">{cell.label}</span>
-						<span class="break-words text-sm font-medium text-foreground">{cell.value}</span>
-					</div>
-				{/each}
-			</div>
 			<DLNASettingsForm
 				bind:form
 				bind:allowedText
 				availableInterfaces={status?.availableInterfaces ?? []}
+				profiles={resources.profiles.data ?? []}
 				{saving}
 				onSave={save}
 			/>
-			<DLNADiagnosticsTables {status} />
 		</Card.Content>
 	</Card.Root>
 	<DLNADeviceProfilesPanel />

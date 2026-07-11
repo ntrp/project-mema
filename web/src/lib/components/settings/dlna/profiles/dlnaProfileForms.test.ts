@@ -22,16 +22,44 @@ describe('DLNA profile settings helpers (SCN-SETTINGS-025)', () => {
 });
 
 describe('DLNA device profile settings UI (SCN-SETTINGS-025)', () => {
+	it('wraps the profile table in a bounded scroll container', () => {
+		const profileTable = renderWithTooltip(DLNAProfileTable, {
+			profiles: [sampleProfile],
+			search: '',
+			selectedId: sampleProfile.id,
+			onSearch: () => {},
+			onEdit: () => {},
+			onClone: () => {},
+			onReset: () => {},
+			onExport: () => {},
+			onDelete: () => {},
+			onCreate: () => {},
+			onImport: () => {},
+			onTrace: () => {},
+			onRestoreOriginals: () => {}
+		});
+
+		expect(profileTable.body).toContain('max-h-[34rem] overflow-y-auto');
+		expect(profileTable.body).toContain('aria-label="Edit LG webOS"');
+		expect(profileTable.body).toContain('aria-label="Open decision trace"');
+		expect(profileTable.body).toContain('aria-label="Restore original profiles"');
+		expect(profileTable.body).toContain('sticky top-0 z-10 bg-card');
+	});
+
 	it('renders profile and override tables', () => {
 		const profileTable = renderWithTooltip(DLNAProfileTable, {
 			profiles: [sampleProfile],
 			search: '',
 			selectedId: sampleProfile.id,
 			onSearch: () => {},
-			onSelect: () => {},
+			onEdit: () => {},
 			onClone: () => {},
 			onReset: () => {},
-			onExport: () => {}
+			onExport: () => {},
+			onDelete: () => {},
+			onCreate: () => {},
+			onImport: () => {},
+			onRestoreOriginals: () => {}
 		});
 		const devices = renderWithTooltip(DLNADeviceOverrideTable, {
 			devices: [
@@ -73,6 +101,28 @@ describe('DLNA device profile settings UI (SCN-SETTINGS-025)', () => {
 		expect(devices.body).toContain('192.168.1.55');
 		expect(devices.body).toContain('Manual override');
 	});
+
+	it('shows delete actions for custom profiles', () => {
+		const profileTable = renderWithTooltip(DLNAProfileTable, {
+			profiles: [{ ...sampleProfile, id: 'user-profile', name: 'User Profile', source: 'user' as const, customized: true }],
+			search: '',
+			selectedId: 'user-profile',
+			onSearch: () => {},
+			onEdit: () => {},
+			onClone: () => {},
+			onReset: () => {},
+			onExport: () => {},
+			onDelete: () => {},
+			onCreate: () => {},
+			onImport: () => {},
+			onTrace: () => {},
+			onRestoreOriginals: () => {}
+		});
+
+		expect(profileTable.body).toContain('aria-label="Delete User Profile"');
+		expect(profileTable.body).not.toContain('aria-label="Delete LG webOS"');
+	});
+
 });
 
 const sampleProfile: DLNARendererProfile = {

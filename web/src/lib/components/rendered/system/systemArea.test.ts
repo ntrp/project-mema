@@ -15,6 +15,14 @@ describe('rendered system area sections (SCN-SYSTEM-001)', () => {
 		expect(body).toContain('Refresh');
 	});
 
+	it('renders the DLNA runtime diagnostics surface while status data loads', () => {
+		const { body } = renderSystemArea('dlna');
+
+		expect(body).toContain('System');
+		expect(body).toContain('DLNA');
+		expect(body).toContain('Loading DLNA status');
+	});
+
 	it('renders live jobs filters and empty table state', () => {
 		const { body } = renderSystemArea('jobs');
 

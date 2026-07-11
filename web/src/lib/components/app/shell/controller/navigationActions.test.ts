@@ -52,6 +52,10 @@ describe('navigation actions (SCN-MEDIA-004)', () => {
 		expect(state.activeSystemSection).toBe('status');
 		expect(gotoMock).toHaveBeenLastCalledWith('/system/status');
 
+		actions.selectSystemSection('dlna');
+		expect(state.activeSystemSection).toBe('dlna');
+		expect(gotoMock).toHaveBeenLastCalledWith('/system/dlna');
+
 		actions.selectSystemSection('jobs');
 		expect(state.activeSystemSection).toBe('jobs');
 		expect(gotoMock).toHaveBeenLastCalledWith('/system/jobs');

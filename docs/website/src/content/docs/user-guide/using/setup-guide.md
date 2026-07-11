@@ -110,9 +110,9 @@ rules once you understand how your indexers name releases.
 ## Configure DLNA Device Profiles
 
 Open Settings, then DLNA, then Device Profiles when a TV or player needs
-renderer-specific compatibility rules. Search the seeded profile table, edit a
-profile, clone it into a custom profile, or reset a seeded profile back to its
-defaults.
+renderer-specific compatibility rules. Search the seeded profile table, select
+a profile to edit it in a modal, clone it into a custom profile, create a new
+custom profile, or reset a seeded profile back to its defaults.
 
 Recent DLNA devices show the IP, last seen time, matched profile, and override
 selector. Use the override selector or manual override form to pin a known

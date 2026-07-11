@@ -28,7 +28,7 @@ describe('app navigation helpers (SCN-MEDIA-003)', () => {
 			'/activity/blocklist'
 		]);
 		expect(settingsItems.at(-1)).toMatchObject({ value: 'users', href: '/settings/users' });
-		expect(systemItems.map((item) => item.value)).toContain('events');
+		expect(systemItems.map((item) => item.value)).toContain('dlna');
 	});
 
 	it('maps settings and system sections to routed pages', () => {
@@ -37,6 +37,7 @@ describe('app navigation helpers (SCN-MEDIA-003)', () => {
 		expect(settingsSectionHref('custom-formats')).toBe('/settings/custom-formats');
 		expect(settingsSectionHref('library')).toBe('/settings/library');
 		expect(systemSectionHref('status')).toBe('/system/status');
+		expect(systemSectionHref('dlna')).toBe('/system/dlna');
 		expect(systemSectionHref('events')).toBe('/system/events');
 		expect(systemSectionHref('logs')).toBe('/system/logs');
 	});

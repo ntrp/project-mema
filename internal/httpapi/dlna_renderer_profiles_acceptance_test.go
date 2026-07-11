@@ -56,6 +56,16 @@ func TestScenarioSCNSettings025AdminManagesDLNARendererProfiles(t *testing.T) {
 	if generic.Customized || generic.Notes == "temporary generic edit" {
 		t.Fatalf("reset profile = %#v", generic)
 	}
+	client.doJSON(t, http.MethodDelete, "/settings/dlna/profiles/generic", nil, http.StatusBadRequest, nil)
+
+	update = dlnaProfileRequestFromResponse(generic)
+	update.Notes = "temporary restore edit"
+	client.doJSON(t, http.MethodPut, "/settings/dlna/profiles/generic", update, http.StatusOK, &generic)
+	client.doJSON(t, http.MethodPost, "/settings/dlna/profiles/restore", nil, http.StatusNoContent, nil)
+	client.doJSON(t, http.MethodGet, "/settings/dlna/profiles/generic", nil, http.StatusOK, &generic)
+	if generic.Customized || generic.Notes == "temporary restore edit" {
+		t.Fatalf("restored seeded profile = %#v", generic)
+	}
 
 	client.doJSON(t, http.MethodPost, "/settings/dlna/profiles", invalidDLNARegexProfile("bad-regex-"+suffix), http.StatusBadRequest, nil)
 

@@ -13926,6 +13926,82 @@ export function createImportDLNARendererProfile<
 	return query;
 }
 
+export const getRestoreDLNARendererProfilesUrl = () => {
+	return `/api/settings/dlna/profiles/restore`;
+};
+
+/**
+ * @summary Restore all seeded DLNA renderer profiles
+ */
+export const restoreDLNARendererProfiles = async (options?: RequestInit): Promise<void> => {
+	const res = await fetch(getRestoreDLNARendererProfilesUrl(), {
+		...options,
+		method: 'POST'
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: void = body ? JSON.parse(body) : undefined;
+	return data;
+};
+
+export const getRestoreDLNARendererProfilesQueryKey = () => {
+	return ['POST', `/api/settings/dlna/profiles/restore`] as const;
+};
+
+export const getRestoreDLNARendererProfilesQueryOptions = <
+	TData = Awaited<ReturnType<typeof restoreDLNARendererProfiles>>,
+	TError = UnauthorizedResponse
+>(options?: {
+	query?: Partial<
+		CreateQueryOptions<Awaited<ReturnType<typeof restoreDLNARendererProfiles>>, TError, TData>
+	>;
+	fetch?: RequestInit;
+}) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getRestoreDLNARendererProfilesQueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof restoreDLNARendererProfiles>>> = ({
+		signal
+	}) => restoreDLNARendererProfiles({ signal, ...fetchOptions });
+
+	return { queryKey, queryFn, ...queryOptions } as CreateQueryOptions<
+		Awaited<ReturnType<typeof restoreDLNARendererProfiles>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type RestoreDLNARendererProfilesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof restoreDLNARendererProfiles>>
+>;
+export type RestoreDLNARendererProfilesQueryError = UnauthorizedResponse;
+
+/**
+ * @summary Restore all seeded DLNA renderer profiles
+ */
+
+export function createRestoreDLNARendererProfiles<
+	TData = Awaited<ReturnType<typeof restoreDLNARendererProfiles>>,
+	TError = UnauthorizedResponse
+>(
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof restoreDLNARendererProfiles>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getRestoreDLNARendererProfilesQueryOptions(options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
 export const getGetDLNARendererProfileUrl = (id: string) => {
 	return `/api/settings/dlna/profiles/${id}`;
 };
@@ -14137,7 +14213,7 @@ export const getDeleteDLNARendererProfileQueryKey = (id: string) => {
 
 export const getDeleteDLNARendererProfileQueryOptions = <
 	TData = Awaited<ReturnType<typeof deleteDLNARendererProfile>>,
-	TError = UnauthorizedResponse | NotFoundResponse
+	TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse
 >(
 	id: string,
 	options?: {
@@ -14168,7 +14244,10 @@ export const getDeleteDLNARendererProfileQueryOptions = <
 export type DeleteDLNARendererProfileQueryResult = NonNullable<
 	Awaited<ReturnType<typeof deleteDLNARendererProfile>>
 >;
-export type DeleteDLNARendererProfileQueryError = UnauthorizedResponse | NotFoundResponse;
+export type DeleteDLNARendererProfileQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse;
 
 /**
  * @summary Delete a DLNA renderer profile
@@ -14176,7 +14255,7 @@ export type DeleteDLNARendererProfileQueryError = UnauthorizedResponse | NotFoun
 
 export function createDeleteDLNARendererProfile<
 	TData = Awaited<ReturnType<typeof deleteDLNARendererProfile>>,
-	TError = UnauthorizedResponse | NotFoundResponse
+	TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse
 >(
 	id: () => string,
 	options?: () => {

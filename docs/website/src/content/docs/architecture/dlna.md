@@ -302,12 +302,12 @@ matching APIs.
 
 The panel contains:
 
-- searchable seeded profile table
+- dedicated profile table card with search, clone, reset, import, export, and
+  create actions
+- profile editor modal for matching, direct-play, delivery, DLNA flags,
+  subtitles, artwork, metadata, and quirks
 - recent devices table
 - profile override selector by IP or UUID
-- profile editor for matching, direct-play, delivery, DLNA flags, subtitles,
-  artwork, metadata, and quirks
-- clone, reset, enable/disable, import, and export actions
 - decision trace viewer for a selected device and media file
 
 Seeded profiles can be edited in place; reset restores the seed copy, while

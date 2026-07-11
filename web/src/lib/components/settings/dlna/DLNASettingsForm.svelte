@@ -4,11 +4,16 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
-	import type { DLNAInterfaceDiagnostic, DLNASettingsRequest } from '$lib/settings/types';
+	import type {
+		DLNAInterfaceDiagnostic,
+		DLNARendererProfile,
+		DLNASettingsRequest
+	} from '$lib/settings/types';
 
 	interface Props {
 		form: DLNASettingsRequest;
 		availableInterfaces?: DLNAInterfaceDiagnostic[];
+		profiles?: DLNARendererProfile[];
 		allowedText: string;
 		saving?: boolean;
 		onSave: (event: SubmitEvent) => void | Promise<void>;
@@ -17,6 +22,7 @@
 	let {
 		form = $bindable(),
 		availableInterfaces = [],
+		profiles = [],
 		allowedText = $bindable(),
 		saving = false,
 		onSave
@@ -58,7 +64,15 @@
 		</div>
 		<div class="space-y-2">
 			<Label for="dlna-profile">Default renderer profile</Label>
-			<Input id="dlna-profile" bind:value={form.defaultRendererProfile} />
+			<select
+				id="dlna-profile"
+				class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+				bind:value={form.defaultRendererProfile}
+			>
+				{#each profiles as profile (profile.id)}
+					<option value={profile.id}>{profile.name}</option>
+				{/each}
+			</select>
 		</div>
 		<div class="space-y-2">
 			<Label for="dlna-announce">Announce interval seconds</Label>

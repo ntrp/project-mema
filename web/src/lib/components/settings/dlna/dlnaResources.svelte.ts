@@ -1,14 +1,17 @@
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query';
-import { getDLNASettings, restartDLNA, updateDLNASettings } from './api';
+import { restartDLNA, updateDLNASettings } from './api';
+import { createDLNAStatusQuery } from './dlnaStatus.svelte';
 import {
 	cloneDLNARendererProfile,
 	createDLNARendererProfile,
 	deleteDLNARendererDeviceOverride,
+	deleteDLNARendererProfile,
 	importDLNARendererProfile,
 	listDLNARecentDevices,
 	listDLNARendererDeviceOverrides,
 	listDLNARendererProfiles,
 	resetDLNARendererProfile,
+	restoreDLNARendererProfiles,
 	updateDLNARendererProfile,
 	upsertDLNARendererDeviceOverride
 } from '$lib/settings/dlnaProfilesApi';
@@ -34,7 +37,7 @@ export function createDLNAResources() {
 	const invalidateProfiles = () => client.invalidateQueries({ queryKey: dlnaKeys.profiles() });
 	const invalidateOverrides = () => client.invalidateQueries({ queryKey: dlnaKeys.overrides() });
 	return {
-		settings: createQuery(() => ({ queryKey: dlnaKeys.settings(), queryFn: getDLNASettings })),
+		settings: createDLNAStatusQuery(),
 		profiles: createQuery(() => ({
 			queryKey: dlnaKeys.profiles(),
 			queryFn: listDLNARendererProfiles
@@ -69,6 +72,14 @@ export function createDLNAResources() {
 		})),
 		resetProfile: createMutation(() => ({
 			mutationFn: (id: string) => resetDLNARendererProfile(id),
+			onSuccess: invalidateProfiles
+		})),
+		restoreProfiles: createMutation(() => ({
+			mutationFn: restoreDLNARendererProfiles,
+			onSuccess: invalidateProfiles
+		})),
+		deleteProfile: createMutation(() => ({
+			mutationFn: (id: string) => deleteDLNARendererProfile(id),
 			onSuccess: invalidateProfiles
 		})),
 		upsertOverride: createMutation(() => ({

@@ -16,6 +16,7 @@ import {
 	profileToForm,
 	type DLNAProfileForm
 } from './dlnaProfileForms';
+
 export class DLNAProfilePanelState {
 	private resources = createDLNAResources();
 	selectedId = $state('');
@@ -30,21 +31,21 @@ export class DLNAProfilePanelState {
 	cloneName = $state('');
 	importOpen = $state(false);
 	importText = $state('');
+	editorOpen = $state(false);
+	editorMode = $state<'create' | 'edit'>('edit');
+	traceOpen = $state(false);
 	traceIp = $state('');
 	traceMediaPath = $state('');
 
 	get profiles(): DLNARendererProfile[] {
 		return this.resources.profiles.data ?? [];
 	}
-
 	get overrides(): DLNARendererDeviceOverride[] {
 		return this.resources.overrides.data ?? [];
 	}
-
 	get devices(): DLNAClientDiagnostic[] {
 		return this.resources.devices.data ?? [];
 	}
-
 	get loading() {
 		return (
 			this.resources.profiles.isFetching ||
@@ -52,7 +53,6 @@ export class DLNAProfilePanelState {
 			this.resources.devices.isFetching
 		);
 	}
-
 	get saving() {
 		return [
 			this.resources.createProfile,
@@ -60,15 +60,15 @@ export class DLNAProfilePanelState {
 			this.resources.cloneProfile,
 			this.resources.importProfile,
 			this.resources.resetProfile,
+			this.resources.restoreProfiles,
+			this.resources.deleteProfile,
 			this.resources.upsertOverride,
 			this.resources.deleteOverride
 		].some((mutation) => mutation.isPending);
 	}
-
 	get selectedProfile() {
 		return this.profiles.find((profile) => profile.id === this.selectedId);
 	}
-
 	get filteredProfiles() {
 		const query = this.search.toLowerCase();
 		return this.profiles.filter((profile) =>
@@ -95,23 +95,39 @@ export class DLNAProfilePanelState {
 			this.errorMessage = error instanceof Error ? error.message : 'Could not load DLNA profiles';
 		}
 	};
-
 	selectProfile = (profile?: DLNARendererProfile) => {
 		this.selectedId = profile?.id ?? '';
 		this.form = profile ? profileToForm(profile) : undefined;
 	};
-
-	newProfile = () => {
-		const source = this.selectedProfile;
-		this.selectedId = '';
-		this.form = blankProfileForm(source);
+	openProfileEditor = (profile: DLNARendererProfile) => {
+		this.editorMode = 'edit';
+		this.selectProfile(profile);
+		this.editorOpen = true;
 	};
-
+	newProfile = () => {
+		this.editorMode = 'create';
+		this.form = blankProfileForm(this.selectedProfile);
+		this.editorOpen = true;
+	};
+	closeEditor = () => {
+		this.editorOpen = false;
+		this.editorMode = 'edit';
+		this.form = undefined;
+	};
+	openTrace = () => {
+		this.traceIp = this.devices[0]?.ip ?? '';
+		this.traceOpen = true;
+	};
+	closeTrace = () => {
+		this.traceOpen = false;
+		this.traceIp = '';
+		this.traceMediaPath = '';
+	};
 	saveProfile = async () => {
 		if (!this.form) return;
 		this.errorMessage = '';
 		try {
-			const current = this.selectedProfile;
+			const current = this.editorMode === 'edit' ? this.selectedProfile : undefined;
 			const saved = current
 				? await this.resources.updateProfile.mutateAsync({
 						id: current.id,
@@ -119,24 +135,32 @@ export class DLNAProfilePanelState {
 					})
 				: await this.resources.createProfile.mutateAsync(formToCreateRequest(this.form));
 			this.selectProfile(saved);
+			this.closeEditor();
 			this.message = current ? 'Profile saved' : 'Profile created';
 		} catch (error) {
 			this.errorMessage = error instanceof Error ? error.message : 'Could not save profile';
 		}
 	};
-
 	resetProfile = async (profile: DLNARendererProfile) => {
 		const saved = await this.resources.resetProfile.mutateAsync(profile.id);
 		this.selectProfile(saved);
 		this.message = 'Profile reset';
 	};
-
+	deleteProfile = async (profile: DLNARendererProfile) => {
+		await this.resources.deleteProfile.mutateAsync(profile.id);
+		if (this.selectedId === profile.id)
+			this.selectProfile(this.profiles.find((item) => item.id !== profile.id));
+		this.message = 'Profile deleted';
+	};
+	restoreOriginalProfiles = async () => {
+		await this.resources.restoreProfiles.mutateAsync();
+		this.message = 'Original profiles restored';
+	};
 	openClone = (profile: DLNARendererProfile) => {
 		this.cloneSource = profile;
 		this.cloneId = `${profile.id}-copy`;
 		this.cloneName = `${profile.name} copy`;
 	};
-
 	cloneProfile = async () => {
 		if (!this.cloneSource) return;
 		const saved = await this.resources.cloneProfile.mutateAsync({
@@ -147,7 +171,6 @@ export class DLNAProfilePanelState {
 		this.cloneSource = undefined;
 		this.message = 'Profile cloned';
 	};
-
 	importProfile = async () => {
 		const saved = await this.resources.importProfile.mutateAsync(
 			importProfileText(this.importText)
@@ -157,20 +180,21 @@ export class DLNAProfilePanelState {
 		this.importText = '';
 		this.message = 'Profile imported';
 	};
-
 	exportProfile = async (profile: DLNARendererProfile) => {
 		downloadProfileJson(await exportDLNARendererProfile(profile.id));
 	};
-
 	saveOverride = async () => {
-		const parsed = JSON.parse(this.overrideJsonText || '{}') as Record<string, unknown>;
-		await this.resources.upsertOverride.mutateAsync({
-			...this.overrideForm,
-			deliveryPolicyOverrides: parsed
-		});
-		this.message = 'Override saved';
+		try {
+			const parsed = JSON.parse(this.overrideJsonText || '{}') as Record<string, unknown>;
+			await this.resources.upsertOverride.mutateAsync({
+				...this.overrideForm,
+				deliveryPolicyOverrides: parsed
+			});
+			this.message = 'Override saved';
+		} catch {
+			this.errorMessage = 'Could not save override';
+		}
 	};
-
 	quickAssign = async (device: DLNAClientDiagnostic, profileId: string) => {
 		const existing = this.overrides.find((override) => override.ipAddress === device.ip);
 		if (!profileId) {
@@ -187,7 +211,6 @@ export class DLNAProfilePanelState {
 			notes: ''
 		});
 	};
-
 	deleteOverride = async (id: string) => {
 		await this.resources.deleteOverride.mutateAsync(id);
 	};

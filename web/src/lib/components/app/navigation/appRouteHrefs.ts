@@ -36,6 +36,8 @@ export function systemSectionHref(section: SystemSection): SystemHref {
 	switch (section) {
 		case 'status':
 			return '/system/status';
+		case 'dlna':
+			return '/system/dlna';
 		case 'indexing':
 			return '/system/indexing';
 		case 'metadata':

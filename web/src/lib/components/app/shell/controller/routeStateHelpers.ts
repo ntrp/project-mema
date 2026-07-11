@@ -18,6 +18,7 @@ const settingsSections = new Set<SettingsSection>([
 ]);
 const systemSections = new Set<SystemSection>([
 	'status',
+	'dlna',
 	'indexing',
 	'metadata',
 	'jobs',

@@ -18,6 +18,7 @@ export type SettingsHref =
 
 export type SystemHref =
 	| '/system/status'
+	| '/system/dlna'
 	| '/system/indexing'
 	| '/system/metadata'
 	| '/system/jobs'
@@ -68,6 +69,7 @@ export const settingsItems = [
 
 export const systemItems = [
 	{ value: 'status', label: 'Status', href: '/system/status' },
+	{ value: 'dlna', label: 'DLNA', href: '/system/dlna' },
 	{ value: 'indexing', label: 'Indexing', href: '/system/indexing' },
 	{ value: 'metadata', label: 'Metadata', href: '/system/metadata' },
 	{ value: 'jobs', label: 'Jobs', href: '/system/jobs' },

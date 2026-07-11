@@ -107,6 +107,74 @@ func (s *SettingsStore) ResetDLNARendererProfile(ctx context.Context, id string)
 	return dlnaRendererProfileFromRow(row), nil
 }
 
+func (s *SettingsStore) RestoreDLNARendererProfiles(ctx context.Context) error {
+	_, err := s.pool.Exec(ctx, `
+		insert into app.dlna_renderer_profiles (
+			id,
+			name,
+			vendor,
+			device_class,
+			source,
+			source_version,
+			customized,
+			enabled,
+			priority,
+			icon_key,
+			notes,
+			match_rules,
+			capability_rules,
+			delivery_settings,
+			dlna_flags,
+			subtitle_rules,
+			artwork_rules,
+			metadata_rules,
+			quirks
+		)
+		select
+			id,
+			name,
+			vendor,
+			device_class,
+			'mema_seed',
+			source_version,
+			false,
+			enabled,
+			priority,
+			icon_key,
+			notes,
+			match_rules,
+			capability_rules,
+			delivery_settings,
+			dlna_flags,
+			subtitle_rules,
+			artwork_rules,
+			metadata_rules,
+			quirks
+		from app.dlna_renderer_profile_defaults
+		on conflict (id) do update
+		set name = excluded.name,
+			vendor = excluded.vendor,
+			device_class = excluded.device_class,
+			source = 'mema_seed',
+			source_version = excluded.source_version,
+			customized = false,
+			enabled = excluded.enabled,
+			priority = excluded.priority,
+			icon_key = excluded.icon_key,
+			notes = excluded.notes,
+			match_rules = excluded.match_rules,
+			capability_rules = excluded.capability_rules,
+			delivery_settings = excluded.delivery_settings,
+			dlna_flags = excluded.dlna_flags,
+			subtitle_rules = excluded.subtitle_rules,
+			artwork_rules = excluded.artwork_rules,
+			metadata_rules = excluded.metadata_rules,
+			quirks = excluded.quirks,
+			updated_at = now();
+	`)
+	return err
+}
+
 func (s *SettingsStore) RebaseDLNARendererProfile(ctx context.Context, id string) (DLNARendererProfile, error) {
 	row, err := storagegen.New(s.pool).RebaseDLNARendererProfile(ctx, strings.TrimSpace(id))
 	if errors.Is(err, pgx.ErrNoRows) {

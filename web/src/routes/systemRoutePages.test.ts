@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import DLNAPage from './system/dlna/+page.svelte';
 import EventsPage from './system/events/+page.svelte';
 import IndexingPage from './system/indexing/+page.svelte';
 import JobsPage from './system/jobs/+page.svelte';
@@ -11,6 +12,7 @@ import { renderPage } from './routeTestHelpers';
 describe('system route pages (SCN-SYSTEM-005)', () => {
 	it.each([
 		[StatusPage, ['Status', 'Loading system status']],
+		[DLNAPage, ['DLNA', 'Loading DLNA status']],
 		[IndexingPage, ['Indexing', 'Query Cache', 'Query History']],
 		[MetadataPage, ['Metadata', 'Metadata Cache', 'Query History']],
 		[JobsPage, ['Jobs', 'Fixed Scheduled Jobs', 'No one-shot jobs are running or scheduled.']],

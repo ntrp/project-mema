@@ -5646,6 +5646,9 @@ type ServerInterface interface {
 	// Import a DLNA renderer profile
 	// (POST /settings/dlna/profiles/import)
 	ImportDLNARendererProfile(w http.ResponseWriter, r *http.Request)
+	// Restore all seeded DLNA renderer profiles
+	// (POST /settings/dlna/profiles/restore)
+	RestoreDLNARendererProfiles(w http.ResponseWriter, r *http.Request)
 	// Delete a DLNA renderer profile
 	// (DELETE /settings/dlna/profiles/{id})
 	DeleteDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string)
@@ -6495,6 +6498,12 @@ func (_ Unimplemented) CreateDLNARendererProfile(w http.ResponseWriter, r *http.
 // Import a DLNA renderer profile
 // (POST /settings/dlna/profiles/import)
 func (_ Unimplemented) ImportDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Restore all seeded DLNA renderer profiles
+// (POST /settings/dlna/profiles/restore)
+func (_ Unimplemented) RestoreDLNARendererProfiles(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -10420,6 +10429,26 @@ func (siw *ServerInterfaceWrapper) ImportDLNARendererProfile(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
+// RestoreDLNARendererProfiles operation middleware
+func (siw *ServerInterfaceWrapper) RestoreDLNARendererProfiles(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreDLNARendererProfiles(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteDLNARendererProfile operation middleware
 func (siw *ServerInterfaceWrapper) DeleteDLNARendererProfile(w http.ResponseWriter, r *http.Request) {
 
@@ -13959,6 +13988,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/dlna/profiles/import", wrapper.ImportDLNARendererProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/dlna/profiles/restore", wrapper.RestoreDLNARendererProfiles)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/dlna/profiles/{id}", wrapper.DeleteDLNARendererProfile)

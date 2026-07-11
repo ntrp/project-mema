@@ -1,6 +1,7 @@
 import { client } from '$lib/api/client';
 import type {
 	MediaFileHistoryResponse,
+	MediaFilePreviewInfo,
 	MediaFileTrackDeleteRequest,
 	MediaItemSubtitleListResponse,
 	MediaItemSubtitleSelectionRequest,
@@ -34,6 +35,23 @@ export async function deleteMediaItemFileTrack(id: string, request: MediaFileTra
 	}
 	if (!data) {
 		throw new Error('Media item was not returned');
+	}
+	return data;
+}
+
+export async function getMediaItemFilePreviewInfo(
+	id: string,
+	path: string
+): Promise<MediaFilePreviewInfo> {
+	const { data, error } = await client.GET('/media/items/{id}/files/preview-info', {
+		params: { path: { id }, query: { path } }
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Media file preview info was not returned');
 	}
 	return data;
 }

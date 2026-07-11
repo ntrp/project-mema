@@ -87,6 +87,18 @@ func (s *Server) DeleteDLNARendererProfile(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) RestoreDLNARendererProfiles(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	if err := s.settings.RestoreDLNARendererProfiles(r.Context()); err != nil {
+		writeError(w, http.StatusInternalServerError, "dlna_profiles_restore_failed", "Could not restore DLNA profiles")
+		return
+	}
+	s.refreshDLNARendererProfiles(r)
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (s *Server) ResetDLNARendererProfile(w http.ResponseWriter, r *http.Request, id string) {
 	if _, ok := s.requireAdmin(w, r); !ok {
 		return

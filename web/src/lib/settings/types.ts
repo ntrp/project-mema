@@ -6,6 +6,11 @@ type S = components['schemas'];
 
 export type * from './schema/platformTypes';
 
+export type DLNAMediaProbeRequest = S['DLNAMediaProbeRequest'];
+export type DLNADeliveryTraceRequest = S['DLNADeliveryTraceRequest'];
+export type DLNADeliveryTraceResponse = S['DLNADeliveryTraceResponse'];
+export type DLNAProfileMatchTraceRequest = S['DLNAProfileMatchTraceRequest'];
+export type DLNAProfileMatchTraceResponse = S['DLNAProfileMatchTraceResponse'];
 export type DownloadClient = S['DownloadClient'];
 export type DownloadClientRequest = S['DownloadClientRequest'];
 export type DownloadClientType = S['DownloadClientType'];
@@ -118,6 +123,7 @@ export type MediaItemRequest = S['MediaItemRequest'];
 export type MediaItemStatus = S['MediaItemStatus'];
 export type MediaFileHistoryEntry = S['MediaFileHistoryEntry'];
 export type MediaFileHistoryResponse = S['MediaFileHistoryResponse'];
+export type MediaFilePreviewInfo = S['MediaFilePreviewInfo'];
 export type MediaFileTrackDeleteRequest = S['MediaFileTrackDeleteRequest'];
 export type MediaRenameApplyResponse = S['MediaRenameApplyResponse'];
 export type MediaRenamePreviewResponse = S['MediaRenamePreviewResponse'];

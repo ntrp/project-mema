@@ -88,6 +88,11 @@ export async function deleteDLNARendererProfile(id: string): Promise<void> {
 	if (error) throw new Error(error.message);
 }
 
+export async function restoreDLNARendererProfiles(): Promise<void> {
+	const { error } = await client.POST('/settings/dlna/profiles/restore');
+	if (error) throw new Error(error.message);
+}
+
 export async function listDLNARendererDeviceOverrides(): Promise<DLNARendererDeviceOverride[]> {
 	const { data, error } = await client.GET('/settings/dlna/device-overrides');
 	if (error) throw new Error(error.message);

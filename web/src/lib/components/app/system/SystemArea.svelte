@@ -6,6 +6,7 @@
 	import SystemLogFilesSettings from '$lib/components/settings/system/logs/SystemLogFilesSettings.svelte';
 	import SystemLogsSettings from '$lib/components/settings/system/logs/SystemLogsSettings.svelte';
 	import SystemStatusSettings from '$lib/components/settings/system/SystemStatusSettings.svelte';
+	import DLNASystemPanel from './dlna/DLNASystemPanel.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import type {
 		IndexerSearchCacheEntry,
@@ -75,6 +76,11 @@
 		<PageHeading eyebrow="System" title="Status" titleId="system-title" />
 		<div class="space-y-4">
 			<SystemStatusSettings />
+		</div>
+	{:else if activeSection === 'dlna'}
+		<PageHeading eyebrow="System" title="DLNA" titleId="system-title" />
+		<div class="space-y-4">
+			<DLNASystemPanel />
 		</div>
 	{:else if activeSection === 'indexing'}
 		<PageHeading eyebrow="System" title="Indexing" titleId="system-title" />

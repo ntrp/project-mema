@@ -23,11 +23,13 @@ vi.mock('$lib/settings/dlnaProfilesApi', () => ({
 	cloneDLNARendererProfile: vi.fn(),
 	createDLNARendererProfile: vi.fn(),
 	deleteDLNARendererDeviceOverride: vi.fn(),
+	deleteDLNARendererProfile: vi.fn(),
 	importDLNARendererProfile: vi.fn(),
 	listDLNARecentDevices: vi.fn(),
 	listDLNARendererDeviceOverrides: vi.fn(),
 	listDLNARendererProfiles: vi.fn(),
 	resetDLNARendererProfile: vi.fn(),
+	restoreDLNARendererProfiles: vi.fn(),
 	updateDLNARendererProfile: vi.fn(),
 	upsertDLNARendererDeviceOverride: vi.fn()
 }));
@@ -60,6 +62,8 @@ describe('DLNA resources', () => {
 		mutations[1].onSuccess?.();
 		mutations[2].onSuccess?.();
 		mutations[7].onSuccess?.();
+		mutations[8].onSuccess?.();
+		mutations[10].onSuccess?.();
 		expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: dlnaKeys.settings() });
 		expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: dlnaKeys.profiles() });
 		expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: dlnaKeys.overrides() });

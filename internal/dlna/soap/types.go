@@ -55,7 +55,7 @@ func (d *Dispatcher) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		WriteFault(w, asSOAPError(err, 402, "Invalid Args"))
 		return
 	}
-	slog.Info("dlna soap action", "path", r.URL.Path, "service", action.Service, "action", action.Name)
+	slog.Debug("dlna soap action", "path", r.URL.Path, "service", action.Service, "action", action.Name)
 	handler, ok := service.Actions[action.Name]
 	if !ok {
 		WriteFault(w, Error{Code: 401, Description: "Invalid Action"})

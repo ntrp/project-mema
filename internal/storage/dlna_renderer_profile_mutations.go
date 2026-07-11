@@ -32,6 +32,13 @@ func (s *SettingsStore) CreateDLNARendererProfile(
 }
 
 func (s *SettingsStore) DeleteDLNARendererProfile(ctx context.Context, id string) error {
+	profile, err := s.GetDLNARendererProfile(ctx, id)
+	if err != nil {
+		return err
+	}
+	if profile.Source == "mema_seed" {
+		return ErrInvalidInput
+	}
 	rows, err := storagegen.New(s.pool).DeleteDLNARendererProfile(ctx, strings.TrimSpace(id))
 	if err != nil {
 		return err

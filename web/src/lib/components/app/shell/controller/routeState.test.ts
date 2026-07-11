@@ -18,6 +18,10 @@ describe('route state parsing (SCN-MEDIA-004)', () => {
 			view: 'system',
 			systemSection: 'events'
 		});
+		expect(routeStateFromPath('/system/dlna', {}, noQuery)).toMatchObject({
+			view: 'system',
+			systemSection: 'dlna'
+		});
 		expect(routeStateFromPath('/profile', {}, noQuery)).toMatchObject({
 			view: 'profile'
 		});

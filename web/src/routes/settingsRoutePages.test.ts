@@ -28,7 +28,7 @@ describe('settings route pages (SCN-SETTINGS-024)', () => {
 		[asRoute(DownloadClientsSettingsPage), ['Download clients', 'Add download client']],
 		[asRoute(GeneralSettingsPage), ['General', 'Event retention days']],
 		[asRoute(IndexersSettingsPage), ['Indexers', 'Indexer search settings']],
-		[asRoute(DLNASettingsPage), ['DLNA', 'Device Profiles', 'Decision trace']],
+		[asRoute(DLNASettingsPage), ['DLNA', 'Server', 'Device Profiles', 'Save settings']],
 		[asRoute(LanguagesSettingsPage), ['Languages', 'Add language']],
 		[asRoute(MetadataSettingsPage), ['Metadata', 'TMDB', 'TVDB']],
 		[asRoute(ProfilesSettingsPage), ['Profiles', 'Add profile']],
