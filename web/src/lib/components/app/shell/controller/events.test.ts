@@ -1,30 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import type { AppShellState } from './state.svelte';
-import { createEventActions } from './events';
+import { createEventActions, mediaStatusFromActivity } from './events';
 import { createNoticeActions } from './noticeActions';
 import type {
-	DownloadActivity,
 	IndexerSearchCacheEntry,
 	IndexerSearchHistoryEntry,
-	MediaItem,
 	MetadataCacheEntry,
 	MetadataSearchHistoryEntry
 } from '$lib/settings/types';
 describe('app shell event actions (SCN-SYSTEM-008)', () => {
-	it('upserts activity events and maps active downloads to media item status', () => {
-		const state = testState();
-		state.activities = [activity({ id: 'activity-1', status: 'queued' })];
-		state.mediaItems = [{ id: 'media-1', title: 'Scenario Movie', status: 'missing' } as MediaItem];
-		const actions = createEventActions(state);
-		const update = activity({ id: 'activity-1', status: 'downloading' });
-		actions.upsertActivity(update);
-		actions.updateMediaStatusFromActivity(update);
-
-		expect(state.activities).toHaveLength(1);
-		expect(state.activities[0].status).toBe('downloading');
-		expect(state.mediaItems[0].status).toBe('downloading');
-		actions.updateMediaStatusFromActivity(activity({ status: 'completed' }));
-		expect(state.mediaItems[0].status).toBe('downloaded');
+	it('maps activity statuses to media statuses', () => {
+		expect(mediaStatusFromActivity('downloading')).toBe('downloading');
+		expect(mediaStatusFromActivity('completed')).toBe('downloaded');
+		expect(mediaStatusFromActivity('failed')).toBeUndefined();
 	});
 
 	it('appends search history and cache updates with bounded dedupe', () => {
@@ -109,16 +97,6 @@ function testState(): AppShellState {
 			historyTotalEntries: 0
 		}
 	} as unknown as AppShellState;
-}
-
-function activity(overrides: Partial<DownloadActivity> = {}): DownloadActivity {
-	return {
-		id: 'activity-1',
-		mediaItemId: 'media-1',
-		status: 'queued',
-		title: 'Scenario Movie',
-		...overrides
-	} as DownloadActivity;
 }
 
 function indexerHistory(

@@ -14,7 +14,6 @@ export default defineConfig({
 				'src/lib/api/generated/**',
 				'src/**/*.d.ts',
 				'src/routes/**',
-				'src/lib/features/**',
 				'src/lib/components/ui/**',
 				'src/lib/components/**/*Modal.svelte',
 				'src/lib/components/**/*Picker.svelte',

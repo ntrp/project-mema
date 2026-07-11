@@ -8,7 +8,7 @@ import {
 	runSystemJobSchedule,
 	updateSystemJobHistorySettings,
 	updateSystemJobScheduleInterval
-} from '$lib/settings/api';
+} from './api';
 import type {
 	SystemJobExecution,
 	SystemJobExecutionLog,

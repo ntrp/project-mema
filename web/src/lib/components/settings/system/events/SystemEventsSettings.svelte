@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { clearSystemEvents, deleteSystemEvent, listSystemEvents } from '$lib/settings/api';
+	import { clearSystemEvents, deleteSystemEvent, listSystemEvents } from './api';
 	import type { SystemEvent } from '$lib/settings/types';
 	import LivePulseDot from '$lib/components/shared/LivePulseDot.svelte';
 	import * as Card from '$lib/components/ui/card';

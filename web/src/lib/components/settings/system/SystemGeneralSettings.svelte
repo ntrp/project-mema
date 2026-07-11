@@ -6,7 +6,7 @@
 	import { Label } from '$lib/components/ui/label';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
-	import { getSystemEventSettings, updateSystemEventSettings } from '$lib/settings/api';
+	import { getSystemEventSettings, updateSystemEventSettings } from './events/api';
 	import SystemLogFileGeneralSettings from './logs/SystemLogFileGeneralSettings.svelte';
 
 	let retentionDays = $state(7);

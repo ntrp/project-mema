@@ -27,6 +27,10 @@ const apiMock = vi.hoisted(() => ({
 }));
 
 vi.mock('$lib/settings/api', () => apiMock);
+vi.mock('$lib/components/settings/tags/api', () => ({
+	saveTag: apiMock.saveTag,
+	deleteTag: apiMock.deleteTag
+}));
 
 import { createSettingsDeleteActions } from '../settingsDeleteActions';
 import { createSettingsSaveActions } from '../settingsSaveActions';
@@ -152,7 +156,9 @@ describe('settings entity save actions (SCN-SETTINGS-009)', () => {
 		const actions = createSettingsSaveActions(state, {
 			clearNotice: vi.fn(),
 			loadSettings,
-			loadMediaItems
+			loadMediaItems,
+			mediaItems: () =>
+				(state as unknown as { mediaItems: import('$lib/settings/types').MediaItem[] }).mediaItems
 		});
 		apiMock.saveMediaProfile.mockResolvedValue(undefined);
 

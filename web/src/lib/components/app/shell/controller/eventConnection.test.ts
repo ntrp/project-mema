@@ -18,9 +18,10 @@ describe('app shell event connection (SCN-SYSTEM-008)', () => {
 		expect(sources).toHaveLength(0);
 
 		state.authenticated = true;
-		state.eventSource = {} as EventSource;
 		connectAppEvents(state, deps());
-		expect(sources).toHaveLength(0);
+		connectAppEvents(state, deps());
+		expect(sources).toHaveLength(1);
+		disconnectAppEvents(state);
 	});
 
 	it('routes activity and cache events through event actions', () => {
@@ -60,28 +61,20 @@ describe('app shell event connection (SCN-SYSTEM-008)', () => {
 		});
 		expect(dependencies.upsertMetadataCache).toHaveBeenCalled();
 		expect(dependencies.appendMetadataSearchHistory).toHaveBeenCalled();
+		disconnectAppEvents(state);
 	});
 
-	it('disconnects when an unauthenticated stream errors', () => {
+	it('disconnects the shared stream and removes subscriptions', () => {
 		const sources = installEventSource();
 		const state = { authenticated: true } as AppShellState;
-		connectAppEvents(state, deps());
-
-		state.authenticated = false;
-		sources[0].onerror?.(new Event('error'));
-
-		expect(sources[0].closed).toBe(true);
-		expect(state.eventSource).toBeUndefined();
-	});
-
-	it('disconnects explicit streams and clears state reference', () => {
-		const source = new FakeEventSource('/api/events', { withCredentials: true });
-		const state = { eventSource: source as unknown as EventSource } as AppShellState;
+		const dependencies = deps();
+		connectAppEvents(state, dependencies);
 
 		disconnectAppEvents(state);
+		sources[0].emit('activity.download.updated', { data: { id: 'activity-1' } });
 
-		expect(source.closed).toBe(true);
-		expect(state.eventSource).toBeUndefined();
+		expect(sources[0].closed).toBe(true);
+		expect(dependencies.upsertActivity).not.toHaveBeenCalled();
 	});
 });
 

@@ -4,7 +4,7 @@ import {
 	currentSession as currentSessionRequest,
 	login as loginRequest,
 	logout as logoutRequest
-} from '$lib/settings/api';
+} from '$lib/app/session/api';
 import {
 	emptyCustomFormatForm,
 	emptyDownloadClientForm,
@@ -24,6 +24,8 @@ interface SessionDeps {
 	clearNotice: () => void;
 	events: EventConnectionDeps;
 	routeData: RouteDataDeps;
+	clearActivityCache: () => void;
+	clearLibraryCache: () => void;
 }
 
 export function createSessionActions(state: AppShellState, deps: SessionDeps) {
@@ -105,8 +107,7 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			state.users = [];
 			state.tags = [];
 			state.languages = [];
-			state.mediaItems = [];
-			state.mediaRequests = [];
+			deps.clearLibraryCache();
 			state.discoverSections = [];
 			state.discoverSection = undefined;
 			state.discoverSectionPage = 1;
@@ -117,7 +118,7 @@ export function createSessionActions(state: AppShellState, deps: SessionDeps) {
 			state.autocompleteGroups = [];
 			state.advancedSearchGroups = [];
 			state.releaseResults = {};
-			state.activities = [];
+			deps.clearActivityCache();
 			state.libraryFolders = [];
 			state.pathMappings = [];
 			state.libraryScansByFolder = {};

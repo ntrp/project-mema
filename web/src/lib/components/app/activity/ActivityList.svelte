@@ -11,7 +11,6 @@
 	import * as Table from '$lib/components/ui/table';
 	import { activityDisplay } from './activityDisplay';
 	import { activitySectionHeading, visibleInActivitySection } from './activitySections';
-	import { manualImportDownloadActivity } from '$lib/settings/api';
 	import type {
 		ActivitySection,
 		DownloadActivity,
@@ -34,6 +33,7 @@
 		onDelete: (_activity: DownloadActivity) => void;
 		onDeleteReleaseBlocklistItem?: (_item: ReleaseBlocklistItem) => void;
 		onClearReleaseBlocklist?: () => void;
+		onManualImport?: (_id: string, _request: ManualImportRequest) => Promise<void>;
 	}
 
 	let {
@@ -50,7 +50,8 @@
 		onCancel,
 		onDelete,
 		onDeleteReleaseBlocklistItem = () => {},
-		onClearReleaseBlocklist = () => {}
+		onClearReleaseBlocklist = () => {},
+		onManualImport = async () => {}
 	}: Props = $props();
 	let manualImportActivity = $state<DownloadActivity | undefined>();
 	let importingId = $state<string | undefined>();
@@ -70,7 +71,7 @@
 		importingId = manualImportActivity.id;
 		importError = undefined;
 		try {
-			await manualImportDownloadActivity(manualImportActivity.id, request);
+			await onManualImport(manualImportActivity.id, request);
 			manualImportActivity = undefined;
 			await onRefresh();
 		} catch (error) {

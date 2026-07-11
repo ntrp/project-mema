@@ -96,6 +96,7 @@ export default defineConfig({
 								label: 'Architecture',
 								items: [
 									{ label: 'System Overview', link: '/architecture/system-overview/' },
+									{ label: 'Frontend', link: '/architecture/frontend/' },
 									{ label: 'Storage', link: '/architecture/storage/' },
 									{
 										label: 'Release Decisions And Track Management',

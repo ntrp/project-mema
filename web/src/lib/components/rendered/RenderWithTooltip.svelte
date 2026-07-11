@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
+	import { QueryClientProvider } from '@tanstack/svelte-query';
+	import { createAppQueryClient } from '$lib/app/query/queryClient';
 	import type { Component as SvelteComponent } from 'svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 
@@ -9,7 +10,7 @@
 	}
 
 	let { component: Component, componentProps = {} }: Props = $props();
-	const queryClient = new QueryClient();
+	const queryClient = createAppQueryClient();
 </script>
 
 <QueryClientProvider client={queryClient}>

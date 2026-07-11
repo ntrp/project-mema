@@ -8,6 +8,7 @@
 	import { autocompleteDiscoverMovieFacet, searchDiscoverMovies } from '$lib/settings/api';
 	import type { DiscoverMovieFacetOption, MediaSearchResult } from '$lib/settings/types';
 	import { getAppShellContext } from '$lib/features/app/appShellContext';
+	import { createMediaItemsQuery } from '$lib/features/library/queries.svelte';
 	import {
 		activeMovieFilterCount,
 		filtersFromParams,
@@ -17,6 +18,7 @@
 	} from '$lib/components/app/discovery/movies/discoverMovieFilters';
 
 	const app = getAppShellContext();
+	const library = createMediaItemsQuery();
 	const filters = $derived(filtersFromParams(page.url.searchParams));
 	let results = $state<MediaSearchResult[]>([]);
 	let genreOptions = $state<DiscoverMovieFacetOption[]>([]);
@@ -163,7 +165,7 @@
 	<div class="grid min-w-0 content-start gap-4">
 		<MovieDiscoverResults
 			{results}
-			mediaItems={app.mediaItems}
+			mediaItems={library.data ?? []}
 			blacklist={app.discoverBlacklist}
 			{loading}
 			{loadingMore}

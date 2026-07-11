@@ -2,7 +2,7 @@ import {
 	getProfile as getProfileRequest,
 	updateProfile as updateProfileRequest
 } from '$lib/profile/profileApi';
-import type { UserProfileUpdateRequest } from '$lib/settings/types';
+import type { UserProfileUpdateRequest } from '$lib/profile/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 

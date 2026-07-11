@@ -5,6 +5,7 @@ import type { AppShellState } from './state.svelte';
 
 interface MediaMetadataDeps {
 	clearNotice: () => void;
+	upsertMediaItem: (_item: MediaItem) => void;
 }
 
 export function createMediaMetadataActions(state: AppShellState, deps: MediaMetadataDeps) {
@@ -16,10 +17,7 @@ export function createMediaMetadataActions(state: AppShellState, deps: MediaMeta
 
 		try {
 			const updated = await refreshMediaItemMetadataRequest(item.id);
-			state.mediaItems = [
-				updated,
-				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
-			];
+			deps.upsertMediaItem(updated);
 			state.message = 'Media metadata refreshed';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not refresh media metadata');

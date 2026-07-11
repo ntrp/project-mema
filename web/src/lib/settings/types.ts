@@ -1,4 +1,6 @@
 import type { components } from '$lib/api/generated/schema';
+export type { SessionResponse } from '$lib/app/session/types';
+export type { UserProfile, UserProfileUpdateRequest } from '$lib/profile/types';
 
 type S = components['schemas'];
 
@@ -8,9 +10,6 @@ export type DownloadClient = S['DownloadClient'];
 export type DownloadClientRequest = S['DownloadClientRequest'];
 export type DownloadClientType = S['DownloadClientType'];
 export type ManagedUser = S['ManagedUser'];
-export type SessionResponse = S['SessionResponse'];
-export type UserProfile = S['UserProfile'];
-export type UserProfileUpdateRequest = S['UserProfileUpdateRequest'];
 export type UserCreateRequest = S['UserCreateRequest'];
 export type UserRole = S['UserRole'];
 export type UserSummary = S['UserSummary'];

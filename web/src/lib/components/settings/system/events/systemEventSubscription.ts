@@ -1,5 +1,8 @@
 import type { SystemEvent } from '$lib/settings/types';
-import { parseSystemEvent } from './systemEventStream';
+import {
+	subscribeToAppEvent,
+	subscribeToAppEventSourceStatus
+} from '$lib/app/realtime/appEventSource';
 
 interface SystemEventSubscription {
 	onOpen: () => void;
@@ -10,21 +13,22 @@ interface SystemEventSubscription {
 }
 
 export function subscribeSystemEvents(handlers: SystemEventSubscription) {
-	const source = new EventSource('/api/events', { withCredentials: true });
-	source.addEventListener('open', handlers.onOpen);
-	source.addEventListener('error', handlers.onError);
-	source.addEventListener('system.event.created', (event) => {
-		const nextEvent = parseSystemEvent<SystemEvent>(event);
-		if (nextEvent) {
-			handlers.onCreated(nextEvent);
-		}
-	});
-	source.addEventListener('system.event.deleted', (event) => {
-		const deleted = parseSystemEvent<{ id: string }>(event);
-		if (deleted?.id) {
-			handlers.onDeleted(deleted.id);
-		}
-	});
-	source.addEventListener('system.events.cleared', handlers.onCleared);
-	return () => source.close();
+	const unsubscribers = [
+		subscribeToAppEventSourceStatus((status) => {
+			if (status === 'open') handlers.onOpen();
+			if (status === 'error') handlers.onError();
+		}),
+		subscribeToAppEvent<SystemEvent>('system.event.created', ({ data: nextEvent }) => {
+			if (nextEvent) {
+				handlers.onCreated(nextEvent);
+			}
+		}),
+		subscribeToAppEvent<{ id: string }>('system.event.deleted', ({ data: deleted }) => {
+			if (deleted?.id) {
+				handlers.onDeleted(deleted.id);
+			}
+		}),
+		subscribeToAppEvent('system.events.cleared', handlers.onCleared)
+	];
+	return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
 }

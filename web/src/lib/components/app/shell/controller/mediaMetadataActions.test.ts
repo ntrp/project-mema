@@ -25,9 +25,10 @@ describe('media metadata actions (SCN-MEDIA-004)', () => {
 			mediaItem({ id: 'media-1', title: 'Updated Movie' })
 		);
 
-		await createMediaMetadataActions(state, { clearNotice }).refreshMediaMetadata(
-			state.mediaItems[0]
-		);
+		await createMediaMetadataActions(state, {
+			clearNotice,
+			upsertMediaItem: state.upsertMediaItem
+		}).refreshMediaMetadata(state.mediaItems[0]);
 
 		expect(clearNotice).toHaveBeenCalledTimes(1);
 		expect(refreshMediaItemMetadataMock).toHaveBeenCalledWith('media-1');
@@ -40,9 +41,10 @@ describe('media metadata actions (SCN-MEDIA-004)', () => {
 		const state = testState([mediaItem({ id: 'media-1', title: 'Original Movie' })]);
 		refreshMediaItemMetadataMock.mockRejectedValue(new Error('Provider unavailable'));
 
-		await createMediaMetadataActions(state, { clearNotice: vi.fn() }).refreshMediaMetadata(
-			state.mediaItems[0]
-		);
+		await createMediaMetadataActions(state, {
+			clearNotice: vi.fn(),
+			upsertMediaItem: state.upsertMediaItem
+		}).refreshMediaMetadata(state.mediaItems[0]);
 
 		expect(state.mediaItems[0].title).toBe('Original Movie');
 		expect(state.errorMessage).toBe('Provider unavailable');
@@ -50,13 +52,17 @@ describe('media metadata actions (SCN-MEDIA-004)', () => {
 	});
 });
 
-function testState(mediaItems: MediaItem[]): AppShellState {
-	return {
+function testState(mediaItems: MediaItem[]) {
+	const value = {
 		mediaItems,
 		message: '',
 		errorMessage: '',
-		refreshingMetadataItemId: undefined
-	} as AppShellState;
+		refreshingMetadataItemId: undefined,
+		upsertMediaItem(item: MediaItem) {
+			value.mediaItems = [item, ...value.mediaItems.filter((entry) => entry.id !== item.id)];
+		}
+	};
+	return value as unknown as AppShellState & typeof value;
 }
 
 function mediaItem(overrides: Partial<MediaItem>): MediaItem {

@@ -3,7 +3,6 @@ import {
 	settingsPrimaryItem,
 	systemPrimaryItem
 } from '$lib/components/app/navigation/appNavigation';
-import { mediaMetadataDetail } from '$lib/components/app/media/detail/mediaDetail';
 import { emptyIndexerSearch, emptyMetadataCache } from '$lib/settings/api';
 import {
 	emptyCustomFormatForm,
@@ -22,7 +21,6 @@ import type {
 	CustomFormat,
 	CustomFormatForm as CustomFormatFormValue,
 	DiscoverBlacklistItem,
-	DownloadActivity,
 	DownloadClient,
 	DownloadClientForm as DownloadClientFormValue,
 	HomeSection,
@@ -37,13 +35,12 @@ import type {
 	LibraryScan,
 	ManagedUser,
 	MediaCollection,
-	MediaDiscoverSection,
 	MediaItem,
+	MediaDiscoverSection,
 	MediaMetadataDetails,
 	PersonDetails,
 	MediaProfile,
 	MediaProfileForm as MediaProfileFormValue,
-	MediaRequest,
 	MediaSearchGroup,
 	MediaSearchResult,
 	MetadataCacheResponse,
@@ -51,7 +48,6 @@ import type {
 	PathMapping,
 	PathMappingForm,
 	ReleaseSearchResults,
-	ReleaseBlocklistItem,
 	SettingsSection,
 	SubtitleProvider,
 	SubtitleProviderForm,
@@ -107,8 +103,6 @@ export class AppShellState {
 	tags = $state<Tag[]>([]);
 	languages = $state<Language[]>([]);
 	currentUser = $state<UserSummary | undefined>();
-	mediaItems = $state<MediaItem[]>([]);
-	mediaRequests = $state<MediaRequest[]>([]);
 	discoverSections = $state<MediaDiscoverSection[]>([]);
 	discoverSection = $state<MediaDiscoverSection | undefined>();
 	discoverBlacklist = $state<DiscoverBlacklistItem[]>([]);
@@ -118,8 +112,6 @@ export class AppShellState {
 	autocompleteGroups = $state<MediaSearchGroup[]>([]);
 	advancedSearchGroups = $state<MediaSearchGroup[]>([]);
 	releaseResults = $state<ReleaseSearchResults>({});
-	activities = $state<DownloadActivity[]>([]);
-	releaseBlocklist = $state<ReleaseBlocklistItem[]>([]);
 	downloadForm = $state<DownloadClientFormValue>(emptyDownloadClientForm());
 	indexerForm = $state<IndexerFormValue>(emptyIndexerForm());
 	libraryFolderForm = $state<LibraryFolderFormValue>(emptyLibraryFolderForm());
@@ -144,7 +136,6 @@ export class AppShellState {
 	discoverSectionPage = $state(1);
 	discoverSectionHasMore = $state(true);
 	loadingBlacklist = $state(false);
-	loadingMediaItems = $state(false);
 	loadingMetadataDetail = $state(false);
 	loadingPersonDetail = $state(false);
 	loadingMediaCollection = $state(false);
@@ -166,11 +157,6 @@ export class AppShellState {
 	assemblingMediaItemId = $state<string | undefined>();
 	reviewingComponentDecisionId = $state<string | undefined>();
 	pendingFulfillmentActions = $state<Record<string, number>>({});
-	cancellingActivityId = $state<string | undefined>();
-	deletingActivityId = $state<string | undefined>();
-	deletingReleaseBlocklistId = $state<string | undefined>();
-	clearingReleaseBlocklist = $state(false);
-	loadingActivity = $state(false);
 	scanningLibraryFolderId = $state<string | undefined>();
 	libraryScansByFolder = $state<Record<string, LibraryScan>>({});
 	openLibraryFolderId = $state<string | undefined>();
@@ -190,23 +176,6 @@ export class AppShellState {
 	selectedRequestId = $state<string | undefined>();
 	searchQuery = $state('');
 	route = $state<AppRouteState>(defaultRouteState());
-	eventSource: EventSource | undefined;
-
-	mediaPeopleDetail = $derived(
-		this.metadataDetail ??
-			(this.selectedMediaItemId
-				? this.mediaItems
-						.filter(
-							(item) => item.type === (this.activeHomeSection === 'movies' ? 'movie' : 'serie')
-						)
-						.find((item) => item.id === this.selectedMediaItemId)
-				: undefined)
-	);
-	mediaPeopleMetadataDetail = $derived(
-		this.mediaPeopleDetail && 'id' in this.mediaPeopleDetail
-			? mediaMetadataDetail(this.mediaPeopleDetail)
-			: this.mediaPeopleDetail
-	);
 	relatedMediaSection = $derived(
 		relatedSectionFromDetail(
 			this.metadataDetail,

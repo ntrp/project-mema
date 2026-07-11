@@ -1,11 +1,12 @@
 <script lang="ts">
 	import BellIcon from '@lucide/svelte/icons/bell';
+	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { listSystemEvents } from '$lib/settings/api';
+	import { subscribeToAppEvent } from '$lib/app/realtime/appEventSource';
+	import { listSystemEvents } from '$lib/components/settings/system/events/api';
 	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
 	import SystemEventSeverityIcon from '$lib/components/settings/system/events/SystemEventSeverityIcon.svelte';
-	import { parseSystemEvent } from '$lib/components/settings/system/events/systemEventStream';
 	import { Button } from '$lib/components/ui/button';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
@@ -13,49 +14,41 @@
 
 	let open = $state(false);
 	let events = $state<SystemEvent[]>([]);
-	let errorTotal = $state(0);
 	let loaded = $state(false);
-	let source: EventSource | undefined;
 
 	const visibleEvents = $derived(events.slice(0, maxEvents));
+	const errorTotal = $derived(events.filter((event) => event.severity === 'error').length);
 
-	$effect(() => {
-		if (!open) {
-			closeEvents();
-			return;
-		}
-		void load();
-		connectEvents();
-		return closeEvents;
+	onMount(() => {
+		const unsubscribeCreated = subscribeToAppEvent<SystemEvent>(
+			'system.event.created',
+			({ data: nextEvent }) => {
+				if (!nextEvent || (nextEvent.severity !== 'warning' && nextEvent.severity !== 'error')) {
+					return;
+				}
+				events = [nextEvent, ...events.filter((item) => item.id !== nextEvent.id)];
+			}
+		);
+		const unsubscribeDeleted = subscribeToAppEvent<{ id: string }>(
+			'system.event.deleted',
+			({ data: deleted }) => {
+				if (deleted?.id) {
+					events = events.filter((item) => item.id !== deleted.id);
+				}
+			}
+		);
+		const unsubscribeCleared = subscribeToAppEvent('system.events.cleared', () => {
+			events = [];
+		});
+		return () => {
+			unsubscribeCreated();
+			unsubscribeDeleted();
+			unsubscribeCleared();
+		};
 	});
 
-	function connectEvents() {
-		if (source) return;
-		source = new EventSource('/api/events', { withCredentials: true });
-		source.addEventListener('system.event.created', (event) => {
-			const nextEvent = parseSystemEvent<SystemEvent>(event);
-			if (!nextEvent || (nextEvent.severity !== 'warning' && nextEvent.severity !== 'error')) {
-				return;
-			}
-			events = [nextEvent, ...events.filter((item) => item.id !== nextEvent.id)];
-			errorTotal = events.filter((item) => item.severity === 'error').length;
-		});
-		source.addEventListener('system.event.deleted', (event) => {
-			const deleted = parseSystemEvent<{ id: string }>(event);
-			if (deleted?.id) {
-				events = events.filter((item) => item.id !== deleted.id);
-				errorTotal = events.filter((item) => item.severity === 'error').length;
-			}
-		});
-		source.addEventListener('system.events.cleared', () => {
-			events = [];
-			errorTotal = 0;
-		});
-	}
-
-	function closeEvents() {
-		source?.close();
-		source = undefined;
+	function handleOpenChange(nextOpen: boolean) {
+		if (nextOpen) void load();
 	}
 
 	async function load() {
@@ -65,17 +58,15 @@
 			events = response.events.filter(
 				(event) => event.severity === 'warning' || event.severity === 'error'
 			);
-			errorTotal = events.filter((event) => event.severity === 'error').length;
 		} catch {
 			events = [];
-			errorTotal = 0;
 		} finally {
 			loaded = true;
 		}
 	}
 </script>
 
-<DropdownMenu.Root bind:open>
+<DropdownMenu.Root bind:open onOpenChange={handleOpenChange}>
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
 			<Button

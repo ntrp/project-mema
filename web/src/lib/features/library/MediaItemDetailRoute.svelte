@@ -2,6 +2,8 @@
 	import MediaDetail from '$lib/components/app/media/detail/MediaDetail.svelte';
 	import { getAppShellContext } from '$lib/features/app/appShellContext';
 	import type { MediaItem, MediaType } from '$lib/settings/types';
+	import { createDownloadActivityQuery } from '$lib/features/activity/queries.svelte';
+	import { createMediaItemsQuery } from './queries.svelte';
 
 	interface Props {
 		mediaType: MediaType;
@@ -10,21 +12,23 @@
 
 	let { mediaType, id }: Props = $props();
 	const app = getAppShellContext();
+	const activity = createDownloadActivityQuery();
+	const library = createMediaItemsQuery();
 	const item = $derived(
-		app.mediaItems.find((entry: MediaItem) => entry.id === id && entry.type === mediaType)
+		(library.data ?? []).find((entry: MediaItem) => entry.id === id && entry.type === mediaType)
 	);
 </script>
 
 <MediaDetail
 	{mediaType}
 	{item}
-	loading={app.loadingMediaItems && !item}
-	mediaItems={app.mediaItems}
+	loading={library.isFetching && !item}
+	mediaItems={library.data ?? []}
 	libraryFolders={app.libraryFolders}
 	languages={app.languages}
 	qualityProfiles={app.mediaProfiles}
 	requestedItemId={id}
-	activities={app.activities}
+	activities={activity.data ?? []}
 	searchingItemId={app.searchingItemId}
 	scanningMediaItemId={app.scanningMediaItemId}
 	refreshingMetadataItemId={app.refreshingMetadataItemId}

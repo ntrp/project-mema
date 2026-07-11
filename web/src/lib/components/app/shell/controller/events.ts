@@ -1,5 +1,4 @@
 import type {
-	DownloadActivity,
 	DownloadActivityStatus,
 	IndexerSearchCacheEntry,
 	IndexerSearchCacheStats,
@@ -22,10 +21,6 @@ type MetadataCacheUpdate = {
 };
 
 export function createEventActions(state: AppShellState) {
-	function upsertActivity(activity: DownloadActivity) {
-		state.activities = [activity, ...state.activities.filter((item) => item.id !== activity.id)];
-	}
-
 	function appendIndexerSearchHistory(entry: IndexerSearchHistoryEntry) {
 		state.indexerSearch = {
 			...state.indexerSearch,
@@ -73,26 +68,6 @@ export function createEventActions(state: AppShellState) {
 		};
 	}
 
-	function updateMediaStatusFromActivity(activity: DownloadActivity) {
-		const status = mediaStatusFromActivity(activity.status);
-		if (!status) {
-			return;
-		}
-		state.mediaItems = state.mediaItems.map((item) =>
-			item.id === activity.mediaItemId ? { ...item, status } : item
-		);
-	}
-
-	function mediaStatusFromActivity(status: DownloadActivityStatus) {
-		if (status === 'completed') {
-			return 'downloaded';
-		}
-		if (status === 'queued' || status === 'grabbed' || status === 'downloading') {
-			return 'downloading';
-		}
-		return undefined;
-	}
-
 	function parseEventData<T>(event: Event) {
 		const message = event as MessageEvent<string>;
 		try {
@@ -103,14 +78,18 @@ export function createEventActions(state: AppShellState) {
 	}
 
 	return {
-		upsertActivity,
-		updateMediaStatusFromActivity,
 		appendIndexerSearchHistory,
 		upsertIndexerSearchCache,
 		upsertMetadataCache,
 		appendMetadataSearchHistory,
 		parseEventData
 	};
+}
+
+export function mediaStatusFromActivity(status: DownloadActivityStatus) {
+	if (status === 'completed') return 'downloaded';
+	if (status === 'queued' || status === 'grabbed' || status === 'downloading') return 'downloading';
+	return undefined;
 }
 
 function upsertByKey<T>(items: T[], next: T, keyFor: (_item: T) => string) {

@@ -28,6 +28,13 @@ interface MediaDeps {
 	clearNotice: () => void;
 	loadMediaItems: () => Promise<void>;
 	loadSettings: () => Promise<void>;
+	removeActivityForMedia: (_mediaItemId: string) => void;
+	mediaItems: () => MediaItem[];
+	upsertMediaItem: (_item: MediaItem) => void;
+	mapMediaItems: (_map: (_item: MediaItem) => MediaItem) => void;
+	removeMediaItem: (_id: string) => void;
+	upsertMediaRequest: (_request: MediaRequest) => void;
+	mapMediaRequests: (_map: (_request: MediaRequest) => MediaRequest) => void;
 }
 
 export function createMediaActions(state: AppShellState, deps: MediaDeps) {
@@ -99,10 +106,7 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 				overview: candidate.overview,
 				posterPath: candidate.posterPath
 			});
-			state.mediaRequests = [
-				request,
-				...state.mediaRequests.filter((item) => item.id !== request.id)
-			];
+			deps.upsertMediaRequest(request);
 			state.message = 'Media request created';
 			state.activeHomeSection = 'requests';
 			state.activeMediaCandidate = undefined;
@@ -137,10 +141,7 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 
 		try {
 			const updated = await rescanMediaItemFilesRequest(item.id);
-			state.mediaItems = [
-				updated,
-				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
-			];
+			deps.upsertMediaItem(updated);
 			state.message = `File scan completed: ${updated.filePaths.length} media, ${updated.metadataFilePaths.length} metadata`;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not rescan media folder');
@@ -153,10 +154,7 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 		clearNotice();
 		try {
 			const updated = await deleteMediaItemFileRequest(item.id, path);
-			state.mediaItems = [
-				updated,
-				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
-			];
+			deps.upsertMediaItem(updated);
 			state.message = 'Media file deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete media file');
@@ -167,10 +165,7 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 		clearNotice();
 		try {
 			const updated = await deleteMediaItemFileTrackRequest(item.id, request);
-			state.mediaItems = [
-				updated,
-				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
-			];
+			deps.upsertMediaItem(updated);
 			state.message = 'Embedded track deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete embedded track');
@@ -180,24 +175,18 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 	async function saveMediaItemOptions(item: MediaItem, request: MediaItemUpdateRequest) {
 		state.savingMediaItemOptionsId = item.id;
 		clearNotice();
-		const previous = state.mediaItems.find((mediaItem) => mediaItem.id === item.id) ?? item;
+		const previous = deps.mediaItems().find((mediaItem) => mediaItem.id === item.id) ?? item;
 		const optimistic = optimisticMediaItem(previous, request);
 		const message = mediaUpdateMessage(previous, optimistic, request);
-		state.mediaItems = state.mediaItems.map((mediaItem) =>
-			mediaItem.id === optimistic.id ? optimistic : mediaItem
-		);
+		deps.mapMediaItems((mediaItem) => (mediaItem.id === optimistic.id ? optimistic : mediaItem));
 		state.message = message;
 
 		try {
 			const updated = await updateMediaItemRequest(item.id, request);
-			state.mediaItems = state.mediaItems.map((mediaItem) =>
-				mediaItem.id === updated.id ? updated : mediaItem
-			);
+			deps.mapMediaItems((mediaItem) => (mediaItem.id === updated.id ? updated : mediaItem));
 			state.message = message;
 		} catch (error) {
-			state.mediaItems = state.mediaItems.map((mediaItem) =>
-				mediaItem.id === previous.id ? previous : mediaItem
-			);
+			deps.mapMediaItems((mediaItem) => (mediaItem.id === previous.id ? previous : mediaItem));
 			state.message = '';
 			state.errorMessage = errorMessageFrom(error, 'Could not save media settings');
 		} finally {
@@ -230,9 +219,9 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 
 		try {
 			await deleteMediaItemRequest(item.id, { keepFiles });
-			state.mediaItems = state.mediaItems.filter((mediaItem) => mediaItem.id !== item.id);
+			deps.removeMediaItem(item.id);
 			state.releaseResults = omitResult(state.releaseResults, item.id);
-			state.activities = state.activities.filter((activity) => activity.mediaItemId !== item.id);
+			deps.removeActivityForMedia(item.id);
 			state.mediaDeleteCandidate = undefined;
 			state.message = keepFiles ? 'Media item removed; files kept' : 'Media item and files removed';
 			if (state.selectedMediaItemId === item.id) {
@@ -252,13 +241,8 @@ export function createMediaActions(state: AppShellState, deps: MediaDeps) {
 
 		try {
 			const result = await approveMediaRequestRequest(request.id, approval);
-			state.mediaRequests = state.mediaRequests.map((item) =>
-				item.id === result.request.id ? result.request : item
-			);
-			state.mediaItems = [
-				result.mediaItem,
-				...state.mediaItems.filter((item) => item.id !== result.mediaItem.id)
-			];
+			deps.mapMediaRequests((item) => (item.id === result.request.id ? result.request : item));
+			deps.upsertMediaItem(result.mediaItem);
 			state.message = 'Media request approved and added to monitored';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not approve media request');

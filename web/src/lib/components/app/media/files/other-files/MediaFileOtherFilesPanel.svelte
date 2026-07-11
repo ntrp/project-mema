@@ -63,7 +63,7 @@
 
 	function subtitleVisualRow(
 		file: MediaFileRow['otherFiles'][number],
-		subtitle?: MediaItemSubtitle
+		_subtitle?: MediaItemSubtitle
 	): MediaFileDetailRow | undefined {
 		if (file.type !== 'subtitle' || !file.state) return undefined;
 		const languageId = subtitleLanguage(file);

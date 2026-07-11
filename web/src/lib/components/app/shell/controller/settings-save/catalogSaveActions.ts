@@ -1,9 +1,9 @@
 import {
 	saveCustomFormat as saveCustomFormatRequest,
 	saveLanguage as saveLanguageRequest,
-	saveMediaProfile as saveMediaProfileRequest,
-	saveTag as saveTagRequest
+	saveMediaProfile as saveMediaProfileRequest
 } from '$lib/settings/api';
+import { saveTag as saveTagFocusedRequest } from '$lib/components/settings/tags/api';
 import {
 	emptyCustomFormatForm,
 	emptyLanguageForm,
@@ -17,7 +17,8 @@ export function createCatalogSaveActions({
 	state,
 	clearNotice,
 	loadSettings,
-	loadMediaItems
+	loadMediaItems,
+	mediaItems
 }: SettingsSaveContext) {
 	async function saveTag(event: SubmitEvent) {
 		event.preventDefault();
@@ -25,7 +26,7 @@ export function createCatalogSaveActions({
 		clearNotice();
 
 		try {
-			await saveTagRequest(state.tagForm);
+			await saveTagFocusedRequest(state.tagForm);
 			state.tagForm = emptyTagForm();
 			state.message = 'Tag saved';
 			await loadSettings();
@@ -59,7 +60,7 @@ export function createCatalogSaveActions({
 		clearNotice();
 		const profileId = state.mediaProfileForm.id;
 		const refreshAffectedMedia = Boolean(
-			profileId && state.mediaItems.some((item) => item.qualityProfileId === profileId)
+			profileId && mediaItems?.().some((item) => item.qualityProfileId === profileId)
 		);
 
 		try {

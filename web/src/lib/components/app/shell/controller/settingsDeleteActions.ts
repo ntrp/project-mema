@@ -17,13 +17,17 @@ import type { AppShellState } from './state.svelte';
 interface SettingsDeleteDeps {
 	clearNotice: () => void;
 	loadSettings: () => Promise<void>;
+	refreshMediaItems?: () => Promise<void>;
 }
 
 export function createSettingsDeleteActions(state: AppShellState, deps: SettingsDeleteDeps) {
 	const clearNotice = deps.clearNotice;
 	const loadSettings = deps.loadSettings;
 	const entityDeleteActions = createSettingsEntityDeleteActions(state, { clearNotice });
-	const libraryScanActions = createSettingsLibraryScanActions(state, { clearNotice });
+	const libraryScanActions = createSettingsLibraryScanActions(state, {
+		clearNotice,
+		refreshMediaItems: deps.refreshMediaItems ?? (async () => {})
+	});
 	async function deleteDownloadClient(id: string) {
 		clearNotice();
 

@@ -16,7 +16,7 @@ const eventsMock = vi.hoisted(() => ({
 	disconnectAppEvents: vi.fn()
 }));
 
-vi.mock('$lib/settings/api', () => apiMock);
+vi.mock('$lib/app/session/api', () => apiMock);
 vi.mock('$app/navigation', () => ({ goto: navigationMock.goto }));
 vi.mock('$app/paths', () => ({ resolve: navigationMock.resolve }));
 vi.mock('../eventConnection', () => eventsMock);
@@ -101,6 +101,8 @@ function deps() {
 	};
 	return {
 		clearNotice: vi.fn(),
+		clearActivityCache: vi.fn(),
+		clearLibraryCache: vi.fn(),
 		routeData,
 		events: {
 			connect: vi.fn(),
@@ -149,7 +151,6 @@ describe('session actions (SCN-AUTH-002)', () => {
 		expect(actionDeps.routeData.loadSettings).not.toHaveBeenCalled();
 		expect(actionDeps.routeData.loadDiscoverBlacklist).not.toHaveBeenCalled();
 		expect(actionDeps.routeData.loadMediaCollection).toHaveBeenCalledOnce();
-		expect(actionDeps.routeData.loadMediaItems).toHaveBeenCalledOnce();
 		expect(eventsMock.connectAppEvents).toHaveBeenCalledWith(state, actionDeps.events);
 	});
 
@@ -169,7 +170,6 @@ describe('session actions (SCN-AUTH-002)', () => {
 		expect(navigationMock.goto).toHaveBeenCalledWith('/discover');
 		expect(actionDeps.routeData.loadSettings).not.toHaveBeenCalled();
 		expect(actionDeps.routeData.loadDiscoverSections).toHaveBeenCalledOnce();
-		expect(actionDeps.routeData.loadMediaItems).toHaveBeenCalledOnce();
 		expect(eventsMock.connectAppEvents).toHaveBeenCalledOnce();
 	});
 
@@ -187,7 +187,6 @@ describe('session actions (SCN-AUTH-002)', () => {
 		expect(state.currentUser).toBeUndefined();
 		expect(state.activeView).toBe('home');
 		expect(state.downloadClients).toEqual([]);
-		expect(state.mediaItems).toEqual([]);
 		expect(state.libraryScansByFolder).toEqual({});
 		expect(state.openLibraryFolderId).toBeUndefined();
 		expect(state.errorMessage).toBe('network down');

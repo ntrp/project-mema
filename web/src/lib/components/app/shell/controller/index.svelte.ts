@@ -6,10 +6,12 @@ import {
 	emptyMediaProfileForm,
 	emptyUserForm
 } from '$lib/settings/forms';
+import { useQueryClient } from '@tanstack/svelte-query';
+import { createActivityCache } from '$lib/features/activity/cache';
+import { createLibraryCache } from '$lib/features/library/cache';
 import { emptyTagForm } from './helpers';
-import { createActivityActions } from './activityActions';
 import { createDiscoveryActions } from './discoveryActions';
-import { createEventActions } from './events';
+import { createEventActions, mediaStatusFromActivity } from './events';
 import { createLoadActions } from './loaders';
 import { createMediaActions } from './mediaActions';
 import { createMediaComponentActions } from './mediaComponentActions';
@@ -35,6 +37,17 @@ export type { AppRouteState } from './routeState';
 
 export function createAppShellController(route: AppRouteState = defaultRouteState()) {
 	const state = new AppShellState(route);
+	const activityCache = createActivityCache(useQueryClient());
+	const libraryCache = createLibraryCache(useQueryClient());
+	const updateMediaStatusFromActivity = (
+		activity: import('$lib/settings/types').DownloadActivity
+	) => {
+		const status = mediaStatusFromActivity(activity.status);
+		if (status)
+			libraryCache.mapItems((item) =>
+				item.id === activity.mediaItemId ? { ...item, status } : item
+			);
+	};
 	const notices = createNoticeActions(state);
 	const profile = createProfileActions(state, notices);
 	const events = createEventActions(state);
@@ -43,37 +56,48 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 	const search = createSearchActions(state, notices);
 	const media = createMediaActions(state, {
 		...notices,
-		loadMediaItems: loads.loadMediaItems,
-		loadSettings: loads.loadSettings
+		loadMediaItems: libraryCache.refreshItems,
+		loadSettings: loads.loadSettings,
+		removeActivityForMedia: activityCache.removeForMedia,
+		mediaItems: libraryCache.items,
+		upsertMediaItem: libraryCache.upsertItem,
+		mapMediaItems: libraryCache.mapItems,
+		removeMediaItem: libraryCache.removeItem,
+		upsertMediaRequest: libraryCache.upsertRequest,
+		mapMediaRequests: libraryCache.mapRequests
 	});
 	const mediaComponents = createMediaComponentActions(state, {
 		...notices,
-		loadMediaItems: loads.loadMediaItems
+		loadMediaItems: libraryCache.refreshItems
 	});
 	const mediaFulfillment = createMediaFulfillmentActions(state, {
 		...notices,
-		loadMediaItems: loads.loadMediaItems
+		loadMediaItems: libraryCache.refreshItems
 	});
-	const mediaMetadata = createMediaMetadataActions(state, notices);
-	const mediaSubtitles = createMediaSubtitleActions(state, notices);
+	const mediaMetadata = createMediaMetadataActions(state, {
+		...notices,
+		upsertMediaItem: libraryCache.upsertItem
+	});
+	const mediaSubtitles = createMediaSubtitleActions(state, {
+		...notices,
+		upsertMediaItem: libraryCache.upsertItem
+	});
 	const releases = createReleaseActions(state, {
 		...notices,
-		loadDownloadActivity: loads.loadDownloadActivity,
-		updateMediaStatusFromActivity: events.updateMediaStatusFromActivity
-	});
-	const activity = createActivityActions(state, {
-		...notices,
-		loadMediaItems: loads.loadMediaItems,
-		upsertActivity: events.upsertActivity
+		upsertActivity: activityCache.upsert,
+		refreshActivity: activityCache.refresh,
+		updateMediaStatusFromActivity
 	});
 	const settingsSave = createSettingsSaveActions(state, {
 		...notices,
 		loadSettings: loads.loadSettings,
-		loadMediaItems: loads.loadMediaItems
+		loadMediaItems: libraryCache.refreshItems,
+		mediaItems: libraryCache.items
 	});
 	const settingsDelete = createSettingsDeleteActions(state, {
 		...notices,
-		loadSettings: loads.loadSettings
+		loadSettings: loads.loadSettings,
+		refreshMediaItems: libraryCache.refreshItems
 	});
 	const settingsTestCache = createSettingsTestCacheActions(state, {
 		...notices,
@@ -86,10 +110,6 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 			loadDiscoverBlacklist: discovery.loadDiscoverBlacklist,
 			loadDiscoverSections: discovery.loadDiscoverSections,
 			loadDiscoverSection: discovery.loadDiscoverSection,
-			loadMediaItems: loads.loadMediaItems,
-			loadMediaRequests: loads.loadMediaRequests,
-			loadDownloadActivity: loads.loadDownloadActivity,
-			loadReleaseBlocklist: loads.loadReleaseBlocklist,
 			loadMetadataDetail: loads.loadMetadataDetail,
 			loadPersonDetail: loads.loadPersonDetail,
 			loadMediaCollection: loads.loadMediaCollection,
@@ -102,9 +122,9 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 	const session = createSessionActions(state, {
 		...notices,
 		events: {
-			loadMediaItems: loads.loadMediaItems,
-			upsertActivity: events.upsertActivity,
-			updateMediaStatusFromActivity: events.updateMediaStatusFromActivity,
+			loadMediaItems: libraryCache.refreshItems,
+			upsertActivity: activityCache.upsert,
+			updateMediaStatusFromActivity,
 			appendIndexerSearchHistory: events.appendIndexerSearchHistory,
 			upsertIndexerSearchCache: events.upsertIndexerSearchCache,
 			upsertMetadataCache: events.upsertMetadataCache,
@@ -112,15 +132,13 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 			updateFulfillmentJobExecution: mediaFulfillment.updateFulfillmentJobExecution,
 			parseEventData: events.parseEventData
 		},
+		clearActivityCache: activityCache.clear,
+		clearLibraryCache: libraryCache.clear,
 		routeData: {
 			loadSettings: loads.loadSettings,
 			loadDiscoverBlacklist: discovery.loadDiscoverBlacklist,
 			loadDiscoverSections: discovery.loadDiscoverSections,
 			loadDiscoverSection: discovery.loadDiscoverSection,
-			loadMediaItems: loads.loadMediaItems,
-			loadMediaRequests: loads.loadMediaRequests,
-			loadDownloadActivity: loads.loadDownloadActivity,
-			loadReleaseBlocklist: loads.loadReleaseBlocklist,
 			loadMetadataDetail: loads.loadMetadataDetail,
 			loadPersonDetail: loads.loadPersonDetail,
 			loadMediaCollection: loads.loadMediaCollection,
@@ -168,7 +186,6 @@ export function createAppShellController(route: AppRouteState = defaultRouteStat
 		mediaMetadata,
 		mediaSubtitles,
 		releases,
-		activity,
 		loads,
 		settingsSave,
 		settingsDelete,

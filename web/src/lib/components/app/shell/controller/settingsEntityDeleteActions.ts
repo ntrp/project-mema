@@ -3,9 +3,9 @@ import {
 	deleteLanguage as deleteLanguageRequest,
 	deleteMediaProfile as deleteMediaProfileRequest,
 	deletePathMapping as deletePathMappingRequest,
-	deleteTag as deleteTagRequest,
 	deleteUser as deleteUserRequest
 } from '$lib/settings/api';
+import { deleteTag as deleteTagRequest } from '$lib/components/settings/tags/api';
 import {
 	emptyCustomFormatForm,
 	emptyLanguageForm,

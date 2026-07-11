@@ -16,7 +16,9 @@
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import * as Tooltip from '$lib/components/ui/tooltip';
 	import { setAppShellContext } from '$lib/features/app/appShellContext';
+	import { createMediaItemsQuery } from '$lib/features/library/queries.svelte';
 	import type { MediaItem, PersonAppearance } from '$lib/settings/types';
+	const library = createMediaItemsQuery();
 
 	let { children } = $props();
 	const route = $derived(routeStateFromPath(page.url.pathname, page.params, page.url.searchParams));
@@ -59,7 +61,7 @@
 			return personBackdropPaths[personBackdropIndex % personBackdropPaths.length];
 		}
 		if (app.activeView === 'media-people') {
-			return app.mediaPeopleMetadataDetail?.backdropPath;
+			return (library.data ?? []).find((item) => item.id === app.selectedMediaItemId)?.backdropPath;
 		}
 		if (app.activeView === 'metadata-detail' || app.activeView === 'related-section') {
 			return app.metadataDetail?.backdropPath;
@@ -67,7 +69,7 @@
 		if (!app.selectedMediaItemId || !['movies', 'series'].includes(app.activeHomeSection)) {
 			return undefined;
 		}
-		return app.mediaItems.find(
+		return (library.data ?? []).find(
 			(item: MediaItem) =>
 				item.id === app.selectedMediaItemId &&
 				item.type === (app.activeHomeSection === 'movies' ? 'movie' : 'serie')

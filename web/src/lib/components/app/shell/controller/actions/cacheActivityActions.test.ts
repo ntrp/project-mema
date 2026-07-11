@@ -19,7 +19,6 @@ const apiMock = vi.hoisted(() => ({
 
 vi.mock('$lib/settings/api', () => apiMock);
 
-import { createActivityActions } from '../activityActions';
 import { createSearchCacheActions } from '../searchCacheActions';
 import { createSettingsTestCacheActions } from '../settingsTestCacheActions';
 import type { AppShellState } from '../state.svelte';
@@ -32,8 +31,6 @@ function state(overrides: Record<string, unknown> = {}) {
 		metadataCache: { entries: [], historyEntries: [] },
 		indexerTests: {},
 		metadataProviderTests: {},
-		activities: [{ id: 'activity-1' }, { id: 'activity-2' }],
-		releaseBlocklist: [{ id: 'block-1' }, { id: 'block-2' }],
 		...overrides
 	} as unknown as AppShellState;
 }
@@ -95,7 +92,7 @@ describe('cache and inspection actions (SCN-SYSTEM-004)', () => {
 	});
 });
 
-describe('integration test and activity actions (SCN-ACTIVITY-002)', () => {
+describe('integration test actions', () => {
 	it('stores integration test results and reloads settings after indexer tests', async () => {
 		const shell = state();
 		const loadSettings = vi.fn();
@@ -121,45 +118,5 @@ describe('integration test and activity actions (SCN-ACTIVITY-002)', () => {
 		});
 		expect(loadSettings).toHaveBeenCalledOnce();
 		expect(shell.testingIndexerId).toBeUndefined();
-	});
-
-	it('cancels and deletes activity while keeping visible state consistent', async () => {
-		const shell = state();
-		const upsertActivity = vi.fn();
-		const loadMediaItems = vi.fn();
-		apiMock.cancelDownloadActivity.mockResolvedValue({ id: 'activity-1', status: 'cancelled' });
-		const actions = createActivityActions(shell, {
-			clearNotice: vi.fn(),
-			loadMediaItems,
-			upsertActivity
-		});
-
-		await actions.cancelActivity({ id: 'activity-1' } as never);
-		await actions.deleteActivity({ id: 'activity-2' } as never);
-
-		expect(upsertActivity).toHaveBeenCalledWith({ id: 'activity-1', status: 'cancelled' });
-		expect(loadMediaItems).toHaveBeenCalledOnce();
-		expect(apiMock.deleteDownloadActivity).toHaveBeenCalledWith('activity-2');
-		expect(shell.activities).toEqual([{ id: 'activity-1' }]);
-		expect(shell.message).toBe('Download activity deleted');
-	});
-
-	it('deletes and clears release blocklist entries', async () => {
-		const shell = state();
-		const actions = createActivityActions(shell, {
-			clearNotice: vi.fn(),
-			loadMediaItems: vi.fn(),
-			upsertActivity: vi.fn()
-		});
-
-		await actions.deleteReleaseBlocklistItem({ id: 'block-1' } as never);
-		expect(apiMock.deleteReleaseBlocklistItem).toHaveBeenCalledWith('block-1');
-		expect(shell.releaseBlocklist).toEqual([{ id: 'block-2' }]);
-		expect(shell.message).toBe('Release blocklist entry removed');
-
-		await actions.clearReleaseBlocklist();
-		expect(apiMock.clearReleaseBlocklist).toHaveBeenCalledOnce();
-		expect(shell.releaseBlocklist).toEqual([]);
-		expect(shell.message).toBe('Release blocklist cleared');
 	});
 });

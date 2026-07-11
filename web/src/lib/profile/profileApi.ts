@@ -1,5 +1,5 @@
 import { client } from '$lib/api/client';
-import type { UserProfile, UserProfileUpdateRequest } from '$lib/settings/types';
+import type { UserProfile, UserProfileUpdateRequest } from './types';
 
 export async function getProfile(): Promise<UserProfile> {
 	const { data, error } = await client.GET('/profile');

@@ -68,7 +68,9 @@ function mediaFulfillmentActionKeyFromExecution(execution: SystemJobExecution) {
 	});
 }
 
-function fulfillmentOperationFromKind(kind: string): MediaFulfillmentActionRequest['operation'] | '' {
+function fulfillmentOperationFromKind(
+	kind: string
+): MediaFulfillmentActionRequest['operation'] | '' {
 	switch (kind.replace('media.fulfillment.', '')) {
 		case 'video_transcode':
 			return 'video_transcode';

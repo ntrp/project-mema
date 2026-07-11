@@ -3,7 +3,10 @@ import type {
 	SystemJobExecutionLog,
 	SystemJobSchedule
 } from '$lib/settings/types';
-import { parseSystemEvent } from '../events/systemEventStream';
+import {
+	subscribeToAppEvent,
+	subscribeToAppEventSourceStatus
+} from '$lib/app/realtime/appEventSource';
 import {
 	abortJobState,
 	loadHistoryState,
@@ -48,7 +51,6 @@ export class SystemJobsController {
 	logsExecution = $state<SystemJobExecution | undefined>();
 	executionLogs = $state<SystemJobExecutionLog[]>([]);
 	loadingLogsId = $state<number | undefined>();
-	private source?: EventSource;
 
 	get visibleHistory() {
 		return this.history.filter((execution) =>
@@ -71,18 +73,24 @@ export class SystemJobsController {
 	start() {
 		void this.loadOverview();
 		void this.loadHistory(true);
-		this.source = new EventSource('/api/events', { withCredentials: true });
-		this.source.addEventListener('system.job.execution.updated', (event) => {
-			const execution = parseSystemEvent<SystemJobExecution>(event);
-			if (execution) this.applyExecutionUpdate(execution);
+		const unsubscribeExecution = subscribeToAppEvent<SystemJobExecution>(
+			'system.job.execution.updated',
+			({ data: execution }) => {
+				if (execution) this.applyExecutionUpdate(execution);
+			}
+		);
+		const unsubscribeStatus = subscribeToAppEventSourceStatus((status) => {
+			if (status === 'error') {
+				this.errorMessage = this.errorMessage || 'Job event stream disconnected';
+			}
+			if (status === 'open' && this.errorMessage === 'Job event stream disconnected') {
+				this.errorMessage = '';
+			}
 		});
-		this.source.addEventListener('error', () => {
-			this.errorMessage = this.errorMessage || 'Job event stream disconnected';
-		});
-		this.source.addEventListener('open', () => {
-			if (this.errorMessage === 'Job event stream disconnected') this.errorMessage = '';
-		});
-		return () => this.source?.close();
+		return () => {
+			unsubscribeExecution();
+			unsubscribeStatus();
+		};
 	}
 
 	async loadOverview() {

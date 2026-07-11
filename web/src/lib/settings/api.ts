@@ -1,4 +1,29 @@
 import { client } from '$lib/api/client';
+export { currentSession, currentSessionAuthenticated, login, logout } from '$lib/app/session/api';
+export {
+	clearSystemEvents,
+	deleteSystemEvent,
+	getSystemEventSettings,
+	listSystemEvents,
+	updateSystemEventSettings
+} from '$lib/components/settings/system/events/api';
+export {
+	abortSystemJob,
+	getSystemJobsOverview,
+	listSystemJobExecutionLogs,
+	listSystemJobExecutions,
+	listSystemJobs,
+	pauseSystemJobSchedule,
+	resumeSystemJobSchedule,
+	runSystemJobSchedule,
+	updateSystemJobHistorySettings,
+	updateSystemJobScheduleInterval
+} from '$lib/components/settings/system/jobs/api';
+export type {
+	SystemJobExecutionFilters,
+	SystemJobFilters
+} from '$lib/components/settings/system/jobs/api';
+export { deleteTag, saveTag } from '$lib/components/settings/tags/api';
 
 import {
 	normalizeCustomFormatForm,
@@ -69,55 +94,17 @@ import type {
 	ReleaseBlocklistItem,
 	ReleaseCandidate,
 	ReleaseOverrideDetails,
-	SessionResponse,
 	SettingsData,
 	SubtitleProviderForm,
 	SubtitleSearchRequest,
-	SystemEventSettings,
-	SystemEventSettingsRequest,
 	SystemLogFile,
 	SystemLogFileSettings,
 	SystemLogFileSettingsRequest,
 	SystemLogLevel,
 	SystemLogLevelResponse,
-	SystemJobExecutionLog,
-	SystemJobExecutionListResponse,
-	SystemJobHistorySettings,
-	SystemJobSchedule,
-	SystemJobsOverviewResponse,
 	SystemStatusResponse,
-	TagForm,
 	UserForm
 } from './types';
-
-export async function currentSession(): Promise<SessionResponse | undefined> {
-	const { data } = await client.GET('/auth/session');
-	return data;
-}
-
-export async function currentSessionAuthenticated() {
-	const data = await currentSession();
-	return Boolean(data?.authenticated);
-}
-
-export async function login(username: string, password: string) {
-	const { data, error } = await client.POST('/auth/login', {
-		body: { username, password }
-	});
-
-	if (error || !data?.authenticated) {
-		throw new Error(error?.message ?? 'Login failed');
-	}
-	return data;
-}
-
-export async function logout() {
-	const { error } = await client.POST('/auth/logout');
-
-	if (error) {
-		throw new Error(error.message);
-	}
-}
 
 export async function getSystemLogLevel(): Promise<SystemLogLevelResponse> {
 	const { data, error } = await client.GET('/system/log-level');
@@ -203,217 +190,6 @@ export async function downloadSystemLogFile(name: string) {
 		throw new Error('Could not download log file');
 	}
 	return response.blob();
-}
-
-export async function listSystemEvents(options: { before?: string; limit?: number } = {}) {
-	const { data, error } = await client.GET('/system/events', {
-		params: { query: options }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	return data ?? { events: [], hasMore: false };
-}
-
-export async function deleteSystemEvent(id: string) {
-	const { error } = await client.DELETE('/system/events/{id}', {
-		params: { path: { id } }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-}
-
-export async function clearSystemEvents() {
-	const { error } = await client.DELETE('/system/events');
-
-	if (error) {
-		throw new Error(error.message);
-	}
-}
-
-export async function getSystemEventSettings(): Promise<SystemEventSettings> {
-	const { data, error } = await client.GET('/system/event-settings');
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Event settings request did not return a result');
-	}
-	return data;
-}
-
-export interface SystemJobFilters {
-	status?: string[];
-	queue?: string;
-	kind?: string;
-	query?: string;
-	limit?: number;
-}
-
-export async function listSystemJobs(filters: SystemJobFilters = {}) {
-	const { data, error } = await client.GET('/system/jobs', {
-		params: { query: filters }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	return data?.jobs ?? [];
-}
-
-export async function abortSystemJob(id: number) {
-	const { data, error } = await client.POST('/system/jobs/{id}/abort', {
-		params: { path: { id } }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Job abort did not return a job');
-	}
-	return data;
-}
-
-export async function getSystemJobsOverview(): Promise<SystemJobsOverviewResponse> {
-	const { data, error } = await client.GET('/system/jobs/overview');
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Jobs overview request did not return a result');
-	}
-	return data;
-}
-
-export async function pauseSystemJobSchedule(id: string): Promise<SystemJobSchedule> {
-	const { data, error } = await client.POST('/system/job-schedules/{id}/pause', {
-		params: { path: { id } }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Schedule pause did not return a schedule');
-	}
-	return data;
-}
-
-export async function resumeSystemJobSchedule(id: string): Promise<SystemJobSchedule> {
-	const { data, error } = await client.POST('/system/job-schedules/{id}/resume', {
-		params: { path: { id } }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Schedule resume did not return a schedule');
-	}
-	return data;
-}
-
-export async function runSystemJobSchedule(id: string): Promise<SystemJobSchedule> {
-	const { data, error } = await client.POST('/system/job-schedules/{id}/run', {
-		params: { path: { id } }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Schedule run did not return a schedule');
-	}
-	return data;
-}
-
-export async function updateSystemJobScheduleInterval(
-	id: string,
-	intervalSeconds: number
-): Promise<SystemJobSchedule> {
-	const { data, error } = await client.PUT('/system/job-schedules/{id}/interval', {
-		params: { path: { id } },
-		body: { intervalSeconds }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Schedule interval update did not return a schedule');
-	}
-	return data;
-}
-
-export interface SystemJobExecutionFilters {
-	status?: string[];
-	scheduleId?: string;
-	kind?: string;
-	queue?: string;
-	query?: string;
-	before?: string;
-	limit?: number;
-	includeRoutine?: boolean;
-}
-
-export async function listSystemJobExecutions(
-	filters: SystemJobExecutionFilters = {}
-): Promise<SystemJobExecutionListResponse> {
-	const { data, error } = await client.GET('/system/job-executions', {
-		params: { query: filters }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	return data ?? { executions: [], hasMore: false };
-}
-
-export async function listSystemJobExecutionLogs(
-	riverJobId: number
-): Promise<SystemJobExecutionLog[]> {
-	const { data, error } = await client.GET('/system/job-executions/{riverJobId}/logs', {
-		params: { path: { riverJobId } }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	return data?.logs ?? [];
-}
-
-export async function updateSystemJobHistorySettings(
-	request: SystemJobHistorySettings
-): Promise<SystemJobHistorySettings> {
-	const { data, error } = await client.PUT('/system/job-history-settings', { body: request });
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Job history settings update did not return a result');
-	}
-	return data;
-}
-
-export async function updateSystemEventSettings(
-	request: SystemEventSettingsRequest
-): Promise<SystemEventSettings> {
-	const { data, error } = await client.PUT('/system/event-settings', { body: request });
-
-	if (error) {
-		throw new Error(error.message);
-	}
-	if (!data) {
-		throw new Error('Event settings update did not return a result');
-	}
-	return data;
 }
 
 export async function getDLNASettings(): Promise<DLNASettings> {
@@ -1519,20 +1295,6 @@ export async function saveUser(form: UserForm) {
 	}
 }
 
-export async function saveTag(form: TagForm) {
-	const body = { name: form.name.trim() };
-	const result = form.id
-		? await client.PUT('/settings/tags/{id}', {
-				params: { path: { id: form.id } },
-				body
-			})
-		: await client.POST('/settings/tags', { body });
-
-	if (result.error) {
-		throw new Error(result.error.message);
-	}
-}
-
 export async function saveLanguage(form: LanguageForm) {
 	const result = form.originalCode
 		? await client.PUT('/settings/languages/{code}', {
@@ -1773,16 +1535,6 @@ export async function deleteSubtitleProvider(id: string) {
 
 export async function deleteUser(id: string) {
 	const { error } = await client.DELETE('/settings/users/{id}', {
-		params: { path: { id } }
-	});
-
-	if (error) {
-		throw new Error(error.message);
-	}
-}
-
-export async function deleteTag(id: string) {
-	const { error } = await client.DELETE('/settings/tags/{id}', {
 		params: { path: { id } }
 	});
 

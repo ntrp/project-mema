@@ -2,10 +2,6 @@ import {
 	getMediaCollection as getMediaCollectionRequest,
 	getMediaMetadataDetails as getMediaMetadataDetailsRequest,
 	getPersonDetails as getPersonDetailsRequest,
-	listDownloadActivity as listDownloadActivityRequest,
-	listReleaseBlocklist as listReleaseBlocklistRequest,
-	listMediaItems as listMediaItemsRequest,
-	listMediaRequests as listMediaRequestsRequest,
 	loadSettings as loadSettingsRequest
 } from '$lib/settings/api';
 import type { MediaType, MetadataProviderType } from '$lib/settings/types';
@@ -32,15 +28,6 @@ export function createLoadActions(state: AppShellState) {
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load settings');
 		}
-	}
-
-	async function loadLibrary() {
-		await Promise.all([
-			loadMediaItems(),
-			loadMediaRequests(),
-			loadDownloadActivity(),
-			loadReleaseBlocklist()
-		]);
 	}
 
 	async function loadMetadataDetail() {
@@ -99,56 +86,10 @@ export function createLoadActions(state: AppShellState) {
 		}
 	}
 
-	async function loadMediaItems() {
-		state.loadingMediaItems = true;
-		try {
-			state.mediaItems = await listMediaItemsRequest();
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not load media items');
-		} finally {
-			state.loadingMediaItems = false;
-		}
-	}
-
-	async function loadMediaRequests() {
-		try {
-			state.mediaRequests = await listMediaRequestsRequest();
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not load media requests');
-		}
-	}
-
-	async function loadDownloadActivity() {
-		state.loadingActivity = true;
-		try {
-			state.activities = await listDownloadActivityRequest();
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not load download activity');
-		} finally {
-			state.loadingActivity = false;
-		}
-	}
-
-	async function loadReleaseBlocklist() {
-		state.loadingActivity = true;
-		try {
-			state.releaseBlocklist = await listReleaseBlocklistRequest();
-		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not load release blocklist');
-		} finally {
-			state.loadingActivity = false;
-		}
-	}
-
 	return {
 		loadSettings,
-		loadLibrary,
 		loadMetadataDetail,
 		loadPersonDetail,
-		loadMediaCollection,
-		loadMediaItems,
-		loadMediaRequests,
-		loadDownloadActivity,
-		loadReleaseBlocklist
+		loadMediaCollection
 	};
 }

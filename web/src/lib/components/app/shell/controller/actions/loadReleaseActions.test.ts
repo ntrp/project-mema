@@ -5,7 +5,6 @@ const apiMock = vi.hoisted(() => ({
 	getMediaCollection: vi.fn(),
 	getMediaMetadataDetails: vi.fn(),
 	grabMediaRelease: vi.fn(),
-	listDownloadActivity: vi.fn(),
 	listMediaItems: vi.fn(),
 	listMediaRequests: vi.fn(),
 	loadSettings: vi.fn(),
@@ -46,10 +45,8 @@ function state(overrides: Record<string, unknown> = {}) {
 		route: {},
 		mediaItems: [],
 		mediaRequests: [],
-		activities: [],
 		releaseResults: {},
 		loadingMediaItems: false,
-		loadingActivity: false,
 		loadingMetadataDetail: false,
 		loadingMediaCollection: false,
 		...overrides
@@ -90,22 +87,15 @@ describe('load actions (SCN-SYSTEM-001)', () => {
 			tags: [{ id: 'tag-1' }],
 			languages: [{ code: 'EN' }]
 		});
-		apiMock.listMediaItems.mockResolvedValue([mediaItem()]);
-		apiMock.listMediaRequests.mockResolvedValue([{ id: 'request-1' }]);
-		apiMock.listDownloadActivity.mockResolvedValue([{ id: 'activity-1' }]);
 		apiMock.getMediaMetadataDetails.mockResolvedValue({ title: 'Scenario Movie' });
 		apiMock.getMediaCollection.mockResolvedValue({ title: 'Scenario Collection' });
 
 		const actions = createLoadActions(shell);
 		await actions.loadSettings();
-		await actions.loadLibrary();
 		await actions.loadMetadataDetail();
 		await actions.loadMediaCollection();
 
 		expect(shell.downloadClients).toEqual([{ id: 'client-1' }]);
-		expect(shell.mediaItems).toEqual([mediaItem()]);
-		expect(shell.mediaRequests).toEqual([{ id: 'request-1' }]);
-		expect(shell.activities).toEqual([{ id: 'activity-1' }]);
 		expect(shell.metadataDetail).toEqual({ title: 'Scenario Movie' });
 		expect(shell.mediaCollection).toEqual({ title: 'Scenario Collection' });
 		expect(shell.loadingMediaCollection).toBe(false);
@@ -132,7 +122,8 @@ describe('release actions (SCN-ACTIVITY-001)', () => {
 		apiMock.searchMediaReleases.mockResolvedValue({ releases: [{ id: 'release-1' }], errors: [] });
 		const actions = createReleaseActions(shell, {
 			clearNotice: vi.fn(),
-			loadDownloadActivity: vi.fn(),
+			upsertActivity: vi.fn(),
+			refreshActivity: vi.fn(),
 			updateMediaStatusFromActivity: vi.fn()
 		});
 
@@ -148,9 +139,10 @@ describe('release actions (SCN-ACTIVITY-001)', () => {
 	});
 
 	it('grabs a release, updates activity state, and schedules an activity refresh', async () => {
-		const shell = state({ activities: [{ id: 'old-activity' }] });
+		const shell = state();
 		const updateMediaStatusFromActivity = vi.fn();
-		const loadDownloadActivity = vi.fn();
+		const upsertActivity = vi.fn();
+		const refreshActivity = vi.fn();
 		stubImmediateWindowTimer();
 		apiMock.grabMediaRelease.mockResolvedValue({
 			message: 'Download queued',
@@ -160,16 +152,17 @@ describe('release actions (SCN-ACTIVITY-001)', () => {
 
 		await createReleaseActions(shell, {
 			clearNotice: vi.fn(),
-			loadDownloadActivity,
+			upsertActivity,
+			refreshActivity,
 			updateMediaStatusFromActivity
 		}).grabRelease(mediaItem() as never, { id: 'release-1' } as never, true);
 
-		expect(shell.activities.map((activity) => activity.id)).toEqual(['activity-1', 'old-activity']);
+		expect(upsertActivity).toHaveBeenCalledWith({ id: 'activity-1', mediaItemId: 'media-1' });
 		expect(updateMediaStatusFromActivity).toHaveBeenCalledWith({
 			id: 'activity-1',
 			mediaItemId: 'media-1'
 		});
-		expect(loadDownloadActivity).toHaveBeenCalledOnce();
+		expect(refreshActivity).toHaveBeenCalledOnce();
 		expect(shell.message).toBe('Download queued (#9)');
 		expect(navigationMock.goto).toHaveBeenCalledWith('/activity');
 	});

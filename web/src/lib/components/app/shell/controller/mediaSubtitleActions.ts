@@ -15,6 +15,7 @@ import type { AppShellState } from './state.svelte';
 
 interface MediaSubtitleDeps {
 	clearNotice: () => void;
+	upsertMediaItem: (_item: MediaItem) => void;
 }
 
 export function createMediaSubtitleActions(state: AppShellState, deps: MediaSubtitleDeps) {
@@ -34,10 +35,7 @@ export function createMediaSubtitleActions(state: AppShellState, deps: MediaSubt
 		clearNotice();
 		try {
 			const updated = await deleteMediaItemSubtitleRequest(item.id, subtitleId);
-			state.mediaItems = [
-				updated,
-				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
-			];
+			deps.upsertMediaItem(updated);
 			state.message = 'Subtitle deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete subtitle');
@@ -52,10 +50,7 @@ export function createMediaSubtitleActions(state: AppShellState, deps: MediaSubt
 		clearNotice();
 		try {
 			const updated = await updateMediaItemSubtitleRequest(item.id, subtitleId, request);
-			state.mediaItems = [
-				updated,
-				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
-			];
+			deps.upsertMediaItem(updated);
 			state.message = 'Subtitle updated';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not update subtitle');
@@ -66,10 +61,7 @@ export function createMediaSubtitleActions(state: AppShellState, deps: MediaSubt
 		clearNotice();
 		try {
 			const updated = await grabMediaSubtitleRequest(item.id, request);
-			state.mediaItems = [
-				updated,
-				...state.mediaItems.filter((mediaItem) => mediaItem.id !== updated.id)
-			];
+			deps.upsertMediaItem(updated);
 			state.message = 'Subtitle grabbed';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not grab subtitle');

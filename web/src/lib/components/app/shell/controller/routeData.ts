@@ -5,10 +5,6 @@ export interface RouteDataDeps {
 	loadDiscoverBlacklist: () => Promise<void>;
 	loadDiscoverSections: () => Promise<void>;
 	loadDiscoverSection: () => Promise<void>;
-	loadMediaItems: () => Promise<void>;
-	loadMediaRequests: () => Promise<void>;
-	loadDownloadActivity: () => Promise<void>;
-	loadReleaseBlocklist: () => Promise<void>;
 	loadMetadataDetail: () => Promise<void>;
 	loadPersonDetail: () => Promise<void>;
 	loadMediaCollection: () => Promise<void>;
@@ -41,25 +37,24 @@ export async function loadAppRouteData(
 		route.view === 'media-people' ||
 		route.view === 'related-section'
 	) {
-		tasks.push(deps.loadMetadataDetail(), deps.loadMediaItems());
+		tasks.push(deps.loadMetadataDetail());
 		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
 		return run(tasks);
 	}
 	if (route.view === 'media-collection') {
-		tasks.push(deps.loadMediaCollection(), deps.loadMediaItems());
+		tasks.push(deps.loadMediaCollection());
 		return run(tasks);
 	}
 	if (route.view === 'person-detail') {
-		tasks.push(deps.loadPersonDetail(), deps.loadMediaItems());
+		tasks.push(deps.loadPersonDetail());
 		return run(tasks);
 	}
 	if (route.view === 'discover-section') {
-		tasks.push(deps.loadDiscoverSection(), deps.loadMediaItems());
+		tasks.push(deps.loadDiscoverSection());
 		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
 		return run(tasks);
 	}
 	if (route.view === 'discover-movies' || route.view === 'discover-series') {
-		tasks.push(deps.loadMediaItems());
 		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
 		return run(tasks);
 	}
@@ -70,25 +65,14 @@ export async function loadAppRouteData(
 function loadPrimaryRouteData(route: AppRouteState, isAdmin: boolean, deps: RouteDataDeps) {
 	const tasks: Array<Promise<void>> = [];
 	if (route.homeSection === 'discover') {
-		tasks.push(deps.loadDiscoverSections(), deps.loadMediaItems());
+		tasks.push(deps.loadDiscoverSections());
 		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
 	} else if (route.homeSection === 'movies' || route.homeSection === 'series') {
-		tasks.push(deps.loadMediaItems());
-		if (route.selectedMediaItemId && isAdmin)
-			tasks.push(deps.loadSettings(), deps.loadDownloadActivity());
-	} else if (route.homeSection === 'wanted') {
-		tasks.push(deps.loadMediaItems());
+		if (route.selectedMediaItemId && isAdmin) tasks.push(deps.loadSettings());
 	} else if (route.homeSection === 'requests') {
-		tasks.push(deps.loadMediaRequests());
 		if (isAdmin) tasks.push(deps.loadSettings());
 	} else if (route.homeSection === 'blacklist') {
 		if (isAdmin) tasks.push(deps.loadDiscoverBlacklist());
-	} else if (route.homeSection === 'activity') {
-		if (route.activitySection === 'blocklist') {
-			tasks.push(deps.loadReleaseBlocklist());
-		} else {
-			tasks.push(deps.loadDownloadActivity());
-		}
 	}
 	return run(tasks);
 }

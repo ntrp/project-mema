@@ -19,13 +19,13 @@ const RELEASE_SEARCH_MAX_POLLS = 120;
 
 interface ReleaseDeps {
 	clearNotice: () => void;
-	loadDownloadActivity: () => Promise<void>;
+	upsertActivity: (_activity: DownloadActivity) => void;
+	refreshActivity: () => Promise<void>;
 	updateMediaStatusFromActivity: (activity: DownloadActivity) => void;
 }
 
 export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 	const clearNotice = deps.clearNotice;
-	const loadDownloadActivity = deps.loadDownloadActivity;
 	const updateMediaStatusFromActivity = deps.updateMediaStatusFromActivity;
 
 	async function findReleases(item: MediaItem, query?: string) {
@@ -98,15 +98,12 @@ export function createReleaseActions(state: AppShellState, deps: ReleaseDeps) {
 				overrideMatch,
 				overrideDetails
 			);
-			state.activities = [
-				result.activity,
-				...state.activities.filter((activity) => activity.id !== result.activity.id)
-			];
+			deps.upsertActivity(result.activity);
 			updateMediaStatusFromActivity(result.activity);
 			state.message = `${result.message} (#${result.jobId})`;
 			state.activeHomeSection = 'activity';
 			void goto(resolve('/activity'));
-			window.setTimeout(() => void loadDownloadActivity(), 1200);
+			window.setTimeout(() => void deps.refreshActivity(), 1200);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not enqueue download');
 		} finally {

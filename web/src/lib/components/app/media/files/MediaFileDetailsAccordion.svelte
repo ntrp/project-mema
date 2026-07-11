@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 	import * as Table from '$lib/components/ui/table';
 	import { cn } from '$lib/utils';
 	import MediaFileDeleteTrackButton from '$lib/components/app/media/files/MediaFileDeleteTrackButton.svelte';
@@ -11,18 +12,29 @@
 	import MediaFileTrackProvenanceIcon from '$lib/components/app/media/files/provenance/MediaFileTrackProvenanceIcon.svelte';
 	import MediaFileTrackTypeIcon from '$lib/components/app/media/files/track-icons/MediaFileTrackTypeIcon.svelte';
 	import {
-		fileChapterDetailRows, fileChapterSummaryRow, fileTrackDetailRows,
+		fileChapterDetailRows,
+		fileChapterSummaryRow,
+		fileTrackDetailRows,
 		type MediaFileDetailRow
 	} from '$lib/components/app/media/files/mediaFileDetails';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import type { MediaFileTrackDeleteRequest, MediaFulfillmentActionRequest } from '$lib/settings/types';
+	import type {
+		MediaFileTrackDeleteRequest,
+		MediaFulfillmentActionRequest
+	} from '$lib/settings/types';
 
 	interface Props {
 		row: MediaFileRow;
 		canManage?: boolean;
 		pendingFulfillmentActionKeys?: string[];
-		onDeleteTrack?: (_row: MediaFileRow, _request: MediaFileTrackDeleteRequest) => void | Promise<void>;
-		onFulfillmentAction?: (_row: MediaFileRow, _request: MediaFulfillmentActionRequest) => void | Promise<void>;
+		onDeleteTrack?: (
+			_row: MediaFileRow,
+			_request: MediaFileTrackDeleteRequest
+		) => void | Promise<void>;
+		onFulfillmentAction?: (
+			_row: MediaFileRow,
+			_request: MediaFulfillmentActionRequest
+		) => void | Promise<void>;
 	}
 
 	let {
@@ -35,9 +47,9 @@
 
 	let chaptersExpanded = $state(false);
 	let deleteTarget = $state<MediaFileDetailRow | undefined>();
-	let pulsingRows = $state(new Set<string>());
-	let rowSignatures = new Map<string, string>();
-	const pulseTimers = new Map<string, number>();
+	const pulsingRows = new SvelteSet<string>();
+	let rowSignatures = new SvelteMap<string, string>();
+	const pulseTimers = new SvelteMap<string, number>();
 
 	const trackRows = $derived(fileTrackDetailRows(row));
 	const chapterRows = $derived(fileChapterDetailRows(row));
@@ -48,7 +60,7 @@
 	]);
 
 	$effect(() => {
-		const next = new Map(rows.map((track) => [track.key, rowChangeSignature(track)]));
+		const next = new SvelteMap(rows.map((track) => [track.key, rowChangeSignature(track)]));
 		for (const [key, signature] of next) {
 			const previous = rowSignatures.get(key);
 			if (previous && previous !== signature) {
@@ -93,13 +105,11 @@
 	function pulseRow(key: string) {
 		const activeTimer = pulseTimers.get(key);
 		if (activeTimer) window.clearTimeout(activeTimer);
-		pulsingRows = new Set(pulsingRows).add(key);
+		pulsingRows.add(key);
 		pulseTimers.set(
 			key,
 			window.setTimeout(() => {
-				const next = new Set(pulsingRows);
-				next.delete(key);
-				pulsingRows = next;
+				pulsingRows.delete(key);
 				pulseTimers.delete(key);
 			}, 1200)
 		);
@@ -171,7 +181,12 @@
 					</Table.Cell>
 					<Table.Cell class="text-right">
 						<span class="inline-flex justify-end gap-1">
-							<MediaFileFulfillmentActions row={track} {canManage} {pendingFulfillmentActionKeys} onFulfillmentAction={(request) => onFulfillmentAction(row, request)} />
+							<MediaFileFulfillmentActions
+								row={track}
+								{canManage}
+								{pendingFulfillmentActionKeys}
+								onFulfillmentAction={(request) => onFulfillmentAction(row, request)}
+							/>
 							<MediaFileDeleteTrackButton {track} {canManage} onRequestDelete={requestDelete} />
 						</span>
 					</Table.Cell>
@@ -186,5 +201,9 @@
 </div>
 
 {#if deleteTarget}
-	<MediaFileTrackDeleteDialog track={deleteTarget} onCancel={() => (deleteTarget = undefined)} onConfirm={confirmDelete} />
+	<MediaFileTrackDeleteDialog
+		track={deleteTarget}
+		onCancel={() => (deleteTarget = undefined)}
+		onConfirm={confirmDelete}
+	/>
 {/if}

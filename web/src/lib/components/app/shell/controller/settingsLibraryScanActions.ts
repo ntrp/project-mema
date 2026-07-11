@@ -11,6 +11,7 @@ import type { AppShellState } from './state.svelte';
 
 interface SettingsLibraryScanDeps {
 	clearNotice: () => void;
+	refreshMediaItems: () => Promise<void>;
 }
 
 export function createSettingsLibraryScanActions(
@@ -55,11 +56,7 @@ export function createSettingsLibraryScanActions(
 
 		try {
 			const result = await importLibraryScanItemsRequest(scan.id, request);
-			const importedMediaIds = result.mediaItems.map((item) => item.id);
-			state.mediaItems = [
-				...result.mediaItems,
-				...state.mediaItems.filter((item) => !importedMediaIds.includes(item.id))
-			];
+			await deps.refreshMediaItems();
 			state.libraryScansByFolder = {
 				...state.libraryScansByFolder,
 				[scan.folderId]: result.scan
@@ -76,7 +73,7 @@ export function createSettingsLibraryScanActions(
 		try {
 			const result = await resetLibraryScanItemImportRequest(scan.id, itemId);
 			if (result.removedMediaItemId) {
-				state.mediaItems = state.mediaItems.filter((item) => item.id !== result.removedMediaItemId);
+				await deps.refreshMediaItems();
 			}
 			state.libraryScansByFolder = {
 				...state.libraryScansByFolder,

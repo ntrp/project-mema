@@ -22,6 +22,7 @@ vi.mock('$app/paths', () => ({ resolve: navigationMock.resolve }));
 
 import { createMediaActions } from '../mediaActions';
 import type { AppShellState } from '../state.svelte';
+import type { MediaItem } from '$lib/settings/types';
 
 function state(overrides: Record<string, unknown> = {}) {
 	return {
@@ -35,17 +36,42 @@ function state(overrides: Record<string, unknown> = {}) {
 		mediaItems: [mediaItem()],
 		mediaRequests: [],
 		releaseResults: { 'media-1': { loaded: true, releases: [], errors: [] } },
-		activities: [{ id: 'activity-1', mediaItemId: 'media-1' }],
 		selectedMediaItemId: undefined,
 		...overrides
-	} as unknown as AppShellState;
+	} as unknown as AppShellState & {
+		mediaItems: ReturnType<typeof mediaItem>[];
+		mediaRequests: Array<Record<string, unknown>>;
+	};
 }
 
-function deps() {
+function deps(shell: ReturnType<typeof state>) {
 	return {
 		clearNotice: vi.fn(),
 		loadMediaItems: vi.fn(),
-		loadSettings: vi.fn()
+		loadSettings: vi.fn(),
+		removeActivityForMedia: vi.fn(),
+		mediaItems: () => shell.mediaItems,
+		upsertMediaItem: vi.fn((item) => {
+			shell.mediaItems = [
+				item as ReturnType<typeof mediaItem>,
+				...shell.mediaItems.filter((entry) => entry.id !== (item as { id: string }).id)
+			];
+		}),
+		mapMediaItems: vi.fn((map) => {
+			shell.mediaItems = shell.mediaItems.map(map);
+		}),
+		removeMediaItem: vi.fn((id) => {
+			shell.mediaItems = shell.mediaItems.filter((item) => item.id !== id);
+		}),
+		upsertMediaRequest: vi.fn((request) => {
+			shell.mediaRequests = [
+				request,
+				...shell.mediaRequests.filter((item) => item.id !== request.id)
+			];
+		}),
+		mapMediaRequests: vi.fn((map) => {
+			shell.mediaRequests = shell.mediaRequests.map(map);
+		})
 	};
 }
 
@@ -62,7 +88,7 @@ function candidate(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function mediaItem(overrides: Record<string, unknown> = {}) {
+function mediaItem(overrides: Record<string, unknown> = {}): MediaItem {
 	return {
 		id: 'media-1',
 		title: 'Scenario Movie',
@@ -72,7 +98,7 @@ function mediaItem(overrides: Record<string, unknown> = {}) {
 		filePaths: ['/media/movie.mkv'],
 		metadataFilePaths: [],
 		...overrides
-	};
+	} as unknown as MediaItem;
 }
 
 describe('media actions (SCN-MEDIA-001)', () => {
@@ -84,7 +110,7 @@ describe('media actions (SCN-MEDIA-001)', () => {
 
 	it('adds monitored media for admins and routes to the matching library section', async () => {
 		const shell = state();
-		const actionDeps = deps();
+		const actionDeps = deps(shell);
 		const selected = candidate({ type: 'serie' });
 		const actions = createMediaActions(shell, actionDeps);
 
@@ -114,7 +140,8 @@ describe('media actions (SCN-MEDIA-001)', () => {
 		const shell = state({ isAdmin: false, mediaRequests: [{ id: 'old-request' }] });
 		const request = { id: 'request-1', title: 'Scenario Movie' };
 		apiMock.createMediaRequest.mockResolvedValue(request);
-		const actions = createMediaActions(shell, deps());
+		const actionDeps = deps(shell);
+		const actions = createMediaActions(shell, actionDeps);
 
 		actions.addMedia(candidate() as never);
 		await actions.confirmMediaAction({ monitorMode: 'none', tags: ['later'] } as never);
@@ -133,7 +160,8 @@ describe('media actions (SCN-MEDIA-001)', () => {
 
 	it('updates visible media after automatic search, file rescan, and file deletion', async () => {
 		const shell = state();
-		const actions = createMediaActions(shell, deps());
+		const actionDeps = deps(shell);
+		const actions = createMediaActions(shell, actionDeps);
 		apiMock.enqueueMediaAutomaticSearch.mockResolvedValue({ message: 'Queued search', jobId: 42 });
 		apiMock.rescanMediaItemFiles.mockResolvedValue(
 			mediaItem({ filePaths: ['/media/movie.mkv', '/media/extra.mkv'] })
@@ -156,7 +184,7 @@ describe('media actions (SCN-MEDIA-001)', () => {
 		const shell = state({ mediaItems: [original] });
 		apiMock.updateMediaItem.mockRejectedValue(new Error('write failed'));
 
-		await createMediaActions(shell, deps()).saveMediaItemOptions(original as never, {
+		await createMediaActions(shell, deps(shell)).saveMediaItemOptions(original as never, {
 			monitored: true,
 			monitorMode: 'only_media'
 		});
@@ -172,7 +200,8 @@ describe('media actions (SCN-MEDIA-001)', () => {
 			selectedMediaItemId: 'media-1',
 			mediaRequests: [{ id: 'request-1', status: 'pending' }]
 		});
-		const actions = createMediaActions(shell, deps());
+		const actionDeps = deps(shell);
+		const actions = createMediaActions(shell, actionDeps);
 		apiMock.approveMediaRequest.mockResolvedValue({
 			request: { id: 'request-1', status: 'approved' },
 			mediaItem: mediaItem({ id: 'media-2' })
@@ -191,7 +220,7 @@ describe('media actions (SCN-MEDIA-001)', () => {
 
 		expect(shell.mediaItems.map((item) => item.id)).toEqual(['media-2']);
 		expect(shell.releaseResults).toEqual({});
-		expect(shell.activities).toEqual([]);
+		expect(actionDeps.removeActivityForMedia).toHaveBeenCalledWith('media-1');
 		expect(shell.selectedMediaItemId).toBeUndefined();
 		expect(shell.mediaRequests[0]).toMatchObject({ id: 'request-1', status: 'approved' });
 		expect(navigationMock.goto).toHaveBeenCalledWith('/movies');
