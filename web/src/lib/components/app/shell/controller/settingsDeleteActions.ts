@@ -13,9 +13,11 @@ import { createSettingsEntityDeleteActions } from './settingsEntityDeleteActions
 import { errorMessageFrom, omitResult } from './helpers';
 import { createSettingsLibraryScanActions } from './settingsLibraryScanActions';
 import type { AppShellState } from './state.svelte';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
 
 interface SettingsDeleteDeps {
 	clearNotice: () => void;
+	runMutation?: RunCommandMutation;
 	loadSettings: () => Promise<void>;
 	refreshMediaItems?: () => Promise<void>;
 	removeLanguage?: (_code: string) => void;
@@ -37,6 +39,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 	const loadSettings = deps.loadSettings;
 	const entityDeleteActions = createSettingsEntityDeleteActions(state, {
 		clearNotice,
+		runMutation: deps.runMutation,
 		removeLanguage: deps.removeLanguage,
 		removeTag: deps.removeTag,
 		removeUser: deps.removeUser,
@@ -46,14 +49,16 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 	});
 	const libraryScanActions = createSettingsLibraryScanActions(state, {
 		clearNotice,
+		runMutation: deps.runMutation,
 		refreshMediaItems: deps.refreshMediaItems ?? (async () => {}),
 		upsertScan: deps.upsertLibraryScan ?? (() => {})
 	});
+	const runMutation = deps.runMutation ?? ((command) => command());
 	async function deleteDownloadClient(id: string) {
 		clearNotice();
 
 		try {
-			await deleteDownloadClientRequest(id);
+			await runMutation(() => deleteDownloadClientRequest(id));
 			if (state.downloadForm.id === id) {
 				state.downloadForm = emptyDownloadClientForm();
 			}
@@ -69,7 +74,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 		clearNotice();
 
 		try {
-			await deleteIndexerRequest(id);
+			await runMutation(() => deleteIndexerRequest(id));
 			if (state.indexerForm.id === id) {
 				state.indexerForm = emptyIndexerForm();
 			}
@@ -86,7 +91,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 		clearNotice();
 
 		try {
-			await deleteSubtitleProviderRequest(id);
+			await runMutation(() => deleteSubtitleProviderRequest(id));
 			if (state.subtitleProviderForm.id === id) {
 				state.subtitleProviderForm = emptySubtitleProviderForm();
 			}
@@ -103,7 +108,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 		clearNotice();
 
 		try {
-			await deleteLibraryFolderRequest(id);
+			await runMutation(() => deleteLibraryFolderRequest(id));
 			deps.removeLibraryFolder?.(id);
 			deps.removeLibraryScan?.(id);
 			if (state.openLibraryFolderId === id) {

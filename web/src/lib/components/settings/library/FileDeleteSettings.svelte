@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -8,7 +7,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
-	import { getFileDeleteSettings, updateFileDeleteSettings } from './filePoliciesApi';
+	import { createFileDeleteResource } from '$lib/features/settings/resources/filePolicies.svelte';
 	import type { FileDeleteMode, FileDeleteSettingsRequest } from '$lib/settings/types';
 
 	const modeOptions: { value: FileDeleteMode; label: string; description: string }[] = [
@@ -22,8 +21,7 @@
 	];
 
 	let form = $state<FileDeleteSettingsRequest>({ mode: 'permanent', recycleFolder: '.recycle' });
-	let loading = $state(true);
-	let saving = $state(false);
+	const resource = createFileDeleteResource();
 	let message = $state('');
 	let errorMessage = $state('');
 	const selectedMode = $derived(modeOptions.find((option) => option.value === form.mode));
@@ -34,21 +32,23 @@
 			!form.recycleFolder.split('/')[0]?.startsWith('.')
 	);
 
+	const loading = $derived(resource.query.isPending || resource.query.isFetching);
+	const saving = $derived(resource.save.isPending);
 	onMount(() => {
 		void loadSettings();
 	});
 
 	async function loadSettings() {
-		loading = true;
 		message = '';
 		errorMessage = '';
 		try {
-			const settings = await getFileDeleteSettings();
+			const { data: settings } = await resource.query.refetch();
+			if (!settings) return;
 			form = { mode: settings.mode, recycleFolder: settings.recycleFolder };
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load file delete settings';
 		} finally {
-			loading = false;
+			/* query owns loading state */
 		}
 	}
 
@@ -60,9 +60,8 @@
 			errorMessage = 'Recycle folder must be a hidden relative folder';
 			return;
 		}
-		saving = true;
 		try {
-			const settings = await updateFileDeleteSettings({
+			const settings = await resource.save.mutateAsync({
 				mode: form.mode,
 				recycleFolder: form.recycleFolder.trim()
 			});
@@ -71,7 +70,7 @@
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not save file delete settings';
 		} finally {
-			saving = false;
+			/* mutation owns saving state */
 		}
 	}
 </script>

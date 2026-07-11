@@ -21,11 +21,12 @@ import type { AppShellState } from '../state.svelte';
 import type { MediaDeps } from './types';
 
 export function createMediaLibraryActions(state: AppShellState, deps: MediaDeps) {
+	const runMutation = deps.runMutation ?? ((command) => command());
 	async function autoSearchMedia(item: MediaItem) {
 		state.searchingItemId = item.id;
 		deps.clearNotice();
 		try {
-			const job = await enqueueMediaAutomaticSearchRequest(item.id);
+			const job = await runMutation(() => enqueueMediaAutomaticSearchRequest(item.id));
 			state.message = `${job.message} (#${job.jobId})`;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not enqueue automatic search');
@@ -38,7 +39,7 @@ export function createMediaLibraryActions(state: AppShellState, deps: MediaDeps)
 		state.scanningMediaItemId = item.id;
 		deps.clearNotice();
 		try {
-			const updated = await rescanMediaItemFilesRequest(item.id);
+			const updated = await runMutation(() => rescanMediaItemFilesRequest(item.id));
 			deps.upsertMediaItem(updated);
 			state.message = `File scan completed: ${updated.filePaths.length} media, ${updated.metadataFilePaths.length} metadata`;
 		} catch (error) {
@@ -51,7 +52,7 @@ export function createMediaLibraryActions(state: AppShellState, deps: MediaDeps)
 	async function deleteMediaFile(item: MediaItem, path: string) {
 		deps.clearNotice();
 		try {
-			deps.upsertMediaItem(await deleteMediaItemFileRequest(item.id, path));
+			deps.upsertMediaItem(await runMutation(() => deleteMediaItemFileRequest(item.id, path)));
 			state.message = 'Media file deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete media file');
@@ -61,7 +62,9 @@ export function createMediaLibraryActions(state: AppShellState, deps: MediaDeps)
 	async function deleteMediaFileTrack(item: MediaItem, request: MediaFileTrackDeleteRequest) {
 		deps.clearNotice();
 		try {
-			deps.upsertMediaItem(await deleteMediaItemFileTrackRequest(item.id, request));
+			deps.upsertMediaItem(
+				await runMutation(() => deleteMediaItemFileTrackRequest(item.id, request))
+			);
 			state.message = 'Embedded track deleted';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not delete embedded track');
@@ -77,7 +80,7 @@ export function createMediaLibraryActions(state: AppShellState, deps: MediaDeps)
 		deps.mapMediaItems((entry) => (entry.id === optimistic.id ? optimistic : entry));
 		state.message = message;
 		try {
-			const updated = await updateMediaItemRequest(item.id, request);
+			const updated = await runMutation(() => updateMediaItemRequest(item.id, request));
 			deps.mapMediaItems((entry) => (entry.id === updated.id ? updated : entry));
 			state.message = message;
 		} catch (error) {
@@ -106,7 +109,7 @@ export function createMediaLibraryActions(state: AppShellState, deps: MediaDeps)
 		state.deletingMediaItemId = item.id;
 		deps.clearNotice();
 		try {
-			await deleteMediaItemRequest(item.id, { keepFiles });
+			await runMutation(() => deleteMediaItemRequest(item.id, { keepFiles }));
 			deps.removeMediaItem(item.id);
 			deps.removeReleaseResults(item.id);
 			deps.removeActivityForMedia(item.id);

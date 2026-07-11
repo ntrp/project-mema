@@ -7,21 +7,21 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import * as Table from '$lib/components/ui/table';
-	import { applyMediaRename, previewMediaRename } from '$lib/features/library/filesApi';
-	import { getFileNamingSettings } from '$lib/components/settings/library/filePoliciesApi';
+	import { createMediaRenameResource } from '$lib/features/library/resources/fileRename.svelte';
 	import { defaultFileNamingTemplates } from '$lib/settings/fileNamingTemplates';
 	import { relativePath } from '$lib/components/app/media/files/mediaFilePath';
-	import type { FileNamingSettings, MediaItem, MediaRenamePreviewRow } from '$lib/settings/types';
+	import type { MediaItem, MediaRenamePreviewRow } from '$lib/settings/types';
 
 	type Props = { item: MediaItem; onClose: () => void; onApplied?: () => void };
 
 	let { item, onClose, onApplied = () => {} }: Props = $props();
 	let open = $state(true);
-	let rows = $state<MediaRenamePreviewRow[]>([]);
+	const resource = createMediaRenameResource(() => item.id);
+	const rows = $derived(resource.preview.data?.rows ?? []);
 	let selected = $state<Record<string, boolean>>({});
-	let settings = $state<FileNamingSettings>();
-	let loading = $state(false);
-	let applying = $state(false);
+	const settings = $derived(resource.naming.data);
+	const loading = $derived(resource.preview.isFetching || resource.naming.isFetching);
+	const applying = $derived(resource.apply.isPending);
 	let errorMessage = $state<string | undefined>();
 
 	const rootPath = $derived(item.mediaFolderPath ?? '-');
@@ -44,40 +44,32 @@
 	}
 
 	async function load() {
-		loading = true;
 		errorMessage = undefined;
 		try {
-			const [preview, fileNaming] = await Promise.all([
-				previewMediaRename(item.id),
-				getFileNamingSettings()
-			]);
-			rows = preview.rows;
-			settings = fileNaming;
+			const [preview] = await Promise.all([resource.preview.refetch(), resource.naming.refetch()]);
+			if (!preview.data) return;
 			selected = Object.fromEntries(
-				preview.rows.filter((row) => row.status === 'safe').map((row) => [row.currentPath, true])
+				preview.data.rows
+					.filter((row) => row.status === 'safe')
+					.map((row) => [row.currentPath, true])
 			);
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not preview rename';
 		} finally {
-			loading = false;
+			/* queries own loading state */
 		}
 	}
 
 	async function applySelected() {
-		applying = true;
 		errorMessage = undefined;
 		try {
-			const result = await applyMediaRename(
-				item.id,
-				selectedPaths.map((row) => row.currentPath)
-			);
-			rows = result.rows;
+			const result = await resource.apply.mutateAsync(selectedPaths.map((row) => row.currentPath));
 			selected = {};
 			if (result.appliedCount > 0) onApplied();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not apply rename';
 		} finally {
-			applying = false;
+			/* mutation owns pending state */
 		}
 	}
 

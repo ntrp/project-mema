@@ -16,7 +16,8 @@ export function createCatalogSaveActions({
 	clearNotice,
 	loadSettings,
 	loadMediaItems,
-	mediaItems
+	mediaItems,
+	runMutation = (command) => command()
 }: SettingsSaveContext) {
 	async function saveTag(event: SubmitEvent) {
 		event.preventDefault();
@@ -24,7 +25,7 @@ export function createCatalogSaveActions({
 		clearNotice();
 
 		try {
-			await saveTagFocusedRequest(state.tagForm);
+			await runMutation(() => saveTagFocusedRequest(state.tagForm));
 			state.tagForm = emptyTagForm();
 			state.message = 'Tag saved';
 			await loadSettings();
@@ -41,7 +42,7 @@ export function createCatalogSaveActions({
 		clearNotice();
 
 		try {
-			await saveLanguageRequest(state.languageForm);
+			await runMutation(() => saveLanguageRequest(state.languageForm));
 			state.languageForm = emptyLanguageForm();
 			state.message = 'Language saved';
 			await loadSettings();
@@ -62,7 +63,7 @@ export function createCatalogSaveActions({
 		);
 
 		try {
-			await saveMediaProfileRequest(state.mediaProfileForm);
+			await runMutation(() => saveMediaProfileRequest(state.mediaProfileForm));
 			state.mediaProfileForm = emptyMediaProfileForm();
 			state.message = 'Profile saved';
 			await loadSettings();
@@ -82,7 +83,7 @@ export function createCatalogSaveActions({
 		clearNotice();
 
 		try {
-			await saveCustomFormatRequest(state.customFormatForm);
+			await runMutation(() => saveCustomFormatRequest(state.customFormatForm));
 			state.customFormatForm = emptyCustomFormatForm();
 			state.message = 'Custom format saved';
 			await loadSettings();
@@ -98,7 +99,7 @@ export function createCatalogSaveActions({
 		clearNotice();
 
 		try {
-			await saveCustomFormatRequest(format);
+			await runMutation(() => saveCustomFormatRequest(format));
 			state.message = 'Custom format imported';
 			await loadSettings();
 		} catch (error) {

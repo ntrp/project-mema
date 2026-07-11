@@ -1,19 +1,16 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
 	import MediaProfileEditorForm from '$lib/components/settings/profiles/MediaProfileEditorForm.svelte';
+	import { createQualitySizeResources } from '$lib/components/settings/quality/resources.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import { getAppShellContext } from '$lib/features/app/appShellContext';
 	import { emptyMediaProfileForm, mediaProfileFormFromProfile } from '$lib/settings/forms';
-	import type { MediaProfile, MediaProfileForm, QualitySizeSetting } from '$lib/settings/types';
+	import type { MediaProfile, MediaProfileForm } from '$lib/settings/types';
 	import { errorMessageFrom } from '$lib/components/app/shell/controller/helpers';
-	import {
-		loadMediaProfileQualities,
-		returnToMediaProfiles,
-		saveMediaProfileForm
-	} from './mediaProfileRouteHelpers';
+	import { returnToMediaProfiles } from './mediaProfileRouteHelpers';
+	import { createProfileEditorResources } from './profileEditorResources.svelte';
 
 	interface Props {
 		profileId: string;
@@ -21,38 +18,19 @@
 
 	let { profileId }: Props = $props();
 	const app = getAppShellContext();
-	let form = $state<MediaProfileForm>(emptyMediaProfileForm());
-	let activeProfileId = $state('');
-	let qualities = $state<QualitySizeSetting[]>([]);
-	let loadingQualities = $state(false);
-	let qualityError = $state('');
+	const resources = createProfileEditorResources();
+	const profile = $derived(app.mediaProfiles.find((item: MediaProfile) => item.id === profileId));
+	let form = $derived<MediaProfileForm>(
+		profile ? mediaProfileFormFromProfile(profile) : emptyMediaProfileForm()
+	);
+	const qualitySizes = createQualitySizeResources();
+	const qualities = $derived(qualitySizes.query.data ?? []);
+	const loadingQualities = $derived(qualitySizes.query.isFetching);
+	const qualityError = $derived(qualitySizes.query.error?.message ?? '');
 	let saving = $state(false);
 	let saveError = $state('');
 
-	const profile = $derived(app.mediaProfiles.find((item: MediaProfile) => item.id === profileId));
 	const notFound = $derived(app.mediaProfiles.length > 0 && !profile);
-
-	onMount(() => {
-		void loadQualities();
-	});
-
-	$effect(() => {
-		if (!profile || activeProfileId === profile.id) return;
-		form = mediaProfileFormFromProfile(profile);
-		activeProfileId = profile.id;
-	});
-
-	async function loadQualities() {
-		loadingQualities = true;
-		qualityError = '';
-		try {
-			qualities = await loadMediaProfileQualities();
-		} catch (error) {
-			qualityError = errorMessageFrom(error, 'Could not load qualities');
-		} finally {
-			loadingQualities = false;
-		}
-	}
 
 	async function submitProfile(event: SubmitEvent) {
 		event.preventDefault();
@@ -60,7 +38,7 @@
 		saveError = '';
 		app.clearNotice();
 		try {
-			await saveMediaProfileForm(form);
+			await resources.save.mutateAsync(form);
 			app.message = 'Profile saved';
 			await app.loadSettingsSection('profiles');
 			await returnToMediaProfiles();

@@ -7,19 +7,22 @@ import type {
 } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
 
 interface MediaFulfillmentDeps {
 	clearNotice: () => void;
+	runMutation?: RunCommandMutation;
 	loadMediaItems: () => Promise<void>;
 }
 
 export function createMediaFulfillmentActions(state: AppShellState, deps: MediaFulfillmentDeps) {
+	const runMutation = deps.runMutation ?? ((command) => command());
 	async function enqueueMediaFulfillment(item: MediaItem, request: MediaFulfillmentActionRequest) {
 		deps.clearNotice();
 		const key = mediaFulfillmentActionKey(request);
 		state.pendingFulfillmentActions = { ...state.pendingFulfillmentActions, [key]: 0 };
 		try {
-			const job = await enqueueMediaFulfillmentAction(item.id, request);
+			const job = await runMutation(() => enqueueMediaFulfillmentAction(item.id, request));
 			if (key in state.pendingFulfillmentActions) {
 				state.pendingFulfillmentActions = { ...state.pendingFulfillmentActions, [key]: job.jobId };
 			}

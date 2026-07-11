@@ -1,49 +1,30 @@
 <script lang="ts">
-	import { searchMedia } from '$lib/settings/api';
 	import type { MediaSearchResult } from '$lib/settings/types';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Button } from '$lib/components/ui/button';
 	import { cn } from '$lib/utils';
+	import { createMediaLookupQuery } from '$lib/features/media/searchQueries.svelte';
 
 	interface Props {
 		value: string;
 	}
 
 	let { value = $bindable() }: Props = $props();
-	let results = $state<MediaSearchResult[]>([]);
-	let loading = $state(false);
 	let open = $state(false);
 	let selectedIndex = $state(-1);
-	let requestNumber = 0;
-
 	const trimmed = $derived(value.trim());
+	const search = createMediaLookupQuery(
+		'movie',
+		() => trimmed,
+		() => open
+	);
+	const results = $derived(search.data ?? []);
 	const selected = $derived(selectedIndex >= 0 ? results[selectedIndex] : undefined);
 
 	function handleInput() {
 		open = true;
 		selectedIndex = -1;
-		void searchMovies(trimmed);
-	}
-
-	async function searchMovies(query: string) {
-		const current = ++requestNumber;
-		if (query.length < 2) {
-			results = [];
-			loading = false;
-			return;
-		}
-		loading = true;
-		try {
-			const found = await searchMedia({ query, type: 'movie' });
-			if (current === requestNumber) {
-				results = found.slice(0, 6);
-			}
-		} finally {
-			if (current === requestNumber) {
-				loading = false;
-			}
-		}
 	}
 
 	function choose(result: MediaSearchResult) {
@@ -85,7 +66,6 @@
 		oninput={handleInput}
 		onfocus={() => {
 			open = true;
-			if (trimmed.length >= 2 && results.length === 0) void searchMovies(trimmed);
 		}}
 		onkeydown={handleKeydown}
 		onblur={() => {
@@ -120,7 +100,7 @@
 				{/each}
 			{:else}
 				<div class="px-2 py-1 text-xs font-bold text-muted-foreground uppercase">
-					{loading ? 'Searching' : 'No matches'}
+					{search.isFetching ? 'Searching' : 'No matches'}
 				</div>
 			{/if}
 		</div>

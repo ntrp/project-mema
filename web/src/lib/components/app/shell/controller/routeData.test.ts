@@ -25,6 +25,12 @@ describe('route data loading', () => {
 		);
 		expect(dependencies.loadSettingsSection).not.toHaveBeenCalled();
 	});
+
+	it('leaves profile loading to its route query', async () => {
+		const dependencies = deps();
+		await loadAppRouteData({ ...defaultRouteState(), view: 'profile' }, false, dependencies);
+		expect(dependencies.loadProfile).not.toHaveBeenCalled();
+	});
 });
 
 function deps(): RouteDataDeps {

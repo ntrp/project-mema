@@ -1,13 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
-
 	import MediaProfileTable from '$lib/components/settings/profiles/MediaProfileTable.svelte';
 	import SettingsAddButton from '$lib/components/settings/shared/SettingsAddButton.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import { Card } from '$lib/components/ui/card';
-	import { listQualitySizeSettings } from '$lib/components/settings/quality/api';
-	import type { MediaProfile, QualitySizeSetting } from '$lib/settings/types';
+	import { createQualitySizeResources } from '$lib/components/settings/quality/resources.svelte';
+	import type { MediaProfile } from '$lib/settings/types';
 
 	interface Props {
 		profiles: MediaProfile[];
@@ -17,22 +15,9 @@
 
 	let { profiles, deletingId, onDelete }: Props = $props();
 
-	let qualities = $state<QualitySizeSetting[]>([]);
-	let qualityError = $state('');
-
-	onMount(() => {
-		void loadQualities();
-	});
-
-	async function loadQualities() {
-		qualityError = '';
-		try {
-			const response = await listQualitySizeSettings();
-			qualities = response.qualities;
-		} catch (error) {
-			qualityError = error instanceof Error ? error.message : 'Could not load qualities';
-		}
-	}
+	const qualitySizes = createQualitySizeResources();
+	const qualities = $derived(qualitySizes.query.data ?? []);
+	const qualityError = $derived(qualitySizes.query.error?.message ?? '');
 </script>
 
 <Card class="p-5" aria-label="Profiles">

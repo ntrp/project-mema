@@ -4,6 +4,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { createQuery } from '@tanstack/svelte-query';
 	import { traceDLNADeliveryDecision, traceDLNAProfileMatch } from '$lib/settings/dlnaProfilesApi';
 	import type {
 		DLNAClientDiagnostic,
@@ -24,10 +25,6 @@
 	let { devices, overrides, profiles, selectedIp, mediaPath, onSelectedIp, onMediaPath }: Props =
 		$props();
 
-	let loading = $state(false);
-	let errorMessage = $state('');
-	let traceText = $state('Select a device, enter a media path, then run trace.');
-
 	const selectedDevice = $derived(devices.find((device) => device.ip === selectedIp));
 	const selectedOverride = $derived(
 		overrides.find((override) => override.ipAddress === selectedIp)
@@ -37,18 +34,21 @@
 			(profile) => profile.id === (selectedOverride?.profileId ?? selectedDevice?.profileId)
 		)
 	);
-
-	async function refreshTrace() {
-		loading = true;
-		errorMessage = '';
-		try {
-			const profileMatch = await traceDLNAProfileMatch({
+	const profileMatch = createQuery(() => ({
+		queryKey: ['settings', 'dlna', 'profile-trace', selectedIp, selectedDevice?.rendererUuid],
+		queryFn: () =>
+			traceDLNAProfileMatch({
 				deviceIp: selectedIp || undefined,
 				rendererUuid: selectedDevice?.rendererUuid || undefined,
 				friendlyName: selectedDevice?.friendlyName || undefined,
 				userAgent: selectedDevice?.userAgent || undefined
-			});
-			const deliveryDecision = await traceDLNADeliveryDecision({
+			}),
+		enabled: false
+	}));
+	const delivery = createQuery(() => ({
+		queryKey: ['settings', 'dlna', 'delivery-trace', selectedIp, selectedProfile?.id, mediaPath],
+		queryFn: () =>
+			traceDLNADeliveryDecision({
 				deviceIp: selectedIp || undefined,
 				profileId: selectedProfile?.id,
 				mediaPath: mediaPath || undefined,
@@ -56,13 +56,23 @@
 				resourceId: selectedDevice?.lastResourceId || undefined,
 				streamMode: selectedDevice?.lastStreamMode || undefined,
 				userAgent: selectedDevice?.userAgent || undefined
-			});
-			traceText = JSON.stringify({ profileMatch, deliveryDecision }, null, 2);
-		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Could not run DLNA trace';
-		} finally {
-			loading = false;
-		}
+			}),
+		enabled: false
+	}));
+	const loading = $derived(profileMatch.isFetching || delivery.isFetching);
+	const errorMessage = $derived(profileMatch.error?.message ?? delivery.error?.message ?? '');
+	const traceText = $derived(
+		profileMatch.data && delivery.data
+			? JSON.stringify(
+					{ profileMatch: profileMatch.data, deliveryDecision: delivery.data },
+					null,
+					2
+				)
+			: 'Select a device, enter a media path, then run trace.'
+	);
+
+	async function refreshTrace() {
+		await Promise.all([profileMatch.refetch(), delivery.refetch()]);
 	}
 </script>
 

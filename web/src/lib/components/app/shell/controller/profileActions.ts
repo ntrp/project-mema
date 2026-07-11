@@ -1,13 +1,14 @@
-import {
-	getProfile as getProfileRequest,
-	updateProfile as updateProfileRequest
-} from '$lib/profile/profileApi';
+import { updateProfile as updateProfileRequest } from '$lib/profile/profileApi';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
+import type { UserProfile } from '$lib/profile/types';
 import type { UserProfileUpdateRequest } from '$lib/profile/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 
 interface ProfileDeps {
 	clearNotice: () => void;
+	loadProfile: () => Promise<UserProfile>;
+	runMutation: RunCommandMutation;
 }
 
 export function createProfileActions(state: AppShellState, deps: ProfileDeps) {
@@ -17,7 +18,7 @@ export function createProfileActions(state: AppShellState, deps: ProfileDeps) {
 		state.loadingProfile = true;
 		state.profileErrorMessage = '';
 		try {
-			state.profile = await getProfileRequest();
+			state.profile = await deps.loadProfile();
 		} catch (error) {
 			state.profileErrorMessage = errorMessageFrom(error, 'Could not load profile');
 		} finally {
@@ -30,7 +31,7 @@ export function createProfileActions(state: AppShellState, deps: ProfileDeps) {
 		state.profileErrorMessage = '';
 		clearNotice();
 		try {
-			const profile = await updateProfileRequest(request);
+			const profile = await deps.runMutation(() => updateProfileRequest(request));
 			state.profile = profile;
 			state.currentUser = {
 				id: profile.id,

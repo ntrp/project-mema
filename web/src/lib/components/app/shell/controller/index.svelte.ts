@@ -19,18 +19,20 @@ import {
 } from '$lib/features/discovery/content/query.svelte';
 import { AppShellState } from './state.svelte';
 import { defaultRouteState, type AppRouteState } from './routeState';
+import { createResourceEnablement } from './resourceEnablement';
 
 export type { PeopleSectionKind, RelatedSectionKind } from './types';
 export type { AppRouteState } from './routeState';
 
 export function createAppShellController(route: AppRouteState = defaultRouteState()) {
 	const state = new AppShellState(route);
+	const enabled = createResourceEnablement(state);
 	const resources = createControllerResourceRuntime(state, useQueryClient());
 	const activityCache = createActivityCache(useQueryClient());
 	const libraryCache = createLibraryCache(useQueryClient());
 	const releaseCache = createReleaseCache(useQueryClient());
 	const discoverBlacklistCache = createDiscoverBlacklistCache(useQueryClient());
-	const discoverBlacklist = createDiscoverBlacklistQuery(() => state.isAdmin);
+	const discoverBlacklist = createDiscoverBlacklistQuery(enabled.discovery);
 	const discoverContentCache = createDiscoverContentCache(useQueryClient());
 	const discoverSections = createDiscoverSectionsQuery(
 		() =>

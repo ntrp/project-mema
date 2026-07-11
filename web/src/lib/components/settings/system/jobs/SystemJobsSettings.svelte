@@ -5,8 +5,9 @@
 	import SystemJobLogsDialog from './SystemJobLogsDialog.svelte';
 	import SystemJobsLiveSections from './SystemJobsLiveSections.svelte';
 	import { SystemJobsController } from './systemJobsController.svelte';
+	import { createSystemJobsOperations } from '$lib/features/settings/resources/systemJobs.svelte';
 
-	const controller = new SystemJobsController();
+	const controller = new SystemJobsController(createSystemJobsOperations());
 	const reloadDelayMs = 180;
 	let mounted = false;
 	const filterKey = $derived(

@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { subscribeToAppEvent } from '$lib/app/realtime/appEventSource';
-	import { listSystemEvents } from '$lib/components/settings/system/events/api';
+	import { createEventNotificationsResource } from '$lib/features/settings/resources/eventNotifications.svelte';
 	import { formatCompactDateTime } from '$lib/settings/dateFormat';
 	import type { SystemEvent } from '$lib/settings/types';
 	import SystemEventSeverityIcon from '$lib/components/settings/system/events/SystemEventSeverityIcon.svelte';
@@ -13,8 +13,13 @@
 	const maxEvents = 20;
 
 	let open = $state(false);
-	let events = $state<SystemEvent[]>([]);
-	let loaded = $state(false);
+	const resource = createEventNotificationsResource(() => open);
+	const events = $derived(
+		(resource.query.data?.events ?? []).filter(
+			(event) => event.severity === 'warning' || event.severity === 'error'
+		)
+	);
+	const loaded = $derived(!resource.query.isPending && !resource.query.isFetching);
 
 	const visibleEvents = $derived(events.slice(0, maxEvents));
 	const errorTotal = $derived(events.filter((event) => event.severity === 'error').length);
@@ -26,19 +31,19 @@
 				if (!nextEvent || (nextEvent.severity !== 'warning' && nextEvent.severity !== 'error')) {
 					return;
 				}
-				events = [nextEvent, ...events.filter((item) => item.id !== nextEvent.id)];
+				resource.created(nextEvent);
 			}
 		);
 		const unsubscribeDeleted = subscribeToAppEvent<{ id: string }>(
 			'system.event.deleted',
 			({ data: deleted }) => {
 				if (deleted?.id) {
-					events = events.filter((item) => item.id !== deleted.id);
+					resource.deleted(deleted.id);
 				}
 			}
 		);
 		const unsubscribeCleared = subscribeToAppEvent('system.events.cleared', () => {
-			events = [];
+			resource.cleared();
 		});
 		return () => {
 			unsubscribeCreated();
@@ -48,21 +53,7 @@
 	});
 
 	function handleOpenChange(nextOpen: boolean) {
-		if (nextOpen) void load();
-	}
-
-	async function load() {
-		loaded = false;
-		try {
-			const response = await listSystemEvents();
-			events = response.events.filter(
-				(event) => event.severity === 'warning' || event.severity === 'error'
-			);
-		} catch {
-			events = [];
-		} finally {
-			loaded = true;
-		}
+		if (nextOpen) void resource.query.refetch();
 	}
 </script>
 

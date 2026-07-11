@@ -2,7 +2,7 @@
 	import { onMount, tick } from 'svelte';
 
 	import { Card } from '$lib/components/ui/card';
-	import { getSystemLogLevel, updateSystemLogLevel } from './api';
+	import { createLogLevelResource } from '$lib/features/settings/resources/systemGeneral.svelte';
 	import type { SystemLogEntry, SystemLogLevel } from '$lib/settings/types';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import SystemLogRow from './SystemLogRow.svelte';
@@ -24,8 +24,9 @@
 
 	let entries = $state<SystemLogEntry[]>([]);
 	let level = $state<SystemLogLevel>('info');
-	let loading = $state(true);
-	let saving = $state(false);
+	const levelResource = createLogLevelResource();
+	const loading = $derived(levelResource.query.isPending || levelResource.query.isFetching);
+	const saving = $derived(levelResource.save.isPending);
 	let errorMessage = $state('');
 	let followLogs = $state(true);
 	let logViewport = $state<HTMLDivElement>();
@@ -58,29 +59,28 @@
 	});
 
 	async function loadLevel() {
-		loading = true;
 		errorMessage = '';
 		try {
-			const response = await getSystemLogLevel();
+			const { data: response } = await levelResource.query.refetch();
+			if (!response) return;
 			level = response.level;
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load log level';
 		} finally {
-			loading = false;
+			/* query owns loading state */
 		}
 	}
 
 	async function changeLevel(value: string) {
 		const nextLevel = value as SystemLogLevel;
-		saving = true;
 		errorMessage = '';
 		try {
-			const response = await updateSystemLogLevel(nextLevel);
+			const response = await levelResource.save.mutateAsync(nextLevel);
 			level = response.level;
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not update log level';
 		} finally {
-			saving = false;
+			/* mutation owns saving state */
 		}
 	}
 
@@ -114,6 +114,11 @@
 
 	function clearLogs() {
 		entries = [];
+	}
+
+	function trackViewport(node: HTMLDivElement) {
+		logViewport = node;
+		return { destroy: () => (logViewport = undefined) };
 	}
 
 	function enableFollow() {
@@ -153,7 +158,7 @@
 	<div
 		class="h-[min(58vh,620px)] overflow-auto bg-background px-1 py-px font-mono"
 		data-log-viewer
-		bind:this={logViewport}
+		{@attach trackViewport}
 		onscroll={handleLogScroll}
 		aria-live="polite"
 		aria-label="Application logs"

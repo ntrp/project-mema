@@ -14,28 +14,34 @@ export const serverResourceKeys = {
 
 export function createServerResourceRuntime(
 	client: QueryClient,
-	authenticated: () => boolean,
-	admin: () => boolean
+	enabled: { indexerSearch: () => boolean; metadataCache: () => boolean; profile: () => boolean }
 ) {
 	const indexerSearch = createQuery(() => ({
 		queryKey: serverResourceKeys.indexerSearch(),
 		queryFn: () => getIndexerSearch(),
-		enabled: authenticated() && admin()
+		enabled: enabled.indexerSearch()
 	}));
 	const metadataCache = createQuery(() => ({
 		queryKey: serverResourceKeys.metadataCache(),
 		queryFn: () => getMetadataCache(),
-		enabled: authenticated() && admin()
+		enabled: enabled.metadataCache()
 	}));
 	const profile = createQuery(() => ({
 		queryKey: serverResourceKeys.profile(),
 		queryFn: getProfile,
-		enabled: authenticated()
+		enabled: enabled.profile()
 	}));
+	async function refetchProfile() {
+		const result = await profile.refetch();
+		if (result.error) throw result.error;
+		if (!result.data) throw new Error('Profile request did not return a result');
+		return result.data;
+	}
 	return {
 		indexerSearch,
 		metadataCache,
 		profile,
+		refetchProfile,
 		setIndexerSearch: (value: IndexerSearchResponse) =>
 			client.setQueryData(serverResourceKeys.indexerSearch(), value),
 		setMetadataCache: (value: MetadataCacheResponse) =>

@@ -20,7 +20,7 @@ import { renderWithTooltip } from './renderHelpers';
 
 describe('rendered library settings (SCN-LIBRARY-004)', () => {
 	it('renders file naming defaults and examples', () => {
-		const { body } = render(FileNamingSettings);
+		const { body } = renderWithTooltip(FileNamingSettings, {});
 
 		expect(body).toContain('File Naming');
 		expect(body).toContain('Movie');
@@ -131,7 +131,7 @@ describe('rendered system and quality settings (SCN-SETTINGS-009)', () => {
 
 	it('renders initial system status and log file states', () => {
 		const status = renderWithTooltip(SystemStatusSettings, {});
-		const logFiles = render(SystemLogFilesSettings);
+		const logFiles = renderWithTooltip(SystemLogFilesSettings, {});
 
 		expect(status.body).toContain('About');
 		expect(status.body).toContain('Loading system status');

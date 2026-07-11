@@ -12,21 +12,26 @@ import type {
 import { errorMessageFrom } from './helpers';
 import { createSearchCacheActions } from './searchCacheActions';
 import type { AppShellState } from './state.svelte';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
+import type { QueryClient } from '@tanstack/svelte-query';
 
 interface SettingsTestCacheDeps {
 	clearNotice: () => void;
 	loadSettings: () => Promise<void>;
+	runMutation?: RunCommandMutation;
+	queryClient?: QueryClient;
 }
 
 export function createSettingsTestCacheActions(state: AppShellState, deps: SettingsTestCacheDeps) {
 	const clearNotice = deps.clearNotice;
 	const loadSettings = deps.loadSettings;
-	const cacheActions = createSearchCacheActions(state, clearNotice);
+	const runMutation = deps.runMutation ?? ((command) => command());
+	const cacheActions = createSearchCacheActions(state, clearNotice, runMutation, deps.queryClient);
 	async function testDownloadClientConfig(form: DownloadClientFormValue) {
 		clearNotice();
 
 		try {
-			return await testDownloadClientConfigRequest(form);
+			return await runMutation(() => testDownloadClientConfigRequest(form));
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not test download client');
 			throw error;
@@ -38,7 +43,7 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		state.testingIndexerId = id;
 
 		try {
-			const result = await testIndexerRequest(id);
+			const result = await runMutation(() => testIndexerRequest(id));
 			state.indexerTests = { ...state.indexerTests, [id]: result };
 			await loadSettings();
 		} catch (error) {
@@ -52,7 +57,7 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		clearNotice();
 
 		try {
-			return await testIndexerConfigRequest(form);
+			return await runMutation(() => testIndexerConfigRequest(form));
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not test indexer');
 			throw error;
@@ -64,7 +69,7 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		state.testingMetadataProviderId = id;
 
 		try {
-			const result = await testMetadataProviderRequest(id);
+			const result = await runMutation(() => testMetadataProviderRequest(id));
 			state.metadataProviderTests = { ...state.metadataProviderTests, [id]: result };
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not test metadata provider');
@@ -78,7 +83,7 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		state.testingSubtitleProviderId = id;
 
 		try {
-			const result = await testSubtitleProviderRequest(id);
+			const result = await runMutation(() => testSubtitleProviderRequest(id));
 			state.subtitleProviderTests = { ...state.subtitleProviderTests, [id]: result };
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not test subtitle provider');

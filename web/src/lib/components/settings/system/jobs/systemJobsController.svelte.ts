@@ -25,8 +25,10 @@ import {
 	updateScheduleFromExecution,
 	upsertExecution
 } from './systemJobsState';
+import type { SystemJobsOperations } from '$lib/features/settings/resources/systemJobs.svelte';
 
 export class SystemJobsController {
+	constructor(public readonly operations: SystemJobsOperations) {}
 	schedules = $state<SystemJobSchedule[]>([]);
 	oneShotJobs = $state<SystemJobExecution[]>([]);
 	history = $state<SystemJobExecution[]>([]);

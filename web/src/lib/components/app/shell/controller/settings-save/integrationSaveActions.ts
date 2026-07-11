@@ -19,7 +19,8 @@ import type { SettingsSaveContext } from './types';
 export function createIntegrationSaveActions({
 	state,
 	clearNotice,
-	loadSettings
+	loadSettings,
+	runMutation = (command) => command()
 }: SettingsSaveContext) {
 	async function saveDownloadClient(event: SubmitEvent) {
 		event.preventDefault();
@@ -27,7 +28,7 @@ export function createIntegrationSaveActions({
 		clearNotice();
 
 		try {
-			await saveDownloadClientRequest(state.downloadForm);
+			await runMutation(() => saveDownloadClientRequest(state.downloadForm));
 			state.downloadForm = emptyDownloadClientForm();
 			state.message = 'Download client saved';
 			await loadSettings();
@@ -44,7 +45,7 @@ export function createIntegrationSaveActions({
 		clearNotice();
 
 		try {
-			await saveIndexerRequest(state.indexerForm);
+			await runMutation(() => saveIndexerRequest(state.indexerForm));
 			state.indexerForm = emptyIndexerForm();
 			state.message = 'Indexer saved';
 			await loadSettings();
@@ -60,7 +61,7 @@ export function createIntegrationSaveActions({
 		clearNotice();
 
 		try {
-			await saveMetadataProviderRequest(form);
+			await runMutation(() => saveMetadataProviderRequest(form));
 			state.message = 'Metadata provider saved';
 			await loadSettings();
 		} catch (error) {
@@ -75,7 +76,7 @@ export function createIntegrationSaveActions({
 		clearNotice();
 
 		try {
-			await saveSubtitleProviderRequest(form);
+			await runMutation(() => saveSubtitleProviderRequest(form));
 			state.subtitleProviderForm = emptySubtitleProviderForm();
 			state.message = 'Subtitle provider saved';
 			await loadSettings();

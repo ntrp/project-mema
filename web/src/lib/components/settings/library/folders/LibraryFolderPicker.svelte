@@ -2,7 +2,7 @@
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
-	import { createLibraryFolderOption, listLibraryFolderOptions } from '$lib/settings/api';
+	import { createFolderBrowserResources } from './folderBrowser.svelte';
 	import { onMount } from 'svelte';
 	import LibraryFolderCreateForm from './LibraryFolderCreateForm.svelte';
 	import LibraryFolderTree from './LibraryFolderTree.svelte';
@@ -14,6 +14,7 @@
 	} from './libraryFolderTree';
 
 	let { initialPath, onClose, onUse }: LibraryFolderPickerProps = $props();
+	const resources = createFolderBrowserResources();
 	let pickerLoading = $state(false);
 	let pickerError = $state('');
 	let rootPath = $state('');
@@ -34,7 +35,7 @@
 		pickerError = '';
 		createFolderError = '';
 		try {
-			const response = await listLibraryFolderOptions(path);
+			const response = await resources.load(path);
 			const root = createNode(
 				{ name: response.currentPath, path: response.currentPath },
 				undefined,
@@ -75,7 +76,7 @@
 
 		treeNodes = { ...treeNodes, [path]: { ...node, loading: true, error: '' } };
 		try {
-			const response = await listLibraryFolderOptions(path);
+			const response = await resources.load(path);
 			const children = response.entries.map((entry) => entry.path);
 			const nextNodes = {
 				...treeNodes,
@@ -126,7 +127,7 @@
 		creatingFolder = true;
 		createFolderError = '';
 		try {
-			const created = await createLibraryFolderOption(parentPath, name);
+			const created = await resources.create.mutateAsync({ parentPath, name });
 			newFolderName = '';
 			await refreshNode(parentPath, created.path);
 		} catch (error) {

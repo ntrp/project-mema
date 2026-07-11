@@ -14,7 +14,8 @@ export function createLibraryUserSaveActions({
 	users,
 	upsertLibraryFolder,
 	upsertPathMapping,
-	upsertLibraryScan
+	upsertLibraryScan,
+	runMutation = (command) => command()
 }: SettingsSaveContext) {
 	async function saveLibraryFolder(event: SubmitEvent) {
 		event.preventDefault();
@@ -22,7 +23,7 @@ export function createLibraryUserSaveActions({
 		clearNotice();
 
 		try {
-			const result = await saveLibraryFolderRequest(state.libraryFolderForm);
+			const result = await runMutation(() => saveLibraryFolderRequest(state.libraryFolderForm));
 			state.libraryFolderForm = emptyLibraryFolderForm();
 			upsertLibraryFolder?.(result.folder);
 			upsertLibraryScan?.(result.scan);
@@ -41,7 +42,7 @@ export function createLibraryUserSaveActions({
 		clearNotice();
 
 		try {
-			const mapping = await savePathMappingRequest(state.pathMappingForm);
+			const mapping = await runMutation(() => savePathMappingRequest(state.pathMappingForm));
 			state.pathMappingForm = emptyPathMappingForm();
 			upsertPathMapping?.(mapping);
 			state.message = 'Path mapping saved';
@@ -58,7 +59,7 @@ export function createLibraryUserSaveActions({
 		clearNotice();
 
 		try {
-			await saveUserRequest(state.userForm);
+			await runMutation(() => saveUserRequest(state.userForm));
 			state.userForm = emptyUserForm();
 			state.message = 'User saved';
 			await loadSettings();

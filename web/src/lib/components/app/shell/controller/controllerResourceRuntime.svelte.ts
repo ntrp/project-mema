@@ -16,28 +16,25 @@ import {
 import { createLibraryScansRuntime } from '$lib/features/settings/libraryScans.svelte';
 import { createServerResourceRuntime } from '$lib/features/system/cacheResources.svelte';
 import type { AppShellState } from './state.svelte';
+import { createResourceEnablement } from './resourceEnablement';
 
 export function createControllerResourceRuntime(state: AppShellState, client: QueryClient) {
-	const admin = () => state.authenticated && state.isAdmin;
+	const enabled = createResourceEnablement(state);
 	const catalogCache = createSettingsCatalogCache(client);
 	const queries = {
-		languages: createLanguagesQuery(() => state.authenticated),
-		tags: createTagsQuery(() => state.authenticated),
-		users: createUsersQuery(admin),
-		downloadClients: createDownloadClientsQuery(admin),
-		indexers: createIndexersQuery(admin),
-		metadataProviders: createMetadataProvidersQuery(admin),
-		subtitleProviders: createSubtitleProvidersQuery(admin),
-		libraryFolders: createLibraryFoldersQuery(admin),
-		pathMappings: createPathMappingsQuery(admin),
-		mediaProfiles: createMediaProfilesQuery(admin),
-		customFormats: createCustomFormatsQuery(admin)
+		languages: createLanguagesQuery(enabled.languages),
+		tags: createTagsQuery(enabled.tags),
+		users: createUsersQuery(enabled.users),
+		downloadClients: createDownloadClientsQuery(enabled.downloadClients),
+		indexers: createIndexersQuery(enabled.indexers),
+		metadataProviders: createMetadataProvidersQuery(enabled.metadataProviders),
+		subtitleProviders: createSubtitleProvidersQuery(enabled.subtitleProviders),
+		libraryFolders: createLibraryFoldersQuery(enabled.libraryFolders),
+		pathMappings: createPathMappingsQuery(enabled.pathMappings),
+		mediaProfiles: createMediaProfilesQuery(enabled.mediaProfiles),
+		customFormats: createCustomFormatsQuery(enabled.customFormats)
 	};
-	const server = createServerResourceRuntime(
-		client,
-		() => state.authenticated,
-		() => state.isAdmin
-	);
+	const server = createServerResourceRuntime(client, enabled);
 	const scans = createLibraryScansRuntime(client);
 	Object.defineProperties(state, {
 		indexerSearch: {
@@ -57,5 +54,5 @@ export function createControllerResourceRuntime(state: AppShellState, client: Qu
 		Object.entries(queries).map(([name, query]) => [name, { get: () => query.data ?? [] }])
 	);
 	properties.libraryScansByFolder = { get: () => scans.scans.data ?? {} };
-	return { catalogCache, queries, server, scans, properties };
+	return { client, catalogCache, queries, server, scans, properties };
 }

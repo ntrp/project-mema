@@ -27,7 +27,12 @@
 	// svelte-ignore state_referenced_locally
 	let app = $state(createAppShellController(route));
 	setAppShellContext(app);
-	const library = createMediaItemsQuery();
+	const library = createMediaItemsQuery(
+		() =>
+			app.authenticated &&
+			app.activeView === 'home' &&
+			['movies', 'series'].includes(app.activeHomeSection)
+	);
 	const metadata = createMetadataDetailQuery({
 		provider: () => app.route.metadataProvider,
 		type: () => app.route.metadataType,

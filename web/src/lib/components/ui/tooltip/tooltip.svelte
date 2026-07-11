@@ -2,10 +2,7 @@
 	import { Tooltip as TooltipPrimitive } from 'bits-ui';
 	import { registerTouchTooltipRoot } from './tooltip-touch';
 
-	let {
-		open = $bindable(false),
-		...restProps
-	}: TooltipPrimitive.RootProps<T> = $props();
+	let { open = $bindable(false), ...restProps }: TooltipPrimitive.RootProps<T> = $props();
 	let rootOpen = $state(open);
 	let touchCloseTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
 	let touchOpenActive = false;
@@ -49,10 +46,6 @@
 	}
 </script>
 
-<span
-	use:touchTooltipRoot
-	data-slot="tooltip-root"
-	style="display: contents;"
->
+<span use:touchTooltipRoot data-slot="tooltip-root" style="display: contents;">
 	<TooltipPrimitive.Root open={rootOpen} onOpenChange={handleOpenChange} {...restProps} />
 </span>

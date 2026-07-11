@@ -7,23 +7,28 @@ import {
 	clearMetadataSearchHistory as clearMetadataSearchHistoryRequest,
 	deleteIndexerSearchCacheEntry as deleteIndexerSearchCacheEntryRequest,
 	deleteMetadataCacheEntry as deleteMetadataCacheEntryRequest,
-	getIndexerSearch as getIndexerSearchRequest,
-	getMetadataCache as getMetadataCacheRequest,
 	updateIndexerSearchSettings as updateIndexerSearchSettingsRequest
 } from '$lib/settings/api';
 import type { IndexerSearchCacheEntry, MetadataCacheEntry } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import { createSearchInspectionActions } from './searchInspectionActions';
 import type { AppShellState } from './state.svelte';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
+import type { QueryClient } from '@tanstack/svelte-query';
 
-export function createSearchCacheActions(state: AppShellState, clearNotice: () => void) {
-	const inspectionActions = createSearchInspectionActions(state, clearNotice);
+export function createSearchCacheActions(
+	state: AppShellState,
+	clearNotice: () => void,
+	runMutation: RunCommandMutation = (command) => command(),
+	queryClient?: QueryClient
+) {
+	const inspectionActions = createSearchInspectionActions(state, clearNotice, queryClient);
 
 	async function saveIndexerSearchSettings(settings = state.indexerSearch.settings) {
 		state.savingIndexerSearchSettings = true;
 		clearNotice();
 		try {
-			state.indexerSearch = await updateIndexerSearchSettingsRequest(settings);
+			state.indexerSearch = await runMutation(() => updateIndexerSearchSettingsRequest(settings));
 			state.message = 'Indexer search settings saved';
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not save indexer search settings');
@@ -111,8 +116,8 @@ export function createSearchCacheActions(state: AppShellState, clearNotice: () =
 		state.clearingIndexerSearchCache = true;
 		clearNotice();
 		try {
-			const deletedCount = await deleteRequest();
-			state.indexerSearch = await getIndexerSearchRequest();
+			const deletedCount = await runMutation(deleteRequest);
+			await inspectionActions.refreshIndexerSearch();
 			state.message = `${successPrefix}: ${deletedCount}${countLabel} entries deleted`;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, errorText);
@@ -130,8 +135,8 @@ export function createSearchCacheActions(state: AppShellState, clearNotice: () =
 		state.clearingMetadataCache = true;
 		clearNotice();
 		try {
-			const deletedCount = await deleteRequest();
-			state.metadataCache = await getMetadataCacheRequest();
+			const deletedCount = await runMutation(deleteRequest);
+			await inspectionActions.refreshMetadataCache();
 			state.message = `${successPrefix}: ${deletedCount}${countLabel} entries deleted`;
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, errorText);

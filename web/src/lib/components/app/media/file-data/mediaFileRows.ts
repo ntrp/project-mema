@@ -6,9 +6,7 @@ type MediaFileSubtitleSatisfaction = NonNullable<
 	NonNullable<MediaItem['files']>[number]['subtitleSatisfaction']
 >;
 type MediaFileRollup = NonNullable<NonNullable<MediaItem['files']>[number]['rollup']>;
-type MediaFileRequirements = NonNullable<
-	NonNullable<MediaItem['files']>[number]['requirements']
->;
+type MediaFileRequirements = NonNullable<NonNullable<MediaItem['files']>[number]['requirements']>;
 type MediaFileMissingTrack = NonNullable<
 	NonNullable<MediaItem['files']>[number]['missingTracks']
 >[number];

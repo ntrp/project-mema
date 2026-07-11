@@ -1,39 +1,30 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
-	import { listQualitySizeSettings, updateQualitySizeSettings } from './api';
+	import { createQualitySizeResources } from './resources.svelte';
 	import { groupQualitiesByResolution } from '$lib/settings/qualityGroups';
 	import type { QualitySizeSetting } from '$lib/settings/types';
 	import QualitySizeRow from './QualitySizeRow.svelte';
 	import { qualityRequest, rowError } from './qualitySize';
 
-	let qualities = $state<QualitySizeSetting[]>([]);
-	let loading = $state(true);
-	let saving = $state(false);
+	const resources = createQualitySizeResources();
+	let qualities = $derived<QualitySizeSetting[]>(resources.query.data ?? []);
+	const loading = $derived(resources.query.isFetching);
+	const saving = $derived(resources.update.isPending);
 	let errorMessage = $state('');
 	let message = $state('');
 
 	const hasValidationErrors = $derived(qualities.some((quality) => rowError(quality) !== ''));
 	const qualityGroups = $derived(groupQualitiesByResolution(qualities));
 
-	onMount(() => {
-		void loadQualitySizes();
-	});
-
 	async function loadQualitySizes() {
-		loading = true;
 		errorMessage = '';
 		try {
-			const response = await listQualitySizeSettings();
-			qualities = response.qualities;
+			await resources.query.refetch();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load quality sizes';
-		} finally {
-			loading = false;
 		}
 	}
 
@@ -46,15 +37,12 @@
 			return;
 		}
 
-		saving = true;
 		try {
-			const response = await updateQualitySizeSettings(qualities.map(qualityRequest));
+			const response = await resources.update.mutateAsync(qualities.map(qualityRequest));
 			qualities = response.qualities;
 			message = 'Quality sizes saved';
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not save quality sizes';
-		} finally {
-			saving = false;
 		}
 	}
 

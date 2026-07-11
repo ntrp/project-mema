@@ -7,6 +7,7 @@ import QualitySizeSettings from '$lib/components/settings/quality/QualitySizeSet
 import SystemGeneralSettings from '$lib/components/settings/system/SystemGeneralSettings.svelte';
 import { emptyDownloadClientForm, emptyIndexerForm } from '$lib/settings/forms';
 import type { IndexerSearchResponse } from '$lib/settings/types';
+import { renderWithTooltip } from './renderHelpers';
 
 describe('rendered integration settings sections (SCN-SETTINGS-018, SCN-SETTINGS-004)', () => {
 	it('renders download client section actions and empty state', () => {
@@ -29,25 +30,23 @@ describe('rendered integration settings sections (SCN-SETTINGS-018, SCN-SETTINGS
 	});
 
 	it('renders indexer section search settings and empty state', () => {
-		const { body } = render(IndexersSettingsSection, {
-			props: {
-				indexers: [],
-				indexerSearch: emptyIndexerSearch(),
-				tags: [],
-				form: emptyIndexerForm(),
-				saving: false,
-				clearingIndexerSearchCache: false,
-				savingIndexerSearchSettings: false,
-				testResults: {},
-				onSave: vi.fn(),
-				onCancel: vi.fn(),
-				onEdit: vi.fn(),
-				onDelete: vi.fn(),
-				onTest: vi.fn(),
-				onTestConfig: vi.fn(),
-				onClearIndexerSearchCache: vi.fn(),
-				onSaveIndexerSearchSettings: vi.fn()
-			}
+		const { body } = renderWithTooltip(IndexersSettingsSection, {
+			indexers: [],
+			indexerSearch: emptyIndexerSearch(),
+			tags: [],
+			form: emptyIndexerForm(),
+			saving: false,
+			clearingIndexerSearchCache: false,
+			savingIndexerSearchSettings: false,
+			testResults: {},
+			onSave: vi.fn(),
+			onCancel: vi.fn(),
+			onEdit: vi.fn(),
+			onDelete: vi.fn(),
+			onTest: vi.fn(),
+			onTestConfig: vi.fn(),
+			onClearIndexerSearchCache: vi.fn(),
+			onSaveIndexerSearchSettings: vi.fn()
 		});
 
 		expect(body).toContain('Indexers');
@@ -60,7 +59,7 @@ describe('rendered integration settings sections (SCN-SETTINGS-018, SCN-SETTINGS
 
 describe('rendered general system settings sections (SCN-SYSTEM-006, SCN-SETTINGS-008)', () => {
 	it('renders general system settings forms before async data loads', () => {
-		const { body } = render(SystemGeneralSettings);
+		const { body } = renderWithTooltip(SystemGeneralSettings, {});
 
 		expect(body).toContain('General');
 		expect(body).toContain('Event retention days');
@@ -70,7 +69,7 @@ describe('rendered general system settings sections (SCN-SYSTEM-006, SCN-SETTING
 	});
 
 	it('renders quality size loading table and save controls', () => {
-		const { body } = render(QualitySizeSettings);
+		const { body } = renderWithTooltip(QualitySizeSettings, {});
 
 		expect(body).toContain('Quality sizes');
 		expect(body).toContain('Release scoring');

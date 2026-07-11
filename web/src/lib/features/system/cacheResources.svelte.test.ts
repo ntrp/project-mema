@@ -14,11 +14,11 @@ import { createServerResourceRuntime, serverResourceKeys } from './cacheResource
 describe('server resource runtime', () => {
 	it('guards queries and writes or clears their shared cache namespace', () => {
 		const client = { setQueryData: vi.fn(), removeQueries: vi.fn() };
-		const runtime = createServerResourceRuntime(
-			client as never,
-			() => true,
-			() => false
-		);
+		const runtime = createServerResourceRuntime(client as never, {
+			indexerSearch: () => false,
+			metadataCache: () => false,
+			profile: () => true
+		});
 		expect(runtime.indexerSearch).toMatchObject({ enabled: false });
 		expect(runtime.profile).toMatchObject({ enabled: true });
 		runtime.setProfile({ id: 'user-1' } as never);

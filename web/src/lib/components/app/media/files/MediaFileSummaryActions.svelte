@@ -22,7 +22,10 @@
 		onAutoSearch: () => void;
 		onManualSearch: () => void;
 		onPreview: () => void;
-		onFulfillmentAction: (_row: MediaFileRow, _request: MediaFulfillmentActionRequest) => void | Promise<void>;
+		onFulfillmentAction: (
+			_row: MediaFileRow,
+			_request: MediaFulfillmentActionRequest
+		) => void | Promise<void>;
 		onDelete: (_row: MediaFileRow) => void;
 	}
 
@@ -46,7 +49,9 @@
 		targetType: 'video'
 	});
 	const remuxKey = $derived(mediaFulfillmentActionKey(remuxRequest));
-	const remuxAvailable = $derived(row.exists && row.path && row.requirements?.container?.state === 'pending');
+	const remuxAvailable = $derived(
+		row.exists && row.path && row.requirements?.container?.state === 'pending'
+	);
 	const remuxPending = $derived(
 		pendingAction === remuxKey || pendingFulfillmentActionKeys.includes(remuxKey)
 	);

@@ -7,8 +7,9 @@
 	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
+	import { createQuery } from '@tanstack/svelte-query';
+	import { onDestroy } from 'svelte';
 	import { testCustomFormatParsing } from '$lib/settings/api';
-	import type { CustomFormatParsingResponse } from '$lib/settings/types';
 
 	interface Props {
 		onClose: () => void;
@@ -16,52 +17,27 @@
 
 	let { onClose }: Props = $props();
 	let fileName = $state('');
-	let result = $state<CustomFormatParsingResponse | undefined>();
-	let loading = $state(false);
-	let error = $state('');
-	let requestID = 0;
+	let debounce: number | undefined;
+	const parsing = createQuery(() => ({
+		queryKey: ['settings', 'custom-format-parsing', fileName.trim()],
+		queryFn: () => testCustomFormatParsing(fileName.trim()),
+		enabled: false
+	}));
+	const result = $derived(parsing.data);
+	const loading = $derived(parsing.isFetching);
+	const error = $derived(parsing.error?.message ?? '');
 
-	$effect(() => {
-		const value = fileName.trim();
-		requestID += 1;
-		const currentRequestID = requestID;
-		if (!value) {
-			result = undefined;
-			error = '';
-			loading = false;
-			return;
-		}
-		loading = true;
-		const timeout = window.setTimeout(() => {
-			void runParsing(value, currentRequestID);
-		}, 700);
-		return () => window.clearTimeout(timeout);
-	});
+	onDestroy(() => window.clearTimeout(debounce));
 
-	async function runParsing(value: string, currentRequestID: number) {
-		loading = true;
-		error = '';
-		try {
-			const nextResult = await testCustomFormatParsing(value);
-			if (currentRequestID === requestID) {
-				result = nextResult;
-			}
-		} catch (caught) {
-			if (currentRequestID === requestID) {
-				error = caught instanceof Error ? caught.message : 'Could not test parsing';
-				result = undefined;
-			}
-		} finally {
-			if (currentRequestID === requestID) {
-				loading = false;
-			}
-		}
+	function updateFileName(value: string) {
+		fileName = value;
+		window.clearTimeout(debounce);
+		if (!value.trim()) return;
+		debounce = window.setTimeout(() => void parsing.refetch(), 700);
 	}
 
 	function clearFileName() {
-		fileName = '';
-		result = undefined;
-		error = '';
+		updateFileName('');
 	}
 </script>
 
@@ -77,7 +53,7 @@
 			<ListChecksIcon aria-hidden="true" />
 			<label class="grid gap-1">
 				<span>Release title</span>
-				<Input bind:value={fileName} type="text" maxlength={500} />
+				<Input bind:value={() => fileName, updateFileName} type="text" maxlength={500} />
 			</label>
 			<Button
 				type="button"

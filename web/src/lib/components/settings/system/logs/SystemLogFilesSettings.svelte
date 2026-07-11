@@ -1,28 +1,17 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as Table from '$lib/components/ui/table';
-	import { downloadSystemLogFile, listSystemLogFiles } from './api';
+	import { downloadSystemLogFile } from './api';
+	import { createLogFilesQuery } from '$lib/features/settings/resources/systemGeneral.svelte';
 	import { formatLongDateTime } from '$lib/settings/dateFormat';
 	import type { SystemLogFile } from '$lib/settings/types';
 
-	let files = $state<SystemLogFile[]>([]);
+	const filesQuery = createLogFilesQuery();
+	const files = $derived(filesQuery.data ?? []);
+	const loadError = $derived(filesQuery.error?.message ?? '');
 	let downloadingName = $state<string | undefined>();
 	let errorMessage = $state('');
-
-	onMount(() => {
-		void load();
-	});
-
-	async function load() {
-		errorMessage = '';
-		try {
-			files = await listSystemLogFiles();
-		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'Could not load log files';
-		}
-	}
 
 	async function download(file: SystemLogFile) {
 		downloadingName = file.name;
@@ -54,8 +43,8 @@
 </script>
 
 <Card class="gap-4 p-5" aria-label="Log files">
-	{#if errorMessage}
-		<p class="m-0 font-bold text-destructive">{errorMessage}</p>
+	{#if errorMessage || loadError}
+		<p class="m-0 font-bold text-destructive">{errorMessage || loadError}</p>
 	{/if}
 
 	<Table.Root>

@@ -8,9 +8,11 @@ import {
 import type { LibraryMediaKind, LibraryScan, LibraryScanImportRequest } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
 
 interface SettingsLibraryScanDeps {
 	clearNotice: () => void;
+	runMutation?: RunCommandMutation;
 	refreshMediaItems: () => Promise<void>;
 	upsertScan: (_scan: LibraryScan) => void;
 }
@@ -20,13 +22,14 @@ export function createSettingsLibraryScanActions(
 	deps: SettingsLibraryScanDeps
 ) {
 	const clearNotice = deps.clearNotice;
+	const runMutation = deps.runMutation ?? ((command) => command());
 
 	async function scanLibraryFolder(id: string) {
 		state.scanningLibraryFolderId = id;
 		clearNotice();
 
 		try {
-			const scan = await scanLibraryFolderRequest(id);
+			const scan = await runMutation(() => scanLibraryFolderRequest(id));
 			deps.upsertScan(scan);
 			state.openLibraryFolderId = scan.folderId;
 			state.message = `Library scan completed: ${scan.manualCount} pending`;
@@ -56,7 +59,7 @@ export function createSettingsLibraryScanActions(
 		clearNotice();
 
 		try {
-			const result = await importLibraryScanItemsRequest(scan.id, request);
+			const result = await runMutation(() => importLibraryScanItemsRequest(scan.id, request));
 			await deps.refreshMediaItems();
 			deps.upsertScan(result.scan);
 			state.message = `Imported ${result.importedCount} media item${result.importedCount === 1 ? '' : 's'}`;
@@ -69,7 +72,7 @@ export function createSettingsLibraryScanActions(
 		clearNotice();
 
 		try {
-			const result = await resetLibraryScanItemImportRequest(scan.id, itemId);
+			const result = await runMutation(() => resetLibraryScanItemImportRequest(scan.id, itemId));
 			if (result.removedMediaItemId) {
 				await deps.refreshMediaItems();
 			}

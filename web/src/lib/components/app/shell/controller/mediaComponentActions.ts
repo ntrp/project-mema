@@ -7,13 +7,16 @@ import type {
 } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
 
 interface MediaComponentDeps {
 	clearNotice: () => void;
+	runMutation?: RunCommandMutation;
 	loadMediaItems: () => Promise<void>;
 }
 
 export function createMediaComponentActions(state: AppShellState, deps: MediaComponentDeps) {
+	const runMutation = deps.runMutation ?? ((command) => command());
 	async function reviewComponentCompatibility(
 		item: MediaItem,
 		source: MediaComponentSource,
@@ -24,10 +27,12 @@ export function createMediaComponentActions(state: AppShellState, deps: MediaCom
 		deps.clearNotice();
 
 		try {
-			await reviewMediaComponentCompatibility(item.id, source.id, decisionId, {
-				reviewState,
-				reason: 'Reviewed from media detail'
-			});
+			await runMutation(() =>
+				reviewMediaComponentCompatibility(item.id, source.id, decisionId, {
+					reviewState,
+					reason: 'Reviewed from media detail'
+				})
+			);
 			await deps.loadMediaItems();
 			state.message =
 				reviewState === 'approved'
@@ -49,7 +54,9 @@ export function createMediaComponentActions(state: AppShellState, deps: MediaCom
 		deps.clearNotice();
 
 		try {
-			const result = await enqueueMediaComponentAssembly(item.id, { baseSourceId, artifactIds });
+			const result = await runMutation(() =>
+				enqueueMediaComponentAssembly(item.id, { baseSourceId, artifactIds })
+			);
 			await deps.loadMediaItems();
 			state.message = `${result.message} (#${result.jobId})`;
 		} catch (error) {

@@ -5,15 +5,25 @@ import {
 } from '$lib/settings/api';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
+import type { QueryClient } from '@tanstack/svelte-query';
 
 const INSPECTION_PAGE_SIZE = 10;
 
-export function createSearchInspectionActions(state: AppShellState, clearNotice: () => void) {
+export function createSearchInspectionActions(
+	state: AppShellState,
+	clearNotice: () => void,
+	client?: QueryClient
+) {
 	async function loadMetadataCache(limits: CacheInspectionLimits = {}) {
 		state.loadingMetadataCache = true;
 		clearNotice();
 		try {
-			state.metadataCache = await getMetadataCacheRequest(limits);
+			state.metadataCache = client
+				? await client.fetchQuery({
+						queryKey: ['server-resources', 'metadata-cache', limits],
+						queryFn: () => getMetadataCacheRequest(limits)
+					})
+				: await getMetadataCacheRequest(limits);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load metadata cache');
 		} finally {
@@ -25,7 +35,12 @@ export function createSearchInspectionActions(state: AppShellState, clearNotice:
 		state.loadingIndexerSearch = true;
 		clearNotice();
 		try {
-			state.indexerSearch = await getIndexerSearchRequest(limits);
+			state.indexerSearch = client
+				? await client.fetchQuery({
+						queryKey: ['server-resources', 'indexer-search', limits],
+						queryFn: () => getIndexerSearchRequest(limits)
+					})
+				: await getIndexerSearchRequest(limits);
 		} catch (error) {
 			state.errorMessage = errorMessageFrom(error, 'Could not load indexer search cache');
 		} finally {

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
-	import { createGetSystemStatus } from '$lib/api/generated/tanstack';
+	import { createSystemStatusQuery } from '$lib/features/system/statusQuery.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import type { SystemStatusResponse } from '$lib/settings/types';
 
-	const statusQuery = createGetSystemStatus();
+	const statusQuery = createSystemStatusQuery();
 	const status = $derived(statusQuery.data);
 	const loading = $derived(statusQuery.isPending || statusQuery.isFetching);
 	const errorMessage = $derived(queryErrorMessage(statusQuery.error));

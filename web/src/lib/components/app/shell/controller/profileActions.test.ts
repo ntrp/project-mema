@@ -26,7 +26,7 @@ describe('profile actions', () => {
 		const saved = { ...loaded, displayName: '', pictureUrl: '', role: 'admin' };
 		profileApi.get.mockResolvedValue(loaded);
 		profileApi.update.mockResolvedValue(saved);
-		const actions = createProfileActions(state, { clearNotice: vi.fn() });
+		const actions = createProfileActions(state, dependencies());
 		await actions.loadProfile();
 		expect(state.profile).toEqual(loaded);
 		expect(state.loadingProfile).toBe(false);
@@ -46,7 +46,7 @@ describe('profile actions', () => {
 	it('records load and save errors and resets busy state', async () => {
 		profileApi.get.mockRejectedValue(new Error('load failed'));
 		profileApi.update.mockRejectedValue(new Error('save failed'));
-		const actions = createProfileActions(state, { clearNotice: vi.fn() });
+		const actions = createProfileActions(state, dependencies());
 		await actions.loadProfile();
 		expect(state.profileErrorMessage).toBe('load failed');
 		expect(state.loadingProfile).toBe(false);
@@ -54,4 +54,12 @@ describe('profile actions', () => {
 		expect(state.profileErrorMessage).toBe('save failed');
 		expect(state.savingProfile).toBe(false);
 	});
+
+	function dependencies() {
+		return {
+			clearNotice: vi.fn(),
+			loadProfile: profileApi.get,
+			runMutation: <T>(command: () => Promise<T>) => command()
+		};
+	}
 });

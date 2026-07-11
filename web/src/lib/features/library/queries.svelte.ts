@@ -7,10 +7,11 @@ export const libraryKeys = {
 	requests: () => [...libraryKeys.all, 'requests'] as const
 };
 
-export function createMediaItemsQuery() {
+export function createMediaItemsQuery(enabled: () => boolean = () => true) {
 	return createQuery(() => ({
 		queryKey: libraryKeys.items(),
 		queryFn: ({ signal }) => listMediaItems({ signal }),
+		enabled: enabled(),
 		select: (response) => response.items
 	}));
 }

@@ -1,14 +1,4 @@
-import {
-	abortSystemJob,
-	getSystemJobsOverview,
-	listSystemJobExecutionLogs,
-	listSystemJobExecutions,
-	pauseSystemJobSchedule,
-	resumeSystemJobSchedule,
-	runSystemJobSchedule,
-	updateSystemJobHistorySettings,
-	updateSystemJobScheduleInterval
-} from './api';
+import type { SystemJobsOperations } from '$lib/features/settings/resources/systemJobs.svelte';
 import type {
 	SystemJobExecution,
 	SystemJobExecutionLog,
@@ -19,6 +9,7 @@ import { mergeExecutions, sortExecutions } from './systemJobsState';
 const historyPageLimit = 20;
 
 interface ControllerState {
+	operations: SystemJobsOperations;
 	schedules: SystemJobSchedule[];
 	oneShotJobs: SystemJobExecution[];
 	history: SystemJobExecution[];
@@ -47,7 +38,7 @@ export async function loadOverviewState(state: ControllerState) {
 	state.loadingOverview = true;
 	state.errorMessage = '';
 	try {
-		const overview = await getSystemJobsOverview();
+		const overview = await state.operations.overview();
 		state.schedules = overview.schedules;
 		state.oneShotJobs = overview.oneShotJobs;
 		state.retentionDays = overview.historySettings.retentionDays;
@@ -65,7 +56,7 @@ export async function loadHistoryState(state: ControllerState, reset: boolean) {
 	else state.loadingMore = true;
 	state.errorMessage = '';
 	try {
-		const response = await listSystemJobExecutions({
+		const response = await state.operations.history({
 			status: state.selectedStatuses.length > 0 ? state.selectedStatuses : undefined,
 			query: state.query.trim() || undefined,
 			before: reset ? undefined : state.history.at(-1)?.updatedAt,
@@ -94,8 +85,8 @@ export async function toggleScheduleState(
 	state.errorMessage = '';
 	try {
 		const updated = paused
-			? await pauseSystemJobSchedule(schedule.id)
-			: await resumeSystemJobSchedule(schedule.id);
+			? await state.operations.pause(schedule.id)
+			: await state.operations.resume(schedule.id);
 		state.schedules = state.schedules.map((current) =>
 			current.id === updated.id ? updated : current
 		);
@@ -114,7 +105,7 @@ export async function saveScheduleIntervalState(
 	state.updatingIntervalId = schedule.id;
 	state.errorMessage = '';
 	try {
-		const updated = await updateSystemJobScheduleInterval(schedule.id, intervalSeconds);
+		const updated = await state.operations.interval(schedule.id, intervalSeconds);
 		state.schedules = state.schedules.map((current) =>
 			current.id === updated.id ? updated : current
 		);
@@ -130,7 +121,7 @@ export async function runScheduleState(state: ControllerState, schedule: SystemJ
 	state.runningScheduleId = schedule.id;
 	state.errorMessage = '';
 	try {
-		const updated = await runSystemJobSchedule(schedule.id);
+		const updated = await state.operations.run(schedule.id);
 		state.schedules = state.schedules.map((current) =>
 			current.id === updated.id ? updated : current
 		);
@@ -145,7 +136,7 @@ export async function abortJobState(state: ControllerState) {
 	if (!state.abortCandidate) return;
 	state.abortingId = state.abortCandidate.id;
 	try {
-		await abortSystemJob(state.abortCandidate.id);
+		await state.operations.abort(state.abortCandidate.id);
 		state.abortCandidate = undefined;
 		void loadOverviewState(state);
 		void loadHistoryState(state, true);
@@ -160,7 +151,7 @@ export async function openLogsState(state: ControllerState, execution: SystemJob
 	state.logsExecution = execution;
 	state.loadingLogsId = execution.riverJobId;
 	try {
-		state.executionLogs = await listSystemJobExecutionLogs(execution.riverJobId);
+		state.executionLogs = await state.operations.logs(execution.riverJobId);
 	} finally {
 		state.loadingLogsId = undefined;
 	}
@@ -169,7 +160,7 @@ export async function openLogsState(state: ControllerState, execution: SystemJob
 export async function saveRetentionState(state: ControllerState) {
 	state.savingRetention = true;
 	try {
-		const settings = await updateSystemJobHistorySettings({
+		const settings = await state.operations.retention({
 			retentionDays: Number(state.retentionDays),
 			routineRetentionHours: Number(state.routineRetentionHours)
 		});

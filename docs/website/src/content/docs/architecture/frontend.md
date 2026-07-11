@@ -24,6 +24,10 @@ Shared dependencies are explicit: indexers also load indexer-search configuratio
 and tags; library loads folders, path mappings, profiles, and metadata providers;
 and profile editing loads profiles, custom formats, and languages. Sections whose
 content is local or loaded by a nested component make no aggregate request.
+Root-owned query observers use consumer-specific enablement predicates. Being
+authenticated or having the administrator role is not sufficient to activate a
+settings, system, blacklist, profile, or library query; the active route or an
+open consumer must require that resource.
 
 ## State Ownership
 
@@ -31,6 +35,12 @@ TanStack Query owns remote resources, including remote search results. Query
 keys belong to the feature that understands the resource. Mutations invalidate
 or update every affected key; optimistic updates are reserved for deterministic,
 reversible operations.
+
+Interactive POST searches and diagnostics use explicitly triggered queries.
+Shell commands pass through a shared TanStack mutation executor while retaining
+feature-owned cache reconciliation. Streaming media, downloads, session
+bootstrap, and endpoint-specific SSE transports remain transport-level
+exceptions and are not cache resources.
 
 Svelte runes own temporary browser state such as forms, selections, open modal
 state, and navigation UI. A remote resource must not be mirrored into `$state`.

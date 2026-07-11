@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-
 	import FileNamingTemplateSection from '$lib/components/settings/library/FileNamingTemplateSection.svelte';
 	import NoticeStack from '$lib/components/settings/shared/NoticeStack.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
@@ -10,7 +9,7 @@
 		defaultFileNamingTemplates,
 		fileNamingTemplateExample
 	} from '$lib/settings/fileNamingTemplates';
-	import { getFileNamingSettings, updateFileNamingSettings } from './filePoliciesApi';
+	import { createFileNamingResource } from '$lib/features/settings/resources/filePolicies.svelte';
 	import type { FileNamingSettingsRequest } from '$lib/settings/types';
 
 	type TemplateField = keyof FileNamingSettingsRequest;
@@ -43,8 +42,7 @@
 	];
 
 	let templates = $state<FileNamingSettingsRequest>({ ...defaultFileNamingTemplates });
-	let loading = $state(true);
-	let saving = $state(false);
+	const resource = createFileNamingResource();
 	let message = $state('');
 	let errorMessage = $state('');
 
@@ -52,30 +50,22 @@
 		Object.values(templates).some((value) => value.trim().length === 0)
 	);
 
+	const loading = $derived(resource.query.isPending || resource.query.isFetching);
+	const saving = $derived(resource.save.isPending);
 	onMount(() => {
 		void loadSettings();
 	});
 
 	async function loadSettings() {
-		loading = true;
 		message = '';
 		errorMessage = '';
 		try {
-			const settings = await getFileNamingSettings();
-			templates = {
-				movieFileFormat: settings.movieFileFormat,
-				movieFolderFormat: settings.movieFolderFormat,
-				seriesEpisodeFormat: settings.seriesEpisodeFormat,
-				dailyEpisodeFormat: settings.dailyEpisodeFormat,
-				animeEpisodeFormat: settings.animeEpisodeFormat,
-				seriesFolderFormat: settings.seriesFolderFormat,
-				seasonFolderFormat: settings.seasonFolderFormat,
-				specialsFolderFormat: settings.specialsFolderFormat
-			};
+			const result = await resource.query.refetch();
+			if (result.data) hydrate(result.data);
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load file naming settings';
 		} finally {
-			loading = false;
+			/* query owns loading state */
 		}
 	}
 
@@ -88,25 +78,18 @@
 			return;
 		}
 
-		saving = true;
 		try {
-			const settings = await updateFileNamingSettings(trimmedTemplates());
-			templates = {
-				movieFileFormat: settings.movieFileFormat,
-				movieFolderFormat: settings.movieFolderFormat,
-				seriesEpisodeFormat: settings.seriesEpisodeFormat,
-				dailyEpisodeFormat: settings.dailyEpisodeFormat,
-				animeEpisodeFormat: settings.animeEpisodeFormat,
-				seriesFolderFormat: settings.seriesFolderFormat,
-				seasonFolderFormat: settings.seasonFolderFormat,
-				specialsFolderFormat: settings.specialsFolderFormat
-			};
+			hydrate(await resource.save.mutateAsync(trimmedTemplates()));
 			message = 'File naming settings saved';
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not save file naming settings';
 		} finally {
-			saving = false;
+			/* mutation owns saving state */
 		}
+	}
+
+	function hydrate(settings: FileNamingSettingsRequest) {
+		templates = { ...settings };
 	}
 
 	function updateTemplate(key: TemplateField, value: string) {

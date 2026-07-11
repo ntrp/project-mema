@@ -1,18 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import PencilIcon from '@lucide/svelte/icons/pencil';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { getFileNamingSettings } from '$lib/components/settings/library/filePoliciesApi';
+	import { createFileNamingResource } from '$lib/features/settings/resources/filePolicies.svelte';
 	import { mediaRootWarning } from '$lib/components/app/media/collection/mediaRootPreview';
 	import { matchingLibraryFolders } from '$lib/components/app/media/actions/mediaActionDefaults';
-	import type {
-		FileNamingSettings,
-		LibraryFolder,
-		MediaItem,
-		MediaItemUpdateRequest
-	} from '$lib/settings/types';
+	import type { LibraryFolder, MediaItem, MediaItemUpdateRequest } from '$lib/settings/types';
 	import MediaRootEditModal from '$lib/components/app/media/collection/MediaRootEditModal.svelte';
 
 	interface Props {
@@ -23,8 +17,9 @@
 	}
 
 	let { item, libraryFolders, canManage, onSaveOptions }: Props = $props();
+	const naming = createFileNamingResource();
 	let editing = $state(false);
-	let fileNamingSettings = $state<FileNamingSettings>();
+	const fileNamingSettings = $derived(naming.query.data);
 
 	const rootPath = $derived(item.mediaFolderPath ?? '-');
 	const matchingFolders = $derived(matchingLibraryFolders(item.type, libraryFolders));
@@ -35,21 +30,9 @@
 	const warning = $derived(mediaRootWarning(item, selectedFolder, fileNamingSettings));
 	const canEdit = $derived(canManage && matchingFolders.length > 0);
 
-	onMount(() => {
-		void loadFileNamingSettings();
-	});
-
 	function saveRoot(libraryFolderId: string) {
 		onSaveOptions(item, { libraryFolderId });
 		editing = false;
-	}
-
-	async function loadFileNamingSettings() {
-		try {
-			fileNamingSettings = await getFileNamingSettings();
-		} catch {
-			fileNamingSettings = undefined;
-		}
 	}
 </script>
 

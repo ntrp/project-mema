@@ -39,12 +39,16 @@ async function loadMoreSection(
 	if (!current || current.loadingMore || !current.hasMore) return;
 	setLoading(client, id, current, true);
 	try {
-		const next = await getMediaDiscoverSection(id, { page: current.page + 1 });
+		const page = current.page + 1;
+		const next = await client.fetchQuery({
+			queryKey: discoverContentKeys.page(id, page),
+			queryFn: () => getMediaDiscoverSection(id, { page })
+		});
 		const known = new Set((current.section.results ?? []).map(resultKey));
 		const additions = (next.results ?? []).filter((item) => !known.has(resultKey(item)));
 		client.setQueryData<DiscoverSectionCacheEntry>(discoverContentKeys.section(id), {
 			section: { ...next, results: [...(current.section.results ?? []), ...additions] },
-			page: current.page + 1,
+			page,
 			hasMore: additions.length > 0,
 			loadingMore: false
 		});

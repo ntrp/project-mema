@@ -1,10 +1,4 @@
-import type { createActivityCache } from '$lib/features/activity/cache';
-import type { createLibraryCache } from '$lib/features/library/cache';
-import type { createReleaseCache } from '$lib/features/releases/cache';
-import type { createDiscoverBlacklistCache } from '$lib/features/discovery/blacklist/cache';
-import type { createDiscoverContentCache } from '$lib/features/discovery/content/cache';
-import type { createSearchCache } from '$lib/features/search/cache';
-import type { MediaAdvancedSearchRequest } from '$lib/features/search/api';
+import { createCommandMutation } from '$lib/app/query/commandMutation.svelte';
 import { createDiscoveryActions } from './discoveryActions';
 import { createEventActions, mediaStatusFromActivity } from './events';
 import { createFormCancelActions } from './formCancelActions';
@@ -25,24 +19,18 @@ import { createSettingsDeleteActions } from './settingsDeleteActions';
 import { createSettingsEditActions } from './settingsEditActions';
 import { createSettingsSaveActions } from './settingsSaveActions';
 import { createSettingsTestCacheActions } from './settingsTestCacheActions';
-import type { createControllerResourceRuntime } from './controllerResourceRuntime.svelte';
+import type { ControllerActionDeps } from './controllerActionTypes';
 import type { AppShellState } from './state.svelte';
 
-interface Deps {
-	activity: ReturnType<typeof createActivityCache>;
-	library: ReturnType<typeof createLibraryCache>;
-	releases: ReturnType<typeof createReleaseCache>;
-	blacklist: ReturnType<typeof createDiscoverBlacklistCache>;
-	discovery: ReturnType<typeof createDiscoverContentCache>;
-	search: ReturnType<typeof createSearchCache>;
-	resources: ReturnType<typeof createControllerResourceRuntime>;
-	setAutocomplete: (_query: string) => void;
-	setAdvanced: (_request: MediaAdvancedSearchRequest) => void;
-}
-
-export function createControllerActions(state: AppShellState, deps: Deps) {
+export function createControllerActions(state: AppShellState, deps: ControllerActionDeps) {
 	const notices = createNoticeActions(state);
-	const profile = createProfileActions(state, notices);
+	const runSettingsMutation = createCommandMutation();
+	const runMediaMutation = createCommandMutation();
+	const profile = createProfileActions(state, {
+		...notices,
+		runMutation: runSettingsMutation,
+		loadProfile: deps.resources.server.refetchProfile
+	});
 	const events = createEventActions(state);
 	const loads = createLoadActions(state);
 	const updateStatus = (activity: import('$lib/settings/types').DownloadActivity) => {
@@ -66,6 +54,7 @@ export function createControllerActions(state: AppShellState, deps: Deps) {
 	});
 	const media = createMediaActions(state, {
 		...notices,
+		runMutation: runMediaMutation,
 		loadMediaItems: deps.library.refreshItems,
 		removeActivityForMedia: deps.activity.removeForMedia,
 		removeReleaseResults: deps.releases.remove,
@@ -78,18 +67,22 @@ export function createControllerActions(state: AppShellState, deps: Deps) {
 	});
 	const mediaComponents = createMediaComponentActions(state, {
 		...notices,
+		runMutation: runMediaMutation,
 		loadMediaItems: deps.library.refreshItems
 	});
 	const mediaFulfillment = createMediaFulfillmentActions(state, {
 		...notices,
+		runMutation: runMediaMutation,
 		loadMediaItems: deps.library.refreshItems
 	});
 	const mediaMetadata = createMediaMetadataActions(state, {
 		...notices,
+		runMutation: runMediaMutation,
 		upsertMediaItem: deps.library.upsertItem
 	});
 	const mediaSubtitles = createMediaSubtitleActions(state, {
 		...notices,
+		runMutation: runMediaMutation,
 		upsertMediaItem: deps.library.upsertItem
 	});
 	const releaseActions = createReleaseActions(state, {
@@ -104,6 +97,7 @@ export function createControllerActions(state: AppShellState, deps: Deps) {
 	const scans = deps.resources.scans;
 	const settingsSave = createSettingsSaveActions(state, {
 		...notices,
+		runMutation: runSettingsMutation,
 		loadSettings: refreshSettings,
 		loadMediaItems: deps.library.refreshItems,
 		mediaItems: deps.library.items,
@@ -114,6 +108,7 @@ export function createControllerActions(state: AppShellState, deps: Deps) {
 	});
 	const settingsDelete = createSettingsDeleteActions(state, {
 		...notices,
+		runMutation: runSettingsMutation,
 		loadSettings: refreshSettings,
 		refreshMediaItems: deps.library.refreshItems,
 		removeLanguage: catalog.removeLanguage,
@@ -174,7 +169,12 @@ export function createControllerActions(state: AppShellState, deps: Deps) {
 		loads,
 		settingsSave,
 		settingsDelete,
-		createSettingsTestCacheActions(state, { ...notices, loadSettings: refreshSettings }),
+		createSettingsTestCacheActions(state, {
+			...notices,
+			loadSettings: refreshSettings,
+			runMutation: runSettingsMutation,
+			queryClient: deps.resources.client
+		}),
 		createSettingsEditActions(state),
 		createRouteActions(state, { routeData }),
 		createNavigationActions(state),

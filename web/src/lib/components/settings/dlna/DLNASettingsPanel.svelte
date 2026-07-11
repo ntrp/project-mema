@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import RotateCwIcon from '@lucide/svelte/icons/rotate-cw';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
-	import { getDLNASettings, restartDLNA, updateDLNASettings } from './api';
-	import type { DLNASettings, DLNASettingsRequest, DLNAStatus } from '$lib/settings/types';
+	import type { DLNASettingsRequest, DLNAStatus } from '$lib/settings/types';
+	import { createDLNAResources } from './dlnaResources.svelte';
 	import DLNADiagnosticsTables from './DLNADiagnosticsTables.svelte';
 	import DLNADeviceProfilesPanel from './profiles/DLNADeviceProfilesPanel.svelte';
 	import DLNASettingsForm from './DLNASettingsForm.svelte';
@@ -23,15 +22,15 @@
 		defaultRendererProfile: 'generic'
 	};
 
-	let settings = $state<DLNASettings>();
-	let form = $state<DLNASettingsRequest>({ ...defaultForm });
-	let allowedText = $state(defaultForm.allowedCidrs.join('\n'));
-	let loading = $state(true);
-	let saving = $state(false);
+	const resources = createDLNAResources();
+	let form = $derived(settingsForm(resources.settings.data));
+	let allowedText = $derived(form.allowedCidrs.join('\n'));
 	let errorMessage = $state('');
 	let message = $state('');
 
-	const status = $derived<DLNAStatus | undefined>(settings?.status);
+	const loading = $derived(resources.settings.isFetching);
+	const saving = $derived(resources.updateSettings.isPending);
+	const status = $derived<DLNAStatus | undefined>(resources.settings.data?.status);
 	const statusCells = $derived([
 		{ label: 'State', value: status?.running ? 'Running' : 'Stopped' },
 		{ label: 'SSDP', value: status?.lastSsdpEvent ?? 'None' },
@@ -39,34 +38,24 @@
 		{ label: 'Last error', value: status?.lastError ?? 'None' }
 	]);
 
-	onMount(() => {
-		void load();
-	});
-
 	async function load() {
-		loading = true;
 		errorMessage = '';
 		try {
-			hydrate(await getDLNASettings());
+			await resources.settings.refetch();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load DLNA settings';
-		} finally {
-			loading = false;
 		}
 	}
 
 	async function save(event: SubmitEvent) {
 		event.preventDefault();
-		saving = true;
 		errorMessage = '';
 		message = '';
 		try {
-			hydrate(await updateDLNASettings(normalizedForm()));
+			await resources.updateSettings.mutateAsync(normalizedForm());
 			message = 'DLNA settings saved';
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not save DLNA settings';
-		} finally {
-			saving = false;
 		}
 	}
 
@@ -74,27 +63,11 @@
 		errorMessage = '';
 		message = '';
 		try {
-			hydrate(await restartDLNA());
+			await resources.restart.mutateAsync();
 			message = 'DLNA restarted';
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not restart DLNA';
 		}
-	}
-
-	function hydrate(next: DLNASettings) {
-		settings = next;
-		form = {
-			enabled: next.enabled,
-			friendlyName: next.friendlyName,
-			interfaces: [...next.interfaces],
-			allowedCidrs: [...next.allowedCidrs],
-			announceIntervalSeconds: next.announceIntervalSeconds,
-			transcodeEnabled: next.transcodeEnabled,
-			thumbnailsEnabled: next.thumbnailsEnabled,
-			subtitlesEnabled: next.subtitlesEnabled,
-			defaultRendererProfile: next.defaultRendererProfile
-		};
-		allowedText = form.allowedCidrs.join('\n');
 	}
 
 	function normalizedForm(): DLNASettingsRequest {
@@ -110,6 +83,21 @@
 			.split('\n')
 			.map((line) => line.trim())
 			.filter(Boolean);
+	}
+
+	function settingsForm(settings = resources.settings.data): DLNASettingsRequest {
+		if (!settings) return { ...defaultForm };
+		return {
+			enabled: settings.enabled,
+			friendlyName: settings.friendlyName,
+			interfaces: [...settings.interfaces],
+			allowedCidrs: [...settings.allowedCidrs],
+			announceIntervalSeconds: settings.announceIntervalSeconds,
+			transcodeEnabled: settings.transcodeEnabled,
+			thumbnailsEnabled: settings.thumbnailsEnabled,
+			subtitlesEnabled: settings.subtitlesEnabled,
+			defaultRendererProfile: settings.defaultRendererProfile
+		};
 	}
 </script>
 

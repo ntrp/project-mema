@@ -25,10 +25,7 @@ export async function loadAppRouteData(
 		}
 		return run(tasks);
 	}
-	if (route.view === 'profile') {
-		tasks.push(deps.loadProfile());
-		return run(tasks);
-	}
+	if (route.view === 'profile') return run(tasks);
 	if (
 		route.view === 'metadata-detail' ||
 		route.view === 'media-people' ||

@@ -16,6 +16,7 @@ import type { AppShellState } from '../state.svelte';
 import type { MediaDeps } from './types';
 
 export function createMediaCreateActions(state: AppShellState, deps: MediaDeps) {
+	const runMutation = deps.runMutation ?? ((command) => command());
 	function addMedia(candidate: MediaSearchResult) {
 		state.activeMediaCandidate = candidate;
 		deps.clearNotice();
@@ -36,15 +37,17 @@ export function createMediaCreateActions(state: AppShellState, deps: MediaDeps) 
 				await addLibraryItem(candidate, selection);
 				return;
 			}
-			const request = await createMediaRequestRequest({
-				title: candidate.title,
-				type: candidate.type,
-				year: candidate.year,
-				externalProvider: candidate.externalProvider,
-				externalId: candidate.externalId,
-				overview: candidate.overview,
-				posterPath: candidate.posterPath
-			});
+			const request = await runMutation(() =>
+				createMediaRequestRequest({
+					title: candidate.title,
+					type: candidate.type,
+					year: candidate.year,
+					externalProvider: candidate.externalProvider,
+					externalId: candidate.externalId,
+					overview: candidate.overview,
+					posterPath: candidate.posterPath
+				})
+			);
 			deps.upsertMediaRequest(request);
 			state.message = 'Media request created';
 			state.activeHomeSection = 'requests';
@@ -65,23 +68,25 @@ export function createMediaCreateActions(state: AppShellState, deps: MediaDeps) 
 		if (!selection.qualityProfileId || !selection.libraryFolderId) {
 			throw new Error('Quality profile and library folder are required');
 		}
-		await createMediaItemRequest({
-			title: candidate.title,
-			type: candidate.type,
-			year: candidate.year,
-			monitored: selection.monitorMode !== 'none',
-			monitorMode: selection.monitorMode,
-			seriesType: candidate.type === 'serie' ? selection.seriesType : undefined,
-			minimumAvailability: selection.minimumAvailability,
-			startSearch: selection.startSearch,
-			externalProvider: candidate.externalProvider,
-			externalId: candidate.externalId,
-			overview: candidate.overview,
-			posterPath: candidate.posterPath,
-			qualityProfileId: selection.qualityProfileId,
-			libraryFolderId: selection.libraryFolderId,
-			tags: selection.tags
-		});
+		await runMutation(() =>
+			createMediaItemRequest({
+				title: candidate.title,
+				type: candidate.type,
+				year: candidate.year,
+				monitored: selection.monitorMode !== 'none',
+				monitorMode: selection.monitorMode,
+				seriesType: candidate.type === 'serie' ? selection.seriesType : undefined,
+				minimumAvailability: selection.minimumAvailability,
+				startSearch: selection.startSearch,
+				externalProvider: candidate.externalProvider,
+				externalId: candidate.externalId,
+				overview: candidate.overview,
+				posterPath: candidate.posterPath,
+				qualityProfileId: selection.qualityProfileId,
+				libraryFolderId: selection.libraryFolderId,
+				tags: selection.tags
+			})
+		);
 		await deps.loadMediaItems();
 		state.message =
 			selection.monitorMode === 'none'
@@ -98,7 +103,7 @@ export function createMediaCreateActions(state: AppShellState, deps: MediaDeps) 
 		state.approvingRequestId = request.id;
 		deps.clearNotice();
 		try {
-			const result = await approveMediaRequestRequest(request.id, approval);
+			const result = await runMutation(() => approveMediaRequestRequest(request.id, approval));
 			deps.mapMediaRequests((item) => (item.id === result.request.id ? result.request : item));
 			deps.upsertMediaItem(result.mediaItem);
 			state.message = 'Media request approved and added to monitored';

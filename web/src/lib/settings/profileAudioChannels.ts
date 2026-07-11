@@ -38,7 +38,12 @@ export function uniqueAudioChannels(values: string[]) {
 }
 
 function normalizedAudioChannel(value: string) {
-	return audioChannelAliases[value.trim().toLowerCase().replace(/[^a-z0-9]/g, '')];
+	return audioChannelAliases[
+		value
+			.trim()
+			.toLowerCase()
+			.replace(/[^a-z0-9]/g, '')
+	];
 }
 
 function uniqueTrimmed(values: string[]) {

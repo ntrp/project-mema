@@ -3,9 +3,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Label } from '$lib/components/ui/label';
-	import { getFileNamingSettings } from '$lib/components/settings/library/filePoliciesApi';
+	import { createFileNamingResource } from '$lib/features/settings/resources/filePolicies.svelte';
 	import { mediaRootPreview } from '$lib/components/app/media/collection/mediaRootPreview';
-	import type { FileNamingSettings, LibraryFolder, MediaItem } from '$lib/settings/types';
+	import type { LibraryFolder, MediaItem } from '$lib/settings/types';
 
 	interface Props {
 		item: MediaItem;
@@ -15,9 +15,10 @@
 	}
 
 	let { item, libraryFolders, onCancel, onConfirm }: Props = $props();
+	const naming = createFileNamingResource();
 	let open = $state(true);
 	let libraryFolderId = $derived(item.libraryFolderId ?? '');
-	let fileNamingSettings = $state<FileNamingSettings>();
+	const fileNamingSettings = $derived(naming.query.data);
 
 	const folderOptions = $derived(
 		libraryFolders.map((folder) => ({ value: folder.id, label: folder.path }))
@@ -26,21 +27,9 @@
 	const previewPath = $derived(mediaRootPreview(item, selectedFolder, fileNamingSettings));
 	const canConfirm = $derived(libraryFolderId !== '' && libraryFolderId !== item.libraryFolderId);
 
-	$effect(() => {
-		void loadFileNamingSettings();
-	});
-
 	function handleOpenChange(nextOpen: boolean) {
 		open = nextOpen;
 		if (!nextOpen) onCancel();
-	}
-
-	async function loadFileNamingSettings() {
-		try {
-			fileNamingSettings = await getFileNamingSettings();
-		} catch {
-			fileNamingSettings = undefined;
-		}
 	}
 </script>
 

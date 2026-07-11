@@ -1,28 +1,30 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Switch } from '$lib/components/ui/switch';
-	import { getSystemLogFileSettings, updateSystemLogFileSettings } from './api';
+	import { createLogFileSettingsResource } from '$lib/features/settings/resources/systemGeneral.svelte';
 	import type { SystemLogFileSettings } from '$lib/settings/types';
 
 	let settings = $state<SystemLogFileSettings>();
 	let enabled = $state(false);
 	let directory = $state('.data/logs');
 	let retentionDays = $state(7);
-	let saving = $state(false);
+	const resource = createLogFileSettingsResource();
+	const saving = $derived(resource.save.isPending);
 
-	export async function load() {
-		applySettings(await getSystemLogFileSettings());
-	}
+	onMount(async () => {
+		const { data } = await resource.query.refetch();
+		if (data) applySettings(data);
+	});
 
 	async function save(event: SubmitEvent) {
 		event.preventDefault();
-		saving = true;
 		try {
-			applySettings(await updateSystemLogFileSettings({ enabled, directory, retentionDays }));
+			applySettings(await resource.save.mutateAsync({ enabled, directory, retentionDays }));
 		} finally {
-			saving = false;
+			/* mutation owns saving state */
 		}
 	}
 

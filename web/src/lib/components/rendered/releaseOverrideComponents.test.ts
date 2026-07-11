@@ -8,6 +8,7 @@ import ReleaseOverrideSeriesFields from '$lib/components/app/media/release-overr
 import type { SeasonOption } from '$lib/components/app/media/release-override/releaseOverrideSeriesOptions';
 import type { ReleaseOverrideDraft } from '$lib/components/app/media/release-override/releaseOverrideDetails';
 import type { MediaItem, MediaMetadataEpisode } from '$lib/settings/types';
+import { renderWithTooltip } from './renderHelpers';
 
 const seriesItem = {
 	id: 'series-1',
@@ -60,10 +61,8 @@ const seasons: SeasonOption[] = [
 
 describe('rendered release override components (SCN-MEDIA-002)', () => {
 	it('renders movie override title editing with the current value', () => {
-		const { body } = render(ReleaseOverrideMovieField, {
-			props: {
-				value: 'Scenario Movie'
-			}
+		const { body } = renderWithTooltip(ReleaseOverrideMovieField, {
+			value: 'Scenario Movie'
 		});
 
 		expect(body).toContain('Movie');
@@ -72,11 +71,9 @@ describe('rendered release override components (SCN-MEDIA-002)', () => {
 	});
 
 	it('renders series override fields with fallback season and selected episodes', () => {
-		const { body } = render(ReleaseOverrideSeriesFields, {
-			props: {
-				item: seriesItem,
-				draft: draft()
-			}
+		const { body } = renderWithTooltip(ReleaseOverrideSeriesFields, {
+			item: seriesItem,
+			draft: draft()
 		});
 
 		expect(body).toContain('Series');

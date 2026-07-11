@@ -6,19 +6,11 @@
 	import SettingsFormModal from '$lib/components/settings/shared/SettingsFormModal.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import * as Card from '$lib/components/ui/card';
-	import { onMount } from 'svelte';
-	import {
-		listIndexerAppProfiles,
-		listIndexerCatalog,
-		listIndexerProxies
-	} from '$lib/settings/api';
+	import { createIndexerAuxiliaryQueries } from '$lib/features/settings/resources/indexerAuxiliary.svelte';
 	import { emptyIndexerForm } from '$lib/settings/forms';
 	import type {
 		Indexer,
-		IndexerAppProfile,
-		IndexerCatalogEntry,
 		IndexerForm as IndexerFormValue,
-		IndexerProxy,
 		IndexerSearchResponse,
 		IndexerSearchSettings,
 		IntegrationTestResponse,
@@ -67,27 +59,16 @@
 	}: Props = $props();
 
 	let modalOpen = $state(false);
-	let catalog = $state<IndexerCatalogEntry[]>([]);
-	let appProfiles = $state<IndexerAppProfile[]>([]);
-	let proxies = $state<IndexerProxy[]>([]);
-	let catalogError = $state('');
+	const auxiliary = createIndexerAuxiliaryQueries();
+	const catalog = $derived(auxiliary.catalog.data?.entries ?? []);
+	const appProfiles = $derived(auxiliary.appProfiles.data ?? []);
+	const proxies = $derived(auxiliary.proxies.data ?? []);
+	const catalogError = $derived(
+		[auxiliary.catalog.error, auxiliary.appProfiles.error, auxiliary.proxies.error].find(Boolean)
+			?.message ?? ''
+	);
 	let testingConfig = $state(false);
 	let testResult = $state<IntegrationTestResponse | undefined>();
-
-	onMount(async () => {
-		try {
-			const [catalogResponse, profilesResponse, proxiesResponse] = await Promise.all([
-				listIndexerCatalog(),
-				listIndexerAppProfiles(),
-				listIndexerProxies()
-			]);
-			catalog = catalogResponse.entries;
-			appProfiles = profilesResponse;
-			proxies = proxiesResponse;
-		} catch (error) {
-			catalogError = error instanceof Error ? error.message : 'Could not load indexer catalog';
-		}
-	});
 
 	function openModal() {
 		form = emptyIndexerForm();

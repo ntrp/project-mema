@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
-	import { getMediaMetadataDetails, searchMedia } from '$lib/settings/api';
 	import type { MediaItem, MediaMetadataDetails, MediaSearchResult } from '$lib/settings/types';
 	import { cn } from '$lib/utils';
 	import type { ReleaseOverrideDraft } from '$lib/components/app/media/release-override/releaseOverrideDetails';
@@ -14,6 +13,10 @@
 	} from '$lib/components/app/media/release-override/releaseOverrideSeriesOptions';
 	import ReleaseOverrideEpisodeSelect from '$lib/components/app/media/release-override/ReleaseOverrideEpisodeSelect.svelte';
 	import ReleaseOverrideSeasonSelect from '$lib/components/app/media/release-override/ReleaseOverrideSeasonSelect.svelte';
+	import {
+		createMediaLookupQuery,
+		createTmdbSeriesDetailsQuery
+	} from '$lib/features/media/searchQueries.svelte';
 
 	interface Props {
 		item: MediaItem;
@@ -21,48 +24,39 @@
 	}
 
 	let { item, draft }: Props = $props();
-	let results = $state<MediaSearchResult[]>([]);
-	let details = $state<MediaMetadataDetails | undefined>();
-	let loadingSearch = $state(false);
-	let loadingDetails = $state(false);
 	let open = $state(false);
 	let selectedIndex = $state(-1);
-	let requestNumber = 0;
+	let detailsId = $state(
+		untrack(() =>
+			item.externalProvider === 'tmdb' && item.externalId ? item.externalId : undefined
+		)
+	);
 
 	const trimmed = $derived(draft.seriesTitle.trim());
+	const search = createMediaLookupQuery(
+		'serie',
+		() => trimmed,
+		() => open
+	);
+	const detailQuery = createTmdbSeriesDetailsQuery(() => detailsId);
+	const results = $derived(
+		(search.data ?? []).filter((result) => result.externalProvider === 'tmdb')
+	);
+	const details = $derived<MediaMetadataDetails | undefined>(detailQuery.data);
 	const selectedResult = $derived(selectedIndex >= 0 ? results[selectedIndex] : undefined);
 	const seasons = $derived(seasonOptions(details));
 	const season = $derived(selectedSeason(seasons, draft.seasonNumber));
 	const episodes = $derived(season?.season.episodes ?? []);
 
-	onMount(() => {
-		if (item.externalProvider === 'tmdb' && item.externalId) {
-			void loadSeriesDetails(item.externalId, item.title);
-		}
+	onMount(async () => {
+		if (!detailsId) return;
+		await detailQuery.refetch();
+		selectDefaultSeason();
 	});
 
 	function handleInput() {
 		open = true;
 		selectedIndex = -1;
-		void searchSeries(trimmed);
-	}
-
-	async function searchSeries(query: string) {
-		const current = ++requestNumber;
-		if (query.length < 2) {
-			results = [];
-			loadingSearch = false;
-			return;
-		}
-		loadingSearch = true;
-		try {
-			const found = await searchMedia({ query, type: 'serie' });
-			if (current === requestNumber) {
-				results = found.filter((result) => result.externalProvider === 'tmdb').slice(0, 6);
-			}
-		} finally {
-			if (current === requestNumber) loadingSearch = false;
-		}
 	}
 
 	async function choose(result: MediaSearchResult) {
@@ -70,18 +64,10 @@
 		open = false;
 		selectedIndex = -1;
 		if (result.externalProvider !== 'tmdb' || !result.externalId) return;
-		await loadSeriesDetails(result.externalId, result.title);
-	}
-
-	async function loadSeriesDetails(externalId: string, title: string) {
-		loadingDetails = true;
-		try {
-			details = await getMediaMetadataDetails('tmdb', 'serie', externalId);
-			setSeriesTitle(title);
-			selectDefaultSeason();
-		} finally {
-			loadingDetails = false;
-		}
+		detailsId = result.externalId;
+		await tick();
+		await detailQuery.refetch();
+		selectDefaultSeason();
 	}
 
 	function selectDefaultSeason() {
@@ -143,7 +129,6 @@
 			}}
 			onfocus={() => {
 				open = true;
-				if (trimmed.length >= 2 && results.length === 0) void searchSeries(trimmed);
 			}}
 			onkeydown={handleKeydown}
 			onblur={() => {
@@ -177,7 +162,7 @@
 					{/each}
 				{:else}
 					<div class="px-2 py-1 text-xs font-bold text-muted-foreground uppercase">
-						{loadingSearch ? 'Searching' : 'No TMDB matches'}
+						{search.isFetching ? 'Searching' : 'No TMDB matches'}
 					</div>
 				{/if}
 			</div>
@@ -190,7 +175,7 @@
 		onChange={setSeason}
 	/>
 </div>
-{#if loadingDetails}
+{#if detailQuery.isFetching}
 	<span class="text-xs text-muted-foreground">Loading series metadata</span>
 {/if}
 <ReleaseOverrideEpisodeSelect value={draft.episodeNumbers} {episodes} onChange={setEpisodes} />

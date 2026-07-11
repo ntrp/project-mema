@@ -1,39 +1,22 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import MediaProfileEditorForm from '$lib/components/settings/profiles/MediaProfileEditorForm.svelte';
+	import { createQualitySizeResources } from '$lib/components/settings/quality/resources.svelte';
 	import { getAppShellContext } from '$lib/features/app/appShellContext';
 	import { emptyMediaProfileForm } from '$lib/settings/forms';
-	import type { MediaProfileForm, QualitySizeSetting } from '$lib/settings/types';
+	import type { MediaProfileForm } from '$lib/settings/types';
 	import { errorMessageFrom } from '$lib/components/app/shell/controller/helpers';
-	import {
-		loadMediaProfileQualities,
-		returnToMediaProfiles,
-		saveMediaProfileForm
-	} from './mediaProfileRouteHelpers';
+	import { returnToMediaProfiles } from './mediaProfileRouteHelpers';
+	import { createProfileEditorResources } from './profileEditorResources.svelte';
 
 	const app = getAppShellContext();
+	const resources = createProfileEditorResources();
 	let form = $state<MediaProfileForm>(emptyMediaProfileForm());
-	let qualities = $state<QualitySizeSetting[]>([]);
-	let loadingQualities = $state(false);
-	let qualityError = $state('');
+	const qualitySizes = createQualitySizeResources();
+	const qualities = $derived(qualitySizes.query.data ?? []);
+	const loadingQualities = $derived(qualitySizes.query.isFetching);
+	const qualityError = $derived(qualitySizes.query.error?.message ?? '');
 	let saving = $state(false);
 	let saveError = $state('');
-
-	onMount(() => {
-		void loadQualities();
-	});
-
-	async function loadQualities() {
-		loadingQualities = true;
-		qualityError = '';
-		try {
-			qualities = await loadMediaProfileQualities();
-		} catch (error) {
-			qualityError = errorMessageFrom(error, 'Could not load qualities');
-		} finally {
-			loadingQualities = false;
-		}
-	}
 
 	async function submitProfile(event: SubmitEvent) {
 		event.preventDefault();
@@ -41,7 +24,7 @@
 		saveError = '';
 		app.clearNotice();
 		try {
-			await saveMediaProfileForm(form);
+			await resources.save.mutateAsync(form);
 			app.message = 'Profile saved';
 			await app.loadSettingsSection('profiles');
 			await returnToMediaProfiles();

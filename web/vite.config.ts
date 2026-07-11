@@ -24,7 +24,9 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			dynamicCompileOptions: ({ filename }) =>
-				inspectorCompileExclusionEnabled && inspectorExcluded(filename) ? { dev: false } : undefined,
+				inspectorCompileExclusionEnabled && inspectorExcluded(filename)
+					? { dev: false }
+					: undefined,
 			inspector: {
 				showToggleButton: 'always',
 				toggleButtonPos: 'bottom-right'

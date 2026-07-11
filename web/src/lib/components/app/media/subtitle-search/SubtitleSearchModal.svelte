@@ -8,15 +8,21 @@
 		type ReleaseSearchLogEntry
 	} from '$lib/components/app/media/release-search/releaseSearchLog';
 	import { Button } from '$lib/components/ui/button';
+	import { tick } from 'svelte';
 	import SearchIcon from '@lucide/svelte/icons/search';
 	import SubtitleSearchResultsTable from './SubtitleSearchResultsTable.svelte';
 	import {
 		subtitleSearchQuery,
 		subtitleSearchQueryVariants
 	} from '$lib/components/app/media/subtitle-search/subtitleSearchQuery';
-	import { searchMediaSubtitles } from '$lib/features/releases/api';
+	import { createSubtitleSearchQuery } from '$lib/features/media/searchQueries.svelte';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-	import type { GrabSubtitleRequest, MediaItem, SubtitleCandidate } from '$lib/settings/types';
+	import type {
+		GrabSubtitleRequest,
+		ManualSubtitleSearchRequest,
+		MediaItem,
+		SubtitleCandidate
+	} from '$lib/settings/types';
 
 	interface Props {
 		item: MediaItem;
@@ -31,38 +37,40 @@
 
 	let overrideQuery = $state(false);
 	let customQuery = $state('');
-	let searching = $state(false);
 	let grabbingId = $state<string | undefined>();
-	let candidates = $state<SubtitleCandidate[]>([]);
+	let request = $state<ManualSubtitleSearchRequest | undefined>();
 	let statusMessages = $state<ReleaseSearchLogEntry[]>([placeholderLogEntry()]);
 	const systemQuery = $derived(subtitleSearchQuery(item));
 	const queryVariants = $derived(subtitleSearchQueryVariants(item, row));
 	const searchQuery = $derived(overrideQuery ? customQuery.trim() : systemQuery);
+	const search = createSubtitleSearchQuery(
+		() => item.id,
+		() => request
+	);
+	const candidates = $derived(search.data?.candidates ?? []);
 
 	async function submitSearch() {
 		if (!row.path || !languageId) return;
-		searching = true;
-		candidates = [];
 		statusMessages = [createLogEntry('Search started')];
 		try {
-			const result = await searchMediaSubtitles(item.id, {
+			request = {
 				query: searchQuery,
 				languageId,
 				filePath: row.path
-			});
-			candidates = result.candidates;
+			};
+			await tick();
+			const result = await search.refetch({ throwOnError: true });
+			const data = result.data!;
 			statusMessages = [
 				...statusMessages,
-				...result.logs.map(createLogEntry),
-				createLogEntry(`Search finished: ${result.candidates.length} subtitles`)
+				...data.logs.map(createLogEntry),
+				createLogEntry(`Search finished: ${data.candidates.length} subtitles`)
 			].slice(-100);
 		} catch (error) {
 			statusMessages = [
 				...statusMessages,
 				createLogEntry(error instanceof Error ? error.message : 'Subtitle search failed')
 			].slice(-100);
-		} finally {
-			searching = false;
 		}
 	}
 
@@ -99,20 +107,26 @@
 				bind:overrideQuery
 				bind:customQuery
 				{queryVariants}
-				disabled={!canManage || searching}
+				disabled={!canManage || search.isFetching}
 			/>
 			<div class="flex justify-end">
 				<Button
 					type="button"
-					disabled={!canManage || searching || !searchQuery || !row.path}
+					disabled={!canManage || search.isFetching || !searchQuery || !row.path}
 					onclick={submitSearch}
 				>
 					<SearchIcon aria-hidden="true" />
-					{searching ? 'Searching' : 'Search'}
+					{search.isFetching ? 'Searching' : 'Search'}
 				</Button>
 			</div>
 		</div>
 		<ReleaseSearchStatusLog messages={statusMessages} />
-		<SubtitleSearchResultsTable {candidates} {searching} {grabbingId} {canManage} onGrab={grab} />
+		<SubtitleSearchResultsTable
+			{candidates}
+			searching={search.isFetching}
+			{grabbingId}
+			{canManage}
+			onGrab={grab}
+		/>
 	</div>
 </SettingsFormModal>

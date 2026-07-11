@@ -14,9 +14,11 @@ import {
 } from '$lib/settings/forms';
 import { emptyTagForm, errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
+import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
 
 interface SettingsEntityDeleteDeps {
 	clearNotice: () => void;
+	runMutation?: RunCommandMutation;
 	removeLanguage?: (_code: string) => void;
 	removeTag?: (_id: string) => void;
 	removeUser?: (_id: string) => void;
@@ -30,13 +32,14 @@ export function createSettingsEntityDeleteActions(
 	deps: SettingsEntityDeleteDeps
 ) {
 	const clearNotice = deps.clearNotice;
+	const runMutation = deps.runMutation ?? ((command) => command());
 
 	async function deletePathMapping(id: string) {
 		state.deletingPathMappingId = id;
 		clearNotice();
 
 		try {
-			await deletePathMappingRequest(id);
+			await runMutation(() => deletePathMappingRequest(id));
 			deps.removePathMapping?.(id);
 			state.message = 'Path mapping deleted';
 		} catch (error) {
@@ -50,7 +53,7 @@ export function createSettingsEntityDeleteActions(
 		clearNotice();
 
 		try {
-			await deleteUserRequest(id);
+			await runMutation(() => deleteUserRequest(id));
 			if (state.userForm.id === id) {
 				state.userForm = emptyUserForm();
 			}
@@ -66,7 +69,7 @@ export function createSettingsEntityDeleteActions(
 		clearNotice();
 
 		try {
-			await deleteTagRequest(id);
+			await runMutation(() => deleteTagRequest(id));
 			if (state.tagForm.id === id) {
 				state.tagForm = emptyTagForm();
 			}
@@ -84,7 +87,7 @@ export function createSettingsEntityDeleteActions(
 		clearNotice();
 
 		try {
-			await deleteLanguageRequest(code);
+			await runMutation(() => deleteLanguageRequest(code));
 			if (state.languageForm.originalCode === code) {
 				state.languageForm = emptyLanguageForm();
 			}
@@ -102,7 +105,7 @@ export function createSettingsEntityDeleteActions(
 		clearNotice();
 
 		try {
-			await deleteMediaProfileRequest(id);
+			await runMutation(() => deleteMediaProfileRequest(id));
 			if (state.mediaProfileForm.id === id) {
 				state.mediaProfileForm = emptyMediaProfileForm();
 			}
@@ -120,7 +123,7 @@ export function createSettingsEntityDeleteActions(
 		clearNotice();
 
 		try {
-			await deleteCustomFormatRequest(id);
+			await runMutation(() => deleteCustomFormatRequest(id));
 			if (state.customFormatForm.id === id) {
 				state.customFormatForm = emptyCustomFormatForm();
 			}

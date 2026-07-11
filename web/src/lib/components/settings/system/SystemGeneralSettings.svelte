@@ -6,13 +6,13 @@
 	import { Label } from '$lib/components/ui/label';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
-	import { getSystemEventSettings, updateSystemEventSettings } from './events/api';
+	import { createEventSettingsResource } from '$lib/features/settings/resources/systemGeneral.svelte';
 	import SystemLogFileGeneralSettings from './logs/SystemLogFileGeneralSettings.svelte';
 
 	let retentionDays = $state(7);
-	let loading = $state(true);
-	let saving = $state(false);
-	let logFileSettings = $state<SystemLogFileGeneralSettings>();
+	const resource = createEventSettingsResource();
+	const loading = $derived(resource.query.isPending || resource.query.isFetching);
+	const saving = $derived(resource.save.isPending);
 	let errorMessage = $state('');
 	let message = $state('');
 
@@ -21,31 +21,29 @@
 	});
 
 	async function load() {
-		loading = true;
 		errorMessage = '';
 		try {
-			const eventSettings = await getSystemEventSettings();
+			const { data: eventSettings } = await resource.query.refetch();
+			if (!eventSettings) return;
 			retentionDays = eventSettings.retentionDays;
-			await logFileSettings?.load();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not load general settings';
 		} finally {
-			loading = false;
+			/* query owns loading state */
 		}
 	}
 
 	async function save(event: SubmitEvent) {
 		event.preventDefault();
-		saving = true;
 		errorMessage = '';
 		message = '';
 		try {
-			retentionDays = (await updateSystemEventSettings({ retentionDays })).retentionDays;
+			retentionDays = (await resource.save.mutateAsync({ retentionDays })).retentionDays;
 			message = 'General settings saved';
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not save general settings';
 		} finally {
-			saving = false;
+			/* mutation owns saving state */
 		}
 	}
 </script>
@@ -78,5 +76,5 @@
 		</div>
 	</form>
 
-	<SystemLogFileGeneralSettings bind:this={logFileSettings} />
+	<SystemLogFileGeneralSettings />
 </Card>

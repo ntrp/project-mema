@@ -10,7 +10,8 @@ export interface DiscoverSectionCacheEntry {
 
 export const discoverContentKeys = {
 	sections: ['discovery', 'sections'] as const,
-	section: (id: string) => ['discovery', 'section', id] as const
+	section: (id: string) => ['discovery', 'section', id] as const,
+	page: (id: string, page: number) => [...discoverContentKeys.section(id), 'page', page] as const
 };
 
 export function createDiscoverSectionsQuery(enabled: () => boolean) {

@@ -18,7 +18,8 @@ const client = {
 		data.set(name, typeof value === 'function' ? value(data.get(name)) : value);
 	}),
 	invalidateQueries: vi.fn(),
-	removeQueries: vi.fn()
+	removeQueries: vi.fn(),
+	fetchQuery: vi.fn(({ queryFn }: { queryFn: () => Promise<unknown> }) => queryFn())
 };
 
 describe('discover content cache', () => {

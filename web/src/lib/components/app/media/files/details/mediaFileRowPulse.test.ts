@@ -27,5 +27,10 @@ describe('media file row pulse tracking', () => {
 });
 
 function row(key: string, statusLabel: string): MediaFileDetailRow {
-	return { key, description: 'English audio', statusLabel, details: [] } as unknown as MediaFileDetailRow;
+	return {
+		key,
+		description: 'English audio',
+		statusLabel,
+		details: []
+	} as unknown as MediaFileDetailRow;
 }
