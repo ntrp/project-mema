@@ -34,3 +34,4 @@ output/playwright/
 .data/secrets/
 internal/storage/seeds/dev.local.sql
 scripts/seeds/dev.local.sql
+.pi-subagents/
