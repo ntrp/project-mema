@@ -23,12 +23,7 @@ type clusterCProvider struct {
 	searchPath string
 }
 
-var clusterCProviders = []clusterCProvider{
-	{key: "addic7ed", baseURL: "https://www.addic7ed.com", captcha: true, searchPath: "/search.php"},
-	{key: "avistaz", baseURL: "https://avistaz.to", private: true, searchPath: "/subtitles"},
-	{key: "cinemaz", baseURL: "https://cinemaz.to", private: true, searchPath: "/subtitles"},
-	{key: "hdbits", baseURL: "https://hdbits.org", private: true, searchPath: "/browse.php"},
-}
+var clusterCProviders = []clusterCProvider{}
 
 func init() {
 	for _, provider := range clusterCProviders {

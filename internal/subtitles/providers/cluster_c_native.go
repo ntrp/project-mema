@@ -15,16 +15,21 @@ import (
 )
 
 type nativeCProvider struct {
-	key         string
-	baseURL     string
-	captcha     bool
-	rawDownload bool
-	search      func(providercore.SearchRequest) (string, url.Values, string)
-	parse       func([]byte, string, string) ([]providercore.Candidate, error)
-	download    func(providercore.Candidate) (string, url.Values, string)
+	key              string
+	baseURL          string
+	captcha          bool
+	rawDownload      bool
+	provenanceSource string
+	search           func(providercore.SearchRequest) (string, url.Values, string)
+	parse            func([]byte, string, string) ([]providercore.Candidate, error)
+	download         func(providercore.Candidate) (string, url.Values, string)
 }
 
 var nativeCProviders = []nativeCProvider{
+	addic7edAdapter(),
+	avistazSubtitleAdapter(),
+	cinemazSubtitleAdapter(),
+	hdbitsSubtitleAdapter(),
 	karagargaAdapter(),
 	ktuvitAdapter(),
 	legendasdivxAdapter(),
@@ -53,6 +58,9 @@ func (p nativeCProvider) Test(ctx context.Context, svc providercore.Service, cfg
 func (p nativeCProvider) Search(ctx context.Context, svc providercore.Service, cfg providercore.Config, req providercore.SearchRequest) ([]providercore.Candidate, error) {
 	if err := p.prereq(cfg); err != nil {
 		return nil, err
+	}
+	if p.provenanceSource != "" && releaseProvenanceURL(req, p.provenanceSource) == "" {
+		return nil, providercore.ErrReleaseProvenanceRequired
 	}
 	rawPath, form, method := p.search(req)
 	data, err := p.do(ctx, svc, cfg, method, rawPath, form, "", false)
