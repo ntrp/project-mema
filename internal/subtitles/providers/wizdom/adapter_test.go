@@ -54,6 +54,25 @@ func TestDownloadExtractsArchiveAndSetsReferer(t *testing.T) {
 	}
 }
 
+func TestParseSeriesRowsAndPrerequisites(t *testing.T) {
+	season, episode := int32(1), int32(2)
+	rows, err := parseRows([]byte(`{"subs":{"1":{"2":[{"id":9,"version":"Series.Release"}]}}}`), providercore.SearchRequest{MediaType: "serie", SeasonNumber: &season, EpisodeNumber: &episode})
+	if err != nil || len(rows) != 1 || rows[0].ID != 9 {
+		t.Fatalf("rows=%#v err=%v", rows, err)
+	}
+	_, err = parseRows([]byte(`{"subs":{}}`), providercore.SearchRequest{MediaType: "serie"})
+	if err == nil {
+		t.Fatal("expected season/episode prerequisite")
+	}
+}
+
+func TestDownloadRequiresCandidate(t *testing.T) {
+	_, err := Adapter.Download(context.Background(), &providerStub{}, providercore.Config{}, providercore.Candidate{})
+	if err == nil {
+		t.Fatal("expected missing candidate error")
+	}
+}
+
 func zipBody() []byte {
 	var buf bytes.Buffer
 	zw := zip.NewWriter(&buf)
