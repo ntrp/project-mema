@@ -100,14 +100,24 @@
     "key": "animetosho",
     "displayName": "Animetosho",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime support implemented for AniDB episode-id based anime subtitle lookup and xz downloads.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true,
+      "anidb": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "feed.animetosho.org"
+      ],
+      "allowedDownloadHosts": [
+        "animetosho.org"
+      ]
+    },
     "fields": []
   },
   {
@@ -244,8 +254,8 @@
     "key": "bsplayer",
     "displayName": "BSPlayer",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime support reports the Bazarr-documented broken SOAP search upstream honestly; gzip downloads are supported for existing candidates.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -253,7 +263,16 @@
     "dependencies": {
       "archive": true
     },
-    "outboundPolicy": {},
+    "warning": "BSPlayer search is disabled because the upstream SOAP API is unreliable.",
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "*.api.bsplayer-subtitles.com"
+      ],
+      "allowedDownloadHosts": [
+        "*.bsplayer-subtitles.com",
+        "bsplayer-subtitles.com"
+      ]
+    },
     "fields": []
   },
   {
@@ -706,14 +725,23 @@
     "key": "napiprojekt",
     "displayName": "Napiprojekt",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime support implemented for Polish hash-based subtitle lookup and download.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "napiprojekt.pl",
+        "www.napiprojekt.pl"
+      ],
+      "allowedDownloadHosts": [
+        "napiprojekt.pl",
+        "www.napiprojekt.pl"
+      ]
+    },
     "fields": []
   },
   {

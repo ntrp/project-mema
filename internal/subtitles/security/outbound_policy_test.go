@@ -42,7 +42,7 @@ func TestValidateProviderURLAllowsLocalOnlyWhenCatalogAllowsIt(t *testing.T) {
 }
 
 func TestValidateProviderURLFailsClosedForUnknownDownloadHosts(t *testing.T) {
-	err := ValidateProviderURL("bsplayer", "https://bsplayer.example/archive.zip", true)
+	err := ValidateProviderURL("addic7ed", "https://addic7ed.example/archive.zip", true)
 	if !errors.Is(err, ErrDownloadHostClosed) {
 		t.Fatalf("expected fail-closed download host error, got %v", err)
 	}

@@ -42,9 +42,11 @@ func TestCatalogProvenanceAndRuntimeStatus(t *testing.T) {
 			t.Fatalf("%s should be supported, got %#v", key, entry.RuntimeStatus)
 		}
 	}
-	entry, ok := Lookup("bsplayer")
-	if !ok || entry.RuntimeStatus != RuntimeCatalogOnly {
-		t.Fatalf("bsplayer should be catalog-only, got %#v", entry.RuntimeStatus)
+	for _, key := range []string{"animetosho", "bsplayer", "napiprojekt"} {
+		entry, ok := Lookup(key)
+		if !ok || entry.RuntimeStatus != RuntimeSupported {
+			t.Fatalf("%s should be supported, got %#v", key, entry.RuntimeStatus)
+		}
 	}
 }
 

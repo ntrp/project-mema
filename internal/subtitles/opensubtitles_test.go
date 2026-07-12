@@ -57,7 +57,7 @@ func TestOpenSubtitlesComAliasSearchAndDownload(t *testing.T) {
 
 func TestCatalogOnlyProviderCannotRun(t *testing.T) {
 	service := NewService(nil)
-	_, err := service.Search(context.Background(), Config{Type: "bsplayer"}, SearchRequest{Title: "Scenario", LanguageID: "english"})
+	_, err := service.Search(context.Background(), Config{Type: "addic7ed"}, SearchRequest{Title: "Scenario", LanguageID: "english"})
 	if err == nil || !strings.Contains(err.Error(), ErrCatalogOnlyProvider.Error()) {
 		t.Fatalf("err = %v", err)
 	}
