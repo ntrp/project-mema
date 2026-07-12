@@ -29,3 +29,13 @@ func TestSearchFixture(t *testing.T) {
 		t.Fatalf("unexpected candidates: %#v", candidates)
 	}
 }
+
+func TestDownloadReturnsSubtitle(t *testing.T) {
+	dl, err := Adapter.Download(context.Background(), providerStub{}, providercore.Config{}, providercore.Candidate{SourceURL: "https://example.test/download/fixture.srt", ReleaseName: "Fixture"})
+	if err != nil {
+		t.Fatalf("Download returned error: %v", err)
+	}
+	if !strings.Contains(string(dl.Content), "fixture") {
+		t.Fatalf("unexpected download: %q", dl.Content)
+	}
+}
