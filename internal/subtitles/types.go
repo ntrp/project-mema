@@ -49,6 +49,46 @@ type SearchRequest struct {
 	SeasonNumber  *int32
 	EpisodeNumber *int32
 	FilePath      string
+	MediaContext  MediaContext
+}
+
+type MediaContext struct {
+	ExternalIDs        map[string]string
+	SeasonExternalIDs  map[string]string
+	EpisodeExternalIDs map[string]string
+	Aliases            []MediaAlias
+	EpisodeNumbering   []EpisodeNumbering
+	File               FileContext
+	Provenance         []ReleaseProvenance
+}
+
+type MediaAlias struct {
+	Value        string
+	Language     string
+	Kind         string
+	ProviderName string
+}
+
+type EpisodeNumbering struct {
+	ProviderName    string
+	NumberingScheme string
+	SeasonNumber    *int32
+	EpisodeNumber   *int32
+	AbsoluteNumber  *int32
+}
+
+type FileContext struct {
+	Path      string
+	Name      string
+	BaseName  string
+	Extension string
+	SizeBytes int64
+	Hashes    map[string]string
+}
+
+type ReleaseProvenance struct {
+	Source  string
+	InfoURL string
 }
 
 type Candidate struct {

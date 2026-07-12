@@ -3,9 +3,12 @@ package security
 import (
 	"archive/zip"
 	"bytes"
+	"compress/gzip"
 	"errors"
 	"os"
 	"testing"
+
+	"github.com/ulikunitz/xz"
 )
 
 func TestReadArchiveReadsZipInMemory(t *testing.T) {
@@ -72,13 +75,63 @@ func TestReadArchiveRejectsTooManyMembers(t *testing.T) {
 	}
 }
 
-func TestReadArchiveRejectsUnsupportedFormats(t *testing.T) {
-	for _, name := range []string{"subs.rar", "subs.7z"} {
-		_, err := ReadArchive(name, []byte("not supported"), ArchiveLimits{})
-		if !errors.Is(err, ErrUnsupportedArchive) {
-			t.Fatalf("expected unsupported format for %s, got %v", name, err)
+func TestReadArchiveReadsGzipAndXZ(t *testing.T) {
+	cases := map[string][]byte{
+		"movie.en.srt.gz": gzipArchiveBytes(t, []byte("gzip subtitle")),
+		"movie.en.srt.xz": xzArchiveBytes(t, []byte("xz subtitle")),
+	}
+	for name, data := range cases {
+		members, err := ReadArchive(name, data, ArchiveLimits{MaxMembers: 1, MaxBytes: 1024})
+		if err != nil {
+			t.Fatalf("ReadArchive(%s) failed: %v", name, err)
+		}
+		if len(members) != 1 || members[0].Name != "movie.en.srt" || len(members[0].Content) == 0 {
+			t.Fatalf("members = %#v", members)
 		}
 	}
+}
+
+func TestReadArchiveRecognizesMalformedRARAsRAR(t *testing.T) {
+	_, err := ReadArchive("subs.rar", []byte("Rar!\x1a\x07\x00bad"), ArchiveLimits{})
+	if err == nil || errors.Is(err, ErrUnsupportedArchive) {
+		t.Fatalf("expected rar parse error, got %v", err)
+	}
+}
+
+func TestReadArchiveRejectsUnsupportedFormats(t *testing.T) {
+	_, err := ReadArchive("subs.7z", []byte("not supported"), ArchiveLimits{})
+	if !errors.Is(err, ErrUnsupportedArchive) {
+		t.Fatalf("expected unsupported format, got %v", err)
+	}
+}
+
+func gzipArchiveBytes(t *testing.T, content []byte) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	if _, err := zw.Write(content); err != nil {
+		t.Fatalf("write gzip: %v", err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatalf("close gzip: %v", err)
+	}
+	return buf.Bytes()
+}
+
+func xzArchiveBytes(t *testing.T, content []byte) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	zw, err := xz.NewWriter(&buf)
+	if err != nil {
+		t.Fatalf("create xz: %v", err)
+	}
+	if _, err := zw.Write(content); err != nil {
+		t.Fatalf("write xz: %v", err)
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatalf("close xz: %v", err)
+	}
+	return buf.Bytes()
 }
 
 func zipBytes(t *testing.T, files map[string]string) []byte {

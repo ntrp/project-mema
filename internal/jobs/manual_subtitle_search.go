@@ -10,6 +10,7 @@ import (
 
 	"media-manager/internal/storage"
 	"media-manager/internal/subtitles"
+	"media-manager/internal/subtitles/providercore"
 )
 
 type ManualSubtitleCandidate struct {
@@ -99,13 +100,7 @@ func GrabManualSubtitle(
 	if err := subtitles.UnsupportedRuntimeError(provider.Type); err != nil {
 		return fmt.Errorf("subtitle provider %s cannot run: %w", provider.Name, err)
 	}
-	request := subtitles.SearchRequest{
-		MediaType:  item.Type,
-		Title:      item.Title,
-		LanguageID: strings.TrimSpace(input.LanguageID),
-		Year:       item.Year,
-		FilePath:   path,
-	}
+	request := providercore.BuildSearchRequest(item, strings.TrimSpace(input.LanguageID), path)
 	candidate, err := manualSubtitleDownloadCandidate(provider, input)
 	if err != nil {
 		return err
@@ -135,13 +130,8 @@ func manualSubtitleSearchRequest(
 	if err != nil {
 		return subtitles.SearchRequest{}, false, err
 	}
-	request := subtitles.SearchRequest{
-		MediaType:  item.Type,
-		Title:      firstNonEmpty(query, item.Title),
-		LanguageID: strings.TrimSpace(languageID),
-		Year:       item.Year,
-		FilePath:   path,
-	}
+	request := providercore.BuildSearchRequest(item, strings.TrimSpace(languageID), path)
+	request.Title = firstNonEmpty(query, item.Title)
 	if request.LanguageID == "" || path == "" {
 		return subtitles.SearchRequest{}, false, nil
 	}

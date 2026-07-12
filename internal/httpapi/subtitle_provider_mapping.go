@@ -62,15 +62,42 @@ func stringValuesPtr(values []string) *[]string {
 	return &copyValues
 }
 
+func subtitleProviderConfigSettings(settings storage.SubtitleProviderSettings) map[string]subtitles.SettingValue {
+	values := make(map[string]subtitles.SettingValue, len(settings))
+	for key, value := range settings {
+		var stringValues []string
+		if value.StringValues != nil {
+			stringValues = append([]string{}, value.StringValues...)
+		}
+		values[key] = subtitles.SettingValue{
+			StringValue:  value.StringValue,
+			NumberValue:  value.NumberValue,
+			BooleanValue: value.BooleanValue,
+			StringValues: stringValues,
+		}
+	}
+	return values
+}
+
+func subtitleProviderConfigSecrets(secrets storage.SubtitleProviderSecretSettings) map[string]string {
+	values := make(map[string]string, len(secrets))
+	for key, value := range secrets {
+		values[key] = value
+	}
+	return values
+}
+
 func subtitleProviderConfigFromInput(input storage.SubtitleProviderInput) subtitles.Config {
 	return subtitles.Config{
-		Name:          input.Name,
-		Type:          input.Type,
-		BaseURL:       input.BaseURL,
-		Username:      input.Username,
-		Password:      input.Password,
-		APIKey:        input.APIKey,
-		MockSubtitles: subtitleProviderMockConfigFromInput(input.MockSubtitles),
+		Name:           input.Name,
+		Type:           input.Type,
+		BaseURL:        input.BaseURL,
+		Username:       input.Username,
+		Password:       input.Password,
+		APIKey:         input.APIKey,
+		Settings:       subtitleProviderConfigSettings(input.Settings),
+		SecretSettings: subtitleProviderConfigSecrets(input.SecretSettings),
+		MockSubtitles:  subtitleProviderMockConfigFromInput(input.MockSubtitles),
 	}
 }
 

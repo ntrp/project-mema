@@ -70,6 +70,41 @@ func TestSubtitleProviderInputAllowsDisabledCatalogProvider(t *testing.T) {
 	}
 }
 
+func TestSubtitleProviderConfigIncludesDynamicSettingsAndSecrets(t *testing.T) {
+	text := "enabled"
+	secret := "cookie=value"
+	providerConfig := subtitleProviderConfig(storage.SubtitleProvider{
+		Name:           "Dynamic Provider",
+		Type:           "mock",
+		Settings:       storage.SubtitleProviderSettings{"mode": {StringValue: &text}},
+		SecretSettings: storage.SubtitleProviderSecretSettings{"cookies": secret},
+	})
+	if providerConfig.Settings["mode"].StringValue == nil || *providerConfig.Settings["mode"].StringValue != "enabled" {
+		t.Fatalf("settings = %#v", providerConfig.Settings)
+	}
+	if providerConfig.SecretSettings["cookies"] != secret {
+		t.Fatalf("secrets = %#v", providerConfig.SecretSettings)
+	}
+}
+
+func TestDraftSubtitleProviderConfigIncludesDynamicSettingsAndSecrets(t *testing.T) {
+	text := "fallback"
+	secret := "token"
+	input := storage.SubtitleProviderInput{
+		Name:           "Draft",
+		Type:           "mock",
+		Settings:       storage.SubtitleProviderSettings{"mode": {StringValue: &text}},
+		SecretSettings: storage.SubtitleProviderSecretSettings{"apiToken": secret},
+	}
+	providerConfig := subtitleProviderConfigFromInput(input)
+	if providerConfig.Settings["mode"].StringValue == nil || *providerConfig.Settings["mode"].StringValue != "fallback" {
+		t.Fatalf("settings = %#v", providerConfig.Settings)
+	}
+	if providerConfig.SecretSettings["apiToken"] != secret {
+		t.Fatalf("secrets = %#v", providerConfig.SecretSettings)
+	}
+}
+
 func TestSubtitleProviderUpdatePreservesAndClearsSecrets(t *testing.T) {
 	input := storage.SubtitleProviderInput{SecretSettings: storage.SubtitleProviderSecretSettings{}}
 	current := storage.SubtitleProvider{

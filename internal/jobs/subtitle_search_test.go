@@ -45,6 +45,45 @@ func TestSubtitleSearchRequestBuildsEpisodeContext(t *testing.T) {
 	}
 }
 
+func TestSubtitleSearchRequestIncludesProviderCoreContext(t *testing.T) {
+	size := int64(128)
+	item := storage.MediaItem{
+		ID:           uuid.New(),
+		Type:         "serie",
+		Title:        "Context Series",
+		Monitored:    true,
+		FilePaths:    []string{"/library/Context.Series.S01E02.mkv"},
+		SubtitleMode: "mixed",
+		SubtitleTargets: []storage.MediaProfileSubtitleTarget{
+			{LanguageID: "english"},
+		},
+		ProviderMappings: []storage.MediaProviderMapping{
+			{ProviderName: "imdb", ExternalID: "tt1234567", EntityType: "media"},
+			{ProviderName: "anidb", ExternalID: "999", EntityType: "episode"},
+		},
+		EpisodeNumbering: []storage.MediaEpisodeNumbering{{
+			EpisodeID: uuid.New(), ProviderName: "anidb", NumberingScheme: "absolute", AbsoluteNumber: int32Ptr(12),
+		}},
+		FileFacts: []storage.MediaFileFact{{FilePath: "/library/Context.Series.S01E02.mkv", SizeBytes: &size}},
+	}
+	request, ok := subtitleSearchRequest(item, SubtitleSearchArgs{LanguageID: "english"})
+	if !ok {
+		t.Fatal("expected request")
+	}
+	if request.MediaContext.ExternalIDs["imdb"] != "tt1234567" {
+		t.Fatalf("external IDs = %#v", request.MediaContext.ExternalIDs)
+	}
+	if request.MediaContext.EpisodeExternalIDs["anidb"] != "999" {
+		t.Fatalf("episode IDs = %#v", request.MediaContext.EpisodeExternalIDs)
+	}
+	if request.MediaContext.File.SizeBytes != 128 || request.MediaContext.File.Extension != "mkv" {
+		t.Fatalf("file context = %#v", request.MediaContext.File)
+	}
+	if len(request.MediaContext.EpisodeNumbering) != 1 || *request.MediaContext.EpisodeNumbering[0].AbsoluteNumber != 12 {
+		t.Fatalf("numbering = %#v", request.MediaContext.EpisodeNumbering)
+	}
+}
+
 func TestSubtitleRecordMuxesProviderSubtitleForEmbeddedProfile(t *testing.T) {
 	item := storage.MediaItem{
 		ID:           uuid.New(),

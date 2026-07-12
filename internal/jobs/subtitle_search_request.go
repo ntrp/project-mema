@@ -8,6 +8,7 @@ import (
 
 	"media-manager/internal/storage"
 	"media-manager/internal/subtitles"
+	"media-manager/internal/subtitles/providercore"
 )
 
 var subtitleEpisodePattern = regexp.MustCompile(`(?i)s(\d{1,2})e(\d{1,3})`)
@@ -47,13 +48,7 @@ func subtitleSearchRequest(
 	if language == "" || filePath == "" || subtitleSearchLanguageSatisfied(item, language, filePath) {
 		return subtitles.SearchRequest{}, false
 	}
-	request := subtitles.SearchRequest{
-		MediaType:  item.Type,
-		Title:      item.Title,
-		LanguageID: language,
-		Year:       item.Year,
-		FilePath:   filePath,
-	}
+	request := providercore.BuildSearchRequest(item, language, filePath)
 	season, episode, ok := subtitleEpisodeNumbers(filePath)
 	if ok {
 		request.SeasonNumber = &season
