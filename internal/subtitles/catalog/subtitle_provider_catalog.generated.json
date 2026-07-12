@@ -3,8 +3,8 @@
     "key": "addic7ed",
     "displayName": "Addic7Ed",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Requires a logged-in browser cookie because interactive CAPTCHA cannot be solved by the runtime.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -12,8 +12,44 @@
     "dependencies": {
       "captcha": true
     },
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "www.addic7ed.com",
+        "addic7ed.com"
+      ],
+      "allowedDownloadHosts": [
+        "www.addic7ed.com",
+        "addic7ed.com"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://www.addic7ed.com"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "animekalesi",
@@ -109,15 +145,49 @@
     "key": "avistaz",
     "displayName": "Avistaz",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "avistaz.to"
+      ],
+      "allowedDownloadHosts": [
+        "avistaz.to"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://avistaz.to"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "bayflix",
@@ -190,15 +260,49 @@
     "key": "cinemaz",
     "displayName": "Cinemaz",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "cinemaz.to"
+      ],
+      "allowedDownloadHosts": [
+        "cinemaz.to"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://cinemaz.to"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "gestdown",
@@ -268,15 +372,49 @@
     "key": "hdbits",
     "displayName": "HDBits",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "hdbits.org"
+      ],
+      "allowedDownloadHosts": [
+        "hdbits.org"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://hdbits.org"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "hosszupuska",
@@ -353,22 +491,56 @@
     "key": "karagarga",
     "displayName": "Karagarga",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "karagarga.in"
+      ],
+      "allowedDownloadHosts": [
+        "karagarga.in"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://karagarga.in"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "ktuvit",
     "displayName": "Ktuvit",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported only with valid session cookies from a user-solved CAPTCHA session; missing cookies return a typed CAPTCHA/private prerequisite error.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -376,29 +548,101 @@
     "dependencies": {
       "captcha": true
     },
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "www.ktuvit.me",
+        "ktuvit.me"
+      ],
+      "allowedDownloadHosts": [
+        "www.ktuvit.me",
+        "ktuvit.me"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://www.ktuvit.me"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "legendasdivx",
     "displayName": "Legendasdivx",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "www.legendasdivx.pt",
+        "legendasdivx.pt"
+      ],
+      "allowedDownloadHosts": [
+        "www.legendasdivx.pt",
+        "legendasdivx.pt"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://www.legendasdivx.pt"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "legendasnet",
     "displayName": "Legendasnet",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported only with valid session cookies from a user-solved CAPTCHA session; missing cookies return a typed CAPTCHA/private prerequisite error.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -406,8 +650,44 @@
     "dependencies": {
       "captcha": true
     },
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "legendas.net",
+        "www.legendas.net"
+      ],
+      "allowedDownloadHosts": [
+        "legendas.net",
+        "www.legendas.net"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://legendas.net"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "mock",
@@ -440,15 +720,51 @@
     "key": "napisy24",
     "displayName": "Napisy24",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "napisy24.pl",
+        "www.napisy24.pl"
+      ],
+      "allowedDownloadHosts": [
+        "napisy24.pl",
+        "www.napisy24.pl"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://napisy24.pl"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "nekur",
@@ -536,15 +852,51 @@
     "key": "pipocas",
     "displayName": "Pipocas",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "pipocas.tv",
+        "www.pipocas.tv"
+      ],
+      "allowedDownloadHosts": [
+        "pipocas.tv",
+        "www.pipocas.tv"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://pipocas.tv"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "prijevodionline",
@@ -734,15 +1086,51 @@
     "key": "subs4series",
     "displayName": "Subs4Series",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "www.subs4series.com",
+        "subs4series.com"
+      ],
+      "allowedDownloadHosts": [
+        "www.subs4series.com",
+        "subs4series.com"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://www.subs4series.com"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "subsarr",
@@ -773,10 +1161,10 @@
   },
   {
     "key": "subscenter",
-    "displayName": " Subscenter",
+    "displayName": "Subscenter",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported only with valid session cookies from a user-solved CAPTCHA session; missing cookies return a typed CAPTCHA/private prerequisite error.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -784,8 +1172,44 @@
     "dependencies": {
       "captcha": true
     },
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "www.subscenter.org",
+        "subscenter.org"
+      ],
+      "allowedDownloadHosts": [
+        "www.subscenter.org",
+        "subscenter.org"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://www.subscenter.org"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "subsource",
@@ -1060,15 +1484,51 @@
     "key": "titlovi",
     "displayName": "Titlovi",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "titlovi.com",
+        "www.titlovi.com"
+      ],
+      "allowedDownloadHosts": [
+        "titlovi.com",
+        "www.titlovi.com"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://titlovi.com"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "titrari",
@@ -1097,29 +1557,101 @@
     "key": "titulky",
     "displayName": "Titulky",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "www.titulky.com",
+        "titulky.com"
+      ],
+      "allowedDownloadHosts": [
+        "www.titulky.com",
+        "titulky.com"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://www.titulky.com"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "turkcealtyaziorg",
     "displayName": "Turkcealtyaziorg",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "turkcealtyazi.org",
+        "www.turkcealtyazi.org"
+      ],
+      "allowedDownloadHosts": [
+        "turkcealtyazi.org",
+        "www.turkcealtyazi.org"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://turkcealtyazi.org"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "tvsubtitles",
@@ -1245,15 +1777,51 @@
     "key": "xsubs",
     "displayName": "X Subs",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "xsubs.tv",
+        "www.xsubs.tv"
+      ],
+      "allowedDownloadHosts": [
+        "xsubs.tv",
+        "www.xsubs.tv"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://xsubs.tv"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   },
   {
     "key": "yavkanet",
@@ -1302,8 +1870,8 @@
     "key": "zimuku",
     "displayName": "Zimuku",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1311,7 +1879,43 @@
     "dependencies": {
       "archive": true
     },
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "zimuku.org",
+        "www.zimuku.org"
+      ],
+      "allowedDownloadHosts": [
+        "zimuku.org",
+        "www.zimuku.org"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://zimuku.org"
+        ]
+      },
+      {
+        "key": "cookies",
+        "label": "Cookies",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "cookies"
+      },
+      {
+        "key": "userAgent",
+        "label": "User agent",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "user_agent"
+      }
+    ]
   }
 ]
