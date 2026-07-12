@@ -12,5 +12,9 @@ import (
 	_ "media-manager/internal/subtitles/providers/subsro"
 	_ "media-manager/internal/subtitles/providers/subtis"
 	_ "media-manager/internal/subtitles/providers/subx"
+	_ "media-manager/internal/subtitles/providers/titulky"
+	_ "media-manager/internal/subtitles/providers/turkcealtyaziorg"
 	_ "media-manager/internal/subtitles/providers/whisperai"
+	_ "media-manager/internal/subtitles/providers/xsubs"
+	_ "media-manager/internal/subtitles/providers/zimuku"
 )

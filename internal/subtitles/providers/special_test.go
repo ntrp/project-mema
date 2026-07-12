@@ -122,21 +122,31 @@ func TestNapiProjektHashSearchAndDownload(t *testing.T) {
 	}
 }
 
-func TestBSPlayerBrokenSearchAndGzipDownload(t *testing.T) {
+func TestBSPlayerSearchAndGzipDownload(t *testing.T) {
 	adapter := bsplayerAdapter{}
-	if err := adapter.Test(context.Background(), fakeProviderService{}, providercore.Config{}); err == nil || !strings.Contains(err.Error(), providercore.ErrProviderBrokenUpstream.Error()) {
-		t.Fatalf("expected broken upstream test error, got %v", err)
+	if err := adapter.Test(context.Background(), fakeProviderService{}, providercore.Config{}); err != nil {
+		t.Fatalf("Test() with missing file metadata should be non-networked, got %v", err)
 	}
-	if _, err := adapter.Search(context.Background(), fakeProviderService{}, providercore.Config{}, providercore.SearchRequest{}); err == nil || !strings.Contains(err.Error(), providercore.ErrProviderBrokenUpstream.Error()) {
-		t.Fatalf("expected broken upstream error, got %v", err)
+	if _, err := adapter.Search(context.Background(), fakeProviderService{}, providercore.Config{}, providercore.SearchRequest{}); err == nil || !strings.Contains(err.Error(), providercore.ErrProviderPrerequisiteMissing.Error()) {
+		t.Fatalf("expected prerequisite error, got %v", err)
 	}
 	service := fakeProviderService{handler: func(request *http.Request, providerType string, download bool) (*http.Response, error) {
-		if providerType != bsplayerKey || !download || request.Header.Get("User-Agent") == "" {
-			t.Fatalf("bad request provider=%s download=%v ua=%q", providerType, download, request.Header.Get("User-Agent"))
+		if providerType != bsplayerKey || request.Header.Get("User-Agent") == "" {
+			t.Fatalf("bad request provider=%s ua=%q", providerType, request.Header.Get("User-Agent"))
+		}
+		if !download {
+			if request.Method != http.MethodPost || !strings.Contains(request.Header.Get("SOAPAction"), "searchSubtitles") {
+				t.Fatalf("bad search request method=%s action=%q", request.Method, request.Header.Get("SOAPAction"))
+			}
+			return response(200, []byte(`<Envelope><Body><searchSubtitlesResponse><subtitle><subName>Release.Name</subName><subLang>en</subLang><downloadLink>https://s1.api.bsplayer-subtitles.com/sub.gz</downloadLink></subtitle></searchSubtitlesResponse></Body></Envelope>`)), nil
 		}
 		return response(200, gzipBytes(t, []byte("bsplayer subtitle"))), nil
 	}}
-	download, err := adapter.Download(context.Background(), service, providercore.Config{}, providercore.Candidate{SourceURL: "https://s1.api.bsplayer-subtitles.com/sub.gz"})
+	candidates, err := adapter.Search(context.Background(), service, providercore.Config{}, providercore.SearchRequest{LanguageID: "en", MediaContext: providercore.MediaContext{File: providercore.FileContext{SizeBytes: 12, Hashes: map[string]string{"bsplayer": "abc"}}}})
+	if err != nil || len(candidates) != 1 || candidates[0].ReleaseName != "Release.Name" {
+		t.Fatalf("Search()=%#v err=%v", candidates, err)
+	}
+	download, err := adapter.Download(context.Background(), service, providercore.Config{}, candidates[0])
 	if err != nil || string(download.Content) != "bsplayer subtitle" {
 		t.Fatalf("Download()=%q err=%v", download.Content, err)
 	}

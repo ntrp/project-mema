@@ -28,10 +28,6 @@ var clusterCProviders = []clusterCProvider{
 	{key: "avistaz", baseURL: "https://avistaz.to", private: true, searchPath: "/subtitles"},
 	{key: "cinemaz", baseURL: "https://cinemaz.to", private: true, searchPath: "/subtitles"},
 	{key: "hdbits", baseURL: "https://hdbits.org", private: true, searchPath: "/browse.php"},
-	{key: "titulky", baseURL: "https://www.titulky.com", private: true, searchPath: "/"},
-	{key: "turkcealtyaziorg", baseURL: "https://turkcealtyazi.org", private: true, searchPath: "/find.php"},
-	{key: "xsubs", baseURL: "https://xsubs.tv", private: true, searchPath: "/search"},
-	{key: "zimuku", baseURL: "https://zimuku.org", private: true, searchPath: "/search"},
 }
 
 func init() {
