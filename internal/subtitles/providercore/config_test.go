@@ -1,19 +1,15 @@
 package providercore
 
-import (
-	"testing"
-
-	"media-manager/internal/subtitles"
-)
+import "testing"
 
 func TestConfigViewReadsTypedSettingsAndSecrets(t *testing.T) {
 	text := " value "
 	number := float64(42)
 	flag := true
-	config := subtitles.Config{
+	config := Config{
 		BaseURL: "https://example.test/root/",
 		APIKey:  stringPtr(" legacy-api "),
-		Settings: map[string]subtitles.SettingValue{
+		Settings: map[string]SettingValue{
 			"text":    {StringValue: &text},
 			"number":  {NumberValue: &number},
 			"flag":    {BooleanValue: &flag},

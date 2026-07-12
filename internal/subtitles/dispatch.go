@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"media-manager/internal/subtitles/catalog"
+	"media-manager/internal/subtitles/providercore"
+	"media-manager/internal/subtitles/providers"
 )
 
 var (
@@ -20,6 +22,22 @@ type providerAdapter interface {
 	Test(context.Context, *Service, Config) error
 	Search(context.Context, *Service, Config, SearchRequest) ([]Candidate, error)
 	Download(context.Context, *Service, Config, Candidate) (Download, error)
+}
+
+type registeredProviderAdapter struct {
+	adapter providercore.Adapter
+}
+
+func (a registeredProviderAdapter) Test(ctx context.Context, service *Service, config Config) error {
+	return a.adapter.Test(ctx, service, config)
+}
+
+func (a registeredProviderAdapter) Search(ctx context.Context, service *Service, config Config, request SearchRequest) ([]Candidate, error) {
+	return a.adapter.Search(ctx, service, config, request)
+}
+
+func (a registeredProviderAdapter) Download(ctx context.Context, service *Service, config Config, candidate Candidate) (Download, error) {
+	return a.adapter.Download(ctx, service, config, candidate)
 }
 
 var providerRegistry = map[string]providerAdapter{
@@ -93,6 +111,9 @@ func adapterFor(providerType string) (providerAdapter, error) {
 	key := canonicalProviderKey(providerType)
 	if adapter, ok := providerRegistry[key]; ok {
 		return adapter, nil
+	}
+	if adapter, ok := providers.AdapterFor(key); ok {
+		return registeredProviderAdapter{adapter: adapter}, nil
 	}
 	if entry, ok := catalog.Lookup(key); ok {
 		if entry.RuntimeStatus != catalog.RuntimeSupported {

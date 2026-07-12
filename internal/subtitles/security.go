@@ -10,7 +10,7 @@ func validateProviderURL(providerKey string, rawURL string, download bool) error
 	return security.ValidateProviderURL(canonicalProviderKey(providerKey), rawURL, download)
 }
 
-func (s *Service) doProviderRequest(req *http.Request, providerKey string, download bool) (*http.Response, error) {
+func (s *Service) DoProviderRequest(req *http.Request, providerKey string, download bool) (*http.Response, error) {
 	if err := validateProviderURL(providerKey, req.URL.String(), download); err != nil {
 		return nil, err
 	}

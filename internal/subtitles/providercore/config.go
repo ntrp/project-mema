@@ -4,13 +4,11 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	"media-manager/internal/subtitles"
 )
 
-type ConfigView struct{ config subtitles.Config }
+type ConfigView struct{ config Config }
 
-func NewConfig(config subtitles.Config) ConfigView { return ConfigView{config: config} }
+func NewConfig(config Config) ConfigView { return ConfigView{config: config} }
 
 func (c ConfigView) StringSetting(key string) string {
 	value, ok := c.config.Settings[key]

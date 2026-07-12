@@ -89,5 +89,37 @@ func passwordField() catalog.Field {
 }
 
 func apiKeyField() catalog.Field {
-	return catalog.Field{Key: "apiKey", Label: "API key", Type: catalog.FieldPassword, Secret: true, Required: true, Persisted: true, SemanticKey: "api_key"}
+	return secretField("apiKey", "API key", "api_key", true)
+}
+
+func tokenField() catalog.Field {
+	return secretField("token", "Token", "token", true)
+}
+
+func passkeyField() catalog.Field {
+	return secretField("passkey", "Passkey", "passkey", true)
+}
+
+func hashedPasswordField() catalog.Field {
+	return secretField("hashedPassword", "Hashed password", "hashed_password", true)
+}
+
+func cookiesField() catalog.Field {
+	return secretField("cookies", "Cookies", "cookies", false)
+}
+
+func userAgentField() catalog.Field {
+	return catalog.Field{Key: "userAgent", Label: "User agent", Type: catalog.FieldText, Persisted: true, SemanticKey: "user_agent"}
+}
+
+func boolField(key string, label string) catalog.Field {
+	return catalog.Field{Key: key, Label: label, Type: catalog.FieldSwitch, Persisted: true}
+}
+
+func numericTextField(key string, label string) catalog.Field {
+	return catalog.Field{Key: key, Label: label, Type: catalog.FieldText, Persisted: true}
+}
+
+func secretField(key string, label string, semantic string, required bool) catalog.Field {
+	return catalog.Field{Key: key, Label: label, Type: catalog.FieldPassword, Secret: true, Required: required, Persisted: true, SemanticKey: semantic}
 }

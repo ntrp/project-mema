@@ -62,7 +62,7 @@ func (s *Service) testOpenSubtitles(ctx context.Context, config Config) error {
 	}
 	req.Header.Set("Api-Key", strings.TrimSpace(*config.APIKey))
 	req.Header.Set("User-Agent", "project-mema")
-	resp, err := s.doProviderRequest(req, config.Type, false)
+	resp, err := s.DoProviderRequest(req, config.Type, false)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (s *Service) searchOpenSubtitles(
 		return nil, err
 	}
 	openSubtitlesHeaders(req, config)
-	resp, err := s.doProviderRequest(req, config.Type, false)
+	resp, err := s.DoProviderRequest(req, config.Type, false)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (s *Service) downloadOpenSubtitles(
 	openSubtitlesHeaders(req, config)
 	openSubtitlesAuth(req, token)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := s.doProviderRequest(req, config.Type, false)
+	resp, err := s.DoProviderRequest(req, config.Type, false)
 	if err != nil {
 		return Download{}, err
 	}
@@ -176,7 +176,7 @@ func (s *Service) openSubtitlesToken(ctx context.Context, config Config) (string
 	}
 	openSubtitlesHeaders(req, config)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := s.doProviderRequest(req, config.Type, false)
+	resp, err := s.DoProviderRequest(req, config.Type, false)
 	if err != nil {
 		return "", err
 	}
@@ -200,7 +200,7 @@ func (s *Service) fetchSubtitle(ctx context.Context, config Config, link string)
 		return Download{}, err
 	}
 	openSubtitlesHeaders(req, config)
-	resp, err := s.doProviderRequest(req, config.Type, true)
+	resp, err := s.DoProviderRequest(req, config.Type, true)
 	if err != nil {
 		return Download{}, err
 	}

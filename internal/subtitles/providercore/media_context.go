@@ -11,13 +11,12 @@ import (
 	"strings"
 
 	"media-manager/internal/storage"
-	"media-manager/internal/subtitles"
 )
 
 const openSubtitlesChunkSize int64 = 64 * 1024
 
-func BuildSearchRequest(item storage.MediaItem, languageID string, filePath string) subtitles.SearchRequest {
-	request := subtitles.SearchRequest{
+func BuildSearchRequest(item storage.MediaItem, languageID string, filePath string) SearchRequest {
+	request := SearchRequest{
 		MediaType:    item.Type,
 		Title:        item.Title,
 		LanguageID:   strings.TrimSpace(languageID),
@@ -28,8 +27,8 @@ func BuildSearchRequest(item storage.MediaItem, languageID string, filePath stri
 	return request
 }
 
-func BuildMediaContext(item storage.MediaItem, filePath string) subtitles.MediaContext {
-	return subtitles.MediaContext{
+func BuildMediaContext(item storage.MediaItem, filePath string) MediaContext {
+	return MediaContext{
 		ExternalIDs:        externalIDs(item, ""),
 		SeasonExternalIDs:  externalIDs(item, "season"),
 		EpisodeExternalIDs: externalIDs(item, "episode"),
@@ -65,14 +64,14 @@ func addID(ids map[string]string, provider string, id string) {
 	}
 }
 
-func aliases(item storage.MediaItem) []subtitles.MediaAlias {
-	values := make([]subtitles.MediaAlias, 0, len(item.Aliases))
+func aliases(item storage.MediaItem) []MediaAlias {
+	values := make([]MediaAlias, 0, len(item.Aliases))
 	for _, alias := range item.Aliases {
 		value := strings.TrimSpace(alias.Alias)
 		if value == "" {
 			continue
 		}
-		values = append(values, subtitles.MediaAlias{
+		values = append(values, MediaAlias{
 			Value:        value,
 			Language:     stringValue(alias.Language),
 			Kind:         alias.Kind,
@@ -82,10 +81,10 @@ func aliases(item storage.MediaItem) []subtitles.MediaAlias {
 	return values
 }
 
-func episodeNumbering(item storage.MediaItem) []subtitles.EpisodeNumbering {
-	values := make([]subtitles.EpisodeNumbering, 0, len(item.EpisodeNumbering))
+func episodeNumbering(item storage.MediaItem) []EpisodeNumbering {
+	values := make([]EpisodeNumbering, 0, len(item.EpisodeNumbering))
 	for _, numbering := range item.EpisodeNumbering {
-		values = append(values, subtitles.EpisodeNumbering{
+		values = append(values, EpisodeNumbering{
 			ProviderName:    numbering.ProviderName,
 			NumberingScheme: numbering.NumberingScheme,
 			SeasonNumber:    numbering.SeasonNumber,
@@ -96,10 +95,10 @@ func episodeNumbering(item storage.MediaItem) []subtitles.EpisodeNumbering {
 	return values
 }
 
-func fileContext(item storage.MediaItem, filePath string) subtitles.FileContext {
+func fileContext(item storage.MediaItem, filePath string) FileContext {
 	filePath = strings.TrimSpace(filePath)
 	name := filepath.Base(filePath)
-	ctx := subtitles.FileContext{
+	ctx := FileContext{
 		Path:      filePath,
 		Name:      name,
 		BaseName:  strings.TrimSuffix(name, filepath.Ext(name)),
@@ -198,12 +197,12 @@ func hashChunk(reader io.Reader, sum *uint64) error {
 	return nil
 }
 
-func provenance(item storage.MediaItem) []subtitles.ReleaseProvenance {
-	values := []subtitles.ReleaseProvenance{}
+func provenance(item storage.MediaItem) []ReleaseProvenance {
+	values := []ReleaseProvenance{}
 	for _, source := range item.ComponentSources {
 		for _, candidate := range []string{source.SourceFilePath, stringValue(source.ReleaseID), stringValue(source.SourceMetadata)} {
 			if strings.HasPrefix(candidate, "http://") || strings.HasPrefix(candidate, "https://") {
-				values = append(values, subtitles.ReleaseProvenance{Source: source.SourceRole, InfoURL: candidate})
+				values = append(values, ReleaseProvenance{Source: source.SourceRole, InfoURL: candidate})
 			}
 		}
 	}
