@@ -28,10 +28,6 @@ var clusterCProviders = []clusterCProvider{
 	{key: "avistaz", baseURL: "https://avistaz.to", private: true, searchPath: "/subtitles"},
 	{key: "cinemaz", baseURL: "https://cinemaz.to", private: true, searchPath: "/subtitles"},
 	{key: "hdbits", baseURL: "https://hdbits.org", private: true, searchPath: "/browse.php"},
-	{key: "karagarga", baseURL: "https://karagarga.in", private: true, searchPath: "/browse.php"},
-	{key: "ktuvit", baseURL: "https://www.ktuvit.me", private: true, captcha: true, searchPath: "/Services/GetModuleAjax.ashx"},
-	{key: "legendasdivx", baseURL: "https://www.legendasdivx.pt", private: true, searchPath: "/modules.php"},
-	{key: "legendasnet", baseURL: "https://legendas.net", private: true, captcha: true, searchPath: "/search"},
 	{key: "napisy24", baseURL: "https://napisy24.pl", private: true, searchPath: "/szukaj"},
 	{key: "pipocas", baseURL: "https://pipocas.tv", private: true, searchPath: "/pesquisar"},
 	{key: "subs4series", baseURL: "https://www.subs4series.com", private: true, searchPath: "/search"},
@@ -252,6 +248,21 @@ func searchQuery(request providercore.SearchRequest) string {
 }
 
 func mustParseRef(ref string) *url.URL { parsed, _ := url.Parse(strings.TrimSpace(ref)); return parsed }
-func attr(item *goquery.Selection, name string) string { value, _ := item.Attr(name); return strings.TrimSpace(value) }
-func firstNonEmpty(values ...string) string { for _, value := range values { if strings.TrimSpace(value) != "" { return strings.TrimSpace(value) } }; return "" }
-func userAgent(config providercore.ConfigView) string { if value := config.StringSetting("userAgent"); value != "" { return value }; return "Mozilla/5.0 (compatible; MemaSubtitleProvider/1.0)" }
+func attr(item *goquery.Selection, name string) string {
+	value, _ := item.Attr(name)
+	return strings.TrimSpace(value)
+}
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+func userAgent(config providercore.ConfigView) string {
+	if value := config.StringSetting("userAgent"); value != "" {
+		return value
+	}
+	return "Mozilla/5.0 (compatible; MemaSubtitleProvider/1.0)"
+}
