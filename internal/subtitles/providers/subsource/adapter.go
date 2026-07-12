@@ -1,15 +1,12 @@
 package subsource
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"mime"
 	"net/http"
 	"net/url"
-	"path"
 	"strconv"
 	"strings"
 
@@ -18,19 +15,40 @@ import (
 	"media-manager/internal/subtitles/security"
 )
 
+const key = "subsource"
+const defaultBaseURL = "https://api.subsource.net"
 const maxBody = 50 << 20
 
 var Adapter providercore.Adapter = adapter{}
 
 type adapter struct{}
 
-func init() { providers.Register("subsource", Adapter) }
+type titleResponse struct {
+	Data []titleRow `json:"data"`
+}
+type titleRow struct {
+	MovieID               int64 `json:"movieId"`
+	Title, AlternateTitle string
+	ReleaseYear           any `json:"releaseYear"`
+}
+type subtitleResponse struct {
+	Success bool          `json:"success"`
+	Data    []subtitleRow `json:"data"`
+}
+type subtitleRow struct {
+	SubtitleID  int64  `json:"subtitleId"`
+	Language    string `json:"language"`
+	ReleaseInfo any    `json:"releaseInfo"`
+	Link        string `json:"link"`
+}
+
+func init() { providers.Register(key, Adapter) }
 
 func (adapter) Test(ctx context.Context, svc providercore.Service, cfg providercore.Config) error {
 	if _, ok := providercore.NewConfig(cfg).RequiredSecret("apiKey"); !ok {
 		return fmt.Errorf("%w: apiKey is required", providercore.ErrProviderPrerequisiteMissing)
 	}
-	_, _, err := do(ctx, svc, cfg, http.MethodGet, "/api/search", nil, false)
+	_, _, err := request(ctx, svc, cfg, "/api/v1/movies/search", url.Values{"searchType": {"text"}, "q": {"test"}}, false)
 	return err
 }
 
@@ -38,221 +56,183 @@ func (adapter) Search(ctx context.Context, svc providercore.Service, cfg provide
 	if _, ok := providercore.NewConfig(cfg).RequiredSecret("apiKey"); !ok {
 		return nil, fmt.Errorf("%w: apiKey is required", providercore.ErrProviderPrerequisiteMissing)
 	}
-	searchURL := searchEndpoint(cfg, sr)
-	data, _, err := do(ctx, svc, cfg, http.MethodGet, searchURL, nil, false)
+	movieID, err := findTitle(ctx, svc, cfg, sr)
+	if err != nil || movieID == 0 {
+		return nil, err
+	}
+	query := url.Values{"language": {strings.ToLower(sr.LanguageID)}, "limit": {"100"}, "movieId": {strconv.FormatInt(movieID, 10)}}
+	if sr.SeasonNumber != nil {
+		query.Set("seasonNumber", strconv.Itoa(int(*sr.SeasonNumber)))
+	}
+	if sr.EpisodeNumber != nil {
+		query.Set("episodeNumber", strconv.Itoa(int(*sr.EpisodeNumber)))
+	}
+	body, _, err := request(ctx, svc, cfg, "/api/v1/subtitles", query, false)
 	if err != nil {
 		return nil, err
 	}
-	matches := parseMatches(data)
-	var out []providercore.Candidate
-	for _, match := range matches {
-		detailURL := detailEndpoint(cfg, match, sr)
-		detail, _, err := do(ctx, svc, cfg, http.MethodGet, detailURL, nil, false)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, parseSubtitles(detail, sr.LanguageID)...)
+	var payload subtitleResponse
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, err
+	}
+	out := make([]providercore.Candidate, 0, len(payload.Data))
+	for _, row := range payload.Data {
+		release := releaseName(row.ReleaseInfo)
+		out = append(out, providercore.Candidate{ProviderName: key, LanguageID: firstNonEmpty(strings.ToLower(row.Language), sr.LanguageID), FileID: row.SubtitleID, Format: "srt", ReleaseName: release, SourceURL: endpoint(cfg, fmt.Sprintf("/api/v1/subtitles/%d/download", row.SubtitleID)), SourceRef: "https://subsource.net" + row.Link})
 	}
 	return out, nil
 }
 
 func (adapter) Download(ctx context.Context, svc providercore.Service, cfg providercore.Config, cand providercore.Candidate) (providercore.Download, error) {
-	raw := strings.TrimSpace(cand.SourceURL)
+	raw := cand.SourceURL
 	if raw == "" && cand.FileID != 0 {
-		raw = "/api/downloadSubtitle?subtitleId=" + strconv.FormatInt(cand.FileID, 10)
+		raw = endpoint(cfg, fmt.Sprintf("/api/v1/subtitles/%d/download", cand.FileID))
 	}
 	if raw == "" {
 		return providercore.Download{}, fmt.Errorf("%w: missing download URL", providercore.ErrProviderPrerequisiteMissing)
 	}
-	data, resp, err := do(ctx, svc, cfg, http.MethodGet, raw, nil, true)
+	body, _, err := requestURL(ctx, svc, cfg, raw, url.Values{}, true)
 	if err != nil {
 		return providercore.Download{}, err
 	}
-	member, err := providercore.ExtractSubtitle(downloadName(raw, resp), data, security.ArchiveLimits{})
+	member, err := providercore.ExtractSubtitle("subtitle.zip", body, security.ArchiveLimits{})
 	if err != nil {
 		return providercore.Download{}, err
 	}
-	return providercore.Download{Content: member.Content, URL: absolute(cfg, raw)}, nil
+	return providercore.Download{Content: member.Content, URL: raw}, nil
 }
 
-func do(ctx context.Context, svc providercore.Service, cfg providercore.Config, method, raw string, body io.Reader, download bool) ([]byte, *http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, method, absolute(cfg, raw), body)
+func findTitle(ctx context.Context, svc providercore.Service, cfg providercore.Config, sr providercore.SearchRequest) (int64, error) {
+	query := url.Values{}
+	imdb := sr.MediaContext.ExternalIDs["imdb"]
+	if imdb != "" {
+		query.Set("searchType", "imdb")
+		query.Set("imdb", imdb)
+	} else {
+		query.Set("searchType", "text")
+		query.Set("q", strings.ToLower(sr.Title))
+	}
+	if sr.SeasonNumber != nil {
+		query.Set("season", strconv.Itoa(int(*sr.SeasonNumber)))
+	}
+	rows, err := searchTitles(ctx, svc, cfg, query)
+	if err != nil {
+		return 0, err
+	}
+	if len(rows) == 0 && imdb != "" {
+		query.Del("imdb")
+		query.Set("searchType", "text")
+		query.Set("q", strings.ToLower(sr.Title))
+		rows, err = searchTitles(ctx, svc, cfg, query)
+	}
+	if err != nil {
+		return 0, err
+	}
+	for _, row := range rows {
+		if titleMatches(sr.Title, row.Title, row.AlternateTitle) && yearMatches(sr.Year, row.ReleaseYear) {
+			return row.MovieID, nil
+		}
+	}
+	return 0, nil
+}
+
+func searchTitles(ctx context.Context, svc providercore.Service, cfg providercore.Config, query url.Values) ([]titleRow, error) {
+	body, _, err := request(ctx, svc, cfg, "/api/v1/movies/search", query, false)
+	if err != nil {
+		return nil, err
+	}
+	var payload titleResponse
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, err
+	}
+	return payload.Data, nil
+}
+
+func request(ctx context.Context, svc providercore.Service, cfg providercore.Config, path string, query url.Values, download bool) ([]byte, *http.Response, error) {
+	return requestURL(ctx, svc, cfg, endpoint(cfg, path), query, download)
+}
+func requestURL(ctx context.Context, svc providercore.Service, cfg providercore.Config, raw string, query url.Values, download bool) ([]byte, *http.Response, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return nil, nil, err
+	}
+	q := u.Query()
+	for k, values := range query {
+		for _, value := range values {
+			q.Add(k, value)
+		}
+	}
+	q.Set("api_key", providercore.NewConfig(cfg).Secret("apiKey"))
+	u.RawQuery = q.Encode()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	if token, ok := providercore.NewConfig(cfg).RequiredSecret("apiKey"); ok {
-		req.Header.Set("Authorization", token)
-	}
-	resp, err := svc.DoProviderRequest(req, "subsource", download)
+	resp, err := svc.DoProviderRequest(req, key, download)
 	if err != nil {
 		return nil, resp, err
 	}
 	defer resp.Body.Close()
-	data, err := io.ReadAll(io.LimitReader(resp.Body, maxBody+1))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBody+1))
 	if err != nil {
 		return nil, resp, err
 	}
-	if len(data) > maxBody {
+	if len(body) > maxBody {
 		return nil, resp, fmt.Errorf("provider response size limit exceeded")
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, resp, fmt.Errorf("provider returned HTTP %d", resp.StatusCode)
 	}
-	return data, resp, nil
+	return body, resp, nil
 }
 
-func searchEndpoint(cfg providercore.Config, sr providercore.SearchRequest) string {
-	u, _ := url.Parse(absolute(cfg, "/api/search"))
-	q := u.Query()
-	q.Set("query", sr.Title)
-	q.Set("q", sr.Title)
-	if sr.Year != nil {
-		q.Set("year", strconv.Itoa(int(*sr.Year)))
-	}
-	u.RawQuery = q.Encode()
-	return u.String()
+func endpoint(cfg providercore.Config, path string) string {
+	return strings.TrimRight(providercore.NewConfig(cfg).BaseURL(defaultBaseURL), "/") + path
 }
-
-func detailEndpoint(cfg providercore.Config, m match, sr providercore.SearchRequest) string {
-	if m.URL != "" {
-		return m.URL
-	}
-	kind := "movie"
-	if sr.MediaType == "serie" {
-		kind = "tv"
-	}
-	u, _ := url.Parse(absolute(cfg, "/api/"+kind))
-	q := u.Query()
-	q.Set(kind+"Name", m.LinkName)
-	if sr.SeasonNumber != nil {
-		q.Set("season", strconv.Itoa(int(*sr.SeasonNumber)))
-	}
-	if sr.EpisodeNumber != nil {
-		q.Set("episode", strconv.Itoa(int(*sr.EpisodeNumber)))
-	}
-	u.RawQuery = q.Encode()
-	return u.String()
-}
-
-type match struct {
-	LinkName string
-	URL      string
-}
-
-func parseMatches(data []byte) []match {
-	var v any
-	if json.Unmarshal(data, &v) != nil {
-		return nil
-	}
-	objs := collect(v)
-	out := make([]match, 0, len(objs))
-	for _, obj := range objs {
-		link := firstString(obj, "linkName", "link_name", "name", "title", "slug")
-		u := firstString(obj, "details", "details_url", "url", "link")
-		if link != "" || u != "" {
-			out = append(out, match{LinkName: link, URL: u})
-		}
-	}
-	return out
-}
-
-func parseSubtitles(data []byte, fallbackLang string) []providercore.Candidate {
-	var v any
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.UseNumber()
-	if dec.Decode(&v) != nil {
-		return nil
-	}
-	objs := collect(v)
-	out := make([]providercore.Candidate, 0, len(objs))
-	for _, obj := range objs {
-		dl := firstString(obj, "download", "download_url", "downloadUrl", "url", "link")
-		if dl == "" {
-			continue
-		}
-		lang := firstString(obj, "language", "lang", "language_id")
-		if lang == "" {
-			lang = fallbackLang
-		}
-		out = append(out, providercore.Candidate{ProviderName: "subsource", LanguageID: lang, FileID: firstInt(obj, "id", "subtitleId", "subtitle_id"), Format: format(dl), ReleaseName: firstString(obj, "release", "release_name", "filename", "name"), DownloadCount: int(firstInt(obj, "downloads", "download_count")), SourceURL: dl})
-	}
-	return out
-}
-
-func absolute(cfg providercore.Config, raw string) string {
-	if strings.HasPrefix(raw, "http://") || strings.HasPrefix(raw, "https://") {
-		return raw
-	}
-	base, _ := url.Parse(providercore.NewConfig(cfg).BaseURL("https://subsource.net") + "/")
-	ref, _ := url.Parse(strings.TrimLeft(raw, "/"))
-	if strings.HasPrefix(raw, "/") {
-		ref, _ = url.Parse(raw)
-	}
-	return base.ResolveReference(ref).String()
-}
-func collect(v any) []map[string]any {
-	var out []map[string]any
-	switch x := v.(type) {
-	case map[string]any:
-		out = append(out, x)
-		for _, c := range x {
-			out = append(out, collect(c)...)
-		}
-	case []any:
-		for _, c := range x {
-			out = append(out, collect(c)...)
-		}
-	}
-	return out
-}
-func firstString(m map[string]any, keys ...string) string {
-	for _, k := range keys {
-		if v, ok := m[k]; ok {
-			switch x := v.(type) {
-			case string:
-				return strings.TrimSpace(x)
-			case json.Number:
-				return x.String()
-			}
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
 		}
 	}
 	return ""
 }
-func firstInt(m map[string]any, keys ...string) int64 {
-	for _, k := range keys {
-		if v, ok := m[k]; ok {
-			switch x := v.(type) {
-			case json.Number:
-				n, _ := x.Int64()
-				return n
-			case float64:
-				return int64(x)
+func titleMatches(want string, values ...string) bool {
+	want = strings.ToLower(strings.TrimSpace(want))
+	for _, value := range values {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value != "" && (strings.Contains(value, want) || strings.Contains(want, value)) {
+			return true
+		}
+	}
+	return false
+}
+func yearMatches(want *int32, raw any) bool {
+	if want == nil {
+		return true
+	}
+	switch value := raw.(type) {
+	case float64:
+		return int32(value) == *want
+	case string:
+		parsed, _ := strconv.Atoi(value)
+		return int32(parsed) == *want
+	}
+	return false
+}
+func releaseName(raw any) string {
+	switch value := raw.(type) {
+	case string:
+		return value
+	case []any:
+		var parts []string
+		for _, item := range value {
+			if text, ok := item.(string); ok {
+				parts = append(parts, text)
 			}
 		}
+		return strings.Join(parts, " ")
 	}
-	return 0
-}
-func format(raw string) string {
-	ext := strings.TrimPrefix(path.Ext(raw), ".")
-	if ext == "" || len(ext) > 4 {
-		return "srt"
-	}
-	return ext
-}
-func downloadName(raw string, resp *http.Response) string {
-	if resp != nil {
-		_, p, _ := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
-		if p["filename"] != "" {
-			return p["filename"]
-		}
-	}
-	u, _ := url.Parse(raw)
-	if b := path.Base(u.Path); b != "." && b != "/" {
-		return b
-	}
-	return "subtitle.srt"
+	return ""
 }

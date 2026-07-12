@@ -1254,9 +1254,11 @@
     },
     "outboundPolicy": {
       "allowedBaseHosts": [
+        "api.subsource.net",
         "subsource.net"
       ],
       "allowedDownloadHosts": [
+        "api.subsource.net",
         "subsource.net"
       ]
     },
