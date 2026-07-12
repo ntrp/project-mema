@@ -148,12 +148,14 @@ Settings > DLNA show current long-running work.
 ## Add Subtitle Providers
 
 Open Settings, then Subtitles. The picker shows the full Bazarr-compatible
-provider catalog, including providers that are catalog-only while runtime
-support is still being added. Runtime-supported entries can be enabled and
-tested; unsupported entries are visibly marked and can only be saved disabled.
+provider catalog. Every catalog entry has a native runtime and can be configured,
+enabled, and tested. Provider warnings describe requirements such as API keys,
+private-site membership, browser cookies for CAPTCHA-protected sites, local
+Whisper services, or media identifiers.
 
-Configure OpenSubtitles.com for real online subtitle search. The mock provider
-is useful only when you want predictable test data.
+Configure OpenSubtitles.com for a straightforward online subtitle source, or
+choose the providers serving your languages and media. The mock provider is
+useful only when you want predictable test data.
 
 Subtitle providers work together with profile subtitle targets. The provider
 finds candidates; the profile decides which languages and formats are wanted.

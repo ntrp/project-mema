@@ -45,11 +45,12 @@ subtitle rows outside the target languages are marked unwanted.
 ## Subtitle Providers
 
 Open Settings, then Subtitles. The catalog picker lists the Bazarr-compatible
-provider set, but not every catalog entry has runtime support yet. Supported
-providers can be enabled and tested; catalog-only or unsupported providers show
-an honest notice and can only be saved disabled.
+provider set, and every entry has native runtime support. Configure the fields
+shown for a provider, then enable, save, and test it. Warnings identify providers
+that need private-site membership, CAPTCHA-authenticated browser cookies,
+archives, media identifiers, or a local service.
 
-Configure OpenSubtitles.com for real online subtitle searches. Add the required
+OpenSubtitles.com is a straightforward online option: add the required
 credentials, enable it, save, and test. The mock provider is useful only for
 predictable local testing and is not a replacement for a real subtitle source.
 
