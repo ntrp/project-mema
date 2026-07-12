@@ -3060,11 +3060,142 @@ export interface MetadataProviderListResponse {
 	providers: MetadataProvider[];
 }
 
+export type SubtitleProviderRuntimeStatus =
+	(typeof SubtitleProviderRuntimeStatus)[keyof typeof SubtitleProviderRuntimeStatus];
+
+export const SubtitleProviderRuntimeStatus = {
+	supported: 'supported',
+	catalog_only: 'catalog_only',
+	unsupported: 'unsupported'
+} as const;
+
+export interface SubtitleProviderDependencies {
+	captcha?: boolean;
+	anti_captcha?: boolean;
+	archive?: boolean;
+	ffmpeg?: boolean;
+	ffprobe?: boolean;
+	anidb?: boolean;
+	arr_history?: boolean;
+	local_http_endpoint?: boolean;
+}
+
+export interface SubtitleProviderOutboundPolicy {
+	allowedBaseHosts?: string[];
+	allowedDownloadHosts?: string[];
+	allowLocalHosts?: boolean;
+}
+
+export type SubtitleProviderFieldType =
+	(typeof SubtitleProviderFieldType)[keyof typeof SubtitleProviderFieldType];
+
+export const SubtitleProviderFieldType = {
+	text: 'text',
+	password: 'password',
+	switch: 'switch',
+	select: 'select',
+	chips: 'chips',
+	action: 'action'
+} as const;
+
+export interface SubtitleProviderField {
+	key: string;
+	label: string;
+	type: SubtitleProviderFieldType;
+	secret?: boolean;
+	required?: boolean;
+	persisted: boolean;
+	semanticKey?: string;
+	options?: string[];
+}
+
+export interface SubtitleProviderCatalogEntry {
+	key: string;
+	displayName: string;
+	provenanceCommit?: string;
+	runtimeStatus: SubtitleProviderRuntimeStatus;
+	runtimeMessage: string;
+	mediaTypes: string[];
+	dependencies: SubtitleProviderDependencies;
+	warning?: string;
+	outboundPolicy: SubtitleProviderOutboundPolicy;
+	fields: SubtitleProviderField[];
+}
+
+export interface SubtitleProviderCatalogResponse {
+	providers: SubtitleProviderCatalogEntry[];
+}
+
+export interface SubtitleProviderSettingValue {
+	stringValue?: string;
+	numberValue?: number;
+	booleanValue?: boolean;
+	stringValues?: string[];
+}
+
 export type SubtitleProviderType = (typeof SubtitleProviderType)[keyof typeof SubtitleProviderType];
 
 export const SubtitleProviderType = {
+	addic7ed: 'addic7ed',
+	animekalesi: 'animekalesi',
+	animesubinfo: 'animesubinfo',
+	animetosho: 'animetosho',
+	assrt: 'assrt',
+	avistaz: 'avistaz',
+	bayflix: 'bayflix',
+	betaseries: 'betaseries',
+	bsplayer: 'bsplayer',
+	cinemaz: 'cinemaz',
+	gestdown: 'gestdown',
+	greeksubs: 'greeksubs',
+	greeksubtitles: 'greeksubtitles',
+	hdbits: 'hdbits',
+	hosszupuska: 'hosszupuska',
+	jimaku: 'jimaku',
+	karagarga: 'karagarga',
+	ktuvit: 'ktuvit',
+	legendasdivx: 'legendasdivx',
+	legendasnet: 'legendasnet',
+	mock: 'mock',
+	napiprojekt: 'napiprojekt',
+	napisy24: 'napisy24',
+	nekur: 'nekur',
 	opensubtitles: 'opensubtitles',
-	mock: 'mock'
+	opensubtitlescom: 'opensubtitlescom',
+	pipocas: 'pipocas',
+	prijevodionline: 'prijevodionline',
+	regielive: 'regielive',
+	soustitreseu: 'soustitreseu',
+	subclub: 'subclub',
+	subdl: 'subdl',
+	subf2m: 'subf2m',
+	subs4free: 'subs4free',
+	subs4series: 'subs4series',
+	subsarr: 'subsarr',
+	subscenter: 'subscenter',
+	subsource: 'subsource',
+	subsro: 'subsro',
+	subssabbz: 'subssabbz',
+	subsunacs: 'subsunacs',
+	subsynchro: 'subsynchro',
+	subtis: 'subtis',
+	subtitrarinoi: 'subtitrarinoi',
+	subtitriid: 'subtitriid',
+	subtitulamostv: 'subtitulamostv',
+	subx: 'subx',
+	supersubtitles: 'supersubtitles',
+	titlovi: 'titlovi',
+	titrari: 'titrari',
+	titulky: 'titulky',
+	turkcealtyaziorg: 'turkcealtyaziorg',
+	tvsubtitles: 'tvsubtitles',
+	vladoonmooo: 'vladoonmooo',
+	whisperai: 'whisperai',
+	wizdom: 'wizdom',
+	xsubs: 'xsubs',
+	yavkanet: 'yavkanet',
+	yifysubtitles: 'yifysubtitles',
+	zimuku: 'zimuku'
 } as const;
 
 export interface MockSubtitleProviderRow {
@@ -3074,18 +3205,23 @@ export interface MockSubtitleProviderRow {
 	format: string;
 }
 
+export type SubtitleProviderSettings = { [key: string]: SubtitleProviderSettingValue };
+
 export interface SubtitleProvider {
 	id: string;
 	name: string;
 	type: SubtitleProviderType;
+	catalogKey: string;
 	baseUrl: string;
 	username?: string;
-	password?: string;
-	apiKey?: string;
+	settings: SubtitleProviderSettings;
 	enabled: boolean;
 	priority: number;
 	apiKeySet: boolean;
 	passwordSet: boolean;
+	secretFieldsSet: string[];
+	runtimeStatus: SubtitleProviderRuntimeStatus;
+	runtimeMessage: string;
 	mockSubtitles: MockSubtitleProviderRow[];
 	createdAt: string;
 	updatedAt: string;
@@ -3094,6 +3230,10 @@ export interface SubtitleProvider {
 export interface SubtitleProviderListResponse {
 	providers: SubtitleProvider[];
 }
+
+export type SubtitleProviderRequestSettings = { [key: string]: SubtitleProviderSettingValue };
+
+export type SubtitleProviderRequestSecretSettings = { [key: string]: string };
 
 export interface MockSubtitleProviderRowRequest {
 	/**
@@ -3120,17 +3260,17 @@ export interface SubtitleProviderRequest {
 	 */
 	name: string;
 	type: SubtitleProviderType;
-	/**
-	 * @minLength 1
-	 * @maxLength 2000
-	 */
-	baseUrl: string;
+	/** @maxLength 2000 */
+	baseUrl?: string;
 	/** @maxLength 1024 */
 	username?: string;
 	/** @maxLength 1024 */
 	password?: string;
 	/** @maxLength 1024 */
 	apiKey?: string;
+	settings?: SubtitleProviderRequestSettings;
+	secretSettings?: SubtitleProviderRequestSecretSettings;
+	clearSecretFields?: string[];
 	enabled: boolean;
 	/**
 	 * @minimum 0
@@ -16281,6 +16421,172 @@ export function createTestMetadataProvider<
 ): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 	const query = createQuery(
 		() => getTestMetadataProviderQueryOptions(id(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getListSubtitleProviderCatalogUrl = () => {
+	return `/api/settings/subtitle-provider-catalog`;
+};
+
+/**
+ * @summary List subtitle provider catalog entries
+ */
+export const listSubtitleProviderCatalog = async (
+	options?: RequestInit
+): Promise<SubtitleProviderCatalogResponse> => {
+	const res = await fetch(getListSubtitleProviderCatalogUrl(), {
+		...options,
+		method: 'GET'
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: SubtitleProviderCatalogResponse = body ? JSON.parse(body) : {};
+	return data;
+};
+
+export const getListSubtitleProviderCatalogQueryKey = () => {
+	return [`/api/settings/subtitle-provider-catalog`] as const;
+};
+
+export const getListSubtitleProviderCatalogQueryOptions = <
+	TData = Awaited<ReturnType<typeof listSubtitleProviderCatalog>>,
+	TError = UnauthorizedResponse
+>(options?: {
+	query?: Partial<
+		CreateQueryOptions<Awaited<ReturnType<typeof listSubtitleProviderCatalog>>, TError, TData>
+	>;
+	fetch?: RequestInit;
+}) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListSubtitleProviderCatalogQueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listSubtitleProviderCatalog>>> = ({
+		signal
+	}) => listSubtitleProviderCatalog({ signal, ...fetchOptions });
+
+	return { queryKey, queryFn, ...queryOptions } as CreateQueryOptions<
+		Awaited<ReturnType<typeof listSubtitleProviderCatalog>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListSubtitleProviderCatalogQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listSubtitleProviderCatalog>>
+>;
+export type ListSubtitleProviderCatalogQueryError = UnauthorizedResponse;
+
+/**
+ * @summary List subtitle provider catalog entries
+ */
+
+export function createListSubtitleProviderCatalog<
+	TData = Awaited<ReturnType<typeof listSubtitleProviderCatalog>>,
+	TError = UnauthorizedResponse
+>(
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof listSubtitleProviderCatalog>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getListSubtitleProviderCatalogQueryOptions(options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getTestDraftSubtitleProviderUrl = () => {
+	return `/api/settings/subtitle-providers/test`;
+};
+
+/**
+ * @summary Test a draft subtitle provider configuration
+ */
+export const testDraftSubtitleProvider = async (
+	subtitleProviderRequest: SubtitleProviderRequest,
+	options?: RequestInit
+): Promise<IntegrationTestResponse> => {
+	const res = await fetch(getTestDraftSubtitleProviderUrl(), {
+		...options,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...options?.headers },
+		body: JSON.stringify(subtitleProviderRequest)
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: IntegrationTestResponse = body ? JSON.parse(body) : {};
+	return data;
+};
+
+export const getTestDraftSubtitleProviderQueryKey = (
+	subtitleProviderRequest?: SubtitleProviderRequest
+) => {
+	return ['POST', `/api/settings/subtitle-providers/test`, subtitleProviderRequest] as const;
+};
+
+export const getTestDraftSubtitleProviderQueryOptions = <
+	TData = Awaited<ReturnType<typeof testDraftSubtitleProvider>>,
+	TError = BadRequestResponse | UnauthorizedResponse
+>(
+	subtitleProviderRequest: SubtitleProviderRequest,
+	options?: {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof testDraftSubtitleProvider>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getTestDraftSubtitleProviderQueryKey(subtitleProviderRequest);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof testDraftSubtitleProvider>>> = ({
+		signal
+	}) => testDraftSubtitleProvider(subtitleProviderRequest, { signal, ...fetchOptions });
+
+	return { queryKey, queryFn, ...queryOptions } as CreateQueryOptions<
+		Awaited<ReturnType<typeof testDraftSubtitleProvider>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type TestDraftSubtitleProviderQueryResult = NonNullable<
+	Awaited<ReturnType<typeof testDraftSubtitleProvider>>
+>;
+export type TestDraftSubtitleProviderQueryError = BadRequestResponse | UnauthorizedResponse;
+
+/**
+ * @summary Test a draft subtitle provider configuration
+ */
+
+export function createTestDraftSubtitleProvider<
+	TData = Awaited<ReturnType<typeof testDraftSubtitleProvider>>,
+	TError = BadRequestResponse | UnauthorizedResponse
+>(
+	subtitleProviderRequest: () => SubtitleProviderRequest,
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof testDraftSubtitleProvider>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getTestDraftSubtitleProviderQueryOptions(subtitleProviderRequest(), options?.()),
 		queryClient
 	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

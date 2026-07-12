@@ -25,6 +25,10 @@ func bestSubtitleCandidate(
 		if !provider.Enabled {
 			continue
 		}
+		if err := subtitles.UnsupportedRuntimeError(provider.Type); err != nil {
+			failures = append(failures, provider.Name+": skipped: "+err.Error())
+			continue
+		}
 		candidates, err := service.Search(ctx, subtitleConfig(provider), request)
 		if err != nil {
 			failures = append(failures, provider.Name+": "+err.Error())
@@ -57,14 +61,37 @@ func chooseSubtitleCandidate(candidates []subtitles.Candidate, languageID string
 
 func subtitleConfig(provider storage.SubtitleProvider) subtitles.Config {
 	return subtitles.Config{
-		Name:          provider.Name,
-		Type:          provider.Type,
-		BaseURL:       provider.BaseURL,
-		Username:      provider.Username,
-		Password:      provider.Password,
-		APIKey:        provider.APIKey,
-		MockSubtitles: mockSubtitleConfig(provider.MockSubtitles),
+		Name:           provider.Name,
+		Type:           provider.Type,
+		BaseURL:        provider.BaseURL,
+		Username:       provider.Username,
+		Password:       provider.Password,
+		APIKey:         provider.APIKey,
+		Settings:       subtitleSettingsConfig(provider.Settings),
+		SecretSettings: subtitleSecretSettingsConfig(provider.SecretSettings),
+		MockSubtitles:  mockSubtitleConfig(provider.MockSubtitles),
 	}
+}
+
+func subtitleSettingsConfig(settings storage.SubtitleProviderSettings) map[string]subtitles.SettingValue {
+	items := make(map[string]subtitles.SettingValue, len(settings))
+	for key, value := range settings {
+		items[key] = subtitles.SettingValue{
+			StringValue:  value.StringValue,
+			NumberValue:  value.NumberValue,
+			BooleanValue: value.BooleanValue,
+			StringValues: append([]string(nil), value.StringValues...),
+		}
+	}
+	return items
+}
+
+func subtitleSecretSettingsConfig(settings storage.SubtitleProviderSecretSettings) map[string]string {
+	items := make(map[string]string, len(settings))
+	for key, value := range settings {
+		items[key] = value
+	}
+	return items
 }
 
 func mockSubtitleConfig(rows []storage.MockSubtitleProviderRow) []subtitles.MockSubtitle {

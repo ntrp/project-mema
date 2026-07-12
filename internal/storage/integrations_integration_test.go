@@ -204,8 +204,22 @@ func TestSubtitleProviderLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("update subtitle provider: %v", err)
 	}
-	if updated.Enabled || updated.APIKey != nil || updated.Password != nil {
-		t.Fatalf("updated provider = %#v", updated)
+	if updated.Enabled || updated.APIKey == nil || *updated.APIKey != "key" || updated.Password == nil || *updated.Password != "secret" {
+		t.Fatalf("updated provider should preserve omitted secrets, got %#v", updated)
+	}
+	cleared, err := store.UpdateSubtitleProvider(ctx, provider.ID, SubtitleProviderInput{
+		Name:              "Updated " + suffix,
+		Type:              "opensubtitles",
+		BaseURL:           "https://api.opensubtitles.com",
+		Enabled:           false,
+		Priority:          20,
+		ClearSecretFields: []string{"apiKey", "password"},
+	})
+	if err != nil {
+		t.Fatalf("clear subtitle provider secrets: %v", err)
+	}
+	if cleared.APIKey != nil || cleared.Password != nil || len(cleared.SecretFieldsSet) != 0 {
+		t.Fatalf("cleared provider secrets = %#v", cleared)
 	}
 	if err := store.DeleteSubtitleProvider(ctx, provider.ID); err != nil {
 		t.Fatalf("delete subtitle provider: %v", err)

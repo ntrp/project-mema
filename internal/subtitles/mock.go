@@ -1,12 +1,37 @@
 package subtitles
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
 const mockSubtitleCueCount = 20
+
+type mockAdapter struct{}
+
+func (mockAdapter) Test(context.Context, *Service, Config) error {
+	return nil
+}
+
+func (mockAdapter) Search(
+	_ context.Context,
+	service *Service,
+	config Config,
+	request SearchRequest,
+) ([]Candidate, error) {
+	return service.searchMock(config, request), nil
+}
+
+func (mockAdapter) Download(
+	_ context.Context,
+	service *Service,
+	_ Config,
+	candidate Candidate,
+) (Download, error) {
+	return service.downloadMock(candidate), nil
+}
 
 func (s *Service) searchMock(config Config, request SearchRequest) []Candidate {
 	candidates := []Candidate{}

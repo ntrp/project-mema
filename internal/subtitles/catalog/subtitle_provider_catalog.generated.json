@@ -1,0 +1,905 @@
+[
+  {
+    "key": "addic7ed",
+    "displayName": "Addic7Ed",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "captcha": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "animekalesi",
+    "displayName": "Animekalesi",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "animesubinfo",
+    "displayName": "Animesubinfo",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "animetosho",
+    "displayName": "Animetosho",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "assrt",
+    "displayName": "Assrt",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "avistaz",
+    "displayName": "Avistaz",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "bayflix",
+    "displayName": "Bayflix",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "betaseries",
+    "displayName": "Betaseries",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "bsplayer",
+    "displayName": "BSPlayer",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "cinemaz",
+    "displayName": "Cinemaz",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "gestdown",
+    "displayName": "Gestdown",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "greeksubs",
+    "displayName": "Greek Subs",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "greeksubtitles",
+    "displayName": "Greek Subtitles",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "hdbits",
+    "displayName": "HDBits",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "hosszupuska",
+    "displayName": "Hosszupuska",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "jimaku",
+    "displayName": "Jimaku",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "karagarga",
+    "displayName": "Karagarga",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "ktuvit",
+    "displayName": "Ktuvit",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "captcha": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "legendasdivx",
+    "displayName": "Legendasdivx",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "legendasnet",
+    "displayName": "Legendasnet",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "captcha": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "mock",
+    "displayName": "Mock",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Fixture-backed local mock provider for tests and development.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "napiprojekt",
+    "displayName": "Napiprojekt",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "napisy24",
+    "displayName": "Napisy24",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "nekur",
+    "displayName": "Nekur",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "opensubtitlescom",
+    "displayName": "OpenSubtitles.com",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the OpenSubtitles.com HTTP API.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.opensubtitles.com"
+      ],
+      "allowedDownloadHosts": [
+        "www.opensubtitles.com",
+        "dl.opensubtitles.com",
+        "api.opensubtitles.com"
+      ]
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url",
+        "options": [
+          "https://api.opensubtitles.com"
+        ]
+      },
+      {
+        "key": "username",
+        "label": "Username",
+        "type": "text",
+        "persisted": true,
+        "semanticKey": "username"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "type": "password",
+        "secret": true,
+        "persisted": true,
+        "semanticKey": "password"
+      },
+      {
+        "key": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "api_key"
+      }
+    ]
+  },
+  {
+    "key": "pipocas",
+    "displayName": "Pipocas",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "prijevodionline",
+    "displayName": "Prijevodionline",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "regielive",
+    "displayName": "Regielive",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "soustitreseu",
+    "displayName": "Soustitreseu",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subclub",
+    "displayName": "Subclub",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subdl",
+    "displayName": "Subdl",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subf2m",
+    "displayName": "Subf2M",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subs4free",
+    "displayName": "Subs4Free",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subs4series",
+    "displayName": "Subs4Series",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subsarr",
+    "displayName": " Subsarr",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subscenter",
+    "displayName": " Subscenter",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "captcha": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subsource",
+    "displayName": " Subsource",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subsro",
+    "displayName": " Subsro",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subssabbz",
+    "displayName": " Subssabbz",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subsunacs",
+    "displayName": " Subsunacs",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subsynchro",
+    "displayName": " Subsynchro",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subtis",
+    "displayName": "Subtis",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subtitrarinoi",
+    "displayName": "Subtitrarinoi",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subtitriid",
+    "displayName": "Subtitriid",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subtitulamostv",
+    "displayName": "Subtitulamostv",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "subx",
+    "displayName": "Subx",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "supersubtitles",
+    "displayName": "Super Subtitles",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "titlovi",
+    "displayName": "Titlovi",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "titrari",
+    "displayName": "Titrari",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "titulky",
+    "displayName": "Titulky",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "turkcealtyaziorg",
+    "displayName": "Turkcealtyaziorg",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "tvsubtitles",
+    "displayName": "TVsubtitles",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "vladoonmooo",
+    "displayName": "Vladoonmooo",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "whisperai",
+    "displayName": "Whisper",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "unsupported",
+    "runtimeMessage": "Requires a reviewed local Whisper service integration before runtime use.",
+    "mediaTypes": [
+      "movie",
+      "serie",
+      "anime",
+      "audio"
+    ],
+    "dependencies": {
+      "local_http_endpoint": true
+    },
+    "outboundPolicy": {
+      "allowLocalHosts": true
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url"
+      }
+    ]
+  },
+  {
+    "key": "wizdom",
+    "displayName": "Wizdom",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "xsubs",
+    "displayName": "X Subs",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "yavkanet",
+    "displayName": "Yavkanet",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {},
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "yifysubtitles",
+    "displayName": "YIFY Subtitles",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  },
+  {
+    "key": "zimuku",
+    "displayName": "Zimuku",
+    "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
+    "runtimeStatus": "catalog_only",
+    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "mediaTypes": [
+      "movie",
+      "serie"
+    ],
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {},
+    "fields": []
+  }
+]

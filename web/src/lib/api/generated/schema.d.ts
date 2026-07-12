@@ -2000,6 +2000,40 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/settings/subtitle-provider-catalog': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List subtitle provider catalog entries */
+		get: operations['listSubtitleProviderCatalog'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/settings/subtitle-providers/test': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Test a draft subtitle provider configuration */
+		post: operations['testDraftSubtitleProvider'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/subtitle-providers': {
 		parameters: {
 			query?: never;
@@ -5011,6 +5045,56 @@ export interface components {
 		};
 		/** @enum {string} */
 		MetadataProviderType: 'tmdb' | 'tvdb' | 'anilist' | 'anidb';
+		SubtitleProviderCatalogResponse: {
+			providers: components['schemas']['SubtitleProviderCatalogEntry'][];
+		};
+		SubtitleProviderCatalogEntry: {
+			key: string;
+			displayName: string;
+			provenanceCommit?: string;
+			runtimeStatus: components['schemas']['SubtitleProviderRuntimeStatus'];
+			runtimeMessage: string;
+			mediaTypes: string[];
+			dependencies: components['schemas']['SubtitleProviderDependencies'];
+			warning?: string;
+			outboundPolicy: components['schemas']['SubtitleProviderOutboundPolicy'];
+			fields: components['schemas']['SubtitleProviderField'][];
+		};
+		/** @enum {string} */
+		SubtitleProviderRuntimeStatus: 'supported' | 'catalog_only' | 'unsupported';
+		SubtitleProviderDependencies: {
+			captcha?: boolean;
+			anti_captcha?: boolean;
+			archive?: boolean;
+			ffmpeg?: boolean;
+			ffprobe?: boolean;
+			anidb?: boolean;
+			arr_history?: boolean;
+			local_http_endpoint?: boolean;
+		};
+		SubtitleProviderOutboundPolicy: {
+			allowedBaseHosts?: string[];
+			allowedDownloadHosts?: string[];
+			allowLocalHosts?: boolean;
+		};
+		SubtitleProviderField: {
+			key: string;
+			label: string;
+			/** @enum {string} */
+			type: 'text' | 'password' | 'switch' | 'select' | 'chips' | 'action';
+			secret?: boolean;
+			required?: boolean;
+			persisted: boolean;
+			semanticKey?: string;
+			options?: string[];
+		};
+		SubtitleProviderSettingValue: {
+			stringValue?: string;
+			/** Format: double */
+			numberValue?: number;
+			booleanValue?: boolean;
+			stringValues?: string[];
+		};
 		SubtitleProviderListResponse: {
 			providers: components['schemas']['SubtitleProvider'][];
 		};
@@ -5019,15 +5103,20 @@ export interface components {
 			id: string;
 			name: string;
 			type: components['schemas']['SubtitleProviderType'];
+			catalogKey: string;
 			baseUrl: string;
 			username?: string;
-			password?: string;
-			apiKey?: string;
+			settings: {
+				[key: string]: components['schemas']['SubtitleProviderSettingValue'];
+			};
 			enabled: boolean;
 			/** Format: int32 */
 			priority: number;
 			apiKeySet: boolean;
 			passwordSet: boolean;
+			secretFieldsSet: string[];
+			runtimeStatus: components['schemas']['SubtitleProviderRuntimeStatus'];
+			runtimeMessage: string;
 			mockSubtitles: components['schemas']['MockSubtitleProviderRow'][];
 			/** Format: date-time */
 			createdAt: string;
@@ -5037,17 +5126,84 @@ export interface components {
 		SubtitleProviderRequest: {
 			name: string;
 			type: components['schemas']['SubtitleProviderType'];
-			baseUrl: string;
+			baseUrl?: string;
 			username?: string;
 			password?: string;
 			apiKey?: string;
+			settings?: {
+				[key: string]: components['schemas']['SubtitleProviderSettingValue'];
+			};
+			secretSettings?: {
+				[key: string]: string;
+			};
+			clearSecretFields?: string[];
 			enabled: boolean;
 			/** Format: int32 */
 			priority: number;
 			mockSubtitles?: components['schemas']['MockSubtitleProviderRowRequest'][];
 		};
 		/** @enum {string} */
-		SubtitleProviderType: 'opensubtitles' | 'mock';
+		SubtitleProviderType:
+			| 'addic7ed'
+			| 'animekalesi'
+			| 'animesubinfo'
+			| 'animetosho'
+			| 'assrt'
+			| 'avistaz'
+			| 'bayflix'
+			| 'betaseries'
+			| 'bsplayer'
+			| 'cinemaz'
+			| 'gestdown'
+			| 'greeksubs'
+			| 'greeksubtitles'
+			| 'hdbits'
+			| 'hosszupuska'
+			| 'jimaku'
+			| 'karagarga'
+			| 'ktuvit'
+			| 'legendasdivx'
+			| 'legendasnet'
+			| 'mock'
+			| 'napiprojekt'
+			| 'napisy24'
+			| 'nekur'
+			| 'opensubtitles'
+			| 'opensubtitlescom'
+			| 'pipocas'
+			| 'prijevodionline'
+			| 'regielive'
+			| 'soustitreseu'
+			| 'subclub'
+			| 'subdl'
+			| 'subf2m'
+			| 'subs4free'
+			| 'subs4series'
+			| 'subsarr'
+			| 'subscenter'
+			| 'subsource'
+			| 'subsro'
+			| 'subssabbz'
+			| 'subsunacs'
+			| 'subsynchro'
+			| 'subtis'
+			| 'subtitrarinoi'
+			| 'subtitriid'
+			| 'subtitulamostv'
+			| 'subx'
+			| 'supersubtitles'
+			| 'titlovi'
+			| 'titrari'
+			| 'titulky'
+			| 'turkcealtyaziorg'
+			| 'tvsubtitles'
+			| 'vladoonmooo'
+			| 'whisperai'
+			| 'wizdom'
+			| 'xsubs'
+			| 'yavkanet'
+			| 'yifysubtitles'
+			| 'zimuku';
 		MockSubtitleProviderRow: {
 			/** Format: uuid */
 			id: string;
@@ -8984,6 +9140,53 @@ export interface operations {
 			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
+		};
+	};
+	listSubtitleProviderCatalog: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Subtitle provider catalog */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SubtitleProviderCatalogResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	testDraftSubtitleProvider: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['SubtitleProviderRequest'];
+			};
+		};
+		responses: {
+			/** @description Subtitle provider test result */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['IntegrationTestResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
 		};
 	};
 	listSubtitleProviders: {

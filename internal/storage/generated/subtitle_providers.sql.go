@@ -72,6 +72,8 @@ insert into app.subtitle_providers (
     username,
     password,
     api_key,
+    settings_json,
+    secret_settings_json,
     enabled,
     priority
 ) values (
@@ -83,21 +85,25 @@ insert into app.subtitle_providers (
     $6,
     $7,
     $8,
-    $9
+    $9,
+    $10,
+    $11
 )
-returning id, name, type, base_url, username, password, api_key, enabled, priority, created_at, updated_at
+returning id, name, type, base_url, username, password, api_key, settings_json, secret_settings_json, enabled, priority, created_at, updated_at
 `
 
 type CreateSubtitleProviderParams struct {
-	ID       uuid.UUID
-	Name     string
-	Type     string
-	BaseUrl  string
-	Username pgtype.Text
-	Password pgtype.Text
-	ApiKey   pgtype.Text
-	Enabled  bool
-	Priority int32
+	ID                 uuid.UUID
+	Name               string
+	Type               string
+	BaseUrl            string
+	Username           pgtype.Text
+	Password           pgtype.Text
+	ApiKey             pgtype.Text
+	SettingsJson       []byte
+	SecretSettingsJson []byte
+	Enabled            bool
+	Priority           int32
 }
 
 func (q *Queries) CreateSubtitleProvider(ctx context.Context, arg CreateSubtitleProviderParams) (AppSubtitleProvider, error) {
@@ -109,6 +115,8 @@ func (q *Queries) CreateSubtitleProvider(ctx context.Context, arg CreateSubtitle
 		arg.Username,
 		arg.Password,
 		arg.ApiKey,
+		arg.SettingsJson,
+		arg.SecretSettingsJson,
 		arg.Enabled,
 		arg.Priority,
 	)
@@ -121,6 +129,8 @@ func (q *Queries) CreateSubtitleProvider(ctx context.Context, arg CreateSubtitle
 		&i.Username,
 		&i.Password,
 		&i.ApiKey,
+		&i.SettingsJson,
+		&i.SecretSettingsJson,
 		&i.Enabled,
 		&i.Priority,
 		&i.CreatedAt,
@@ -153,7 +163,7 @@ func (q *Queries) DeleteSubtitleProvider(ctx context.Context, id uuid.UUID) (int
 }
 
 const getSubtitleProvider = `-- name: GetSubtitleProvider :one
-select id, name, type, base_url, username, password, api_key, enabled, priority, created_at, updated_at
+select id, name, type, base_url, username, password, api_key, settings_json, secret_settings_json, enabled, priority, created_at, updated_at
 from app.subtitle_providers
 where id = $1
 `
@@ -169,6 +179,8 @@ func (q *Queries) GetSubtitleProvider(ctx context.Context, id uuid.UUID) (AppSub
 		&i.Username,
 		&i.Password,
 		&i.ApiKey,
+		&i.SettingsJson,
+		&i.SecretSettingsJson,
 		&i.Enabled,
 		&i.Priority,
 		&i.CreatedAt,
@@ -214,7 +226,7 @@ func (q *Queries) ListMockSubtitleProviderRows(ctx context.Context, providerID u
 }
 
 const listSubtitleProviders = `-- name: ListSubtitleProviders :many
-select id, name, type, base_url, username, password, api_key, enabled, priority, created_at, updated_at
+select id, name, type, base_url, username, password, api_key, settings_json, secret_settings_json, enabled, priority, created_at, updated_at
 from app.subtitle_providers
 order by priority asc, lower(name) asc
 `
@@ -236,6 +248,8 @@ func (q *Queries) ListSubtitleProviders(ctx context.Context) ([]AppSubtitleProvi
 			&i.Username,
 			&i.Password,
 			&i.ApiKey,
+			&i.SettingsJson,
+			&i.SecretSettingsJson,
 			&i.Enabled,
 			&i.Priority,
 			&i.CreatedAt,
@@ -259,23 +273,27 @@ set name = $1,
     username = $4,
     password = $5,
     api_key = $6,
-    enabled = $7,
-    priority = $8,
+    settings_json = $7,
+    secret_settings_json = $8,
+    enabled = $9,
+    priority = $10,
     updated_at = now()
-where id = $9
-returning id, name, type, base_url, username, password, api_key, enabled, priority, created_at, updated_at
+where id = $11
+returning id, name, type, base_url, username, password, api_key, settings_json, secret_settings_json, enabled, priority, created_at, updated_at
 `
 
 type UpdateSubtitleProviderParams struct {
-	Name     string
-	Type     string
-	BaseUrl  string
-	Username pgtype.Text
-	Password pgtype.Text
-	ApiKey   pgtype.Text
-	Enabled  bool
-	Priority int32
-	ID       uuid.UUID
+	Name               string
+	Type               string
+	BaseUrl            string
+	Username           pgtype.Text
+	Password           pgtype.Text
+	ApiKey             pgtype.Text
+	SettingsJson       []byte
+	SecretSettingsJson []byte
+	Enabled            bool
+	Priority           int32
+	ID                 uuid.UUID
 }
 
 func (q *Queries) UpdateSubtitleProvider(ctx context.Context, arg UpdateSubtitleProviderParams) (AppSubtitleProvider, error) {
@@ -286,6 +304,8 @@ func (q *Queries) UpdateSubtitleProvider(ctx context.Context, arg UpdateSubtitle
 		arg.Username,
 		arg.Password,
 		arg.ApiKey,
+		arg.SettingsJson,
+		arg.SecretSettingsJson,
 		arg.Enabled,
 		arg.Priority,
 		arg.ID,
@@ -299,6 +319,8 @@ func (q *Queries) UpdateSubtitleProvider(ctx context.Context, arg UpdateSubtitle
 		&i.Username,
 		&i.Password,
 		&i.ApiKey,
+		&i.SettingsJson,
+		&i.SecretSettingsJson,
 		&i.Enabled,
 		&i.Priority,
 		&i.CreatedAt,

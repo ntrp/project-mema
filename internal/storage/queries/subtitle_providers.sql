@@ -17,6 +17,8 @@ insert into app.subtitle_providers (
     username,
     password,
     api_key,
+    settings_json,
+    secret_settings_json,
     enabled,
     priority
 ) values (
@@ -27,6 +29,8 @@ insert into app.subtitle_providers (
     sqlc.narg(username),
     sqlc.narg(password),
     sqlc.narg(api_key),
+    sqlc.arg(settings_json),
+    sqlc.arg(secret_settings_json),
     sqlc.arg(enabled),
     sqlc.arg(priority)
 )
@@ -40,6 +44,8 @@ set name = sqlc.arg(name),
     username = sqlc.narg(username),
     password = sqlc.narg(password),
     api_key = sqlc.narg(api_key),
+    settings_json = sqlc.arg(settings_json),
+    secret_settings_json = sqlc.arg(secret_settings_json),
     enabled = sqlc.arg(enabled),
     priority = sqlc.arg(priority),
     updated_at = now()

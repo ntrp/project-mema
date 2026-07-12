@@ -13,21 +13,47 @@ import (
 	"strings"
 )
 
-var (
-	ErrCredentialsRequired = errors.New("subtitle provider API key is required")
-	ErrUnsupportedProvider = errors.New("unsupported subtitle provider")
-)
+type openSubtitlesAdapter struct {
+	providerKey string
+}
+
+func (a openSubtitlesAdapter) Test(ctx context.Context, service *Service, config Config) error {
+	return service.testOpenSubtitles(ctx, a.normalizedConfig(config))
+}
+
+func (a openSubtitlesAdapter) Search(
+	ctx context.Context,
+	service *Service,
+	config Config,
+	request SearchRequest,
+) ([]Candidate, error) {
+	return service.searchOpenSubtitles(ctx, a.normalizedConfig(config), request)
+}
+
+func (a openSubtitlesAdapter) Download(
+	ctx context.Context,
+	service *Service,
+	config Config,
+	candidate Candidate,
+) (Download, error) {
+	return service.downloadOpenSubtitles(ctx, a.normalizedConfig(config), candidate)
+}
+
+func (a openSubtitlesAdapter) normalizedConfig(config Config) Config {
+	config.Type = a.providerKey
+	return config
+}
 
 func (s *Service) testOpenSubtitles(ctx context.Context, config Config) error {
-	if config.Type != "opensubtitles" {
-		return ErrUnsupportedProvider
-	}
 	if config.APIKey == nil || strings.TrimSpace(*config.APIKey) == "" {
 		return ErrCredentialsRequired
 	}
 	base, err := url.Parse(strings.TrimSpace(config.BaseURL))
 	if err != nil || base.Scheme == "" || base.Host == "" {
 		return errors.New("subtitle provider base URL is invalid")
+	}
+	if err := validateProviderURL(config.Type, base.String(), false); err != nil {
+		return err
 	}
 	endpoint := base.JoinPath("api", "v1", "infos", "languages")
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
@@ -36,7 +62,7 @@ func (s *Service) testOpenSubtitles(ctx context.Context, config Config) error {
 	}
 	req.Header.Set("Api-Key", strings.TrimSpace(*config.APIKey))
 	req.Header.Set("User-Agent", "project-mema")
-	resp, err := s.client.Do(req)
+	resp, err := s.doProviderRequest(req, config.Type, false)
 	if err != nil {
 		return err
 	}
@@ -52,9 +78,6 @@ func (s *Service) searchOpenSubtitles(
 	config Config,
 	request SearchRequest,
 ) ([]Candidate, error) {
-	if config.Type != "opensubtitles" {
-		return nil, ErrUnsupportedProvider
-	}
 	endpoint, err := openSubtitlesEndpoint(config.BaseURL, "subtitles")
 	if err != nil {
 		return nil, err
@@ -77,7 +100,7 @@ func (s *Service) searchOpenSubtitles(
 		return nil, err
 	}
 	openSubtitlesHeaders(req, config)
-	resp, err := s.client.Do(req)
+	resp, err := s.doProviderRequest(req, config.Type, false)
 	if err != nil {
 		return nil, err
 	}
@@ -97,9 +120,6 @@ func (s *Service) downloadOpenSubtitles(
 	config Config,
 	candidate Candidate,
 ) (Download, error) {
-	if config.Type != "opensubtitles" {
-		return Download{}, ErrUnsupportedProvider
-	}
 	endpoint, err := openSubtitlesEndpoint(config.BaseURL, "download")
 	if err != nil {
 		return Download{}, err
@@ -116,7 +136,7 @@ func (s *Service) downloadOpenSubtitles(
 	openSubtitlesHeaders(req, config)
 	openSubtitlesAuth(req, token)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := s.client.Do(req)
+	resp, err := s.doProviderRequest(req, config.Type, false)
 	if err != nil {
 		return Download{}, err
 	}
@@ -130,6 +150,9 @@ func (s *Service) downloadOpenSubtitles(
 	}
 	if strings.TrimSpace(payload.Link) == "" {
 		return Download{}, errors.New("subtitle provider returned no download link")
+	}
+	if err := validateProviderURL(config.Type, payload.Link, true); err != nil {
+		return Download{}, err
 	}
 	return s.fetchSubtitle(ctx, config, payload.Link)
 }
@@ -153,7 +176,7 @@ func (s *Service) openSubtitlesToken(ctx context.Context, config Config) (string
 	}
 	openSubtitlesHeaders(req, config)
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := s.client.Do(req)
+	resp, err := s.doProviderRequest(req, config.Type, false)
 	if err != nil {
 		return "", err
 	}
@@ -177,7 +200,7 @@ func (s *Service) fetchSubtitle(ctx context.Context, config Config, link string)
 		return Download{}, err
 	}
 	openSubtitlesHeaders(req, config)
-	resp, err := s.client.Do(req)
+	resp, err := s.doProviderRequest(req, config.Type, true)
 	if err != nil {
 		return Download{}, err
 	}
@@ -185,9 +208,13 @@ func (s *Service) fetchSubtitle(ctx context.Context, config Config, link string)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return Download{}, fmt.Errorf("subtitle file returned HTTP %d", resp.StatusCode)
 	}
-	content, err := io.ReadAll(io.LimitReader(resp.Body, 10<<20))
+	const subtitleDownloadLimit = 10 << 20
+	content, err := io.ReadAll(io.LimitReader(resp.Body, subtitleDownloadLimit+1))
 	if err != nil {
 		return Download{}, err
+	}
+	if len(content) > subtitleDownloadLimit {
+		return Download{}, errors.New("subtitle file is too large")
 	}
 	return Download{Content: content, URL: link}, nil
 }

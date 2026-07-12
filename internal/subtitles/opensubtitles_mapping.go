@@ -45,6 +45,9 @@ func openSubtitlesEndpoint(baseURL string, path string) (*url.URL, error) {
 	if err != nil || base.Scheme == "" || base.Host == "" {
 		return nil, errInvalidBaseURL()
 	}
+	if err := validateProviderURL("opensubtitlescom", base.String(), false); err != nil {
+		return nil, err
+	}
 	return base.JoinPath("api", "v1", path), nil
 }
 

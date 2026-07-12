@@ -88,6 +88,7 @@ export function createAppShell(overrides: Partial<AppShellController> = {}): App
 		saveSubtitleProvider: vi.fn(),
 		deleteSubtitleProvider: vi.fn(),
 		testSubtitleProvider: vi.fn(),
+		testSubtitleProviderConfig: vi.fn(),
 		testingSubtitleProviderId: undefined,
 		savingSubtitleProviderId: undefined,
 		subtitleProviderTests: {},

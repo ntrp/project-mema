@@ -1690,18 +1690,243 @@ func (e SubtitleCandidateMatchSeverity) Valid() bool {
 	}
 }
 
+// Defines values for SubtitleProviderFieldType.
+const (
+	Action   SubtitleProviderFieldType = "action"
+	Chips    SubtitleProviderFieldType = "chips"
+	Password SubtitleProviderFieldType = "password"
+	Select   SubtitleProviderFieldType = "select"
+	Switch   SubtitleProviderFieldType = "switch"
+	Text     SubtitleProviderFieldType = "text"
+)
+
+// Valid indicates whether the value is a known member of the SubtitleProviderFieldType enum.
+func (e SubtitleProviderFieldType) Valid() bool {
+	switch e {
+	case Action:
+		return true
+	case Chips:
+		return true
+	case Password:
+		return true
+	case Select:
+		return true
+	case Switch:
+		return true
+	case Text:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubtitleProviderRuntimeStatus.
+const (
+	CatalogOnly SubtitleProviderRuntimeStatus = "catalog_only"
+	Supported   SubtitleProviderRuntimeStatus = "supported"
+	Unsupported SubtitleProviderRuntimeStatus = "unsupported"
+)
+
+// Valid indicates whether the value is a known member of the SubtitleProviderRuntimeStatus enum.
+func (e SubtitleProviderRuntimeStatus) Valid() bool {
+	switch e {
+	case CatalogOnly:
+		return true
+	case Supported:
+		return true
+	case Unsupported:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SubtitleProviderType.
 const (
-	Mock          SubtitleProviderType = "mock"
-	Opensubtitles SubtitleProviderType = "opensubtitles"
+	Addic7ed         SubtitleProviderType = "addic7ed"
+	Animekalesi      SubtitleProviderType = "animekalesi"
+	Animesubinfo     SubtitleProviderType = "animesubinfo"
+	Animetosho       SubtitleProviderType = "animetosho"
+	Assrt            SubtitleProviderType = "assrt"
+	Avistaz          SubtitleProviderType = "avistaz"
+	Bayflix          SubtitleProviderType = "bayflix"
+	Betaseries       SubtitleProviderType = "betaseries"
+	Bsplayer         SubtitleProviderType = "bsplayer"
+	Cinemaz          SubtitleProviderType = "cinemaz"
+	Gestdown         SubtitleProviderType = "gestdown"
+	Greeksubs        SubtitleProviderType = "greeksubs"
+	Greeksubtitles   SubtitleProviderType = "greeksubtitles"
+	Hdbits           SubtitleProviderType = "hdbits"
+	Hosszupuska      SubtitleProviderType = "hosszupuska"
+	Jimaku           SubtitleProviderType = "jimaku"
+	Karagarga        SubtitleProviderType = "karagarga"
+	Ktuvit           SubtitleProviderType = "ktuvit"
+	Legendasdivx     SubtitleProviderType = "legendasdivx"
+	Legendasnet      SubtitleProviderType = "legendasnet"
+	Mock             SubtitleProviderType = "mock"
+	Napiprojekt      SubtitleProviderType = "napiprojekt"
+	Napisy24         SubtitleProviderType = "napisy24"
+	Nekur            SubtitleProviderType = "nekur"
+	Opensubtitles    SubtitleProviderType = "opensubtitles"
+	Opensubtitlescom SubtitleProviderType = "opensubtitlescom"
+	Pipocas          SubtitleProviderType = "pipocas"
+	Prijevodionline  SubtitleProviderType = "prijevodionline"
+	Regielive        SubtitleProviderType = "regielive"
+	Soustitreseu     SubtitleProviderType = "soustitreseu"
+	Subclub          SubtitleProviderType = "subclub"
+	Subdl            SubtitleProviderType = "subdl"
+	Subf2m           SubtitleProviderType = "subf2m"
+	Subs4free        SubtitleProviderType = "subs4free"
+	Subs4series      SubtitleProviderType = "subs4series"
+	Subsarr          SubtitleProviderType = "subsarr"
+	Subscenter       SubtitleProviderType = "subscenter"
+	Subsource        SubtitleProviderType = "subsource"
+	Subsro           SubtitleProviderType = "subsro"
+	Subssabbz        SubtitleProviderType = "subssabbz"
+	Subsunacs        SubtitleProviderType = "subsunacs"
+	Subsynchro       SubtitleProviderType = "subsynchro"
+	Subtis           SubtitleProviderType = "subtis"
+	Subtitrarinoi    SubtitleProviderType = "subtitrarinoi"
+	Subtitriid       SubtitleProviderType = "subtitriid"
+	Subtitulamostv   SubtitleProviderType = "subtitulamostv"
+	Subx             SubtitleProviderType = "subx"
+	Supersubtitles   SubtitleProviderType = "supersubtitles"
+	Titlovi          SubtitleProviderType = "titlovi"
+	Titrari          SubtitleProviderType = "titrari"
+	Titulky          SubtitleProviderType = "titulky"
+	Turkcealtyaziorg SubtitleProviderType = "turkcealtyaziorg"
+	Tvsubtitles      SubtitleProviderType = "tvsubtitles"
+	Vladoonmooo      SubtitleProviderType = "vladoonmooo"
+	Whisperai        SubtitleProviderType = "whisperai"
+	Wizdom           SubtitleProviderType = "wizdom"
+	Xsubs            SubtitleProviderType = "xsubs"
+	Yavkanet         SubtitleProviderType = "yavkanet"
+	Yifysubtitles    SubtitleProviderType = "yifysubtitles"
+	Zimuku           SubtitleProviderType = "zimuku"
 )
 
 // Valid indicates whether the value is a known member of the SubtitleProviderType enum.
 func (e SubtitleProviderType) Valid() bool {
 	switch e {
+	case Addic7ed:
+		return true
+	case Animekalesi:
+		return true
+	case Animesubinfo:
+		return true
+	case Animetosho:
+		return true
+	case Assrt:
+		return true
+	case Avistaz:
+		return true
+	case Bayflix:
+		return true
+	case Betaseries:
+		return true
+	case Bsplayer:
+		return true
+	case Cinemaz:
+		return true
+	case Gestdown:
+		return true
+	case Greeksubs:
+		return true
+	case Greeksubtitles:
+		return true
+	case Hdbits:
+		return true
+	case Hosszupuska:
+		return true
+	case Jimaku:
+		return true
+	case Karagarga:
+		return true
+	case Ktuvit:
+		return true
+	case Legendasdivx:
+		return true
+	case Legendasnet:
+		return true
 	case Mock:
 		return true
+	case Napiprojekt:
+		return true
+	case Napisy24:
+		return true
+	case Nekur:
+		return true
 	case Opensubtitles:
+		return true
+	case Opensubtitlescom:
+		return true
+	case Pipocas:
+		return true
+	case Prijevodionline:
+		return true
+	case Regielive:
+		return true
+	case Soustitreseu:
+		return true
+	case Subclub:
+		return true
+	case Subdl:
+		return true
+	case Subf2m:
+		return true
+	case Subs4free:
+		return true
+	case Subs4series:
+		return true
+	case Subsarr:
+		return true
+	case Subscenter:
+		return true
+	case Subsource:
+		return true
+	case Subsro:
+		return true
+	case Subssabbz:
+		return true
+	case Subsunacs:
+		return true
+	case Subsynchro:
+		return true
+	case Subtis:
+		return true
+	case Subtitrarinoi:
+		return true
+	case Subtitriid:
+		return true
+	case Subtitulamostv:
+		return true
+	case Subx:
+		return true
+	case Supersubtitles:
+		return true
+	case Titlovi:
+		return true
+	case Titrari:
+		return true
+	case Titulky:
+		return true
+	case Turkcealtyaziorg:
+		return true
+	case Tvsubtitles:
+		return true
+	case Vladoonmooo:
+		return true
+	case Whisperai:
+		return true
+	case Wizdom:
+		return true
+	case Xsubs:
+		return true
+	case Yavkanet:
+		return true
+	case Yifysubtitles:
+		return true
+	case Zimuku:
 		return true
 	default:
 		return false
@@ -4541,38 +4766,108 @@ type SubtitleCandidateMatchSeverity string
 
 // SubtitleProvider defines model for SubtitleProvider.
 type SubtitleProvider struct {
-	ApiKey        *string                   `json:"apiKey,omitempty"`
-	ApiKeySet     bool                      `json:"apiKeySet"`
-	BaseUrl       string                    `json:"baseUrl"`
-	CreatedAt     time.Time                 `json:"createdAt"`
-	Enabled       bool                      `json:"enabled"`
-	Id            openapi_types.UUID        `json:"id"`
-	MockSubtitles []MockSubtitleProviderRow `json:"mockSubtitles"`
-	Name          string                    `json:"name"`
-	Password      *string                   `json:"password,omitempty"`
-	PasswordSet   bool                      `json:"passwordSet"`
-	Priority      int32                     `json:"priority"`
-	Type          SubtitleProviderType      `json:"type"`
-	UpdatedAt     time.Time                 `json:"updatedAt"`
-	Username      *string                   `json:"username,omitempty"`
+	ApiKeySet       bool                                    `json:"apiKeySet"`
+	BaseUrl         string                                  `json:"baseUrl"`
+	CatalogKey      string                                  `json:"catalogKey"`
+	CreatedAt       time.Time                               `json:"createdAt"`
+	Enabled         bool                                    `json:"enabled"`
+	Id              openapi_types.UUID                      `json:"id"`
+	MockSubtitles   []MockSubtitleProviderRow               `json:"mockSubtitles"`
+	Name            string                                  `json:"name"`
+	PasswordSet     bool                                    `json:"passwordSet"`
+	Priority        int32                                   `json:"priority"`
+	RuntimeMessage  string                                  `json:"runtimeMessage"`
+	RuntimeStatus   SubtitleProviderRuntimeStatus           `json:"runtimeStatus"`
+	SecretFieldsSet []string                                `json:"secretFieldsSet"`
+	Settings        map[string]SubtitleProviderSettingValue `json:"settings"`
+	Type            SubtitleProviderType                    `json:"type"`
+	UpdatedAt       time.Time                               `json:"updatedAt"`
+	Username        *string                                 `json:"username,omitempty"`
 }
+
+// SubtitleProviderCatalogEntry defines model for SubtitleProviderCatalogEntry.
+type SubtitleProviderCatalogEntry struct {
+	Dependencies     SubtitleProviderDependencies   `json:"dependencies"`
+	DisplayName      string                         `json:"displayName"`
+	Fields           []SubtitleProviderField        `json:"fields"`
+	Key              string                         `json:"key"`
+	MediaTypes       []string                       `json:"mediaTypes"`
+	OutboundPolicy   SubtitleProviderOutboundPolicy `json:"outboundPolicy"`
+	ProvenanceCommit *string                        `json:"provenanceCommit,omitempty"`
+	RuntimeMessage   string                         `json:"runtimeMessage"`
+	RuntimeStatus    SubtitleProviderRuntimeStatus  `json:"runtimeStatus"`
+	Warning          *string                        `json:"warning,omitempty"`
+}
+
+// SubtitleProviderCatalogResponse defines model for SubtitleProviderCatalogResponse.
+type SubtitleProviderCatalogResponse struct {
+	Providers []SubtitleProviderCatalogEntry `json:"providers"`
+}
+
+// SubtitleProviderDependencies defines model for SubtitleProviderDependencies.
+type SubtitleProviderDependencies struct {
+	Anidb             *bool `json:"anidb,omitempty"`
+	AntiCaptcha       *bool `json:"anti_captcha,omitempty"`
+	Archive           *bool `json:"archive,omitempty"`
+	ArrHistory        *bool `json:"arr_history,omitempty"`
+	Captcha           *bool `json:"captcha,omitempty"`
+	Ffmpeg            *bool `json:"ffmpeg,omitempty"`
+	Ffprobe           *bool `json:"ffprobe,omitempty"`
+	LocalHttpEndpoint *bool `json:"local_http_endpoint,omitempty"`
+}
+
+// SubtitleProviderField defines model for SubtitleProviderField.
+type SubtitleProviderField struct {
+	Key         string                    `json:"key"`
+	Label       string                    `json:"label"`
+	Options     *[]string                 `json:"options,omitempty"`
+	Persisted   bool                      `json:"persisted"`
+	Required    *bool                     `json:"required,omitempty"`
+	Secret      *bool                     `json:"secret,omitempty"`
+	SemanticKey *string                   `json:"semanticKey,omitempty"`
+	Type        SubtitleProviderFieldType `json:"type"`
+}
+
+// SubtitleProviderFieldType defines model for SubtitleProviderField.Type.
+type SubtitleProviderFieldType string
 
 // SubtitleProviderListResponse defines model for SubtitleProviderListResponse.
 type SubtitleProviderListResponse struct {
 	Providers []SubtitleProvider `json:"providers"`
 }
 
+// SubtitleProviderOutboundPolicy defines model for SubtitleProviderOutboundPolicy.
+type SubtitleProviderOutboundPolicy struct {
+	AllowLocalHosts      *bool     `json:"allowLocalHosts,omitempty"`
+	AllowedBaseHosts     *[]string `json:"allowedBaseHosts,omitempty"`
+	AllowedDownloadHosts *[]string `json:"allowedDownloadHosts,omitempty"`
+}
+
 // SubtitleProviderRequest defines model for SubtitleProviderRequest.
 type SubtitleProviderRequest struct {
-	ApiKey        *string                           `json:"apiKey,omitempty"`
-	BaseUrl       string                            `json:"baseUrl"`
-	Enabled       bool                              `json:"enabled"`
-	MockSubtitles *[]MockSubtitleProviderRowRequest `json:"mockSubtitles,omitempty"`
-	Name          string                            `json:"name"`
-	Password      *string                           `json:"password,omitempty"`
-	Priority      int32                             `json:"priority"`
-	Type          SubtitleProviderType              `json:"type"`
-	Username      *string                           `json:"username,omitempty"`
+	ApiKey            *string                                  `json:"apiKey,omitempty"`
+	BaseUrl           *string                                  `json:"baseUrl,omitempty"`
+	ClearSecretFields *[]string                                `json:"clearSecretFields,omitempty"`
+	Enabled           bool                                     `json:"enabled"`
+	MockSubtitles     *[]MockSubtitleProviderRowRequest        `json:"mockSubtitles,omitempty"`
+	Name              string                                   `json:"name"`
+	Password          *string                                  `json:"password,omitempty"`
+	Priority          int32                                    `json:"priority"`
+	SecretSettings    *map[string]string                       `json:"secretSettings,omitempty"`
+	Settings          *map[string]SubtitleProviderSettingValue `json:"settings,omitempty"`
+	Type              SubtitleProviderType                     `json:"type"`
+	Username          *string                                  `json:"username,omitempty"`
+}
+
+// SubtitleProviderRuntimeStatus defines model for SubtitleProviderRuntimeStatus.
+type SubtitleProviderRuntimeStatus string
+
+// SubtitleProviderSettingValue defines model for SubtitleProviderSettingValue.
+type SubtitleProviderSettingValue struct {
+	BooleanValue *bool     `json:"booleanValue,omitempty"`
+	NumberValue  *float64  `json:"numberValue,omitempty"`
+	StringValue  *string   `json:"stringValue,omitempty"`
+	StringValues *[]string `json:"stringValues,omitempty"`
 }
 
 // SubtitleProviderType defines model for SubtitleProviderType.
@@ -5369,6 +5664,9 @@ type UpdateQualitySizeSettingsJSONRequestBody = QualitySizeSettingsUpdateRequest
 // CreateSubtitleProviderJSONRequestBody defines body for CreateSubtitleProvider for application/json ContentType.
 type CreateSubtitleProviderJSONRequestBody = SubtitleProviderRequest
 
+// TestDraftSubtitleProviderJSONRequestBody defines body for TestDraftSubtitleProvider for application/json ContentType.
+type TestDraftSubtitleProviderJSONRequestBody = SubtitleProviderRequest
+
 // UpdateSubtitleProviderJSONRequestBody defines body for UpdateSubtitleProvider for application/json ContentType.
 type UpdateSubtitleProviderJSONRequestBody = SubtitleProviderRequest
 
@@ -5881,12 +6179,18 @@ type ServerInterface interface {
 	// Update quality size settings
 	// (PUT /settings/quality-sizes)
 	UpdateQualitySizeSettings(w http.ResponseWriter, r *http.Request)
+	// List subtitle provider catalog entries
+	// (GET /settings/subtitle-provider-catalog)
+	ListSubtitleProviderCatalog(w http.ResponseWriter, r *http.Request)
 	// List configured subtitle providers
 	// (GET /settings/subtitle-providers)
 	ListSubtitleProviders(w http.ResponseWriter, r *http.Request)
 	// Create a subtitle provider
 	// (POST /settings/subtitle-providers)
 	CreateSubtitleProvider(w http.ResponseWriter, r *http.Request)
+	// Test a draft subtitle provider configuration
+	// (POST /settings/subtitle-providers/test)
+	TestDraftSubtitleProvider(w http.ResponseWriter, r *http.Request)
 	// Delete a subtitle provider
 	// (DELETE /settings/subtitle-providers/{id})
 	DeleteSubtitleProvider(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -6958,6 +7262,12 @@ func (_ Unimplemented) UpdateQualitySizeSettings(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// List subtitle provider catalog entries
+// (GET /settings/subtitle-provider-catalog)
+func (_ Unimplemented) ListSubtitleProviderCatalog(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // List configured subtitle providers
 // (GET /settings/subtitle-providers)
 func (_ Unimplemented) ListSubtitleProviders(w http.ResponseWriter, r *http.Request) {
@@ -6967,6 +7277,12 @@ func (_ Unimplemented) ListSubtitleProviders(w http.ResponseWriter, r *http.Requ
 // Create a subtitle provider
 // (POST /settings/subtitle-providers)
 func (_ Unimplemented) CreateSubtitleProvider(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Test a draft subtitle provider configuration
+// (POST /settings/subtitle-providers/test)
+func (_ Unimplemented) TestDraftSubtitleProvider(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -12498,6 +12814,26 @@ func (siw *ServerInterfaceWrapper) UpdateQualitySizeSettings(w http.ResponseWrit
 	handler.ServeHTTP(w, r)
 }
 
+// ListSubtitleProviderCatalog operation middleware
+func (siw *ServerInterfaceWrapper) ListSubtitleProviderCatalog(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSubtitleProviderCatalog(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSubtitleProviders operation middleware
 func (siw *ServerInterfaceWrapper) ListSubtitleProviders(w http.ResponseWriter, r *http.Request) {
 
@@ -12529,6 +12865,26 @@ func (siw *ServerInterfaceWrapper) CreateSubtitleProvider(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateSubtitleProvider(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TestDraftSubtitleProvider operation middleware
+func (siw *ServerInterfaceWrapper) TestDraftSubtitleProvider(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestDraftSubtitleProvider(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14225,10 +14581,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/settings/quality-sizes", wrapper.UpdateQualitySizeSettings)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/settings/subtitle-provider-catalog", wrapper.ListSubtitleProviderCatalog)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/subtitle-providers", wrapper.ListSubtitleProviders)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/subtitle-providers", wrapper.CreateSubtitleProvider)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/settings/subtitle-providers/test", wrapper.TestDraftSubtitleProvider)
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/subtitle-providers/{id}", wrapper.DeleteSubtitleProvider)

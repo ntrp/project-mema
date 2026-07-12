@@ -15,6 +15,7 @@
 			onSave={app.saveSubtitleProvider}
 			onDelete={app.deleteSubtitleProvider}
 			onTest={app.testSubtitleProvider}
+			onTestConfig={app.testSubtitleProviderConfig}
 			testingId={app.testingSubtitleProviderId}
 			savingId={app.savingSubtitleProviderId}
 			testResults={app.subtitleProviderTests}

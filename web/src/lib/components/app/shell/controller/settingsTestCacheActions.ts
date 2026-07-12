@@ -3,11 +3,13 @@ import {
 	testIndexerConfig as testIndexerConfigRequest,
 	testIndexer as testIndexerRequest,
 	testMetadataProvider as testMetadataProviderRequest,
+	testSubtitleProviderConfig as testSubtitleProviderConfigRequest,
 	testSubtitleProvider as testSubtitleProviderRequest
 } from '$lib/settings/api';
 import type {
 	DownloadClientForm as DownloadClientFormValue,
-	IndexerForm as IndexerFormValue
+	IndexerForm as IndexerFormValue,
+	SubtitleProviderForm as SubtitleProviderFormValue
 } from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import { createSearchCacheActions } from './searchCacheActions';
@@ -92,12 +94,24 @@ export function createSettingsTestCacheActions(state: AppShellState, deps: Setti
 		}
 	}
 
+	async function testSubtitleProviderConfig(form: SubtitleProviderFormValue) {
+		clearNotice();
+
+		try {
+			return await runMutation(() => testSubtitleProviderConfigRequest(form));
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not test subtitle provider');
+			throw error;
+		}
+	}
+
 	return {
 		testDownloadClientConfig,
 		testIndexer,
 		testIndexerConfig,
 		testMetadataProvider,
 		testSubtitleProvider,
+		testSubtitleProviderConfig,
 		...cacheActions
 	};
 }

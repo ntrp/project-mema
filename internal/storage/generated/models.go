@@ -890,17 +890,19 @@ type AppSession struct {
 }
 
 type AppSubtitleProvider struct {
-	ID        uuid.UUID
-	Name      string
-	Type      string
-	BaseUrl   string
-	Username  pgtype.Text
-	Password  pgtype.Text
-	ApiKey    pgtype.Text
-	Enabled   bool
-	Priority  int32
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID                 uuid.UUID
+	Name               string
+	Type               string
+	BaseUrl            string
+	Username           pgtype.Text
+	Password           pgtype.Text
+	ApiKey             pgtype.Text
+	SettingsJson       []byte
+	SecretSettingsJson []byte
+	Enabled            bool
+	Priority           int32
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 type AppSystemEvent struct {

@@ -980,7 +980,9 @@ paths:
       parameters:
         - name: keepFiles
           in: query
-          description: Remove the media item from the app without deleting its media folder.
+          description: >-
+            Remove the media item from the app without deleting its media
+            folder.
           required: false
           schema:
             type: boolean
@@ -1659,7 +1661,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MediaComponentExtractionEnqueueResponse"
+                $ref: >-
+                  #/components/schemas/MediaComponentExtractionEnqueueResponse
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1687,7 +1690,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MediaComponentCompatibilityEvaluateRequest"
+              $ref: >-
+                #/components/schemas/MediaComponentCompatibilityEvaluateRequest
       responses:
         "200":
           description: Compatibility decision
@@ -1728,7 +1732,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MediaComponentCompatibilityReviewRequest"
+              $ref: >-
+                #/components/schemas/MediaComponentCompatibilityReviewRequest
       responses:
         "200":
           description: Reviewed compatibility decision
@@ -1764,7 +1769,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MediaComponentAssemblyEnqueueResponse"
+                $ref: >-
+                  #/components/schemas/MediaComponentAssemblyEnqueueResponse
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -3152,7 +3158,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DLNARendererDeviceOverrideListResponse"
+                $ref: >-
+                  #/components/schemas/DLNARendererDeviceOverrideListResponse
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -3566,6 +3573,48 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /settings/subtitle-provider-catalog:
+    get:
+      operationId: listSubtitleProviderCatalog
+      tags:
+        - Settings
+      summary: List subtitle provider catalog entries
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Subtitle provider catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubtitleProviderCatalogResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/subtitle-providers/test:
+    post:
+      operationId: testDraftSubtitleProvider
+      tags:
+        - Settings
+      summary: Test a draft subtitle provider configuration
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubtitleProviderRequest"
+      responses:
+        "200":
+          description: Subtitle provider test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationTestResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/subtitle-providers:
     get:
       operationId: listSubtitleProviders
@@ -4246,7 +4295,8 @@ paths:
       operationId: matchLibraryScanItem
       tags:
         - Settings
-      summary: Manually match a discovered file to a movie, series, or anime item
+      summary: >-
+        Manually match a discovered file to a movie, series, or anime item
       security:
         - sessionCookie: []
       requestBody:
@@ -6799,9 +6849,11 @@ components:
           type: string
           format: uuid
         confidenceState:
-          $ref: "#/components/schemas/MediaComponentCompatibilityConfidenceState"
+          $ref: >-
+            #/components/schemas/MediaComponentCompatibilityConfidenceState
         automationState:
-          $ref: "#/components/schemas/MediaComponentCompatibilityAutomationState"
+          $ref: >-
+            #/components/schemas/MediaComponentCompatibilityAutomationState
         reviewState:
           $ref: "#/components/schemas/MediaComponentCompatibilityReviewState"
         reason:
@@ -9949,7 +10001,9 @@ components:
         progressData:
           type: object
           additionalProperties: true
-          description: Structured progress payload with media, file or target, phase, units, timestamps, and pending operation fields when known.
+          description: >-
+            Structured progress payload with media, file or target, phase,
+            units, timestamps, and pending operation fields when known.
         args:
           type: string
         metadata:
@@ -10995,6 +11049,142 @@ components:
         - tvdb
         - anilist
         - anidb
+    SubtitleProviderCatalogResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - providers
+      properties:
+        providers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubtitleProviderCatalogEntry"
+    SubtitleProviderCatalogEntry:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - displayName
+        - runtimeStatus
+        - runtimeMessage
+        - mediaTypes
+        - dependencies
+        - outboundPolicy
+        - fields
+      properties:
+        key:
+          type: string
+        displayName:
+          type: string
+        provenanceCommit:
+          type: string
+        runtimeStatus:
+          $ref: "#/components/schemas/SubtitleProviderRuntimeStatus"
+        runtimeMessage:
+          type: string
+        mediaTypes:
+          type: array
+          items:
+            type: string
+        dependencies:
+          $ref: "#/components/schemas/SubtitleProviderDependencies"
+        warning:
+          type: string
+        outboundPolicy:
+          $ref: "#/components/schemas/SubtitleProviderOutboundPolicy"
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubtitleProviderField"
+    SubtitleProviderRuntimeStatus:
+      type: string
+      enum:
+        - supported
+        - catalog_only
+        - unsupported
+    SubtitleProviderDependencies:
+      type: object
+      additionalProperties: false
+      properties:
+        captcha:
+          type: boolean
+        anti_captcha:
+          type: boolean
+        archive:
+          type: boolean
+        ffmpeg:
+          type: boolean
+        ffprobe:
+          type: boolean
+        anidb:
+          type: boolean
+        arr_history:
+          type: boolean
+        local_http_endpoint:
+          type: boolean
+    SubtitleProviderOutboundPolicy:
+      type: object
+      additionalProperties: false
+      properties:
+        allowedBaseHosts:
+          type: array
+          items:
+            type: string
+        allowedDownloadHosts:
+          type: array
+          items:
+            type: string
+        allowLocalHosts:
+          type: boolean
+    SubtitleProviderField:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - label
+        - type
+        - persisted
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        type:
+          type: string
+          enum:
+            - text
+            - password
+            - switch
+            - select
+            - chips
+            - action
+        secret:
+          type: boolean
+        required:
+          type: boolean
+        persisted:
+          type: boolean
+        semanticKey:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+    SubtitleProviderSettingValue:
+      type: object
+      additionalProperties: false
+      properties:
+        stringValue:
+          type: string
+        numberValue:
+          type: number
+          format: double
+        booleanValue:
+          type: boolean
+        stringValues:
+          type: array
+          items:
+            type: string
     SubtitleProviderListResponse:
       type: object
       additionalProperties: false
@@ -11012,11 +11202,16 @@ components:
         - id
         - name
         - type
+        - catalogKey
         - baseUrl
         - enabled
         - priority
         - apiKeySet
         - passwordSet
+        - secretFieldsSet
+        - settings
+        - runtimeStatus
+        - runtimeMessage
         - mockSubtitles
         - createdAt
         - updatedAt
@@ -11028,14 +11223,16 @@ components:
           type: string
         type:
           $ref: "#/components/schemas/SubtitleProviderType"
+        catalogKey:
+          type: string
         baseUrl:
           type: string
         username:
           type: string
-        password:
-          type: string
-        apiKey:
-          type: string
+        settings:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/SubtitleProviderSettingValue"
         enabled:
           type: boolean
         priority:
@@ -11045,6 +11242,14 @@ components:
           type: boolean
         passwordSet:
           type: boolean
+        secretFieldsSet:
+          type: array
+          items:
+            type: string
+        runtimeStatus:
+          $ref: "#/components/schemas/SubtitleProviderRuntimeStatus"
+        runtimeMessage:
+          type: string
         mockSubtitles:
           type: array
           items:
@@ -11061,7 +11266,6 @@ components:
       required:
         - name
         - type
-        - baseUrl
         - enabled
         - priority
       properties:
@@ -11073,7 +11277,6 @@ components:
           $ref: "#/components/schemas/SubtitleProviderType"
         baseUrl:
           type: string
-          minLength: 1
           maxLength: 2000
         username:
           type: string
@@ -11084,6 +11287,18 @@ components:
         apiKey:
           type: string
           maxLength: 1024
+        settings:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/SubtitleProviderSettingValue"
+        secretSettings:
+          type: object
+          additionalProperties:
+            type: string
+        clearSecretFields:
+          type: array
+          items:
+            type: string
         enabled:
           type: boolean
         priority:
@@ -11098,8 +11313,66 @@ components:
     SubtitleProviderType:
       type: string
       enum:
-        - opensubtitles
+        - addic7ed
+        - animekalesi
+        - animesubinfo
+        - animetosho
+        - assrt
+        - avistaz
+        - bayflix
+        - betaseries
+        - bsplayer
+        - cinemaz
+        - gestdown
+        - greeksubs
+        - greeksubtitles
+        - hdbits
+        - hosszupuska
+        - jimaku
+        - karagarga
+        - ktuvit
+        - legendasdivx
+        - legendasnet
         - mock
+        - napiprojekt
+        - napisy24
+        - nekur
+        - opensubtitles
+        - opensubtitlescom
+        - pipocas
+        - prijevodionline
+        - regielive
+        - soustitreseu
+        - subclub
+        - subdl
+        - subf2m
+        - subs4free
+        - subs4series
+        - subsarr
+        - subscenter
+        - subsource
+        - subsro
+        - subssabbz
+        - subsunacs
+        - subsynchro
+        - subtis
+        - subtitrarinoi
+        - subtitriid
+        - subtitulamostv
+        - subx
+        - supersubtitles
+        - titlovi
+        - titrari
+        - titulky
+        - turkcealtyaziorg
+        - tvsubtitles
+        - vladoonmooo
+        - whisperai
+        - wizdom
+        - xsubs
+        - yavkanet
+        - yifysubtitles
+        - zimuku
     MockSubtitleProviderRow:
       type: object
       additionalProperties: false

@@ -6,14 +6,26 @@ import (
 	"time"
 )
 
+type SettingValue struct {
+	StringValue  *string
+	NumberValue  *float64
+	BooleanValue *bool
+	StringValues []string
+}
+
+type CommandRunner func(ctx context.Context, name string, args ...string) ([]byte, error)
+
 type Config struct {
-	Name          string
-	Type          string
-	BaseURL       string
-	Username      *string
-	Password      *string
-	APIKey        *string
-	MockSubtitles []MockSubtitle
+	Name           string
+	Type           string
+	BaseURL        string
+	Username       *string
+	Password       *string
+	APIKey         *string
+	Settings       map[string]SettingValue
+	SecretSettings map[string]string
+	CommandRunner  CommandRunner
+	MockSubtitles  []MockSubtitle
 }
 
 type MockSubtitle struct {
@@ -64,61 +76,4 @@ func NewService(client *http.Client) *Service {
 		client = http.DefaultClient
 	}
 	return &Service{client: client}
-}
-
-func (s *Service) Test(ctx context.Context, config Config) TestResult {
-	start := time.Now()
-	err := s.testProvider(ctx, config)
-	latency := time.Since(start)
-	if err != nil {
-		return TestResult{
-			Success: false,
-			Message: err.Error(),
-			Latency: latency,
-			Details: map[string]any{"provider": config.Type},
-		}
-	}
-	return TestResult{
-		Success: true,
-		Message: "Subtitle provider connection OK",
-		Latency: latency,
-		Details: map[string]any{"provider": config.Type},
-	}
-}
-
-func (s *Service) Search(
-	ctx context.Context,
-	config Config,
-	request SearchRequest,
-) ([]Candidate, error) {
-	switch config.Type {
-	case "opensubtitles":
-		return s.searchOpenSubtitles(ctx, config, request)
-	case "mock":
-		return s.searchMock(config, request), nil
-	default:
-		return nil, ErrUnsupportedProvider
-	}
-}
-
-func (s *Service) Download(ctx context.Context, config Config, candidate Candidate) (Download, error) {
-	switch config.Type {
-	case "opensubtitles":
-		return s.downloadOpenSubtitles(ctx, config, candidate)
-	case "mock":
-		return s.downloadMock(candidate), nil
-	default:
-		return Download{}, ErrUnsupportedProvider
-	}
-}
-
-func (s *Service) testProvider(ctx context.Context, config Config) error {
-	switch config.Type {
-	case "opensubtitles":
-		return s.testOpenSubtitles(ctx, config)
-	case "mock":
-		return nil
-	default:
-		return ErrUnsupportedProvider
-	}
 }

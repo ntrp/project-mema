@@ -12,30 +12,36 @@ import (
 )
 
 type SubtitleProvider struct {
-	ID            uuid.UUID
-	Name          string
-	Type          string
-	BaseURL       string
-	Username      *string
-	Password      *string
-	APIKey        *string
-	Enabled       bool
-	Priority      int32
-	MockSubtitles []MockSubtitleProviderRow
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID              uuid.UUID
+	Name            string
+	Type            string
+	BaseURL         string
+	Username        *string
+	Password        *string
+	APIKey          *string
+	Settings        SubtitleProviderSettings
+	SecretSettings  SubtitleProviderSecretSettings
+	SecretFieldsSet []string
+	Enabled         bool
+	Priority        int32
+	MockSubtitles   []MockSubtitleProviderRow
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type SubtitleProviderInput struct {
-	Name          string
-	Type          string
-	BaseURL       string
-	Username      *string
-	Password      *string
-	APIKey        *string
-	Enabled       bool
-	Priority      int32
-	MockSubtitles []MockSubtitleProviderRowInput
+	Name              string
+	Type              string
+	BaseURL           string
+	Username          *string
+	Password          *string
+	APIKey            *string
+	Settings          SubtitleProviderSettings
+	SecretSettings    SubtitleProviderSecretSettings
+	ClearSecretFields []string
+	Enabled           bool
+	Priority          int32
+	MockSubtitles     []MockSubtitleProviderRowInput
 }
 
 func (s *SettingsStore) ListSubtitleProviders(ctx context.Context) ([]SubtitleProvider, error) {
@@ -96,10 +102,15 @@ func (s *SettingsStore) UpdateSubtitleProvider(ctx context.Context, id uuid.UUID
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := storagegen.New(tx)
-	row, err := q.UpdateSubtitleProvider(ctx, subtitleProviderUpdateParams(id, input))
+	currentRow, err := q.GetSubtitleProvider(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return SubtitleProvider{}, ErrNotFound
 	}
+	if err != nil {
+		return SubtitleProvider{}, err
+	}
+	input = preserveSubtitleProviderUpdateSecrets(input, subtitleProviderFromRow(currentRow))
+	row, err := q.UpdateSubtitleProvider(ctx, subtitleProviderUpdateParams(id, input))
 	if err != nil {
 		return SubtitleProvider{}, err
 	}
@@ -127,46 +138,58 @@ func (s *SettingsStore) DeleteSubtitleProvider(ctx context.Context, id uuid.UUID
 }
 
 func subtitleProviderParams(id uuid.UUID, input SubtitleProviderInput) storagegen.CreateSubtitleProviderParams {
+	input = normalizedSubtitleProviderInput(input)
 	return storagegen.CreateSubtitleProviderParams{
-		ID:       id,
-		Name:     input.Name,
-		Type:     input.Type,
-		BaseUrl:  input.BaseURL,
-		Username: textValue(input.Username),
-		Password: textValue(input.Password),
-		ApiKey:   textValue(input.APIKey),
-		Enabled:  input.Enabled,
-		Priority: input.Priority,
+		ID:                 id,
+		Name:               input.Name,
+		Type:               input.Type,
+		BaseUrl:            input.BaseURL,
+		Username:           textValue(input.Username),
+		Password:           textValue(input.Password),
+		ApiKey:             textValue(input.APIKey),
+		SettingsJson:       subtitleProviderSettingsJSON(input.Settings),
+		SecretSettingsJson: subtitleProviderSecretsJSON(input.SecretSettings),
+		Enabled:            input.Enabled,
+		Priority:           input.Priority,
 	}
 }
 
 func subtitleProviderUpdateParams(id uuid.UUID, input SubtitleProviderInput) storagegen.UpdateSubtitleProviderParams {
+	input = normalizedSubtitleProviderInput(input)
 	return storagegen.UpdateSubtitleProviderParams{
-		ID:       id,
-		Name:     input.Name,
-		Type:     input.Type,
-		BaseUrl:  input.BaseURL,
-		Username: textValue(input.Username),
-		Password: textValue(input.Password),
-		ApiKey:   textValue(input.APIKey),
-		Enabled:  input.Enabled,
-		Priority: input.Priority,
+		ID:                 id,
+		Name:               input.Name,
+		Type:               input.Type,
+		BaseUrl:            input.BaseURL,
+		Username:           textValue(input.Username),
+		Password:           textValue(input.Password),
+		ApiKey:             textValue(input.APIKey),
+		SettingsJson:       subtitleProviderSettingsJSON(input.Settings),
+		SecretSettingsJson: subtitleProviderSecretsJSON(input.SecretSettings),
+		Enabled:            input.Enabled,
+		Priority:           input.Priority,
 	}
 }
 
 func subtitleProviderFromRow(row storagegen.AppSubtitleProvider) SubtitleProvider {
-	return SubtitleProvider{
-		ID:            row.ID,
-		Name:          row.Name,
-		Type:          row.Type,
-		BaseURL:       row.BaseUrl,
-		Username:      textPtr(row.Username),
-		Password:      textPtr(row.Password),
-		APIKey:        textPtr(row.ApiKey),
-		Enabled:       row.Enabled,
-		Priority:      row.Priority,
-		MockSubtitles: []MockSubtitleProviderRow{},
-		CreatedAt:     row.CreatedAt,
-		UpdatedAt:     row.UpdatedAt,
+	settings := subtitleProviderSettingsFromJSON(row.SettingsJson)
+	secrets := subtitleProviderSecretsFromJSON(row.SecretSettingsJson)
+	provider := SubtitleProvider{
+		ID:              row.ID,
+		Name:            row.Name,
+		Type:            row.Type,
+		BaseURL:         row.BaseUrl,
+		Username:        textPtr(row.Username),
+		Password:        textPtr(row.Password),
+		APIKey:          textPtr(row.ApiKey),
+		Settings:        settings,
+		SecretSettings:  secrets,
+		SecretFieldsSet: subtitleProviderSecretKeys(secrets),
+		Enabled:         row.Enabled,
+		Priority:        row.Priority,
+		MockSubtitles:   []MockSubtitleProviderRow{},
+		CreatedAt:       row.CreatedAt,
+		UpdatedAt:       row.UpdatedAt,
 	}
+	return normalizedSubtitleProvider(provider)
 }

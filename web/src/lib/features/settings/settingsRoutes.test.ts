@@ -121,8 +121,8 @@ describe('settings route wrappers (SCN-SETTINGS-024)', () => {
 
 		expect(body).toContain('Subtitles');
 		expect(body).toContain('OpenSubtitles');
-		expect(body).toContain('type="password"');
-		expect(body).toContain('Show secret');
+		expect(body).toContain('Add subtitle provider');
+		expect(body).toContain('Support');
 	});
 });
 

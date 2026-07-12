@@ -19,7 +19,15 @@ export type MetadataProviderForm = Schemas['MetadataProviderRequest'] & {
 	pinSet?: boolean;
 	accessTokenSet?: boolean;
 };
-export type SubtitleProviderForm = Schemas['SubtitleProviderRequest'] & { id?: string };
+export type SubtitleProviderForm = Schemas['SubtitleProviderRequest'] & {
+	id?: string;
+	catalogKey?: string;
+	apiKeySet?: boolean;
+	passwordSet?: boolean;
+	secretFieldsSet?: string[];
+	runtimeStatus?: Schemas['SubtitleProviderRuntimeStatus'];
+	runtimeMessage?: string;
+};
 export type LibraryFolderForm = Schemas['LibraryFolderRequest'];
 export type PathMappingForm = Schemas['PathMappingRequest'];
 export type MediaProfileForm = Schemas['MediaProfileRequest'] & { id?: string };

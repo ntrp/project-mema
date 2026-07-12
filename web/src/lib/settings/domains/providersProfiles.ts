@@ -75,3 +75,17 @@ export async function testSubtitleProvider(id: string) {
 	}
 	return data;
 }
+
+export async function testSubtitleProviderConfig(form: SubtitleProviderForm) {
+	const { data, error } = await client.POST('/settings/subtitle-providers/test', {
+		body: normalizeSubtitleProviderForm(form)
+	});
+
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Subtitle provider test did not return a result');
+	}
+	return data;
+}

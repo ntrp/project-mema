@@ -69,6 +69,17 @@ export async function listIndexerCatalog() {
 	return data;
 }
 
+export async function listSubtitleProviderCatalog() {
+	const { data, error } = await client.GET('/settings/subtitle-provider-catalog');
+	if (error) {
+		throw new Error(error.message);
+	}
+	if (!data) {
+		throw new Error('Subtitle provider catalog did not return a result');
+	}
+	return data;
+}
+
 export async function listIndexerAppProfiles() {
 	const { data, error } = await client.GET('/settings/indexer-app-profiles');
 	if (error) {

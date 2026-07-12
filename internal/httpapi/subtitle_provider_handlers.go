@@ -78,11 +78,29 @@ func preserveSubtitleProviderSecrets(
 	request SubtitleProviderRequest,
 	current storage.SubtitleProvider,
 ) storage.SubtitleProviderInput {
+	if request.Settings == nil {
+		input.Settings = current.Settings
+	}
+	if request.BaseUrl == nil {
+		input.BaseURL = current.BaseURL
+	}
+	if request.SecretSettings == nil {
+		input.SecretSettings = current.SecretSettings
+	}
 	if request.ApiKey == nil {
 		input.APIKey = current.APIKey
 	}
 	if request.Password == nil {
 		input.Password = current.Password
+	}
+	for _, field := range input.ClearSecretFields {
+		delete(input.SecretSettings, field)
+		if field == "apiKey" {
+			input.APIKey = nil
+		}
+		if field == "password" {
+			input.Password = nil
+		}
 	}
 	return input
 }
@@ -123,7 +141,7 @@ func (s *Server) TestSubtitleProvider(w http.ResponseWriter, r *http.Request, id
 
 func subtitleProviderInput(w http.ResponseWriter, request SubtitleProviderRequest) (storage.SubtitleProviderInput, bool) {
 	name := strings.TrimSpace(request.Name)
-	baseURL := strings.TrimSpace(request.BaseUrl)
+	baseURL := optionalTrimmedString(request.BaseUrl)
 	if name == "" {
 		writeError(w, http.StatusBadRequest, "invalid_name", "Name is required")
 		return storage.SubtitleProviderInput{}, false
@@ -132,9 +150,11 @@ func subtitleProviderInput(w http.ResponseWriter, request SubtitleProviderReques
 		writeError(w, http.StatusBadRequest, "invalid_type", "Subtitle provider type is not supported")
 		return storage.SubtitleProviderInput{}, false
 	}
-	if baseURL == "" {
-		writeError(w, http.StatusBadRequest, "invalid_base_url", "Base URL is required")
-		return storage.SubtitleProviderInput{}, false
+	if request.Enabled {
+		if err := subtitles.UnsupportedRuntimeError(string(request.Type)); err != nil {
+			writeError(w, http.StatusBadRequest, "unsupported_subtitle_provider", "Subtitle provider runtime is not supported")
+			return storage.SubtitleProviderInput{}, false
+		}
 	}
 	if request.Priority < 0 || request.Priority > 1000 {
 		writeError(w, http.StatusBadRequest, "invalid_priority", "Priority must be between 0 and 1000")
@@ -144,37 +164,54 @@ func subtitleProviderInput(w http.ResponseWriter, request SubtitleProviderReques
 	if !ok {
 		return storage.SubtitleProviderInput{}, false
 	}
-	return storage.SubtitleProviderInput{
-		Name:          name,
-		Type:          string(request.Type),
-		BaseURL:       baseURL,
-		Username:      optionalTrimmedString(request.Username),
-		Password:      optionalTrimmedString(request.Password),
-		APIKey:        optionalTrimmedString(request.ApiKey),
-		Enabled:       request.Enabled,
-		Priority:      request.Priority,
-		MockSubtitles: mockRows,
-	}, true
+	input := storage.SubtitleProviderInput{
+		Name:           name,
+		Type:           string(request.Type),
+		Username:       optionalTrimmedString(request.Username),
+		Password:       optionalTrimmedString(request.Password),
+		APIKey:         optionalTrimmedString(request.ApiKey),
+		Settings:       storageSettingValues(request.Settings),
+		SecretSettings: storage.SubtitleProviderSecretSettings{},
+		Enabled:        request.Enabled,
+		Priority:       request.Priority,
+		MockSubtitles:  mockRows,
+	}
+	if baseURL != nil {
+		input.BaseURL = *baseURL
+	}
+	if request.SecretSettings != nil {
+		for key, value := range *request.SecretSettings {
+			if trimmed := strings.TrimSpace(value); trimmed != "" {
+				input.SecretSettings[key] = trimmed
+			}
+		}
+	}
+	if request.ClearSecretFields != nil {
+		input.ClearSecretFields = append([]string{}, (*request.ClearSecretFields)...)
+	}
+	return input, true
 }
 
 func subtitleProviderResponse(provider storage.SubtitleProvider) SubtitleProvider {
+	runtimeStatus, runtimeMessage := subtitleProviderRuntime(provider.Type)
 	return SubtitleProvider{
-		Id:          openapi_types.UUID(provider.ID),
-		Name:        provider.Name,
-		Type:        SubtitleProviderType(provider.Type),
-		BaseUrl:     provider.BaseURL,
-		Username:    provider.Username,
-		Password:    provider.Password,
-		ApiKey:      provider.APIKey,
-		Enabled:     provider.Enabled,
-		Priority:    provider.Priority,
-		ApiKeySet:   provider.APIKey != nil,
-		PasswordSet: provider.Password != nil,
-		MockSubtitles: subtitleProviderMockRowsResponse(
-			provider.MockSubtitles,
-		),
-		CreatedAt: provider.CreatedAt,
-		UpdatedAt: provider.UpdatedAt,
+		Id:              openapi_types.UUID(provider.ID),
+		Name:            provider.Name,
+		Type:            SubtitleProviderType(provider.Type),
+		CatalogKey:      subtitleProviderCatalogKey(provider.Type),
+		BaseUrl:         provider.BaseURL,
+		Username:        provider.Username,
+		Settings:        apiSettingValues(provider.Settings),
+		Enabled:         provider.Enabled,
+		Priority:        provider.Priority,
+		ApiKeySet:       provider.APIKey != nil,
+		PasswordSet:     provider.Password != nil,
+		SecretFieldsSet: provider.SecretFieldsSet,
+		RuntimeStatus:   runtimeStatus,
+		RuntimeMessage:  runtimeMessage,
+		MockSubtitles:   subtitleProviderMockRowsResponse(provider.MockSubtitles),
+		CreatedAt:       provider.CreatedAt,
+		UpdatedAt:       provider.UpdatedAt,
 	}
 }
 

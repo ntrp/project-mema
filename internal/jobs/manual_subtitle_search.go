@@ -60,6 +60,10 @@ func SearchManualSubtitles(
 		if !provider.Enabled {
 			continue
 		}
+		if err := subtitles.UnsupportedRuntimeError(provider.Type); err != nil {
+			logs = append(logs, fmt.Sprintf("Skipping %s: %s", provider.Name, err.Error()))
+			continue
+		}
 		logs = append(logs, fmt.Sprintf("Searching %s", provider.Name))
 		candidates, err := service.Search(ctx, subtitleConfig(provider), request)
 		if err != nil {
@@ -92,6 +96,9 @@ func GrabManualSubtitle(
 	if !provider.Enabled {
 		return fmt.Errorf("subtitle provider %s is disabled", provider.Name)
 	}
+	if err := subtitles.UnsupportedRuntimeError(provider.Type); err != nil {
+		return fmt.Errorf("subtitle provider %s cannot run: %w", provider.Name, err)
+	}
 	request := subtitles.SearchRequest{
 		MediaType:  item.Type,
 		Title:      item.Title,
@@ -99,16 +106,9 @@ func GrabManualSubtitle(
 		Year:       item.Year,
 		FilePath:   path,
 	}
-	candidate := subtitles.Candidate{
-		ProviderName: provider.Name,
-		LanguageID:   strings.TrimSpace(input.LanguageID),
-		Format:       strings.TrimSpace(input.Format),
-		ReleaseName:  strings.TrimSpace(input.Title),
-		SourceURL:    stringPtrValue(input.SourceURL),
-		SourceRef:    stringPtrValue(input.SourceRef),
-	}
-	if input.FileID != nil {
-		candidate.FileID = *input.FileID
+	candidate, err := manualSubtitleDownloadCandidate(provider, input)
+	if err != nil {
+		return err
 	}
 	download, err := service.Download(ctx, subtitleConfig(provider), candidate)
 	if err != nil {
@@ -192,6 +192,24 @@ func subtitleCandidateID(providerID uuid.UUID, candidate subtitles.Candidate) st
 		parts = append(parts, candidate.SourceRef)
 	}
 	return strings.Join(parts, ":")
+}
+
+func manualSubtitleDownloadCandidate(
+	provider storage.SubtitleProvider,
+	input ManualSubtitleGrabInput,
+) (subtitles.Candidate, error) {
+	candidate := subtitles.Candidate{
+		ProviderName: provider.Name,
+		LanguageID:   strings.TrimSpace(input.LanguageID),
+		Format:       strings.TrimSpace(input.Format),
+		ReleaseName:  strings.TrimSpace(input.Title),
+		SourceURL:    stringPtrValue(input.SourceURL),
+		SourceRef:    stringPtrValue(input.SourceRef),
+	}
+	if input.FileID != nil {
+		candidate.FileID = *input.FileID
+	}
+	return candidate, nil
 }
 
 func stringPtrValue(value *string) string {
