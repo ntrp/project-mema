@@ -19,34 +19,50 @@ func (s *stub) DoProviderRequest(req *http.Request, providerType string, isDownl
 	if strings.Contains(req.URL.Path, "download") {
 		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Disposition": []string{"attachment; filename=subsro.zip"}}, Body: io.NopCloser(bytes.NewReader(zipBody()))}, nil
 	}
-	return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"subtitles":[{"id":9,"language":"ron","release":"Fixture.2024.RO","download_url":"/download/9.zip"}]}`))}, nil
+	return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"status":200,"items":[{"id":9,"title":"Fixture","description":"Fixture.2024.RO","downloadLink":"/download/9.zip"}]}`))}, nil
 }
 
 func TestSearchRequiresIMDbAndAddsAPIKey(t *testing.T) {
 	s := &stub{}
 	key := "secret"
 	got, err := Adapter.Search(context.Background(), s, providercore.Config{BaseURL: "https://api.subs.ro", APIKey: &key}, providercore.SearchRequest{Title: "Fixture", LanguageID: "ron", MediaContext: providercore.MediaContext{ExternalIDs: map[string]string{"imdb": "tt1234567"}}})
-	if err != nil { t.Fatalf("Search error: %v", err) }
-	if len(got) != 1 || got[0].ProviderName != "subsro" || got[0].FileID != 9 || got[0].LanguageID != "ron" { t.Fatalf("unexpected candidates: %#v", got) }
+	if err != nil {
+		t.Fatalf("Search error: %v", err)
+	}
+	if len(got) != 1 || got[0].ProviderName != "subsro" || got[0].FileID != 9 || got[0].LanguageID != "ron" {
+		t.Fatalf("unexpected candidates: %#v", got)
+	}
 	q := s.reqs[0].URL.Query()
-	if q.Get("key") != "secret" || q.Get("imdb") != "tt1234567" { t.Fatalf("unexpected query: %s", s.reqs[0].URL.RawQuery) }
+	if s.reqs[0].URL.Path != "/v1.0/search/imdbid/1234567" || q.Get("language") != "ro" || s.reqs[0].Header.Get("X-Subs-Api-Key") != "secret" {
+		t.Fatalf("unexpected request: %s headers=%v", s.reqs[0].URL.String(), s.reqs[0].Header)
+	}
 }
 
 func TestDownloadAppendsKeyAndExtractsArchive(t *testing.T) {
 	s := &stub{}
 	key := "secret"
 	dl, err := Adapter.Download(context.Background(), s, providercore.Config{BaseURL: "https://api.subs.ro", APIKey: &key}, providercore.Candidate{SourceURL: "/download/9.zip"})
-	if err != nil { t.Fatalf("Download error: %v", err) }
-	if !strings.Contains(string(dl.Content), "subsro subtitle") { t.Fatalf("unexpected content: %q", dl.Content) }
-	if s.reqs[0].URL.Query().Get("key") != "secret" { t.Fatalf("missing key in download URL: %s", s.reqs[0].URL.String()) }
+	if err != nil {
+		t.Fatalf("Download error: %v", err)
+	}
+	if !strings.Contains(string(dl.Content), "subsro subtitle") {
+		t.Fatalf("unexpected content: %q", dl.Content)
+	}
+	if s.reqs[0].Header.Get("X-Subs-Api-Key") != "secret" {
+		t.Fatalf("missing API key header: %v", s.reqs[0].Header)
+	}
 }
 
 func TestSearchPrerequisites(t *testing.T) {
 	_, err := Adapter.Search(context.Background(), &stub{}, providercore.Config{}, providercore.SearchRequest{})
-	if err == nil || !strings.Contains(err.Error(), "apiKey") { t.Fatalf("expected apiKey prerequisite, got %v", err) }
+	if err == nil || !strings.Contains(err.Error(), "apiKey") {
+		t.Fatalf("expected apiKey prerequisite, got %v", err)
+	}
 	key := "secret"
 	_, err = Adapter.Search(context.Background(), &stub{}, providercore.Config{APIKey: &key}, providercore.SearchRequest{})
-	if err == nil || !strings.Contains(err.Error(), "imdb") { t.Fatalf("expected imdb prerequisite, got %v", err) }
+	if err == nil || !strings.Contains(err.Error(), "imdb") {
+		t.Fatalf("expected imdb prerequisite, got %v", err)
+	}
 }
 
 func zipBody() []byte {

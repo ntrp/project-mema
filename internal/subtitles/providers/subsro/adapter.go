@@ -30,7 +30,7 @@ func (adapter) Test(ctx context.Context, svc providercore.Service, cfg providerc
 	if _, ok := providercore.NewConfig(cfg).RequiredSecret("apiKey"); !ok {
 		return fmt.Errorf("%w: apiKey is required", providercore.ErrProviderPrerequisiteMissing)
 	}
-	_, _, err := do(ctx, svc, cfg, http.MethodGet, "/subtitles", false)
+	_, _, err := do(ctx, svc, cfg, http.MethodGet, "/v1.0/search/imdbid/0?language=en", false)
 	return err
 }
 
@@ -42,20 +42,13 @@ func (adapter) Search(ctx context.Context, svc providercore.Service, cfg provide
 	if imdb == "" {
 		return nil, fmt.Errorf("%w: imdb id is required", providercore.ErrProviderPrerequisiteMissing)
 	}
-	u, _ := url.Parse(absolute(cfg, "/subtitles"))
+	u, _ := url.Parse(absolute(cfg, "/v1.0/search/imdbid/"+strings.TrimPrefix(imdb, "tt")))
 	q := u.Query()
-	q.Set("key", providercore.NewConfig(cfg).Secret("apiKey"))
-	q.Set("imdb", imdb)
-	q.Set("imdb_id", imdb)
-	if sr.LanguageID != "" {
-		q.Set("language", sr.LanguageID)
+	language := "en"
+	if sr.LanguageID == "ron" || sr.LanguageID == "ro" {
+		language = "ro"
 	}
-	if sr.SeasonNumber != nil {
-		q.Set("season", strconv.Itoa(int(*sr.SeasonNumber)))
-	}
-	if sr.EpisodeNumber != nil {
-		q.Set("episode", strconv.Itoa(int(*sr.EpisodeNumber)))
-	}
+	q.Set("language", language)
 	u.RawQuery = q.Encode()
 	data, _, err := do(ctx, svc, cfg, http.MethodGet, u.String(), false)
 	if err != nil {
@@ -74,11 +67,6 @@ func (adapter) Download(ctx context.Context, svc providercore.Service, cfg provi
 	}
 	u := absolute(cfg, raw)
 	parsed, _ := url.Parse(u)
-	q := parsed.Query()
-	if _, ok := q["key"]; !ok {
-		q.Set("key", providercore.NewConfig(cfg).Secret("apiKey"))
-	}
-	parsed.RawQuery = q.Encode()
 	data, resp, err := do(ctx, svc, cfg, http.MethodGet, parsed.String(), true)
 	if err != nil {
 		return providercore.Download{}, err
@@ -91,14 +79,31 @@ func (adapter) Download(ctx context.Context, svc providercore.Service, cfg provi
 }
 
 func do(ctx context.Context, svc providercore.Service, cfg providercore.Config, method, raw string, download bool) ([]byte, *http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, method, absolute(cfg, raw), nil)
-	if err != nil {
-		return nil, nil, err
+	keys := strings.Split(providercore.NewConfig(cfg).Secret("apiKey"), ",")
+	var resp *http.Response
+	var err error
+	for _, rawKey := range keys {
+		key := strings.TrimSpace(rawKey)
+		if key == "" {
+			continue
+		}
+		req, requestErr := http.NewRequestWithContext(ctx, method, absolute(cfg, raw), nil)
+		if requestErr != nil {
+			return nil, nil, requestErr
+		}
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("X-Subs-Api-Key", key)
+		resp, err = svc.DoProviderRequest(req, "subsro", download)
+		if err != nil {
+			return nil, resp, err
+		}
+		if resp.StatusCode != http.StatusTooManyRequests {
+			break
+		}
+		resp.Body.Close()
 	}
-	req.Header.Set("Accept", "application/json")
-	resp, err := svc.DoProviderRequest(req, "subsro", download)
-	if err != nil {
-		return nil, resp, err
+	if resp == nil {
+		return nil, nil, fmt.Errorf("%w: apiKey is required", providercore.ErrProviderPrerequisiteMissing)
 	}
 	defer resp.Body.Close()
 	data, err := io.ReadAll(io.LimitReader(resp.Body, maxBody+1))
@@ -124,7 +129,7 @@ func parseCandidates(data []byte, fallbackLang string) []providercore.Candidate 
 	objs := collect(v)
 	out := make([]providercore.Candidate, 0, len(objs))
 	for _, obj := range objs {
-		dl := firstString(obj, "download", "download_url", "downloadUrl", "url", "link", "archive")
+		dl := firstString(obj, "downloadLink", "download", "download_url", "downloadUrl", "url", "link", "archive")
 		if dl == "" {
 			continue
 		}
@@ -132,7 +137,7 @@ func parseCandidates(data []byte, fallbackLang string) []providercore.Candidate 
 		if lang == "" {
 			lang = fallbackLang
 		}
-		out = append(out, providercore.Candidate{ProviderName: "subsro", LanguageID: lang, FileID: firstInt(obj, "id", "file_id", "subtitle_id"), Format: format(dl), ReleaseName: firstString(obj, "release", "release_name", "filename", "name", "title"), DownloadCount: int(firstInt(obj, "downloads", "download_count")), SourceURL: dl})
+		out = append(out, providercore.Candidate{ProviderName: "subsro", LanguageID: lang, FileID: firstInt(obj, "id", "file_id", "subtitle_id"), Format: format(dl), ReleaseName: firstString(obj, "description", "release", "release_name", "filename", "name", "title"), DownloadCount: int(firstInt(obj, "downloads", "download_count")), SourceURL: dl})
 	}
 	return out
 }
