@@ -2,13 +2,10 @@ package providers
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 
 	"media-manager/internal/subtitles/providercore"
@@ -18,16 +15,29 @@ import (
 )
 
 type nativeCProvider struct {
-	key      string
-	baseURL  string
-	captcha  bool
-	search   func(providercore.SearchRequest) (string, url.Values, string)
-	parse    func([]byte, string, string) ([]providercore.Candidate, error)
-	download func(providercore.Candidate) (string, url.Values, string)
+	key         string
+	baseURL     string
+	captcha     bool
+	rawDownload bool
+	search      func(providercore.SearchRequest) (string, url.Values, string)
+	parse       func([]byte, string, string) ([]providercore.Candidate, error)
+	download    func(providercore.Candidate) (string, url.Values, string)
+}
+
+var nativeCProviders = []nativeCProvider{
+	karagargaAdapter(),
+	ktuvitAdapter(),
+	legendasdivxAdapter(),
+	legendasnetAdapter(),
+	napisy24Adapter(),
+	pipocasAdapter(),
+	subs4seriesAdapter(),
+	subscenterAdapter(),
+	titloviAdapter(),
 }
 
 func init() {
-	for _, adapter := range []nativeCProvider{karagargaAdapter(), ktuvitAdapter(), legendasdivxAdapter(), legendasnetAdapter()} {
+	for _, adapter := range nativeCProviders {
 		Register(adapter.key, adapter)
 	}
 }
@@ -44,12 +54,12 @@ func (p nativeCProvider) Search(ctx context.Context, svc providercore.Service, c
 	if err := p.prereq(cfg); err != nil {
 		return nil, err
 	}
-	path, form, method := p.search(req)
-	data, err := p.do(ctx, svc, cfg, method, path, form, "", false)
+	rawPath, form, method := p.search(req)
+	data, err := p.do(ctx, svc, cfg, method, rawPath, form, "", false)
 	if err != nil {
 		return nil, err
 	}
-	return p.parse(data, p.absolute(cfg, path), req.LanguageID)
+	return p.parse(data, p.absolute(cfg, rawPath), req.LanguageID)
 }
 
 func (p nativeCProvider) Download(ctx context.Context, svc providercore.Service, cfg providercore.Config, cand providercore.Candidate) (providercore.Download, error) {
@@ -63,6 +73,9 @@ func (p nativeCProvider) Download(ctx context.Context, svc providercore.Service,
 	data, err := p.do(ctx, svc, cfg, method, dlPath, form, acceptArchive(), true)
 	if err != nil {
 		return providercore.Download{}, err
+	}
+	if p.rawDownload {
+		return providercore.Download{Content: data, URL: p.absolute(cfg, dlPath)}, nil
 	}
 	member, err := providercore.ExtractSubtitle(path.Base(dlPath), data, security.ArchiveLimits{})
 	if err != nil {
@@ -110,8 +123,9 @@ func (p nativeCProvider) do(ctx context.Context, svc providercore.Service, cfg p
 	view := providercore.NewConfig(cfg)
 	req.Header.Set("User-Agent", nativeUserAgent(view))
 	req.Header.Set("Cookie", view.CookieString())
+	req.Header.Set("Referer", view.BaseURL(p.baseURL)+"/")
 	if body != nil {
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	}
 	if accept != "" {
 		req.Header.Set("Accept", accept)
@@ -120,16 +134,13 @@ func (p nativeCProvider) do(ctx context.Context, svc providercore.Service, cfg p
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-	data, err := io.ReadAll(io.LimitReader(resp.Body, 50<<20+1))
+	maxBytes := int64(4 << 20)
+	if download {
+		maxBytes = 50 << 20
+	}
+	data, err := readLimited(resp, maxBytes)
 	if err != nil {
 		return nil, err
-	}
-	if len(data) > 50<<20 {
-		return nil, fmt.Errorf("%w: response too large", security.ErrUnsafeArchive)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("%w: http status %d", providercore.ErrProviderBrokenUpstream, resp.StatusCode)
 	}
 	return data, nil
 }
@@ -139,37 +150,8 @@ func (p nativeCProvider) absolute(cfg providercore.Config, raw string) string {
 		return raw
 	}
 	base, _ := url.Parse(strings.TrimRight(providercore.NewConfig(cfg).BaseURL(p.baseURL), "/") + "/")
-	ref, _ := url.Parse(strings.TrimLeft(raw, "/"))
-	if strings.HasPrefix(raw, "/") {
-		ref, _ = url.Parse(raw)
-	}
+	ref, _ := url.Parse(strings.TrimSpace(raw))
 	return base.ResolveReference(ref).String()
-}
-
-func karagargaAdapter() nativeCProvider {
-	return nativeCProvider{key: "karagarga", baseURL: "https://karagarga.in", search: func(req providercore.SearchRequest) (string, url.Values, string) {
-		return "/browse.php", url.Values{"search": {nativeQuery(req)}, "search_type": {"title"}}, http.MethodGet
-	}, parse: parseNativeHTML("karagarga", "tr", "a[href*='download.php'], a[href*='details.php']"), download: sourceDownload}
-}
-
-func ktuvitAdapter() nativeCProvider {
-	return nativeCProvider{key: "ktuvit", baseURL: "https://www.ktuvit.me", captcha: true, search: func(req providercore.SearchRequest) (string, url.Values, string) {
-		return "/Services/GetModuleAjax.ashx", url.Values{"moduleName": {"SubtitlesList"}, "SeriesName": {nativeQuery(req)}, "FilmName": {nativeQuery(req)}, "lang": {req.LanguageID}}, http.MethodPost
-	}, parse: parseKtuvit, download: func(c providercore.Candidate) (string, url.Values, string) {
-		return firstNonEmpty(c.SourceURL, "/Services/DownloadFile.ashx"), url.Values{"subtitleID": {strconv.FormatInt(c.FileID, 10)}}, http.MethodPost
-	}}
-}
-
-func legendasdivxAdapter() nativeCProvider {
-	return nativeCProvider{key: "legendasdivx", baseURL: "https://www.legendasdivx.pt", search: func(req providercore.SearchRequest) (string, url.Values, string) {
-		return "/modules.php", url.Values{"name": {"Downloads"}, "op": {"search"}, "query": {nativeQuery(req)}}, http.MethodGet
-	}, parse: parseNativeHTML("legendasdivx", "tr, .download, .subtitle", "a[href*='d_op=getit'], a[href*='download']"), download: sourceDownload}
-}
-
-func legendasnetAdapter() nativeCProvider {
-	return nativeCProvider{key: "legendasnet", baseURL: "https://legendas.net", captcha: true, search: func(req providercore.SearchRequest) (string, url.Values, string) {
-		return "/search", url.Values{"q": {nativeQuery(req)}, "language": {req.LanguageID}}, http.MethodGet
-	}, parse: parseNativeHTML("legendasnet", "tr, .subtitle, .item", "a[href*='download'], a[href*='/download/']"), download: sourceDownload}
 }
 
 func parseNativeHTML(provider, rowSelector, linkSelector string) func([]byte, string, string) ([]providercore.Candidate, error) {
@@ -182,39 +164,28 @@ func parseNativeHTML(provider, rowSelector, linkSelector string) func([]byte, st
 		seen := map[string]bool{}
 		doc.Find(rowSelector).Each(func(_ int, row *goquery.Selection) {
 			link := row.Find(linkSelector).First()
+			if link.Length() == 0 {
+				link = row.Find("a[href]").First()
+			}
 			href, _ := link.Attr("href")
 			if strings.TrimSpace(href) == "" {
 				return
 			}
-			title := firstNonEmpty(attr(row, "data-release"), strings.TrimSpace(link.Text()), strings.TrimSpace(row.Find("td").First().Text()))
-			lang := firstNonEmpty(attr(row, "data-language"), fallback)
+			title := firstNonEmpty(attr(row, "data-release"), strings.TrimSpace(row.Find(".release, .title, .episode, .naziv, td:first-child").First().Text()), strings.TrimSpace(link.Text()))
+			if title == "" {
+				return
+			}
+			lang := firstNonEmpty(attr(row, "data-language"), strings.TrimSpace(row.Find(".language, .lang, .jezik").First().Text()), fallback)
 			abs := resolveAgainst(pageURL, href)
 			key := title + "\x00" + abs
 			if seen[key] {
 				return
 			}
 			seen[key] = true
-			out = append(out, providercore.Candidate{ProviderName: provider, LanguageID: lang, Format: "srt", ReleaseName: title, SourceURL: abs, SourceRef: href})
+			out = append(out, providercore.Candidate{ProviderName: provider, LanguageID: lang, Format: formatFrom(href), ReleaseName: title, SourceURL: abs, SourceRef: href})
 		})
 		return out, nil
 	}
-}
-
-func parseKtuvit(data []byte, pageURL, fallback string) ([]providercore.Candidate, error) {
-	var payload struct {
-		Subtitles []struct {
-			ID                                    int64
-			Name, FileName, Language, DownloadURL string
-		}
-	}
-	if json.Unmarshal(data, &payload) == nil && len(payload.Subtitles) > 0 {
-		out := make([]providercore.Candidate, 0, len(payload.Subtitles))
-		for _, sub := range payload.Subtitles {
-			out = append(out, providercore.Candidate{ProviderName: "ktuvit", FileID: sub.ID, LanguageID: firstNonEmpty(sub.Language, fallback), Format: "srt", ReleaseName: firstNonEmpty(sub.FileName, sub.Name), SourceURL: firstNonEmpty(sub.DownloadURL, "/Services/DownloadFile.ashx")})
-		}
-		return out, nil
-	}
-	return parseNativeHTML("ktuvit", "tr, .subtitle", "a[href*='DownloadFile'], a[href*='download']")(data, pageURL, fallback)
 }
 
 func sourceDownload(c providercore.Candidate) (string, url.Values, string) {
@@ -234,4 +205,11 @@ func resolveAgainst(pageURL, href string) string {
 	base, _ := url.Parse(pageURL)
 	ref, _ := url.Parse(strings.TrimSpace(href))
 	return base.ResolveReference(ref).String()
+}
+func formatFrom(raw string) string {
+	ext := strings.TrimPrefix(path.Ext(raw), ".")
+	if ext == "" || len(ext) > 5 {
+		return "srt"
+	}
+	return strings.ToLower(ext)
 }
