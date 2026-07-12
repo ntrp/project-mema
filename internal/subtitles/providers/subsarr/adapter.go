@@ -29,7 +29,7 @@ func (adapter) Test(ctx context.Context, svc providercore.Service, cfg providerc
 	if strings.TrimSpace(providercore.NewConfig(cfg).BaseURL("")) == "" {
 		return fmt.Errorf("%w: baseUrl is required", providercore.ErrProviderPrerequisiteMissing)
 	}
-	_, _, err := do(ctx, svc, cfg, http.MethodGet, "/api/health", false)
+	_, _, err := do(ctx, svc, cfg, http.MethodGet, "/api/v1/info", false)
 	return err
 }
 
@@ -37,37 +37,39 @@ func (adapter) Search(ctx context.Context, svc providercore.Service, cfg provide
 	if strings.TrimSpace(providercore.NewConfig(cfg).BaseURL("")) == "" {
 		return nil, fmt.Errorf("%w: baseUrl is required", providercore.ErrProviderPrerequisiteMissing)
 	}
-	u, err := endpoint(cfg, "/api/subtitles/search")
-	if err != nil {
-		return nil, err
-	}
-	q := u.Query()
-	q.Set("title", sr.Title)
-	q.Set("q", sr.Title)
-	if sr.LanguageID != "" {
-		q.Set("language", sr.LanguageID)
-	}
-	if sr.MediaType != "" {
-		q.Set("type", sr.MediaType)
-	}
-	if sr.Year != nil {
-		q.Set("year", strconv.Itoa(int(*sr.Year)))
-	}
+	baseQuery := url.Values{"language": {sr.LanguageID}, "per_page": {"100"}}
 	if sr.SeasonNumber != nil {
-		q.Set("season", strconv.Itoa(int(*sr.SeasonNumber)))
+		baseQuery.Set("season", strconv.Itoa(int(*sr.SeasonNumber)))
 	}
 	if sr.EpisodeNumber != nil {
-		q.Set("episode", strconv.Itoa(int(*sr.EpisodeNumber)))
+		baseQuery.Set("episode", strconv.Itoa(int(*sr.EpisodeNumber)))
 	}
-	if sr.FilePath != "" {
-		q.Set("path", sr.FilePath)
+	var data []byte
+	imdbID := strings.TrimSpace(sr.MediaContext.ExternalIDs["imdb"])
+	if imdbID != "" {
+		query := cloneValues(baseQuery)
+		query.Set("imdb_id", imdbID)
+		if sr.Year != nil {
+			query.Set("year", strconv.Itoa(int(*sr.Year)))
+		}
+		var err error
+		data, err = search(ctx, svc, cfg, query)
+		if err != nil {
+			return nil, err
+		}
 	}
-	u.RawQuery = q.Encode()
-	data, _, err := do(ctx, svc, cfg, http.MethodGet, u.String(), false)
-	if err != nil {
-		return nil, err
+	candidates := parseCandidates(data, sr.LanguageID)
+	if len(candidates) == 0 && strings.TrimSpace(sr.Title) != "" {
+		query := cloneValues(baseQuery)
+		query.Set("query", sr.Title)
+		var err error
+		data, err = search(ctx, svc, cfg, query)
+		if err != nil {
+			return nil, err
+		}
+		candidates = parseCandidates(data, sr.LanguageID)
 	}
-	return parseCandidates(data, sr.LanguageID), nil
+	return candidates, nil
 }
 
 func (adapter) Download(ctx context.Context, svc providercore.Service, cfg providercore.Config, cand providercore.Candidate) (providercore.Download, error) {
@@ -112,6 +114,24 @@ func do(ctx context.Context, svc providercore.Service, cfg providercore.Config, 
 		return nil, resp, fmt.Errorf("provider returned HTTP %d", resp.StatusCode)
 	}
 	return body, resp, nil
+}
+
+func search(ctx context.Context, svc providercore.Service, cfg providercore.Config, query url.Values) ([]byte, error) {
+	u, err := endpoint(cfg, "/api/v1/subtitles/search")
+	if err != nil {
+		return nil, err
+	}
+	u.RawQuery = query.Encode()
+	data, _, err := do(ctx, svc, cfg, http.MethodGet, u.String(), false)
+	return data, err
+}
+
+func cloneValues(values url.Values) url.Values {
+	copy := make(url.Values, len(values))
+	for key, items := range values {
+		copy[key] = append([]string(nil), items...)
+	}
+	return copy
 }
 
 func endpoint(cfg providercore.Config, p string) (*url.URL, error) {

@@ -23,7 +23,7 @@ func (s *stub) DoProviderRequest(req *http.Request, providerType string, isDownl
 	if strings.Contains(req.URL.Path, "download") {
 		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Disposition": []string{"attachment; filename=fixture.zip"}}, Body: io.NopCloser(bytes.NewReader(zipBody()))}, nil
 	}
-	if strings.Contains(req.URL.Path, "health") {
+	if strings.HasSuffix(req.URL.Path, "/api/v1/info") {
 		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"ok":true}`))}, nil
 	}
 	return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"subtitles":[{"id":77,"language":"eng","release":"Fixture.2024","download_url":"/api/subtitles/download/77"}]}`))}, nil
@@ -32,23 +32,37 @@ func (s *stub) DoProviderRequest(req *http.Request, providerType string, isDownl
 func TestSearchBuildsLocalAPIRequest(t *testing.T) {
 	s := &stub{}
 	year := int32(2024)
-	got, err := Adapter.Search(context.Background(), s, providercore.Config{BaseURL: "http://127.0.0.1:7878"}, providercore.SearchRequest{MediaType: "movie", Title: "Fixture", LanguageID: "eng", Year: &year})
-	if err != nil { t.Fatalf("Search error: %v", err) }
-	if len(got) != 1 || got[0].ProviderName != "subsarr" || got[0].FileID != 77 || got[0].ReleaseName != "Fixture.2024" { t.Fatalf("unexpected candidates: %#v", got) }
-	if s.reqs[0].URL.Host != "127.0.0.1:7878" || s.reqs[0].URL.Query().Get("title") != "Fixture" { t.Fatalf("unexpected request URL: %s", s.reqs[0].URL.String()) }
+	got, err := Adapter.Search(context.Background(), s, providercore.Config{BaseURL: "http://127.0.0.1:7878"}, providercore.SearchRequest{MediaType: "movie", Title: "Fixture", LanguageID: "eng", Year: &year, MediaContext: providercore.MediaContext{ExternalIDs: map[string]string{"imdb": "tt123"}}})
+	if err != nil {
+		t.Fatalf("Search error: %v", err)
+	}
+	if len(got) != 1 || got[0].ProviderName != "subsarr" || got[0].FileID != 77 || got[0].ReleaseName != "Fixture.2024" {
+		t.Fatalf("unexpected candidates: %#v", got)
+	}
+	if s.reqs[0].URL.Host != "127.0.0.1:7878" || s.reqs[0].URL.Path != "/api/v1/subtitles/search" || s.reqs[0].URL.Query().Get("imdb_id") != "tt123" || s.reqs[0].URL.Query().Get("per_page") != "100" {
+		t.Fatalf("unexpected request URL: %s", s.reqs[0].URL.String())
+	}
 }
 
 func TestDownloadUsesLocalAPINotDownloadPolicyAndExtractsArchive(t *testing.T) {
 	s := &stub{}
 	dl, err := Adapter.Download(context.Background(), s, providercore.Config{BaseURL: "http://127.0.0.1:7878"}, providercore.Candidate{SourceURL: "/api/subtitles/download/77"})
-	if err != nil { t.Fatalf("Download error: %v", err) }
-	if !strings.Contains(string(dl.Content), "fixture subtitle") { t.Fatalf("unexpected content: %q", dl.Content) }
-	if len(s.downloads) != 1 || s.downloads[0] { t.Fatalf("subsarr local endpoint must be requested as API traffic, got downloads=%v", s.downloads) }
+	if err != nil {
+		t.Fatalf("Download error: %v", err)
+	}
+	if !strings.Contains(string(dl.Content), "fixture subtitle") {
+		t.Fatalf("unexpected content: %q", dl.Content)
+	}
+	if len(s.downloads) != 1 || s.downloads[0] {
+		t.Fatalf("subsarr local endpoint must be requested as API traffic, got downloads=%v", s.downloads)
+	}
 }
 
 func TestRequiresBaseURL(t *testing.T) {
 	_, err := Adapter.Search(context.Background(), &stub{}, providercore.Config{}, providercore.SearchRequest{Title: "Fixture"})
-	if err == nil || !strings.Contains(err.Error(), "baseUrl") { t.Fatalf("expected baseUrl prerequisite, got %v", err) }
+	if err == nil || !strings.Contains(err.Error(), "baseUrl") {
+		t.Fatalf("expected baseUrl prerequisite, got %v", err)
+	}
 }
 
 func zipBody() []byte {
