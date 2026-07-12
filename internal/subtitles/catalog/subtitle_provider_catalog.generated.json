@@ -19,28 +19,45 @@
     "key": "animekalesi",
     "displayName": "Animekalesi",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "animekalesi.com"
+      ],
+      "allowedDownloadHosts": [
+        "animekalesi.com"
+      ]
+    },
     "fields": []
   },
   {
     "key": "animesubinfo",
     "displayName": "Animesubinfo",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "animesub.info"
+      ],
+      "allowedDownloadHosts": [
+        "animesub.info"
+      ]
+    },
     "fields": []
   },
   {
@@ -106,14 +123,21 @@
     "key": "bayflix",
     "displayName": "Bayflix",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "bayflix.sb"
+      ],
+      "allowedDownloadHosts": [
+        "bayflix.sb"
+      ]
+    },
     "fields": []
   },
   {
@@ -200,28 +224,44 @@
     "key": "greeksubs",
     "displayName": "Greek Subs",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "greeksubs.net"
+      ],
+      "allowedDownloadHosts": [
+        "greeksubs.net"
+      ]
+    },
     "fields": []
   },
   {
     "key": "greeksubtitles",
     "displayName": "Greek Subtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "gr.greek-subtitles.com",
+        "greeksubtitles.info"
+      ],
+      "allowedDownloadHosts": [
+        "gr.greek-subtitles.com",
+        "greeksubtitles.info"
+      ]
+    },
     "fields": []
   },
   {
@@ -242,14 +282,20 @@
     "key": "hosszupuska",
     "displayName": "Hosszupuska",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "hosszupuskasub.com"
+      ],
+      "allowedDownloadHosts": [
+        "hosszupuskasub.com"
+      ]
+    },
     "fields": []
   },
   {
@@ -408,14 +454,23 @@
     "key": "nekur",
     "displayName": "Nekur",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
-      "serie"
+      "movie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "warning": "Plaintext HTTP upstream.",
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subtitri.nekur.net"
+      ],
+      "allowedDownloadHosts": [
+        "subtitri.nekur.net"
+      ]
+    },
     "fields": []
   },
   {
@@ -495,14 +550,20 @@
     "key": "prijevodionline",
     "displayName": "Prijevodionline",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "prijevodi-online.org"
+      ],
+      "allowedDownloadHosts": [
+        "prijevodi-online.org"
+      ]
+    },
     "fields": []
   },
   {
@@ -530,30 +591,46 @@
   },
   {
     "key": "soustitreseu",
-    "displayName": "Soustitreseu",
+    "displayName": "Sous-titres.eu",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "sous-titres.eu"
+      ],
+      "allowedDownloadHosts": [
+        "sous-titres.eu"
+      ]
+    },
     "fields": []
   },
   {
     "key": "subclub",
     "displayName": "Subclub",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subclub.eu"
+      ],
+      "allowedDownloadHosts": [
+        "subclub.eu"
+      ]
+    },
     "fields": []
   },
   {
@@ -596,28 +673,61 @@
     "key": "subf2m",
     "displayName": "Subf2M",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subf2m.co"
+      ],
+      "allowedDownloadHosts": [
+        "subf2m.co"
+      ]
+    },
+    "fields": [
+      {
+        "key": "verifySsl",
+        "label": "Verify SSL",
+        "type": "switch",
+        "persisted": true
+      },
+      {
+        "key": "userAgent",
+        "label": "User-Agent",
+        "type": "text",
+        "persisted": true
+      }
+    ]
   },
   {
     "key": "subs4free",
     "displayName": "Subs4Free",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
-      "serie"
+      "movie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "warning": "Bazarr marks this upstream as broken; runtime returns provider_broken_upstream on anti-block/layout failures.",
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subs4free.info",
+        "images.subs4free.info",
+        "subs4series.com"
+      ],
+      "allowedDownloadHosts": [
+        "subs4free.info",
+        "images.subs4free.info",
+        "subs4series.com"
+      ]
+    },
     "fields": []
   },
   {
@@ -745,44 +855,67 @@
   },
   {
     "key": "subssabbz",
-    "displayName": " Subssabbz",
+    "displayName": "Subs.sab.bz",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "warning": "Plaintext HTTP upstream.",
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subs.sab.bz"
+      ],
+      "allowedDownloadHosts": [
+        "subs.sab.bz"
+      ]
+    },
     "fields": []
   },
   {
     "key": "subsunacs",
-    "displayName": " Subsunacs",
+    "displayName": "Subsunacs",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subsunacs.net"
+      ],
+      "allowedDownloadHosts": [
+        "subsunacs.net"
+      ]
+    },
     "fields": []
   },
   {
     "key": "subsynchro",
-    "displayName": " Subsynchro",
+    "displayName": "Subsynchro",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
-      "serie"
+      "movie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subsynchro.com"
+      ],
+      "allowedDownloadHosts": [
+        "subsynchro.com"
+      ]
+    },
     "fields": []
   },
   {
@@ -807,44 +940,67 @@
   },
   {
     "key": "subtitrarinoi",
-    "displayName": "Subtitrarinoi",
+    "displayName": "Subtitrari Noi",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subtitrari-noi.ro"
+      ],
+      "allowedDownloadHosts": [
+        "subtitrari-noi.ro"
+      ]
+    },
     "fields": []
   },
   {
     "key": "subtitriid",
     "displayName": "Subtitriid",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
-      "serie"
+      "movie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subtitri.do.am"
+      ],
+      "allowedDownloadHosts": [
+        "subtitri.do.am"
+      ]
+    },
     "fields": []
   },
   {
     "key": "subtitulamostv",
-    "displayName": "Subtitulamostv",
+    "displayName": "Subtitulamos.tv",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subtitulamos.tv"
+      ],
+      "allowedDownloadHosts": [
+        "subtitulamos.tv"
+      ]
+    },
     "fields": []
   },
   {
@@ -882,14 +1038,22 @@
     "key": "supersubtitles",
     "displayName": "Super Subtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "warning": "Bazarr forces this provider off when upstream blocks or layout drifts.",
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "feliratok.eu"
+      ],
+      "allowedDownloadHosts": [
+        "feliratok.eu"
+      ]
+    },
     "fields": []
   },
   {
@@ -910,14 +1074,23 @@
     "key": "titrari",
     "displayName": "Titrari",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "titrari.ro"
+      ],
+      "allowedDownloadHosts": [
+        "titrari.ro"
+      ]
+    },
     "fields": []
   },
   {
@@ -952,28 +1125,44 @@
     "key": "tvsubtitles",
     "displayName": "TVsubtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "warning": "Bazarr marks this upstream unstable; runtime reports broken-upstream for unrecognized layouts.",
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "tvsubtitles.net"
+      ],
+      "allowedDownloadHosts": [
+        "tvsubtitles.net"
+      ]
+    },
     "fields": []
   },
   {
     "key": "vladoonmooo",
     "displayName": "Vladoonmooo",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "vladoon.mooo.com"
+      ],
+      "allowedDownloadHosts": [
+        "vladoon.mooo.com"
+      ]
+    },
     "fields": []
   },
   {
@@ -1035,14 +1224,21 @@
     "key": "wizdom",
     "displayName": "Wizdom",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "wizdom.xyz"
+      ],
+      "allowedDownloadHosts": [
+        "wizdom.xyz"
+      ]
+    },
     "fields": []
   },
   {
@@ -1061,32 +1257,45 @@
   },
   {
     "key": "yavkanet",
-    "displayName": "Yavkanet",
+    "displayName": "Yavka.net",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "yavka.net"
+      ],
+      "allowedDownloadHosts": [
+        "yavka.net"
+      ]
+    },
     "fields": []
   },
   {
     "key": "yifysubtitles",
     "displayName": "YIFY Subtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Native public HTML adapter implemented.",
     "mediaTypes": [
-      "movie",
-      "serie"
+      "movie"
     ],
     "dependencies": {
       "archive": true
     },
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "yifysubtitles.ch"
+      ],
+      "allowedDownloadHosts": [
+        "yifysubtitles.ch"
+      ]
+    },
     "fields": []
   },
   {
