@@ -38,6 +38,40 @@ func TestRendererProfileTraceShowsRuleReasonsAndSafeHeaders(t *testing.T) {
 			t.Fatalf("unsafe header summary = %#v", trace.HeadersSummary)
 		}
 	}
+	if len(trace.Candidates) != 2 {
+		t.Fatalf("candidates = %#v", trace.Candidates)
+	}
+	candidate := candidateTraceByID(trace.Candidates, "lg-test")
+	if candidate == nil || !candidate.Selected || !candidate.Qualified || candidate.Score != 5 || candidate.MinimumScore != 3 || candidate.Priority != 10 {
+		t.Fatalf("selected candidate = %#v", candidate)
+	}
+	if len(candidate.RuleTrace) != 1 || candidate.RuleTrace[0].ProfileID != "lg-test" {
+		t.Fatalf("candidate rule trace = %#v", candidate.RuleTrace)
+	}
+}
+
+func TestRendererProfileTraceKeepsStickyCandidatesUnselected(t *testing.T) {
+	manager := NewManager(nil, "http://127.0.0.1:18080")
+	manager.profileCache = rendererProfileCacheState{loaded: true, profiles: []RendererProfile{
+		{ID: "sticky", Name: "Sticky", MatchTokens: []string{"webos"}, MatchMinScore: 5},
+		{ID: "generic", Name: "Generic DLNA"},
+	}}
+	manager.recentClients = map[string]ClientStatus{
+		"10.0.0.1": {ProfileID: "sticky"},
+	}
+
+	trace := manager.TraceRendererProfile(context.Background(), RendererRequest{
+		UserAgent: "LG webOS TV",
+		ClientIP:  "10.0.0.1",
+	})
+
+	if trace.Match.Explanation.MatchSource != "sticky_ip" {
+		t.Fatalf("match source = %#v", trace.Match.Explanation)
+	}
+	candidate := candidateTraceByID(trace.Candidates, "sticky")
+	if candidate == nil || candidate.Selected || candidate.Qualified || candidate.Score != 1 || candidate.MinimumScore != 5 {
+		t.Fatalf("sticky candidate = %#v", candidate)
+	}
 }
 
 func TestDeliveryDecisionTraceSanitizesMediaPathAndExplainsAudioTranscode(t *testing.T) {
@@ -60,6 +94,15 @@ func TestDeliveryDecisionTraceSanitizesMediaPathAndExplainsAudioTranscode(t *tes
 		t.Fatalf("decision = %#v", trace.Decision)
 	}
 	requireTrace(t, trace.Trace, "audioCodec", "fail")
+}
+
+func candidateTraceByID(traces []RendererProfileMatchCandidate, profileID string) *RendererProfileMatchCandidate {
+	for i := range traces {
+		if traces[i].ProfileID == profileID {
+			return &traces[i]
+		}
+	}
+	return nil
 }
 
 func requireProfileRuleTrace(t *testing.T, traces []RendererProfileRuleTrace, profileID string, result string) {

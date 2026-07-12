@@ -2100,6 +2100,17 @@ export interface DLNAProfileRuleTrace {
 	result: DLNAProfileRuleTraceResult;
 }
 
+export interface DLNAProfileMatchCandidate {
+	profileId: string;
+	profileName: string;
+	score: number;
+	minimumScore: number;
+	priority: number;
+	qualified: boolean;
+	selected: boolean;
+	ruleTrace: DLNAProfileRuleTrace[];
+}
+
 export interface DLNAProfileMatchTraceResponse {
 	profileId: string;
 	profileName: string;
@@ -2112,6 +2123,7 @@ export interface DLNAProfileMatchTraceResponse {
 	candidateProfileIds: string[];
 	headersSummary: string[];
 	ruleTrace: DLNAProfileRuleTrace[];
+	candidates: DLNAProfileMatchCandidate[];
 }
 
 export interface DLNAMediaProbeRequest {

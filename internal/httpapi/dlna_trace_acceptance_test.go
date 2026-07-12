@@ -17,8 +17,20 @@ func TestScenarioSCNSettings026AdminTracesDLNADecisions(t *testing.T) {
 	if !strings.Contains(strings.ToLower(match.ProfileId+" "+match.ProfileName), "lg") {
 		t.Fatalf("match = %#v", match)
 	}
-	if match.MatchSource == "" || len(match.RuleTrace) == 0 {
+	if match.MatchSource == "" || len(match.RuleTrace) == 0 || len(match.Candidates) == 0 {
 		t.Fatalf("expected match trace details, got %#v", match)
+	}
+	selectedCandidate := false
+	for _, candidate := range match.Candidates {
+		if candidate.Selected && candidate.ProfileId == match.ProfileId {
+			selectedCandidate = true
+			if !candidate.Qualified || candidate.Score < candidate.MinimumScore {
+				t.Fatalf("selected candidate is not qualified: %#v", candidate)
+			}
+		}
+	}
+	if match.MatchSource == "match" && !selectedCandidate {
+		t.Fatalf("selected automatic candidate missing: %#v", match.Candidates)
 	}
 
 	var delivery DLNADeliveryTraceResponse

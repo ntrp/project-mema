@@ -18,6 +18,7 @@ func (m *Manager) TraceRendererProfile(ctx context.Context, request RendererRequ
 		Match:          match,
 		HeadersSummary: SafeHeadersSummary(request.Headers),
 		Rules:          profileRuleTraces(profiles, request),
+		Candidates:     profileMatchCandidates(profiles, request, match.Explanation),
 	}
 }
 
@@ -53,11 +54,8 @@ func (m *Manager) deliveryTraceProfile(ctx context.Context, input DeliveryTraceI
 
 func profileRuleTraces(profiles []RendererProfile, request RendererRequest) []RendererProfileRuleTrace {
 	traces := []RendererProfileRuleTrace{}
-	for _, profile := range profiles {
-		if profile.ID == "generic" {
-			continue
-		}
-		traces = append(traces, profileRuleTrace(profile, request)...)
+	for _, candidate := range profileMatchCandidates(profiles, request, RendererProfileExplanation{}) {
+		traces = append(traces, candidate.RuleTrace...)
 	}
 	sort.SliceStable(traces, func(i, j int) bool {
 		if traces[i].ProfileID != traces[j].ProfileID {
@@ -66,6 +64,29 @@ func profileRuleTraces(profiles []RendererProfile, request RendererRequest) []Re
 		return traces[i].Rule < traces[j].Rule
 	})
 	return traces
+}
+
+func profileMatchCandidates(profiles []RendererProfile, request RendererRequest, explanation RendererProfileExplanation) []RendererProfileMatchCandidate {
+	candidates := make([]RendererProfileMatchCandidate, 0, len(profiles))
+	for _, profile := range profiles {
+		if profile.ID == "generic" {
+			continue
+		}
+		ruleTrace := profileRuleTrace(profile, request)
+		score, _ := profileMatchScore(profile, request)
+		minimumScore := profileMinScore(profile)
+		candidates = append(candidates, RendererProfileMatchCandidate{
+			ProfileID:    profile.ID,
+			ProfileName:  profile.Name,
+			Score:        score,
+			MinimumScore: minimumScore,
+			Priority:     profile.Priority,
+			Qualified:    score > 0 && score >= minimumScore,
+			Selected:     explanation.MatchSource == "match" && explanation.SelectedProfileID == profile.ID,
+			RuleTrace:    append([]RendererProfileRuleTrace{}, ruleTrace...),
+		})
+	}
+	return candidates
 }
 
 func profileRuleTrace(profile RendererProfile, request RendererRequest) []RendererProfileRuleTrace {

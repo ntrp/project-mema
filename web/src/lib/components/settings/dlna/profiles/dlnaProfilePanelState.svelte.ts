@@ -191,8 +191,10 @@ export class DLNAProfilePanelState {
 				deliveryPolicyOverrides: parsed
 			});
 			this.message = 'Override saved';
+			return true;
 		} catch {
 			this.errorMessage = 'Could not save override';
+			return false;
 		}
 	};
 	quickAssign = async (device: DLNAClientDiagnostic, profileId: string) => {

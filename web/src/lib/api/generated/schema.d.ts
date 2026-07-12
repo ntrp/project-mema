@@ -4267,6 +4267,19 @@ export interface components {
 			/** @enum {string} */
 			result: 'pass' | 'fail';
 		};
+		DLNAProfileMatchCandidate: {
+			profileId: string;
+			profileName: string;
+			/** Format: int32 */
+			score: number;
+			/** Format: int32 */
+			minimumScore: number;
+			/** Format: int32 */
+			priority: number;
+			qualified: boolean;
+			selected: boolean;
+			ruleTrace: components['schemas']['DLNAProfileRuleTrace'][];
+		};
 		DLNAProfileMatchTraceResponse: {
 			profileId: string;
 			profileName: string;
@@ -4280,6 +4293,7 @@ export interface components {
 			candidateProfileIds: string[];
 			headersSummary: string[];
 			ruleTrace: components['schemas']['DLNAProfileRuleTrace'][];
+			candidates: components['schemas']['DLNAProfileMatchCandidate'][];
 		};
 		DLNAMediaProbeRequest: {
 			container?: string;

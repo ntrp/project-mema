@@ -125,5 +125,12 @@
 			/>
 		</Card.Content>
 	</Card.Root>
-	<DLNADeviceProfilesPanel />
+	<Card.Root aria-label="DLNA server configuration">
+		<Card.Header class="border-b border-border">
+			<Card.Title>Device Profiles</Card.Title>
+		</Card.Header>
+		<Card.Content class="grid gap-5 pt-5">
+			<DLNADeviceProfilesPanel />
+		</Card.Content>
+	</Card.Root>
 </div>

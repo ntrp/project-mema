@@ -99,12 +99,20 @@ describe('DLNA device profile settings UI (SCN-SETTINGS-025)', () => {
 		expect(profileTable.body).toContain('LG webOS');
 		expect(profileTable.body).toContain('Customized');
 		expect(devices.body).toContain('192.168.1.55');
-		expect(devices.body).toContain('Manual override');
+		expect(devices.body).toContain('Add manual override');
 	});
 
 	it('shows delete actions for custom profiles', () => {
 		const profileTable = renderWithTooltip(DLNAProfileTable, {
-			profiles: [{ ...sampleProfile, id: 'user-profile', name: 'User Profile', source: 'user' as const, customized: true }],
+			profiles: [
+				{
+					...sampleProfile,
+					id: 'user-profile',
+					name: 'User Profile',
+					source: 'user' as const,
+					customized: true
+				}
+			],
 			search: '',
 			selectedId: 'user-profile',
 			onSearch: () => {},
@@ -122,7 +130,6 @@ describe('DLNA device profile settings UI (SCN-SETTINGS-025)', () => {
 		expect(profileTable.body).toContain('aria-label="Delete User Profile"');
 		expect(profileTable.body).not.toContain('aria-label="Delete LG webOS"');
 	});
-
 });
 
 const sampleProfile: DLNARendererProfile = {

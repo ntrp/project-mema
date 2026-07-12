@@ -15,37 +15,26 @@ export interface DLNATraceSummaryItem {
 	value: string;
 }
 
+export type DLNAProfileMatchCandidate = DLNAProfileMatchTraceResponse['candidates'][number];
+
+export interface DLNAProfileMatchView {
+	profileId: string;
+	profileName: string;
+	selectionMethod: string;
+	matchReason: string;
+	winningRule: string;
+	fallbackPath: string;
+	score: number;
+	headersSummary: string[];
+	candidates: DLNAProfileMatchCandidate[];
+}
+
 export function basename(path: string) {
 	return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
 
-export function buildTraceSteps(
-	profileMatch?: DLNAProfileMatchTraceResponse,
-	delivery?: DLNADeliveryTraceResponse
-): DLNATraceStep[] {
-	const profileSteps = profileMatch
-		? [
-				{
-					id: 'profile-selected',
-					stage: 'Profile matching',
-					field: 'selected profile',
-					rule: profileMatch.matchReason || 'Profile selection',
-					value: `${profileMatch.profileName} (${profileMatch.profileId})`,
-					score: profileMatch.score,
-					result: 'pass'
-				},
-				...profileMatch.ruleTrace.map((step, index) => ({
-					id: `profile-${index}`,
-					stage: 'Profile matching',
-					field: step.field,
-					rule: `${step.profileName} (${step.profileId}): ${step.rule || 'Rule'}`,
-					value: step.value || '—',
-					score: step.score,
-					result: step.result
-				}))
-			]
-		: [];
-	const deliverySteps = (delivery?.capabilityTrace ?? []).map((step, index) => ({
+export function buildDeliveryTraceSteps(delivery?: DLNADeliveryTraceResponse): DLNATraceStep[] {
+	return (delivery?.capabilityTrace ?? []).map((step, index) => ({
 		id: `delivery-${index}`,
 		stage: 'Delivery decision',
 		field: step.field,
@@ -53,8 +42,43 @@ export function buildTraceSteps(
 		value: step.value || '—',
 		result: step.result
 	}));
+}
 
-	return [...profileSteps, ...deliverySteps];
+export function buildProfileMatchView(
+	profileMatch?: DLNAProfileMatchTraceResponse
+): DLNAProfileMatchView | undefined {
+	if (!profileMatch) return undefined;
+	return {
+		profileId: profileMatch.profileId,
+		profileName: profileMatch.profileName,
+		selectionMethod: matchSourceLabel(profileMatch.matchSource),
+		matchReason: profileMatch.matchReason,
+		winningRule: profileMatch.winningRule,
+		fallbackPath: profileMatch.fallbackPath,
+		score: profileMatch.score,
+		headersSummary: profileMatch.headersSummary,
+		candidates: [...profileMatch.candidates].sort(compareCandidates)
+	};
+}
+
+function matchSourceLabel(source: string) {
+	return (
+		{
+			manual_uuid: 'Manual device override',
+			manual_ip: 'Manual IP override',
+			match: 'Automatic profile match',
+			sticky_ip: 'Remembered profile for this IP',
+			default: 'Generic fallback'
+		}[source] ?? source
+	);
+}
+
+function compareCandidates(a: DLNAProfileMatchCandidate, b: DLNAProfileMatchCandidate) {
+	if (a.selected !== b.selected) return a.selected ? -1 : 1;
+	if (a.qualified !== b.qualified) return a.qualified ? -1 : 1;
+	if (a.priority !== b.priority) return b.priority - a.priority;
+	if (a.score !== b.score) return b.score - a.score;
+	return a.profileId.localeCompare(b.profileId);
 }
 
 function tracedValue(delivery: DLNADeliveryTraceResponse | undefined, field: string) {
@@ -83,19 +107,15 @@ function codecDetail(
 		: `transcoding (${sourceCodec} -> ${effectiveOutputCodec})`;
 }
 
-export function buildTraceSummary(
-	profileMatch?: DLNAProfileMatchTraceResponse,
+export function buildDeliveryTraceSummary(
 	delivery?: DLNADeliveryTraceResponse
 ): DLNATraceSummaryItem[] {
 	return [
-		{ label: 'Profile name', value: delivery?.profileName ?? profileMatch?.profileName ?? '—' },
+		{ label: 'Profile name', value: delivery?.profileName ?? '—' },
 		{ label: 'Delivery Protocol', value: delivery?.deliveryProtocol ?? '—' },
 		{ label: 'Delivery mode', value: deliveryModeDetail(delivery) },
 		{ label: 'Video codec', value: codecDetail(delivery, 'videoCodec', delivery?.videoCodec) },
-		{ label: 'Audio codec', value: codecDetail(delivery, 'audioCodec', delivery?.audioCodec) },
-		{ label: 'Match score', value: profileMatch ? String(profileMatch.score) : '—' },
-		{ label: 'Match reason', value: profileMatch?.matchReason ?? '—' },
-		{ label: 'Winning rule', value: profileMatch?.winningRule ?? '—' }
+		{ label: 'Audio codec', value: codecDetail(delivery, 'audioCodec', delivery?.audioCodec) }
 	];
 }
 

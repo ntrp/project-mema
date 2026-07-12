@@ -116,7 +116,25 @@ func dlnaProfileMatchTraceResponse(trace dlna.RendererProfileTrace) DLNAProfileM
 		CandidateProfileIds: append([]string{}, explanation.CandidateProfileIDs...),
 		HeadersSummary:      append([]string{}, trace.HeadersSummary...),
 		RuleTrace:           dlnaProfileRuleTraceResponse(trace.Rules),
+		Candidates:          dlnaProfileMatchCandidateTraceResponse(trace.Candidates),
 	}
+}
+
+func dlnaProfileMatchCandidateTraceResponse(traces []dlna.RendererProfileMatchCandidate) []DLNAProfileMatchCandidate {
+	values := make([]DLNAProfileMatchCandidate, 0, len(traces))
+	for _, trace := range traces {
+		values = append(values, DLNAProfileMatchCandidate{
+			ProfileId:    trace.ProfileID,
+			ProfileName:  trace.ProfileName,
+			Score:        int32(trace.Score),
+			MinimumScore: int32(trace.MinimumScore),
+			Priority:     int32(trace.Priority),
+			Qualified:    trace.Qualified,
+			Selected:     trace.Selected,
+			RuleTrace:    dlnaProfileRuleTraceResponse(trace.RuleTrace),
+		})
+	}
+	return values
 }
 
 func dlnaProfileRuleTraceResponse(traces []dlna.RendererProfileRuleTrace) []DLNAProfileRuleTrace {

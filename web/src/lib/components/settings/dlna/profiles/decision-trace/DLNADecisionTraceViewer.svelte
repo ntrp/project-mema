@@ -12,9 +12,14 @@
 		DLNARendererProfile,
 		MediaFilePreviewInfo
 	} from '$lib/settings/types';
-	import { buildTraceSteps, buildTraceSummary } from './dlnaDecisionTrace';
+	import {
+		buildDeliveryTraceSteps,
+		buildDeliveryTraceSummary,
+		buildProfileMatchView
+	} from './dlnaDecisionTrace';
 	import { probeFromMediaPreview } from './dlnaMediaProbe';
 	import DLNAMediaPicker from './DLNAMediaPicker.svelte';
+	import DLNAProfileMatchResults from './DLNAProfileMatchResults.svelte';
 	import DLNATraceResults from './DLNATraceResults.svelte';
 
 	interface Props {
@@ -95,8 +100,9 @@
 	}));
 	const loading = $derived(profileMatch.isFetching || delivery.isFetching);
 	const errorMessage = $derived(profileMatch.error?.message ?? delivery.error?.message ?? '');
-	const traceSteps = $derived(buildTraceSteps(profileMatch.data, delivery.data));
-	const traceSummary = $derived(buildTraceSummary(profileMatch.data, delivery.data));
+	const profileMatchView = $derived(buildProfileMatchView(profileMatch.data));
+	const deliverySteps = $derived(buildDeliveryTraceSteps(delivery.data));
+	const deliverySummary = $derived(buildDeliveryTraceSummary(delivery.data));
 
 	function headersFromSummary(headers: string[]) {
 		return Object.fromEntries(
@@ -161,7 +167,7 @@
 				<div class="flex flex-col gap-3 sm:items-end sm:justify-self-end">
 					<div class="flex h-9 items-center justify-end gap-2">
 						<Checkbox id="dlna-trace-hide-failed" bind:checked={hideFailedSteps} />
-						<Label for="dlna-trace-hide-failed" class="text-sm">Hide failed tests</Label>
+						<Label for="dlna-trace-hide-failed" class="text-sm">Hide failed delivery tests</Label>
 					</div>
 					<Button
 						type="button"
@@ -176,7 +182,11 @@
 					</Button>
 				</div>
 			</div>
-			<DLNATraceResults steps={traceSteps} summary={traceSummary} {hideFailedSteps} />
+			<DLNAProfileMatchResults match={profileMatchView} />
+			<section class="grid gap-3" aria-label="DLNA delivery decision">
+				<h3 class="m-0 text-sm font-semibold">Delivery decision</h3>
+				<DLNATraceResults steps={deliverySteps} summary={deliverySummary} {hideFailedSteps} />
+			</section>
 		</section>
 	</SettingsFormModal>
 {/if}

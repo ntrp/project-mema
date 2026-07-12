@@ -2206,6 +2206,18 @@ type DLNAMediaProbeRequest struct {
 	VideoCodec *string `json:"videoCodec,omitempty"`
 }
 
+// DLNAProfileMatchCandidate defines model for DLNAProfileMatchCandidate.
+type DLNAProfileMatchCandidate struct {
+	MinimumScore int32                  `json:"minimumScore"`
+	Priority     int32                  `json:"priority"`
+	ProfileId    string                 `json:"profileId"`
+	ProfileName  string                 `json:"profileName"`
+	Qualified    bool                   `json:"qualified"`
+	RuleTrace    []DLNAProfileRuleTrace `json:"ruleTrace"`
+	Score        int32                  `json:"score"`
+	Selected     bool                   `json:"selected"`
+}
+
 // DLNAProfileMatchTraceRequest defines model for DLNAProfileMatchTraceRequest.
 type DLNAProfileMatchTraceRequest struct {
 	DeviceIp     *string            `json:"deviceIp,omitempty"`
@@ -2217,17 +2229,18 @@ type DLNAProfileMatchTraceRequest struct {
 
 // DLNAProfileMatchTraceResponse defines model for DLNAProfileMatchTraceResponse.
 type DLNAProfileMatchTraceResponse struct {
-	CandidateProfileIds []string               `json:"candidateProfileIds"`
-	FallbackPath        string                 `json:"fallbackPath"`
-	HeadersSummary      []string               `json:"headersSummary"`
-	MatchReason         string                 `json:"matchReason"`
-	MatchSource         string                 `json:"matchSource"`
-	ProfileId           string                 `json:"profileId"`
-	ProfileName         string                 `json:"profileName"`
-	RuleTrace           []DLNAProfileRuleTrace `json:"ruleTrace"`
-	Score               int32                  `json:"score"`
-	SourceProfileId     string                 `json:"sourceProfileId"`
-	WinningRule         string                 `json:"winningRule"`
+	CandidateProfileIds []string                    `json:"candidateProfileIds"`
+	Candidates          []DLNAProfileMatchCandidate `json:"candidates"`
+	FallbackPath        string                      `json:"fallbackPath"`
+	HeadersSummary      []string                    `json:"headersSummary"`
+	MatchReason         string                      `json:"matchReason"`
+	MatchSource         string                      `json:"matchSource"`
+	ProfileId           string                      `json:"profileId"`
+	ProfileName         string                      `json:"profileName"`
+	RuleTrace           []DLNAProfileRuleTrace      `json:"ruleTrace"`
+	Score               int32                       `json:"score"`
+	SourceProfileId     string                      `json:"sourceProfileId"`
+	WinningRule         string                      `json:"winningRule"`
 }
 
 // DLNAProfileRuleTrace defines model for DLNAProfileRuleTrace.

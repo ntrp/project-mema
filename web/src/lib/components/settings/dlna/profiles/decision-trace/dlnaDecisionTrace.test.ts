@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
 	basename,
-	buildTraceSteps,
-	buildTraceSummary,
+	buildDeliveryTraceSteps,
+	buildDeliveryTraceSummary,
+	buildProfileMatchView,
 	filterTraceSteps
 } from './dlnaDecisionTrace';
 import type { DLNADeliveryTraceResponse, DLNAProfileMatchTraceResponse } from '$lib/settings/types';
@@ -14,7 +15,7 @@ describe('DLNA decision trace helpers', () => {
 			profileId: 'lg-webos',
 			profileName: 'LG webOS',
 			sourceProfileId: 'lg-webos',
-			matchSource: 'headers',
+			matchSource: 'match',
 			matchReason: 'matched user agent',
 			winningRule: 'userAgent:LG',
 			fallbackPath: 'generic',
@@ -30,6 +31,18 @@ describe('DLNA decision trace helpers', () => {
 					rule: 'contains LG',
 					score: 120,
 					result: 'pass'
+				}
+			],
+			candidates: [
+				{
+					profileId: 'lg-webos',
+					profileName: 'LG webOS',
+					score: 120,
+					minimumScore: 50,
+					priority: 100,
+					qualified: true,
+					selected: true,
+					ruleTrace: []
 				}
 			]
 		};
@@ -61,25 +74,7 @@ describe('DLNA decision trace helpers', () => {
 			]
 		};
 
-		expect(buildTraceSteps(profileMatch, delivery)).toEqual([
-			{
-				id: 'profile-selected',
-				stage: 'Profile matching',
-				field: 'selected profile',
-				rule: 'matched user agent',
-				value: 'LG webOS (lg-webos)',
-				score: 120,
-				result: 'pass'
-			},
-			{
-				id: 'profile-0',
-				stage: 'Profile matching',
-				field: 'userAgent',
-				rule: 'LG webOS (lg-webos): contains LG',
-				value: 'LG TV',
-				score: 120,
-				result: 'pass'
-			},
+		expect(buildDeliveryTraceSteps(delivery)).toEqual([
 			{
 				id: 'delivery-0',
 				stage: 'Delivery decision',
@@ -98,16 +93,20 @@ describe('DLNA decision trace helpers', () => {
 			}
 		]);
 
-		expect(buildTraceSummary(profileMatch, delivery)).toEqual([
+		expect(buildDeliveryTraceSummary(delivery)).toEqual([
 			{ label: 'Profile name', value: 'LG webOS' },
 			{ label: 'Delivery Protocol', value: 'file' },
 			{ label: 'Delivery mode', value: 'direct' },
 			{ label: 'Video codec', value: 'copy (h264)' },
-			{ label: 'Audio codec', value: 'copy (aac)' },
-			{ label: 'Match score', value: '120' },
-			{ label: 'Match reason', value: 'matched user agent' },
-			{ label: 'Winning rule', value: 'userAgent:LG' }
+			{ label: 'Audio codec', value: 'copy (aac)' }
 		]);
+
+		expect(buildProfileMatchView(profileMatch)).toMatchObject({
+			profileId: 'lg-webos',
+			selectionMethod: 'Automatic profile match',
+			score: 120,
+			candidates: [{ profileId: 'lg-webos', selected: true }]
+		});
 	});
 
 	it('shows current codecs for direct delivery when the output codecs are omitted', () => {
@@ -129,7 +128,7 @@ describe('DLNA decision trace helpers', () => {
 			]
 		};
 
-		expect(buildTraceSummary(undefined, delivery)).toEqual(
+		expect(buildDeliveryTraceSummary(delivery)).toEqual(
 			expect.arrayContaining([
 				{ label: 'Video codec', value: 'copy (h264)' },
 				{ label: 'Audio codec', value: 'copy (aac)' }
@@ -157,7 +156,7 @@ describe('DLNA decision trace helpers', () => {
 			]
 		};
 
-		expect(buildTraceSummary(undefined, delivery)).toEqual(
+		expect(buildDeliveryTraceSummary(delivery)).toEqual(
 			expect.arrayContaining([
 				{ label: 'Delivery mode', value: 'remux (mkv -> mpegts)' },
 				{ label: 'Video codec', value: 'copy (hevc)' },
@@ -185,7 +184,7 @@ describe('DLNA decision trace helpers', () => {
 			]
 		};
 
-		expect(buildTraceSummary(undefined, delivery)).toEqual(
+		expect(buildDeliveryTraceSummary(delivery)).toEqual(
 			expect.arrayContaining([
 				{ label: 'Video codec', value: 'copy' },
 				{ label: 'Audio codec', value: 'transcoding (aac)' }

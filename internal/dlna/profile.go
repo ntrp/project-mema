@@ -69,10 +69,22 @@ type RendererProfileRuleTrace struct {
 	Result      string
 }
 
+type RendererProfileMatchCandidate struct {
+	ProfileID    string
+	ProfileName  string
+	Score        int
+	MinimumScore int
+	Priority     int
+	Qualified    bool
+	Selected     bool
+	RuleTrace    []RendererProfileRuleTrace
+}
+
 type RendererProfileTrace struct {
 	Match          RendererProfileMatch
 	HeadersSummary []string
 	Rules          []RendererProfileRuleTrace
+	Candidates     []RendererProfileMatchCandidate
 }
 
 type DeliveryDecisionTrace struct {

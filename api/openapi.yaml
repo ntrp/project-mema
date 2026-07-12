@@ -8996,6 +8996,40 @@ components:
           x-enum-varnames:
             - DLNAProfileRulePass
             - DLNAProfileRuleFail
+    DLNAProfileMatchCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - profileId
+        - profileName
+        - score
+        - minimumScore
+        - priority
+        - qualified
+        - selected
+        - ruleTrace
+      properties:
+        profileId:
+          type: string
+        profileName:
+          type: string
+        score:
+          type: integer
+          format: int32
+        minimumScore:
+          type: integer
+          format: int32
+        priority:
+          type: integer
+          format: int32
+        qualified:
+          type: boolean
+        selected:
+          type: boolean
+        ruleTrace:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAProfileRuleTrace"
     DLNAProfileMatchTraceResponse:
       type: object
       additionalProperties: false
@@ -9011,6 +9045,7 @@ components:
         - candidateProfileIds
         - headersSummary
         - ruleTrace
+        - candidates
       properties:
         profileId:
           type: string
@@ -9041,6 +9076,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DLNAProfileRuleTrace"
+        candidates:
+          type: array
+          items:
+            $ref: "#/components/schemas/DLNAProfileMatchCandidate"
     DLNAMediaProbeRequest:
       type: object
       additionalProperties: false
