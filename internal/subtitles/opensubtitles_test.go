@@ -2,10 +2,13 @@ package subtitles
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
+
+	"media-manager/internal/subtitles/providercore"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
@@ -55,11 +58,11 @@ func TestOpenSubtitlesComAliasSearchAndDownload(t *testing.T) {
 	}
 }
 
-func TestCatalogOnlyProviderCannotRun(t *testing.T) {
+func TestAddic7edRequiresCaptchaSessionBeforeRuntimeSearch(t *testing.T) {
 	service := NewService(nil)
 	_, err := service.Search(context.Background(), Config{Type: "addic7ed"}, SearchRequest{Title: "Scenario", LanguageID: "english"})
-	if err == nil || !strings.Contains(err.Error(), ErrCatalogOnlyProvider.Error()) {
-		t.Fatalf("err = %v", err)
+	if !errors.Is(err, providercore.ErrCaptchaRequired) {
+		t.Fatalf("expected captcha prerequisite error, got %v", err)
 	}
 }
 

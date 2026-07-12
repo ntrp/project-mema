@@ -44,20 +44,20 @@ func TestSubtitleProviderInputValidation(t *testing.T) {
 	}
 }
 
-func TestSubtitleProviderInputRejectsEnabledUnsupportedProvider(t *testing.T) {
+func TestSubtitleProviderInputAllowsEnabledBSPlayerRuntimeProvider(t *testing.T) {
 	w := httptest.NewRecorder()
-	_, ok := subtitleProviderInput(w, SubtitleProviderRequest{
+	input, ok := subtitleProviderInput(w, SubtitleProviderRequest{
 		Name:     "BSPlayer",
 		Type:     Bsplayer,
 		Enabled:  true,
 		Priority: 10,
 	})
-	if ok || w.Code != http.StatusBadRequest {
-		t.Fatalf("expected unsupported enabled provider to be rejected, ok=%v code=%d", ok, w.Code)
+	if !ok || !input.Enabled || w.Code != http.StatusOK {
+		t.Fatalf("expected enabled BSPlayer runtime provider to be accepted, input=%#v ok=%v code=%d", input, ok, w.Code)
 	}
 }
 
-func TestSubtitleProviderInputAllowsDisabledCatalogProvider(t *testing.T) {
+func TestSubtitleProviderInputAllowsDisabledBSPlayerRuntimeProvider(t *testing.T) {
 	w := httptest.NewRecorder()
 	input, ok := subtitleProviderInput(w, SubtitleProviderRequest{
 		Name:     "BSPlayer",
@@ -66,7 +66,7 @@ func TestSubtitleProviderInputAllowsDisabledCatalogProvider(t *testing.T) {
 		Priority: 10,
 	})
 	if !ok || input.Enabled || w.Code != http.StatusOK {
-		t.Fatalf("expected disabled catalog provider to be accepted, input=%#v ok=%v code=%d", input, ok, w.Code)
+		t.Fatalf("expected disabled BSPlayer runtime provider to be accepted, input=%#v ok=%v code=%d", input, ok, w.Code)
 	}
 }
 
