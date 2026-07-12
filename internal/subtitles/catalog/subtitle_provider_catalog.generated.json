@@ -61,15 +61,32 @@
     "key": "assrt",
     "displayName": "Assrt",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.assrt.net"
+      ],
+      "allowedDownloadHosts": [
+        "api.assrt.net"
+      ]
+    },
+    "fields": [
+      {
+        "key": "token",
+        "label": "Token",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "token"
+      }
+    ]
   },
   {
     "key": "avistaz",
@@ -103,15 +120,31 @@
     "key": "betaseries",
     "displayName": "Betaseries",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
-      "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.betaseries.com"
+      ],
+      "allowedDownloadHosts": [
+        "api.betaseries.com"
+      ]
+    },
+    "fields": [
+      {
+        "key": "token",
+        "label": "Token",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "token"
+      }
+    ]
   },
   {
     "key": "bsplayer",
@@ -147,14 +180,20 @@
     "key": "gestdown",
     "displayName": "Gestdown",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
-      "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.gestdown.info"
+      ],
+      "allowedDownloadHosts": [
+        "api.gestdown.info"
+      ]
+    },
     "fields": []
   },
   {
@@ -217,15 +256,52 @@
     "key": "jimaku",
     "displayName": "Jimaku",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "jimaku.cc"
+      ],
+      "allowedDownloadHosts": [
+        "jimaku.cc"
+      ]
+    },
+    "fields": [
+      {
+        "key": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "api_key"
+      },
+      {
+        "key": "enableNameSearchFallback",
+        "label": "Enable name-search fallback",
+        "type": "switch",
+        "persisted": true
+      },
+      {
+        "key": "enableArchivesDownload",
+        "label": "Enable archive downloads",
+        "type": "switch",
+        "persisted": true
+      },
+      {
+        "key": "enableAiSubs",
+        "label": "Enable AI subtitles",
+        "type": "switch",
+        "persisted": true
+      }
+    ]
   },
   {
     "key": "karagarga",
@@ -433,14 +509,23 @@
     "key": "regielive",
     "displayName": "Regielive",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.regielive.ro",
+        "subtitrari.regielive.ro"
+      ],
+      "allowedDownloadHosts": [
+        "api.regielive.ro",
+        "subtitrari.regielive.ro"
+      ]
+    },
     "fields": []
   },
   {
@@ -475,8 +560,8 @@
     "key": "subdl",
     "displayName": "Subdl",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -484,8 +569,28 @@
     "dependencies": {
       "archive": true
     },
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.subdl.com",
+        "subdl.com"
+      ],
+      "allowedDownloadHosts": [
+        "dl.subdl.com",
+        "subdl.com",
+        "api.subdl.com"
+      ]
+    },
+    "fields": [
+      {
+        "key": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "api_key"
+      }
+    ]
   },
   {
     "key": "subf2m",
@@ -531,17 +636,30 @@
   },
   {
     "key": "subsarr",
-    "displayName": " Subsarr",
+    "displayName": "Subsarr",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "dependencies": {
+      "local_http_endpoint": true
+    },
+    "outboundPolicy": {
+      "allowLocalHosts": true
+    },
+    "fields": [
+      {
+        "key": "baseUrl",
+        "label": "Base URL",
+        "type": "text",
+        "required": true,
+        "persisted": true,
+        "semanticKey": "base_url"
+      }
+    ]
   },
   {
     "key": "subscenter",
@@ -561,10 +679,10 @@
   },
   {
     "key": "subsource",
-    "displayName": " Subsource",
+    "displayName": "Subsource",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -572,22 +690,58 @@
     "dependencies": {
       "archive": true
     },
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subsource.net"
+      ],
+      "allowedDownloadHosts": [
+        "subsource.net"
+      ]
+    },
+    "fields": [
+      {
+        "key": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "api_key"
+      }
+    ]
   },
   {
     "key": "subsro",
-    "displayName": " Subsro",
+    "displayName": "Subs.ro",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
-    "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "dependencies": {
+      "archive": true
+    },
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.subs.ro"
+      ],
+      "allowedDownloadHosts": [
+        "api.subs.ro"
+      ]
+    },
+    "fields": [
+      {
+        "key": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "api_key"
+      }
+    ]
   },
   {
     "key": "subssabbz",
@@ -633,16 +787,22 @@
   },
   {
     "key": "subtis",
-    "displayName": "Subtis",
+    "displayName": "Subt.is",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
-      "movie",
-      "serie"
+      "movie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "api.subt.is"
+      ],
+      "allowedDownloadHosts": [
+        "api.subt.is"
+      ]
+    },
     "fields": []
   },
   {
@@ -689,17 +849,34 @@
   },
   {
     "key": "subx",
-    "displayName": "Subx",
+    "displayName": "SubX",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "catalog_only",
-    "runtimeMessage": "Catalog entry only; runtime support is not implemented yet.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
     "mediaTypes": [
       "movie",
       "serie"
     ],
     "dependencies": {},
-    "outboundPolicy": {},
-    "fields": []
+    "outboundPolicy": {
+      "allowedBaseHosts": [
+        "subx-api.duckdns.org"
+      ],
+      "allowedDownloadHosts": [
+        "subx-api.duckdns.org"
+      ]
+    },
+    "fields": [
+      {
+        "key": "apiKey",
+        "label": "API key",
+        "type": "password",
+        "secret": true,
+        "required": true,
+        "persisted": true,
+        "semanticKey": "api_key"
+      }
+    ]
   },
   {
     "key": "supersubtitles",
@@ -803,8 +980,8 @@
     "key": "whisperai",
     "displayName": "Whisper",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
-    "runtimeStatus": "unsupported",
-    "runtimeMessage": "Requires a reviewed local Whisper service integration before runtime use.",
+    "runtimeStatus": "supported",
+    "runtimeMessage": "Runtime supported through a local Whisper-compatible transcription endpoint.",
     "mediaTypes": [
       "movie",
       "serie",
@@ -812,6 +989,8 @@
       "audio"
     ],
     "dependencies": {
+      "ffmpeg": true,
+      "ffprobe": true,
       "local_http_endpoint": true
     },
     "outboundPolicy": {
@@ -825,6 +1004,30 @@
         "required": true,
         "persisted": true,
         "semanticKey": "base_url"
+      },
+      {
+        "key": "responseTimeoutSeconds",
+        "label": "Response timeout seconds",
+        "type": "text",
+        "persisted": true
+      },
+      {
+        "key": "transcriptionTimeoutSeconds",
+        "label": "Transcription timeout seconds",
+        "type": "text",
+        "persisted": true
+      },
+      {
+        "key": "logLevel",
+        "label": "Log level",
+        "type": "text",
+        "persisted": true
+      },
+      {
+        "key": "passVideoName",
+        "label": "Pass video name",
+        "type": "switch",
+        "persisted": true
       }
     ]
   },
