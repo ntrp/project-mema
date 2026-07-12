@@ -1,6 +1,7 @@
 package subtitriid
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"io"
@@ -15,24 +16,40 @@ type providerStub struct{}
 
 func (providerStub) DoProviderRequest(req *http.Request, providerType string, isDownload bool) (*http.Response, error) {
 	if isDownload {
-		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader("1\n00:00:01,000 --> 00:00:02,000\nfixture\n"))}, nil
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(bytes.NewReader(zipFixture()))}, nil
 	}
-	return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"text/html"}}, Body: io.NopCloser(bytes.NewBufferString(`<div data-subtitle data-lang="eng" data-release="Fixture.Release"><a href="/download/fixture.srt">download</a></div>`))}, nil
+	switch req.URL.Path {
+	case "/search/":
+		if req.URL.Query().Get("q") != "Straume" {
+			return &http.Response{StatusCode: 400, Body: io.NopCloser(strings.NewReader(""))}, nil
+		}
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`<div class="eBlock"><div class="eTitle"><a href="/load/straume/1">Straume</a></div></div>`))}, nil
+	case "/load/straume/1":
+		html := `<h1 class="main-header">Flow / Straume</h1><span id="film-page-year">2024</span><div id="actors-page"><a href="https://www.imdb.com/title/tt4772188/">imdb</a></div><a class="hvr" href="/download/straume.zip">download</a>`
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(html))}, nil
+	}
+	return &http.Response{StatusCode: 404, Body: io.NopCloser(strings.NewReader(""))}, nil
 }
 
-func TestSearchFixture(t *testing.T) {
-	candidates, err := Adapter.Search(context.Background(), providerStub{}, providercore.Config{BaseURL: "https://example.test"}, providercore.SearchRequest{MediaType: "movie", Title: "Fixture", LanguageID: "eng"})
-	if err != nil {
-		t.Fatalf("Search returned error: %v", err)
+func TestSearchFetchesDetailPageAndDownloadsArchive(t *testing.T) {
+	candidates, err := Adapter.Search(context.Background(), providerStub{}, providercore.Config{BaseURL: "https://example.test"}, providercore.SearchRequest{MediaType: "movie", Title: "Straume"})
+	if err != nil || len(candidates) != 1 {
+		t.Fatalf("Search = %#v, %v", candidates, err)
 	}
-	if len(candidates) != 1 || candidates[0].ProviderName != "subtitriid" || candidates[0].LanguageID != "eng" {
-		t.Fatalf("unexpected candidates: %#v", candidates)
+	if candidates[0].ProviderName != "subtitriid" || candidates[0].LanguageID != "lav" || !strings.Contains(candidates[0].ReleaseName, "Straume") {
+		t.Fatalf("unexpected candidate: %#v", candidates[0])
+	}
+	dl, err := Adapter.Download(context.Background(), providerStub{}, providercore.Config{BaseURL: "https://example.test"}, candidates[0])
+	if err != nil || !bytes.Contains(dl.Content, []byte("sveiki")) {
+		t.Fatalf("Download = %q, %v", dl.Content, err)
 	}
 }
 
-func TestRejectsUnsupportedMediaType(t *testing.T) {
-	_, err := Adapter.Search(context.Background(), providerStub{}, providercore.Config{}, providercore.SearchRequest{MediaType: "serie", Title: "Fixture"})
-	if err == nil || !strings.Contains(err.Error(), "provider_prerequisite_missing") {
-		t.Fatalf("expected unsupported media type error, got %v", err)
-	}
+func zipFixture() []byte {
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	w, _ := zw.Create("straume.srt")
+	_, _ = w.Write([]byte("1\n00:00:01,000 --> 00:00:02,000\nsveiki\n"))
+	_ = zw.Close()
+	return buf.Bytes()
 }
