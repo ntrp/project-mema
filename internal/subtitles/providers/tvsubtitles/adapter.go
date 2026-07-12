@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -19,6 +22,9 @@ const defaultBaseURL = "https://tvsubtitles.net"
 var Adapter providercore.Adapter = adapter{}
 
 type adapter struct{}
+
+var idPattern = regexp.MustCompile(`(tvshow|episode|subtitle)-(\d+)`)
+var scriptPartPattern = regexp.MustCompile(`(?m)s\d+\s*=\s*'([^']*)';`)
 
 func (adapter) Test(ctx context.Context, svc providercore.Service, cfg providercore.Config) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sitehtml.BaseURL(cfg, defaultBaseURL), nil)
@@ -35,17 +41,16 @@ func (adapter) Search(ctx context.Context, svc providercore.Service, cfg provide
 	if sr.SeasonNumber == nil || sr.EpisodeNumber == nil {
 		return nil, fmt.Errorf("%w: season and episode required", providercore.ErrProviderPrerequisiteMissing)
 	}
-	base := sitehtml.BaseURL(cfg, defaultBaseURL)
-	showURL, err := tvSearchShow(ctx, svc, base, sr)
+	base := strings.TrimRight(sitehtml.BaseURL(cfg, defaultBaseURL), "/")
+	showID, err := searchShowID(ctx, svc, base, sr.Title)
 	if err != nil {
 		return nil, err
 	}
-	seasonURL := sitehtml.Resolve(showURL, fmt.Sprintf("season-%d.html", *sr.SeasonNumber))
-	episodeURL, err := tvFindEpisode(ctx, svc, seasonURL, sr)
+	episodeID, err := findEpisodeID(ctx, svc, base, showID, *sr.SeasonNumber, *sr.EpisodeNumber)
 	if err != nil {
 		return nil, err
 	}
-	return tvFindSubtitles(ctx, svc, episodeURL, sr.LanguageID)
+	return findSubtitles(ctx, svc, base, episodeID, sr.LanguageID)
 }
 
 func (adapter) Download(ctx context.Context, svc providercore.Service, _ providercore.Config, cand providercore.Candidate) (providercore.Download, error) {
@@ -56,64 +61,93 @@ func (adapter) Download(ctx context.Context, svc providercore.Service, _ provide
 	if err != nil {
 		return providercore.Download{}, err
 	}
-	return sitehtml.Download(req, svc, key, false, cand.ReleaseName)
+	doc, _, err := sitehtml.DoHTML(svc, req, key)
+	if err != nil {
+		return providercore.Download{}, err
+	}
+	parts := scriptPartPattern.FindAllStringSubmatch(doc.Text(), -1)
+	if len(parts) == 0 {
+		html, htmlErr := doc.Html()
+		if htmlErr != nil {
+			return providercore.Download{}, htmlErr
+		}
+		parts = scriptPartPattern.FindAllStringSubmatch(html, -1)
+	}
+	var relative strings.Builder
+	for _, part := range parts {
+		relative.WriteString(part[1])
+	}
+	if relative.Len() == 0 {
+		return providercore.Download{}, fmt.Errorf("%w: download link missing", providercore.ErrProviderBrokenUpstream)
+	}
+	downloadURL := sitehtml.Resolve(cand.SourceURL, relative.String())
+	downloadReq, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
+	if err != nil {
+		return providercore.Download{}, err
+	}
+	return sitehtml.Download(downloadReq, svc, key, true, "subtitle.zip")
 }
 
-func tvSearchShow(ctx context.Context, svc providercore.Service, base string, sr providercore.SearchRequest) (string, error) {
-	form := url.Values{"q": {sr.Title}}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/search.php", strings.NewReader(form.Encode()))
+func searchShowID(ctx context.Context, svc providercore.Service, base, title string) (int64, error) {
+	form := url.Values{"qs": {title}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/search1.php", strings.NewReader(form.Encode()))
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	doc, _, err := sitehtml.DoHTML(svc, req, key)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	showURL := ""
-	doc.Find("a[href]").EachWithBreak(func(_ int, link *goquery.Selection) bool {
+	var id int64
+	doc.Find(`div.left li div a[href^="/tvshow-"], a[href^="/tvshow-"]`).EachWithBreak(func(_ int, link *goquery.Selection) bool {
 		href, _ := link.Attr("href")
-		lower := strings.ToLower(href + " " + link.Text())
-		if strings.Contains(lower, "tvshow") || strings.Contains(lower, strings.ToLower(sr.Title)) {
-			showURL = sitehtml.Resolve(base+"/search.php", href)
+		match := idPattern.FindStringSubmatch(href)
+		if len(match) == 3 && strings.Contains(strings.ToLower(link.Text()), strings.ToLower(title)) {
+			id, _ = strconv.ParseInt(match[2], 10, 64)
 			return false
 		}
 		return true
 	})
-	if showURL == "" {
-		return "", fmt.Errorf("%w: show not found", providercore.ErrProviderBrokenUpstream)
+	if id == 0 {
+		return 0, fmt.Errorf("%w: show not found", providercore.ErrProviderBrokenUpstream)
 	}
-	return showURL, nil
+	return id, nil
 }
 
-func tvFindEpisode(ctx context.Context, svc providercore.Service, seasonURL string, sr providercore.SearchRequest) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, seasonURL, nil)
+func findEpisodeID(ctx context.Context, svc providercore.Service, base string, showID int64, season, episode int32) (int64, error) {
+	raw := fmt.Sprintf("%s/tvshow-%d-%d.html", base, showID, season)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, raw, nil)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	doc, _, err := sitehtml.DoHTML(svc, req, key)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	episodeURL := ""
-	episodeText := fmt.Sprintf("x%02d", *sr.EpisodeNumber)
-	doc.Find("a[href]").EachWithBreak(func(_ int, link *goquery.Selection) bool {
-		href, _ := link.Attr("href")
-		text := strings.ToLower(link.Text() + " " + href)
-		if strings.Contains(text, episodeText) || strings.Contains(text, fmt.Sprintf("episode-%d", *sr.EpisodeNumber)) {
-			episodeURL = sitehtml.Resolve(seasonURL, href)
+	var id int64
+	doc.Find("table#table5 tr").EachWithBreak(func(_ int, row *goquery.Selection) bool {
+		cells := row.Find("td")
+		if cells.Length() < 2 || !strings.Contains(strings.TrimSpace(cells.Eq(0).Text()), fmt.Sprintf("x%02d", episode)) {
+			return true
+		}
+		href, _ := cells.Eq(1).Find(`a[href^="episode-"]`).Attr("href")
+		match := idPattern.FindStringSubmatch(href)
+		if len(match) == 3 {
+			id, _ = strconv.ParseInt(match[2], 10, 64)
 			return false
 		}
 		return true
 	})
-	if episodeURL == "" {
-		return "", fmt.Errorf("%w: episode not found", providercore.ErrProviderBrokenUpstream)
+	if id == 0 {
+		return 0, fmt.Errorf("%w: episode not found", providercore.ErrProviderBrokenUpstream)
 	}
-	return episodeURL, nil
+	return id, nil
 }
 
-func tvFindSubtitles(ctx context.Context, svc providercore.Service, episodeURL, languageID string) ([]providercore.Candidate, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, episodeURL, nil)
+func findSubtitles(ctx context.Context, svc providercore.Service, base string, episodeID int64, fallbackLanguage string) ([]providercore.Candidate, error) {
+	raw := fmt.Sprintf("%s/episode-%d.html", base, episodeID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, raw, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -121,21 +155,24 @@ func tvFindSubtitles(ctx context.Context, svc providercore.Service, episodeURL, 
 	if err != nil {
 		return nil, err
 	}
-	var candidates []providercore.Candidate
-	doc.Find("a[href]").Each(func(_ int, link *goquery.Selection) {
-		href, _ := link.Attr("href")
-		lower := strings.ToLower(href)
-		if !strings.Contains(lower, "download") && !strings.Contains(lower, "subtitle") {
+	var out []providercore.Candidate
+	doc.Find(".subtitlen").Each(func(_ int, item *goquery.Selection) {
+		parent := item.Parent()
+		href, _ := parent.Attr("href")
+		match := idPattern.FindStringSubmatch(href)
+		if len(match) != 3 {
 			return
 		}
-		lang := languageID
-		if data := sitehtml.Attr(link, "data-lang", "data-language"); data != "" {
-			lang = data
+		id, _ := strconv.ParseInt(match[2], 10, 64)
+		lang := fallbackLanguage
+		if src, ok := item.Find("h5 img").Attr("src"); ok {
+			lang = strings.TrimSuffix(path.Base(src), path.Ext(src))
 		}
-		candidates = append(candidates, providercore.Candidate{ProviderName: key, LanguageID: lang, Format: "srt", ReleaseName: sitehtml.Text(link), SourceURL: sitehtml.Resolve(episodeURL, href), SourceRef: episodeURL})
+		release := strings.TrimSpace(item.Find("h5").Text())
+		out = append(out, providercore.Candidate{ProviderName: key, LanguageID: lang, FileID: id, Format: "srt", ReleaseName: release, SourceURL: fmt.Sprintf("%s/download-%d.html", base, id), SourceRef: raw})
 	})
-	if len(candidates) == 0 {
-		return nil, fmt.Errorf("%w: no subtitle links found", providercore.ErrProviderBrokenUpstream)
+	if len(out) == 0 {
+		return nil, fmt.Errorf("%w: no subtitles found", providercore.ErrProviderBrokenUpstream)
 	}
-	return candidates, nil
+	return out, nil
 }
