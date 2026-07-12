@@ -255,7 +255,7 @@
     "displayName": "BSPlayer",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime support reports the Bazarr-documented broken SOAP search upstream honestly; gzip downloads are supported for existing candidates.",
+    "runtimeMessage": "Runtime support implements SOAP hash search and gzip subtitle downloads.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -263,7 +263,7 @@
     "dependencies": {
       "archive": true
     },
-    "warning": "BSPlayer search is disabled because the upstream SOAP API is unreliable.",
+    "warning": "The upstream SOAP API is historically unreliable and may be unavailable intermittently.",
     "outboundPolicy": {
       "allowedBaseHosts": [
         "*.api.bsplayer-subtitles.com"
