@@ -3,6 +3,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	"media-manager/internal/subtitles/catalog"
@@ -18,6 +19,12 @@ func TestSubtitleProviderDefinitionsAreUniqueAndComplete(t *testing.T) {
 			t.Fatalf("duplicate key %q", entry.Key)
 		}
 		seen[entry.Key] = true
+		message := strings.ToLower(entry.RuntimeMessage)
+		for _, placeholder := range []string{"runtime support", "adapter implemented", "provider adapter"} {
+			if strings.Contains(message, placeholder) {
+				t.Fatalf("provider %q still uses implementation placeholder %q", entry.Key, placeholder)
+			}
+		}
 	}
 	if len(seen) != 59 {
 		t.Fatalf("expected 59 unique definitions, got %d", len(seen))

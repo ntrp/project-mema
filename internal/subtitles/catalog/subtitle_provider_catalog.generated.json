@@ -4,7 +4,7 @@
     "displayName": "Addic7Ed",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Requires a logged-in browser cookie because interactive CAPTCHA cannot be solved by the runtime.",
+    "runtimeMessage": "Community subtitles for television episodes and movies, including current releases.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -56,7 +56,7 @@
     "displayName": "Animekalesi",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Turkish anime subtitles focused on television series releases.",
     "mediaTypes": [
       "serie"
     ],
@@ -78,7 +78,7 @@
     "displayName": "Animesubinfo",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Anime subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -101,7 +101,7 @@
     "displayName": "Animetosho",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime support implemented for AniDB episode-id based anime subtitle lookup and xz downloads.",
+    "runtimeMessage": "Anime release index providing embedded subtitles and related files.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -125,7 +125,7 @@
     "displayName": "Assrt",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Chinese subtitle catalog for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -156,7 +156,7 @@
     "displayName": "Avistaz",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Private Asian media community covering films and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -204,7 +204,7 @@
     "displayName": "Bayflix",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -225,7 +225,7 @@
     "displayName": "Betaseries",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Community subtitles for television series tracked on BetaSeries.",
     "mediaTypes": [
       "serie"
     ],
@@ -255,7 +255,7 @@
     "displayName": "BSPlayer",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime support implements SOAP hash search and gzip subtitle downloads.",
+    "runtimeMessage": "Community subtitle database used by BSPlayer for automatic subtitle matching.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -280,7 +280,7 @@
     "displayName": "Cinemaz",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Private movie community focused on international and specialized cinema.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -328,7 +328,7 @@
     "displayName": "Gestdown",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Subtitle catalog for television series and episode releases.",
     "mediaTypes": [
       "serie"
     ],
@@ -348,7 +348,7 @@
     "displayName": "Greek Subs",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Greek subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -369,7 +369,7 @@
     "displayName": "Greek Subtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Greek subtitle archive for movies and television series releases.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -392,7 +392,7 @@
     "displayName": "HDBits",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Private high-definition community for movie and television releases.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -440,7 +440,7 @@
     "displayName": "Hosszupuska",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Hungarian subtitle archive focused on television series.",
     "mediaTypes": [
       "serie"
     ],
@@ -460,7 +460,7 @@
     "displayName": "Jimaku",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Japanese subtitles for anime, films, and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -511,7 +511,7 @@
     "displayName": "Karagarga",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Private community specializing in arthouse, classic, and world cinema.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -559,7 +559,7 @@
     "displayName": "Ktuvit",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported only with valid session cookies from a user-solved CAPTCHA session; missing cookies return a typed CAPTCHA/private prerequisite error.",
+    "runtimeMessage": "Hebrew subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -611,7 +611,7 @@
     "displayName": "Legendasdivx",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Portuguese subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -661,7 +661,7 @@
     "displayName": "Legendasnet",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported only with valid session cookies from a user-solved CAPTCHA session; missing cookies return a typed CAPTCHA/private prerequisite error.",
+    "runtimeMessage": "Portuguese subtitle community and release index for films and series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -726,7 +726,7 @@
     "displayName": "Napiprojekt",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime support implemented for Polish hash-based subtitle lookup and download.",
+    "runtimeMessage": "Polish subtitle database with automatic matching for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -749,7 +749,7 @@
     "displayName": "Napisy24",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Polish subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -799,7 +799,7 @@
     "displayName": "Nekur",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Movie subtitle archive hosted by the Nekur community.",
     "mediaTypes": [
       "movie"
     ],
@@ -822,7 +822,7 @@
     "displayName": "OpenSubtitles.com",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the OpenSubtitles.com HTTP API.",
+    "runtimeMessage": "Large multilingual subtitle database for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -881,7 +881,7 @@
     "displayName": "Pipocas",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Portuguese subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -931,7 +931,7 @@
     "displayName": "Prijevodionline",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Croatian subtitle archive focused on television series.",
     "mediaTypes": [
       "serie"
     ],
@@ -951,7 +951,7 @@
     "displayName": "Regielive",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Romanian subtitles for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -974,7 +974,7 @@
     "displayName": "Sous-titres.eu",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "French subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -997,7 +997,7 @@
     "displayName": "Subclub",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1018,7 +1018,7 @@
     "displayName": "Subdl",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Multilingual subtitle catalog for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1054,7 +1054,7 @@
     "displayName": "Subf2M",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Subtitle archive for movies and television series releases.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1088,7 +1088,7 @@
     "displayName": "Subs4Free",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Greek movie subtitle archive with community-contributed releases.",
     "mediaTypes": [
       "movie"
     ],
@@ -1115,7 +1115,7 @@
     "displayName": "Subs4Series",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Greek subtitle community specializing in television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1165,7 +1165,7 @@
     "displayName": "Subsarr",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Self-hosted subtitle search service for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1192,7 +1192,7 @@
     "displayName": "Subscenter",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported only with valid session cookies from a user-solved CAPTCHA session; missing cookies return a typed CAPTCHA/private prerequisite error.",
+    "runtimeMessage": "Arabic subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1244,7 +1244,7 @@
     "displayName": "Subsource",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Multilingual subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1279,7 +1279,7 @@
     "displayName": "Subs.ro",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Romanian subtitle catalog for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1312,7 +1312,7 @@
     "displayName": "Subs.sab.bz",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1334,7 +1334,7 @@
     "displayName": "Subsunacs",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Bulgarian subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1357,7 +1357,7 @@
     "displayName": "Subsynchro",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "French movie subtitle catalog with searchable downloads.",
     "mediaTypes": [
       "movie"
     ],
@@ -1377,7 +1377,7 @@
     "displayName": "Subt.is",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Movie subtitle catalog spanning multiple languages and releases.",
     "mediaTypes": [
       "movie"
     ],
@@ -1397,7 +1397,7 @@
     "displayName": "Subtitrari Noi",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Romanian subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1420,7 +1420,7 @@
     "displayName": "Subtitriid",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Community movie subtitle archive with downloadable releases.",
     "mediaTypes": [
       "movie"
     ],
@@ -1442,7 +1442,7 @@
     "displayName": "Subtitulamos.tv",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Spanish subtitles for television series and episodes.",
     "mediaTypes": [
       "serie"
     ],
@@ -1462,7 +1462,7 @@
     "displayName": "SubX",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through the native Go structured HTTP provider adapter.",
+    "runtimeMessage": "Subtitle search service for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1493,7 +1493,7 @@
     "displayName": "Super Subtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Hungarian subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1515,7 +1515,7 @@
     "displayName": "Titlovi",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Balkan subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1565,7 +1565,7 @@
     "displayName": "Titrari",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Romanian subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1588,7 +1588,7 @@
     "displayName": "Titulky",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Czech and Slovak subtitle community for films and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1638,7 +1638,7 @@
     "displayName": "Turkcealtyaziorg",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Turkish subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1688,7 +1688,7 @@
     "displayName": "TVsubtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "International subtitle database dedicated to television series.",
     "mediaTypes": [
       "serie"
     ],
@@ -1709,7 +1709,7 @@
     "displayName": "Vladoonmooo",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Subtitle archive for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1732,7 +1732,7 @@
     "displayName": "Whisper",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported through a local Whisper-compatible transcription endpoint.",
+    "runtimeMessage": "Local AI speech-to-text transcription for generating subtitles from media.",
     "mediaTypes": [
       "movie",
       "serie",
@@ -1787,7 +1787,7 @@
     "displayName": "Wizdom",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Hebrew subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1808,7 +1808,7 @@
     "displayName": "X Subs",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Greek subtitle community for films and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1858,7 +1858,7 @@
     "displayName": "Yavka.net",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Bulgarian subtitle community for movies and television series.",
     "mediaTypes": [
       "movie",
       "serie"
@@ -1879,7 +1879,7 @@
     "displayName": "YIFY Subtitles",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Native public HTML adapter implemented.",
+    "runtimeMessage": "Movie subtitles matched to YIFY release uploads.",
     "mediaTypes": [
       "movie"
     ],
@@ -1901,7 +1901,7 @@
     "displayName": "Zimuku",
     "provenanceCommit": "e54edd769b7062280118a14aa0fef3808829714d",
     "runtimeStatus": "supported",
-    "runtimeMessage": "Runtime supported for configured members with valid session cookies; unauthenticated use returns a typed private-membership error.",
+    "runtimeMessage": "Chinese subtitle library and community for movies and television shows.",
     "mediaTypes": [
       "movie",
       "serie"
