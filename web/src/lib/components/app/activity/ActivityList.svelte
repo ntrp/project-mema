@@ -60,6 +60,13 @@
 		activities.filter((activity) => visibleInActivitySection(activity, section))
 	);
 	const heading = $derived(activitySectionHeading(section));
+	const sectionDescription = $derived(
+		section === 'history'
+			? 'Completed and cancelled background activity appears here so you can review finished media work.'
+			: section === 'blocklist'
+				? 'Automatic blocks for broken or temporarily unavailable releases will appear here and expire according to the indexer search setting.'
+				: 'Queued downloads and in-progress grabs appear here while Mema fetches monitored media.'
+	);
 
 	function openManualImport(activity: DownloadActivity) {
 		manualImportActivity = activity;
@@ -103,13 +110,9 @@
 	{:else}
 		<EmptyState
 			class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
-		>
-			<p class="m-0 text-lg font-black text-foreground">{heading.empty}</p>
-			<p class="m-0 max-w-2xl text-sm font-semibold text-muted-foreground">
-				Automatic blocks for broken or temporarily unavailable releases will appear here and expire
-				according to the indexer search setting.
-			</p>
-		</EmptyState>
+			title={heading.empty}
+			description={sectionDescription}
+		/>
 	{/if}
 {:else if visibleActivities.length > 0}
 	<Card class="overflow-hidden p-0">
@@ -183,9 +186,9 @@
 {:else}
 	<EmptyState
 		class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
-	>
-		<p class="m-0 text-lg font-black text-foreground">{heading.empty}</p>
-	</EmptyState>
+		title={heading.empty}
+		description={sectionDescription}
+	/>
 {/if}
 
 {#if manualImportActivity}

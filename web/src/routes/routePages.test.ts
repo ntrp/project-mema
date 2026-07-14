@@ -34,10 +34,12 @@ describe('top-level route pages (SCN-ROUTES-001)', () => {
 		const activity = renderPage(ActivityPage);
 		expect(activity.body).toContain('Activity queue');
 		expect(activity.body).toContain('No queued activity');
+		expect(activity.body).toContain('Queued downloads and in-progress grabs appear here');
 
 		const activityHistory = renderPage(ActivityHistoryPage);
 		expect(activityHistory.body).toContain('Activity history');
 		expect(activityHistory.body).toContain('No completed background activity yet');
+		expect(activityHistory.body).toContain('review finished media work');
 
 		const activityBlocklist = renderPage(ActivityBlocklistPage);
 		expect(activityBlocklist.body).toContain('Release blocklist');
