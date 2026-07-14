@@ -15,11 +15,11 @@ import { renderPage } from './routeTestHelpers';
 describe('top-level route pages (SCN-ROUTES-001)', () => {
 	it('renders discover and library route sections from shell state', () => {
 		const root = renderPage(RootPage);
-		expect(root.body).toContain('Browse media from metadata providers');
+		expect(root.body).toContain('Browse latest media');
 		expect(root.body).toContain('No discovery sections available');
 
 		const discover = renderPage(DiscoverPage);
-		expect(discover.body).toContain('Browse media from metadata providers');
+		expect(discover.body).toContain('Browse latest media');
 
 		const movies = renderPage(MoviesPage);
 		expect(movies.body).toContain('Added movies');

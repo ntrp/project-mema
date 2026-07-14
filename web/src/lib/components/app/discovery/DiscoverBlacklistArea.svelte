@@ -28,12 +28,7 @@
 	}
 </script>
 
-<PageHeading
-	eyebrow="Discover"
-	title="Blacklist"
-	titleId="home-title"
-	description={`${items.length} hidden titles`}
-/>
+<PageHeading eyebrow="Discover" title="Blacklist" titleId="home-title" />
 
 {#if loading}
 	<div

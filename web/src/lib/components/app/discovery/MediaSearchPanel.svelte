@@ -105,7 +105,7 @@
 	}
 </script>
 
-<PageHeading eyebrow="Discover" title="Browse media from metadata providers" titleId="home-title" />
+<PageHeading eyebrow="Discover" title="Browse latest media" titleId="home-title" />
 
 {#if loading}
 	<div class="min-w-0" aria-busy="true" aria-live="polite">

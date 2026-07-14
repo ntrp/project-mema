@@ -25,7 +25,7 @@
 
 <div
 	class={cn(
-		'relative mb-2 grid gap-1',
+		'relative mb-5 grid gap-1',
 		actions && 'grid-cols-[minmax(0,1fr)_auto] items-start gap-3',
 		className
 	)}
