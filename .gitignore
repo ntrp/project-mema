@@ -35,3 +35,4 @@ output/playwright/
 internal/storage/seeds/dev.local.sql
 scripts/seeds/dev.local.sql
 .pi-subagents/
+.pi/remote-pi/

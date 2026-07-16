@@ -2,7 +2,34 @@
 
 ## Status
 
-Draft
+Implemented with deferred optional renderer surfaces
+
+Last reconciled with the application: **2026-07-14**.
+
+## Implementation Snapshot
+
+Epic [#88](https://github.com/ntrp/project-mema/issues/88) and child stories
+89–108 are closed. The server, profiles, diagnostics, security, compatibility,
+and isolated control-point contracts were verified with `make check` when the
+epic closed on 2026-07-07.
+
+- [x] Shared delivery, settings/lifecycle, SSDP, device/service descriptions,
+      SOAP, ContentDirectory, DIDL-Lite, browse/search, and ConnectionManager.
+- [x] Direct/remux/transcode resources, artwork, thumbnails, subtitles, eventing,
+      update IDs, security limits, and audit logging.
+- [x] Persisted renderer profiles, device overrides, capability decisions,
+      diagnostics UI, and compatibility matrix.
+- [x] Isolated MediaRenderer description contracts plus AVTransport and
+      RenderingControl clients.
+- [ ] Renderer discovery and explicit user-facing control-point actions are not
+      exposed through the current API/UI.
+- [ ] Mema does not advertise as a MediaRenderer and has no local playback target.
+- [ ] A persisted device override with `allowed: false` is excluded from profile
+      matching, but it is not yet enforced as network access denial.
+
+Primary implementation: `internal/dlna/`, `internal/storage/dlna_*`,
+`internal/httpapi/dlna_*`, `internal/delivery/`, and
+`web/src/lib/components/settings/dlna/`.
 
 ## Epic Goal
 
@@ -552,30 +579,27 @@ Dependencies: DLNA-016, DLNA-018.
 
 ## Story DLNA-020: Optional MediaRenderer and Control Point Capabilities
 
-Goal: Add renderer/control capabilities only after server mode is stable.
+Implementation state:
 
-Scope:
+- [x] Server-only DLNA was completed before control-point contracts were added.
+- [x] MediaRenderer device-description parsing is isolated under
+      `internal/dlna/controlpoint/`.
+- [x] AVTransport clients support SetAVTransportURI, Play, Pause, Stop, Seek,
+      Next, and Previous.
+- [x] RenderingControl clients support volume and mute.
+- [x] Fake-renderer SOAP and server-advertisement contract tests are present.
+- [x] MediaServer advertisement remains isolated from MediaRenderer,
+      AVTransport, and RenderingControl services.
+- [ ] Active renderer discovery and explicit UI/API controls remain deferred.
+- [ ] Advertising Mema as a MediaRenderer remains deferred until a local
+      playback target exists.
 
-- Discover MediaRenderer devices as a control point.
-- Support AVTransport actions such as SetAVTransportURI, Play, Pause, Stop,
-  Seek, Next, and Previous.
-- Support RenderingControl actions such as volume and mute.
-- Optionally expose Mema as a MediaRenderer if a local playback target exists.
-
-Acceptance criteria:
-
-- Server-only DLNA is complete before this story starts.
-- Control point actions are available only through explicit UI.
-- Renderer discovery does not interfere with MediaServer advertisement.
-
-Tests:
-
-- UPnP client contract tests.
-- Fake renderer SOAP tests.
+Delivered foundation: issue
+[#108](https://github.com/ntrp/project-mema/issues/108), commit `0cce215`.
 
 Dependencies: DLNA-019.
 
-## Implementation Order
+## Delivered Implementation Order
 
 1. DLNA-001
 2. DLNA-002

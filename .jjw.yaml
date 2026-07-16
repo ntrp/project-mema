@@ -1,0 +1,16 @@
+# jjw configuration
+# See: https://github.com/aranw/jjw
+
+version: 1
+
+# Directory where workspaces are created (relative to this file)
+workspace_dir: workspaces
+
+# Bookmark naming pattern ({name} is replaced with the workspace name)
+bookmark_pattern: "{name}"
+
+# Branch to compare against for status (ahead/behind/merged)
+default_branch: main
+
+# Subdirectory containing the jj repository (use "." if .jjw.yaml is inside the repo)
+repo_dir: "."
