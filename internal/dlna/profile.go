@@ -153,6 +153,19 @@ func (m *Manager) ExplainRendererProfile(ctx context.Context, request RendererRe
 	return matchRendererProfiles(profiles, deviceOverrides, request, overrides, rememberedProfileID)
 }
 
+func (m *Manager) rendererRequestDenied(r *http.Request) bool {
+	_, overrides := m.rendererProfileCache(r.Context())
+	request := RendererRequestFromHTTP(r)
+	if request.RendererUUID == "" {
+		m.mu.Lock()
+		if client, ok := m.recentClients[request.ClientIP]; ok {
+			request.RendererUUID = client.RendererUUID
+		}
+		m.mu.Unlock()
+	}
+	return rendererOverrideDenied(overrides, request)
+}
+
 func (m *Manager) RendererProfileFromRequest(r *http.Request) RendererProfile {
 	return m.ExplainRendererProfile(r.Context(), RendererRequestFromHTTP(r)).Profile
 }

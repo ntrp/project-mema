@@ -24,8 +24,8 @@ epic closed on 2026-07-07.
 - [ ] Renderer discovery and explicit user-facing control-point actions are not
       exposed through the current API/UI.
 - [ ] Mema does not advertise as a MediaRenderer and has no local playback target.
-- [ ] A persisted device override with `allowed: false` is excluded from profile
-      matching, but it is not yet enforced as network access denial.
+- [x] A persisted device override with `allowed: false` denies DLNA requests
+      at the request boundary before catalogue or delivery work.
 
 Primary implementation: `internal/dlna/`, `internal/storage/dlna_*`,
 `internal/httpapi/dlna_*`, `internal/delivery/`, and

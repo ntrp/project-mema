@@ -187,10 +187,7 @@ func rendererProfileFromStorage(row storage.DLNARendererProfile) RendererProfile
 func rendererOverridesFromStorage(rows []storage.DLNARendererDeviceOverride) []rendererDeviceOverride {
 	overrides := make([]rendererDeviceOverride, 0, len(rows))
 	for _, row := range rows {
-		if !row.Allowed {
-			continue
-		}
-		override := rendererDeviceOverride{ProfileID: row.ProfileID}
+		override := rendererDeviceOverride{ProfileID: row.ProfileID, Allowed: row.Allowed}
 		if row.RendererUUID != nil {
 			override.RendererUUID = *row.RendererUUID
 		}

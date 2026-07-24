@@ -25,8 +25,7 @@ The planned server/profile scope was delivered through epic
       deferred.
 - [ ] Mema MediaRenderer advertisement remains deferred without a local playback
       target.
-- [ ] `allowed: false` device overrides are not yet enforced as request-level
-      network access denial.
+- [x] `allowed: false` device overrides deny requests at the DLNA boundary.
 - [ ] Physical-device verification remains an ongoing compatibility activity,
       not a guarantee implied by seed-catalogue coverage.
 
@@ -71,8 +70,16 @@ Mema needs per-device configuration layered above the seeded profile:
 3. Seeded or cloned renderer profile.
 4. Generic renderer fallback.
 
-Device overrides should support profile assignment, display name, allowed
-state, delivery policy overrides, and notes.
+Device overrides support profile assignment, display name, allowed state,
+delivery policy overrides, and notes. No matching override means allowed with
+normal profile matching. `allowed: true` explicitly allows and assigns the
+selected profile but does not bypass Allowed CIDRs. `allowed: false` denies all
+DLNA traffic before catalogue, stream, transcode, or process work. UUID is
+evaluated before IP, so an explicit UUID allow beats an IP deny.
+
+Denied SOAP actions receive UPnP fault 606 (`Action not authorized`); all other
+denied DLNA resources receive HTTP 403. Recent-client diagnostics and the DLNA
+audit log expose the denial.
 
 ### UPnP and DLNA Server
 

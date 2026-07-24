@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"media-manager/internal/dlna/soap"
 	"media-manager/internal/storage"
 )
 
@@ -35,6 +36,15 @@ func (m *Manager) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !m.allowRequest(r) {
 			http.Error(w, "DLNA client is not allowed", http.StatusForbidden)
+			return
+		}
+		if m.rendererRequestDenied(r) {
+			m.recordDeniedRequest(r)
+			if isSOAPControlPath(r.URL.Path) {
+				soap.WriteFault(w, soap.Error{Code: 606, Description: "Action not authorized"})
+				return
+			}
+			http.Error(w, "DLNA device override denied", http.StatusForbidden)
 			return
 		}
 		if m.rateLimiter != nil && !m.rateLimiter.Allow(clientIP(r), time.Now()) {

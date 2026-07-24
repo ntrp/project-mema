@@ -189,59 +189,35 @@ Thumbnail and remux/transcode caches are pruned on DLNA startup by age and total
 size. The DLNA HTTP handler also applies a small per-client request rate limit
 before SOAP, resource, artwork, and subtitle handlers run.
 
-## Renderer Profiles Today
+## Renderer Profiles
 
-Renderer profiles are currently Go structs in `internal/dlna/profile.go`.
-
-Current seeded profiles:
-
-- Generic DLNA
-- VLC
-- Kodi
-- Samsung TV
-- LG TV
-- Sony TV
-- BubbleUPnP
-- Chromecast
-
-Matching currently uses:
-
-1. manual IP override
-2. User-Agent, friendly name, and HTTP header token matching
-3. sticky IP reuse from recent clients
-4. generic fallback
-
-Sticky IP reuse is important because many televisions send useful DLNA headers
-for SOAP but weaker browser-like headers for media requests. Once a client IP
-is identified as LG, later resource requests from the same IP can keep the LG
-profile.
-
-Profiles currently affect:
-
-- HLS preference or avoidance
-- eventing disablement
-- subtitle format list
-- response headers
-- advertised source protocol order
-- browser/WebKit delivery profile selection
-- profile-specific remux/transcode output containers and seek mode
-
-## Planned Profile Architecture
-
-Epic `#109` replaces hardcoded renderer profiles with persisted, seeded, and
-editable renderer profiles.
-
-Future profile matching order:
+Renderer profiles are persisted, seeded, editable records loaded into the DLNA
+manager's matcher cache. Matching order is:
 
 1. manual device override by UUID
 2. manual device override by IP
-3. sticky connected-renderer association by IP
-4. UPnP UUID and device details
-5. HTTP headers
-6. default renderer profile
+3. structured automatic profile rules
+4. sticky recent-client profile by IP
+5. generic fallback
 
-Future profile data is structured rather than copied from UMS configuration
-files. Each profile can define:
+Sticky IP reuse is important because many televisions send useful DLNA headers
+for SOAP but weaker browser-like headers for media requests. A later resource
+request from the same IP can therefore keep the recognized profile.
+
+Device access follows the same UUID-before-IP precedence. No matching override
+means allowed with normal profile matching. `allowed: true` explicitly allows
+and assigns its profile, but does not bypass Allowed CIDRs. `allowed: false`
+denies all DLNA routes before catalogue, stream, transcode, or process work. An
+allowed UUID therefore beats a denied IP. SOAP denial returns UPnP fault 606;
+non-SOAP denial returns HTTP 403. Recent-client diagnostics and the DLNA audit
+log expose the denial.
+
+Profiles affect HLS preference, eventing, subtitles, response headers, source
+protocol order, delivery selection, remux/transcode containers, seek mode,
+capability decisions, DIDL metadata, and artwork behavior.
+
+Profile data is structured rather than copied from UMS configuration files.
+Each profile can define:
 
 - identity and seed version
 - vendor and device class
@@ -254,9 +230,8 @@ files. Each profile can define:
 - metadata and tree compatibility flags
 - compatibility notes and confidence level
 
-Seeded profiles must cover the UMS-supported device families in clean-room
-form. User edits must survive seed upgrades, and each seeded profile must be
-resettable or cloneable.
+Seeded profiles cover the supported device families in clean-room form. User
+edits survive seed upgrades, and each seeded profile is resettable or cloneable.
 
 The storage layer now keeps two profile copies: seeded defaults and editable
 runtime profiles. `internal/storage/seeds/defaults.sql` refreshes defaults on

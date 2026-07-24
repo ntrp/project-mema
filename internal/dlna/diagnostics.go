@@ -2,6 +2,7 @@ package dlna
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sort"
 	"strconv"
@@ -34,6 +35,22 @@ type StreamStatus struct {
 	Path      string
 	ProfileID string
 	StartedAt time.Time
+}
+
+var errRendererOverrideDenied = errors.New("DLNA device override denied")
+
+func (m *Manager) recordDeniedRequest(r *http.Request) {
+	action := ""
+	if _, parsedAction, ok := soap.ParseSOAPAction(r.Header.Get("SOAPACTION")); ok {
+		action = parsedAction
+	}
+	m.recordClient(r, action, nil, errRendererOverrideDenied)
+	m.audit(r.Context(), "DLNA request denied", map[string]any{
+		"reason": "device override",
+		"method": r.Method,
+		"path":   r.URL.Path,
+		"action": action,
+	})
 }
 
 func (m *Manager) recordHTTPClient(r *http.Request) {

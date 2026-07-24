@@ -79,9 +79,6 @@ GitHub tracker has no open implementation issue for them.
       and matched, but conversion between bitmap subtitles and
       SubRip/WebVTT/ASS/SSA is not implemented
       (`docs/website/src/content/docs/user-guide/using/qualities-formats-profiles.md`).
-- [ ] **Per-device DLNA allow/deny enforcement** — overrides persist an
-      `allowed` field, but `allowed: false` currently removes the override from
-      profile matching rather than denying the renderer at the request boundary.
 - [ ] **Decide the user-facing DLNA control-point surface** — backend
       AVTransport and RenderingControl clients exist, but there is no current
       route/API for renderer discovery or play/pause/seek/volume actions. Issue

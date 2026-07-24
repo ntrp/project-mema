@@ -24,8 +24,8 @@ The clean-room server specification was delivered by epic
       foundation.
 - [ ] Active MediaRenderer discovery, control-point UI/API, and optional Mema
       MediaRenderer advertisement remain outside the delivered server surface.
-- [ ] A false device `allowed` override is not yet enforced as request-level
-      network denial.
+- [x] A false device `allowed` override denies SOAP and resource requests at the
+      request boundary before catalogue or delivery work.
 
 Primary implementation: `internal/dlna/`, `internal/delivery/`,
 `internal/httpapi/dlna_*`, `internal/storage/dlna_*`, and the DLNA settings UI.
@@ -467,6 +467,15 @@ DLNA must be explicitly enabled. Defaults:
 - Limits on concurrent transcodes and probes.
 - Audit log for client IP, renderer identity, action, media item, and delivery
   method.
+
+Device overrides add a second access decision after the CIDR allowlist. Without
+a matching override, requests are allowed. An `allowed: true` override allows
+and assigns its profile but cannot bypass Allowed CIDRs. An `allowed: false`
+override denies every DLNA route before catalogue, stream, transcode, or process
+work. UUID overrides take precedence over IP overrides, including an explicit
+UUID allow paired with an IP deny. SOAP denial is UPnP fault 606 (`Action not
+authorized`); non-SOAP denial is HTTP 403. Both are recorded in recent-client
+diagnostics and the DLNA audit log.
 
 ## Settings and UI
 
