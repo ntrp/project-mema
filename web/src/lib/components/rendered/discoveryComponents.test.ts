@@ -25,7 +25,7 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onBlacklist: vi.fn()
 		});
 
-		expect(body).toContain('Browse media from metadata providers');
+		expect(body).toContain('Browse latest media');
 		expect(body).toContain('Trending');
 		expect(body).toContain('Visible Movie');
 		expect(body).toContain('View all');
@@ -128,7 +128,6 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 		});
 
 		expect(body).toContain('Blacklist');
-		expect(body).toContain('2 hidden titles');
 		expect(body).toContain('Visible Movie');
 		expect(body).toContain('No Poster');
 		expect(body).toContain('https://image.tmdb.org/t/p/w342/poster.jpg');

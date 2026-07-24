@@ -49,9 +49,12 @@ func insertReleaseCandidate(ctx context.Context, q mediaItemQuerier, mediaItemID
 	if err != nil {
 		return err
 	}
-	customFormats, err := json.Marshal(release.MatchedCustomFormats)
-	if err != nil {
-		return err
+	customFormats := []byte("[]")
+	if release.MatchedCustomFormats != nil {
+		customFormats, err = json.Marshal(release.MatchedCustomFormats)
+		if err != nil {
+			return err
+		}
 	}
 	return storagegen.New(q).AddReleaseCandidate(ctx, storagegen.AddReleaseCandidateParams{
 		ID:                   uuid.New(),

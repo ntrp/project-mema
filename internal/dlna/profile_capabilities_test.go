@@ -22,6 +22,19 @@ func TestRendererCapabilityEvaluatorDirectPlaysCompatibleMedia(t *testing.T) {
 	requireTrace(t, result.Trace, "audioCodec", "pass")
 }
 
+func TestRendererCapabilityEvaluatorDirectPlaysMatroska(t *testing.T) {
+	profile := capabilityTestProfile()
+	profile.Capabilities.Containers = append(profile.Capabilities.Containers, "mkv")
+	probe := capabilityProbe("matroska,webm", "h264", "aac", 1080)
+
+	result := EvaluateRendererCapability(profile, probe)
+
+	if result.Decision.Mode != delivery.ModeDirect || len(result.ReasonCodes) != 0 {
+		t.Fatalf("result = %#v", result)
+	}
+	requireTrace(t, result.Trace, "container", "pass")
+}
+
 func TestRendererCapabilityEvaluatorChoosesAudioTranscode(t *testing.T) {
 	profile := capabilityTestProfile()
 	probe := capabilityProbe("mov,mp4,m4a,3gp,3g2,mj2", "h264", "dts", 1080)

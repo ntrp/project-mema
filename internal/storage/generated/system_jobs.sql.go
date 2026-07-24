@@ -292,7 +292,7 @@ func (q *Queries) ListSystemJobExecutionLogs(ctx context.Context, arg ListSystem
 const listSystemJobExecutions = `-- name: ListSystemJobExecutions :many
 select river_job_id, schedule_id, classification, history_policy, status, kind, queue, attempt, max_attempts, priority, progress_percent, progress_label, progress_data, args, metadata, errors, info_message, scheduled_at, created_at, attempted_at, finalized_at, updated_at
 from app.system_job_executions
-where (cardinality($1::text[]) = 0 or status = any($1::text[]))
+where (coalesce(cardinality($1::text[]), 0) = 0 or status = any($1::text[]))
     and status in ('completed', 'cancelled', 'discarded')
     and ($2::text = '' or coalesce(schedule_id, '') = $2::text)
     and ($3::text = '' or kind = $3::text)

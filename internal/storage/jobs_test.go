@@ -190,9 +190,15 @@ func TestSCNSystem006RoutineExecutionsAreHiddenFromDefaultHistory(t *testing.T) 
 	}
 	now := time.Now().UTC()
 	finalized := now.Add(time.Minute)
-	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(201, "download_activity_sync", "download.activity_sync", "completed", now, &finalized))
-	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(202, "download_activity_sync", "download.activity_sync", "retryable", now.Add(time.Second), nil))
-	_, _ = store.UpsertSystemJobExecution(ctx, executionInput(203, "rss_sync", "media.rss_sync", "completed", now.Add(2*time.Second), &finalized))
+	for _, input := range []SystemJobExecutionInput{
+		executionInput(201, "download_activity_sync", "download.activity_sync", "completed", now, &finalized),
+		executionInput(202, "download_activity_sync", "download.activity_sync", "retryable", now.Add(time.Second), nil),
+		executionInput(203, "rss_sync", "media.rss_sync", "completed", now.Add(2*time.Second), &finalized),
+	} {
+		if _, err := store.UpsertSystemJobExecution(ctx, input); err != nil {
+			t.Fatalf("upsert execution %d: %v", input.RiverJobID, err)
+		}
+	}
 
 	defaultRows, err := store.ListSystemJobExecutions(ctx, SystemJobExecutionFilters{Limit: 10})
 	if err != nil {

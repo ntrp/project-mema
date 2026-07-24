@@ -8,7 +8,7 @@ order by created_at desc, id;
 select id, run_id, source_id, artifact_id, stream_type, input_path, provenance, created_at
 from app.media_component_assembly_inputs
 where run_id = sqlc.arg(run_id)
-order by created_at, id;
+order by (artifact_id is not null), created_at, id;
 
 -- name: GetMediaComponentAssemblyRun :one
 select id, media_item_id, base_source_id, output_path, status, tool_name, tool_summary, error_message, job_id, size_bytes, created_at, updated_at, completed_at
