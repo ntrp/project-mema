@@ -110,6 +110,10 @@ func openDatabase(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error)
 		pool.Close()
 		return nil, fmt.Errorf("database schema setup failed: %w", err)
 	}
+	if err := jobs.EnsureSchema(ctx, pool); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("job schema setup failed: %w", err)
+	}
 	if err := storage.NewSettingsStore(pool).EnsureDefaultAdminUser(ctx, cfg.AdminUsername, cfg.AdminPassword); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("default admin user setup failed: %w", err)

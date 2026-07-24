@@ -256,7 +256,8 @@ gitignored `scripts/seeds/dev.local.sql`. Missing or invalid local seed files
 are skipped with a warning. Destructive reset commands only run against local
 database hosts unless `ALLOW_REMOTE_DEV_DB_RESET=true` is set.
 
-River schema changes are handled separately through:
+The application also applies River's job schema migrations on startup. To run
+them manually without starting the server:
 
 ```sh
 make river-migrate

@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
+	"github.com/riverqueue/river/rivermigrate"
 
 	"media-manager/internal/decisions"
 	"media-manager/internal/downloadclients"
@@ -33,6 +34,17 @@ type Client struct {
 	river    *river.Client[pgx.Tx]
 	settings *storage.SettingsStore
 	events   *events.Broker
+}
+
+func EnsureSchema(ctx context.Context, pool *pgxpool.Pool) error {
+	migrator, err := rivermigrate.New(riverpgxv5.New(pool), nil)
+	if err != nil {
+		return fmt.Errorf("river migrator setup failed: %w", err)
+	}
+	if _, err := migrator.Migrate(ctx, rivermigrate.DirectionUp, nil); err != nil {
+		return fmt.Errorf("river migration failed: %w", err)
+	}
+	return nil
 }
 
 type ReleaseSearchArgs struct {
