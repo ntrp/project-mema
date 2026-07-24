@@ -73,6 +73,46 @@ func TestAniListPartialFixtureOmitsUnavailableValues(t *testing.T) {
 	}
 }
 
+func TestAniListExternalMappingsRequireProviderOwnedHosts(t *testing.T) {
+	tests := []struct {
+		name, site, rawURL, provider, entityType, externalID string
+	}{
+		{"AniDB canonical", "ignored", "https://anidb.net/anime/17617", "anidb", "serie", "17617"},
+		{"AniDB www", "ignored", "https://www.anidb.net/anime/17617", "anidb", "serie", "17617"},
+		{"TMDB canonical", "ignored", "https://themoviedb.org/movie/129", "tmdb", "movie", "129"},
+		{"TMDB www", "ignored", "https://www.themoviedb.org/tv/209867", "tmdb", "serie", "209867"},
+		{"TVDB canonical", "ignored", "https://thetvdb.com/series/123", "tvdb", "serie", "123"},
+		{"TVDB www", "ignored", "https://www.thetvdb.com/series/123", "tvdb", "serie", "123"},
+		{"malicious site label", "AniDB", "https://example.com/anime/17617", "", "", ""},
+		{"lookalike host", "AniDB", "https://evil-anidb.example/anime/17617", "", "", ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			provider, entityType, externalID := supportedExternalLink(test.site, test.rawURL, "serie")
+			if provider != test.provider || entityType != test.entityType || externalID != test.externalID {
+				t.Fatalf("mapping = %q/%q/%q", provider, entityType, externalID)
+			}
+		})
+	}
+}
+
+func TestAniListDoesNotPersistMappingsFromSpoofedExternalLinks(t *testing.T) {
+	var media anilistMedia
+	if err := json.Unmarshal([]byte(`{
+		"id": 1,
+		"externalLinks": [
+			{"site":"AniDB","url":"https://example.com/anime/17617"},
+			{"site":"Not AniDB","url":"https://evil-anidb.example/anime/17617"}
+		]
+	}`), &media); err != nil {
+		t.Fatal(err)
+	}
+	mappings := anilistMappings(media, "serie")
+	if len(mappings) != 1 || mappings[0].ProviderName != "anilist" {
+		t.Fatalf("spoofed mappings persisted: %#v", mappings)
+	}
+}
+
 func TestAniListFailuresAreTyped(t *testing.T) {
 	tests := []struct {
 		name       string

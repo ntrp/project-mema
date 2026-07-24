@@ -90,7 +90,8 @@ func (m *Manager) recordSOAPAction(ctx context.Context, action string, args map[
 }
 
 func (m *Manager) recordClient(r *http.Request, action string, args map[string]string, err error) {
-	request := RendererRequestFromHTTP(r)
+	_, deviceOverrides := m.rendererProfileCache(r.Context())
+	request := m.verifiedRendererRequest(RendererRequestFromHTTP(r), deviceOverrides)
 	match := m.ExplainRendererProfile(r.Context(), request)
 	status := ClientStatus{
 		IP:             request.ClientIP,

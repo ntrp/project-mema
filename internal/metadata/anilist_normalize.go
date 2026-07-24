@@ -85,19 +85,18 @@ func anilistMappings(media anilistMedia, mediaType string) []ProviderMapping {
 	return mappings
 }
 
-func supportedExternalLink(site, rawURL, fallbackType string) (string, string, string) {
+func supportedExternalLink(_ string, rawURL, fallbackType string) (string, string, string) {
 	parsed, err := url.Parse(strings.TrimSpace(rawURL))
-	if err != nil || parsed.Host == "" {
+	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") {
 		return "", "", ""
 	}
-	name := strings.ToLower(site + " " + parsed.Host)
 	provider := ""
-	switch {
-	case strings.Contains(name, "anidb"):
+	switch strings.ToLower(parsed.Hostname()) {
+	case "anidb.net", "www.anidb.net":
 		provider = "anidb"
-	case strings.Contains(name, "themoviedb") || strings.Contains(name, "tmdb"):
+	case "themoviedb.org", "www.themoviedb.org":
 		provider = "tmdb"
-	case strings.Contains(name, "thetvdb") || strings.Contains(name, "tvdb"):
+	case "thetvdb.com", "www.thetvdb.com":
 		provider = "tvdb"
 	default:
 		return "", "", ""

@@ -38,6 +38,7 @@ func TestRepositoryRendererProfileOverridesWin(t *testing.T) {
 	ctx, store := dlnaTestStore(t)
 	manager := NewManager(store, "http://127.0.0.1:18080")
 	ip := "192.0.2.55"
+	rendererIP := "192.0.2.56"
 	rendererUUID := "uuid:living-room"
 	upsertOverride(t, ctx, store, storage.DLNARendererDeviceOverrideInput{
 		IPAddress:               &ip,
@@ -47,6 +48,7 @@ func TestRepositoryRendererProfileOverridesWin(t *testing.T) {
 	})
 	upsertOverride(t, ctx, store, storage.DLNARendererDeviceOverrideInput{
 		RendererUUID:            &rendererUUID,
+		IPAddress:               &rendererIP,
 		ProfileID:               "lg-tv-2025",
 		Allowed:                 true,
 		DeliveryPolicyOverrides: rawObject(),
@@ -59,7 +61,7 @@ func TestRepositoryRendererProfileOverridesWin(t *testing.T) {
 	if ipMatch.Profile.ID != "chromecast" || ipMatch.Explanation.MatchSource != "manual_ip" {
 		t.Fatalf("ip match = %#v", ipMatch)
 	}
-	uuidMatch := manager.ExplainRendererProfile(ctx, RendererRequest{RendererUUID: rendererUUID, UserAgent: "VLC/3.0"})
+	uuidMatch := manager.ExplainRendererProfile(ctx, RendererRequest{RendererUUID: rendererUUID, ClientIP: rendererIP, UserAgent: "VLC/3.0"})
 	if uuidMatch.Profile.ID != "lg-tv-2025" || uuidMatch.Explanation.MatchSource != "manual_uuid" {
 		t.Fatalf("uuid match = %#v", uuidMatch)
 	}
