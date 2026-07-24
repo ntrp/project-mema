@@ -80,12 +80,13 @@ func TestAniListAPIUsesFixtureAndReportsCacheMissAndHit(t *testing.T) {
 	}
 
 	primarySource := map[string]any{"source": "tmdb_import", "raw": map[string]any{"id": float64(209867), "title": "TMDB Primary Title"}}
+	anilistSource := map[string]any{"source": "manual_anilist_link"}
 	item, err := store.CreateMediaItem(t.Context(), storage.MediaItemInput{
 		Type: "serie", ContentKind: "anime", Title: "TMDB Primary Title", Monitored: true,
 		ExternalProvider: stringPointer("tmdb"), ExternalID: stringPointer("209867"),
 		ProviderMappings: []storage.MediaProviderMappingInput{
 			{EntityType: "media_item", ProviderName: "tmdb", ProviderEntityType: "serie", ExternalID: "209867", Canonical: true, Source: primarySource},
-			{EntityType: "media_item", ProviderName: "anilist", ProviderEntityType: "serie", ExternalID: "154587"},
+			{EntityType: "media_item", ProviderName: "anilist", ProviderEntityType: "serie", ExternalID: "154587", Source: anilistSource},
 		},
 	})
 	if err != nil {
@@ -99,17 +100,20 @@ func TestAniListAPIUsesFixtureAndReportsCacheMissAndHit(t *testing.T) {
 	if refreshed.ExternalProvider == nil || *refreshed.ExternalProvider != "tmdb" || len(refreshed.Aliases) < 5 {
 		t.Fatalf("refreshed item did not preserve TMDB and persist aliases: %#v", refreshed)
 	}
-	anilistMappingFound, primaryProvenancePreserved := false, false
+	anilistPreserved, anidbFound, primaryPreserved := false, false, false
 	for _, mapping := range refreshed.ProviderMappings {
-		if mapping.ProviderName == "anilist" && mapping.ExternalID == "154587" && mapping.Source["raw"] != nil {
-			anilistMappingFound = true
+		if mapping.ProviderName == "anilist" && mapping.ExternalID == "154587" && reflect.DeepEqual(mapping.Source, anilistSource) {
+			anilistPreserved = true
 		}
-		if mapping.ProviderName == "tmdb" && mapping.ExternalID == "209867" && reflect.DeepEqual(mapping.Source, primarySource) {
-			primaryProvenancePreserved = true
+		if mapping.ProviderName == "anidb" && mapping.ExternalID == "17617" && mapping.Source["source"] == "anilist_external_link" {
+			anidbFound = true
+		}
+		if mapping.ProviderName == "tmdb" && mapping.ExternalID == "209867" && mapping.Canonical && reflect.DeepEqual(mapping.Source, primarySource) {
+			primaryPreserved = true
 		}
 	}
-	if !anilistMappingFound || !primaryProvenancePreserved {
-		t.Fatalf("refreshed mapping provenance missing: %#v", refreshed.ProviderMappings)
+	if !anilistPreserved || !anidbFound || !primaryPreserved || len(refreshed.ProviderMappings) != 3 {
+		t.Fatalf("refreshed mappings did not preserve collision and add AniDB: %#v", refreshed.ProviderMappings)
 	}
 
 	failureServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

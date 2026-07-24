@@ -19,6 +19,7 @@
       "duration": 24,
       "externalLinks": [
         {"site": "AniDB", "url": "https://anidb.net/anime/17617"},
+        {"site": "TMDB", "url": "https://www.themoviedb.org/tv/209867"},
         {"site": "Official Site", "url": "https://frieren-anime.jp/"}
       ]
     }

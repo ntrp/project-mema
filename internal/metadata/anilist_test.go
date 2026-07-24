@@ -48,7 +48,7 @@ func TestAniListDetailsNormalizesAliasesMappingsAndRawProvenance(t *testing.T) {
 	if details.FirstAirDate == nil || *details.FirstAirDate != "2023-09-29" || details.RuntimeMinutes == nil || *details.RuntimeMinutes != 24 {
 		t.Fatalf("dates/runtime = %#v", details)
 	}
-	if len(details.ProviderMappings) != 2 || details.ProviderMappings[0].ProviderName != "anilist" || details.ProviderMappings[1].ProviderName != "anidb" {
+	if len(details.ProviderMappings) != 3 || details.ProviderMappings[0].ProviderName != "anilist" || details.ProviderMappings[1].ProviderName != "anidb" || details.ProviderMappings[2].ProviderName != "tmdb" {
 		t.Fatalf("mappings = %#v", details.ProviderMappings)
 	}
 	raw, ok := details.ProviderMappings[0].Source["raw"].(map[string]any)

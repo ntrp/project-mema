@@ -55,6 +55,9 @@ func mergeMediaProviderMappings(existing, next []storage.MediaProviderMappingInp
 			ProviderEntityType: primaryType, ExternalID: primaryID, Canonical: true, Source: map[string]any{"source": "primary_metadata"}})
 	}
 	for _, mapping := range next {
+		if hasMediaProviderMapping(mappings, mapping.ProviderName, mapping.ExternalID) {
+			continue
+		}
 		if primaryProvider != "" && mapping.ProviderName != primaryProvider {
 			mapping.Canonical = false
 		}

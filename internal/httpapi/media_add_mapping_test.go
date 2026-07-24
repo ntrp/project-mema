@@ -137,15 +137,21 @@ func TestMetadataSearchResultResponseCopiesAliases(t *testing.T) {
 	}
 }
 
-func TestMergeMediaProviderMappingsPreservesExistingPrimaryProvenance(t *testing.T) {
+func TestMergeMediaProviderMappingsKeepsExistingCollisionAndAddsAniDB(t *testing.T) {
 	source := map[string]any{"source": "tmdb_import", "raw": map[string]any{"id": float64(209867)}}
 	existing := []storage.MediaProviderMappingInput{{EntityType: "media_item", ProviderName: "tmdb", ExternalID: "209867", Canonical: true, Source: source}}
-	next := []storage.MediaProviderMappingInput{{EntityType: "media_item", ProviderName: "anilist", ExternalID: "154587", Canonical: true}}
+	next := []storage.MediaProviderMappingInput{
+		{EntityType: "media_item", ProviderName: "tmdb", ExternalID: "209867", Source: map[string]any{"source": "anilist_external_link"}},
+		{EntityType: "media_item", ProviderName: "anidb", ExternalID: "17617", Canonical: true, Source: map[string]any{"source": "anilist_external_link"}},
+	}
 
 	mappings := mergeMediaProviderMappings(existing, next, "tmdb", "209867", "serie")
 
-	if len(mappings) != 2 || !reflect.DeepEqual(mappings[0].Source, source) || mappings[1].Canonical {
-		t.Fatalf("provider mappings = %#v", mappings)
+	if len(mappings) != 2 || !mappings[0].Canonical || !reflect.DeepEqual(mappings[0].Source, source) {
+		t.Fatalf("existing TMDB mapping changed: %#v", mappings)
+	}
+	if mappings[1].ProviderName != "anidb" || mappings[1].ExternalID != "17617" || mappings[1].Canonical {
+		t.Fatalf("non-colliding AniDB mapping = %#v", mappings[1])
 	}
 }
 
