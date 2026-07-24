@@ -347,7 +347,7 @@ DLNA remains LAN-scoped:
 - disabled by default
 - interface allowlist
 - CIDR allowlist
-- optional per-device allow/deny in the future
+- per-device allow/deny overrides with UUID-before-IP precedence
 - no absolute path exposure
 - safe ffmpeg argument construction
 - bounded stream and transcode counts

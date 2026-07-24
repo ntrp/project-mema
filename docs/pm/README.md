@@ -28,9 +28,10 @@ This folder is the product-level inventory for Mema. It reconciles the local doc
 
 - The product has an end-to-end movie, series, anime-aware, subtitle, acquisition, profile-fulfillment, and DLNA foundation.
 - The target-satisfaction epic ([#122](https://github.com/ntrp/project-mema/issues/122)) and DLNA epic ([#88](https://github.com/ntrp/project-mema/issues/88)) are closed with implementation evidence.
-- **11 GitHub issues remain open** as of the audit date.
+- **9 GitHub issues remain open** as of the audit date.
+- AniList ([#70](https://github.com/ntrp/project-mema/issues/70)) and AniDB ([#71](https://github.com/ntrp/project-mema/issues/71)) metadata providers are delivered.
 - The most important release-readiness gaps are first-start onboarding, backup/restore, CI enforcement, and decisions about advanced operational integrations.
-- AniList and AniDB metadata providers are implemented; the remaining anime gaps are editable aliases, conflict review, and manual numbering overrides.
+- The remaining anime gaps are editable aliases, provider-conflict review, and manual numbering overrides.
 
 ## Primary evidence
 

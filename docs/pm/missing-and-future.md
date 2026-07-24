@@ -6,7 +6,7 @@ product/documentation gaps found locally even when no issue exists.
 
 ## Open GitHub backlog
 
-All 11 open issues are represented below.
+All 9 remaining open issues are represented below.
 
 ### Release readiness and operations
 
@@ -40,8 +40,10 @@ All 11 open issues are represented below.
 ### Anime metadata and correction workflows
 
 The storage/matching foundation from
-[#30](https://github.com/ntrp/project-mema/issues/30) and the AniList/AniDB
-provider integrations are implemented; these correction workflows remain.
+[#30](https://github.com/ntrp/project-mema/issues/30) and the AniList and AniDB
+providers from [#70](https://github.com/ntrp/project-mema/issues/70) and
+[#71](https://github.com/ntrp/project-mema/issues/71) are implemented. These
+user-facing correction workflows remain:
 
 - [ ] **User-editable anime aliases** — add/edit/delete/disable user aliases
       without losing provider-derived values; define how aliases affect search
@@ -119,10 +121,11 @@ a product decision before implementation.
       secret redaction, filesystem safety, and media-tool safety as remaining
       even though their child issues are closed.
 - [ ] **Refine open anime issues** —
-      [#68](https://github.com/ntrp/project-mema/issues/68) through
+      [#68](https://github.com/ntrp/project-mema/issues/68),
+      [#69](https://github.com/ntrp/project-mema/issues/69), and
       [#72](https://github.com/ntrp/project-mema/issues/72) are labeled
       `to refine` and contain placeholder acceptance criteria/open decisions.
-- [ ] **Assign roadmap milestones/priorities** — none of the 11 open issues had
+- [ ] **Assign roadmap milestones/priorities** — none of the 9 open issues had
       a milestone during this audit, so sequencing beyond issue dependencies is
       not explicit.
 - [ ] **Keep this PM inventory current** whenever an issue closes, a limitation
@@ -141,5 +144,7 @@ without a new, specific gap.
       jobs, API/UI, tests, and docs through child issues #123–#137
       ([#122](https://github.com/ntrp/project-mema/issues/122)).
 - [x] Anime provider mapping/alias/numbering storage and matching foundation
-      ([#30](https://github.com/ntrp/project-mema/issues/30)); only the five open
-      follow-ups above remain.
+      ([#30](https://github.com/ntrp/project-mema/issues/30)), plus AniList and
+      AniDB metadata providers ([#70](https://github.com/ntrp/project-mema/issues/70),
+      [#71](https://github.com/ntrp/project-mema/issues/71)); only the three
+      correction workflows above remain.
