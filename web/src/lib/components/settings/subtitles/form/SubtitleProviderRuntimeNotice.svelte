@@ -36,7 +36,8 @@
 	{/if}
 	{#if status !== 'supported'}
 		<p class="m-0 mt-2 text-muted-foreground">
-			This entry can be saved only while disabled, and testing is unavailable until runtime support is added.
+			This entry can be saved only while disabled, and testing is unavailable until runtime support
+			is added.
 		</p>
 	{/if}
 </div>

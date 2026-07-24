@@ -78,7 +78,14 @@ export type HomeSection =
 	| 'wanted'
 	| 'activity';
 export type ActivitySection = 'queue' | 'history' | 'blocklist';
-export type SystemSection = 'status' | 'dlna' | 'indexing' | 'metadata' | 'jobs' | 'logs' | 'events';
+export type SystemSection =
+	| 'status'
+	| 'dlna'
+	| 'indexing'
+	| 'metadata'
+	| 'jobs'
+	| 'logs'
+	| 'events';
 export type SettingsSection =
 	| 'general'
 	| 'library'

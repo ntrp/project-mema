@@ -65,8 +65,8 @@
 
 {#if open}
 	<SettingsFormModal
-		title={title}
-		onClose={onClose}
+		{title}
+		{onClose}
 		modalClass="w-[min(1120px,calc(100vw-32px))] max-h-[min(900px,calc(100vh-32px))]"
 	>
 		<div class="grid gap-4">
@@ -89,7 +89,12 @@
 					<div class="grid gap-4 sm:grid-cols-4">
 						<div class="space-y-2">
 							<Label for="dlna-profile-id">ID</Label>
-							<Input id="dlna-profile-id" bind:value={form.id} disabled={mode === 'edit'} required />
+							<Input
+								id="dlna-profile-id"
+								bind:value={form.id}
+								disabled={mode === 'edit'}
+								required
+							/>
 						</div>
 						<div class="space-y-2 sm:col-span-2">
 							<Label for="dlna-profile-name">Name</Label>
@@ -139,7 +144,8 @@
 												</Button>
 											{/snippet}
 										</Tooltip.Trigger>
-										<Tooltip.Content>JSON object used by renderer profile evaluator</Tooltip.Content>
+										<Tooltip.Content>JSON object used by renderer profile evaluator</Tooltip.Content
+										>
 									</Tooltip.Root>
 								</div>
 								<Textarea
@@ -153,7 +159,9 @@
 					</div>
 					<div class="flex justify-end gap-2">
 						<Button type="button" variant="outline" onclick={onClose}>Cancel</Button>
-						<Button type="submit" disabled={saving}>{saving ? 'Saving' : mode === 'create' ? 'Create profile' : 'Save profile'}</Button>
+						<Button type="submit" disabled={saving}
+							>{saving ? 'Saving' : mode === 'create' ? 'Create profile' : 'Save profile'}</Button
+						>
 					</div>
 				</form>
 			{/if}

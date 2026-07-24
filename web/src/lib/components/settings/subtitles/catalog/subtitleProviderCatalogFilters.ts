@@ -3,7 +3,9 @@ import type { components } from '$lib/api/generated/schema';
 type SubtitleProviderCatalogEntry = components['schemas']['SubtitleProviderCatalogEntry'];
 
 export function unique(values: string[]) {
-	return Array.from(new Set(values.filter(Boolean))).sort((left, right) => left.localeCompare(right));
+	return Array.from(new Set(values.filter(Boolean))).sort((left, right) =>
+		left.localeCompare(right)
+	);
 }
 
 export function dependencyLabels(entry: SubtitleProviderCatalogEntry) {
