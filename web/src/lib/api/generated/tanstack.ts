@@ -161,9 +161,17 @@ export interface MediaSearchRequest {
 	year?: number;
 }
 
+export interface MediaSearchAlias {
+	value: string;
+	language?: string;
+	kind: string;
+	providerName?: string;
+}
+
 export interface MediaSearchResult {
 	id?: string;
 	title: string;
+	aliases?: MediaSearchAlias[];
 	type: MediaType;
 	year?: number;
 	externalProvider?: string;

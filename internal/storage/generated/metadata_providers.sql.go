@@ -152,8 +152,8 @@ select id, name, type, base_url, api_key, pin, access_token, session_token,
     session_token_expires_at, enabled, priority, created_at, updated_at
 from app.metadata_providers
 where enabled = true
-    and (($1 = 'movie' and type in ('tmdb', 'tvdb'))
-        or ($1 = 'serie' and type in ('tmdb', 'tvdb')))
+    and (($1 = 'movie' and type in ('tmdb', 'tvdb', 'anilist'))
+        or ($1 = 'serie' and type in ('tmdb', 'tvdb', 'anilist')))
 order by priority asc, name asc
 `
 

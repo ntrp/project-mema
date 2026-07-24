@@ -20,6 +20,16 @@ func (e ProviderHTTPError) Error() string {
 	return fmt.Sprintf("metadata provider returned HTTP %d", e.StatusCode)
 }
 
+type ProviderGraphQLError struct{ Message string }
+
+func (e ProviderGraphQLError) Error() string { return "metadata provider GraphQL error: " + e.Message }
+
+type ProviderPayloadError struct{ Message string }
+
+func (e ProviderPayloadError) Error() string {
+	return "metadata provider invalid payload: " + e.Message
+}
+
 func (s *Service) Search(ctx context.Context, config Config, request SearchRequest) ([]SearchResult, error) {
 	provider, err := s.provider(config)
 	if err != nil {
@@ -54,6 +64,8 @@ func (s *Service) provider(config Config) (Provider, error) {
 		return tmdbProvider{service: s, config: config}, nil
 	case "tvdb":
 		return tvdbProvider{service: s, config: config}, nil
+	case "anilist":
+		return anilistProvider{service: s, config: config}, nil
 	default:
 		return nil, ErrUnsupportedProvider
 	}

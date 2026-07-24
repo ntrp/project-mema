@@ -31,6 +31,18 @@ func (p tmdbProvider) Details(ctx context.Context, request DetailsRequest) (Deta
 	return p.service.detailsTMDB(ctx, p.config, request)
 }
 
+type anilistProvider struct {
+	service *Service
+	config  Config
+}
+
+func (p anilistProvider) Search(ctx context.Context, request SearchRequest) ([]SearchResult, error) {
+	return p.service.searchAniList(ctx, p.config, request)
+}
+func (p anilistProvider) Details(ctx context.Context, request DetailsRequest) (Details, error) {
+	return p.service.detailsAniList(ctx, p.config, request)
+}
+
 type tvdbProvider struct {
 	service *Service
 	config  Config

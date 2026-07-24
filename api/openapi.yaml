@@ -5708,6 +5708,21 @@ components:
       enum:
         - library
         - provider
+    MediaSearchAlias:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - kind
+      properties:
+        value:
+          type: string
+        language:
+          type: string
+        kind:
+          type: string
+        providerName:
+          type: string
     MediaSearchResult:
       type: object
       additionalProperties: false
@@ -5720,6 +5735,10 @@ components:
           format: uuid
         title:
           type: string
+        aliases:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchAlias"
         type:
           $ref: "#/components/schemas/MediaType"
         year:

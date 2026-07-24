@@ -52,7 +52,9 @@ export function appearanceResult(appearance: PersonAppearance): MediaSearchResul
 	};
 }
 
-export function resultKey(result: MediaSearchResult) {
+export function resultKey(
+	result: Pick<MediaSearchResult, 'type' | 'externalProvider' | 'externalId'>
+) {
 	return `${result.type}:${result.externalProvider ?? ''}:${result.externalId ?? ''}`;
 }
 

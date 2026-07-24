@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
@@ -118,6 +119,67 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 	}
 	if len(input.Similar) != 1 || input.Similar[0].ExternalID != "sim-1" {
 		t.Fatalf("similar = %#v", input.Similar)
+	}
+}
+
+func TestMetadataSearchResultResponseCopiesAliases(t *testing.T) {
+	language := "ja-Latn"
+	response := metadataSearchResultResponse(metadata.SearchResult{Title: "Frieren", Type: "serie", Aliases: []metadata.Alias{{
+		Value: "Sousou no Frieren", Language: &language, Kind: "romaji", ProviderName: "anilist",
+	}}})
+
+	if response.Aliases == nil || len(*response.Aliases) != 1 {
+		t.Fatalf("aliases = %#v", response.Aliases)
+	}
+	alias := (*response.Aliases)[0]
+	if alias.Value != "Sousou no Frieren" || alias.Language == nil || *alias.Language != language || alias.Kind != "romaji" || alias.ProviderName == nil || *alias.ProviderName != "anilist" {
+		t.Fatalf("alias = %#v", alias)
+	}
+}
+
+func TestMergeMediaProviderMappingsPreservesExistingPrimaryProvenance(t *testing.T) {
+	source := map[string]any{"source": "tmdb_import", "raw": map[string]any{"id": float64(209867)}}
+	existing := []storage.MediaProviderMappingInput{{EntityType: "media_item", ProviderName: "tmdb", ExternalID: "209867", Canonical: true, Source: source}}
+	next := []storage.MediaProviderMappingInput{{EntityType: "media_item", ProviderName: "anilist", ExternalID: "154587", Canonical: true}}
+
+	mappings := mergeMediaProviderMappings(existing, next, "tmdb", "209867", "serie")
+
+	if len(mappings) != 2 || !reflect.DeepEqual(mappings[0].Source, source) || mappings[1].Canonical {
+		t.Fatalf("provider mappings = %#v", mappings)
+	}
+}
+
+func TestApplyAniListDetailsPreservesExistingTMDBPrimary(t *testing.T) {
+	tmdb := "tmdb"
+	tmdbID := "209867"
+	details := metadata.Details{
+		Title: "Frieren: Beyond Journey's End", Type: "serie", ExternalProvider: "anilist", ExternalID: "154587",
+		Aliases: []metadata.Alias{{Value: "Sousou no Frieren", Kind: "romaji", ProviderName: "anilist", Source: map[string]any{"field": "title.romaji"}}},
+		ProviderMappings: []metadata.ProviderMapping{{ProviderName: "anilist", ProviderEntityType: "serie", ExternalID: "154587", Canonical: true,
+			Source: map[string]any{"source": "anilist", "raw": map[string]any{"id": float64(154587)}}}},
+	}
+
+	input := applyMediaDetails(storage.MediaItemInput{Type: "serie", ExternalProvider: &tmdb, ExternalID: &tmdbID}, details)
+
+	if input.ExternalProvider == nil || *input.ExternalProvider != "tmdb" || input.ExternalID == nil || *input.ExternalID != "209867" {
+		t.Fatalf("primary provider changed: %#v %#v", input.ExternalProvider, input.ExternalID)
+	}
+	if input.ContentKind != "anime" || len(input.ProviderMappings) != 2 || !input.ProviderMappings[0].Canonical || input.ProviderMappings[1].Canonical {
+		t.Fatalf("provider mappings = %#v", input.ProviderMappings)
+	}
+	if input.ProviderMappings[1].Source["raw"] == nil || len(input.Aliases) != 1 || input.Aliases[0].ProviderName == nil || *input.Aliases[0].ProviderName != "anilist" {
+		t.Fatalf("provenance/aliases = %#v %#v", input.ProviderMappings, input.Aliases)
+	}
+}
+
+func TestMediaRefreshUsesAniListMappingWithoutChangingPrimaryLink(t *testing.T) {
+	item := storage.MediaItem{
+		ExternalProvider: stringPointer("tmdb"), ExternalID: stringPointer("209867"),
+		ProviderMappings: []storage.MediaProviderMapping{{EntityType: "media_item", ProviderName: "anilist", ExternalID: "154587"}},
+	}
+	provider, externalID := mediaRefreshProviderLink(item)
+	if provider != "anilist" || externalID != "154587" || *item.ExternalProvider != "tmdb" || *item.ExternalID != "209867" {
+		t.Fatalf("refresh link = %q %q, item = %#v", provider, externalID, item)
 	}
 }
 

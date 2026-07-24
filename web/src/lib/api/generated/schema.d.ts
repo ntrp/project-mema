@@ -3099,10 +3099,17 @@ export interface components {
 		};
 		/** @enum {string} */
 		MediaSearchSourceType: 'library' | 'provider';
+		MediaSearchAlias: {
+			value: string;
+			language?: string;
+			kind: string;
+			providerName?: string;
+		};
 		MediaSearchResult: {
 			/** Format: uuid */
 			id?: string;
 			title: string;
+			aliases?: components['schemas']['MediaSearchAlias'][];
 			type: components['schemas']['MediaType'];
 			/** Format: int32 */
 			year?: number;

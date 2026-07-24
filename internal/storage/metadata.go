@@ -90,6 +90,13 @@ func (s *SettingsStore) EnsureDefaultMetadataProviders(ctx context.Context) erro
 			Enabled:  true,
 			Priority: 110,
 		},
+		{
+			Name:     "AniList",
+			Type:     "anilist",
+			BaseURL:  "https://graphql.anilist.co",
+			Enabled:  true,
+			Priority: 120,
+		},
 	}
 	for _, input := range defaults {
 		if err := s.ensureMetadataProvider(ctx, input); err != nil {

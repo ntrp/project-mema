@@ -70,6 +70,51 @@ func TestMediaAnimeMetadataHydratesMappingsAliasesAndNumbering(t *testing.T) {
 	}
 }
 
+func TestAniListMetadataPersistsAlongsideTMDBPrimaryAtomically(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item, err := store.CreateMediaItem(ctx, MediaItemInput{
+		Type: "serie", Title: "Frieren: Beyond Journey's End", Monitored: true,
+		ExternalProvider: stringPtr("tmdb"), ExternalID: stringPtr("209867"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := MediaItemInput{
+		Type: "serie", ContentKind: "anime", Title: item.Title, Monitored: true,
+		ExternalProvider: item.ExternalProvider, ExternalID: item.ExternalID,
+		ProviderMappings: []MediaProviderMappingInput{
+			{EntityType: "media_item", ProviderName: "tmdb", ProviderEntityType: "serie", ExternalID: "209867", Canonical: true},
+			{EntityType: "media_item", ProviderName: "anilist", ProviderEntityType: "serie", ExternalID: "154587", Source: map[string]any{"source": "anilist", "raw": map[string]any{"id": float64(154587)}}},
+		},
+		Aliases: []MediaItemAliasInput{{Alias: "Sousou no Frieren", Language: stringPtr("ja-Latn"), Kind: "romaji", ProviderName: stringPtr("anilist"), Source: map[string]any{"field": "title.romaji"}}},
+	}
+	updated, err := store.UpdateMediaItemMetadata(ctx, item.ID, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if updated.ExternalProvider == nil || *updated.ExternalProvider != "tmdb" || len(updated.ProviderMappings) != 2 || len(updated.Aliases) != 2 {
+		t.Fatalf("updated AniList metadata = %#v", updated)
+	}
+	if updated.ProviderMappings[1].ProviderName != "anilist" || updated.ProviderMappings[1].Source["raw"] == nil {
+		t.Fatalf("AniList provenance = %#v", updated.ProviderMappings)
+	}
+
+	input.Title = "Should Roll Back"
+	input.ProviderMappings = append(input.ProviderMappings, MediaProviderMappingInput{
+		EntityType: "media_item", ProviderName: "unsupported", ProviderEntityType: "serie", ExternalID: "1",
+	})
+	if _, err := store.UpdateMediaItemMetadata(ctx, item.ID, input); err == nil {
+		t.Fatal("expected invalid provider mapping to fail")
+	}
+	afterFailure, err := store.GetMediaItem(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if afterFailure.Title != item.Title || len(afterFailure.ProviderMappings) != 2 {
+		t.Fatalf("failed update partially persisted: %#v", afterFailure)
+	}
+}
+
 func TestMediaKindToMediaTypeAndContentMapsAnimeHints(t *testing.T) {
 	mediaType, contentKind, ok := mediaKindToMediaTypeAndContent("anime_series")
 	if !ok || mediaType != "serie" || contentKind != "anime" {

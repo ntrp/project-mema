@@ -4340,6 +4340,14 @@ type MediaRollupSummary struct {
 	TargetCounts TargetStateCounts `json:"targetCounts"`
 }
 
+// MediaSearchAlias defines model for MediaSearchAlias.
+type MediaSearchAlias struct {
+	Kind         string  `json:"kind"`
+	Language     *string `json:"language,omitempty"`
+	ProviderName *string `json:"providerName,omitempty"`
+	Value        string  `json:"value"`
+}
+
 // MediaSearchGroup defines model for MediaSearchGroup.
 type MediaSearchGroup struct {
 	People     *[]PersonSearchResult `json:"people,omitempty"`
@@ -4363,6 +4371,7 @@ type MediaSearchResponse struct {
 
 // MediaSearchResult defines model for MediaSearchResult.
 type MediaSearchResult struct {
+	Aliases          *[]MediaSearchAlias `json:"aliases,omitempty"`
 	BackdropPath     *string             `json:"backdropPath,omitempty"`
 	CollectionId     *string             `json:"collectionId,omitempty"`
 	CollectionName   *string             `json:"collectionName,omitempty"`

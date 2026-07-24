@@ -21,7 +21,7 @@ func discoverProvider(providers []storage.MetadataProvider) (storage.MetadataPro
 
 func metadataProviderByType(providers []storage.MetadataProvider, providerType string) (storage.MetadataProvider, bool) {
 	for _, provider := range providers {
-		if provider.Enabled && provider.Type == providerType && providerHasCredentials(provider) {
+		if provider.Enabled && provider.Type == providerType && (provider.Type == "anilist" || providerHasCredentials(provider)) {
 			return provider, true
 		}
 	}
