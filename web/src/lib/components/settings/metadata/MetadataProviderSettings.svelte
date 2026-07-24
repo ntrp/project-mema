@@ -1,19 +1,11 @@
 <script lang="ts">
 	import MetadataProviderCard from './MetadataProviderCard.svelte';
+	import { metadataProviderDefinitions } from './metadataProviderDefinitions';
 	import type {
 		IntegrationTestResults,
 		MetadataProvider,
-		MetadataProviderForm,
-		MetadataProviderType
+		MetadataProviderForm
 	} from '$lib/settings/types';
-
-	interface ProviderDefinition {
-		type: MetadataProviderType;
-		name: string;
-		baseUrl: string;
-		priority: number;
-		fields: 'tmdb' | 'tvdb' | 'anidb';
-	}
 
 	interface Props {
 		metadataProviders: MetadataProvider[];
@@ -25,34 +17,10 @@
 	}
 
 	let { metadataProviders, onSave, onTest, testingId, savingId, testResults }: Props = $props();
-
-	const providerDefinitions: ProviderDefinition[] = [
-		{
-			type: 'tmdb',
-			name: 'TMDB',
-			baseUrl: 'https://api.themoviedb.org/3',
-			priority: 100,
-			fields: 'tmdb'
-		},
-		{
-			type: 'tvdb',
-			name: 'TVDB',
-			baseUrl: 'https://api4.thetvdb.com/v4',
-			priority: 110,
-			fields: 'tvdb'
-		},
-		{
-			type: 'anidb',
-			name: 'AniDB',
-			baseUrl: 'http://api.anidb.net:9001',
-			priority: 120,
-			fields: 'anidb'
-		}
-	];
 </script>
 
 <div class="grid items-start gap-[18px] md:grid-cols-2">
-	{#each providerDefinitions as definition (definition.type)}
+	{#each metadataProviderDefinitions as definition (definition.type)}
 		{@const provider = metadataProviders.find((item) => item.type === definition.type)}
 		{@const key = provider?.id ?? definition.type}
 		{#key key}

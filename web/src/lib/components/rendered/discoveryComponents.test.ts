@@ -24,7 +24,6 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onAdd: vi.fn(),
 			onBlacklist: vi.fn()
 		});
-
 		expect(body).toContain('Browse latest media');
 		expect(body).toContain('Trending');
 		expect(body).toContain('Visible Movie');
@@ -46,7 +45,6 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 		});
 		expect(loading.body).toContain('Loading discovery');
 		expect(loading.body).toContain('data-slot="skeleton"');
-
 		const empty = renderWithTooltip(MediaSearchPanel, {
 			sections: [],
 			mediaItems: [],
@@ -72,7 +70,6 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onBlacklist: vi.fn(),
 			onLoadMore: vi.fn()
 		});
-
 		expect(loading.body).toContain('Loading section');
 		expect(loading.body).toContain('data-slot="skeleton"');
 	});
@@ -90,7 +87,6 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onAdd: vi.fn(),
 			onBlacklist: vi.fn()
 		});
-
 		expect(loading.body).toContain('data-slot="skeleton"');
 		expect(loading.body).not.toContain('Visible Movie');
 	});
@@ -108,7 +104,6 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			onBlacklist: vi.fn(),
 			onLoadMore: vi.fn()
 		});
-
 		expect(body).toContain('Trending');
 		expect(body).toContain('Visible Movie');
 		expect(body).toContain('Loading more');
@@ -126,7 +121,6 @@ describe('rendered discovery components (SCN-MEDIA-004)', () => {
 			removingId: 'blacklist-1',
 			onRemove: vi.fn()
 		});
-
 		expect(body).toContain('Blacklist');
 		expect(body).toContain('Visible Movie');
 		expect(body).toContain('No Poster');

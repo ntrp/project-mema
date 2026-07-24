@@ -4,12 +4,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import MetadataProviderCard from './MetadataProviderCard.svelte';
 import type { MetadataProviderForm } from '$lib/settings/types';
 
-const definition = {
+const anidbDefinition = {
 	type: 'anidb' as const,
 	name: 'AniDB',
 	baseUrl: 'http://api.anidb.net:9001',
 	priority: 120,
 	fields: 'anidb' as const
+};
+const anilistDefinition = {
+	type: 'anilist' as const,
+	name: 'AniList',
+	baseUrl: 'https://graphql.anilist.co',
+	priority: 120,
+	fields: 'anilist' as const
 };
 let component: ReturnType<typeof mount> | undefined;
 let target = document.createElement('div');
@@ -44,7 +51,7 @@ describe('MetadataProviderCard interactions', () => {
 		document.body.append(target);
 		component = mount(MetadataProviderCard, {
 			target,
-			props: { definition, onSave, onTest: vi.fn() }
+			props: { definition: anidbDefinition, onSave, onTest: vi.fn() }
 		});
 		await tick();
 
@@ -78,12 +85,12 @@ describe('MetadataProviderCard interactions', () => {
 		component = mount(MetadataProviderCard, {
 			target,
 			props: {
-				definition,
+				definition: anidbDefinition,
 				provider: {
 					id: 'provider-anidb',
 					name: 'AniDB',
 					type: 'anidb',
-					baseUrl: definition.baseUrl,
+					baseUrl: anidbDefinition.baseUrl,
 					apiKey: 'registeredclient1',
 					pin: '2',
 					apiKeySet: true,
@@ -114,5 +121,50 @@ describe('MetadataProviderCard interactions', () => {
 
 		expect(onTest).toHaveBeenCalledWith('provider-anidb');
 		expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ enabled: false, priority: 0 }));
+	});
+
+	it('toggles, prioritizes, saves, and tests AniList without credentials', async () => {
+		const onSave = vi.fn<(form: MetadataProviderForm) => void>();
+		const onTest = vi.fn();
+		target = document.createElement('div');
+		document.body.append(target);
+		component = mount(MetadataProviderCard, {
+			target,
+			props: {
+				definition: anilistDefinition,
+				provider: {
+					id: 'provider-anilist',
+					name: 'AniList',
+					type: 'anilist',
+					baseUrl: anilistDefinition.baseUrl,
+					apiKeySet: false,
+					pinSet: false,
+					accessTokenSet: false,
+					enabled: true,
+					priority: 120,
+					createdAt: '2026-07-24T00:00:00Z',
+					updatedAt: '2026-07-24T00:00:00Z'
+				},
+				onSave,
+				onTest
+			}
+		});
+		await tick();
+
+		expect(target.textContent).toContain('No credentials required');
+		expect(target.querySelectorAll('input')).toHaveLength(2);
+		click('[role="checkbox"]');
+		update(input('input[type="number"][max="1000"]'), '125');
+		click('button[type="button"]:last-child');
+		click('button[type="submit"]');
+
+		expect(onTest).toHaveBeenCalledWith('provider-anilist');
+		expect(onSave).toHaveBeenCalledWith(
+			expect.objectContaining({ type: 'anilist', enabled: false, priority: 125 })
+		);
+		const saved = onSave.mock.calls[0][0];
+		expect(saved).not.toHaveProperty('apiKey');
+		expect(saved).not.toHaveProperty('pin');
+		expect(saved).not.toHaveProperty('accessToken');
 	});
 });

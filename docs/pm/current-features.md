@@ -1,6 +1,6 @@
 # Current Features
 
-This checklist describes the product capabilities found in the local docs, API/backend, frontend routes, tests, and closed GitHub issues.
+This checklist describes the product capabilities found in the local docs, API/backend, frontend routes, tests, and closed GitHub issues. The 2026-07-24 post-delivery snapshot includes AniList ([#70](https://github.com/ntrp/project-mema/issues/70)), AniDB ([#71](https://github.com/ntrp/project-mema/issues/71)), DLNA device-deny enforcement ([#138](https://github.com/ntrp/project-mema/issues/138)), the DLNA control point ([#139](https://github.com/ntrp/project-mema/issues/139)), and DLNA architecture reconciliation ([#143](https://github.com/ntrp/project-mema/issues/143)).
 
 ## Platform, accounts, and operations
 
@@ -20,6 +20,7 @@ This checklist describes the product capabilities found in the local docs, API/b
 
 - [x] TMDB metadata integration for movie and series search, details, discovery, people, artwork, trailers, similar titles, and recommendations.
 - [x] TVDB metadata integration for series details, episodes, people, artwork, and facts.
+- [x] AniList and AniDB anime metadata integrations for search, details, aliases, mappings, artwork, dates, and numbering hints ([#70](https://github.com/ntrp/project-mema/issues/70), [#71](https://github.com/ntrp/project-mema/issues/71)).
 - [x] Global and advanced search with metadata-provider selection.
 - [x] Discovery home, trending/section feeds, movie and series feeds, pagination, and add/request actions.
 - [x] Anime/animated discovery filters while retaining `movie` and `serie` as the core media types.
@@ -93,6 +94,7 @@ This checklist describes the product capabilities found in the local docs, API/b
 - [x] Shared direct, remux, transcode, seek, artwork, thumbnail, and subtitle resource delivery.
 - [x] UPnP event subscriptions and lifecycle handling.
 - [x] Seeded and editable renderer profiles, matching rules, per-device overrides, clone/import/export/reset/restore, and compatibility controls.
+- [x] Explicitly denied device overrides block SOAP and media resources before catalogue, stream, or transcode work ([#138](https://github.com/ntrp/project-mema/issues/138)).
 - [x] Recent-device, profile-match, and delivery-decision diagnostics in settings/system UI.
 - [x] DLNA security limits, audit logging, compatibility fixtures, and a device matrix.
 - [x] Authenticated DLNA control point with remote MediaRenderer discovery, Play on device, transport, seek, volume, and mute controls ([#139](https://github.com/ntrp/project-mema/issues/139)).

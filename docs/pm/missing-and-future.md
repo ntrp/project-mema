@@ -1,12 +1,19 @@
 # Missing and Future Features
 
-Unchecked items are not complete as of **2026-07-14**. The first section is the
-authoritative open GitHub backlog. Later sections capture limitations and
-product/documentation gaps found locally even when no issue exists.
+Unchecked items are not complete as of **2026-07-24**. The first section is the
+authoritative open GitHub backlog. This post-delivery snapshot treats AniList
+([#70](https://github.com/ntrp/project-mema/issues/70)), AniDB
+([#71](https://github.com/ntrp/project-mema/issues/71)), DLNA device-deny
+enforcement ([#138](https://github.com/ntrp/project-mema/issues/138)), the DLNA
+control point ([#139](https://github.com/ntrp/project-mema/issues/139)), and DLNA
+architecture reconciliation
+([#143](https://github.com/ntrp/project-mema/issues/143)) as closed with this
+stack's push. Later sections capture limitations and product/documentation gaps.
 
 ## Open GitHub backlog
 
-All 9 remaining open issues are represented below.
+All 13 issues that remain open after #70, #71, #138, #139, and #143 close are
+represented below.
 
 ### Release readiness and operations
 
@@ -17,6 +24,9 @@ All 9 remaining open issues are represented below.
 - [ ] **GitHub Actions quality gates** — run Go tests, Svelte checks/tests,
       lint/format checks, and generated OpenAPI drift checks on pull requests
       ([#46](https://github.com/ntrp/project-mema/issues/46)).
+- [ ] **Application healthcheck and deterministic E2E readiness** — expose
+      database-aware application readiness and make Docker and E2E startup wait
+      for it ([#144](https://github.com/ntrp/project-mema/issues/144)).
 - [ ] **Decide the advanced operations surface** — scope V0/V1 versus deferred
       capabilities and produce ADRs/follow-up issues
       ([#49](https://github.com/ntrp/project-mema/issues/49)).
@@ -73,23 +83,21 @@ user-facing correction workflows remain:
       routes, with skip/finish/restart state and responsive/error behavior
       ([#74](https://github.com/ntrp/project-mema/issues/74)).
 
-## Explicit current limitations without an open issue
+### Subtitle support gaps
 
-These limitations are stated by local docs or exposed by the code audit, but the
-GitHub tracker has no open implementation issue for them.
+- [ ] **Bitmap subtitle OCR/conversion or an explicit unsupported state** —
+      decide whether to implement bounded PGS/SUP OCR or represent the work as
+      requiring manual review ([#141](https://github.com/ntrp/project-mema/issues/141)).
+- [ ] **Visible subtitle-provider runtime support** — distinguish supported,
+      configuration-only, and catalogue-only providers so unavailable providers
+      cannot be enabled as usable
+      ([#142](https://github.com/ntrp/project-mema/issues/142)).
 
-- [ ] **Bitmap-to-text subtitle conversion** — PGS/SUP tracks can be recognized
-      and matched, but conversion between bitmap subtitles and
-      SubRip/WebVTT/ASS/SSA is not implemented
-      (`docs/website/src/content/docs/user-guide/using/qualities-formats-profiles.md`).
-- [x] **User-facing DLNA control point** — issue
-      [#139](https://github.com/ntrp/project-mema/issues/139) added LAN-scoped
-      renderer discovery, authenticated playback controls, and the Play on
-      device picker and remote.
-- [ ] **Optional Mema MediaRenderer mode** — the server intentionally does not
-      advertise MediaRenderer/AVTransport/RenderingControl services. A local
-      playback target and renderer mode remain conditional future work from
-      [#108](https://github.com/ntrp/project-mema/issues/108).
+### DLNA follow-up
+
+- [ ] **Optional Mema MediaRenderer mode** — decide whether Mema should advertise
+      as a renderer and identify a supported local playback target before any
+      implementation ([#140](https://github.com/ntrp/project-mema/issues/140)).
 
 ## Deferred or conditional product ideas
 
@@ -110,7 +118,7 @@ a product decision before implementation.
 ## Documentation and planning gaps
 
 - [x] **Update implemented PRD statuses** — reconciled all six PRDs with the
-      application on 2026-07-14, including delivered scope, implementation
+      application on 2026-07-24, including delivered scope, implementation
       evidence, and explicit remaining boundaries.
 - [x] **Reconcile DLNA architecture wording** — delivered by
       [#143](https://github.com/ntrp/project-mema/issues/143); the architecture
@@ -125,7 +133,7 @@ a product decision before implementation.
       [#69](https://github.com/ntrp/project-mema/issues/69), and
       [#72](https://github.com/ntrp/project-mema/issues/72) are labeled
       `to refine` and contain placeholder acceptance criteria/open decisions.
-- [ ] **Assign roadmap milestones/priorities** — none of the 9 open issues had
+- [ ] **Assign roadmap milestones/priorities** — none of the 13 open issues had
       a milestone during this audit, so sequencing beyond issue dependencies is
       not explicit.
 - [ ] **Keep this PM inventory current** whenever an issue closes, a limitation
