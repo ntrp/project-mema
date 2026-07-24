@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"media-manager/internal/dlna/content"
+	"media-manager/internal/dlna/controlpoint"
 	"media-manager/internal/dlna/ssdp"
 	"media-manager/internal/storage"
 )
@@ -53,6 +54,7 @@ type Manager struct {
 	nextStreamID     int
 	startSSDP        func(context.Context, ssdp.Config) (ssdpRuntime, error)
 	ssdp             ssdpRuntime
+	controlPoint     *controlpoint.Service
 	mu               sync.Mutex
 	status           Status
 }
@@ -97,6 +99,7 @@ func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettin
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.allowedNets = parseAllowedCIDRs(settings.AllowedCIDRs)
+	m.stopControlPoint()
 	m.stopSSDP(ctx)
 	if !settings.Enabled {
 		m.cancelStreamsLocked()
@@ -118,6 +121,7 @@ func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettin
 		return err
 	}
 	m.ssdp = runtime
+	m.startControlPoint(ctx, runtime.Interfaces())
 	m.status = m.statusForSettings(settings, runtime.Interfaces())
 	return nil
 }
@@ -132,6 +136,7 @@ func deviceUUID(settings storage.DLNASettings) string {
 func (m *Manager) Stop(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.stopControlPoint()
 	m.stopSSDP(ctx)
 	m.cancelStreamsLocked()
 	m.status = Status{}

@@ -1,6 +1,6 @@
 ---
 title: DLNA
-description: UPnP AV server architecture, renderer profiles, and planned UMS-level device coverage.
+description: UPnP AV server architecture, renderer profiles, and device compatibility.
 ---
 
 Mema includes a DLNA Digital Media Server surface for televisions and UPnP
@@ -9,10 +9,13 @@ media delivery primitives with browser preview and VLC playback where possible.
 
 The long-term direction is tracked by the DLNA profile epic and PRDs:
 
-- `docs/prd/dlna-upnp-clean-room-spec.md`
-- `docs/prd/dlna-device-profiles-clean-room-spec.md`
-- `docs/prd/dlna-ums-feature-parity-plan.md`
-- GitHub epic `#109`
+- [DLNA and UPnP clean-room specification](https://github.com/ntrp/project-mema/blob/main/docs/prd/dlna-upnp-clean-room-spec.md)
+- [DLNA device profiles specification](https://github.com/ntrp/project-mema/blob/main/docs/prd/dlna-device-profiles-clean-room-spec.md)
+- [DLNA UMS feature parity plan](https://github.com/ntrp/project-mema/blob/main/docs/prd/dlna-ums-feature-parity-plan.md)
+- [DLNA compatibility matrix](https://github.com/ntrp/project-mema/blob/main/docs/dlna-compatibility-matrix.md)
+- [DLNA setup](/user-guide/using/setup-guide/)
+- [Current DLNA features](https://github.com/ntrp/project-mema/blob/main/docs/pm/current-features.md)
+- [Renderer profile epic #109](https://github.com/ntrp/project-mema/issues/109)
 
 ## Runtime Shape
 
@@ -189,34 +192,12 @@ Thumbnail and remux/transcode caches are pruned on DLNA startup by age and total
 size. The DLNA HTTP handler also applies a small per-client request rate limit
 before SOAP, resource, artwork, and subtitle handlers run.
 
-## Renderer Profiles Today
+## Renderer Profile Compatibility Controls
 
-Renderer profiles are currently Go structs in `internal/dlna/profile.go`.
-
-Current seeded profiles:
-
-- Generic DLNA
-- VLC
-- Kodi
-- Samsung TV
-- LG TV
-- Sony TV
-- BubbleUPnP
-- Chromecast
-
-Matching currently uses:
-
-1. manual IP override
-2. User-Agent, friendly name, and HTTP header token matching
-3. sticky IP reuse from recent clients
-4. generic fallback
-
-Sticky IP reuse is important because many televisions send useful DLNA headers
-for SOAP but weaker browser-like headers for media requests. Once a client IP
-is identified as LG, later resource requests from the same IP can keep the LG
-profile.
-
-Profiles currently affect:
+Persisted profiles and per-device overrides are managed by the DLNA settings
+panel. Sticky IP reuse is important because many televisions send useful DLNA
+headers for SOAP but weaker browser-like headers for media requests. Profiles
+currently affect:
 
 - HLS preference or avoidance
 - eventing disablement
@@ -226,22 +207,35 @@ Profiles currently affect:
 - browser/WebKit delivery profile selection
 - profile-specific remux/transcode output containers and seek mode
 
-## Planned Profile Architecture
+## Renderer Profile Architecture
 
-Epic `#109` replaces hardcoded renderer profiles with persisted, seeded, and
-editable renderer profiles.
+Renderer profiles are persisted, seeded, editable records (the implementation
+tracked by epic `#109`), not a future replacement for hardcoded profiles.
+Matching currently proceeds in this order:
 
-Future profile matching order:
+1. manual device override by renderer UUID
+2. manual device override by IP address
+3. best automatic match from structured rules (including UUID/device details,
+   friendly name, User-Agent, and HTTP headers; profile score and priority win)
+4. sticky profile from the recent-client IP association (for weak media requests)
+5. generic fallback profile
 
-1. manual device override by UUID
-2. manual device override by IP
-3. sticky connected-renderer association by IP
-4. UPnP UUID and device details
-5. HTTP headers
-6. default renderer profile
+The match result records its source, winning rule, score, candidate IDs, and
+fallback reason. Detailed accepted/rejected rule traces are exposed separately
+by the diagnostics endpoints. An override that names a missing profile
+falls through to normal matching rather than selecting an invalid profile.
 
-Future profile data is structured rather than copied from UMS configuration
-files. Each profile can define:
+Device access is deny-dominant before normal profile matching. No matching
+override means allowed; `allowed: true` assigns a profile without bypassing
+Allowed CIDRs or any matching explicit deny, while `allowed: false` denies every
+DLNA route before catalogue, stream, transcode-slot, or process work. UUID
+identity for persisted overrides requires a persisted UUID+source-IP binding;
+unauthenticated SSDP discovery claims are not trusted bindings. SOAP denial
+returns UPnP fault 606 and other routes return HTTP 403. Recent-client diagnostics
+and the audit log record the denial.
+
+Profile data is structured rather than copied from UMS configuration files. Each
+profile defines:
 
 - identity and seed version
 - vendor and device class
@@ -254,15 +248,15 @@ files. Each profile can define:
 - metadata and tree compatibility flags
 - compatibility notes and confidence level
 
-Seeded profiles must cover the UMS-supported device families in clean-room
-form. User edits must survive seed upgrades, and each seeded profile must be
-resettable or cloneable.
+Seeded profiles cover the UMS-supported device families in clean-room form.
+User edits survive seed upgrades, and each seeded profile can be reset or
+cloned.
 
 The storage layer now keeps two profile copies: seeded defaults and editable
 runtime profiles. `internal/storage/seeds/defaults.sql` refreshes defaults on
 startup and only refreshes runtime profiles that have not been customized.
 Device overrides are stored separately and can bind a renderer profile by IP
-address or renderer UUID.
+address or by a persisted renderer UUID+source-IP association.
 
 The seeded defaults include clean-room family profiles for the UMS-supported
 catalog areas: generic fallback, Android/Chromecast, Apple/VLC clients,
@@ -298,7 +292,8 @@ current seed version without overwriting its edited rules.
 ## Settings UI
 
 Settings > DLNA includes a Device Profiles panel over the profile storage and
-matching APIs.
+matching APIs. This delivered renderer-profile administration surface is
+separate from the control point.
 
 The panel contains:
 
@@ -318,6 +313,15 @@ rule, accepted/rejected profile rules, delivery mode, protocol, transcode
 codecs, and capability checks for the selected renderer and media file.
 Responses return file names, object IDs, resource IDs, and stream mode when
 useful, but do not echo absolute media paths.
+
+## Control Point and Deferred MediaRenderer Scope
+
+Mema provides a Digital Media Server and an authenticated DLNA control point.
+The control point discovers remote MediaRenderer devices on configured
+interfaces and CIDRs and exposes Play on device plus transport, seek, volume,
+and mute controls. Mema does not advertise itself as a MediaRenderer or expose
+its own AVTransport/RenderingControl services. A local playback target and Mema
+MediaRenderer mode remain deferred.
 
 ## Delivery Model
 
@@ -345,7 +349,7 @@ DLNA remains LAN-scoped:
 - disabled by default
 - interface allowlist
 - CIDR allowlist
-- optional per-device allow/deny in the future
+- per-device allow/deny overrides with deny-dominant conflict handling
 - no absolute path exposure
 - safe ffmpeg argument construction
 - bounded stream and transcode counts

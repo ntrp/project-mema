@@ -2,14 +2,41 @@
 
 ## Status
 
-Draft
+Implemented
+
+Last reconciled with the application: **2026-07-14**.
+
+## Implementation Snapshot
+
+- [x] One profile editor covers video, audio, subtitle, container, custom-format,
+      upgrade, and delivery policy.
+- [x] Profiles require at least one quality and one audio-language target.
+- [x] Subtitle targets remain optional.
+- [x] Video targets support codecs, HDR formats, and pixel formats with required
+      flags and scores.
+- [x] Audio targets support language, codec, channel layouts, minimum/preferred
+      bitrate, scores, retention, and explicit lossy-conversion policy.
+- [x] Subtitle targets support language, formats, scores, placement, retention,
+      and release fallback.
+- [x] Final container, preferred delivery protocol, and series-pack preference
+      are profile-level policy.
+- [x] Target evaluation, rollup, wanted rows, and fulfillment are implemented by
+      the closed target-satisfaction epic
+      ([#122](https://github.com/ntrp/project-mema/issues/122)).
+- [ ] Bitmap-to-text subtitle conversion remains unsupported; PGS/SUP tracks can
+      be recognized and matched but not converted to text formats.
+- [ ] A generic profile rule engine remains intentionally deferred.
+
+Primary implementation: `internal/storage/media_profile_*`,
+`internal/targets/`, `internal/satisfaction/`, `internal/jobs/fulfillment_*`,
+`internal/httpapi/media_profile_*`, and
+`web/src/lib/components/settings/profiles/`.
 
 ## Context
 
-Media profiles currently combine quality selection, target audio languages,
-subtitle languages, custom format score settings, and experimental component
-targets. Those settings are stored on the profile, but the UI still presents
-them as separate rule groups instead of one desired media state.
+Media profiles now combine quality selection, target audio languages, subtitle
+languages, custom-format score settings, video requirements, final container,
+and delivery policies in one profile contract and editor.
 
 The goal is to make a profile describe the final state the user wants for a
 media item. Target satisfaction, media rollup, release decisions, fulfillment
@@ -259,120 +286,83 @@ Acceptance criteria:
 - The model should leave room for container-level options such as chapter
   retention, attachment retention, and metadata retention.
 
-## Data Model Direction
+## Implemented Data Model
 
-The refactored profile model should make desired video, audio, subtitle, and
-container targets the canonical shape. Existing profile fields can be removed or
-reshaped as part of the refactor because the project is not released yet.
+The application uses typed profile fields and target records rather than a
+generic rule table:
 
-Suggested target concepts:
+- quality IDs remain top-level and define the video quality baseline;
+- final container and delivery/conversion/retention settings are profile-level;
+- one typed video target stores codec, HDR, and pixel-format preferences;
+- audio and subtitle targets are typed lists keyed by language;
+- custom formats remain a separate score and upgrade layer.
 
-- `profile_video_targets`
-- `profile_audio_targets`
-- `profile_subtitle_targets`
-- `profile_container_targets`
-
-or one generalized target table with typed detail fields. The final schema
-choice should be made during implementation after evaluating sqlc query shape
-and API ergonomics.
-
-The profile API should expose a desired-state object that is easy for the UI to
-render:
+The profile API exposes the implemented desired-state shape to the UI:
 
 ```json
 {
-  "container": {
-    "format": "mkv",
-    "required": true
+  "finalContainer": "mkv",
+  "qualityIds": ["webdl-1080p"],
+  "videoTarget": {
+    "codecs": ["h265"],
+    "codecRequired": false,
+    "codecScore": 20,
+    "hdrFormats": ["hdr10"],
+    "hdrRequired": false,
+    "hdrScore": 10,
+    "pixelFormats": []
   },
-  "video": {
-    "qualityIds": ["webdl-1080p"],
-    "codec": {
-      "value": "h265",
-      "required": false,
-      "score": 20
-    },
-    "perks": [
-      {
-        "kind": "hdr",
-        "value": "hdr10",
-        "required": false,
-        "score": 10
-      }
-    ]
-  },
-  "audio": [
+  "audioTargets": [
     {
       "languageId": "english",
-      "required": true,
       "score": 100,
-      "codec": "eac3",
-      "channels": "5.1",
+      "targetCodec": "eac3",
+      "targetChannels": ["5.1"],
       "minimumBitrateKbps": 384,
-      "preferredBitrateKbps": 768,
-      "lossyTranscode": "disabled"
+      "preferredBitrateKbps": 768
     }
   ],
-  "subtitles": [
+  "audioLossyTranscodePolicy": "disabled",
+  "subtitleTargets": [
     {
       "languageId": "english",
-      "required": true,
       "score": 25,
-      "source": "external",
-      "format": "subrip"
+      "formats": ["subrip"]
     }
-  ]
+  ],
+  "subtitleMode": "external"
 }
 ```
 
-## Implementation Plan
+## Delivered Implementation
 
-Phase 1: PRD and final model design
+- [x] Final typed profile model and initial-schema storage.
+- [x] Unified editor and OpenAPI-generated frontend contract.
+- [x] Required quality and audio target validation with optional subtitles.
+- [x] Final-container and delivery-policy selection.
+- [x] Release decisions, target evaluation, media rollup, wanted rows, and
+      fulfillment jobs.
 
-- Document current profile fields and runtime consumers only as input to the
-  refactor.
-- Decide the final target schema for video, audio, subtitles, and container.
-- Remove old profile fields unless they are part of the new model.
+## Resolved Design Decisions
 
-Phase 2: Unified UI and new profile contract
-
-- Replace the separate profile rule sections with one desired-state editor.
-- Write the new desired-state profile contract directly.
-- Replace target language UI with audio language targets.
-- Add final container target selection.
-
-Phase 3: Backend desired-state model
-
-- Add or reshape storage for video/audio/subtitle/container targets.
-- Update OpenAPI and generated frontend types.
-- Enforce required video target and at least one audio language target during
-  profile validation.
-- Enforce required final container target during profile validation.
-- Preserve zero-subtitle-target profiles as valid.
-
-Phase 4: Runtime integration
-
-- Follow `docs/prd/target-satisfaction-and-media-state-rollup.md` for target
-  evaluation, release decisions, media rollup, wanted-table behavior, and
-  fulfillment jobs.
-
-## Open Questions
-
-- Should quality stay as a top-level profile concept or become a video target?
-- Should component targets be generalized enough to replace audio/subtitle
-  language tables?
-- Should final container be top-level profile state or a video/container target?
-- Which video perks should be first-class versus custom key/value targets?
-- Which codecs and subtitle formats should be normalized enums versus free text?
-- Which audio channel targets should be normalized enums versus free text?
-- Should bitrate targets be minimum-only, preferred-only, or both?
-- How should retained component sources be selected when a release has the
-  desired audio or subtitle track but the imported main file does not?
+- Quality remains a top-level ordered profile concept and is the resolution
+  baseline for the video target.
+- Audio and subtitle targets remain separate typed language lists; component
+  source/provenance workflows complement them rather than replacing them.
+- Final container remains top-level profile state.
+- Codec, HDR, and pixel format are first-class video fields; custom formats
+  remain the extensible scoring mechanism.
+- Codec, subtitle-format, and channel values are normalized strings validated by
+  the backend and constrained by frontend catalogues.
+- Audio targets support both minimum and preferred bitrate.
+- Retained alternate sources and assembled outputs use component-source and
+  provenance records instead of adding source selection to the profile target.
 
 ## Success Criteria
 
-- A user can define the desired final media state from one profile screen.
-- The profile defines the final container format for stored media.
-- Audio language settings no longer feel disconnected from component targets.
-- The implementation can be delivered incrementally without breaking existing
-  profile behavior.
+- [x] A user can define the desired final media state from one profile screen.
+- [x] The profile defines the final container format for stored media.
+- [x] Audio-language requirements are first-class profile targets and participate
+      in release decisions, satisfaction, wanted rows, and fulfillment.
+- [x] Existing quality/custom-format upgrade behavior remains integrated with
+      the desired-state model.

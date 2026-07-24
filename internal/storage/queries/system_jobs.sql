@@ -247,7 +247,7 @@ limit sqlc.arg(row_limit);
 -- name: ListSystemJobExecutions :many
 select *
 from app.system_job_executions
-where (cardinality(sqlc.arg(states)::text[]) = 0 or status = any(sqlc.arg(states)::text[]))
+where (coalesce(cardinality(sqlc.arg(states)::text[]), 0) = 0 or status = any(sqlc.arg(states)::text[]))
     and status in ('completed', 'cancelled', 'discarded')
     and (sqlc.arg(schedule_id)::text = '' or coalesce(schedule_id, '') = sqlc.arg(schedule_id)::text)
     and (sqlc.arg(kind)::text = '' or kind = sqlc.arg(kind)::text)

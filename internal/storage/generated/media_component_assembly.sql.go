@@ -261,7 +261,7 @@ const listMediaComponentAssemblyInputs = `-- name: ListMediaComponentAssemblyInp
 select id, run_id, source_id, artifact_id, stream_type, input_path, provenance, created_at
 from app.media_component_assembly_inputs
 where run_id = $1
-order by created_at, id
+order by (artifact_id is not null), created_at, id
 `
 
 func (q *Queries) ListMediaComponentAssemblyInputs(ctx context.Context, runID uuid.UUID) ([]AppMediaComponentAssemblyInput, error) {

@@ -1,0 +1,27 @@
+{
+  "data": {
+    "Media": {
+      "id": 154587,
+      "idMal": 52991,
+      "type": "ANIME",
+      "format": "TV",
+      "title": {
+        "romaji": "Sousou no Frieren",
+        "english": "Frieren: Beyond Journey's End",
+        "native": "葬送のフリーレン"
+      },
+      "synonyms": ["Frieren at the Funeral", "Frieren après la fin"],
+      "description": "The adventure is over, but life goes on.",
+      "countryOfOrigin": "JP",
+      "startDate": {"year": 2023, "month": 9, "day": 29},
+      "coverImage": {"large": "https://img.test/frieren-large.jpg", "extraLarge": "https://img.test/frieren-xl.jpg"},
+      "siteUrl": "https://anilist.co/anime/154587",
+      "duration": 24,
+      "externalLinks": [
+        {"site": "AniDB", "url": "https://anidb.net/anime/17617"},
+        {"site": "TMDB", "url": "https://www.themoviedb.org/tv/209867"},
+        {"site": "Official Site", "url": "https://frieren-anime.jp/"}
+      ]
+    }
+  }
+}

@@ -23,6 +23,8 @@ type Config struct {
 	AccessToken           *string
 	SessionToken          *string
 	SessionTokenExpiresAt *time.Time
+	ClientName            *string
+	ClientVersion         *string
 }
 
 type SearchRequest struct {
@@ -45,6 +47,7 @@ type DetailsRequest struct {
 
 type SearchResult struct {
 	Title            string   `json:"title"`
+	Aliases          []Alias  `json:"aliases,omitempty"`
 	Type             string   `json:"type"`
 	Year             *int32   `json:"year,omitempty"`
 	ExternalProvider string   `json:"externalProvider"`
@@ -118,8 +121,34 @@ type FacetOption struct {
 	Name string `json:"name"`
 }
 
+type Alias struct {
+	Value        string
+	Language     *string
+	Kind         string
+	ProviderName string
+	Source       map[string]any
+}
+
+type ProviderMapping struct {
+	ProviderName       string
+	ProviderEntityType string
+	ExternalID         string
+	Canonical          bool
+	Source             map[string]any
+}
+
+type EpisodeFact struct {
+	ExternalID     string
+	OriginalType   string
+	OriginalNumber int32
+	AbsoluteNumber *int32
+	Title          string
+	AirDate        *string
+}
 type Details struct {
 	Title            string
+	Aliases          []Alias
+	ProviderMappings []ProviderMapping
 	Type             string
 	Year             *int32
 	ExternalProvider string
@@ -142,6 +171,7 @@ type Details struct {
 	Genres           []string
 	Keywords         []string
 	Facts            []Fact
+	EpisodeFacts     []EpisodeFact
 	Seasons          []Season
 	Cast             []Person
 	Crew             []Person
@@ -221,16 +251,18 @@ type TestResult struct {
 }
 
 type Service struct {
-	httpClient *http.Client
-	tokenStore TokenStore
-	mu         sync.Mutex
-	lastByID   map[string]time.Time
+	httpClient       *http.Client
+	tokenStore       TokenStore
+	mu               sync.Mutex
+	lastByID         map[string]time.Time
+	anidbTitleCaches map[string]anidbTitleCache
 }
 
 func NewService(httpClient *http.Client, tokenStore TokenStore) *Service {
 	return &Service{
-		httpClient: httpClient,
-		tokenStore: tokenStore,
-		lastByID:   map[string]time.Time{},
+		httpClient:       httpClient,
+		tokenStore:       tokenStore,
+		lastByID:         map[string]time.Time{},
+		anidbTitleCaches: map[string]anidbTitleCache{},
 	}
 }

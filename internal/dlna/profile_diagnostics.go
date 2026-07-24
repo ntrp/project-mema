@@ -12,6 +12,7 @@ import (
 
 func (m *Manager) TraceRendererProfile(ctx context.Context, request RendererRequest) RendererProfileTrace {
 	profiles, deviceOverrides := m.rendererProfileCache(ctx)
+	request = m.verifiedRendererRequest(request, deviceOverrides)
 	overrides, rememberedProfileID := m.profileMatchState(request.ClientIP)
 	match := matchRendererProfiles(profiles, deviceOverrides, request, overrides, rememberedProfileID)
 	return RendererProfileTrace{

@@ -16,7 +16,7 @@ import (
 )
 
 func writeMetadataDetailsError(w http.ResponseWriter, err error) {
-	if errors.Is(err, metadata.ErrCredentialsRequired) {
+	if errors.Is(err, metadata.ErrCredentialsRequired) || errors.Is(err, metadata.ErrAniDBClientIdentityRequired) {
 		writeError(w, http.StatusBadRequest, "metadata_provider_credentials_required", "Metadata provider credentials are required")
 		return
 	}
@@ -219,8 +219,13 @@ func (s *Server) groupedMediaSearch(ctx context.Context, request groupedMediaSea
 }
 
 func metadataSearchResultResponse(result metadata.SearchResult) MediaSearchResult {
+	aliases := make([]MediaSearchAlias, 0, len(result.Aliases))
+	for _, alias := range result.Aliases {
+		aliases = append(aliases, MediaSearchAlias{Value: alias.Value, Language: alias.Language, Kind: alias.Kind, ProviderName: optionalString(alias.ProviderName)})
+	}
 	return MediaSearchResult{
 		Title:            result.Title,
+		Aliases:          optionalSearchAliases(aliases),
 		Type:             MediaType(result.Type),
 		Year:             result.Year,
 		ExternalProvider: optionalString(result.ExternalProvider),
@@ -251,6 +256,13 @@ func dateOnly(value *string) *openapi_types.Date {
 		return nil
 	}
 	return &openapi_types.Date{Time: date}
+}
+
+func optionalSearchAliases(values []MediaSearchAlias) *[]MediaSearchAlias {
+	if len(values) == 0 {
+		return nil
+	}
+	return &values
 }
 
 func optionalResponseStrings(values []string) *[]string {

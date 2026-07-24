@@ -17,6 +17,7 @@ tags:
   - name: Users
   - name: System
   - name: Events
+  - name: Renderers
 paths:
   /health:
     get:
@@ -2855,6 +2856,170 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /renderers:
+    get:
+      operationId: listRenderers
+      tags: [Renderers]
+      summary: List discovered DLNA renderers
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Currently online renderers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RendererListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /renderers/{id}/status:
+    parameters:
+      - $ref: "#/components/parameters/RendererId"
+    get:
+      operationId: getRendererStatus
+      tags: [Renderers]
+      summary: Read renderer transport and volume state
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Renderer state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RendererStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+  /renderers/{id}/play:
+    parameters:
+      - $ref: "#/components/parameters/RendererId"
+    post:
+      operationId: playMediaOnRenderer
+      tags: [Renderers]
+      summary: Set a media URI and start renderer playback
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RendererPlayRequest"
+      responses:
+        "200":
+          description: Playback started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RendererPlaybackResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+  /renderers/{id}/transport:
+    parameters:
+      - $ref: "#/components/parameters/RendererId"
+    post:
+      operationId: controlRendererTransport
+      tags: [Renderers]
+      summary: Control renderer transport
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RendererTransportRequest"
+      responses:
+        "204":
+          description: Transport action completed
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+  /renderers/{id}/seek:
+    parameters:
+      - $ref: "#/components/parameters/RendererId"
+    post:
+      operationId: seekRenderer
+      tags: [Renderers]
+      summary: Seek renderer playback
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RendererSeekRequest"
+      responses:
+        "204": {description: Seek completed}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "502": {$ref: "#/components/responses/BadGateway"}
+  /renderers/{id}/volume:
+    parameters:
+      - $ref: "#/components/parameters/RendererId"
+    post:
+      operationId: setRendererVolume
+      tags: [Renderers]
+      summary: Set renderer volume
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RendererVolumeRequest"
+      responses:
+        "204": {description: Volume updated}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "502": {$ref: "#/components/responses/BadGateway"}
+  /renderers/{id}/mute:
+    parameters:
+      - $ref: "#/components/parameters/RendererId"
+    post:
+      operationId: setRendererMute
+      tags: [Renderers]
+      summary: Set renderer mute
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RendererMuteRequest"
+      responses:
+        "204": {description: Mute updated}
+        "400": {$ref: "#/components/responses/BadRequest"}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "502": {$ref: "#/components/responses/BadGateway"}
   /settings/dlna:
     get:
       operationId: getDLNASettings
@@ -5085,6 +5250,14 @@ components:
       schema:
         type: string
         minLength: 1
+    RendererId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 200
     ProfileId:
       name: id
       in: path
@@ -5131,6 +5304,12 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
     Conflict:
       description: Resource state conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadGateway:
+      description: Renderer request failed
       content:
         application/json:
           schema:
@@ -5529,6 +5708,21 @@ components:
       enum:
         - library
         - provider
+    MediaSearchAlias:
+      type: object
+      additionalProperties: false
+      required:
+        - value
+        - kind
+      properties:
+        value:
+          type: string
+        language:
+          type: string
+        kind:
+          type: string
+        providerName:
+          type: string
     MediaSearchResult:
       type: object
       additionalProperties: false
@@ -5541,6 +5735,10 @@ components:
           format: uuid
         title:
           type: string
+        aliases:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaSearchAlias"
         type:
           $ref: "#/components/schemas/MediaType"
         year:
@@ -8742,6 +8940,104 @@ components:
         startedAt:
           type: string
           format: date-time
+    RendererListResponse:
+      type: object
+      additionalProperties: false
+      required: [renderers]
+      properties:
+        renderers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Renderer"
+    Renderer:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - manufacturer
+        - modelName
+        - address
+        - lastSeen
+        - expiresAt
+        - supports
+      properties:
+        id: {type: string}
+        name: {type: string}
+        manufacturer: {type: string}
+        modelName: {type: string}
+        address: {type: string}
+        lastSeen: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        supports:
+          $ref: "#/components/schemas/RendererCapabilities"
+    RendererCapabilities:
+      type: object
+      additionalProperties: false
+      required: [play, pause, stop, seek, next, previous, volume, mute]
+      properties:
+        play: {type: boolean}
+        pause: {type: boolean}
+        stop: {type: boolean}
+        seek: {type: boolean}
+        next: {type: boolean}
+        previous: {type: boolean}
+        volume: {type: boolean}
+        mute: {type: boolean}
+    RendererStatus:
+      type: object
+      additionalProperties: false
+      required:
+        - transportState
+        - transportStatus
+        - positionSeconds
+        - durationSeconds
+      properties:
+        transportState: {type: string}
+        transportStatus: {type: string}
+        positionSeconds: {type: integer, format: int32, minimum: 0}
+        durationSeconds: {type: integer, format: int32, minimum: 0}
+        volume: {type: integer, format: int32, minimum: 0, maximum: 100}
+        muted: {type: boolean}
+    RendererPlayRequest:
+      type: object
+      additionalProperties: false
+      required: [mediaItemId]
+      properties:
+        mediaItemId: {type: string, format: uuid}
+        path: {type: string, maxLength: 4096}
+    RendererPlaybackResponse:
+      type: object
+      additionalProperties: false
+      required: [profileId]
+      properties:
+        profileId: {type: string}
+    RendererTransportRequest:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [play, pause, stop, next, previous]
+    RendererSeekRequest:
+      type: object
+      additionalProperties: false
+      required: [positionSeconds]
+      properties:
+        positionSeconds: {type: integer, format: int32, minimum: 0}
+    RendererVolumeRequest:
+      type: object
+      additionalProperties: false
+      required: [volume]
+      properties:
+        volume: {type: integer, format: int32, minimum: 0, maximum: 100}
+    RendererMuteRequest:
+      type: object
+      additionalProperties: false
+      required: [muted]
+      properties:
+        muted: {type: boolean}
     DLNASettings:
       allOf:
         - $ref: "#/components/schemas/DLNASettingsRequest"

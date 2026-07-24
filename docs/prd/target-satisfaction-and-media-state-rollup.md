@@ -2,14 +2,39 @@
 
 ## Status
 
-Draft
+Implemented
+
+Last reconciled with the application: **2026-07-14**.
+
+## Implementation Snapshot
+
+The target-satisfaction epic
+([#122](https://github.com/ntrp/project-mema/issues/122)) and child issues
+123–137 are closed. Completion is recorded through commit `22234db4d`.
+
+- [x] Shared target, satisfaction, rollup, candidate-state, and wanted contracts.
+- [x] Database-backed file, probe, subtitle, custom-format, and provenance facts.
+- [x] Release scoring aligned with the post-import desired-state model.
+- [x] Video, audio, and subtitle satisfaction engines.
+- [x] File and media-item rollups plus wanted-row generation.
+- [x] Automatic and manual fulfillment for supported operations with progress
+      and structured logs.
+- [x] OpenAPI/backend mapping and frontend file-state/wanted surfaces.
+- [x] Acceptance coverage and user/architecture documentation.
+- [ ] Custom formats remain an upgrade layer rather than first-class target rows.
+- [ ] Bitmap-to-text subtitle conversion remains unavailable.
+
+Primary implementation: `internal/targets/`, `internal/satisfaction/`,
+`internal/jobs/fulfillment_*`, `internal/httpapi/*requirement*`,
+`internal/httpapi/wanted_handlers.go`, the initial schema, and the frontend
+wanted/media-file components.
 
 ## Context
 
-Mema currently has several overlapping ways to describe whether media is done:
-release decisions decide what to fetch, file detail views inspect probed tracks,
-subtitle state reports whether configured subtitle languages exist, and media
-items expose a coarse `missing`, `downloading`, or `downloaded` status.
+Before this work, Mema had several overlapping ways to describe whether media
+was done: release decisions chose what to fetch, file detail views inspected
+probed tracks, subtitle state reported configured languages, and media items
+exposed only coarse download status.
 
 This PRD defines one system for evaluating desired video, audio, and subtitle
 targets after files are imported or scanned. It also defines how target state
@@ -32,8 +57,7 @@ tracks or subtitles.
 
 ## Non-Goals
 
-- Implement the refactor in this PRD.
-- Define final database schema.
+- Prescribe the final database schema in the product contract.
 - Require transcoding, remuxing, subtitle conversion, or component sourcing jobs
   to exist before target satisfaction can be calculated.
 - Treat metadata, artwork, chapters, or arbitrary sidecars as done-state
@@ -425,19 +449,22 @@ profile changes.
 
 ## Acceptance Criteria
 
-- PRD clearly distinguishes target state from track/subtitle visual state.
-- PRD states that post-import satisfaction is DB-only and probe data wins for
-  probeable fields.
-- PRD covers initial release decision, target satisfaction, media rollup, custom
-  format handling, fulfillment jobs, visual states, and wanted table behavior.
-- PRD includes setting-dependent examples, including subtitle mode changing
-  external subtitles from pending to satisfied.
-- PRD does not introduce metadata, artwork, chapter, or arbitrary sidecar targets.
+- [x] Target state is distinct from track/subtitle visual state.
+- [x] Post-import satisfaction is database-only and probe data wins for
+      probeable fields.
+- [x] Release decisions, satisfaction, rollup, custom-format handling,
+      fulfillment jobs, visual states, and wanted behavior share one contract.
+- [x] Setting changes recalculate satisfaction, pending operations, unwanted
+      indicators, and wanted rows.
+- [x] Metadata, artwork, chapters, and arbitrary sidecars remain outside the
+      done-state target model.
 
 ## Implementation Notes
 
-- The existing `docs/prd/media-profile-desired-state.md` remains the broader
-  profile model PRD. This PRD is the target satisfaction and rollup contract.
-- The architecture docs should later link to this PRD when implementation starts.
-- Because the project is unreleased, future schema changes should update the
-  initial schema directly rather than adding migrations.
+- `docs/prd/media-profile-desired-state.md` remains the broader profile model
+  PRD; this document is the implemented satisfaction and rollup contract.
+- Architecture and user docs describe the delivered behavior under
+  `docs/website/src/content/docs/`.
+- Because the project is unreleased, future schema changes must update
+  `internal/storage/migrations/00001_initial_schema.sql` rather than add a new
+  migration.

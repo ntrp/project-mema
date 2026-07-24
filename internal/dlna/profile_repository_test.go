@@ -19,11 +19,11 @@ func TestRepositoryRendererProfilesKeepCurrentMatches(t *testing.T) {
 		request RendererRequest
 		want    string
 	}{
-		{name: "vlc", request: RendererRequest{UserAgent: "VLC/3.0"}, want: "vlc"},
-		{name: "samsung", request: RendererRequest{UserAgent: "Samsung Tizen DLNADOC"}, want: "samsung"},
-		{name: "lg", request: RendererRequest{UserAgent: "LG webOS TV"}, want: "lg"},
-		{name: "sony", request: RendererRequest{UserAgent: "Sony BRAVIA"}, want: "sony"},
-		{name: "chromecast", request: RendererRequest{Headers: http.Header{"X-Device": []string{"Google Cast"}}}, want: "chromecast"},
+		{name: "vlc", request: RendererRequest{UserAgent: "VLC/3.0"}, want: "vlc-appletv"},
+		{name: "samsung", request: RendererRequest{UserAgent: "Samsung Tizen DLNADOC"}, want: "samsung-neo-qled"},
+		{name: "lg", request: RendererRequest{UserAgent: "LG webOS TV"}, want: "lg-oled-2022"},
+		{name: "sony", request: RendererRequest{UserAgent: "Sony BRAVIA"}, want: "sony-bravia-modern"},
+		{name: "chromecast", request: RendererRequest{Headers: http.Header{"X-Device": []string{"Google Cast"}}}, want: "chromecast-ultra"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -38,6 +38,7 @@ func TestRepositoryRendererProfileOverridesWin(t *testing.T) {
 	ctx, store := dlnaTestStore(t)
 	manager := NewManager(store, "http://127.0.0.1:18080")
 	ip := "192.0.2.55"
+	rendererIP := "192.0.2.56"
 	rendererUUID := "uuid:living-room"
 	upsertOverride(t, ctx, store, storage.DLNARendererDeviceOverrideInput{
 		IPAddress:               &ip,
@@ -47,6 +48,7 @@ func TestRepositoryRendererProfileOverridesWin(t *testing.T) {
 	})
 	upsertOverride(t, ctx, store, storage.DLNARendererDeviceOverrideInput{
 		RendererUUID:            &rendererUUID,
+		IPAddress:               &rendererIP,
 		ProfileID:               "lg-tv-2025",
 		Allowed:                 true,
 		DeliveryPolicyOverrides: rawObject(),
@@ -59,7 +61,7 @@ func TestRepositoryRendererProfileOverridesWin(t *testing.T) {
 	if ipMatch.Profile.ID != "chromecast" || ipMatch.Explanation.MatchSource != "manual_ip" {
 		t.Fatalf("ip match = %#v", ipMatch)
 	}
-	uuidMatch := manager.ExplainRendererProfile(ctx, RendererRequest{RendererUUID: rendererUUID, UserAgent: "VLC/3.0"})
+	uuidMatch := manager.ExplainRendererProfile(ctx, RendererRequest{RendererUUID: rendererUUID, ClientIP: rendererIP, UserAgent: "VLC/3.0"})
 	if uuidMatch.Profile.ID != "lg-tv-2025" || uuidMatch.Explanation.MatchSource != "manual_uuid" {
 		t.Fatalf("uuid match = %#v", uuidMatch)
 	}
@@ -99,7 +101,7 @@ func TestRepositoryRendererProfileStickyIPRegression(t *testing.T) {
 		UserAgent: "Lavf/60.0",
 	})
 
-	if match.Profile.ID != "lg" || match.Explanation.MatchSource != "sticky_ip" {
+	if match.Profile.ID != "lg-oled-2022" || match.Explanation.MatchSource != "sticky_ip" {
 		t.Fatalf("sticky match = %#v", match)
 	}
 }

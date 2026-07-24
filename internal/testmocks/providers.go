@@ -1,9 +1,18 @@
 package testmocks
 
 import (
+	_ "embed"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 )
+
+//go:embed testdata/anilist/search_multilingual.json
+var anilistSearch []byte
+
+//go:embed testdata/anilist/details_multilingual.json
+var anilistDetails []byte
 
 type ProviderServer struct {
 	*httptest.Server
@@ -30,6 +39,7 @@ func NewProviderServer() *ProviderServer {
 	mux.HandleFunc("/tvdb/v4/login", writeJSON(tvdbLogin))
 	mux.HandleFunc("/tvdb/v4/search", writeJSON(tvdbMovieSearch))
 	mux.HandleFunc("/tvdb/v4/movies/900/extended", writeJSON(tvdbMovieDetails))
+	mux.HandleFunc("/anilist/graphql", handleAniList)
 	return &ProviderServer{Server: httptest.NewServer(mux)}
 }
 
@@ -38,6 +48,16 @@ func writeJSON(body string) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(body))
 	}
+}
+
+func handleAniList(w http.ResponseWriter, r *http.Request) {
+	body, _ := io.ReadAll(r.Body)
+	payload := anilistSearch
+	if strings.Contains(string(body), "Media(id:") {
+		payload = anilistDetails
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write(payload)
 }
 
 func handleTorznab(w http.ResponseWriter, r *http.Request) {

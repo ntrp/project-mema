@@ -1,0 +1,8 @@
+<animetitles>
+  <anime aid="123">
+    <title type="main" xml:lang="x-jat">Example Anime</title>
+    <title type="official" xml:lang="en">Example English</title>
+  </anime>
+  <anime aid="124"><title type="main" xml:lang="x-jat">Fixture OVA</title></anime>
+  <anime aid="125"><title type="main" xml:lang="x-jat">Fixture ONA</title></anime>
+</animetitles>

@@ -12,6 +12,7 @@ type rendererMatchRule struct {
 }
 
 type rendererDeviceOverride struct {
+	Allowed      bool
 	RendererUUID string
 	IPAddress    string
 	ProfileID    string
@@ -21,6 +22,19 @@ type rendererProfileCandidate struct {
 	profile     RendererProfile
 	score       int
 	winningRule string
+}
+
+func rendererOverrideDenied(deviceOverrides []rendererDeviceOverride, request RendererRequest) bool {
+	uuid := normalizeRendererUUID(request.RendererUUID)
+	ip := strings.TrimSpace(request.ClientIP)
+	for _, override := range deviceOverrides {
+		uuidMatches := request.rendererUUIDVerified && uuid != "" && normalizeRendererUUID(override.RendererUUID) == uuid
+		ipMatches := ip != "" && strings.TrimSpace(override.IPAddress) == ip
+		if !override.Allowed && (uuidMatches || ipMatches) {
+			return true
+		}
+	}
+	return false
 }
 
 func matchRendererProfiles(
@@ -56,7 +70,7 @@ func manualProfile(
 	request RendererRequest,
 ) (RendererProfile, bool) {
 	uuid := normalizeRendererUUID(request.RendererUUID)
-	if uuid == "" {
+	if uuid == "" || !request.rendererUUIDVerified {
 		return RendererProfile{}, false
 	}
 	for _, override := range overrides {

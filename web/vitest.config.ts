@@ -5,6 +5,7 @@ export default defineConfig({
 	...viteConfig,
 	test: {
 		include: ['src/**/*.test.ts'],
+		exclude: ['src/**/*.browser.test.ts'],
 		coverage: {
 			provider: 'v8',
 			reportsDirectory: 'coverage',

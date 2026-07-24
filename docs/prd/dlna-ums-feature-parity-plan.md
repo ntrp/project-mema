@@ -2,7 +2,35 @@
 
 ## Status
 
-Draft
+Implemented for Mema-scoped parity
+
+Last reconciled with the application: **2026-07-24**.
+
+## Implementation Snapshot
+
+The planned server/profile scope was delivered through epic
+[#88](https://github.com/ntrp/project-mema/issues/88) and child stories #89–#108.
+
+- [x] Repository-backed profile storage, seed versions, upgrades, overrides, and
+      cache-backed matching.
+- [x] Capability evaluation and profile-driven resource/DIDL decisions.
+- [x] Broad Mema-owned seed catalogue, settings UI, recent-device overrides,
+      import/export/reset/restore/rebase, and diagnostics.
+- [x] SSDP, SOAP, ContentDirectory browse/search/sort/pagination, eventing,
+      ConnectionManager, and shared delivery parity.
+- [x] Compatibility harness, security limits, audit logging, bounded streams,
+      and operational diagnostics.
+- [x] Isolated MediaRenderer description and SOAP action clients.
+- [x] Active renderer discovery and the authenticated Play on device UI/API.
+- [ ] Mema MediaRenderer advertisement remains deferred without a local playback
+      target.
+- [x] `allowed: false` device overrides deny requests at the DLNA boundary.
+- [ ] Physical-device verification remains an ongoing compatibility activity,
+      not a guarantee implied by seed-catalogue coverage.
+
+Primary implementation: `internal/dlna/`, `internal/delivery/`,
+`internal/storage/dlna_*`, `internal/httpapi/dlna_*`, and the frontend DLNA
+settings feature.
 
 ## Clean-Room Boundary
 
@@ -41,8 +69,17 @@ Mema needs per-device configuration layered above the seeded profile:
 3. Seeded or cloned renderer profile.
 4. Generic renderer fallback.
 
-Device overrides should support profile assignment, display name, allowed
-state, delivery policy overrides, and notes.
+Device overrides support profile assignment, display name, allowed state,
+delivery policy overrides, and notes. No matching override means allowed with
+normal profile matching. `allowed: true` explicitly allows and assigns the
+selected profile but does not bypass Allowed CIDRs. `allowed: false` denies all
+DLNA traffic before catalogue, stream, transcode, or process work. UUID profile
+selection requires a persisted UUID+source-IP binding. Access checks are
+deny-dominant: any matching explicit UUID or IP deny wins over an allow.
+
+Denied SOAP actions receive UPnP fault 606 (`Action not authorized`); all other
+denied DLNA resources receive HTTP 403. Recent-client diagnostics and the DLNA
+audit log expose the denial.
 
 ### UPnP and DLNA Server
 
@@ -196,7 +233,7 @@ Feature parity requires:
 - Descriptor URL list per interface.
 - Profile decision trace for a selected file/client.
 
-## Implementation Plan
+## Delivered Implementation
 
 ### Phase 1: Profile Storage and Seed Model
 
@@ -320,7 +357,7 @@ Scope:
 
 - Generalize remux cache beyond LG.
 - Support profile-specific transcode targets.
-- Support subtitle conversion.
+- Support text subtitle conversion; bitmap-to-text conversion remains deferred.
 - Support thumbnail cache.
 - Support DLNA profile-name and MIME translation.
 - Add seek-by-time support where renderer profile asks for it.
@@ -397,17 +434,18 @@ actually serve.
 - Transcode seek parity is expensive because real seek often requires cached
   output or time-seek-aware transcoding.
 
-## First Implementation Slice
+## Initial Implementation Slice
 
-Recommended first slice:
+The original first slice is delivered:
 
-1. Persist renderer profiles and device overrides.
-2. Seed `generic`, `vlc`, `bubbleupnp`, `chromecast`, `kodi`, `samsung-tv`,
-   `sony-tv`, `lg-webos`, `lg-tv-2023-plus`, and `lg-tv-2025-plus`.
-3. Move current hardcoded profile fields into seed data.
-4. Add sticky IP and match explanation backed by persisted profiles.
-5. Add Settings > DLNA > Device profiles panel with table, recent devices, and
-   override assignment.
-6. Add LG profile split so 2023-era DTS-capable and 2025-era DTS-incapable
-   devices can make different audio decisions.
-7. Verify LG TV, VLC, and BubbleUPnP manually.
+- [x] Persist renderer profiles and device overrides.
+- [x] Seed generic, VLC, BubbleUPnP, Chromecast, Kodi, Samsung, Sony, and
+      generation-specific LG profiles, followed by the broader family catalogue.
+- [x] Move hardcoded profile behavior into Mema-owned seed data.
+- [x] Add sticky IP matching and match explanations backed by persisted profiles.
+- [x] Add Settings > DLNA > Device profiles with profiles, recent devices,
+      override assignment, editing, recovery, and diagnostics.
+- [x] Split LG generations so codec support can produce different audio delivery
+      decisions.
+- [x] Add automated compatibility fixtures and a manual device matrix; continue
+      recording physical-device outcomes as hardware becomes available.

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderWithTooltip } from '$lib/components/rendered/renderHelpers';
 import type { DLNARendererProfile } from '$lib/settings/types';
 import DLNADeviceOverrideTable from './DLNADeviceOverrideTable.svelte';
-import DLNAProfileTable from './DLNAProfileTable.svelte';
+import DLNAProfileTable from './table/DLNAProfileTable.svelte';
 import { formToRequest, importProfileText, profileToForm } from './dlnaProfileForms';
 
 describe('DLNA profile settings helpers (SCN-SETTINGS-025)', () => {

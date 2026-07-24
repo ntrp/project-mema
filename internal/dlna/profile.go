@@ -110,11 +110,12 @@ type DeliveryTraceInput struct {
 }
 
 type RendererRequest struct {
-	UserAgent    string
-	FriendlyName string
-	Headers      http.Header
-	ClientIP     string
-	RendererUUID string
+	UserAgent            string
+	FriendlyName         string
+	Headers              http.Header
+	ClientIP             string
+	RendererUUID         string
+	rendererUUIDVerified bool
 }
 
 func DefaultRendererProfiles() []RendererProfile {
@@ -149,8 +150,15 @@ func (m *Manager) RendererProfile(request RendererRequest) RendererProfile {
 
 func (m *Manager) ExplainRendererProfile(ctx context.Context, request RendererRequest) RendererProfileMatch {
 	profiles, deviceOverrides := m.rendererProfileCache(ctx)
+	request = m.verifiedRendererRequest(request, deviceOverrides)
 	overrides, rememberedProfileID := m.profileMatchState(request.ClientIP)
 	return matchRendererProfiles(profiles, deviceOverrides, request, overrides, rememberedProfileID)
+}
+
+func (m *Manager) rendererRequestDenied(r *http.Request) bool {
+	_, overrides := m.rendererProfileCache(r.Context())
+	request := m.verifiedRendererRequest(RendererRequestFromHTTP(r), overrides)
+	return rendererOverrideDenied(overrides, request)
 }
 
 func (m *Manager) RendererProfileFromRequest(r *http.Request) RendererProfile {

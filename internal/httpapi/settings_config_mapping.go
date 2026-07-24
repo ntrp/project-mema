@@ -188,5 +188,7 @@ func metadataProviderConfig(provider storage.MetadataProvider) metadata.Config {
 		AccessToken:           provider.AccessToken,
 		SessionToken:          provider.SessionToken,
 		SessionTokenExpiresAt: provider.SessionTokenExpiresAt,
+		ClientName:            provider.APIKey,
+		ClientVersion:         provider.PIN,
 	}
 }

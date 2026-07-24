@@ -66,14 +66,14 @@ func TestCompatibilitySeededCatalogRepresentativeFamilies(t *testing.T) {
 		wantFirst  string
 		noEventing bool
 	}{
-		{name: "LG", request: RendererRequest{UserAgent: "LG webOS TV"}, profileID: "lg", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
-		{name: "Samsung", request: RendererRequest{UserAgent: "Samsung Tizen DLNADOC"}, profileID: "samsung", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
-		{name: "Sony", request: RendererRequest{UserAgent: "Sony BRAVIA"}, profileID: "sony", fixture: "mpegts-h264-eac3-tv", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
-		{name: "Panasonic", request: RendererRequest{UserAgent: "Panasonic VIERA"}, profileID: "panasonic-tv", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
-		{name: "Philips", request: RendererRequest{UserAgent: "Philips PUS 6500"}, profileID: "philips-tv", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
+		{name: "LG", request: RendererRequest{UserAgent: "LG webOS TV"}, profileID: "lg-oled-2022", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
+		{name: "Samsung", request: RendererRequest{UserAgent: "Samsung Tizen DLNADOC"}, profileID: "samsung-neo-qled", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
+		{name: "Sony", request: RendererRequest{UserAgent: "Sony BRAVIA"}, profileID: "sony-bravia-modern", fixture: "mpegts-h264-eac3-tv", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
+		{name: "Panasonic", request: RendererRequest{UserAgent: "Panasonic VIERA"}, profileID: "panasonic-viera-modern", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
+		{name: "Philips", request: RendererRequest{UserAgent: "Philips PUS 6500"}, profileID: "philips-android-tv", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
 		{name: "Roku", request: RendererRequest{UserAgent: "Roku TV"}, profileID: "roku-tv", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
-		{name: "Chromecast", request: RendererRequest{Headers: http.Header{"X-Cast": []string{"Google Cast"}}}, profileID: "chromecast", fixture: "hdr-hevc-dts-remux", wantMode: delivery.ModeTranscode, wantProto: delivery.ProtocolHLS, wantFirst: "application/vnd.apple.mpegurl", noEventing: true},
-		{name: "VLC", request: RendererRequest{UserAgent: "VLC/3.0.20 LibVLC"}, profileID: "vlc", fixture: "avi-mpeg2-ac3-legacy", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
+		{name: "Chromecast", request: RendererRequest{Headers: http.Header{"X-Cast": []string{"Google Cast"}}}, profileID: "chromecast-ultra", fixture: "hdr-hevc-dts-remux", wantMode: delivery.ModeTranscode, wantProto: delivery.ProtocolHLS, wantFirst: "application/vnd.apple.mpegurl"},
+		{name: "VLC", request: RendererRequest{UserAgent: "VLC/3.0.20 LibVLC"}, profileID: "vlc-appletv", fixture: "avi-mpeg2-ac3-legacy", wantMode: delivery.ModeRemux, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
 		{name: "BubbleUPnP", request: RendererRequest{FriendlyName: "BubbleUPnP Renderer"}, profileID: "bubbleupnp", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
 		{name: "Kodi", request: RendererRequest{FriendlyName: "Kodi"}, profileID: "kodi", fixture: "hdr-hevc-dts-remux", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
 		{name: "Windows Media Player", request: RendererRequest{UserAgent: "Windows Media Player"}, profileID: "windows-media-player", fixture: "baseline-mp4-h264-aac", wantMode: delivery.ModeDirect, wantProto: delivery.ProtocolFile, wantFirst: "video/mp4"},
@@ -132,8 +132,7 @@ func TestCompatibilityDIDLGoldenFamilies(t *testing.T) {
 		},
 		{
 			name: "samsung", request: RendererRequest{UserAgent: "Samsung Tizen DLNADOC"},
-			contains:  []string{"application/x-subrip", "albumArtURI"},
-			forbidden: []string{"text/vtt", "dc:date", "upnp:genre"},
+			contains: []string{"application/x-subrip", "text/vtt", "albumArtURI", "dc:date", "upnp:genre"},
 		},
 	}
 	for _, test := range tests {

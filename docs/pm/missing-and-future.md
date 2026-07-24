@@ -1,0 +1,158 @@
+# Missing and Future Features
+
+Unchecked items are not complete as of **2026-07-24**. The first section is the
+authoritative open GitHub backlog. This post-delivery snapshot treats AniList
+([#70](https://github.com/ntrp/project-mema/issues/70)), AniDB
+([#71](https://github.com/ntrp/project-mema/issues/71)), DLNA device-deny
+enforcement ([#138](https://github.com/ntrp/project-mema/issues/138)), the DLNA
+control point ([#139](https://github.com/ntrp/project-mema/issues/139)), and DLNA
+architecture reconciliation
+([#143](https://github.com/ntrp/project-mema/issues/143)) as closed with this
+stack's push. Later sections capture limitations and product/documentation gaps.
+
+## Open GitHub backlog
+
+All 13 issues that remain open after #70, #71, #138, #139, and #143 close are
+represented below.
+
+### Release readiness and operations
+
+- [ ] **Configuration and database backup/restore** — define a versioned backup
+      format and secret policy; add API/jobs plus create, download, upload,
+      preview, restore, and recovery UI
+      ([#45](https://github.com/ntrp/project-mema/issues/45)).
+- [ ] **GitHub Actions quality gates** — run Go tests, Svelte checks/tests,
+      lint/format checks, and generated OpenAPI drift checks on pull requests
+      ([#46](https://github.com/ntrp/project-mema/issues/46)).
+- [ ] **Application healthcheck and deterministic E2E readiness** — expose
+      database-aware application readiness and make Docker and E2E startup wait
+      for it ([#144](https://github.com/ntrp/project-mema/issues/144)).
+- [ ] **Decide the advanced operations surface** — scope V0/V1 versus deferred
+      capabilities and produce ADRs/follow-up issues
+      ([#49](https://github.com/ntrp/project-mema/issues/49)).
+  - [ ] API keys for automation, if accepted.
+  - [ ] Webhook event types and delivery guarantees, if accepted.
+  - [ ] Authenticated metrics and label policy, if accepted.
+  - [ ] Reverse-proxy authentication boundaries, if accepted.
+  - [ ] OAuth/OIDC boundaries, if accepted.
+- [ ] **Close the operations hardening epic** after its remaining open children
+      are resolved ([#7](https://github.com/ntrp/project-mema/issues/7)).
+  - [x] Durable sessions are complete via
+        [#43](https://github.com/ntrp/project-mema/issues/43).
+  - [x] Secret redaction is complete via
+        [#44](https://github.com/ntrp/project-mema/issues/44).
+  - [x] Filesystem hardening is complete via
+        [#47](https://github.com/ntrp/project-mema/issues/47).
+  - [x] External media-tool hardening is complete via
+        [#48](https://github.com/ntrp/project-mema/issues/48).
+  - [ ] Backup/restore, CI, and advanced-hook scoping remain open.
+
+### Anime metadata and correction workflows
+
+The storage/matching foundation from
+[#30](https://github.com/ntrp/project-mema/issues/30) and the AniList and AniDB
+providers from [#70](https://github.com/ntrp/project-mema/issues/70) and
+[#71](https://github.com/ntrp/project-mema/issues/71) are implemented. These
+user-facing correction workflows remain:
+
+- [ ] **User-editable anime aliases** — add/edit/delete/disable user aliases
+      without losing provider-derived values; define how aliases affect search
+      and matching ([#68](https://github.com/ntrp/project-mema/issues/68)).
+- [ ] **Anime provider-conflict review UI** — show TMDB/TVDB/AniList/AniDB
+      disagreements and let users select canonical values while preserving
+      source data ([#69](https://github.com/ntrp/project-mema/issues/69)).
+- [x] **AniList metadata provider** — search/details, aliases, artwork, dates,
+      mappings, rate-limit/auth policy, and fixtures
+      ([#70](https://github.com/ntrp/project-mema/issues/70)).
+- [x] **AniDB metadata provider** — title-dump search, AID details,
+      absolute-number hints, mappings, specials/OVA policy,
+      caching/credentials, and fixtures
+      ([#71](https://github.com/ntrp/project-mema/issues/71)).
+- [ ] **Manual anime numbering overrides** — correction workflow for provider
+      mappings, split seasons, specials, OVAs, and complex series numbering
+      ([#72](https://github.com/ntrp/project-mema/issues/72)).
+
+### First-start experience
+
+- [ ] **Mandatory first-start setup wizard** — create the first admin without
+      default credentials; validate database readiness, TMDB, an indexer, a
+      download client, movie/series root folders, path mappings, and required
+      defaults before entering the normal app
+      ([#73](https://github.com/ntrp/project-mema/issues/73)).
+- [ ] **Skippable guided tour** — per-user bottom-left stepper covering core
+      routes, with skip/finish/restart state and responsive/error behavior
+      ([#74](https://github.com/ntrp/project-mema/issues/74)).
+
+### Subtitle support gaps
+
+- [ ] **Bitmap subtitle OCR/conversion or an explicit unsupported state** —
+      decide whether to implement bounded PGS/SUP OCR or represent the work as
+      requiring manual review ([#141](https://github.com/ntrp/project-mema/issues/141)).
+- [ ] **Visible subtitle-provider runtime support** — distinguish supported,
+      configuration-only, and catalogue-only providers so unavailable providers
+      cannot be enabled as usable
+      ([#142](https://github.com/ntrp/project-mema/issues/142)).
+
+### DLNA follow-up
+
+- [ ] **Optional Mema MediaRenderer mode** — decide whether Mema should advertise
+      as a renderer and identify a supported local playback target before any
+      implementation ([#140](https://github.com/ntrp/project-mema/issues/140)).
+
+## Deferred or conditional product ideas
+
+These are mentioned by draft PRDs but are not committed backlog items. They need
+a product decision before implementation.
+
+- [ ] **Generic profile rule engine** — the desired-state PRD explicitly defers
+      a full rule engine until the profile model is stable
+      (`docs/prd/media-profile-desired-state.md`).
+- [ ] **Custom formats as first-class target rows** — the rollup PRD keeps
+      custom formats as an upgrade layer unless a future model explicitly
+      attaches them to targets
+      (`docs/prd/target-satisfaction-and-media-state-rollup.md`).
+- [ ] **Additional future profile fields and policies** — preserve
+      extensibility, but only add fields backed by a concrete user need and
+      fulfillment strategy.
+
+## Documentation and planning gaps
+
+- [x] **Update implemented PRD statuses** — reconciled all six PRDs with the
+      application on 2026-07-24, including delivered scope, implementation
+      evidence, and explicit remaining boundaries.
+- [x] **Reconcile DLNA architecture wording** — delivered by
+      [#143](https://github.com/ntrp/project-mema/issues/143); the architecture
+      now describes the implemented profile storage, matching, overrides,
+      diagnostics, settings UI, and delivery behavior.
+- [ ] **Refresh the operations epic body** —
+      [#7](https://github.com/ntrp/project-mema/issues/7) lists durable sessions,
+      secret redaction, filesystem safety, and media-tool safety as remaining
+      even though their child issues are closed.
+- [ ] **Refine open anime issues** —
+      [#68](https://github.com/ntrp/project-mema/issues/68),
+      [#69](https://github.com/ntrp/project-mema/issues/69), and
+      [#72](https://github.com/ntrp/project-mema/issues/72) are labeled
+      `to refine` and contain placeholder acceptance criteria/open decisions.
+- [ ] **Assign roadmap milestones/priorities** — none of the 13 open issues had
+      a milestone during this audit, so sequencing beyond issue dependencies is
+      not explicit.
+- [ ] **Keep this PM inventory current** whenever an issue closes, a limitation
+      is accepted/deferred, or a user-facing capability changes.
+
+## Implemented work that should not be mistaken for missing work
+
+The reconciled PRDs record these broad epics as implemented. Do not reopen them
+without a new, specific gap.
+
+- [x] Full DLNA/UPnP server epic and child stories #89–#108
+      ([#88](https://github.com/ntrp/project-mema/issues/88)).
+- [x] Renderer profiles, device overrides, diagnostics, compatibility tests, and
+      control-point client contracts.
+- [x] Target satisfaction, DB-backed facts, rollups, wanted rows, fulfillment
+      jobs, API/UI, tests, and docs through child issues #123–#137
+      ([#122](https://github.com/ntrp/project-mema/issues/122)).
+- [x] Anime provider mapping/alias/numbering storage and matching foundation
+      ([#30](https://github.com/ntrp/project-mema/issues/30)), plus AniList and
+      AniDB metadata providers ([#70](https://github.com/ntrp/project-mema/issues/70),
+      [#71](https://github.com/ntrp/project-mema/issues/71)); only the three
+      correction workflows above remain.

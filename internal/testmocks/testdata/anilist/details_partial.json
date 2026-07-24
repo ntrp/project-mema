@@ -1,0 +1,19 @@
+{
+  "data": {
+    "Media": {
+      "id": 170000,
+      "idMal": null,
+      "type": "ANIME",
+      "format": "ONA",
+      "title": {"romaji": "Mikan no Anime", "english": null, "native": "未完のアニメ"},
+      "synonyms": [],
+      "description": null,
+      "countryOfOrigin": "JP",
+      "startDate": {"year": 2026, "month": null, "day": null},
+      "coverImage": {"large": null, "extraLarge": null},
+      "siteUrl": "https://anilist.co/anime/170000",
+      "duration": null,
+      "externalLinks": []
+    }
+  }
+}

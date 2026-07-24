@@ -32,6 +32,11 @@ func (m *Manager) diagnosticActions(actions map[string]soap.HandlerFunc) map[str
 		actionName := name
 		next := handler
 		wrapped[actionName] = func(ctx context.Context, args map[string]string) (map[string]string, error) {
+			if request, ok := soap.RequestFromContext(ctx); ok && m.rendererRequestDenied(request) {
+				m.recordClient(request, actionName, safeSOAPArgs(actionName, args), errRendererOverrideDenied)
+				m.audit(ctx, "DLNA request denied", map[string]any{"reason": "device override", "action": actionName})
+				return nil, soap.Error{Code: 606, Description: "Action not authorized"}
+			}
 			values, err := next(ctx, args)
 			m.recordSOAPAction(ctx, actionName, args, err)
 			return values, err

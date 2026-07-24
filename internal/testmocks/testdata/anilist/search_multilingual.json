@@ -1,0 +1,48 @@
+{
+  "data": {
+    "Page": {
+      "media": [
+        {
+          "id": 199,
+          "idMal": 199,
+          "type": "ANIME",
+          "format": "MOVIE",
+          "title": {
+            "romaji": "Sen to Chihiro no Kamikakushi",
+            "english": "Spirited Away",
+            "native": "千と千尋の神隠し"
+          },
+          "synonyms": ["Sen and Chihiro's Spiriting Away", "El viaje de Chihiro"],
+          "description": "A young girl enters a spirit world.",
+          "countryOfOrigin": "JP",
+          "startDate": {"year": 2001, "month": 7, "day": 20},
+          "coverImage": {"large": "https://img.test/199-large.jpg", "extraLarge": "https://img.test/199-xl.jpg"},
+          "siteUrl": "https://anilist.co/anime/199",
+          "duration": 125,
+          "externalLinks": []
+        },
+        {
+          "id": 154587,
+          "type": "ANIME",
+          "format": "TV",
+          "title": {"romaji": "Sousou no Frieren", "english": "Frieren: Beyond Journey's End", "native": "葬送のフリーレン"},
+          "synonyms": [],
+          "countryOfOrigin": "JP",
+          "startDate": {"year": 2023, "month": 9, "day": 29},
+          "coverImage": {},
+          "externalLinks": []
+        },
+        {
+          "id": 999,
+          "type": "MANGA",
+          "format": "MOVIE",
+          "title": {"romaji": "Not Anime", "english": "Not Anime", "native": ""},
+          "synonyms": [],
+          "startDate": {"year": 2020, "month": 1, "day": 1},
+          "coverImage": {},
+          "externalLinks": []
+        }
+      ]
+    }
+  }
+}

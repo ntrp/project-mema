@@ -41,7 +41,9 @@ func runRSSSyncWorker(
 	decisionEngine decisions.Engine,
 	eventBroker *events.Broker,
 ) (err error) {
-	ctx = withJobExecution(ctx, jobRow.ID)
+	if jobRow != nil {
+		ctx = withJobExecution(ctx, jobRow.ID)
+	}
 	recordJobUpdated(ctx, settings, eventBroker, jobRow, "running")
 	defer func() { recordJobFinished(ctx, settings, eventBroker, jobRow, err) }()
 

@@ -2,7 +2,35 @@
 
 ## Status
 
-Draft
+Implemented
+
+Last reconciled with the application: **2026-07-14**.
+
+## Implementation Snapshot
+
+Delivered under epic [#88](https://github.com/ntrp/project-mema/issues/88),
+primarily story #104 and commit `e7b4b45`, with later profile hardening and
+settings refinements.
+
+- [x] Versioned, Mema-owned renderer seed catalogue with at least 80 records and
+      automated family-coverage/clean-room tests.
+- [x] Persisted editable profiles, structured match/capability/delivery data,
+      priority, enablement, and seed-version/customization state.
+- [x] UUID/IP device overrides, sticky matching, capability evaluation, and
+      decision explanations.
+- [x] Settings UI for profiles, recent devices, overrides, clone, edit, disable,
+      reset, restore, rebase, and import/export workflows.
+- [x] Delivery and DIDL behavior consume matched profile decisions.
+- [ ] Hardware coverage remains bounded by available fixtures and the manual
+      compatibility matrix; catalogue membership is not a guarantee for every
+      physical model.
+- [x] Device allow/deny overrides are enforced at the request boundary with
+      deny-dominant conflict handling, persisted UUID+source-IP binding, and
+      denial diagnostics.
+
+Primary implementation: `internal/dlna/profile_*`,
+`internal/storage/dlna_renderer_*`, `internal/httpapi/dlna_renderer_*`, and
+`web/src/lib/components/settings/dlna/profiles/`.
 
 ## Clean-Room Boundary
 
@@ -28,8 +56,10 @@ Forbidden inputs:
 
 ## Goal
 
-Make DLNA renderer profiles seeded, editable, testable, and complete enough to
-represent the full UMS-supported device catalog in Mema-owned data.
+Provide seeded, editable, testable renderer profiles with broad Mema-owned
+coverage of the UMS device-family catalogue. The implementation satisfies this
+through structured clean-room records and family coverage rather than copied
+UMS configuration.
 
 ## UMS Profile Coverage Summary
 
@@ -93,14 +123,25 @@ Matching order:
 
 1. Manual device override by UUID.
 2. Manual device override by IP.
-3. Existing connected renderer association by IP.
-4. UPnP UUID and device details.
-5. HTTP headers.
-6. Default profile.
+3. Best automatic match from structured rules, including UUID/device details,
+   friendly name, User-Agent, and HTTP headers.
+4. Sticky profile from the recent-client IP association for weak requests.
+5. Generic fallback profile.
 
-Mema should keep UMS-like sticky IP behavior: once a renderer is recognized at
-an IP, weak later media requests from the same IP reuse that renderer unless a
-higher-priority profile is positively matched.
+Device access is resolved before normal profile matching and is deny-dominant:
+any matching explicit UUID or IP deny wins over an allow. UUID access matching
+requires a persisted UUID+source-IP binding; unauthenticated SSDP claims are not
+trusted. No matching deny means the request is allowed. `allowed: true` assigns
+its profile without bypassing Allowed CIDRs or another matching deny, while
+`allowed: false` denies all DLNA requests.
+Denied SOAP controls return UPnP error 606, while descriptions, resources,
+direct/remux/transcode streams, artwork, thumbnails, subtitles, and events
+return HTTP 403 before catalogue, stream, transcode-slot, or process work.
+Denials appear in recent-client diagnostics and the DLNA audit log.
+
+Mema keeps UMS-like sticky IP behavior: once a renderer is recognized at an IP,
+weak later media requests from the same IP reuse that renderer unless an
+automatic match succeeds.
 
 ### Direct-Play Capability Rules
 
@@ -267,10 +308,11 @@ seed version and mark profiles as `customized` when user data differs.
 
 ## Acceptance Criteria
 
-- Renderer profiles are persisted and editable.
-- All seeded profiles can be disabled, cloned, or reset.
-- Recent DLNA clients can be assigned a manual profile override.
-- Matching explains profile choice in diagnostics.
-- Capability evaluation explains direct/remux/transcode decision.
-- Mema can seed a profile catalog covering every family listed above.
-- No UMS `.conf` line is copied into seed data or docs.
+- [x] Renderer profiles are persisted and editable.
+- [x] Seeded profiles can be disabled, cloned, reset, restored, and rebased.
+- [x] Recent DLNA clients can receive UUID/IP profile overrides.
+- [x] Matching diagnostics explain profile choice.
+- [x] Capability diagnostics explain direct/remux/transcode decisions.
+- [x] The seed catalogue covers the listed device families, with automated
+      minimum-count and representative required-profile checks.
+- [x] Clean-room tests reject copied UMS `.conf`-style data.

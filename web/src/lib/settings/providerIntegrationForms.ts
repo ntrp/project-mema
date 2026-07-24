@@ -143,9 +143,9 @@ function normalizeSettings(settings: Record<string, SubtitleProviderSettingValue
 		Object.entries(settings).filter(([, value]) =>
 			Boolean(
 				value.stringValue?.trim() ||
-					value.numberValue !== undefined ||
-					value.booleanValue !== undefined ||
-					value.stringValues?.length
+				value.numberValue !== undefined ||
+				value.booleanValue !== undefined ||
+				value.stringValues?.length
 			)
 		)
 	);

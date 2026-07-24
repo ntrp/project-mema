@@ -7,6 +7,9 @@ import (
 )
 
 func providerHasCredentials(provider storage.MetadataProvider) bool {
+	if provider.Type == "anidb" {
+		return optionalTrimmedString(provider.APIKey) != nil && optionalTrimmedString(provider.PIN) != nil
+	}
 	return optionalTrimmedString(provider.APIKey) != nil || optionalTrimmedString(provider.AccessToken) != nil
 }
 
@@ -21,7 +24,7 @@ func discoverProvider(providers []storage.MetadataProvider) (storage.MetadataPro
 
 func metadataProviderByType(providers []storage.MetadataProvider, providerType string) (storage.MetadataProvider, bool) {
 	for _, provider := range providers {
-		if provider.Enabled && provider.Type == providerType && providerHasCredentials(provider) {
+		if provider.Enabled && provider.Type == providerType && (provider.Type == "anilist" || providerHasCredentials(provider)) {
 			return provider, true
 		}
 	}

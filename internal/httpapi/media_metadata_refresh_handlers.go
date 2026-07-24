@@ -30,7 +30,12 @@ func (s *Server) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request
 		writeError(w, http.StatusInternalServerError, "metadata_provider_list_failed", "Could not list metadata providers")
 		return
 	}
-	provider, ok := metadataProviderByType(providers, strings.TrimSpace(*item.ExternalProvider))
+	providerType, externalID := mediaRefreshProviderLink(item)
+	provider, ok := metadataProviderByType(providers, providerType)
+	if !ok && providerType != strings.TrimSpace(*item.ExternalProvider) {
+		providerType, externalID = strings.TrimSpace(*item.ExternalProvider), strings.TrimSpace(*item.ExternalID)
+		provider, ok = metadataProviderByType(providers, providerType)
+	}
 	if !ok {
 		writeError(w, http.StatusNotFound, "metadata_provider_not_found", "Metadata provider is not configured")
 		return
@@ -38,20 +43,55 @@ func (s *Server) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request
 
 	details, err := s.freshMetadataProviderDetails(r.Context(), provider, metadata.DetailsRequest{
 		MediaType:  item.Type,
-		ExternalID: strings.TrimSpace(*item.ExternalID),
+		ExternalID: externalID,
 	})
 	if err != nil {
 		writeMetadataDetailsError(w, err)
 		return
 	}
 
-	updated, err := s.settings.UpdateMediaItemMetadata(r.Context(), item.ID, refreshedMediaInput(item, details))
+	input, err := s.enrichAniDBFacts(r.Context(), item, providers, refreshedMediaInput(item, details), details)
+	if err != nil {
+		writeMetadataDetailsError(w, err)
+		return
+	}
+	updated, err := s.settings.UpdateMediaItemMetadata(r.Context(), item.ID, input)
 	if err != nil {
 		writeSettingsError(w, err, "Could not refresh media metadata")
 		return
 	}
 	s.recordEvent(r.Context(), eventSeverityInfo, "media", "Media metadata refreshed", map[string]any{"mediaItemId": item.ID.String()})
 	writeJSON(w, http.StatusOK, mediaItemResponse(updated))
+}
+
+func mediaRefreshProviderLink(item storage.MediaItem) (string, string) {
+	for _, mapping := range item.ProviderMappings {
+		if mapping.EntityType == "media_item" && mapping.ProviderName == "anilist" && strings.TrimSpace(mapping.ExternalID) != "" {
+			return "anilist", strings.TrimSpace(mapping.ExternalID)
+		}
+	}
+	return strings.TrimSpace(*item.ExternalProvider), strings.TrimSpace(*item.ExternalID)
+}
+
+func providerMappingInputs(values []storage.MediaProviderMapping) []storage.MediaProviderMappingInput {
+	inputs := make([]storage.MediaProviderMappingInput, 0, len(values))
+	for _, value := range values {
+		inputs = append(inputs, storage.MediaProviderMappingInput{
+			SeasonID: value.SeasonID, EpisodeID: value.EpisodeID, EntityType: value.EntityType,
+			ProviderName: value.ProviderName, ProviderEntityType: value.ProviderEntityType,
+			ExternalID: value.ExternalID, Canonical: value.Canonical, Confidence: value.Confidence, Source: value.Source,
+		})
+	}
+	return inputs
+}
+
+func mediaAliasInputs(values []storage.MediaItemAlias) []storage.MediaItemAliasInput {
+	inputs := make([]storage.MediaItemAliasInput, 0, len(values))
+	for _, value := range values {
+		inputs = append(inputs, storage.MediaItemAliasInput{Alias: value.Alias, Language: value.Language,
+			Kind: value.Kind, ProviderName: value.ProviderName, ProviderMappingID: value.ProviderMappingID, Source: value.Source})
+	}
+	return inputs
 }
 
 func refreshedMediaInput(item storage.MediaItem, details metadata.Details) storage.MediaItemInput {
@@ -70,6 +110,8 @@ func refreshedMediaInput(item storage.MediaItem, details metadata.Details) stora
 		MinimumAvailability:   item.MinimumAvailability,
 		QualityProfileID:      item.QualityProfileID,
 		LibraryFolderID:       item.LibraryFolderID,
+		ProviderMappings:      providerMappingInputs(item.ProviderMappings),
+		Aliases:               mediaAliasInputs(item.Aliases),
 		Tags:                  item.Tags,
 	}
 	return applyMediaDetails(input, details)

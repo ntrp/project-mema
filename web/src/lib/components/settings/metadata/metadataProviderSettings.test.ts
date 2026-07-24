@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import MetadataProviderCard from './MetadataProviderCard.svelte';
 import MetadataProviderSettings from './MetadataProviderSettings.svelte';
+import { metadataProviderDefinitions } from './metadataProviderDefinitions';
 import type {
 	IntegrationTestResults,
 	MetadataProvider,
@@ -55,6 +56,13 @@ describe('metadata provider settings (SCN-SETTINGS-014)', () => {
 
 		expect(body).toContain('TMDB');
 		expect(body).toContain('TVDB');
+		expect(body).toContain('AniList');
+		expect(body).toContain('AniDB');
+		expect(body).toContain('No credentials required. AniList uses its public GraphQL API.');
+		expect(body).toContain('https://graphql.anilist.co');
+		expect(body).toContain('Registered client name');
+		expect(body).toContain('Client version');
+		expect(body).toContain('http://api.anidb.net:9001');
 		expect(body).toContain('http://metadata.test/tmdb');
 		expect(body).toContain('https://api4.thetvdb.com/v4');
 		expect(body).toContain('Enabled');
@@ -62,6 +70,25 @@ describe('metadata provider settings (SCN-SETTINGS-014)', () => {
 		expect(body).toContain('Mock metadata ready - 42 ms');
 		expect(body).toContain('Saving');
 		expect(body).toContain('PIN');
+	});
+
+	it('renders AniList without credential fields', () => {
+		const definition = metadataProviderDefinitions.find(({ type }) => type === 'anilist');
+		if (!definition) throw new Error('missing AniList definition');
+
+		const { body } = render(MetadataProviderCard, {
+			props: {
+				definition,
+				onSave: vi.fn(),
+				onTest: vi.fn()
+			}
+		});
+
+		expect(body).toContain('AniList');
+		expect(body).toContain('https://graphql.anilist.co');
+		expect(body).toContain('No credentials required');
+		expect(body).not.toContain('API key');
+		expect(body).not.toContain('Access token');
 	});
 
 	it('renders disabled provider failure status and disabled test action', () => {

@@ -2,16 +2,41 @@
 
 ## Status
 
-Draft
+Implemented for the MediaServer scope
+
+Last reconciled with the application: **2026-07-24**.
+
+## Implementation Snapshot
+
+The clean-room server specification was delivered by epic
+[#88](https://github.com/ntrp/project-mema/issues/88) and child stories #89–#108.
+
+- [x] LAN-scoped SSDP advertisement and discovery responses.
+- [x] Device description, SCPDs, SOAP actions/faults, and service state.
+- [x] ContentDirectory model, browse, search, sort, pagination, DIDL-Lite, and
+      update IDs.
+- [x] ConnectionManager protocol reporting.
+- [x] Shared direct/remux/transcode, seek, artwork, thumbnail, subtitle, and HLS
+      delivery.
+- [x] Event subscriptions, renderer profiles/overrides, diagnostics, limits,
+      audit logging, and compatibility tests.
+- [x] Browser preview and VLC streaming continue to use the shared delivery
+      foundation.
+- [x] Active MediaRenderer discovery and authenticated control-point UI/API.
+- [ ] Mema MediaRenderer advertisement and a local playback target remain
+      outside the delivered surface.
+- [x] A false device `allowed` override denies SOAP and resource requests at the
+      request boundary before catalogue or delivery work.
+
+Primary implementation: `internal/dlna/`, `internal/delivery/`,
+`internal/httpapi/dlna_*`, `internal/storage/dlna_*`, and the DLNA settings UI.
 
 ## Context
 
-Mema currently has browser preview playback, direct HTTP file streaming, VLC
-playlist generation, media probing, and HLS segment generation. Those pieces
-are not a DLNA server. The existing `internal/playback` package contains a
-device-profile decision model for browser playback, while `internal/httpapi`
-owns ffprobe, ffmpeg HLS segmenting, range-capable file serving, preview
-tokens, and preview-specific endpoints.
+Before this implementation, Mema had browser preview playback, direct HTTP file
+streaming, VLC playlists, media probing, and HLS segments but no DLNA server.
+The delivery refactor preserved those surfaces while adding the MediaServer
+protocol stack.
 
 The goal is to implement full DLNA and UPnP AV capabilities without creating a
 second streaming stack. Browser preview and DLNA must share one media delivery
@@ -94,39 +119,30 @@ logic.
 
 ## Architecture
 
-### Packages
+### Implementation Architecture
 
-The implementation should be split into small single-purpose packages. No Go
-module should exceed the project line limits.
+The delivered code uses small single-purpose modules, but keeps most protocol
+concerns in the flat `internal/dlna` package rather than the originally proposed
+nested package tree:
 
-Proposed package boundaries:
-
-- `internal/dlna/server`: lifecycle, settings, network interface selection,
-  startup, shutdown, and integration with the app HTTP server.
-- `internal/dlna/ssdp`: SSDP message construction, multicast listeners,
-  M-SEARCH handling, alive announcements, byebye announcements, and interface
-  binding.
-- `internal/dlna/upnp`: root device documents, service descriptors, SOAP
-  envelope handling, UPnP errors, action dispatch, and event subscription
-  primitives.
-- `internal/dlna/content`: ContentDirectory tree, object IDs, browse, search,
-  pagination, sorting, system update IDs, and DIDL-Lite mapping.
-- `internal/dlna/media`: DLNA resource descriptors, protocolInfo generation,
-  content feature headers, seek and range handling, and delivery integration.
-- `internal/dlna/profile`: renderer capability profiles, user-agent matching,
-  DLNA profile names, direct play profiles, and transcode targets.
-- `internal/playback`: shared media source, stream decision, media delivery
-  plan, and device profile logic used by both preview and DLNA.
-- `internal/media`: shared probing, keyframe discovery, file stat, MIME
-  detection, thumbnail generation, and subtitle resource helpers, if extracting
-  from `httpapi` is needed.
-- `internal/httpapi`: thin endpoint adapters for preview, stream, VLC, and
-  DLNA resource URLs.
+- `internal/dlna`: lifecycle, SSDP, descriptions, SCPDs, SOAP, eventing,
+  ContentDirectory, DIDL-Lite, resources, profiles, diagnostics, and limits;
+- `internal/dlna/controlpoint`: isolated MediaRenderer description and SOAP
+  action clients;
+- `internal/delivery`: shared direct/remux/transcode planning contracts;
+- `internal/playback`: browser/DLNA profile builders and playback decisions;
+- `internal/storage`: DLNA settings, profiles, overrides, recent devices, and
+  subscription persistence;
+- `internal/httpapi`: settings/profile/diagnostic adapters and shared media-file
+  delivery endpoints;
+- `web/src/lib/components/settings/dlna`: settings, profile management, recent
+  devices, and diagnostics UI.
 
 ### Shared Delivery Service
 
-Create a `MediaDeliveryService` that owns the behavior currently split across
-preview and stream handlers.
+The delivered shared-delivery behavior is split across `internal/delivery`,
+`internal/playback`, DLNA resource modules, and thin HTTP adapters rather than a
+single `MediaDeliveryService` type.
 
 Responsibilities:
 
@@ -453,6 +469,16 @@ DLNA must be explicitly enabled. Defaults:
 - Audit log for client IP, renderer identity, action, media item, and delivery
   method.
 
+Device overrides add a second access decision after the CIDR allowlist. Without
+a matching override, requests are allowed. An `allowed: true` override allows
+and assigns its profile but cannot bypass Allowed CIDRs. An `allowed: false`
+override denies every DLNA route before catalogue, stream, transcode, or process
+work. UUID identity for persisted overrides requires a persisted UUID+source-IP
+binding; SSDP discovery claims are not trusted bindings. Any matching explicit
+UUID or IP deny wins over an allow. SOAP denial is UPnP fault 606 (`Action not
+authorized`); non-SOAP denial is HTTP 403. Both are recorded in recent-client
+diagnostics and the DLNA audit log.
+
 ## Settings and UI
 
 Settings should include:
@@ -553,28 +579,25 @@ For each client, capture:
 
 ## Acceptance Criteria
 
-- DLNA can be enabled from settings and appears on the local network.
-- SSDP discovery works for root device and MediaServer service targets.
-- Root device XML and SCPD XML validate against the expected UPnP shape.
-- ContentDirectory browse exposes movies, TV shows, seasons, episodes, and
-  files from the Mema library.
-- ContentDirectory search returns correct paginated results.
-- ConnectionManager reports only supported source protocols.
-- Direct file resources can be played by at least VLC and one UPnP client.
-- At least one DLNA transcode profile can be played by a renderer that cannot
-  direct-play the source.
-- Artwork is visible for clients that request it.
-- External subtitles are advertised or served according to renderer capability.
-- Browser preview still behaves exactly as before.
-- VLC playlist streaming still behaves exactly as before.
-- There is one shared delivery implementation for preview and DLNA resources.
-- The implementation has unit and integration tests for each protocol layer.
+- [x] DLNA can be enabled from settings and appears on the local network.
+- [x] SSDP discovery works for root-device and MediaServer service targets.
+- [x] Root-device XML and SCPD XML have protocol contract coverage.
+- [x] ContentDirectory browse exposes movies, series, seasons, episodes, and
+      files from the Mema library.
+- [x] ContentDirectory search returns sorted, paginated results.
+- [x] ConnectionManager reports supported source protocols.
+- [x] Direct and transcoded resources use renderer-profile delivery decisions.
+- [x] Artwork and external subtitles are exposed according to renderer
+      capability.
+- [x] Browser preview and VLC playlists remain on shared delivery behavior.
+- [x] Protocol layers have focused unit, integration, golden, and compatibility
+      coverage.
 
-## Rollout
+## Delivered Rollout
 
-1. Extract shared media delivery without changing user-visible behavior.
-2. Add protocol-only DLNA server behind a disabled setting.
-3. Add ContentDirectory browse over the Mema library.
-4. Add resource serving through shared delivery.
-5. Add search, eventing, artwork, subtitle, and renderer profile depth.
-6. Expand compatibility testing and ship the setting as beta.
+1. [x] Extract shared media delivery without changing preview behavior.
+2. [x] Add the disabled-by-default, LAN-scoped server lifecycle.
+3. [x] Add ContentDirectory browse and search over the Mema library.
+4. [x] Add direct, remuxed, and transcoded resources through shared delivery.
+5. [x] Add eventing, artwork, subtitles, profiles, overrides, and diagnostics.
+6. [x] Add security limits, audit logging, and compatibility coverage.

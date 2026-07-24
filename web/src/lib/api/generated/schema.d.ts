@@ -1605,6 +1605,137 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/renderers': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** List discovered DLNA renderers */
+		get: operations['listRenderers'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/renderers/{id}/status': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		/** Read renderer transport and volume state */
+		get: operations['getRendererStatus'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/renderers/{id}/play': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Set a media URI and start renderer playback */
+		post: operations['playMediaOnRenderer'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/renderers/{id}/transport': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Control renderer transport */
+		post: operations['controlRendererTransport'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/renderers/{id}/seek': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Seek renderer playback */
+		post: operations['seekRenderer'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/renderers/{id}/volume': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Set renderer volume */
+		post: operations['setRendererVolume'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/renderers/{id}/mute': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Set renderer mute */
+		post: operations['setRendererMute'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/settings/dlna': {
 		parameters: {
 			query?: never;
@@ -2968,10 +3099,17 @@ export interface components {
 		};
 		/** @enum {string} */
 		MediaSearchSourceType: 'library' | 'provider';
+		MediaSearchAlias: {
+			value: string;
+			language?: string;
+			kind: string;
+			providerName?: string;
+		};
 		MediaSearchResult: {
 			/** Format: uuid */
 			id?: string;
 			title: string;
+			aliases?: components['schemas']['MediaSearchAlias'][];
 			type: components['schemas']['MediaType'];
 			/** Format: int32 */
 			year?: number;
@@ -4193,6 +4331,65 @@ export interface components {
 			profileId: string;
 			/** Format: date-time */
 			startedAt: string;
+		};
+		RendererListResponse: {
+			renderers: components['schemas']['Renderer'][];
+		};
+		Renderer: {
+			id: string;
+			name: string;
+			manufacturer: string;
+			modelName: string;
+			address: string;
+			/** Format: date-time */
+			lastSeen: string;
+			/** Format: date-time */
+			expiresAt: string;
+			supports: components['schemas']['RendererCapabilities'];
+		};
+		RendererCapabilities: {
+			play: boolean;
+			pause: boolean;
+			stop: boolean;
+			seek: boolean;
+			next: boolean;
+			previous: boolean;
+			volume: boolean;
+			mute: boolean;
+		};
+		RendererStatus: {
+			transportState: string;
+			transportStatus: string;
+			/** Format: int32 */
+			positionSeconds: number;
+			/** Format: int32 */
+			durationSeconds: number;
+			/** Format: int32 */
+			volume?: number;
+			muted?: boolean;
+		};
+		RendererPlayRequest: {
+			/** Format: uuid */
+			mediaItemId: string;
+			path?: string;
+		};
+		RendererPlaybackResponse: {
+			profileId: string;
+		};
+		RendererTransportRequest: {
+			/** @enum {string} */
+			action: 'play' | 'pause' | 'stop' | 'next' | 'previous';
+		};
+		RendererSeekRequest: {
+			/** Format: int32 */
+			positionSeconds: number;
+		};
+		RendererVolumeRequest: {
+			/** Format: int32 */
+			volume: number;
+		};
+		RendererMuteRequest: {
+			muted: boolean;
 		};
 		DLNASettings: components['schemas']['DLNASettingsRequest'] & {
 			/** Format: date-time */
@@ -5621,6 +5818,15 @@ export interface components {
 				'application/json': components['schemas']['ErrorResponse'];
 			};
 		};
+		/** @description Renderer request failed */
+		BadGateway: {
+			headers: {
+				[name: string]: unknown;
+			};
+			content: {
+				'application/json': components['schemas']['ErrorResponse'];
+			};
+		};
 		/** @description Unexpected server error */
 		InternalServerError: {
 			headers: {
@@ -5634,6 +5840,7 @@ export interface components {
 	parameters: {
 		ResourceId: string;
 		MediaFilePath: string;
+		RendererId: string;
 		ProfileId: string;
 	};
 	requestBodies: never;
@@ -8340,6 +8547,199 @@ export interface operations {
 			};
 			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
+		};
+	};
+	listRenderers: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Currently online renderers */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['RendererListResponse'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+		};
+	};
+	getRendererStatus: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Renderer state */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['RendererStatus'];
+				};
+			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			502: components['responses']['BadGateway'];
+		};
+	};
+	playMediaOnRenderer: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['RendererPlayRequest'];
+			};
+		};
+		responses: {
+			/** @description Playback started */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['RendererPlaybackResponse'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			409: components['responses']['Conflict'];
+			502: components['responses']['BadGateway'];
+		};
+	};
+	controlRendererTransport: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['RendererTransportRequest'];
+			};
+		};
+		responses: {
+			/** @description Transport action completed */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			409: components['responses']['Conflict'];
+			502: components['responses']['BadGateway'];
+		};
+	};
+	seekRenderer: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['RendererSeekRequest'];
+			};
+		};
+		responses: {
+			/** @description Seek completed */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			409: components['responses']['Conflict'];
+			502: components['responses']['BadGateway'];
+		};
+	};
+	setRendererVolume: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['RendererVolumeRequest'];
+			};
+		};
+		responses: {
+			/** @description Volume updated */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			409: components['responses']['Conflict'];
+			502: components['responses']['BadGateway'];
+		};
+	};
+	setRendererMute: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['RendererId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['RendererMuteRequest'];
+			};
+		};
+		responses: {
+			/** @description Mute updated */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+			409: components['responses']['Conflict'];
+			502: components['responses']['BadGateway'];
 		};
 	};
 	getDLNASettings: {

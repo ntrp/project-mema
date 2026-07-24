@@ -1648,6 +1648,33 @@ func (e ReleaseCandidateMatchSeverity) Valid() bool {
 	}
 }
 
+// Defines values for RendererTransportRequestAction.
+const (
+	Next     RendererTransportRequestAction = "next"
+	Pause    RendererTransportRequestAction = "pause"
+	Play     RendererTransportRequestAction = "play"
+	Previous RendererTransportRequestAction = "previous"
+	Stop     RendererTransportRequestAction = "stop"
+)
+
+// Valid indicates whether the value is a known member of the RendererTransportRequestAction enum.
+func (e RendererTransportRequestAction) Valid() bool {
+	switch e {
+	case Next:
+		return true
+	case Pause:
+		return true
+	case Play:
+		return true
+	case Previous:
+		return true
+	case Stop:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SeriesType.
 const (
 	SeriesTypeAbsolute SeriesType = "absolute"
@@ -4313,6 +4340,14 @@ type MediaRollupSummary struct {
 	TargetCounts TargetStateCounts `json:"targetCounts"`
 }
 
+// MediaSearchAlias defines model for MediaSearchAlias.
+type MediaSearchAlias struct {
+	Kind         string  `json:"kind"`
+	Language     *string `json:"language,omitempty"`
+	ProviderName *string `json:"providerName,omitempty"`
+	Value        string  `json:"value"`
+}
+
 // MediaSearchGroup defines model for MediaSearchGroup.
 type MediaSearchGroup struct {
 	People     *[]PersonSearchResult `json:"people,omitempty"`
@@ -4336,6 +4371,7 @@ type MediaSearchResponse struct {
 
 // MediaSearchResult defines model for MediaSearchResult.
 type MediaSearchResult struct {
+	Aliases          *[]MediaSearchAlias `json:"aliases,omitempty"`
 	BackdropPath     *string             `json:"backdropPath,omitempty"`
 	CollectionId     *string             `json:"collectionId,omitempty"`
 	CollectionName   *string             `json:"collectionName,omitempty"`
@@ -4727,6 +4763,79 @@ type ReleaseSearchRequest struct {
 type ReleaseSearchResponse struct {
 	Errors   []string           `json:"errors"`
 	Releases []ReleaseCandidate `json:"releases"`
+}
+
+// Renderer defines model for Renderer.
+type Renderer struct {
+	Address      string               `json:"address"`
+	ExpiresAt    time.Time            `json:"expiresAt"`
+	Id           string               `json:"id"`
+	LastSeen     time.Time            `json:"lastSeen"`
+	Manufacturer string               `json:"manufacturer"`
+	ModelName    string               `json:"modelName"`
+	Name         string               `json:"name"`
+	Supports     RendererCapabilities `json:"supports"`
+}
+
+// RendererCapabilities defines model for RendererCapabilities.
+type RendererCapabilities struct {
+	Mute     bool `json:"mute"`
+	Next     bool `json:"next"`
+	Pause    bool `json:"pause"`
+	Play     bool `json:"play"`
+	Previous bool `json:"previous"`
+	Seek     bool `json:"seek"`
+	Stop     bool `json:"stop"`
+	Volume   bool `json:"volume"`
+}
+
+// RendererListResponse defines model for RendererListResponse.
+type RendererListResponse struct {
+	Renderers []Renderer `json:"renderers"`
+}
+
+// RendererMuteRequest defines model for RendererMuteRequest.
+type RendererMuteRequest struct {
+	Muted bool `json:"muted"`
+}
+
+// RendererPlayRequest defines model for RendererPlayRequest.
+type RendererPlayRequest struct {
+	MediaItemId openapi_types.UUID `json:"mediaItemId"`
+	Path        *string            `json:"path,omitempty"`
+}
+
+// RendererPlaybackResponse defines model for RendererPlaybackResponse.
+type RendererPlaybackResponse struct {
+	ProfileId string `json:"profileId"`
+}
+
+// RendererSeekRequest defines model for RendererSeekRequest.
+type RendererSeekRequest struct {
+	PositionSeconds int32 `json:"positionSeconds"`
+}
+
+// RendererStatus defines model for RendererStatus.
+type RendererStatus struct {
+	DurationSeconds int32  `json:"durationSeconds"`
+	Muted           *bool  `json:"muted,omitempty"`
+	PositionSeconds int32  `json:"positionSeconds"`
+	TransportState  string `json:"transportState"`
+	TransportStatus string `json:"transportStatus"`
+	Volume          *int32 `json:"volume,omitempty"`
+}
+
+// RendererTransportRequest defines model for RendererTransportRequest.
+type RendererTransportRequest struct {
+	Action RendererTransportRequestAction `json:"action"`
+}
+
+// RendererTransportRequestAction defines model for RendererTransportRequest.Action.
+type RendererTransportRequestAction string
+
+// RendererVolumeRequest defines model for RendererVolumeRequest.
+type RendererVolumeRequest struct {
+	Volume int32 `json:"volume"`
 }
 
 // SeriesType defines model for SeriesType.
@@ -5268,8 +5377,14 @@ type MediaFilePath = string
 // ProfileId defines model for ProfileId.
 type ProfileId = string
 
+// RendererId defines model for RendererId.
+type RendererId = string
+
 // ResourceId defines model for ResourceId.
 type ResourceId = openapi_types.UUID
+
+// BadGateway defines model for BadGateway.
+type BadGateway = ErrorResponse
 
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponse
@@ -5549,6 +5664,21 @@ type SearchMediaJSONRequestBody = MediaSearchRequest
 
 // UpdateProfileJSONRequestBody defines body for UpdateProfile for application/json ContentType.
 type UpdateProfileJSONRequestBody = UserProfileUpdateRequest
+
+// SetRendererMuteJSONRequestBody defines body for SetRendererMute for application/json ContentType.
+type SetRendererMuteJSONRequestBody = RendererMuteRequest
+
+// PlayMediaOnRendererJSONRequestBody defines body for PlayMediaOnRenderer for application/json ContentType.
+type PlayMediaOnRendererJSONRequestBody = RendererPlayRequest
+
+// SeekRendererJSONRequestBody defines body for SeekRenderer for application/json ContentType.
+type SeekRendererJSONRequestBody = RendererSeekRequest
+
+// ControlRendererTransportJSONRequestBody defines body for ControlRendererTransport for application/json ContentType.
+type ControlRendererTransportJSONRequestBody = RendererTransportRequest
+
+// SetRendererVolumeJSONRequestBody defines body for SetRendererVolume for application/json ContentType.
+type SetRendererVolumeJSONRequestBody = RendererVolumeRequest
 
 // CreateCustomFormatJSONRequestBody defines body for CreateCustomFormat for application/json ContentType.
 type CreateCustomFormatJSONRequestBody = CustomFormatRequest
@@ -5912,6 +6042,27 @@ type ServerInterface interface {
 	// Update current user profile
 	// (PUT /profile)
 	UpdateProfile(w http.ResponseWriter, r *http.Request)
+	// List discovered DLNA renderers
+	// (GET /renderers)
+	ListRenderers(w http.ResponseWriter, r *http.Request)
+	// Set renderer mute
+	// (POST /renderers/{id}/mute)
+	SetRendererMute(w http.ResponseWriter, r *http.Request, id RendererId)
+	// Set a media URI and start renderer playback
+	// (POST /renderers/{id}/play)
+	PlayMediaOnRenderer(w http.ResponseWriter, r *http.Request, id RendererId)
+	// Seek renderer playback
+	// (POST /renderers/{id}/seek)
+	SeekRenderer(w http.ResponseWriter, r *http.Request, id RendererId)
+	// Read renderer transport and volume state
+	// (GET /renderers/{id}/status)
+	GetRendererStatus(w http.ResponseWriter, r *http.Request, id RendererId)
+	// Control renderer transport
+	// (POST /renderers/{id}/transport)
+	ControlRendererTransport(w http.ResponseWriter, r *http.Request, id RendererId)
+	// Set renderer volume
+	// (POST /renderers/{id}/volume)
+	SetRendererVolume(w http.ResponseWriter, r *http.Request, id RendererId)
 	// List custom formats
 	// (GET /settings/custom-formats)
 	ListCustomFormats(w http.ResponseWriter, r *http.Request)
@@ -6725,6 +6876,48 @@ func (_ Unimplemented) GetProfile(w http.ResponseWriter, r *http.Request) {
 // Update current user profile
 // (PUT /profile)
 func (_ Unimplemented) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// List discovered DLNA renderers
+// (GET /renderers)
+func (_ Unimplemented) ListRenderers(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Set renderer mute
+// (POST /renderers/{id}/mute)
+func (_ Unimplemented) SetRendererMute(w http.ResponseWriter, r *http.Request, id RendererId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Set a media URI and start renderer playback
+// (POST /renderers/{id}/play)
+func (_ Unimplemented) PlayMediaOnRenderer(w http.ResponseWriter, r *http.Request, id RendererId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Seek renderer playback
+// (POST /renderers/{id}/seek)
+func (_ Unimplemented) SeekRenderer(w http.ResponseWriter, r *http.Request, id RendererId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Read renderer transport and volume state
+// (GET /renderers/{id}/status)
+func (_ Unimplemented) GetRendererStatus(w http.ResponseWriter, r *http.Request, id RendererId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Control renderer transport
+// (POST /renderers/{id}/transport)
+func (_ Unimplemented) ControlRendererTransport(w http.ResponseWriter, r *http.Request, id RendererId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Set renderer volume
+// (POST /renderers/{id}/volume)
+func (_ Unimplemented) SetRendererVolume(w http.ResponseWriter, r *http.Request, id RendererId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -10413,6 +10606,218 @@ func (siw *ServerInterfaceWrapper) UpdateProfile(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateProfile(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListRenderers operation middleware
+func (siw *ServerInterfaceWrapper) ListRenderers(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRenderers(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetRendererMute operation middleware
+func (siw *ServerInterfaceWrapper) SetRendererMute(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RendererId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetRendererMute(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PlayMediaOnRenderer operation middleware
+func (siw *ServerInterfaceWrapper) PlayMediaOnRenderer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RendererId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PlayMediaOnRenderer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SeekRenderer operation middleware
+func (siw *ServerInterfaceWrapper) SeekRenderer(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RendererId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SeekRenderer(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRendererStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetRendererStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RendererId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRendererStatus(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ControlRendererTransport operation middleware
+func (siw *ServerInterfaceWrapper) ControlRendererTransport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RendererId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ControlRendererTransport(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetRendererVolume operation middleware
+func (siw *ServerInterfaceWrapper) SetRendererVolume(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id RendererId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetRendererVolume(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14312,6 +14717,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/profile", wrapper.UpdateProfile)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/renderers", wrapper.ListRenderers)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/renderers/{id}/mute", wrapper.SetRendererMute)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/renderers/{id}/play", wrapper.PlayMediaOnRenderer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/renderers/{id}/seek", wrapper.SeekRenderer)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/renderers/{id}/status", wrapper.GetRendererStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/renderers/{id}/transport", wrapper.ControlRendererTransport)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/renderers/{id}/volume", wrapper.SetRendererVolume)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/settings/custom-formats", wrapper.ListCustomFormats)

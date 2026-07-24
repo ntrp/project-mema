@@ -4,7 +4,7 @@
 	import DLNADecisionTraceViewer from './decision-trace/DLNADecisionTraceViewer.svelte';
 	import DLNAProfileEditor from './DLNAProfileEditor.svelte';
 	import DLNAProfileModals from './DLNAProfileModals.svelte';
-	import DLNAProfileTable from './DLNAProfileTable.svelte';
+	import DLNAProfileTable from './table/DLNAProfileTable.svelte';
 	import { DLNAProfilePanelState } from './dlnaProfilePanelState.svelte';
 
 	const vm = new DLNAProfilePanelState();

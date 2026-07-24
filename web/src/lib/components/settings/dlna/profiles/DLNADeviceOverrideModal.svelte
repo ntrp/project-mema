@@ -89,8 +89,21 @@
 				</div>
 				<label class="flex items-center gap-3 pt-7">
 					<Switch bind:checked={overrideForm.allowed} />
-					<span class="text-sm font-medium">Allowed</span>
+					<span class="text-sm font-medium">Allow this device</span>
 				</label>
+				<div
+					class="space-y-1 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground sm:col-span-2"
+				>
+					<p>No override means the device is allowed and matched automatically.</p>
+					<p>
+						On assigns the selected profile. UUID selection requires a saved UUID and source IP
+						binding; SSDP discovery alone is not trusted. Any matching Off rule wins over On.
+					</p>
+					<p>
+						Off denies every DLNA request before browsing or media processing. SOAP returns error
+						606; other requests return HTTP 403, and diagnostics show the denial.
+					</p>
+				</div>
 			</div>
 			<div class="space-y-2">
 				<Label for="dlna-override-policy">Delivery policy overrides</Label>

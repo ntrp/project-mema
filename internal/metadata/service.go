@@ -20,6 +20,16 @@ func (e ProviderHTTPError) Error() string {
 	return fmt.Sprintf("metadata provider returned HTTP %d", e.StatusCode)
 }
 
+type ProviderGraphQLError struct{ Message string }
+
+func (e ProviderGraphQLError) Error() string { return "metadata provider GraphQL error: " + e.Message }
+
+type ProviderPayloadError struct{ Message string }
+
+func (e ProviderPayloadError) Error() string {
+	return "metadata provider invalid payload: " + e.Message
+}
+
 func (s *Service) Search(ctx context.Context, config Config, request SearchRequest) ([]SearchResult, error) {
 	provider, err := s.provider(config)
 	if err != nil {
@@ -54,6 +64,10 @@ func (s *Service) provider(config Config) (Provider, error) {
 		return tmdbProvider{service: s, config: config}, nil
 	case "tvdb":
 		return tvdbProvider{service: s, config: config}, nil
+	case "anilist":
+		return anilistProvider{service: s, config: config}, nil
+	case "anidb":
+		return anidbProvider{service: s, config: config}, nil
 	default:
 		return nil, ErrUnsupportedProvider
 	}
@@ -61,7 +75,13 @@ func (s *Service) provider(config Config) (Provider, error) {
 
 func (s *Service) Test(ctx context.Context, config Config) TestResult {
 	start := time.Now()
-	results, err := s.Search(ctx, config, SearchRequest{Query: "test", MediaType: "movie"})
+	mediaType := "movie"
+	query := "test"
+	if config.Type == "anidb" {
+		mediaType = "serie"
+		query = "Cowboy Bebop"
+	}
+	results, err := s.Search(ctx, config, SearchRequest{Query: query, MediaType: mediaType})
 	latency := time.Since(start)
 	if err != nil {
 		return TestResult{

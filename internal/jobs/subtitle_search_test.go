@@ -134,7 +134,7 @@ func TestSubtitleSearchDownloadsAndRecordsSubtitle(t *testing.T) {
 	provider, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
 		Name:    "Scenario Subtitles",
 		Type:    "opensubtitles",
-		BaseURL: server.URL,
+		BaseURL: "https://api.opensubtitles.com",
 		APIKey:  &apiKey,
 		Enabled: true,
 	})
@@ -156,7 +156,7 @@ func TestSubtitleSearchDownloadsAndRecordsSubtitle(t *testing.T) {
 		{LanguageID: "english"},
 	}
 
-	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
+	err = subtitleSearchDownload(ctx, store, subtitles.NewService(subtitleProviderClient(server)), nil, item, SubtitleSearchArgs{LanguageID: "english"})
 
 	if err != nil {
 		t.Fatalf("subtitleSearchDownload returned error: %v", err)
@@ -195,7 +195,7 @@ func TestSubtitleSearchConvertsDownloadedSubtitleToTargetFormat(t *testing.T) {
 	server := subtitleProviderServer(t, http.StatusOK)
 	apiKey := "subtitle-key"
 	if _, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
-		Name: "Scenario Subtitles", Type: "opensubtitles", BaseURL: server.URL, APIKey: &apiKey, Enabled: true,
+		Name: "Scenario Subtitles", Type: "opensubtitles", BaseURL: "https://api.opensubtitles.com", APIKey: &apiKey, Enabled: true,
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -211,7 +211,7 @@ func TestSubtitleSearchConvertsDownloadedSubtitleToTargetFormat(t *testing.T) {
 		{LanguageID: "english", Formats: []string{"vtt"}},
 	}
 
-	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
+	err = subtitleSearchDownload(ctx, store, subtitles.NewService(subtitleProviderClient(server)), nil, item, SubtitleSearchArgs{LanguageID: "english"})
 
 	if err != nil {
 		t.Fatalf("subtitleSearchDownload returned error: %v", err)
@@ -281,6 +281,10 @@ func TestSubtitleSearchDownloadsMockProviderSubtitle(t *testing.T) {
 func TestManualSubtitleSearchReturnsMockProviderCandidate(t *testing.T) {
 	ctx, store := jobsTestStore(t)
 	tmp := t.TempDir()
+	folder, err := store.CreateLibraryFolder(ctx, tmp, "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
 	mediaPath := filepath.Join(tmp, "Scenario.Movie.2026.mkv")
 	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
 		t.Fatal(err)
@@ -300,12 +304,15 @@ func TestManualSubtitleSearchReturnsMockProviderCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
-		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true,
+		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true, LibraryFolderID: &folder.ID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
+	if err := store.RecordImportedMediaFile(ctx, item, mediaPath); err != nil {
+		t.Fatal(err)
+	}
 
 	results, logs, err := SearchManualSubtitles(ctx, store, subtitles.NewService(nil), item, "Scenario Movie", "english", mediaPath)
 
@@ -316,7 +323,7 @@ func TestManualSubtitleSearchReturnsMockProviderCandidate(t *testing.T) {
 		t.Fatalf("results = %#v logs = %#v", results, logs)
 	}
 	result := results[0]
-	if result.Provider.ID != provider.ID || result.Protocol != "HTTP" || result.Candidate.Format != "srt" {
+	if result.Provider.ID != provider.ID || result.Protocol != "HTTP" || result.Candidate.Format != "subrip" {
 		t.Fatalf("result = %#v", result)
 	}
 	if result.Match.Severity != "success" || !strings.Contains(result.Match.Details[0], "english") {
@@ -327,6 +334,10 @@ func TestManualSubtitleSearchReturnsMockProviderCandidate(t *testing.T) {
 func TestManualSubtitleGrabDownloadsSelectedMockCandidate(t *testing.T) {
 	ctx, store := jobsTestStore(t)
 	tmp := t.TempDir()
+	folder, err := store.CreateLibraryFolder(ctx, tmp, "movie")
+	if err != nil {
+		t.Fatal(err)
+	}
 	mediaPath := filepath.Join(tmp, "Scenario.Movie.2026.mkv")
 	if err := os.WriteFile(mediaPath, []byte("movie"), 0o644); err != nil {
 		t.Fatal(err)
@@ -346,12 +357,15 @@ func TestManualSubtitleGrabDownloadsSelectedMockCandidate(t *testing.T) {
 		t.Fatal(err)
 	}
 	item, err := store.CreateMediaItem(ctx, storage.MediaItemInput{
-		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true,
+		Type: "movie", Title: "Scenario Movie", Year: int32Ptr(2026), Monitored: true, LibraryFolderID: &folder.ID,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	item.FilePaths = []string{mediaPath}
+	if err := store.RecordImportedMediaFile(ctx, item, mediaPath); err != nil {
+		t.Fatal(err)
+	}
 	item.SubtitleMode = "mixed"
 	item.SubtitleTargets = []storage.MediaProfileSubtitleTarget{{LanguageID: "english"}}
 
@@ -393,7 +407,7 @@ func TestSubtitleSearchRejectsUnsupportedBitmapTargetFormat(t *testing.T) {
 	server := subtitleProviderServer(t, http.StatusOK)
 	apiKey := "subtitle-key"
 	if _, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
-		Name: "Scenario Subtitles", Type: "opensubtitles", BaseURL: server.URL, APIKey: &apiKey, Enabled: true,
+		Name: "Scenario Subtitles", Type: "opensubtitles", BaseURL: "https://api.opensubtitles.com", APIKey: &apiKey, Enabled: true,
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -409,7 +423,7 @@ func TestSubtitleSearchRejectsUnsupportedBitmapTargetFormat(t *testing.T) {
 		{LanguageID: "english", Formats: []string{"pgs"}},
 	}
 
-	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
+	err = subtitleSearchDownload(ctx, store, subtitles.NewService(subtitleProviderClient(server)), nil, item, SubtitleSearchArgs{LanguageID: "english"})
 
 	if err == nil || !strings.Contains(err.Error(), "pgs") {
 		t.Fatalf("expected pgs conversion error, got %v", err)
@@ -423,7 +437,7 @@ func TestSubtitleSearchProviderFailureSurfacesEvent(t *testing.T) {
 	if _, err := store.CreateSubtitleProvider(ctx, storage.SubtitleProviderInput{
 		Name:    "Broken Subtitles",
 		Type:    "opensubtitles",
-		BaseURL: server.URL,
+		BaseURL: "https://api.opensubtitles.com",
 		APIKey:  &apiKey,
 		Enabled: true,
 	}); err != nil {
@@ -439,7 +453,7 @@ func TestSubtitleSearchProviderFailureSurfacesEvent(t *testing.T) {
 	}
 	item.FilePaths = []string{filepath.Join(t.TempDir(), "Scenario.Movie.mkv")}
 
-	err = subtitleSearchDownload(ctx, store, subtitles.NewService(server.Client()), nil, item, SubtitleSearchArgs{LanguageID: "english"})
+	err = subtitleSearchDownload(ctx, store, subtitles.NewService(subtitleProviderClient(server)), nil, item, SubtitleSearchArgs{LanguageID: "english"})
 
 	if err == nil {
 		t.Fatal("expected provider failure")
@@ -478,7 +492,7 @@ func subtitleProviderServer(t *testing.T, searchStatus int) *httptest.Server {
 				})
 			}
 		case "/api/v1/download":
-			_ = json.NewEncoder(w).Encode(map[string]any{"link": "http://" + r.Host + "/file.srt"})
+			_ = json.NewEncoder(w).Encode(map[string]any{"link": "https://dl.opensubtitles.com/file.srt"})
 		case "/file.srt":
 			_, _ = w.Write([]byte("1\n00:00:00,000 --> 00:00:01,000\nScenario\n"))
 		default:
@@ -487,6 +501,21 @@ func subtitleProviderServer(t *testing.T, searchStatus int) *httptest.Server {
 	}))
 	t.Cleanup(server.Close)
 	return server
+}
+
+type subtitleRoundTripFunc func(*http.Request) (*http.Response, error)
+
+func (fn subtitleRoundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
+	return fn(request)
+}
+
+func subtitleProviderClient(server *httptest.Server) *http.Client {
+	return &http.Client{Transport: subtitleRoundTripFunc(func(request *http.Request) (*http.Response, error) {
+		clone := request.Clone(request.Context())
+		clone.URL.Scheme = "http"
+		clone.URL.Host = server.Listener.Addr().String()
+		return server.Client().Transport.RoundTrip(clone)
+	})}
 }
 
 func hasSystemEvent(events []storage.SystemEvent, message string) bool {

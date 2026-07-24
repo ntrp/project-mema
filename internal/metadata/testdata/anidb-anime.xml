@@ -1,0 +1,18 @@
+<anime id="123" restricted="false">
+  <type>TV Series</type>
+  <episodecount>3</episodecount>
+  <startdate>2024-01-02</startdate>
+  <enddate>2024-03-04</enddate>
+  <titles>
+    <title xml:lang="x-jat" type="main">Example Anime</title>
+    <title xml:lang="en" type="official">Example English</title>
+    <title xml:lang="ja" type="official">例</title>
+  </titles>
+  <description>Example overview</description>
+  <picture>456.jpg</picture>
+  <episodes>
+    <episode id="1001"><epno type="1">1</epno><airdate>2024-01-02</airdate><title xml:lang="en">Regular</title></episode>
+    <episode id="1002"><epno type="2">1</epno><airdate>2024-02-02</airdate><title xml:lang="en">Special</title></episode>
+    <episode id="1003"><epno type="3">1</epno><title xml:lang="en">Credits</title></episode>
+  </episodes>
+</anime>

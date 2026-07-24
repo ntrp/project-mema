@@ -138,7 +138,11 @@ func normalizedContainer(value *string) string {
 	if value == nil {
 		return ""
 	}
-	return strings.ToLower(strings.TrimSpace(*value))
+	normalized := strings.ToLower(strings.TrimSpace(*value))
+	if strings.Contains(normalized, "matroska") {
+		return "mkv"
+	}
+	return normalized
 }
 
 func optionalCodec(track *delivery.Track) string {
