@@ -34,31 +34,31 @@ type RendererState struct {
 }
 
 func (c Client) GetTransportInfo(ctx context.Context, renderer Renderer) (TransportState, error) {
-	values, err := c.read(ctx, renderer.AVTransportURL, AVTransportService, "GetTransportInfo", map[string]string{"InstanceID": "0"})
+	values, err := c.read(ctx, renderer, renderer.AVTransportURL, AVTransportService, "GetTransportInfo", map[string]string{"InstanceID": "0"})
 	return TransportState{State: values["CurrentTransportState"], Status: values["CurrentTransportStatus"], Speed: values["CurrentSpeed"]}, err
 }
 func (c Client) GetPositionInfo(ctx context.Context, renderer Renderer) (PositionInfo, error) {
-	values, err := c.read(ctx, renderer.AVTransportURL, AVTransportService, "GetPositionInfo", map[string]string{"InstanceID": "0"})
+	values, err := c.read(ctx, renderer, renderer.AVTransportURL, AVTransportService, "GetPositionInfo", map[string]string{"InstanceID": "0"})
 	track, _ := strconv.Atoi(values["Track"])
 	return PositionInfo{Track: track, RelTime: values["RelTime"], TrackDuration: values["TrackDuration"]}, err
 }
 func (c Client) GetVolume(ctx context.Context, renderer Renderer) (int, error) {
-	values, err := c.read(ctx, renderer.RenderingControlURL, RenderingService, "GetVolume", map[string]string{"InstanceID": "0", "Channel": "Master"})
+	values, err := c.read(ctx, renderer, renderer.RenderingControlURL, RenderingService, "GetVolume", map[string]string{"InstanceID": "0", "Channel": "Master"})
 	if err != nil {
 		return 0, err
 	}
 	return strconv.Atoi(values["CurrentVolume"])
 }
 func (c Client) GetMute(ctx context.Context, renderer Renderer) (bool, error) {
-	values, err := c.read(ctx, renderer.RenderingControlURL, RenderingService, "GetMute", map[string]string{"InstanceID": "0", "Channel": "Master"})
+	values, err := c.read(ctx, renderer, renderer.RenderingControlURL, RenderingService, "GetMute", map[string]string{"InstanceID": "0", "Channel": "Master"})
 	if err != nil {
 		return false, err
 	}
 	value := strings.ToLower(values["CurrentMute"])
 	return value == "1" || value == "true", nil
 }
-func (c Client) read(ctx context.Context, endpoint, service, action string, args map[string]string) (map[string]string, error) {
-	response, err := c.request(ctx, endpoint, service, action, args)
+func (c Client) read(ctx context.Context, renderer Renderer, endpoint, service, action string, args map[string]string) (map[string]string, error) {
+	response, err := c.request(ctx, renderer, endpoint, service, action, args)
 	if err != nil {
 		return nil, err
 	}

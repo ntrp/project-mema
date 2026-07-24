@@ -16,7 +16,10 @@
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"test": "vitest run",
-		"test:coverage": "vitest run --coverage",
+		"test:browser": "vitest run --config vitest.browser.config.ts",
+		"test:unit:coverage": "vitest run --coverage",
+		"test:browser:coverage": "vitest run --config vitest.browser.config.ts --coverage",
+		"test:coverage": "pnpm run test:unit:coverage && pnpm run test:browser:coverage",
 		"e2e": "playwright test"
 	},
 	"devDependencies": {

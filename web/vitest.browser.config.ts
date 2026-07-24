@@ -11,6 +11,22 @@ export default defineConfig({
 			headless: true,
 			provider: playwright(),
 			instances: [{ browser: 'chromium' }]
+		},
+		coverage: {
+			provider: 'v8',
+			reportsDirectory: 'coverage/browser',
+			reporter: ['text', 'html', 'lcov'],
+			include: [
+				'src/lib/components/app/renderer/PlayOnDevice.svelte',
+				'src/lib/components/app/renderer/RendererRemote.svelte'
+			],
+			thresholds: {
+				perFile: true,
+				statements: 60,
+				branches: 60,
+				functions: 60,
+				lines: 60
+			}
 		}
 	}
 });

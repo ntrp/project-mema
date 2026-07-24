@@ -107,6 +107,54 @@ func TestDescriptionRedirectCannotChangeTrustedSenderWithinCIDR(t *testing.T) {
 	}
 }
 
+func TestSOAPRedirectCannotChangeTrustedSenderWithinCIDR(t *testing.T) {
+	redirect := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "http://127.0.0.2/private", http.StatusTemporaryRedirect)
+	}))
+	defer redirect.Close()
+	_, network, _ := net.ParseCIDR("127.0.0.0/8")
+	client := NewService(nil, []*net.IPNet{network}, redirect.Client()).Client()
+	renderer := Renderer{
+		AVTransportURL: redirect.URL, RenderingControlURL: redirect.URL,
+		SourceIP: net.ParseIP("127.0.0.1"),
+	}
+	for name, request := range map[string]func() error{
+		"control": func() error { return client.Play(context.Background(), renderer) },
+		"state": func() error {
+			_, err := client.GetTransportInfo(context.Background(), renderer)
+			return err
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if err := request(); err == nil || !strings.Contains(err.Error(), "does not match SSDP sender") {
+				t.Fatalf("same-CIDR redirect error = %v", err)
+			}
+		})
+	}
+}
+
+func TestSOAPRedirectPreservesTrustedSender(t *testing.T) {
+	mux := http.NewServeMux()
+	server := httptest.NewServer(mux)
+	defer server.Close()
+	mux.HandleFunc("/redirect", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/soap", http.StatusTemporaryRedirect)
+	})
+	mux.HandleFunc("/soap", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`<Envelope><Body><GetTransportInfoResponse><CurrentTransportState>PLAYING</CurrentTransportState></GetTransportInfoResponse></Body></Envelope>`))
+	})
+	_, network, _ := net.ParseCIDR("127.0.0.0/8")
+	client := NewService(nil, []*net.IPNet{network}, server.Client()).Client()
+	renderer := Renderer{AVTransportURL: server.URL + "/redirect", SourceIP: net.ParseIP("127.0.0.1")}
+	if err := client.Play(context.Background(), renderer); err != nil {
+		t.Fatalf("control redirect failed: %v", err)
+	}
+	state, err := client.GetTransportInfo(context.Background(), renderer)
+	if err != nil || state.State != "PLAYING" {
+		t.Fatalf("state redirect = %#v, %v", state, err)
+	}
+}
+
 func TestDiscoveryRejectsLocationsOutsideConfiguredCIDR(t *testing.T) {
 	_, network, _ := net.ParseCIDR("192.168.0.0/16")
 	service := NewService(nil, []*net.IPNet{network}, nil)

@@ -46,7 +46,7 @@ func NewSecureClient(httpClient HTTPDoer, networks []*net.IPNet) Client {
 }
 
 func (c Client) SetAVTransportURI(ctx context.Context, renderer Renderer, uri, metadata string) error {
-	return c.call(ctx, renderer.AVTransportURL, AVTransportService, "SetAVTransportURI", map[string]string{
+	return c.call(ctx, renderer, renderer.AVTransportURL, AVTransportService, "SetAVTransportURI", map[string]string{
 		"InstanceID": "0", "CurrentURI": uri, "CurrentURIMetaData": metadata,
 	})
 }
@@ -75,20 +75,20 @@ func (c Client) SetMute(ctx context.Context, r Renderer, mute bool) error {
 	return c.rendering(ctx, r, "SetMute", map[string]string{"Channel": "Master", "DesiredMute": value})
 }
 func (c Client) transport(ctx context.Context, r Renderer, action string, args map[string]string) error {
-	return c.withInstance(ctx, r.AVTransportURL, AVTransportService, action, args)
+	return c.withInstance(ctx, r, r.AVTransportURL, AVTransportService, action, args)
 }
 func (c Client) rendering(ctx context.Context, r Renderer, action string, args map[string]string) error {
-	return c.withInstance(ctx, r.RenderingControlURL, RenderingService, action, args)
+	return c.withInstance(ctx, r, r.RenderingControlURL, RenderingService, action, args)
 }
-func (c Client) withInstance(ctx context.Context, endpoint, service, action string, args map[string]string) error {
+func (c Client) withInstance(ctx context.Context, renderer Renderer, endpoint, service, action string, args map[string]string) error {
 	values := map[string]string{"InstanceID": "0"}
 	for key, value := range args {
 		values[key] = value
 	}
-	return c.call(ctx, endpoint, service, action, values)
+	return c.call(ctx, renderer, endpoint, service, action, values)
 }
-func (c Client) call(ctx context.Context, endpoint, service, action string, args map[string]string) error {
-	response, err := c.request(ctx, endpoint, service, action, args)
+func (c Client) call(ctx context.Context, renderer Renderer, endpoint, service, action string, args map[string]string) error {
+	response, err := c.request(ctx, renderer, endpoint, service, action, args)
 	if err != nil {
 		return err
 	}
@@ -98,11 +98,12 @@ func (c Client) call(ctx context.Context, endpoint, service, action string, args
 	}
 	return parseFault(action, response)
 }
-func (c Client) request(ctx context.Context, endpoint, service, action string, args map[string]string) (*http.Response, error) {
+func (c Client) request(ctx context.Context, renderer Renderer, endpoint, service, action string, args map[string]string) (*http.Response, error) {
 	if len(c.networks) > 0 {
-		if err := ValidateEndpoint(endpoint, c.networks); err != nil {
+		if err := validateEndpointSource(endpoint, renderer.SourceIP, c.networks); err != nil {
 			return nil, err
 		}
+		ctx = context.WithValue(ctx, expectedSourceKey{}, append(net.IP(nil), renderer.SourceIP...))
 	}
 	payload, err := envelope(service, action, args)
 	if err != nil {
