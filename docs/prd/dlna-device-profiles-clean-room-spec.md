@@ -128,10 +128,12 @@ Matching order:
 4. Sticky profile from the recent-client IP association for weak requests.
 5. Generic fallback profile.
 
-Device access is resolved before normal profile matching: a UUID override wins
-when present, otherwise an IP override applies. No matching override means the
-request is allowed. `allowed: true` explicitly allows and assigns its profile
-without bypassing Allowed CIDRs; `allowed: false` denies all DLNA requests.
+Device access is resolved before normal profile matching and is deny-dominant:
+any matching explicit UUID or IP deny wins over an allow. UUID access matching
+requires a persisted UUID+source-IP binding; unauthenticated SSDP claims are not
+trusted. No matching deny means the request is allowed. `allowed: true` assigns
+its profile without bypassing Allowed CIDRs or another matching deny, while
+`allowed: false` denies all DLNA requests.
 Denied SOAP controls return UPnP error 606, while descriptions, resources,
 direct/remux/transcode streams, artwork, thumbnails, subtitles, and events
 return HTTP 403 before catalogue, stream, transcode-slot, or process work.

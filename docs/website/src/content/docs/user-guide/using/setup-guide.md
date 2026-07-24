@@ -116,8 +116,10 @@ custom profile, or reset a seeded profile back to its defaults.
 
 Recent DLNA devices show the IP, last seen time, matched profile, and override
 selector. Use the override selector or manual override form to pin a known
-device, such as an LG TV IP or renderer UUID, to a chosen profile. Use the
-decision trace panel to compare a selected device and media file path against
+device, such as an LG TV IP, to a chosen profile. UUID selection requires a
+persisted UUID+source-IP binding; SSDP discovery alone is not trusted. Any
+matching explicit deny wins over an allow. Use the decision trace panel to
+compare a selected device and media file path against
 the effective profile rules before changing playback settings. Run trace shows
 why a renderer matched a profile and why the selected media will direct play,
 remux, transcode, or use HLS; the output uses the file name instead of exposing
