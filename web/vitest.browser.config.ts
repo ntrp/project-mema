@@ -18,7 +18,8 @@ export default defineConfig({
 			reporter: ['text', 'html', 'lcov'],
 			include: [
 				'src/lib/components/app/renderer/PlayOnDevice.svelte',
-				'src/lib/components/app/renderer/RendererRemote.svelte'
+				'src/lib/components/app/renderer/RendererRemote.svelte',
+				'src/lib/components/settings/metadata/MetadataProviderCard.svelte'
 			],
 			thresholds: {
 				perFile: true,

@@ -1,6 +1,8 @@
-import { page } from 'vitest/browser';
+import * as browser from 'vitest/browser';
 import { mount, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { page } = browser as unknown as typeof import('@vitest/browser/context');
 
 const api = vi.hoisted(() => ({
 	listRenderers: vi.fn(),
