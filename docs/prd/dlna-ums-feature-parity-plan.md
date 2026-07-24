@@ -4,7 +4,7 @@
 
 Implemented for Mema-scoped parity
 
-Last reconciled with the application: **2026-07-14**.
+Last reconciled with the application: **2026-07-24**.
 
 ## Implementation Snapshot
 
@@ -21,8 +21,7 @@ The planned server/profile scope was delivered through epic
 - [x] Compatibility harness, security limits, audit logging, bounded streams,
       and operational diagnostics.
 - [x] Isolated MediaRenderer description and SOAP action clients.
-- [ ] Active renderer discovery and an explicit control-point UI/API remain
-      deferred.
+- [x] Active renderer discovery and the authenticated Play on device UI/API.
 - [ ] Mema MediaRenderer advertisement remains deferred without a local playback
       target.
 - [x] `allowed: false` device overrides deny requests at the DLNA boundary.

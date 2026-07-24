@@ -1,10 +1,12 @@
 <script lang="ts">
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
+	import { createQuery } from '@tanstack/svelte-query';
 	import InfoIcon from '@lucide/svelte/icons/info';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
 	import MediaFileInfoPanel from '$lib/components/app/media/files/preview/MediaFileInfoPanel.svelte';
+	import PlayOnDevice from '$lib/components/app/renderer/PlayOnDevice.svelte';
 	import MediaFilePlaybackError from '$lib/components/app/media/files/preview/MediaFilePlaybackError.svelte';
 	import MediaFileVideoPlayer from '$lib/components/app/media/files/preview/MediaFileVideoPlayer.svelte';
 	import {
@@ -33,9 +35,6 @@
 	let selectedAudioTrack = $state('');
 	let playbackError = $state('');
 	let infoOpen = $state(false);
-	let infoLoading = $state(false);
-	let infoError = $state('');
-	let previewInfo = $state<MediaFilePreviewInfo>();
 	let playbackStats = $state<MediaFilePlaybackStats>({
 		playing: false,
 		variableBitRate: false
@@ -48,6 +47,32 @@
 	const selectedAudio = $derived(
 		metadataAudioTracks.find((track) => track.key === activeAudioTrackKey) ?? metadataAudioTracks[0]
 	);
+	const previewInfoQuery = createQuery(() => ({
+		queryKey: [
+			'media-file-preview-info',
+			mediaItemId,
+			row.path,
+			selectedAudio?.streamIndex,
+			clientProfile
+		],
+		enabled: Boolean(row.path),
+		queryFn: async ({ signal }) => {
+			const response = await globalThis.fetch(
+				mediaFilePreviewInfoUrl(
+					mediaItemId,
+					row.path ?? '',
+					selectedAudio?.streamIndex,
+					clientProfile
+				),
+				{ headers: { Accept: 'application/json' }, signal }
+			);
+			if (!response.ok) throw new Error('Preview info request failed');
+			return response.json() as Promise<MediaFilePreviewInfo>;
+		}
+	}));
+	const previewInfo = $derived(previewInfoQuery.data);
+	const infoLoading = $derived(previewInfoQuery.isFetching);
+	const infoError = $derived(previewInfoQuery.isError ? 'Could not load media info.' : '');
 	const previewUrl = $derived(
 		row.path
 			? mediaFilePreviewUrl(mediaItemId, row.path, selectedAudio?.streamIndex, clientProfile)
@@ -58,36 +83,6 @@
 		`${previewUrl}|${previewSourceType}|${previewInfo?.durationSeconds ?? ''}`
 	);
 	const textTracks = $derived(mediaFileTextTracks(mediaItemId, row));
-
-	$effect(() => {
-		if (!row.path) {
-			previewInfo = undefined;
-			return;
-		}
-		const audioTrackIndex = selectedAudio?.streamIndex;
-		const controller = new globalThis.AbortController();
-		infoLoading = true;
-		infoError = '';
-		void globalThis
-			.fetch(mediaFilePreviewInfoUrl(mediaItemId, row.path, audioTrackIndex, clientProfile), {
-				headers: { Accept: 'application/json' },
-				signal: controller.signal
-			})
-			.then((response) => {
-				if (!response.ok) throw new Error('Preview info request failed');
-				return response.json() as Promise<MediaFilePreviewInfo>;
-			})
-			.then((nextInfo) => {
-				previewInfo = nextInfo;
-				infoLoading = false;
-			})
-			.catch((error: unknown) => {
-				if (error instanceof globalThis.DOMException && error.name === 'AbortError') return;
-				infoError = 'Could not load media info.';
-				infoLoading = false;
-			});
-		return () => controller.abort();
-	});
 
 	function handleOpenChange(nextOpen: boolean) {
 		open = nextOpen;
@@ -128,6 +123,7 @@
 						Media info
 					</Button>
 					{#if row.path}
+						<PlayOnDevice {mediaItemId} path={row.path} />
 						<Button href={vlcUrl} variant="outline" size="sm">
 							<ExternalLinkIcon aria-hidden="true" />
 							Play in VLC

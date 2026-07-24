@@ -1943,6 +1943,89 @@ export interface DLNAStatus {
 	activeTranscodes: DLNAStreamDiagnostic[];
 }
 
+export interface RendererCapabilities {
+	play: boolean;
+	pause: boolean;
+	stop: boolean;
+	seek: boolean;
+	next: boolean;
+	previous: boolean;
+	volume: boolean;
+	mute: boolean;
+}
+
+export interface Renderer {
+	id: string;
+	name: string;
+	manufacturer: string;
+	modelName: string;
+	address: string;
+	lastSeen: string;
+	expiresAt: string;
+	supports: RendererCapabilities;
+}
+
+export interface RendererListResponse {
+	renderers: Renderer[];
+}
+
+export interface RendererStatus {
+	transportState: string;
+	transportStatus: string;
+	/** @minimum 0 */
+	positionSeconds: number;
+	/** @minimum 0 */
+	durationSeconds: number;
+	/**
+	 * @minimum 0
+	 * @maximum 100
+	 */
+	volume?: number;
+	muted?: boolean;
+}
+
+export interface RendererPlayRequest {
+	mediaItemId: string;
+	/** @maxLength 4096 */
+	path?: string;
+}
+
+export interface RendererPlaybackResponse {
+	profileId: string;
+}
+
+export type RendererTransportRequestAction =
+	(typeof RendererTransportRequestAction)[keyof typeof RendererTransportRequestAction];
+
+export const RendererTransportRequestAction = {
+	play: 'play',
+	pause: 'pause',
+	stop: 'stop',
+	next: 'next',
+	previous: 'previous'
+} as const;
+
+export interface RendererTransportRequest {
+	action: RendererTransportRequestAction;
+}
+
+export interface RendererSeekRequest {
+	/** @minimum 0 */
+	positionSeconds: number;
+}
+
+export interface RendererVolumeRequest {
+	/**
+	 * @minimum 0
+	 * @maximum 100
+	 */
+	volume: number;
+}
+
+export interface RendererMuteRequest {
+	muted: boolean;
+}
+
 export interface DLNASettingsRequest {
 	enabled: boolean;
 	/**
@@ -3778,6 +3861,11 @@ export type NotFoundResponse = ErrorResponse;
  * Resource state conflict
  */
 export type ConflictResponse = ErrorResponse;
+
+/**
+ * Renderer request failed
+ */
+export type BadGatewayResponse = ErrorResponse;
 
 /**
  * Unexpected server error
@@ -13594,6 +13682,692 @@ export function createUpdateFileDeleteSettings<
 ): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 	const query = createQuery(
 		() => getUpdateFileDeleteSettingsQueryOptions(fileDeleteSettingsRequest(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getListRenderersUrl = () => {
+	return `/api/renderers`;
+};
+
+/**
+ * @summary List discovered DLNA renderers
+ */
+export const listRenderers = async (options?: RequestInit): Promise<RendererListResponse> => {
+	const res = await fetch(getListRenderersUrl(), {
+		...options,
+		method: 'GET'
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: RendererListResponse = body ? JSON.parse(body) : {};
+	return data;
+};
+
+export const getListRenderersQueryKey = () => {
+	return [`/api/renderers`] as const;
+};
+
+export const getListRenderersQueryOptions = <
+	TData = Awaited<ReturnType<typeof listRenderers>>,
+	TError = UnauthorizedResponse
+>(options?: {
+	query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof listRenderers>>, TError, TData>>;
+	fetch?: RequestInit;
+}) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListRenderersQueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRenderers>>> = ({ signal }) =>
+		listRenderers({ signal, ...fetchOptions });
+
+	return { queryKey, queryFn, ...queryOptions } as CreateQueryOptions<
+		Awaited<ReturnType<typeof listRenderers>>,
+		TError,
+		TData
+	> & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type ListRenderersQueryResult = NonNullable<Awaited<ReturnType<typeof listRenderers>>>;
+export type ListRenderersQueryError = UnauthorizedResponse;
+
+/**
+ * @summary List discovered DLNA renderers
+ */
+
+export function createListRenderers<
+	TData = Awaited<ReturnType<typeof listRenderers>>,
+	TError = UnauthorizedResponse
+>(
+	options?: () => {
+		query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof listRenderers>>, TError, TData>>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getListRenderersQueryOptions(options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getGetRendererStatusUrl = (id: string) => {
+	return `/api/renderers/${id}/status`;
+};
+
+/**
+ * @summary Read renderer transport and volume state
+ */
+export const getRendererStatus = async (
+	id: string,
+	options?: RequestInit
+): Promise<RendererStatus> => {
+	const res = await fetch(getGetRendererStatusUrl(id), {
+		...options,
+		method: 'GET'
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: RendererStatus = body ? JSON.parse(body) : {};
+	return data;
+};
+
+export const getGetRendererStatusQueryKey = (id: string) => {
+	return [`/api/renderers/${id}/status`] as const;
+};
+
+export const getGetRendererStatusQueryOptions = <
+	TData = Awaited<ReturnType<typeof getRendererStatus>>,
+	TError = UnauthorizedResponse | NotFoundResponse | BadGatewayResponse
+>(
+	id: string,
+	options?: {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof getRendererStatus>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetRendererStatusQueryKey(id);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getRendererStatus>>> = ({ signal }) =>
+		getRendererStatus(id, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof getRendererStatus>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type GetRendererStatusQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getRendererStatus>>
+>;
+export type GetRendererStatusQueryError =
+	| UnauthorizedResponse
+	| NotFoundResponse
+	| BadGatewayResponse;
+
+/**
+ * @summary Read renderer transport and volume state
+ */
+
+export function createGetRendererStatus<
+	TData = Awaited<ReturnType<typeof getRendererStatus>>,
+	TError = UnauthorizedResponse | NotFoundResponse | BadGatewayResponse
+>(
+	id: () => string,
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof getRendererStatus>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getGetRendererStatusQueryOptions(id(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getPlayMediaOnRendererUrl = (id: string) => {
+	return `/api/renderers/${id}/play`;
+};
+
+/**
+ * @summary Set a media URI and start renderer playback
+ */
+export const playMediaOnRenderer = async (
+	id: string,
+	rendererPlayRequest: RendererPlayRequest,
+	options?: RequestInit
+): Promise<RendererPlaybackResponse> => {
+	const res = await fetch(getPlayMediaOnRendererUrl(id), {
+		...options,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...options?.headers },
+		body: JSON.stringify(rendererPlayRequest)
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: RendererPlaybackResponse = body ? JSON.parse(body) : {};
+	return data;
+};
+
+export const getPlayMediaOnRendererQueryKey = (
+	id: string,
+	rendererPlayRequest?: RendererPlayRequest
+) => {
+	return ['POST', `/api/renderers/${id}/play`, rendererPlayRequest] as const;
+};
+
+export const getPlayMediaOnRendererQueryOptions = <
+	TData = Awaited<ReturnType<typeof playMediaOnRenderer>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: string,
+	rendererPlayRequest: RendererPlayRequest,
+	options?: {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof playMediaOnRenderer>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getPlayMediaOnRendererQueryKey(id, rendererPlayRequest);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof playMediaOnRenderer>>> = ({ signal }) =>
+		playMediaOnRenderer(id, rendererPlayRequest, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof playMediaOnRenderer>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type PlayMediaOnRendererQueryResult = NonNullable<
+	Awaited<ReturnType<typeof playMediaOnRenderer>>
+>;
+export type PlayMediaOnRendererQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse
+	| ConflictResponse
+	| BadGatewayResponse;
+
+/**
+ * @summary Set a media URI and start renderer playback
+ */
+
+export function createPlayMediaOnRenderer<
+	TData = Awaited<ReturnType<typeof playMediaOnRenderer>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: () => string,
+	rendererPlayRequest: () => RendererPlayRequest,
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof playMediaOnRenderer>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getPlayMediaOnRendererQueryOptions(id(), rendererPlayRequest(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getControlRendererTransportUrl = (id: string) => {
+	return `/api/renderers/${id}/transport`;
+};
+
+/**
+ * @summary Control renderer transport
+ */
+export const controlRendererTransport = async (
+	id: string,
+	rendererTransportRequest: RendererTransportRequest,
+	options?: RequestInit
+): Promise<void> => {
+	const res = await fetch(getControlRendererTransportUrl(id), {
+		...options,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...options?.headers },
+		body: JSON.stringify(rendererTransportRequest)
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: void = body ? JSON.parse(body) : undefined;
+	return data;
+};
+
+export const getControlRendererTransportQueryKey = (
+	id: string,
+	rendererTransportRequest?: RendererTransportRequest
+) => {
+	return ['POST', `/api/renderers/${id}/transport`, rendererTransportRequest] as const;
+};
+
+export const getControlRendererTransportQueryOptions = <
+	TData = Awaited<ReturnType<typeof controlRendererTransport>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: string,
+	rendererTransportRequest: RendererTransportRequest,
+	options?: {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof controlRendererTransport>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getControlRendererTransportQueryKey(id, rendererTransportRequest);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof controlRendererTransport>>> = ({
+		signal
+	}) => controlRendererTransport(id, rendererTransportRequest, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof controlRendererTransport>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type ControlRendererTransportQueryResult = NonNullable<
+	Awaited<ReturnType<typeof controlRendererTransport>>
+>;
+export type ControlRendererTransportQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse
+	| ConflictResponse
+	| BadGatewayResponse;
+
+/**
+ * @summary Control renderer transport
+ */
+
+export function createControlRendererTransport<
+	TData = Awaited<ReturnType<typeof controlRendererTransport>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: () => string,
+	rendererTransportRequest: () => RendererTransportRequest,
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof controlRendererTransport>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getControlRendererTransportQueryOptions(id(), rendererTransportRequest(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getSeekRendererUrl = (id: string) => {
+	return `/api/renderers/${id}/seek`;
+};
+
+/**
+ * @summary Seek renderer playback
+ */
+export const seekRenderer = async (
+	id: string,
+	rendererSeekRequest: RendererSeekRequest,
+	options?: RequestInit
+): Promise<void> => {
+	const res = await fetch(getSeekRendererUrl(id), {
+		...options,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...options?.headers },
+		body: JSON.stringify(rendererSeekRequest)
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: void = body ? JSON.parse(body) : undefined;
+	return data;
+};
+
+export const getSeekRendererQueryKey = (id: string, rendererSeekRequest?: RendererSeekRequest) => {
+	return ['POST', `/api/renderers/${id}/seek`, rendererSeekRequest] as const;
+};
+
+export const getSeekRendererQueryOptions = <
+	TData = Awaited<ReturnType<typeof seekRenderer>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: string,
+	rendererSeekRequest: RendererSeekRequest,
+	options?: {
+		query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof seekRenderer>>, TError, TData>>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getSeekRendererQueryKey(id, rendererSeekRequest);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof seekRenderer>>> = ({ signal }) =>
+		seekRenderer(id, rendererSeekRequest, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof seekRenderer>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type SeekRendererQueryResult = NonNullable<Awaited<ReturnType<typeof seekRenderer>>>;
+export type SeekRendererQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse
+	| ConflictResponse
+	| BadGatewayResponse;
+
+/**
+ * @summary Seek renderer playback
+ */
+
+export function createSeekRenderer<
+	TData = Awaited<ReturnType<typeof seekRenderer>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: () => string,
+	rendererSeekRequest: () => RendererSeekRequest,
+	options?: () => {
+		query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof seekRenderer>>, TError, TData>>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getSeekRendererQueryOptions(id(), rendererSeekRequest(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getSetRendererVolumeUrl = (id: string) => {
+	return `/api/renderers/${id}/volume`;
+};
+
+/**
+ * @summary Set renderer volume
+ */
+export const setRendererVolume = async (
+	id: string,
+	rendererVolumeRequest: RendererVolumeRequest,
+	options?: RequestInit
+): Promise<void> => {
+	const res = await fetch(getSetRendererVolumeUrl(id), {
+		...options,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...options?.headers },
+		body: JSON.stringify(rendererVolumeRequest)
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: void = body ? JSON.parse(body) : undefined;
+	return data;
+};
+
+export const getSetRendererVolumeQueryKey = (
+	id: string,
+	rendererVolumeRequest?: RendererVolumeRequest
+) => {
+	return ['POST', `/api/renderers/${id}/volume`, rendererVolumeRequest] as const;
+};
+
+export const getSetRendererVolumeQueryOptions = <
+	TData = Awaited<ReturnType<typeof setRendererVolume>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: string,
+	rendererVolumeRequest: RendererVolumeRequest,
+	options?: {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof setRendererVolume>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getSetRendererVolumeQueryKey(id, rendererVolumeRequest);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof setRendererVolume>>> = ({ signal }) =>
+		setRendererVolume(id, rendererVolumeRequest, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof setRendererVolume>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type SetRendererVolumeQueryResult = NonNullable<
+	Awaited<ReturnType<typeof setRendererVolume>>
+>;
+export type SetRendererVolumeQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse
+	| ConflictResponse
+	| BadGatewayResponse;
+
+/**
+ * @summary Set renderer volume
+ */
+
+export function createSetRendererVolume<
+	TData = Awaited<ReturnType<typeof setRendererVolume>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: () => string,
+	rendererVolumeRequest: () => RendererVolumeRequest,
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof setRendererVolume>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getSetRendererVolumeQueryOptions(id(), rendererVolumeRequest(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getSetRendererMuteUrl = (id: string) => {
+	return `/api/renderers/${id}/mute`;
+};
+
+/**
+ * @summary Set renderer mute
+ */
+export const setRendererMute = async (
+	id: string,
+	rendererMuteRequest: RendererMuteRequest,
+	options?: RequestInit
+): Promise<void> => {
+	const res = await fetch(getSetRendererMuteUrl(id), {
+		...options,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', ...options?.headers },
+		body: JSON.stringify(rendererMuteRequest)
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: void = body ? JSON.parse(body) : undefined;
+	return data;
+};
+
+export const getSetRendererMuteQueryKey = (
+	id: string,
+	rendererMuteRequest?: RendererMuteRequest
+) => {
+	return ['POST', `/api/renderers/${id}/mute`, rendererMuteRequest] as const;
+};
+
+export const getSetRendererMuteQueryOptions = <
+	TData = Awaited<ReturnType<typeof setRendererMute>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: string,
+	rendererMuteRequest: RendererMuteRequest,
+	options?: {
+		query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof setRendererMute>>, TError, TData>>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getSetRendererMuteQueryKey(id, rendererMuteRequest);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof setRendererMute>>> = ({ signal }) =>
+		setRendererMute(id, rendererMuteRequest, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof setRendererMute>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type SetRendererMuteQueryResult = NonNullable<Awaited<ReturnType<typeof setRendererMute>>>;
+export type SetRendererMuteQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse
+	| ConflictResponse
+	| BadGatewayResponse;
+
+/**
+ * @summary Set renderer mute
+ */
+
+export function createSetRendererMute<
+	TData = Awaited<ReturnType<typeof setRendererMute>>,
+	TError =
+		| BadRequestResponse
+		| UnauthorizedResponse
+		| NotFoundResponse
+		| ConflictResponse
+		| BadGatewayResponse
+>(
+	id: () => string,
+	rendererMuteRequest: () => RendererMuteRequest,
+	options?: () => {
+		query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof setRendererMute>>, TError, TData>>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getSetRendererMuteQueryOptions(id(), rendererMuteRequest(), options?.()),
 		queryClient
 	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

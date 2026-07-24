@@ -79,12 +79,10 @@ GitHub tracker has no open implementation issue for them.
       and matched, but conversion between bitmap subtitles and
       SubRip/WebVTT/ASS/SSA is not implemented
       (`docs/website/src/content/docs/user-guide/using/qualities-formats-profiles.md`).
-- [ ] **Decide the user-facing DLNA control-point surface** — backend
-      AVTransport and RenderingControl clients exist, but there is no current
-      route/API for renderer discovery or play/pause/seek/volume actions. Issue
-      [#108](https://github.com/ntrp/project-mema/issues/108) closed the isolated
-      contract foundation; open a dedicated follow-up only if the product should
-      expose those controls.
+- [x] **User-facing DLNA control point** — issue
+      [#139](https://github.com/ntrp/project-mema/issues/139) added LAN-scoped
+      renderer discovery, authenticated playback controls, and the Play on
+      device picker and remote.
 - [ ] **Optional Mema MediaRenderer mode** — the server intentionally does not
       advertise MediaRenderer/AVTransport/RenderingControl services. A local
       playback target and renderer mode remain conditional future work from

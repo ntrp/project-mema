@@ -21,8 +21,8 @@ epic closed on 2026-07-07.
       diagnostics UI, and compatibility matrix.
 - [x] Isolated MediaRenderer description contracts plus AVTransport and
       RenderingControl clients.
-- [ ] Renderer discovery and explicit user-facing control-point actions are not
-      exposed through the current API/UI.
+- [x] Active renderer discovery and explicit authenticated playback/control are
+      exposed through the renderer API and Play on device UI (issue #139).
 - [ ] Mema does not advertise as a MediaRenderer and has no local playback target.
 - [x] A persisted device override with `allowed: false` denies DLNA requests
       at the request boundary before catalogue or delivery work.
@@ -590,7 +590,8 @@ Implementation state:
 - [x] Fake-renderer SOAP and server-advertisement contract tests are present.
 - [x] MediaServer advertisement remains isolated from MediaRenderer,
       AVTransport, and RenderingControl services.
-- [ ] Active renderer discovery and explicit UI/API controls remain deferred.
+- [x] Active renderer discovery and explicit UI/API controls were delivered by
+      issue [#139](https://github.com/ntrp/project-mema/issues/139).
 - [ ] Advertising Mema as a MediaRenderer remains deferred until a local
       playback target exists.
 
