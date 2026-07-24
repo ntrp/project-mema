@@ -251,16 +251,18 @@ type TestResult struct {
 }
 
 type Service struct {
-	httpClient *http.Client
-	tokenStore TokenStore
-	mu         sync.Mutex
-	lastByID   map[string]time.Time
+	httpClient       *http.Client
+	tokenStore       TokenStore
+	mu               sync.Mutex
+	lastByID         map[string]time.Time
+	anidbTitleCaches map[string]anidbTitleCache
 }
 
 func NewService(httpClient *http.Client, tokenStore TokenStore) *Service {
 	return &Service{
-		httpClient: httpClient,
-		tokenStore: tokenStore,
-		lastByID:   map[string]time.Time{},
+		httpClient:       httpClient,
+		tokenStore:       tokenStore,
+		lastByID:         map[string]time.Time{},
+		anidbTitleCaches: map[string]anidbTitleCache{},
 	}
 }

@@ -29,8 +29,9 @@ type MediaMetadataSnapshot struct {
 }
 
 type MediaFact struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
+	Label  string         `json:"label"`
+	Value  string         `json:"value"`
+	Source map[string]any `json:"source,omitempty"`
 }
 
 type MediaSeason struct {

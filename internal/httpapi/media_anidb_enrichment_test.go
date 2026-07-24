@@ -16,13 +16,18 @@ func TestAppendAniDBArtifactsPreservesPrimaryAndAttachesOnlyResolvedRegularEpiso
 		{ProviderName: "anidb", EntityType: "episode", ExternalID: "1001", SeasonID: &seasonID, EpisodeID: &episodeID},
 	}}
 	primaryProvider, primaryID := "tmdb", "77"
+	primaryPoster, primaryDate := "tmdb.jpg", "2024-01-01"
 	input := storage.MediaItemInput{
-		Title: "Primary title", ExternalProvider: &primaryProvider, ExternalID: &primaryID,
-		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{Facts: []storage.MediaFact{{Label: "Primary", Value: "kept"}}},
+		Title: "Primary title", ExternalProvider: &primaryProvider, ExternalID: &primaryID, PosterPath: &primaryPoster,
+		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{
+			ReleaseDate: &primaryDate,
+			Facts:       []storage.MediaFact{{Label: "Primary", Value: "kept"}},
+		},
 	}
 	absolute := int32(8)
+	auxPoster, auxDate := "https://cdn-eu.anidb.net/images/main/456.jpg", "2024-02-03"
 	details := metadata.Details{
-		ExternalProvider: "anidb", ExternalID: "123", Type: "serie",
+		ExternalProvider: "anidb", ExternalID: "123", Type: "serie", PosterPath: &auxPoster, ReleaseDate: &auxDate,
 		Aliases: []metadata.Alias{{Value: "Provider alias", Kind: "romaji"}},
 		Facts:   []metadata.Fact{{Label: "AniDB episode 1002", Value: "type=2; number=1"}},
 		EpisodeFacts: []metadata.EpisodeFact{
@@ -33,11 +38,11 @@ func TestAppendAniDBArtifactsPreservesPrimaryAndAttachesOnlyResolvedRegularEpiso
 	}
 
 	got := appendAniDBArtifacts(item, input, details, false)
-	if got.Title != "Primary title" || got.ExternalProvider == nil || *got.ExternalProvider != "tmdb" || *got.ExternalID != "77" {
+	if got.Title != "Primary title" || got.ExternalProvider == nil || *got.ExternalProvider != "tmdb" || *got.ExternalID != "77" || *got.PosterPath != primaryPoster || *got.ReleaseDate != primaryDate {
 		t.Fatalf("primary display identity changed: %#v", got)
 	}
-	if len(got.ProviderMappings) != 1 || got.ProviderMappings[0].Canonical {
-		t.Fatalf("AniDB mapping = %#v", got.ProviderMappings)
+	if len(got.ProviderMappings) != 1 || got.ProviderMappings[0].Canonical || got.ProviderMappings[0].Source["artwork"] != auxPoster || got.ProviderMappings[0].Source["startDate"] != auxDate {
+		t.Fatalf("AniDB mapping provenance = %#v", got.ProviderMappings)
 	}
 	if len(got.Aliases) != 1 || got.Aliases[0].ProviderName == nil || *got.Aliases[0].ProviderName != "anidb" {
 		t.Fatalf("aliases = %#v", got.Aliases)
@@ -48,8 +53,18 @@ func TestAppendAniDBArtifactsPreservesPrimaryAndAttachesOnlyResolvedRegularEpiso
 	if got.EpisodeNumbering[0].Source["originalType"] != "1" || got.EpisodeNumbering[0].Source["resolvedBy"] != "provider_mapping" {
 		t.Fatalf("numbering provenance = %#v", got.EpisodeNumbering[0].Source)
 	}
-	if len(got.Facts) != 2 {
-		t.Fatalf("exceptional provider facts were not retained: %#v", got.Facts)
+	if len(got.Facts) != 4 || got.Facts[2].Label != "AniDB artwork" || got.Facts[3].Label != "AniDB start date" || got.Facts[3].Source["externalId"] != "123" {
+		t.Fatalf("auxiliary provider facts were not retained with provenance: %#v", got.Facts)
+	}
+}
+
+func TestDirectAniDBDetailsMarkMediaAsAnime(t *testing.T) {
+	provider, externalID := "anidb", "123"
+	got := applyMediaDetails(storage.MediaItemInput{Type: "serie", ExternalProvider: &provider, ExternalID: &externalID}, metadata.Details{
+		Title: "Anime", Type: "serie", ExternalProvider: "anidb", ExternalID: "123",
+	})
+	if got.ContentKind != "anime" {
+		t.Fatalf("content kind = %q", got.ContentKind)
 	}
 }
 

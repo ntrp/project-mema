@@ -55,7 +55,7 @@ func appendAniDBArtifacts(
 	mapping := mediaProviderMappings(details)
 	if len(mapping) > 0 {
 		mapping[0].Canonical = canonical
-		mapping[0].Source = anidbSource(details.ExternalID)
+		mapping[0].Source = anidbArtifactSource(details)
 		input.ProviderMappings = append(input.ProviderMappings, mapping[0])
 	}
 	for _, alias := range mediaAliases(details) {
@@ -63,7 +63,7 @@ func appendAniDBArtifacts(
 		input.Aliases = append(input.Aliases, alias)
 	}
 	if !canonical {
-		input.Facts = append(input.Facts, mediaFacts(details.Facts)...)
+		input.Facts = append(input.Facts, anidbMediaFacts(details)...)
 	}
 	input.EpisodeNumbering = append(input.EpisodeNumbering, resolvedAniDBNumbering(item.ProviderMappings, details.EpisodeFacts)...)
 	return input
@@ -103,4 +103,30 @@ func anidbSource(externalID string) map[string]any {
 	return map[string]any{
 		"source": "anidb_http_api", "contract": anidbContractSource, "externalId": externalID,
 	}
+}
+
+func anidbArtifactSource(details metadata.Details) map[string]any {
+	source := anidbSource(details.ExternalID)
+	if details.PosterPath != nil {
+		source["artwork"] = *details.PosterPath
+	}
+	if details.ReleaseDate != nil {
+		source["startDate"] = *details.ReleaseDate
+	}
+	return source
+}
+
+func anidbMediaFacts(details metadata.Details) []storage.MediaFact {
+	source := anidbSource(details.ExternalID)
+	facts := make([]storage.MediaFact, 0, len(details.Facts)+2)
+	for _, fact := range details.Facts {
+		facts = append(facts, storage.MediaFact{Label: fact.Label, Value: fact.Value, Source: source})
+	}
+	if details.PosterPath != nil {
+		facts = append(facts, storage.MediaFact{Label: "AniDB artwork", Value: *details.PosterPath, Source: source})
+	}
+	if details.ReleaseDate != nil {
+		facts = append(facts, storage.MediaFact{Label: "AniDB start date", Value: *details.ReleaseDate, Source: source})
+	}
+	return facts
 }

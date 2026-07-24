@@ -97,7 +97,7 @@ func applyMediaDetails(input storage.MediaItemInput, details metadata.Details) s
 		input.ExternalProvider = optionalString(primaryProvider)
 		input.ExternalID = optionalString(primaryID)
 	}
-	if details.ExternalProvider == "anilist" {
+	if details.ExternalProvider == "anilist" || details.ExternalProvider == "anidb" {
 		input.ContentKind = "anime"
 	}
 	input.Overview = details.Overview

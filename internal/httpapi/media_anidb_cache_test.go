@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"compress/gzip"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -15,8 +16,14 @@ import (
 func TestAniDBSearchUsesExistingMetadataCacheAndHistory(t *testing.T) {
 	store := testSettingsStore(t)
 	var calls atomic.Int32
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls.Add(1)
+		if r.URL.Path == "/api/anime-titles.xml.gz" {
+			archive := gzip.NewWriter(w)
+			_, _ = archive.Write([]byte(`<animetitles><anime aid="123"><title xml:lang="x-jat" type="main">Cached Anime</title></anime></animetitles>`))
+			_ = archive.Close()
+			return
+		}
 		_, _ = w.Write([]byte(`<anime id="123"><titles><title xml:lang="x-jat" type="main">Cached Anime</title></titles></anime>`))
 	}))
 	defer upstream.Close()
@@ -37,7 +44,7 @@ func TestAniDBSearchUsesExistingMetadataCacheAndHistory(t *testing.T) {
 			t.Fatalf("results=%#v err=%v", results, searchErr)
 		}
 	}
-	if calls.Load() != 1 {
-		t.Fatalf("upstream calls = %d, want one cache miss", calls.Load())
+	if calls.Load() != 2 {
+		t.Fatalf("upstream calls = %d, want one title dump plus one AID lookup", calls.Load())
 	}
 }

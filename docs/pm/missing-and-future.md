@@ -40,8 +40,8 @@ All 11 open issues are represented below.
 ### Anime metadata and correction workflows
 
 The storage/matching foundation from
-[#30](https://github.com/ntrp/project-mema/issues/30) is implemented; these
-user-facing/provider follow-ups are not.
+[#30](https://github.com/ntrp/project-mema/issues/30) and the AniList/AniDB
+provider integrations are implemented; these correction workflows remain.
 
 - [ ] **User-editable anime aliases** — add/edit/delete/disable user aliases
       without losing provider-derived values; define how aliases affect search
@@ -49,11 +49,12 @@ user-facing/provider follow-ups are not.
 - [ ] **Anime provider-conflict review UI** — show TMDB/TVDB/AniList/AniDB
       disagreements and let users select canonical values while preserving
       source data ([#69](https://github.com/ntrp/project-mema/issues/69)).
-- [ ] **AniList metadata provider** — search/details, aliases, artwork, dates,
+- [x] **AniList metadata provider** — search/details, aliases, artwork, dates,
       mappings, rate-limit/auth policy, and fixtures
       ([#70](https://github.com/ntrp/project-mema/issues/70)).
-- [ ] **AniDB metadata provider** — search/details, absolute-number hints,
-      mappings, specials/OVA policy, caching/credentials, and fixtures
+- [x] **AniDB metadata provider** — title-dump search, AID details,
+      absolute-number hints, mappings, specials/OVA policy,
+      caching/credentials, and fixtures
       ([#71](https://github.com/ntrp/project-mema/issues/71)).
 - [ ] **Manual anime numbering overrides** — correction workflow for provider
       mappings, split seasons, specials, OVAs, and complex series numbering

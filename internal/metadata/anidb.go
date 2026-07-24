@@ -34,8 +34,15 @@ func (p anidbProvider) Search(ctx context.Context, request SearchRequest) ([]Sea
 	if request.MediaType != "serie" {
 		return nil, nil
 	}
+	aid, err := p.findAnimeID(ctx, request.Query)
+	if err != nil {
+		return nil, err
+	}
+	if aid == 0 {
+		return []SearchResult{}, nil
+	}
 	var anime anidbAnime
-	if err := p.request(ctx, map[string]string{"request": "anime", "aname": request.Query}, &anime); err != nil {
+	if err := p.request(ctx, map[string]string{"request": "anime", "aid": strconv.Itoa(aid)}, &anime); err != nil {
 		return nil, err
 	}
 	if anime.ID == 0 || anidbMainTitle(anime) == "" {
