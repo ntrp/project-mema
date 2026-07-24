@@ -109,10 +109,10 @@ a product decision before implementation.
 - [x] **Update implemented PRD statuses** — reconciled all six PRDs with the
       application on 2026-07-14, including delivered scope, implementation
       evidence, and explicit remaining boundaries.
-- [ ] **Reconcile DLNA “planned architecture” wording** —
-      `docs/website/src/content/docs/architecture/dlna.md` still labels profile
-      architecture as planned even though renderer profiles, overrides,
-      diagnostics, and delivery behavior are implemented.
+- [x] **Reconcile DLNA architecture wording** — delivered by
+      [#143](https://github.com/ntrp/project-mema/issues/143); the architecture
+      now describes the implemented profile storage, matching, overrides,
+      diagnostics, settings UI, and delivery behavior.
 - [ ] **Refresh the operations epic body** —
       [#7](https://github.com/ntrp/project-mema/issues/7) lists durable sessions,
       secret redaction, filesystem safety, and media-tool safety as remaining

@@ -118,30 +118,27 @@ Fields:
 - `matchMode`: `any`, `all`, or weighted score.
 - `minScore`: threshold for weighted matching.
 
-Matching and access order:
+Matching order:
 
-1. A matching UUID device override decides access and profile assignment.
-2. Otherwise, a matching IP device override decides access and profile assignment.
-3. Existing connected renderer association by IP.
-4. UPnP UUID and device details.
-5. HTTP headers.
-6. Default profile.
+1. Manual device override by UUID.
+2. Manual device override by IP.
+3. Best automatic match from structured rules, including UUID/device details,
+   friendly name, User-Agent, and HTTP headers.
+4. Sticky profile from the recent-client IP association for weak requests.
+5. Generic fallback profile.
 
-With no matching override, the renderer is allowed and normal profile matching
-continues. `allowed: true` explicitly allows the renderer and assigns the chosen
-profile; it does not bypass the server's Allowed CIDRs. `allowed: false` denies
-all DLNA requests. A UUID decision is final, so an allowed UUID overrides a
-denied IP for the same request.
-
-Denied SOAP control requests return UPnP error 606 (`Action not authorized`).
-Denied descriptions, resources, direct/remux/transcode streams, artwork,
-thumbnails, subtitles, and event requests return HTTP 403. Denial occurs before
-catalogue lookup, stream registration, transcode-slot acquisition, or process
-execution, and appears in recent-client diagnostics and the DLNA audit log.
+Device access is resolved before normal profile matching: a UUID override wins
+when present, otherwise an IP override applies. No matching override means the
+request is allowed. `allowed: true` explicitly allows and assigns its profile
+without bypassing Allowed CIDRs; `allowed: false` denies all DLNA requests.
+Denied SOAP controls return UPnP error 606, while descriptions, resources,
+direct/remux/transcode streams, artwork, thumbnails, subtitles, and events
+return HTTP 403 before catalogue, stream, transcode-slot, or process work.
+Denials appear in recent-client diagnostics and the DLNA audit log.
 
 Mema keeps UMS-like sticky IP behavior: once a renderer is recognized at an IP,
-weak later media requests from the same IP reuse that renderer unless a
-higher-priority profile is positively matched.
+weak later media requests from the same IP reuse that renderer unless an
+automatic match succeeds.
 
 ### Direct-Play Capability Rules
 

@@ -4,14 +4,16 @@
 
 Implemented with deferred optional renderer surfaces
 
-Last reconciled with the application: **2026-07-14**.
+Last reconciled with the application: **2026-07-24**.
 
 ## Implementation Snapshot
 
 Epic [#88](https://github.com/ntrp/project-mema/issues/88) and child stories
 89–108 are closed. The server, profiles, diagnostics, security, compatibility,
 and isolated control-point contracts were verified with `make check` when the
-epic closed on 2026-07-07.
+epic closed on 2026-07-07. Issue
+[#139](https://github.com/ntrp/project-mema/issues/139) later delivered the
+authenticated control-point API and UI.
 
 - [x] Shared delivery, settings/lifecycle, SSDP, device/service descriptions,
       SOAP, ContentDirectory, DIDL-Lite, browse/search, and ConnectionManager.
@@ -21,8 +23,8 @@ epic closed on 2026-07-07.
       diagnostics UI, and compatibility matrix.
 - [x] Isolated MediaRenderer description contracts plus AVTransport and
       RenderingControl clients.
-- [x] Active renderer discovery and explicit authenticated playback/control are
-      exposed through the renderer API and Play on device UI (issue #139).
+- [x] Active renderer discovery plus authenticated Play on device, transport,
+      seek, volume, and mute API/UI controls.
 - [ ] Mema does not advertise as a MediaRenderer and has no local playback target.
 - [x] A persisted device override with `allowed: false` denies DLNA requests
       at the request boundary before catalogue or delivery work.

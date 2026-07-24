@@ -95,7 +95,7 @@ This checklist describes the product capabilities found in the local docs, API/b
 - [x] Seeded and editable renderer profiles, matching rules, per-device overrides, clone/import/export/reset/restore, and compatibility controls.
 - [x] Recent-device, profile-match, and delivery-decision diagnostics in settings/system UI.
 - [x] DLNA security limits, audit logging, compatibility fixtures, and a device matrix.
-- [x] Backend control-point contracts for MediaRenderer descriptions plus AVTransport and RenderingControl actions ([#108](https://github.com/ntrp/project-mema/issues/108)).
+- [x] Authenticated DLNA control point with remote MediaRenderer discovery, Play on device, transport, seek, volume, and mute controls ([#139](https://github.com/ntrp/project-mema/issues/139)).
 
 ## Frontend product surfaces
 

@@ -4,7 +4,7 @@
 
 Implemented for the MediaServer scope
 
-Last reconciled with the application: **2026-07-14**.
+Last reconciled with the application: **2026-07-24**.
 
 ## Implementation Snapshot
 
@@ -22,8 +22,9 @@ The clean-room server specification was delivered by epic
       audit logging, and compatibility tests.
 - [x] Browser preview and VLC streaming continue to use the shared delivery
       foundation.
-- [ ] Active MediaRenderer discovery, control-point UI/API, and optional Mema
-      MediaRenderer advertisement remain outside the delivered server surface.
+- [x] Active MediaRenderer discovery and authenticated control-point UI/API.
+- [ ] Mema MediaRenderer advertisement and a local playback target remain
+      outside the delivered surface.
 - [x] A false device `allowed` override denies SOAP and resource requests at the
       request boundary before catalogue or delivery work.
 
