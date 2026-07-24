@@ -22,6 +22,7 @@ const (
 	defaultSeedPath    = "internal/storage/seeds/defaults.sql"
 	languageSeedPath   = "internal/storage/seeds/languages.sql"
 	devDefaultSeedPath = "scripts/seeds/dev.defaults.sql"
+	devSeriesSeedPath  = "scripts/seeds/dev.test-series.sql"
 	devLocalSeedPath   = "scripts/seeds/dev.local.sql"
 	remoteResetEnv     = "ALLOW_REMOTE_DEV_DB_RESET"
 )
@@ -45,7 +46,7 @@ func run(ctx context.Context, args []string) error {
 	case "clean":
 		return withDB(ctx, databaseURL, func(db *sql.DB) error {
 			if err := ensureLocalReset(databaseURL); err != nil {
-				return err
+				return fmt.Errorf("local reset safety check failed: %w", err)
 			}
 			return cleanSchema(ctx, db)
 		})
@@ -62,16 +63,16 @@ func run(ctx context.Context, args []string) error {
 
 func reset(ctx context.Context, databaseURL string) error {
 	if err := ensureLocalReset(databaseURL); err != nil {
-		return err
+		return fmt.Errorf("local reset safety check failed: %w", err)
 	}
 	return withDB(ctx, databaseURL, func(db *sql.DB) error {
 		if err := cleanSchema(ctx, db); err != nil {
-			return err
+			return fmt.Errorf("schema cleanup failed: %w", err)
 		}
 		if err := runMigrations(ctx, db); err != nil {
 			return err
 		}
-		for _, path := range []string{defaultSeedPath, languageSeedPath, devDefaultSeedPath} {
+		for _, path := range []string{defaultSeedPath, languageSeedPath, devDefaultSeedPath, devSeriesSeedPath} {
 			if err := applyRequiredSeed(ctx, db, path); err != nil {
 				return err
 			}
@@ -104,7 +105,7 @@ func runMigrations(ctx context.Context, db *sql.DB) error {
 	goose.SetLogger(goose.NopLogger())
 	goose.SetTableName(gooseVersionTable)
 	if err := goose.SetDialect("postgres"); err != nil {
-		return err
+		return fmt.Errorf("goose dialect setup failed: %w", err)
 	}
 	if err := goose.UpContext(ctx, db, gooseMigrationsDir); err != nil {
 		return fmt.Errorf("goose migration failed: %w", err)
