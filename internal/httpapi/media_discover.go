@@ -7,6 +7,9 @@ import (
 )
 
 func providerHasCredentials(provider storage.MetadataProvider) bool {
+	if provider.Type == "anidb" {
+		return optionalTrimmedString(provider.APIKey) != nil && optionalTrimmedString(provider.PIN) != nil
+	}
 	return optionalTrimmedString(provider.APIKey) != nil || optionalTrimmedString(provider.AccessToken) != nil
 }
 

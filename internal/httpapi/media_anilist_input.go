@@ -34,8 +34,15 @@ func mediaAliases(details metadata.Details) []storage.MediaItemAliasInput {
 	aliases := make([]storage.MediaItemAliasInput, 0, len(details.Aliases))
 	for _, alias := range details.Aliases {
 		provider := alias.ProviderName
+		if strings.TrimSpace(provider) == "" {
+			provider = details.ExternalProvider
+		}
+		source := alias.Source
+		if source == nil {
+			source = map[string]any{"source": details.ExternalProvider + "_metadata", "externalId": details.ExternalID}
+		}
 		aliases = append(aliases, storage.MediaItemAliasInput{
-			Alias: alias.Value, Language: alias.Language, Kind: alias.Kind, ProviderName: optionalString(provider), Source: alias.Source,
+			Alias: alias.Value, Language: alias.Language, Kind: alias.Kind, ProviderName: optionalString(provider), Source: source,
 		})
 	}
 	return aliases

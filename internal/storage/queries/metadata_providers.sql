@@ -19,7 +19,7 @@ select id, name, type, base_url, api_key, pin, access_token, session_token,
 from app.metadata_providers
 where enabled = true
     and ((sqlc.arg(media_type) = 'movie' and type in ('tmdb', 'tvdb', 'anilist'))
-        or (sqlc.arg(media_type) = 'serie' and type in ('tmdb', 'tvdb', 'anilist')))
+        or (sqlc.arg(media_type) = 'serie' and type in ('tmdb', 'tvdb', 'anilist', 'anidb')))
 order by priority asc, name asc;
 
 -- name: GetMetadataProvider :one

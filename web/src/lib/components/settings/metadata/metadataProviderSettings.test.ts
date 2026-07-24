@@ -55,6 +55,10 @@ describe('metadata provider settings (SCN-SETTINGS-014)', () => {
 
 		expect(body).toContain('TMDB');
 		expect(body).toContain('TVDB');
+		expect(body).toContain('AniDB');
+		expect(body).toContain('Registered client name');
+		expect(body).toContain('Client version');
+		expect(body).toContain('http://api.anidb.net:9001');
 		expect(body).toContain('http://metadata.test/tmdb');
 		expect(body).toContain('https://api4.thetvdb.com/v4');
 		expect(body).toContain('Enabled');

@@ -3,8 +3,11 @@ package storage
 import (
 	"context"
 	"errors"
+	"strconv"
+	"strings"
 	"time"
 
+	"media-manager/internal/anidb"
 	storagegen "media-manager/internal/storage/generated"
 
 	"github.com/google/uuid"
@@ -97,6 +100,13 @@ func (s *SettingsStore) EnsureDefaultMetadataProviders(ctx context.Context) erro
 			Enabled:  true,
 			Priority: 120,
 		},
+		{
+			Name:     "AniDB",
+			Type:     "anidb",
+			BaseURL:  "http://api.anidb.net:9001",
+			Enabled:  false,
+			Priority: 120,
+		},
 	}
 	for _, input := range defaults {
 		if err := s.ensureMetadataProvider(ctx, input); err != nil {
@@ -147,11 +157,13 @@ func (s *SettingsStore) GetMetadataProvider(ctx context.Context, id uuid.UUID) (
 }
 
 func (s *SettingsStore) CreateMetadataProvider(ctx context.Context, input MetadataProviderInput) (MetadataProvider, error) {
+	input = disableUnconfiguredAniDB(input)
 	row, err := storagegen.New(s.pool).CreateMetadataProvider(ctx, metadataProviderCreateParams(uuid.New(), input))
 	return metadataProviderResult(row, err)
 }
 
 func (s *SettingsStore) UpdateMetadataProvider(ctx context.Context, id uuid.UUID, input MetadataProviderInput) (MetadataProvider, error) {
+	input = disableUnconfiguredAniDB(input)
 	row, err := storagegen.New(s.pool).UpdateMetadataProvider(ctx, storagegen.UpdateMetadataProviderParams(metadataProviderCreateParams(id, input)))
 	return metadataProviderResult(row, err)
 }
@@ -173,6 +185,20 @@ func (s *SettingsStore) UpdateMetadataProviderSessionToken(ctx context.Context, 
 		SessionToken:          textValue(&token),
 		SessionTokenExpiresAt: &expiresAt,
 	})
+}
+
+func disableUnconfiguredAniDB(input MetadataProviderInput) MetadataProviderInput {
+	if input.Type != "anidb" {
+		return input
+	}
+	version := 0
+	if input.PIN != nil {
+		version, _ = strconv.Atoi(strings.TrimSpace(*input.PIN))
+	}
+	if input.APIKey == nil || !anidb.ValidClientName(*input.APIKey) || version <= 0 {
+		input.Enabled = false
+	}
+	return input
 }
 
 func metadataProviderResult(row storagegen.AppMetadataProvider, err error) (MetadataProvider, error) {

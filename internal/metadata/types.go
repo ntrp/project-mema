@@ -23,6 +23,8 @@ type Config struct {
 	AccessToken           *string
 	SessionToken          *string
 	SessionTokenExpiresAt *time.Time
+	ClientName            *string
+	ClientVersion         *string
 }
 
 type SearchRequest struct {
@@ -135,6 +137,14 @@ type ProviderMapping struct {
 	Source             map[string]any
 }
 
+type EpisodeFact struct {
+	ExternalID     string
+	OriginalType   string
+	OriginalNumber int32
+	AbsoluteNumber *int32
+	Title          string
+	AirDate        *string
+}
 type Details struct {
 	Title            string
 	Aliases          []Alias
@@ -161,6 +171,7 @@ type Details struct {
 	Genres           []string
 	Keywords         []string
 	Facts            []Fact
+	EpisodeFacts     []EpisodeFact
 	Seasons          []Season
 	Cast             []Person
 	Crew             []Person

@@ -66,6 +66,8 @@ func (s *Service) provider(config Config) (Provider, error) {
 		return tvdbProvider{service: s, config: config}, nil
 	case "anilist":
 		return anilistProvider{service: s, config: config}, nil
+	case "anidb":
+		return anidbProvider{service: s, config: config}, nil
 	default:
 		return nil, ErrUnsupportedProvider
 	}
@@ -73,7 +75,13 @@ func (s *Service) provider(config Config) (Provider, error) {
 
 func (s *Service) Test(ctx context.Context, config Config) TestResult {
 	start := time.Now()
-	results, err := s.Search(ctx, config, SearchRequest{Query: "test", MediaType: "movie"})
+	mediaType := "movie"
+	query := "test"
+	if config.Type == "anidb" {
+		mediaType = "serie"
+		query = "Cowboy Bebop"
+	}
+	results, err := s.Search(ctx, config, SearchRequest{Query: query, MediaType: mediaType})
 	latency := time.Since(start)
 	if err != nil {
 		return TestResult{

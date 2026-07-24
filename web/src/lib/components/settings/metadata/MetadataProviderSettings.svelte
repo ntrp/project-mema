@@ -12,7 +12,7 @@
 		name: string;
 		baseUrl: string;
 		priority: number;
-		fields: 'tmdb' | 'tvdb';
+		fields: 'tmdb' | 'tvdb' | 'anidb';
 	}
 
 	interface Props {
@@ -40,6 +40,13 @@
 			baseUrl: 'https://api4.thetvdb.com/v4',
 			priority: 110,
 			fields: 'tvdb'
+		},
+		{
+			type: 'anidb',
+			name: 'AniDB',
+			baseUrl: 'http://api.anidb.net:9001',
+			priority: 120,
+			fields: 'anidb'
 		}
 	];
 </script>

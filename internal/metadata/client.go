@@ -84,19 +84,26 @@ func (s *Service) doJSONOnce(ctx context.Context, config Config, method string, 
 
 func (s *Service) wait(ctx context.Context, config Config) error {
 	interval := 500 * time.Millisecond
-	if config.Type == "tvdb" {
+	switch config.Type {
+	case "tvdb":
 		interval = time.Second
+	case "anidb":
+		// AniDB asks HTTP API clients to keep at least two seconds between requests.
+		interval = 2 * time.Second
 	}
 	key := config.ID.String()
 	s.mu.Lock()
-	last := s.lastByID[key]
-	wait := time.Until(last.Add(interval))
+	now := time.Now()
+	next := s.lastByID[key].Add(interval)
+	if next.Before(now) {
+		next = now
+	}
+	s.lastByID[key] = next
+	s.mu.Unlock()
+	wait := time.Until(next)
 	if wait <= 0 {
-		s.lastByID[key] = time.Now()
-		s.mu.Unlock()
 		return nil
 	}
-	s.mu.Unlock()
 
 	timer := time.NewTimer(wait)
 	defer timer.Stop()
@@ -106,9 +113,6 @@ func (s *Service) wait(ctx context.Context, config Config) error {
 	case <-timer.C:
 	}
 
-	s.mu.Lock()
-	s.lastByID[key] = time.Now()
-	s.mu.Unlock()
 	return nil
 }
 

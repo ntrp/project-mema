@@ -50,7 +50,12 @@ func (s *Server) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	updated, err := s.settings.UpdateMediaItemMetadata(r.Context(), item.ID, refreshedMediaInput(item, details))
+	input, err := s.enrichAniDBFacts(r.Context(), item, providers, refreshedMediaInput(item, details), details)
+	if err != nil {
+		writeMetadataDetailsError(w, err)
+		return
+	}
+	updated, err := s.settings.UpdateMediaItemMetadata(r.Context(), item.ID, input)
 	if err != nil {
 		writeSettingsError(w, err, "Could not refresh media metadata")
 		return

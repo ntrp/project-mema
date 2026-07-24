@@ -18,7 +18,7 @@
 		name: string;
 		baseUrl: string;
 		priority: number;
-		fields: 'tmdb' | 'tvdb';
+		fields: 'tmdb' | 'tvdb' | 'anidb';
 	}
 
 	interface Props {
@@ -59,7 +59,7 @@
 			apiKey: '',
 			pin: '',
 			accessToken: '',
-			enabled: true,
+			enabled: value.type !== 'anidb',
 			priority: value.priority
 		};
 	}
@@ -77,8 +77,8 @@
 		form = { ...form, enabled: value };
 	}
 
-	function updatePriority(value: number | undefined) {
-		form = { ...form, priority: value ?? 0 };
+	function updatePriority(value: number) {
+		form = { ...form, priority: Number.isFinite(value) ? value : 0 };
 	}
 </script>
 
@@ -119,32 +119,54 @@
 					oninput={(event) => updateText('baseUrl', event.currentTarget.value)}
 				/>
 			</label>
-			<label class="grid gap-1.5">
-				<span class="text-sm font-bold text-muted-foreground">API key</span>
-				<SecretInput
-					value={form.apiKey}
-					autocomplete="off"
-					onValueChange={(value) => updateText('apiKey', value)}
-				/>
-			</label>
-			{#if definition.fields === 'tvdb'}
+			{#if definition.fields === 'anidb'}
 				<label class="grid gap-1.5">
-					<span class="text-sm font-bold text-muted-foreground">PIN</span>
-					<SecretInput
+					<span class="text-sm font-bold text-muted-foreground">Registered client name</span>
+					<Input
+						value={form.apiKey}
+						required
+						pattern="[a-z0-9]+"
+						oninput={(event) => updateText('apiKey', event.currentTarget.value)}
+					/>
+				</label>
+				<label class="grid gap-1.5">
+					<span class="text-sm font-bold text-muted-foreground">Client version</span>
+					<Input
 						value={form.pin}
+						required
+						min="1"
+						type="number"
+						oninput={(event) => updateText('pin', event.currentTarget.value)}
+					/>
+				</label>
+			{:else}
+				<label class="grid gap-1.5">
+					<span class="text-sm font-bold text-muted-foreground">API key</span>
+					<SecretInput
+						value={form.apiKey}
 						autocomplete="off"
-						onValueChange={(value) => updateText('pin', value)}
+						onValueChange={(value) => updateText('apiKey', value)}
+					/>
+				</label>
+				{#if definition.fields === 'tvdb'}
+					<label class="grid gap-1.5">
+						<span class="text-sm font-bold text-muted-foreground">PIN</span>
+						<SecretInput
+							value={form.pin}
+							autocomplete="off"
+							onValueChange={(value) => updateText('pin', value)}
+						/>
+					</label>
+				{/if}
+				<label class="grid gap-1.5">
+					<span class="text-sm font-bold text-muted-foreground">Access token</span>
+					<SecretInput
+						value={form.accessToken}
+						autocomplete="off"
+						onValueChange={(value) => updateText('accessToken', value)}
 					/>
 				</label>
 			{/if}
-			<label class="grid gap-1.5">
-				<span class="text-sm font-bold text-muted-foreground">Access token</span>
-				<SecretInput
-					value={form.accessToken}
-					autocomplete="off"
-					onValueChange={(value) => updateText('accessToken', value)}
-				/>
-			</label>
 			<label class="grid gap-1.5">
 				<span class="text-sm font-bold text-muted-foreground">Priority</span>
 				<Input

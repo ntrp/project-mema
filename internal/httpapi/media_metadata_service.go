@@ -16,7 +16,7 @@ import (
 )
 
 func writeMetadataDetailsError(w http.ResponseWriter, err error) {
-	if errors.Is(err, metadata.ErrCredentialsRequired) {
+	if errors.Is(err, metadata.ErrCredentialsRequired) || errors.Is(err, metadata.ErrAniDBClientIdentityRequired) {
 		writeError(w, http.StatusBadRequest, "metadata_provider_credentials_required", "Metadata provider credentials are required")
 		return
 	}
