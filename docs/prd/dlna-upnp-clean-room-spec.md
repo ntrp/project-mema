@@ -473,8 +473,9 @@ Device overrides add a second access decision after the CIDR allowlist. Without
 a matching override, requests are allowed. An `allowed: true` override allows
 and assigns its profile but cannot bypass Allowed CIDRs. An `allowed: false`
 override denies every DLNA route before catalogue, stream, transcode, or process
-work. UUID overrides take precedence over IP overrides, including an explicit
-UUID allow paired with an IP deny. SOAP denial is UPnP fault 606 (`Action not
+work. UUID identity for persisted overrides requires a persisted UUID+source-IP
+binding; SSDP discovery claims are not trusted bindings. Any matching explicit
+UUID or IP deny wins over an allow. SOAP denial is UPnP fault 606 (`Action not
 authorized`); non-SOAP denial is HTTP 403. Both are recorded in recent-client
 diagnostics and the DLNA audit log.
 

@@ -25,7 +25,8 @@ settings refinements.
       compatibility matrix; catalogue membership is not a guarantee for every
       physical model.
 - [x] Device allow/deny overrides are enforced at the request boundary with
-      UUID-before-IP precedence and denial diagnostics.
+      deny-dominant conflict handling, persisted UUID+source-IP binding, and
+      denial diagnostics.
 
 Primary implementation: `internal/dlna/profile_*`,
 `internal/storage/dlna_renderer_*`, `internal/httpapi/dlna_renderer_*`, and

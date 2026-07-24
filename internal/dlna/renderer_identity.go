@@ -1,10 +1,6 @@
 package dlna
 
-import (
-	"net"
-	"strings"
-	"time"
-)
+import "strings"
 
 func (m *Manager) verifiedRendererRequest(request RendererRequest, overrides []rendererDeviceOverride) RendererRequest {
 	claimedUUID := normalizeRendererUUID(request.RendererUUID)
@@ -30,21 +26,11 @@ func (m *Manager) verifiedRendererRequest(request RendererRequest, overrides []r
 
 func (m *Manager) rendererUUIDBoundToIP(rendererUUID, clientIP string, overrides []rendererDeviceOverride) bool {
 	clientIP = strings.TrimSpace(clientIP)
-	parsedIP := net.ParseIP(clientIP)
-	if rendererUUID == "" || parsedIP == nil {
+	if rendererUUID == "" || clientIP == "" {
 		return false
 	}
 	for _, override := range overrides {
 		if normalizeRendererUUID(override.RendererUUID) == rendererUUID && strings.TrimSpace(override.IPAddress) == clientIP {
-			return true
-		}
-	}
-	service := m.controlPointSnapshot()
-	if service == nil {
-		return false
-	}
-	for _, renderer := range service.Registry().List(time.Time{}) {
-		if normalizeRendererUUID(renderer.UDN) == rendererUUID && renderer.SourceIP.Equal(parsedIP) {
 			return true
 		}
 	}

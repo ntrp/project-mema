@@ -26,19 +26,12 @@ type rendererProfileCandidate struct {
 
 func rendererOverrideDenied(deviceOverrides []rendererDeviceOverride, request RendererRequest) bool {
 	uuid := normalizeRendererUUID(request.RendererUUID)
-	if uuid != "" && request.rendererUUIDVerified {
-		for _, override := range deviceOverrides {
-			if normalizeRendererUUID(override.RendererUUID) == uuid {
-				return !override.Allowed
-			}
-		}
-	}
 	ip := strings.TrimSpace(request.ClientIP)
-	if ip != "" {
-		for _, override := range deviceOverrides {
-			if strings.TrimSpace(override.IPAddress) == ip {
-				return !override.Allowed
-			}
+	for _, override := range deviceOverrides {
+		uuidMatches := request.rendererUUIDVerified && uuid != "" && normalizeRendererUUID(override.RendererUUID) == uuid
+		ipMatches := ip != "" && strings.TrimSpace(override.IPAddress) == ip
+		if !override.Allowed && (uuidMatches || ipMatches) {
+			return true
 		}
 	}
 	return false

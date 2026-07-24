@@ -121,9 +121,6 @@ func (m *Manager) recordClient(r *http.Request, action string, args map[string]s
 		if status.FriendlyName == "" {
 			status.FriendlyName = existing.FriendlyName
 		}
-		if status.RendererUUID == "" {
-			status.RendererUUID = existing.RendererUUID
-		}
 		if len(status.HeadersSummary) == 0 {
 			status.HeadersSummary = existing.HeadersSummary
 		}

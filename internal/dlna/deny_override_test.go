@@ -18,7 +18,7 @@ import (
 	"media-manager/internal/storage"
 )
 
-func TestRendererOverrideDeniedUsesOnlyVerifiedUUIDBeforeIP(t *testing.T) {
+func TestRendererOverrideDeniedUsesVerifiedUUIDAndDenyDominates(t *testing.T) {
 	overrides := []rendererDeviceOverride{
 		{Allowed: false, IPAddress: "192.0.2.4"},
 		{Allowed: true, RendererUUID: "uuid:allowed"},
@@ -31,7 +31,7 @@ func TestRendererOverrideDeniedUsesOnlyVerifiedUUIDBeforeIP(t *testing.T) {
 		"ip denied":                       {RendererRequest{ClientIP: "192.0.2.4"}, true},
 		"unverified allow cannot beat ip": {RendererRequest{RendererUUID: "uuid:allowed", ClientIP: "192.0.2.4"}, true},
 		"verified uuid denied":            {RendererRequest{RendererUUID: "uuid:blocked", ClientIP: "192.0.2.5", rendererUUIDVerified: true}, true},
-		"verified allow beats ip deny":    {RendererRequest{RendererUUID: "uuid:allowed", ClientIP: "192.0.2.4", rendererUUIDVerified: true}, false},
+		"ip deny beats verified allow":    {RendererRequest{RendererUUID: "uuid:allowed", ClientIP: "192.0.2.4", rendererUUIDVerified: true}, true},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -56,7 +56,7 @@ func TestRendererRequestDeniedDoesNotTrustUnboundRememberedUUID(t *testing.T) {
 	}
 }
 
-func TestRendererRequestDeniedUsesPersistedBoundRememberedUUID(t *testing.T) {
+func TestRendererRequestDeniedIPDenyBeatsPersistedBoundRememberedUUID(t *testing.T) {
 	manager := NewManager(nil, "http://127.0.0.1:18080")
 	manager.profileCache = rendererProfileCacheState{loaded: true, overrides: []rendererDeviceOverride{
 		{Allowed: false, IPAddress: "192.0.2.8"},
@@ -65,8 +65,8 @@ func TestRendererRequestDeniedUsesPersistedBoundRememberedUUID(t *testing.T) {
 	manager.recentClients["192.0.2.8"] = ClientStatus{RendererUUID: "uuid:allowed"}
 	request := httptest.NewRequest("GET", "/dlna/resource/item", nil)
 	request.RemoteAddr = "192.0.2.8:1234"
-	if manager.rendererRequestDenied(request) {
-		t.Fatal("persisted UUID/IP binding did not preserve UUID precedence")
+	if !manager.rendererRequestDenied(request) {
+		t.Fatal("persisted UUID/IP allow bypassed IP denial")
 	}
 }
 
@@ -158,19 +158,25 @@ func TestDefaultAndExplicitlyAllowedRequestsStillPass(t *testing.T) {
 	}
 }
 
-func TestRecentlyDiscoveredRendererUUIDAllowBeatsIPDeny(t *testing.T) {
-	manager := NewManager(nil, "http://127.0.0.1:18080")
-	manager.profileCache = rendererProfileCacheState{loaded: true, overrides: []rendererDeviceOverride{
-		{Allowed: false, IPAddress: "127.0.0.1"},
-		{Allowed: true, RendererUUID: "uuid:allowed"},
-	}}
+func TestSpoofedDiscoveryAndUUIDHeaderCannotBypassIPDeny(t *testing.T) {
+	manager, calls := deniedTestManager(t)
+	manager.profileCache.overrides = append(manager.profileCache.overrides, rendererDeviceOverride{Allowed: true, RendererUUID: "uuid:allowed"})
 	manager.controlPoint = controlpoint.NewService(nil, nil, nil)
 	manager.controlPoint.Registry().Upsert(controlpoint.Renderer{UDN: "uuid:allowed"}, net.ParseIP("127.0.0.1"), time.Minute)
-	request := httptest.NewRequest(http.MethodGet, "/dlna/rootDesc.xml", nil)
+	request := soapRequest(
+		"/dlna/control/content-directory",
+		"urn:schemas-upnp-org:service:ContentDirectory:1#Browse",
+		"<u:Browse xmlns:u=\"urn:schemas-upnp-org:service:ContentDirectory:1\"/>",
+	)
 	request.RemoteAddr = "127.0.0.1:1234"
 	request.Header.Set("X-Mema-DLNA-Renderer-UUID", "uuid:allowed")
-	if manager.rendererRequestDenied(request) {
-		t.Fatal("trusted discovery binding did not preserve UUID precedence")
+	response := httptest.NewRecorder()
+	manager.Handler().ServeHTTP(response, request)
+	if response.Code != http.StatusInternalServerError || !strings.Contains(response.Body.String(), "<errorCode>606</errorCode>") {
+		t.Fatalf("response = %d %s", response.Code, response.Body.String())
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("catalogue calls = %d", calls.Load())
 	}
 }
 
@@ -194,7 +200,7 @@ func TestSpoofedUUIDCannotBeatIPDenyForSOAP(t *testing.T) {
 	}
 }
 
-func TestPersistedBoundUUIDAllowBeatsIPDenyForSOAP(t *testing.T) {
+func TestPersistedBoundUUIDAllowCannotBeatIPDenyForSOAP(t *testing.T) {
 	manager := NewManager(nil, "http://127.0.0.1:18080")
 	manager.profileCache = rendererProfileCacheState{loaded: true, overrides: []rendererDeviceOverride{
 		{Allowed: false, IPAddress: "127.0.0.1"},
@@ -209,7 +215,7 @@ func TestPersistedBoundUUIDAllowBeatsIPDenyForSOAP(t *testing.T) {
 	request.Header.Set("X-Mema-DLNA-Renderer-UUID", "uuid:allowed")
 	response := httptest.NewRecorder()
 	manager.Handler().ServeHTTP(response, request)
-	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "<Id>0</Id>") {
+	if response.Code != http.StatusInternalServerError || !strings.Contains(response.Body.String(), "<errorCode>606</errorCode>") {
 		t.Fatalf("response = %d %s", response.Code, response.Body.String())
 	}
 }
@@ -243,7 +249,7 @@ func TestSpoofedRendererUUIDHeadersCannotBypassIPDeny(t *testing.T) {
 	}
 }
 
-func TestManualUUIDProfileRequiresBoundSourceIP(t *testing.T) {
+func TestManualUUIDProfileRequiresPersistedSourceIPBinding(t *testing.T) {
 	profiles := []RendererProfile{{ID: "special", Name: "Special"}, {ID: "generic", Name: "Generic"}}
 	request := httptest.NewRequest(http.MethodGet, "/dlna/rootDesc.xml", nil)
 	request.RemoteAddr = "127.0.0.1:1234"
@@ -260,6 +266,19 @@ func TestManualUUIDProfileRequiresBoundSourceIP(t *testing.T) {
 	manager.profileCache.overrides[0].IPAddress = "127.0.0.1"
 	if got := manager.RendererProfileFromRequest(request).ID; got != "special" {
 		t.Fatalf("bound UUID selected profile %q", got)
+	}
+}
+
+func TestDiagnosticsDropStaleUnverifiedUUID(t *testing.T) {
+	manager := NewManager(nil, "http://127.0.0.1:18080")
+	manager.profileCache = rendererProfileCacheState{loaded: true}
+	manager.recentClients["127.0.0.1"] = ClientStatus{IP: "127.0.0.1", RendererUUID: "uuid:stale"}
+	request := httptest.NewRequest(http.MethodGet, "/dlna/rootDesc.xml", nil)
+	request.RemoteAddr = "127.0.0.1:1234"
+	manager.Handler().ServeHTTP(httptest.NewRecorder(), request)
+	clients := manager.Status().RecentClients
+	if len(clients) != 1 || clients[0].RendererUUID != "" {
+		t.Fatalf("stale UUID was restored: %#v", clients)
 	}
 }
 

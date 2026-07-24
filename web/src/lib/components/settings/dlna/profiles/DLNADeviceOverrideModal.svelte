@@ -96,8 +96,8 @@
 				>
 					<p>No override means the device is allowed and matched automatically.</p>
 					<p>
-						On explicitly allows this UUID or IP and assigns the selected profile. UUID rules win
-						over IP rules, but cannot bypass Allowed CIDRs.
+						On assigns the selected profile. UUID selection requires a saved UUID and source IP
+						binding; SSDP discovery alone is not trusted. Any matching Off rule wins over On.
 					</p>
 					<p>
 						Off denies every DLNA request before browsing or media processing. SOAP returns error

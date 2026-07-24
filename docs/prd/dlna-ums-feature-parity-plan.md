@@ -73,8 +73,9 @@ Device overrides support profile assignment, display name, allowed state,
 delivery policy overrides, and notes. No matching override means allowed with
 normal profile matching. `allowed: true` explicitly allows and assigns the
 selected profile but does not bypass Allowed CIDRs. `allowed: false` denies all
-DLNA traffic before catalogue, stream, transcode, or process work. UUID is
-evaluated before IP, so an explicit UUID allow beats an IP deny.
+DLNA traffic before catalogue, stream, transcode, or process work. UUID profile
+selection requires a persisted UUID+source-IP binding. Access checks are
+deny-dominant: any matching explicit UUID or IP deny wins over an allow.
 
 Denied SOAP actions receive UPnP fault 606 (`Action not authorized`); all other
 denied DLNA resources receive HTTP 403. Recent-client diagnostics and the DLNA

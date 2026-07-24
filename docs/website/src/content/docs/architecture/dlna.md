@@ -225,10 +225,12 @@ fallback reason. Detailed accepted/rejected rule traces are exposed separately
 by the diagnostics endpoints. An override that names a missing profile
 falls through to normal matching rather than selecting an invalid profile.
 
-Device access uses UUID-before-IP precedence before normal profile matching. No
-matching override means allowed; `allowed: true` explicitly allows and assigns a
-profile without bypassing Allowed CIDRs, while `allowed: false` denies every
-DLNA route before catalogue, stream, transcode-slot, or process work. SOAP denial
+Device access is deny-dominant before normal profile matching. No matching
+override means allowed; `allowed: true` assigns a profile without bypassing
+Allowed CIDRs or any matching explicit deny, while `allowed: false` denies every
+DLNA route before catalogue, stream, transcode-slot, or process work. UUID
+identity for persisted overrides requires a persisted UUID+source-IP binding;
+unauthenticated SSDP discovery claims are not trusted bindings. SOAP denial
 returns UPnP fault 606 and other routes return HTTP 403. Recent-client diagnostics
 and the audit log record the denial.
 
@@ -254,7 +256,7 @@ The storage layer now keeps two profile copies: seeded defaults and editable
 runtime profiles. `internal/storage/seeds/defaults.sql` refreshes defaults on
 startup and only refreshes runtime profiles that have not been customized.
 Device overrides are stored separately and can bind a renderer profile by IP
-address or renderer UUID.
+address or by a persisted renderer UUID+source-IP association.
 
 The seeded defaults include clean-room family profiles for the UMS-supported
 catalog areas: generic fallback, Android/Chromecast, Apple/VLC clients,
@@ -347,7 +349,7 @@ DLNA remains LAN-scoped:
 - disabled by default
 - interface allowlist
 - CIDR allowlist
-- per-device allow/deny overrides with UUID-before-IP precedence
+- per-device allow/deny overrides with deny-dominant conflict handling
 - no absolute path exposure
 - safe ffmpeg argument construction
 - bounded stream and transcode counts
