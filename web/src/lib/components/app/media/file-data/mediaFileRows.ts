@@ -16,6 +16,7 @@ type MediaFileOtherFile = NonNullable<
 
 export interface MediaFileRow {
 	key: string;
+	fileId?: string;
 	path?: string;
 	relativePath: string;
 	exists: boolean;

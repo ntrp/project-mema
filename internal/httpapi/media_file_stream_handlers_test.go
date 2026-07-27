@@ -9,37 +9,36 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestSCNMedia011StreamURLUsesForwardedHostAndMountedPath(t *testing.T) {
+func TestSCNMedia011StreamURLUsesFileIdentifier(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "http://internal/api/media/items/abc/files/vlc", nil)
 	request.Header.Set("X-Forwarded-Proto", "https")
 	request.Header.Set("X-Forwarded-Host", "media.example.test")
+	fileID := uuid.MustParse("10000000-0000-4000-8000-000000000001")
 
-	got := streamURL(request, "Season 01/Episode 01.mkv", 1790000000, "signed-token")
-	want := "https://media.example.test/api/media/items/abc/files/stream?path=Season+01%2FEpisode+01.mkv&streamExpires=1790000000&streamToken=signed-token"
+	got := streamURL(request, fileID, 1790000000, "signed-token")
+	want := "https://media.example.test/api/media/items/abc/files/stream?fileId=10000000-0000-4000-8000-000000000001&streamExpires=1790000000&streamToken=signed-token"
 	if got != want {
 		t.Fatalf("streamURL = %q, want %q", got, want)
 	}
 }
 
-func TestSCNMedia011StreamTokenBindsMediaPathAndExpiry(t *testing.T) {
+func TestSCNMedia011StreamTokenBindsMediaFileIdentifierAndExpiry(t *testing.T) {
 	server := &Server{
 		streamSecret: []byte("test-stream-secret"),
 		now:          func() time.Time { return time.Unix(1000, 0) },
 	}
-	mediaID := uuid.New()
-	path := "Season 01/Episode 01.mkv"
+	mediaID, fileID := uuid.New(), uuid.New()
 	expires := server.now().Add(time.Hour).Unix()
-	token := server.newStreamToken(mediaID, path, expires)
+	token := server.newStreamToken(mediaID, fileID.String(), expires)
 
-	if !server.validStreamToken(mediaID, path, &expires, &token) {
-		t.Fatal("expected stream token to validate for matching media, path, and expiry")
+	if !server.validStreamToken(mediaID, fileID.String(), &expires, &token) {
+		t.Fatal("expected stream token to validate for matching media, file, and expiry")
 	}
-	otherPath := "Season 01/Episode 02.mkv"
-	if server.validStreamToken(mediaID, otherPath, &expires, &token) {
-		t.Fatal("expected stream token to reject a different path")
+	if server.validStreamToken(mediaID, uuid.New().String(), &expires, &token) {
+		t.Fatal("expected stream token to reject a different file")
 	}
 	expired := server.now().Add(-time.Second).Unix()
-	if server.validStreamToken(mediaID, path, &expired, &token) {
+	if server.validStreamToken(mediaID, fileID.String(), &expired, &token) {
 		t.Fatal("expected stream token to reject expired links")
 	}
 }
@@ -51,9 +50,9 @@ func TestSCNMedia011PlaylistFilenameKeepsVLCFriendlyExtension(t *testing.T) {
 	}
 }
 
-func TestSCNMedia011PlaylistDispositionOpensInline(t *testing.T) {
+func TestSCNMedia011PlaylistDispositionDownloadsAuthenticatedPlaylist(t *testing.T) {
 	got := playlistDisposition("Movie.Name.2026.mkv")
-	want := "inline; filename=Movie.Name.2026.m3u"
+	want := "attachment; filename=Movie.Name.2026.m3u"
 	if got != want {
 		t.Fatalf("playlistDisposition = %q, want %q", got, want)
 	}

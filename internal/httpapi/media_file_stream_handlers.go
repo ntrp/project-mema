@@ -18,7 +18,7 @@ func (s *Server) StreamMediaItemFile(w http.ResponseWriter, r *http.Request, id 
 	if !s.authorizeMediaFileStream(w, r, mediaID, params) {
 		return
 	}
-	target, err := s.settings.MediaItemFilePath(r.Context(), mediaID, params.Path)
+	target, err := s.settings.MediaItemFilePathByID(r.Context(), mediaID, params.FileId)
 	if err != nil {
 		writeSettingsError(w, err, "Could not find media file")
 		return
@@ -30,7 +30,7 @@ func (s *Server) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, 
 	if _, ok := s.requireSession(w, r); !ok {
 		return
 	}
-	target, err := s.settings.MediaItemFilePath(r.Context(), uuid.UUID(id), params.Path)
+	target, err := s.settings.MediaItemFilePathByID(r.Context(), uuid.UUID(id), params.FileId)
 	if err != nil {
 		writeSettingsError(w, err, "Could not find media file")
 		return
@@ -40,15 +40,15 @@ func (s *Server) PlayMediaItemFileInVlc(w http.ResponseWriter, r *http.Request, 
 	}
 	name := filepath.Base(target)
 	expires := s.now().Add(streamTokenTTL).Unix()
-	token := s.newStreamToken(uuid.UUID(id), params.Path, expires)
+	token := s.newStreamToken(uuid.UUID(id), params.FileId.String(), expires)
 	w.Header().Set("Content-Type", "audio/x-mpegurl; charset=utf-8")
 	w.Header().Set("Content-Disposition", playlistDisposition(name))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", delivery.PlaylistTitle(name), streamURL(r, params.Path, expires, token))
+	_, _ = fmt.Fprintf(w, "#EXTM3U\n#EXTINF:-1,%s\n%s\n", delivery.PlaylistTitle(name), streamURL(r, params.FileId, expires, token))
 }
 
 func (s *Server) authorizeMediaFileStream(w http.ResponseWriter, r *http.Request, mediaID uuid.UUID, params StreamMediaItemFileParams) bool {
-	if s.validStreamToken(mediaID, params.Path, params.StreamExpires, params.StreamToken) {
+	if s.validStreamToken(mediaID, params.FileId.String(), params.StreamExpires, params.StreamToken) {
 		return true
 	}
 	_, ok := s.requireSession(w, r)
@@ -87,9 +87,9 @@ func mediaContentType(path string) string {
 	return delivery.ContentType(path)
 }
 
-func streamURL(r *http.Request, filePath string, expires int64, token string) string {
+func streamURL(r *http.Request, fileID uuid.UUID, expires int64, token string) string {
 	query := url.Values{
-		"path":          []string{filePath},
+		"fileId":        []string{fileID.String()},
 		"streamExpires": []string{fmt.Sprintf("%d", expires)},
 		"streamToken":   []string{token},
 	}
@@ -131,5 +131,5 @@ func playlistFilename(name string) string {
 }
 
 func playlistDisposition(name string) string {
-	return mime.FormatMediaType("inline", map[string]string{"filename": playlistFilename(name)})
+	return mime.FormatMediaType("attachment", map[string]string{"filename": playlistFilename(name)})
 }

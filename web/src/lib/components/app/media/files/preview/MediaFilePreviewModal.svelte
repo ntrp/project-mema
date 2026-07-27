@@ -41,7 +41,7 @@
 	});
 	const fileName = $derived(row.relativePath.split(/[\\/]/).filter(Boolean).pop() ?? 'media');
 	const clientProfile = mediaFilePreviewClientProfile();
-	const vlcUrl = $derived(row.path ? mediaFileVlcUrl(mediaItemId, row.path) : '');
+	const vlcUrl = $derived(row.fileId ? mediaFileVlcUrl(mediaItemId, row.fileId) : '');
 	const metadataAudioTracks = $derived(metadataAudioTrackOptions(row));
 	const activeAudioTrackKey = $derived(selectedAudioTrack || metadataAudioTracks[0]?.key || '');
 	const selectedAudio = $derived(
@@ -124,6 +124,8 @@
 					</Button>
 					{#if row.path}
 						<PlayOnDevice {mediaItemId} path={row.path} />
+					{/if}
+					{#if vlcUrl}
 						<Button href={vlcUrl} variant="outline" size="sm">
 							<ExternalLinkIcon aria-hidden="true" />
 							Play in VLC

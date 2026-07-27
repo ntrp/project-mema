@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestSCNMedia010MediaItemFileTargetValidatesPaths(t *testing.T) {
@@ -83,6 +85,19 @@ func TestAbsoluteCleanPathsDeduplicatesAfterNormalization(t *testing.T) {
 	})
 
 	expectStrings(t, paths, []string{path})
+}
+
+func TestMediaItemFileIDUsesStoredFactAndOpaqueFallback(t *testing.T) {
+	mediaID, factID := uuid.New(), uuid.New()
+	item := MediaItem{ID: mediaID, FileFacts: []MediaFileFact{{ID: factID, FilePath: "/media/movie.mkv"}}}
+
+	if got := MediaItemFileID(item, "/media/movie.mkv"); got != factID {
+		t.Fatalf("stored file ID = %s, want %s", got, factID)
+	}
+	fallback := MediaItemFileID(item, "/media/other.mkv")
+	if fallback == uuid.Nil || fallback != MediaItemFileID(item, "/media/other.mkv") {
+		t.Fatalf("fallback file ID is not stable: %s", fallback)
+	}
 }
 
 func writeTestFile(t *testing.T, path string) {

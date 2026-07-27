@@ -40,7 +40,7 @@ export default defineConfig({
 		port: 15173,
 		strictPort: true,
 		proxy: {
-			'/api': apiProxyTarget
+			'/api': { target: apiProxyTarget, changeOrigin: true, xfwd: true }
 		}
 	}
 });

@@ -67,8 +67,8 @@ export function mediaFilePreviewClientProfile(
 		!/(chrome|chromium|crios|fxios|edg|opr|android)/.test(userAgent);
 	return iOS || safariWebKit ? 'webkit' : undefined;
 }
-export function mediaFileVlcUrl(mediaItemId: string, filePath: string) {
-	return mediaFileUrl(mediaItemId, filePath, 'vlc');
+export function mediaFileVlcUrl(mediaItemId: string, fileId: string) {
+	return `/api/media/items/${encodeURIComponent(mediaItemId)}/files/vlc?${new URLSearchParams({ fileId })}`;
 }
 export function mediaFileTextTracks(mediaItemId: string, row: MediaFileRow): MediaFileTextTrack[] {
 	const subtitles = row.path ? mediaFileSubtitleTracks(mediaItemId, row.path, row.tracks) : [];

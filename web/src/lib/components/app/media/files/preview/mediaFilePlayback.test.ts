@@ -6,7 +6,8 @@ import {
 	mediaFilePreviewInfoUrl,
 	mediaFilePreviewSourceType,
 	mediaFilePreviewUrl,
-	mediaFileTextTracks
+	mediaFileTextTracks,
+	mediaFileVlcUrl
 } from '$lib/components/app/media/files/preview/mediaFilePlayback';
 
 describe('media file playback helpers', () => {
@@ -40,6 +41,15 @@ describe('media file playback helpers', () => {
 		expect(url).toBe(
 			'/api/media/items/media%201/files/preview-info?path=%2Flibrary%2FMovie+File.mkv&audioTrackIndex=2&clientProfile=webkit'
 		);
+	});
+
+	it('builds VLC URLs with an opaque file identifier', () => {
+		const url = mediaFileVlcUrl('media 1', '10000000-0000-4000-8000-000000000001');
+
+		expect(url).toBe(
+			'/api/media/items/media%201/files/vlc?fileId=10000000-0000-4000-8000-000000000001'
+		);
+		expect(url).not.toContain('path=');
 	});
 
 	it('selects the video.js source type from preview delivery', () => {

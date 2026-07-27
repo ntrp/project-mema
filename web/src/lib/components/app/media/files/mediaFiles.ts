@@ -115,6 +115,7 @@ export function fileRow(
 	const upgrade = mediaFileUpgradeInfo(exists, quality, formats, profile.profile);
 	return {
 		key: path,
+		fileId: info?.fileId,
 		path,
 		relativePath: relativePath(item.mediaFolderPath, path),
 		exists,

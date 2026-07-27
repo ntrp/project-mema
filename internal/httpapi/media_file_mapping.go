@@ -16,6 +16,8 @@ func mediaFileInfoResponses(
 	files := make([]MediaFileInfo, 0, len(paths))
 	for _, path := range paths {
 		file := MediaFileInfo{Path: path, Status: MediaFileInfoStatusMissing}
+		fileID := storage.MediaItemFileID(item, path)
+		file.FileId = &fileID
 		file.SubtitleSatisfaction = mediaFileSubtitleSatisfaction(
 			nil,
 			item.SubtitleTargets,
