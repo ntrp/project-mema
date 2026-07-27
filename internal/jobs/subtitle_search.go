@@ -116,6 +116,14 @@ func subtitleSearchDownload(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "subtitles", "Subtitle search skipped", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
 		return nil
 	}
+	allowed, err := libraryOperationAllowed(ctx, settings, item, false, request.FilePath)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "subtitles", "Subtitle search skipped for manual library folder", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "filePath": request.FilePath})
+		return nil
+	}
 	publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "subtitles", "Subtitle search started", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "languageId": request.LanguageID})
 	candidate, provider, err := bestSubtitleCandidate(ctx, settings, service, request)
 	if err != nil {

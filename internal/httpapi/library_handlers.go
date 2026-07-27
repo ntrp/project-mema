@@ -67,7 +67,7 @@ func (s *Server) CreateLibraryFolder(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	folder, err := s.settings.CreateLibraryFolder(r.Context(), path, kind)
+	folder, err := s.settings.CreateLibraryFolderWithManual(r.Context(), path, kind, body.Manual)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "library_folder_create_failed", "Could not create library folder")
 		return
@@ -80,6 +80,22 @@ func (s *Server) CreateLibraryFolder(w http.ResponseWriter, r *http.Request) {
 		Folder: libraryFolderResponse(folder),
 		Scan:   libraryScanResponse(scan),
 	})
+}
+
+func (s *Server) UpdateLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+	var body LibraryFolderUpdateRequest
+	if !decodeJSON(w, r, &body) {
+		return
+	}
+	folder, err := s.settings.UpdateLibraryFolderManual(r.Context(), uuid.UUID(id), body.Manual)
+	if err != nil {
+		writeSettingsError(w, err, "Could not update library folder")
+		return
+	}
+	writeJSON(w, http.StatusOK, libraryFolderResponse(folder))
 }
 
 func (s *Server) DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId) {

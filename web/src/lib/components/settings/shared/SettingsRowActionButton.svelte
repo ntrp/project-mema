@@ -1,11 +1,12 @@
 <script lang="ts">
 	import EditIcon from '@lucide/svelte/icons/pencil';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
+	import SquareIcon from '@lucide/svelte/icons/square';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 
-	type RowActionIcon = 'delete' | 'edit' | 'sync';
+	type RowActionIcon = 'delete' | 'edit' | 'stop' | 'sync';
 
 	interface Props {
 		label: string;
@@ -32,7 +33,15 @@
 		confirmingLabel,
 		onclick
 	}: Props = $props();
-	const Icon = $derived(icon === 'delete' ? TrashIcon : icon === 'sync' ? RefreshCwIcon : EditIcon);
+	const Icon = $derived(
+		icon === 'delete'
+			? TrashIcon
+			: icon === 'stop'
+				? SquareIcon
+				: icon === 'sync'
+					? RefreshCwIcon
+					: EditIcon
+	);
 
 	function runAction() {
 		return onclick?.();

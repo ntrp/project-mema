@@ -3,9 +3,15 @@ import {
 	importLibraryScanItems as importLibraryScanItemsRequest,
 	mediaTypeForLibraryKind,
 	resetLibraryScanItemImport as resetLibraryScanItemImportRequest,
-	scanLibraryFolder as scanLibraryFolderRequest
+	scanLibraryFolder as scanLibraryFolderRequest,
+	updateLibraryFolder as updateLibraryFolderRequest
 } from '$lib/settings/api';
-import type { LibraryMediaKind, LibraryScan, LibraryScanImportRequest } from '$lib/settings/types';
+import type {
+	LibraryFolder,
+	LibraryMediaKind,
+	LibraryScan,
+	LibraryScanImportRequest
+} from '$lib/settings/types';
 import { errorMessageFrom } from './helpers';
 import type { AppShellState } from './state.svelte';
 import type { RunCommandMutation } from '$lib/app/query/commandMutation.svelte';
@@ -14,6 +20,7 @@ interface SettingsLibraryScanDeps {
 	clearNotice: () => void;
 	runMutation?: RunCommandMutation;
 	refreshMediaItems: () => Promise<void>;
+	upsertFolder: (_folder: LibraryFolder) => void;
 	upsertScan: (_scan: LibraryScan) => void;
 }
 
@@ -23,20 +30,52 @@ export function createSettingsLibraryScanActions(
 ) {
 	const clearNotice = deps.clearNotice;
 	const runMutation = deps.runMutation ?? ((command) => command());
+	let scanController: AbortController | undefined;
+	let activeScanFolderId: string | undefined;
 
 	async function scanLibraryFolder(id: string) {
+		scanController?.abort();
+		const controller = new AbortController();
+		scanController = controller;
+		activeScanFolderId = id;
 		state.scanningLibraryFolderId = id;
 		clearNotice();
 
 		try {
-			const scan = await runMutation(() => scanLibraryFolderRequest(id));
+			const scan = await runMutation(() => scanLibraryFolderRequest(id, controller.signal));
 			deps.upsertScan(scan);
 			state.openLibraryFolderId = scan.folderId;
 			state.message = `Library scan completed: ${scan.manualCount} pending`;
 		} catch (error) {
-			state.errorMessage = errorMessageFrom(error, 'Could not scan library folder');
+			if (!(error instanceof Error && error.name === 'AbortError')) {
+				state.errorMessage = errorMessageFrom(error, 'Could not scan library folder');
+			}
 		} finally {
-			state.scanningLibraryFolderId = undefined;
+			if (scanController === controller) {
+				scanController = undefined;
+				activeScanFolderId = undefined;
+				state.scanningLibraryFolderId = undefined;
+			}
+		}
+	}
+
+	function stopLibraryScan(id: string) {
+		if (activeScanFolderId !== id) return;
+		scanController?.abort();
+		state.scanningLibraryFolderId = undefined;
+		state.message = 'Library scan stopped';
+	}
+
+	async function updateLibraryFolderManual(id: string, manual: boolean) {
+		clearNotice();
+		try {
+			const folder = await runMutation(() => updateLibraryFolderRequest(id, manual));
+			deps.upsertFolder(folder);
+			state.message = manual
+				? 'Library folder set to manual only'
+				: 'Library folder automation enabled';
+		} catch (error) {
+			state.errorMessage = errorMessageFrom(error, 'Could not update library folder');
 		}
 	}
 
@@ -86,6 +125,8 @@ export function createSettingsLibraryScanActions(
 
 	return {
 		scanLibraryFolder,
+		stopLibraryScan,
+		updateLibraryFolderManual,
 		searchLibraryMatch,
 		importLibraryScanRows,
 		resetLibraryScanImport

@@ -89,6 +89,7 @@ func videoTranscodePlans(item storage.MediaItem, args FulfillmentActionArgs) []v
 					FilePath:    track.FilePath,
 					TargetType:  "video",
 					TrackID:     track.ID.String(),
+					Manual:      args.Manual,
 				},
 				track:    track,
 				decision: decision,

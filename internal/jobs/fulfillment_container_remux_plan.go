@@ -64,6 +64,7 @@ func containerRemuxPlans(item storage.MediaItem, args FulfillmentActionArgs) []c
 				MediaItemID: item.ID.String(),
 				FilePath:    fact.FilePath,
 				TargetType:  "video",
+				Manual:      args.Manual,
 			},
 			fact:            fact,
 			targetContainer: targetContainer,

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const clientMock = vi.hoisted(() => ({
 	GET: vi.fn(),
 	POST: vi.fn(),
+	PATCH: vi.fn(),
 	PUT: vi.fn(),
 	DELETE: vi.fn()
 }));
@@ -40,6 +41,7 @@ import {
 	savePathMapping,
 	saveUser,
 	scanLibraryFolder,
+	updateLibraryFolder,
 	testIndexerConfig,
 	testIndexer,
 	testMetadataProvider,
@@ -51,6 +53,7 @@ describe('UI API settings command helpers (SCN-SETTINGS-009)', () => {
 	beforeEach(() => {
 		clientMock.GET.mockReset().mockResolvedValue({ data: {} });
 		clientMock.POST.mockReset().mockResolvedValue({ data: {} });
+		clientMock.PATCH.mockReset().mockResolvedValue({ data: {} });
 		clientMock.PUT.mockReset().mockResolvedValue({ data: {} });
 		clientMock.DELETE.mockReset().mockResolvedValue({ data: {} });
 	});
@@ -87,11 +90,14 @@ describe('UI API settings command helpers (SCN-SETTINGS-009)', () => {
 		await expect(deleteLanguage('en')).resolves.toBeUndefined();
 		await expect(deleteMediaProfile('profile-1')).resolves.toBeUndefined();
 		await expect(deleteCustomFormat('format-1')).resolves.toBeUndefined();
-		await expect(saveLibraryFolder({ path: '/media', kind: 'movie' })).resolves.toEqual({});
+		await expect(
+			saveLibraryFolder({ path: '/media', kind: 'movie', manual: false })
+		).resolves.toEqual({});
 		await expect(listLibraryFolderOptions('/media')).resolves.toEqual({});
 		await expect(createLibraryFolderOption('/media', 'Movies')).resolves.toEqual({});
 		await expect(deleteLibraryFolder('folder-1')).resolves.toBeUndefined();
 		await expect(scanLibraryFolder('folder-1')).resolves.toEqual({});
+		await expect(updateLibraryFolder('folder-1', true)).resolves.toEqual({});
 		await expect(savePathMapping({ clientPath: '/downloads', appPath: '/media' })).resolves.toEqual(
 			{}
 		);

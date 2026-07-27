@@ -114,6 +114,7 @@ function libraryFolder(overrides: Partial<LibraryFolder> = {}): LibraryFolder {
 		id: 'folder-1',
 		path: '/library',
 		kind: 'movie',
+		manual: false,
 		createdAt: '',
 		updatedAt: '',
 		...overrides

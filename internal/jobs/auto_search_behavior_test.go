@@ -165,6 +165,27 @@ func TestSCNSystem008JobArgumentKindsAreStable(t *testing.T) {
 	}
 }
 
+func TestLibraryOperationAllowsOnlyManualJobsForManualFolder(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	folder, err := store.CreateLibraryFolderWithManual(ctx, t.TempDir(), "movie", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	item := storage.MediaItem{LibraryFolderID: &folder.ID}
+	allowed, err := libraryOperationAllowed(ctx, store, item, false, folder.Path+"/Movie.mkv")
+	if err != nil || allowed {
+		t.Fatalf("automatic operation = %v, %v; want false, nil", allowed, err)
+	}
+	allowed, err = libraryOperationAllowed(ctx, store, item, false, t.TempDir()+"/Movie.mkv")
+	if err != nil || !allowed {
+		t.Fatalf("outside automatic operation = %v, %v; want true, nil", allowed, err)
+	}
+	allowed, err = libraryOperationAllowed(ctx, store, item, true, folder.Path+"/Movie.mkv")
+	if err != nil || !allowed {
+		t.Fatalf("manual operation = %v, %v; want true, nil", allowed, err)
+	}
+}
+
 func int32Ptr(value int32) *int32 {
 	return &value
 }

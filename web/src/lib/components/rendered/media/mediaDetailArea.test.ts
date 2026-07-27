@@ -231,6 +231,7 @@ function libraryFolder(): LibraryFolder {
 		id: 'folder-1',
 		path: '/library',
 		kind: 'movie',
+		manual: false,
 		createdAt: '2026-07-03T00:00:00Z',
 		updatedAt: '2026-07-03T00:01:00Z'
 	};

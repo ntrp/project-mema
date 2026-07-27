@@ -6,6 +6,7 @@ const apiMock = vi.hoisted(() => ({
 	saveUser: vi.fn(),
 	deleteLibraryFolder: vi.fn(),
 	scanLibraryFolder: vi.fn(),
+	updateLibraryFolder: vi.fn(),
 	deletePathMapping: vi.fn(),
 	deleteUser: vi.fn(),
 	advancedSearchMedia: vi.fn(),
@@ -57,7 +58,7 @@ function shellState(overrides: Record<string, unknown> = {}) {
 	return {
 		message: '',
 		errorMessage: '',
-		libraryFolderForm: { path: '/incoming', kind: 'movie' },
+		libraryFolderForm: { path: '/incoming', kind: 'movie', manual: false },
 		pathMappingForm: { hostPath: '/downloads', mediaPath: '/media' },
 		userForm: { id: 'user-1', username: 'editor', role: 'user', password: '' },
 		libraryFolders: [{ id: 'old-folder', path: '/old', kind: 'movie' }],
@@ -100,7 +101,11 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 		}).saveLibraryFolder(submitEvent());
 
 		expect(clearNotice).toHaveBeenCalledOnce();
-		expect(apiMock.saveLibraryFolder).toHaveBeenCalledWith({ path: '/incoming', kind: 'movie' });
+		expect(apiMock.saveLibraryFolder).toHaveBeenCalledWith({
+			path: '/incoming',
+			kind: 'movie',
+			manual: false
+		});
 		expect(upsertLibraryFolder).toHaveBeenCalledWith(expect.objectContaining({ id: 'new-folder' }));
 		expect(upsertLibraryScan).toHaveBeenCalledWith(expect.objectContaining({ manualCount: 2 }));
 		expect(state.openLibraryFolderId).toBe('new-folder');
@@ -211,6 +216,52 @@ describe('settings delete and import actions (SCN-SETTINGS-009)', () => {
 		expect(state.openLibraryFolderId).toBe('folder-1');
 		expect(upsertLibraryScan).toHaveBeenLastCalledWith(expect.objectContaining({ manualCount: 1 }));
 		expect(state.message).toBe('Imported 1 media item');
+	});
+
+	it('updates a library folder manual-only setting', async () => {
+		const state = shellState();
+		const upsertLibraryFolder = vi.fn();
+		const actions = createSettingsDeleteActions(state, {
+			clearNotice: vi.fn(),
+			loadSettings: vi.fn(),
+			upsertLibraryFolder
+		});
+		apiMock.updateLibraryFolder.mockResolvedValue({ id: 'folder-1', manual: true });
+
+		await actions.updateLibraryFolderManual('folder-1', true);
+
+		expect(apiMock.updateLibraryFolder).toHaveBeenCalledWith('folder-1', true);
+		expect(upsertLibraryFolder).toHaveBeenCalledWith({ id: 'folder-1', manual: true });
+		expect(state.message).toBe('Library folder set to manual only');
+	});
+
+	it('stops an active library scan without reporting an error', async () => {
+		const state = shellState();
+		const actions = createSettingsDeleteActions(state, {
+			clearNotice: vi.fn(),
+			loadSettings: vi.fn()
+		});
+		let signal: AbortSignal | undefined;
+		apiMock.scanLibraryFolder.mockImplementation((_id: string, nextSignal: AbortSignal) => {
+			signal = nextSignal;
+			return new Promise((_resolve, reject) => {
+				nextSignal.addEventListener('abort', () => {
+					const error = new Error('aborted');
+					error.name = 'AbortError';
+					reject(error);
+				});
+			});
+		});
+
+		const scanning = actions.scanLibraryFolder('folder-1');
+		expect(state.scanningLibraryFolderId).toBe('folder-1');
+		actions.stopLibraryScan('folder-1');
+		await scanning;
+
+		expect(signal?.aborted).toBe(true);
+		expect(state.scanningLibraryFolderId).toBeUndefined();
+		expect(state.message).toBe('Library scan stopped');
+		expect(state.errorMessage).toBe('');
 	});
 
 	it('searches library matches using the media type for the selected library kind', async () => {

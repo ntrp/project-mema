@@ -30,6 +30,9 @@ func TestContainerRemuxPlansCreateFileScopedJobs(t *testing.T) {
 		got.TargetType != "video" || got.TrackID != "" || got.Manual {
 		t.Fatalf("planned args = %#v", got)
 	}
+	if manual := containerRemuxPlans(item, FulfillmentActionArgs{Manual: true}); !manual[0].args.Manual {
+		t.Fatalf("manual planned args = %#v", manual[0].args)
+	}
 }
 
 func TestContainerRemuxPlansSkipMatchingContainer(t *testing.T) {

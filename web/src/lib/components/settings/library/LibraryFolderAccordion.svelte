@@ -5,6 +5,8 @@
 	import SettingsRowActionButton from '$lib/components/settings/shared/SettingsRowActionButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
+	import { Label } from '$lib/components/ui/label';
+	import { Switch } from '$lib/components/ui/switch';
 	import { mediaBadgeToneClass } from '$lib/components/app/media/shared/mediaBadge';
 	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import type {
@@ -26,6 +28,8 @@
 		qualityProfiles: QualityProfileOption[];
 		metadataProviders: MetadataProvider[];
 		onScan: (_id: string) => void | Promise<void>;
+		onStopScan: (_id: string) => void;
+		onManualChange: (_id: string, _manual: boolean) => void | Promise<void>;
 		onDelete: (_id: string) => void | Promise<void>;
 		onSearchMatch: (
 			_kind: LibraryMediaKind,
@@ -44,6 +48,8 @@
 		qualityProfiles,
 		metadataProviders,
 		onScan,
+		onStopScan,
+		onManualChange,
 		onDelete,
 		onSearchMatch,
 		onImport,
@@ -52,17 +58,20 @@
 
 	let opened = $state<Record<string, boolean>>({});
 
-	$effect(() => {
-		if (openFolderId) {
-			opened[openFolderId] = true;
-		}
-	});
+	function isOpened(id: string) {
+		return opened[id] ?? openFolderId === id;
+	}
 
 	function toggle(id: string) {
-		opened[id] = !opened[id];
+		opened[id] = !isOpened(id);
 		if (opened[id] && !scansByFolder[id]) {
 			void onScan(id);
 		}
+	}
+
+	function startScan(id: string) {
+		opened[id] = true;
+		return onScan(id);
 	}
 
 	function folderKindLabel(kind: LibraryFolderKind) {
@@ -81,7 +90,7 @@
 					class="min-w-0 flex-1 justify-start px-2 text-left"
 					onclick={() => toggle(folder.id)}
 				>
-					{#if opened[folder.id]}
+					{#if isOpened(folder.id)}
 						<ChevronUpIcon aria-hidden="true" />
 					{:else}
 						<ChevronDownIcon aria-hidden="true" />
@@ -94,12 +103,26 @@
 					</span>
 				</Button>
 				<div class="flex shrink-0 items-center gap-2">
+					<Label for={`library-folder-manual-${folder.id}`} class="text-xs">Manual only</Label>
+					<Switch
+						id={`library-folder-manual-${folder.id}`}
+						checked={folder.manual}
+						onCheckedChange={(checked) => onManualChange(folder.id, checked === true)}
+					/>
 					<SettingsRowActionButton
 						label={`Scan ${folder.path}`}
 						icon="sync"
 						disabled={scanningFolderId === folder.id}
-						onclick={() => onScan(folder.id)}
+						onclick={() => startScan(folder.id)}
 					/>
+					{#if scanningFolderId === folder.id}
+						<SettingsRowActionButton
+							label={`Stop scanning ${folder.path}`}
+							icon="stop"
+							variant="destructive"
+							onclick={() => onStopScan(folder.id)}
+						/>
+					{/if}
 					<SettingsRowActionButton
 						label={`Delete ${folder.path}`}
 						icon="delete"
@@ -111,7 +134,7 @@
 					/>
 				</div>
 			</div>
-			{#if opened[folder.id]}
+			{#if isOpened(folder.id)}
 				<div class="grid gap-3 p-3">
 					{#if scanningFolderId === folder.id && !scan}
 						<p class="m-0 leading-6">

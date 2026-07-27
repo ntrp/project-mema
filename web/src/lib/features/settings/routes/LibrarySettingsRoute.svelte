@@ -22,6 +22,8 @@
 		deletingPathMappingId={app.deletingPathMappingId}
 		onSave={app.saveLibraryFolder}
 		onScan={app.scanLibraryFolder}
+		onStopScan={app.stopLibraryScan}
+		onManualChange={app.updateLibraryFolderManual}
 		onDelete={app.deleteLibraryFolder}
 		onSavePathMapping={app.savePathMapping}
 		onDeletePathMapping={app.deletePathMapping}

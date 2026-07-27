@@ -52,6 +52,14 @@ func TestScenarioSCNSettings016AdminManagesLibraryFoldersAndMappings(t *testing.
 		t.Fatalf("folder not listed: %#v", listed.Folders)
 	}
 
+	var updated LibraryFolder
+	client.doJSON(t, http.MethodPatch, "/settings/library/folders/"+created.Folder.Id.String(), LibraryFolderUpdateRequest{
+		Manual: true,
+	}, http.StatusOK, &updated)
+	if !updated.Manual {
+		t.Fatalf("updated library folder = %#v", updated)
+	}
+
 	var scan LibraryScan
 	client.doJSON(t, http.MethodGet, "/settings/library/scans/"+created.Scan.Id.String(), nil, http.StatusOK, &scan)
 	if scan.Id != created.Scan.Id || len(scan.Items) == 0 {

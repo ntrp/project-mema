@@ -57,6 +57,17 @@ export async function createLibraryFolderOption(
 	return data;
 }
 
+export async function updateLibraryFolder(id: string, manual: boolean) {
+	const { data, error } = await client.PATCH('/settings/library/folders/{id}', {
+		params: { path: { id } },
+		body: { manual }
+	});
+
+	if (error) throw new Error(error.message);
+	if (!data) throw new Error('Library folder was not returned');
+	return data;
+}
+
 export async function deleteLibraryFolder(id: string) {
 	const { error } = await client.DELETE('/settings/library/folders/{id}', {
 		params: { path: { id } }
@@ -67,9 +78,10 @@ export async function deleteLibraryFolder(id: string) {
 	}
 }
 
-export async function scanLibraryFolder(id: string) {
+export async function scanLibraryFolder(id: string, signal?: AbortSignal) {
 	const { data, error } = await client.POST('/settings/library/folders/{id}/scan', {
-		params: { path: { id } }
+		params: { path: { id } },
+		signal
 	});
 
 	if (error) {

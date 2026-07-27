@@ -25,7 +25,7 @@ func (q *Queries) DeleteLibraryFolder(ctx context.Context, id uuid.UUID) (int64,
 }
 
 const getLibraryFolder = `-- name: GetLibraryFolder :one
-select id, path, kind, created_at, updated_at
+select id, path, kind, manual, created_at, updated_at
 from app.library_folders
 where id = $1
 `
@@ -37,6 +37,7 @@ func (q *Queries) GetLibraryFolder(ctx context.Context, id uuid.UUID) (AppLibrar
 		&i.ID,
 		&i.Path,
 		&i.Kind,
+		&i.Manual,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -55,7 +56,7 @@ func (q *Queries) LibraryFolderExists(ctx context.Context, id uuid.UUID) (bool, 
 }
 
 const listLibraryFolders = `-- name: ListLibraryFolders :many
-select id, path, kind, created_at, updated_at
+select id, path, kind, manual, created_at, updated_at
 from app.library_folders
 order by path asc
 `
@@ -73,6 +74,7 @@ func (q *Queries) ListLibraryFolders(ctx context.Context) ([]AppLibraryFolder, e
 			&i.ID,
 			&i.Path,
 			&i.Kind,
+			&i.Manual,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -86,26 +88,59 @@ func (q *Queries) ListLibraryFolders(ctx context.Context) ([]AppLibraryFolder, e
 	return items, nil
 }
 
-const upsertLibraryFolder = `-- name: UpsertLibraryFolder :one
-insert into app.library_folders (id, path, kind)
-values ($1, $2, $3)
-on conflict (path) do update set kind = excluded.kind, updated_at = now()
-returning id, path, kind, created_at, updated_at
+const updateLibraryFolderManual = `-- name: UpdateLibraryFolderManual :one
+update app.library_folders
+set manual = $2, updated_at = now()
+where id = $1
+returning id, path, kind, manual, created_at, updated_at
 `
 
-type UpsertLibraryFolderParams struct {
-	ID   uuid.UUID
-	Path string
-	Kind string
+type UpdateLibraryFolderManualParams struct {
+	ID     uuid.UUID
+	Manual bool
 }
 
-func (q *Queries) UpsertLibraryFolder(ctx context.Context, arg UpsertLibraryFolderParams) (AppLibraryFolder, error) {
-	row := q.db.QueryRow(ctx, upsertLibraryFolder, arg.ID, arg.Path, arg.Kind)
+func (q *Queries) UpdateLibraryFolderManual(ctx context.Context, arg UpdateLibraryFolderManualParams) (AppLibraryFolder, error) {
+	row := q.db.QueryRow(ctx, updateLibraryFolderManual, arg.ID, arg.Manual)
 	var i AppLibraryFolder
 	err := row.Scan(
 		&i.ID,
 		&i.Path,
 		&i.Kind,
+		&i.Manual,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const upsertLibraryFolder = `-- name: UpsertLibraryFolder :one
+insert into app.library_folders (id, path, kind, manual)
+values ($1, $2, $3, $4)
+on conflict (path) do update set kind = excluded.kind, manual = excluded.manual, updated_at = now()
+returning id, path, kind, manual, created_at, updated_at
+`
+
+type UpsertLibraryFolderParams struct {
+	ID     uuid.UUID
+	Path   string
+	Kind   string
+	Manual bool
+}
+
+func (q *Queries) UpsertLibraryFolder(ctx context.Context, arg UpsertLibraryFolderParams) (AppLibraryFolder, error) {
+	row := q.db.QueryRow(ctx, upsertLibraryFolder,
+		arg.ID,
+		arg.Path,
+		arg.Kind,
+		arg.Manual,
+	)
+	var i AppLibraryFolder
+	err := row.Scan(
+		&i.ID,
+		&i.Path,
+		&i.Kind,
+		&i.Manual,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

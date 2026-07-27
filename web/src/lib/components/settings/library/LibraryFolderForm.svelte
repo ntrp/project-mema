@@ -6,6 +6,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import { Switch } from '$lib/components/ui/switch';
 	import type { LibraryFolderForm, LibraryFolderKind } from '$lib/settings/types';
 
 	interface Props {
@@ -59,6 +60,15 @@
 					options={kindOptions}
 					onValueChange={(value) => (form.kind = value as LibraryFolderKind)}
 				/>
+			</div>
+			<div class="flex items-center justify-between gap-4 rounded-md border p-3">
+				<div>
+					<Label for="library-folder-manual">Manual only</Label>
+					<p class="m-0 text-sm text-muted-foreground">
+						Automated downloads, imports, subtitles, and file processing are disabled.
+					</p>
+				</div>
+				<Switch id="library-folder-manual" bind:checked={form.manual} />
 			</div>
 			<div class="flex flex-wrap justify-end gap-2">
 				<Button type="button" variant="outline" onclick={openPicker}>Browse</Button>

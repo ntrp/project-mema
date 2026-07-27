@@ -104,6 +104,24 @@ func runFulfillmentWorker(
 		if err != nil {
 			return err
 		}
+		if activeArgs.FilePath != "" {
+			allowed, allowErr := libraryOperationAllowed(ctx, settings, item, args.Manual, activeArgs.FilePath)
+			if allowErr != nil {
+				return allowErr
+			}
+			if !allowed {
+				skipped++
+				publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Automatic fulfillment skipped for manual library folder", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "operation": operation, "filePath": activeArgs.FilePath})
+				continue
+			}
+		} else if !args.Manual {
+			facts, factsErr := settings.AutomatedMediaFileFacts(ctx, item)
+			if factsErr != nil {
+				return factsErr
+			}
+			skipped += len(item.FileFacts) - len(facts)
+			item.FileFacts = facts
+		}
 		if scopedTrack != nil {
 			publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "media", "Fulfillment track resolved", map[string]any{
 				"mediaItemId": item.ID.String(),
@@ -170,6 +188,16 @@ func runFulfillmentWorker(
 			if !fulfillmentTargetInRequestScope(activeArgs, target) {
 				skipped++
 				continue
+			}
+			if activeArgs.FilePath == "" {
+				allowed, allowErr := libraryOperationAllowed(ctx, settings, item, args.Manual, input.FilePath)
+				if allowErr != nil {
+					return allowErr
+				}
+				if !allowed {
+					skipped++
+					continue
+				}
 			}
 			evaluated++
 			if fulfillmentTargetMatches(operation, activeArgs, target) {

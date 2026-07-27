@@ -33,6 +33,11 @@ func enqueueMediaFulfillmentJobs(
 	queued := 0
 	for index, item := range items {
 		liveItem := mediafacts.WithLiveFileFacts(item, "")
+		facts, err := settings.AutomatedMediaFileFacts(ctx, liveItem)
+		if err != nil {
+			return err
+		}
+		liveItem.FileFacts = facts
 		added, err := enqueueVideoTranscodeTrackJobs(ctx, settings, eventBroker, enqueue, liveItem, FulfillmentActionArgs{})
 		if err != nil {
 			return err

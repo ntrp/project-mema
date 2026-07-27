@@ -44,6 +44,16 @@ func (s *Service) ImportCompletedDownload(ctx context.Context, activity storage.
 		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "load_media_item", err, nil, nil)
 		return fmt.Errorf("load media item: %w", err)
 	}
+	allowed, err := s.settings.MediaItemAllowsAutomation(ctx, item, "")
+	if err != nil {
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "automation_policy", err, nil, nil)
+		return fmt.Errorf("check library folder automation policy: %w", err)
+	}
+	if !allowed {
+		err := fmt.Errorf("library folder only allows manual operations")
+		s.recordImportAttempt(ctx, activity, importRun{mode: ImportModeHardlink}, importStatusFailed, "automation_policy", err, nil, nil)
+		return err
+	}
 	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
 		slog.Error("import completed download missing media folder", "activityId", activity.ID, "mediaItemId", item.ID)
 		err := fmt.Errorf("media folder is not set")

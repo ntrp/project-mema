@@ -29,7 +29,14 @@ function mediaRequest(overrides: Partial<MediaRequest> = {}): MediaRequest {
 }
 
 const libraryFolders: LibraryFolder[] = [
-	{ id: 'folder-1', path: '/media/movies', kind: 'movie', createdAt: now, updatedAt: now }
+	{
+		id: 'folder-1',
+		path: '/media/movies',
+		kind: 'movie',
+		manual: false,
+		createdAt: now,
+		updatedAt: now
+	}
 ];
 
 const qualityProfiles: QualityProfileOption[] = [{ id: 'profile-1', name: 'HD-1080p' }];

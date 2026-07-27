@@ -105,6 +105,7 @@ func audioTranscodePlansForPolicy(
 					TargetType:  "audio",
 					LanguageID:  target.LanguageID,
 					TrackID:     track.ID.String(),
+					Manual:      args.Manual,
 				},
 				track:    track,
 				target:   target,

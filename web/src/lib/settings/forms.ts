@@ -48,7 +48,8 @@ export {
 export function emptyLibraryFolderForm(): LibraryFolderForm {
 	return {
 		path: '',
-		kind: 'movie'
+		kind: 'movie',
+		manual: false
 	};
 }
 
@@ -62,7 +63,8 @@ export function emptyPathMappingForm(): PathMappingForm {
 export function normalizeLibraryFolderForm(form: LibraryFolderForm): LibraryFolderRequest {
 	return {
 		path: form.path.trim(),
-		kind: form.kind
+		kind: form.kind,
+		manual: form.manual
 	};
 }
 

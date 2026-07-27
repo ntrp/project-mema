@@ -121,6 +121,7 @@ export function createControllerActions(state: AppShellState, deps: ControllerAc
 		removePathMapping: catalog.removePathMapping,
 		removeMediaProfile: catalog.removeMediaProfile,
 		removeCustomFormat: catalog.removeCustomFormat,
+		upsertLibraryFolder: catalog.upsertLibraryFolder,
 		upsertLibraryScan: scans.upsert,
 		removeLibraryScan: scans.remove
 	});

@@ -134,6 +134,13 @@ func processRSSMatches(
 		if err != nil {
 			return fmt.Errorf("load media item: %w", err)
 		}
+		allowed, err := libraryOperationAllowed(ctx, settings, item, false, "")
+		if err != nil {
+			return err
+		}
+		if !allowed {
+			continue
+		}
 		profile, formats, languages := releaseDecisionContext(ctx, settings, item)
 		releases = dedupeReleaseCandidates(item, profile, formats, languages, releases)
 		sortReleaseCandidates(item, profile, formats, languages, releases)

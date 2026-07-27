@@ -30,6 +30,7 @@ interface SettingsDeleteDeps {
 	removePathMapping?: (_id: string) => void;
 	removeMediaProfile?: (_id: string) => void;
 	removeCustomFormat?: (_id: string) => void;
+	upsertLibraryFolder?: (_folder: import('$lib/settings/types').LibraryFolder) => void;
 	upsertLibraryScan?: (_scan: import('$lib/settings/types').LibraryScan) => void;
 	removeLibraryScan?: (_folderId: string) => void;
 }
@@ -51,6 +52,7 @@ export function createSettingsDeleteActions(state: AppShellState, deps: Settings
 		clearNotice,
 		runMutation: deps.runMutation,
 		refreshMediaItems: deps.refreshMediaItems ?? (async () => {}),
+		upsertFolder: deps.upsertLibraryFolder ?? (() => {}),
 		upsertScan: deps.upsertLibraryScan ?? (() => {})
 	});
 	const runMutation = deps.runMutation ?? ((command) => command());

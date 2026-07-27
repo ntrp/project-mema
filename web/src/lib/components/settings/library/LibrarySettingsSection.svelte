@@ -39,6 +39,8 @@
 		deletingPathMappingId?: string;
 		onSave: (_event: SubmitEvent) => void | Promise<void>;
 		onScan: (_id: string) => void | Promise<void>;
+		onStopScan: (_id: string) => void;
+		onManualChange: (_id: string, _manual: boolean) => void | Promise<void>;
 		onDelete: (_id: string) => void | Promise<void>;
 		onSavePathMapping: (_event: SubmitEvent) => void | Promise<void>;
 		onDeletePathMapping: (_id: string) => void | Promise<void>;
@@ -66,6 +68,8 @@
 		deletingPathMappingId,
 		onSave,
 		onScan,
+		onStopScan,
+		onManualChange,
 		onDelete,
 		onSavePathMapping,
 		onDeletePathMapping,
@@ -115,6 +119,8 @@
 					{qualityProfiles}
 					{metadataProviders}
 					{onScan}
+					{onStopScan}
+					{onManualChange}
 					{onDelete}
 					{onSearchMatch}
 					{onImport}

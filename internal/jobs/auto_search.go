@@ -82,6 +82,14 @@ func autoSearchDownload(
 		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search skipped", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "status": item.Status})
 		return nil
 	}
+	allowed, err := libraryOperationAllowed(ctx, settings, item, false, "")
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search skipped for manual library folder", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
+		return nil
+	}
 	releases, searchErrors, err := searchReleases(ctx, settings, indexerService, item, decisions.SearchQueryForMediaItem(item), eventBroker, false)
 	if err != nil {
 		slog.Error("auto search release search failed", "mediaItemId", item.ID, "title", item.Title, "error", err)
