@@ -1,6 +1,9 @@
-import { importCheckedScanRows } from './libraryScanTableActions';
 import type { MatchDraft } from './libraryScanImport';
-import type { ImportBulkOptions } from './libraryScanImportPayloads';
+import {
+	duplicateRemovalPathsForRows,
+	importPayloadForSingleRow,
+	type ImportBulkOptions
+} from './libraryScanImportPayloads';
 import type { LibraryScan, LibraryScanImportRequest, LibraryScanItem } from '$lib/settings/types';
 
 export async function runCheckedScanImport(input: {
@@ -17,16 +20,20 @@ export async function runCheckedScanImport(input: {
 	if (!input.canImport) return;
 	input.setImporting(true);
 	try {
-		await importCheckedScanRows({
-			canImport: input.canImport,
-			checkedRows: input.checkedRows,
-			allRows: input.allRows,
-			drafts: input.drafts,
-			scan: input.scan,
-			onProgress: input.setImportingItem,
-			onImport: input.onImport,
-			bulk: input.bulk
-		});
+		const duplicatePaths = duplicateRemovalPathsForRows(input.allRows, input.drafts);
+		for (const [index, row] of input.checkedRows.entries()) {
+			input.setImportingItem(row.id);
+			await input.onImport(
+				input.scan,
+				importPayloadForSingleRow(
+					row,
+					input.drafts,
+					input.bulk,
+					index === 0 ? duplicatePaths : [],
+					input.allRows
+				)
+			);
+		}
 	} finally {
 		input.setImportingItem('');
 		input.setImporting(false);

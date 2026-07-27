@@ -1,16 +1,13 @@
 import { applyAutoMatch, autoMatchResult } from './libraryScanAutoMatch';
-import { cleanMatchSearchTitle, searchCacheKey, type MatchDraft } from './libraryScanImport';
 import {
-	duplicateRemovalPathsForRows,
-	importPayloadForSingleRow,
-	type ImportBulkOptions
-} from './libraryScanImportPayloads';
-import type {
-	LibraryScan,
-	LibraryScanImportRequest,
-	LibraryScanItem,
-	MediaSearchResult
-} from '$lib/settings/types';
+	cleanMatchSearchTitle,
+	isScanItemGroupRepresentative,
+	scanItemGroupKey,
+	scanItemGroupRows,
+	searchCacheKey,
+	type MatchDraft
+} from './libraryScanImport';
+import type { LibraryScan, LibraryScanItem, MediaSearchResult } from '$lib/settings/types';
 
 type SearchCache = Record<string, MediaSearchResult[] | undefined>;
 
@@ -43,30 +40,42 @@ export function scheduleScanItemSearch(input: {
 
 export function changeScanItemProvider(input: {
 	item: LibraryScanItem;
+	allRows: LibraryScanItem[];
 	providerId: string;
 	drafts: Record<string, MatchDraft>;
 	search: (_item: LibraryScanItem, _auto: boolean) => Promise<void>;
 }) {
-	const { item, providerId, drafts, search } = input;
+	const { item, allRows, providerId, drafts, search } = input;
 	const draft = drafts[item.id];
 	if (!draft || draft.metadataProviderId === providerId) return;
-	draft.metadataProviderId = providerId;
-	prepareProviderSearch(item, draft);
+	for (const row of scanItemGroupRows(item, allRows)) {
+		const groupedDraft = drafts[row.id];
+		if (!groupedDraft || row.imported || (row.status && row.status !== 'pending')) continue;
+		groupedDraft.metadataProviderId = providerId;
+		prepareProviderSearch(row, groupedDraft);
+	}
 	void search(item, true);
 }
 
 export function applyScanItemProvider(input: {
 	rows: LibraryScanItem[];
+	allRows?: LibraryScanItem[];
 	drafts: Record<string, MatchDraft>;
 	providerId: string;
 	search: (_item: LibraryScanItem, _auto: boolean) => Promise<void>;
 }) {
-	const { rows, drafts, providerId, search } = input;
+	const { rows, allRows = rows, drafts, providerId, search } = input;
+	const searched = new Set<string>();
 	for (const item of rows) {
-		const draft = drafts[item.id];
-		if (!draft) continue;
-		draft.metadataProviderId = providerId;
-		prepareProviderSearch(item, draft);
+		const key = scanItemGroupKey(item);
+		if (searched.has(key)) continue;
+		searched.add(key);
+		for (const row of scanItemGroupRows(item, allRows)) {
+			const draft = drafts[row.id];
+			if (!draft || row.imported || (row.status && row.status !== 'pending')) continue;
+			draft.metadataProviderId = providerId;
+			prepareProviderSearch(row, draft);
+		}
 		void search(item, true);
 	}
 }
@@ -80,6 +89,7 @@ export function searchPendingScanItems(input: {
 	const { rows, drafts, autoSearchStarted, search } = input;
 	for (const item of rows) {
 		const draft = drafts[item.id];
+		if (!isScanItemGroupRepresentative(item, rows)) continue;
 		if (!draft || draft.matched || item.imported || item.status !== 'pending') continue;
 		if (autoSearchStarted[item.id] || draft.query.trim().length < 2) continue;
 		autoSearchStarted[item.id] = true;
@@ -126,49 +136,6 @@ export async function searchScanItem(input: {
 		draft.searched = true;
 	} finally {
 		if (draft.query === query || matchedCurrentSearch) draft.searching = false;
-	}
-}
-
-export async function importCheckedScanRows(input: {
-	canImport: boolean;
-	checkedRows: LibraryScanItem[];
-	allRows: LibraryScanItem[];
-	drafts: Record<string, MatchDraft>;
-	bulk: ImportBulkOptions;
-	scan: LibraryScan;
-	onProgress: (_id: string) => void;
-	onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
-}) {
-	const { canImport, checkedRows, allRows, drafts, bulk, scan, onProgress, onImport } = input;
-	if (!canImport) return;
-	await importRowsSequentially({
-		rows: checkedRows,
-		allRows,
-		drafts,
-		scan,
-		onImport,
-		onProgress,
-		bulk
-	});
-}
-
-export async function importRowsSequentially(input: {
-	rows: LibraryScanItem[];
-	allRows: LibraryScanItem[];
-	drafts: Record<string, MatchDraft>;
-	bulk: ImportBulkOptions;
-	scan: LibraryScan;
-	onProgress: (_id: string) => void;
-	onImport: (_scan: LibraryScan, _request: LibraryScanImportRequest) => Promise<void>;
-}) {
-	const { rows, allRows, drafts, bulk, scan, onProgress, onImport } = input;
-	const duplicatePaths = duplicateRemovalPathsForRows(allRows, drafts);
-	for (const [index, row] of rows.entries()) {
-		onProgress(row.id);
-		await onImport(
-			scan,
-			importPayloadForSingleRow(row, drafts, bulk, index === 0 ? duplicatePaths : [])
-		);
 	}
 }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import LibraryScanImportTableView from '$lib/components/settings/library/scan/LibraryScanImportTableView.svelte';
 	import {
+		applyEpisodeSeason,
 		applyMovieOptions,
 		applyQualityProfile,
 		applySeriesOptions,
@@ -49,9 +50,8 @@
 	}: LibraryScanImportTableProps = $props();
 	let drafts = $state<Record<string, MatchDraft>>({});
 	let showImported = $state(false);
-	let bulkQualityProfileId = $state('');
-	let bulkMetadataProviderId = $state('');
-	let defaultsApplied = $state({ profile: false, provider: false });
+	let bulkQualityProfileId = $derived(defaultQualityProfileId(qualityProfiles));
+	let bulkMetadataProviderId = $derived(defaultMetadataProviderId(metadataProviders, 'movie'));
 	let movieMonitorMode = $state<MediaMonitorMode>('only_media');
 	let movieMinimumAvailability = $state<MinimumAvailability>('released');
 	let seriesMonitorMode = $state<MediaMonitorMode>('all_episodes');
@@ -85,8 +85,6 @@
 	const duplicateCount = $derived(scan.items.filter((item) => item.duplicateGroupId).length);
 	const noMatchCount = $derived(scan.items.length - matchedCount);
 	const duplicateStates = $derived(duplicateDraftStatesForRows(allRows, drafts));
-	const defaultProfileId = $derived(defaultQualityProfileId(qualityProfiles));
-	const defaultProviderId = $derived(defaultMetadataProviderId(metadataProviders, 'movie'));
 	const duplicateRemovalCount = $derived(
 		Object.entries(drafts).filter(
 			([id, draft]) => draft.removeDuplicate && (!draft.matched || duplicateStates[id]?.duplicate)
@@ -97,14 +95,6 @@
 		monitorMode: movieMonitorMode,
 		minimumAvailability: movieMinimumAvailability,
 		seriesType: bulkSeriesType
-	});
-	$effect(() => {
-		if (!bulkQualityProfileId && !defaultsApplied.profile && defaultProfileId)
-			bulkQualityProfileId = defaultProfileId;
-		if (defaultProfileId) defaultsApplied.profile = true;
-		if (!bulkMetadataProviderId && !defaultsApplied.provider && defaultProviderId)
-			bulkMetadataProviderId = defaultProviderId;
-		if (defaultProviderId) defaultsApplied.provider = true;
 	});
 	$effect(() => {
 		ensureScanDrafts(scan.items, drafts, metadataProviders, importBulkOptions, draftSources);
@@ -119,12 +109,13 @@
 		await searchScanItem({ item, allRows, drafts, searchCache, auto, onSearchMatch });
 	}
 	const changeProvider = (item: LibraryScanItem, providerId: string) =>
-		changeScanItemProvider({ item, providerId, drafts, search });
+		changeScanItemProvider({ item, allRows, providerId, drafts, search });
 	const selectResult = (item: LibraryScanItem, result: MediaSearchResult) =>
 		applyAutoMatch(item, result, allRows, drafts);
 	function applyProvider() {
 		applyScanItemProvider({
 			rows: [...checkedRows],
+			allRows,
 			drafts,
 			providerId: bulkMetadataProviderId,
 			search
@@ -142,6 +133,14 @@
 			onImport,
 			bulk: importBulkOptions
 		});
+	}
+	function changeEpisodeSeason(item: LibraryScanItem, seasonNumber: number | undefined) {
+		const targets = drafts[item.id]?.selected ? checkedMatchedSeries : [item];
+		applyEpisodeSeason(targets, drafts, seasonNumber);
+	}
+	function changeEpisodeNumber(item: LibraryScanItem, episodeNumber: number | undefined) {
+		const draft = drafts[item.id];
+		if (draft) draft.episodeNumber = episodeNumber;
 	}
 	function resetImport(item: LibraryScanItem) {
 		return resetScanItemImport({ item, drafts, resetting, scan, onResetImport });
@@ -183,6 +182,8 @@
 	onSearch={scheduleSearch}
 	onSelect={selectResult}
 	onProviderChange={changeProvider}
+	onSeasonChange={changeEpisodeSeason}
+	onEpisodeChange={changeEpisodeNumber}
 	onResetImport={resetImport}
 	onApplyProvider={applyProvider}
 	onApplyQualityProfile={() => applyQualityProfile(checkedRows, drafts, bulkQualityProfileId)}

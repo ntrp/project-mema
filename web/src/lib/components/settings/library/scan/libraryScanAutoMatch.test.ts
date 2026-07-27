@@ -9,6 +9,7 @@ import {
 	prepareProviderSearch,
 	searchScanItem
 } from '$lib/components/settings/library/scan/libraryScanTableActions';
+import { applyMovieOptions, applySeriesOptions, matchedRowsByKind } from './libraryScanBulk';
 import type { MatchDraft } from '$lib/components/settings/library/scan/libraryScanImport';
 import type { LibraryScanItem, MediaSearchResult } from '$lib/settings/types';
 
@@ -17,6 +18,7 @@ describe('library scan auto matching', () => {
 		expect(normalizedMatchTitle('Amélie')).toBe('amelie');
 		expect(normalizedMatchTitle('Wall-e')).toBe('walle');
 		expect(normalizedMatchTitle('WALL·E')).toBe('walle');
+		expect(normalizedMatchTitle('The.Matrix.1999.[imdbid-tt0133093].1080p')).toBe('thematrix');
 		expect(
 			autoMatchResult(detectedScanItem('item-1', 'Amelie', 2001), [
 				match('tmdb-other', 'movie', 'Amelia', 2001),
@@ -32,15 +34,21 @@ describe('library scan auto matching', () => {
 	});
 
 	it('matches provider ids embedded in filenames', () => {
+		for (const [fileName, provider, id] of [
+			['WALL-E.2008.tmdb-10681.1080p.WEB-DL.mkv', 'tmdb', '10681'],
+			['WALL-E.2008.tt0910970.mkv', 'imdb', 'tt0910970'],
+			['WALL-E.2008.tvdb-12345.mkv', 'tvdb', '12345']
+		]) {
+			const result = { ...match(id, 'movie', 'WALL·E', 2008), externalProvider: provider };
+			expect(
+				autoMatchResult({ ...detectedScanItem('item-3', 'Wall E', 2008), fileName }, [result])
+			).toBe(result);
+		}
 		expect(
-			autoMatchResult(
-				{
-					...detectedScanItem('item-3', 'Wall E', 2008),
-					fileName: 'WALL-E.2008.tmdb-10681.1080p.WEB-DL.mkv'
-				},
-				[match('tmdb-other', 'movie', 'Wall Street', 1987), match('10681', 'movie', 'WALL·E', 2008)]
-			)
-		).toMatchObject({ title: 'WALL·E' });
+			autoMatchResult({ ...detectedScanItem('wrong', 'Wall E', 2008), fileName: 'tmdb-999.mkv' }, [
+				match('10681')
+			])
+		).toBeUndefined();
 	});
 
 	it('stops the auto matching spinner when the provider title changes the query', async () => {
@@ -70,7 +78,7 @@ describe('library scan auto matching', () => {
 	});
 
 	it('clears stale matches before searching another provider', () => {
-		const item = detectedScanItem('item-5', 'Scenario Movie', 2026);
+		const item = detectedScanItem('item-5', 'Scenario.Movie.2026.[imdbid-tt1234567].1080p', 2026);
 		const draft = movieDraft({
 			matched: match('tmdb-1'),
 			query: 'Old Provider Title',
@@ -86,6 +94,31 @@ describe('library scan auto matching', () => {
 		expect(draft.results).toEqual([]);
 		expect(draft.selected).toBe(false);
 		expect(draft.searched).toBe(false);
+	});
+
+	it('applies bulk options only to matched media of that type', () => {
+		const rows = ['movie-1', 'series-1', 'unmatched-1'].map((id) => ({ id }) as LibraryScanItem);
+		const drafts = {
+			'movie-1': movieDraft({ matched: match('movie-1') }),
+			'series-1': movieDraft({ matched: match('series-1', 'serie'), monitorMode: 'all_episodes' }),
+			'unmatched-1': movieDraft({ matched: undefined, monitorMode: 'none' })
+		};
+		applyMovieOptions(matchedRowsByKind(rows, drafts, 'movie'), drafts, 'collection', 'announced');
+		applySeriesOptions(
+			matchedRowsByKind(rows, drafts, 'series'),
+			drafts,
+			'missing_episodes',
+			'daily'
+		);
+		expect(drafts['movie-1']).toMatchObject({
+			monitorMode: 'collection',
+			minimumAvailability: 'announced'
+		});
+		expect(drafts['series-1']).toMatchObject({
+			monitorMode: 'missing_episodes',
+			seriesType: 'daily'
+		});
+		expect(drafts['unmatched-1'].monitorMode).toBe('none');
 	});
 
 	it('applies footer provider changes and starts a fresh auto search', () => {

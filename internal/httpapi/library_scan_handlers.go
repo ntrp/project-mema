@@ -42,7 +42,7 @@ func (s *Server) createLibraryScan(w http.ResponseWriter, ctx context.Context, f
 }
 
 func (s *Server) libraryScanInputsForPath(w http.ResponseWriter, ctx context.Context, folder storage.LibraryFolder) ([]storage.LibraryScanItemInput, bool) {
-	discovered, err := discoverLibraryFolder(folder)
+	discovered, err := discoverLibraryFolder(ctx, folder)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "library_scan_failed", "Could not scan library folder")
 		return nil, false
@@ -57,11 +57,11 @@ func (s *Server) libraryScanInputsForPath(w http.ResponseWriter, ctx context.Con
 	return inputs, true
 }
 
-func discoverLibraryFolder(folder storage.LibraryFolder) ([]library.DiscoveredFile, error) {
+func discoverLibraryFolder(ctx context.Context, folder storage.LibraryFolder) ([]library.DiscoveredFile, error) {
 	if folder.Kind == "movie" {
-		return library.DiscoverMovies(folder.Path)
+		return library.DiscoverMoviesContext(ctx, folder.Path)
 	}
-	return library.Discover(folder.Path)
+	return library.DiscoverSeriesContext(ctx, folder.Path)
 }
 
 func (s *Server) storeLibraryScan(

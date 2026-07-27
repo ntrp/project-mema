@@ -1,9 +1,14 @@
-import { defaultMonitorModeForMatch, type MatchDraft } from './libraryScanImport';
+import {
+	cleanMatchSearchTitle,
+	defaultMonitorModeForMatch,
+	scanItemGroupRows,
+	type MatchDraft
+} from './libraryScanImport';
 import { normalizeDuplicateDrafts } from './libraryScanDuplicates';
 import type { LibraryScanItem, MediaSearchResult } from '$lib/settings/types';
 
 export function normalizedMatchTitle(value: string) {
-	return value
+	return cleanMatchSearchTitle(value)
 		.normalize('NFD')
 		.replace(/\p{Diacritic}/gu, '')
 		.toLowerCase()
@@ -12,23 +17,25 @@ export function normalizedMatchTitle(value: string) {
 
 export function scanItemExternalReference(item: LibraryScanItem) {
 	const source = `${item.fileName ?? ''} ${item.path ?? ''}`;
-	const match = source.match(/\b(tmdb|tvdb|imdb)[-_. ]?([a-z0-9]+)\b/i);
-	if (!match) return undefined;
-	return {
-		provider: match[1].toLowerCase(),
-		id: match[2].toLowerCase()
-	};
+	const tagged = source.match(/\b(imdb(?:[ ._-]*id)?|tmdb|tvdb)[ ._:-]*((?:tt)?\d{3,12})\b/i);
+	if (tagged) {
+		return {
+			provider: tagged[1].toLowerCase().startsWith('imdb') ? 'imdb' : tagged[1].toLowerCase(),
+			id: tagged[2].toLowerCase()
+		};
+	}
+	const imdb = source.match(/\b(tt\d{5,10})\b/i);
+	return imdb ? { provider: 'imdb', id: imdb[1].toLowerCase() } : undefined;
 }
 
 export function autoMatchResult(item: LibraryScanItem, results: MediaSearchResult[]) {
 	const reference = scanItemExternalReference(item);
 	if (reference) {
-		const referenced = results.find(
+		return results.find(
 			(result) =>
 				result.externalProvider?.toLowerCase() === reference.provider &&
 				result.externalId?.toLowerCase() === reference.id
 		);
-		if (referenced) return referenced;
 	}
 	if (results.length === 1) return results[0];
 	const detectedTitle = normalizedMatchTitle(item.detectedTitle ?? '');
@@ -49,12 +56,19 @@ export function applyAutoMatch(
 	rows: LibraryScanItem[],
 	drafts: Record<string, MatchDraft>
 ) {
-	const draft = drafts[item.id];
-	if (!draft) return;
-	draft.matched = result;
-	draft.query = result.title;
-	draft.results = [];
-	draft.selected = true;
-	draft.monitorMode = defaultMonitorModeForMatch(result);
-	normalizeDuplicateDrafts(rows, drafts, item.duplicateGroupId);
+	const source = drafts[item.id];
+	if (!source) return;
+	for (const row of scanItemGroupRows(item, rows)) {
+		const draft = drafts[row.id];
+		if (!draft || row.imported || (row.status && row.status !== 'pending')) continue;
+		draft.matched = result;
+		draft.query = result.title;
+		draft.results = [];
+		draft.selected = true;
+		draft.searched = true;
+		draft.searching = false;
+		draft.metadataProviderId = source.metadataProviderId;
+		draft.monitorMode = defaultMonitorModeForMatch(result);
+		normalizeDuplicateDrafts(rows, drafts, row.duplicateGroupId);
+	}
 }

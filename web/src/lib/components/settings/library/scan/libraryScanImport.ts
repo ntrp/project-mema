@@ -23,6 +23,8 @@ export interface MatchDraft {
 	monitorMode: MediaMonitorMode;
 	minimumAvailability: MinimumAvailability;
 	seriesType: SeriesType;
+	seasonNumber?: number;
+	episodeNumber?: number;
 	removeDuplicate: boolean;
 }
 
@@ -66,8 +68,8 @@ export function folderName(path: string) {
 
 export function sortedScanItems(items: LibraryScanItem[]) {
 	return [...items].sort((left, right) => {
-		const leftKey = `${folderName(left.path)}/${left.fileName}`;
-		const rightKey = `${folderName(right.path)}/${right.fileName}`;
+		const leftKey = `${left.seriesFolderPath ?? folderName(left.path)}/${left.fileName}`;
+		const rightKey = `${right.seriesFolderPath ?? folderName(right.path)}/${right.fileName}`;
 		return leftKey.localeCompare(rightKey);
 	});
 }
@@ -78,6 +80,39 @@ export function scanMediaKind(item: LibraryScanItem): LibraryMediaKind {
 
 export function isSeriesKind(kind: LibraryMediaKind) {
 	return kind === 'series' || kind === 'anime_series';
+}
+
+export function scanItemGroupKey(item: LibraryScanItem) {
+	if (isSeriesKind(scanMediaKind(item)) && item.seriesFolderPath) {
+		return `series:${item.seriesFolderPath.replaceAll('\\', '/')}`;
+	}
+	return `item:${item.id}`;
+}
+
+export function scanItemGroupRows(item: LibraryScanItem, rows: LibraryScanItem[]) {
+	const key = scanItemGroupKey(item);
+	return rows.filter((row) => scanItemGroupKey(row) === key);
+}
+
+export function isScanItemGroupRepresentative(item: LibraryScanItem, rows: LibraryScanItem[]) {
+	const group = scanItemGroupRows(item, rows);
+	return (
+		(group.find((row) => !row.imported && row.status === 'pending') ?? group[0])?.id === item.id
+	);
+}
+
+export function relativeScanPath(path: string, root: string) {
+	const normalizedPath = path.replaceAll('\\', '/').replace(/\/+$/g, '');
+	const normalizedRoot = root.replaceAll('\\', '/').replace(/\/+$/g, '');
+	const comparablePath = /^[a-z]:\//i.test(normalizedPath)
+		? normalizedPath.toLowerCase()
+		: normalizedPath;
+	const comparableRoot = /^[a-z]:\//i.test(normalizedRoot)
+		? normalizedRoot.toLowerCase()
+		: normalizedRoot;
+	if (!normalizedRoot || comparablePath === comparableRoot) return normalizedPath;
+	if (!comparablePath.startsWith(`${comparableRoot}/`)) return normalizedPath;
+	return normalizedPath.slice(normalizedRoot.length + 1) || normalizedPath;
 }
 
 export function defaultMonitorModeForMatch(match?: MediaSearchResult): MediaMonitorMode {
@@ -96,7 +131,10 @@ export function searchCacheKey(kind: LibraryMediaKind, providerId: string, query
 export function cleanMatchSearchTitle(value: string) {
 	const normalized = value
 		.replace(/\.[a-z0-9]{2,5}$/i, '')
-		.replace(/[._]+/g, ' ')
+		.replace(/\b(?:imdb(?:[ ._-]*id)?|tmdb|tvdb)[ ._:-]*(?:tt)?\d{3,12}\b/gi, ' ')
+		.replace(/\btt\d{5,10}\b/gi, ' ')
+		.replace(/[()[\]{}]/g, ' ')
+		.replace(/[._-]+/g, ' ')
 		.replace(/\s+/g, ' ')
 		.trim();
 	const [beforeMediaToken] = normalized.split(
@@ -123,7 +161,10 @@ export function canImportRows(
 	return items.every((item) => {
 		const draft = drafts[item.id];
 		return Boolean(
-			draft?.matched && effectiveDraftValue(draft.qualityProfileId, bulkQualityProfileId)
+			draft?.matched &&
+			effectiveDraftValue(draft.qualityProfileId, bulkQualityProfileId) &&
+			(!isSeriesKind(draft.mediaKind) ||
+				(draft.seasonNumber !== undefined && draft.episodeNumber !== undefined))
 		);
 	});
 }

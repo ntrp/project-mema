@@ -1,6 +1,8 @@
 package httpapi
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 )
@@ -20,6 +22,16 @@ func TestLibraryFolderKindAllowsMediaKind(t *testing.T) {
 	for _, tc := range cases {
 		if got := libraryFolderKindAllowsMediaKind(tc.folderKind, tc.mediaKind); got != tc.want {
 			t.Fatalf("allow %s/%s = %v, want %v", tc.folderKind, tc.mediaKind, got, tc.want)
+		}
+	}
+}
+
+func TestValidLibraryEpisodeNumbersRejectsInvalidValues(t *testing.T) {
+	negative, episode := int32(-1), int32(2)
+	for _, values := range [][2]*int32{{&episode, nil}, {&negative, &episode}} {
+		response := httptest.NewRecorder()
+		if validLibraryEpisodeNumbers(response, values[0], values[1]) || response.Code != http.StatusBadRequest {
+			t.Fatalf("values %v accepted with status %d", values, response.Code)
 		}
 	}
 }

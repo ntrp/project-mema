@@ -389,11 +389,13 @@ set status = 'manually_added',
     match_source = $7,
     selected_metadata_provider_id = $8,
     media_item_id = $9,
-    season_id = $10,
-    episode_id = $11,
+    season_number = coalesce($10, season_number),
+    episode_number = coalesce($11, episode_number),
+    season_id = $12,
+    episode_id = $13,
     updated_at = now()
-where scan_id = $12
-    and id = $13
+where scan_id = $14
+    and id = $15
     and status = 'pending'
 returning id,
     scan_id,
@@ -431,6 +433,8 @@ type MatchLibraryScanItemParams struct {
 	MatchSource                pgtype.Text
 	SelectedMetadataProviderID *uuid.UUID
 	MediaItemID                *uuid.UUID
+	SeasonNumber               pgtype.Int4
+	EpisodeNumber              pgtype.Int4
 	SeasonID                   *uuid.UUID
 	EpisodeID                  *uuid.UUID
 	ScanID                     uuid.UUID
@@ -475,6 +479,8 @@ func (q *Queries) MatchLibraryScanItem(ctx context.Context, arg MatchLibraryScan
 		arg.MatchSource,
 		arg.SelectedMetadataProviderID,
 		arg.MediaItemID,
+		arg.SeasonNumber,
+		arg.EpisodeNumber,
 		arg.SeasonID,
 		arg.EpisodeID,
 		arg.ScanID,

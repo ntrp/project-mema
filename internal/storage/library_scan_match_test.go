@@ -7,6 +7,58 @@ import (
 	"testing"
 )
 
+func TestAssignSeriesFolderPathsGroupsNestedSeasons(t *testing.T) {
+	root := t.TempDir()
+	items := []LibraryScanItem{
+		{Path: filepath.Join(root, "Show", "Season 1", "Show.S01E01.mkv"), DetectedMediaKind: "series"},
+		{Path: filepath.Join(root, "Show", "Season 2", "Show.S02E01.mkv"), DetectedMediaKind: "series"},
+		{Path: filepath.Join(root, "Movie.mkv"), DetectedMediaKind: "movie"},
+	}
+	assignSeriesFolderPaths(items, root)
+	if items[0].SeriesFolderPath != filepath.Join(root, "Show") || items[1].SeriesFolderPath != items[0].SeriesFolderPath {
+		t.Fatalf("series folders = %q, %q", items[0].SeriesFolderPath, items[1].SeriesFolderPath)
+	}
+	if items[2].SeriesFolderPath != "" {
+		t.Fatalf("movie series folder = %q", items[2].SeriesFolderPath)
+	}
+}
+
+func TestResolvedImportedEpisodeNumbersUsesOverrides(t *testing.T) {
+	season, episode := int32(4), int32(9)
+	gotSeason, gotEpisode, ok := resolvedImportedEpisodeNumbers("Show.S01E02.mkv", &season, &episode)
+	if !ok || gotSeason != 4 || gotEpisode != 9 {
+		t.Fatalf("resolved episode = S%dE%d, %v; want S4E9", gotSeason, gotEpisode, ok)
+	}
+	if _, _, ok := resolvedImportedEpisodeNumbers("Show.S01E02.mkv", &season, nil); ok {
+		t.Fatal("partial override should not resolve")
+	}
+}
+
+func TestMatchLibraryScanItemPersistsEpisodeOverrides(t *testing.T) {
+	ctx, store := testDBStore(t)
+	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "series")
+	if err != nil {
+		t.Fatal(err)
+	}
+	season, episode := int32(4), int32(9)
+	scan, err := store.CreateLibraryScan(ctx, folder, []LibraryScanItemInput{{
+		Path: filepath.Join(folder.Path, "Show", "Season 1", "01.mkv"), DetectedTitle: "Show", DetectedMediaKind: "series",
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	matched, _, err := store.MatchLibraryScanItem(ctx, scan.ID, scan.Items[0].ID, LibraryMatchInput{
+		MediaKind: "series", Title: "Show", QualityProfileID: "any", MonitorMode: "all_episodes",
+		MinimumAvailability: "released", SeasonNumber: &season, EpisodeNumber: &episode,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if matched.SeasonNumber == nil || *matched.SeasonNumber != season || matched.EpisodeNumber == nil || *matched.EpisodeNumber != episode {
+		t.Fatalf("matched episode = %#v, want S%dE%d", matched, season, episode)
+	}
+}
+
 func TestImportLibraryScanItemRecordsOriginalFileNameProvenance(t *testing.T) {
 	ctx, store := testDBStore(t)
 	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "movie")

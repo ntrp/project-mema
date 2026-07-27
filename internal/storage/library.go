@@ -16,6 +16,7 @@ type LibraryFolder struct {
 	ID        uuid.UUID
 	Path      string
 	Kind      string
+	Manual    bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -39,6 +40,7 @@ type LibraryScanItem struct {
 	ScanID                     uuid.UUID
 	Path                       string
 	FileName                   string
+	SeriesFolderPath           string
 	SizeBytes                  int64
 	DetectedTitle              string
 	DetectedYear               *int32
@@ -93,6 +95,8 @@ type LibraryMatchInput struct {
 	MonitorMode         string
 	MinimumAvailability string
 	SeriesType          *string
+	SeasonNumber        *int32
+	EpisodeNumber       *int32
 	MetadataProviderID  *uuid.UUID
 	MediaItemID         *uuid.UUID
 	ExternalProvider    *string
@@ -125,22 +129,6 @@ func (s *SettingsStore) ListLibraryFolders(ctx context.Context) ([]LibraryFolder
 		folders = append(folders, libraryFolderFromRow(row))
 	}
 	return folders, nil
-}
-
-func (s *SettingsStore) CreateLibraryFolder(ctx context.Context, path string, kind string) (LibraryFolder, error) {
-	path, err := absoluteCleanPath(path)
-	if err != nil {
-		return LibraryFolder{}, err
-	}
-	row, err := storagegen.New(s.pool).UpsertLibraryFolder(ctx, storagegen.UpsertLibraryFolderParams{
-		ID:   uuid.New(),
-		Path: path,
-		Kind: kind,
-	})
-	if err != nil {
-		return LibraryFolder{}, err
-	}
-	return libraryFolderFromRow(row), nil
 }
 
 func (s *SettingsStore) DeleteLibraryFolder(ctx context.Context, id uuid.UUID) error {
@@ -247,6 +235,7 @@ func (s *SettingsStore) GetLibraryScan(ctx context.Context, id uuid.UUID) (Libra
 	if err != nil {
 		return LibraryScan{}, err
 	}
+	assignSeriesFolderPaths(items, scan.FolderPath)
 	scan.Items = items
 	return scan, nil
 }

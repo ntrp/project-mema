@@ -2,9 +2,22 @@ package httpapi
 
 import (
 	"context"
+	"net/http"
 
 	"media-manager/internal/storage"
 )
+
+func validLibraryEpisodeNumbers(w http.ResponseWriter, season *int32, episode *int32) bool {
+	if (season == nil) != (episode == nil) {
+		writeError(w, http.StatusBadRequest, "invalid_episode", "Season and episode numbers must be provided together")
+		return false
+	}
+	if season != nil && (*season < 0 || *episode < 0) {
+		writeError(w, http.StatusBadRequest, "invalid_episode", "Season and episode numbers cannot be negative")
+		return false
+	}
+	return true
+}
 
 func (s *Server) enrichLibraryImportMatch(ctx context.Context, input storage.LibraryMatchInput) (storage.LibraryMatchInput, error) {
 	if input.MediaItemID != nil {

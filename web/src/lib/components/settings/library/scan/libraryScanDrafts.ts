@@ -66,6 +66,8 @@ export function initialMatchDraft(
 		monitorMode: matched ? defaultMonitorModeForMatch(matched) : bulk.monitorMode,
 		minimumAvailability: bulk.minimumAvailability,
 		seriesType: bulk.seriesType,
+		seasonNumber: item.seasonNumber,
+		episodeNumber: item.episodeNumber,
 		removeDuplicate: false
 	};
 }
@@ -100,6 +102,8 @@ export function scanItemDraftSource(item: LibraryScanItem) {
 		item.matchedMediaKind ?? '',
 		item.matchedExternalProvider ?? '',
 		item.matchedExternalId ?? '',
-		item.selectedMetadataProviderId ?? ''
+		item.selectedMetadataProviderId ?? '',
+		item.seasonNumber ?? '',
+		item.episodeNumber ?? ''
 	].join('|');
 }

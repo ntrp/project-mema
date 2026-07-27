@@ -7,6 +7,7 @@ import {
 	importPayloadForSingleRow
 } from './libraryScanImportPayloads';
 import { duplicateDraftStatesForRows, normalizeDuplicateDrafts } from './libraryScanDuplicates';
+import { searchPendingScanItems, searchScanItem } from './libraryScanTableActions';
 import type { LibraryScanItem, MediaSearchResult } from '$lib/settings/types';
 
 describe('library scan duplicate imports', () => {
@@ -48,6 +49,62 @@ describe('library scan duplicate imports', () => {
 		).toEqual(['/downloads/item-3.mkv']);
 	});
 
+	it('searches and matches a series folder once for all nested episodes', async () => {
+		const rows = [seriesItem('episode-1'), seriesItem('episode-2')];
+		const drafts = Object.fromEntries(
+			rows.map((row) => [
+				row.id,
+				movieDraft({
+					mediaKind: 'series',
+					matched: undefined,
+					query: 'Scenario Show',
+					selected: false
+				})
+			])
+		);
+		const searched: string[] = [];
+		searchPendingScanItems({
+			rows,
+			drafts,
+			autoSearchStarted: {},
+			search: async (row) => void searched.push(row.id)
+		});
+		expect(searched).toEqual(['episode-1']);
+		await searchScanItem({
+			item: rows[0],
+			allRows: rows,
+			drafts,
+			searchCache: {},
+			auto: true,
+			onSearchMatch: async () => [match('show', 'serie', 'Scenario Show')]
+		});
+		expect(drafts['episode-1'].matched?.title).toBe('Scenario Show');
+		expect(drafts['episode-2'].matched?.title).toBe('Scenario Show');
+	});
+
+	it('uses the series folder match settings for every episode import', () => {
+		const rows = [seriesItem('episode-1'), seriesItem('episode-2')];
+		const drafts = {
+			'episode-1': movieDraft({
+				mediaKind: 'series',
+				matched: match('show', 'serie'),
+				qualityProfileId: 'series-profile',
+				monitorMode: 'missing_episodes'
+			}),
+			'episode-2': movieDraft({
+				mediaKind: 'series',
+				matched: match('show', 'serie'),
+				qualityProfileId: 'old-profile',
+				monitorMode: 'all_episodes'
+			})
+		};
+		const request = importPayloadForSingleRow(rows[1], drafts, bulkOptions(), [], rows);
+		expect(request.items[0].match).toMatchObject({
+			qualityProfileId: 'series-profile',
+			monitorMode: 'missing_episodes'
+		});
+	});
+
 	it('builds single-row import payloads for sequential imports', () => {
 		const rows = [scanItem('item-1'), scanItem('item-2'), scanItem('item-3')];
 		const drafts = {
@@ -75,6 +132,19 @@ describe('library scan duplicate imports', () => {
 		expect(drafts['item-1'].removeDuplicate).toBe(true);
 	});
 });
+
+function seriesItem(id: string): LibraryScanItem {
+	return {
+		id,
+		path: `/library/Show/Season 1/${id}.mkv`,
+		fileName: `${id}.mkv`,
+		seriesFolderPath: '/library/Show',
+		detectedTitle: 'Scenario Show',
+		detectedMediaKind: 'series',
+		status: 'pending',
+		imported: false
+	} as LibraryScanItem;
+}
 
 function scanItem(id: string): LibraryScanItem {
 	return {

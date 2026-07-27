@@ -88,7 +88,9 @@ func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UU
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
-	seasonID, episodeID, err := importedEpisodeReference(ctx, tx, item, itemPath)
+	seasonID, episodeID, err := importedEpisodeReferenceWithNumbers(
+		ctx, tx, item, itemPath, input.SeasonNumber, input.EpisodeNumber,
+	)
 	if err != nil {
 		return LibraryScanItem{}, MediaItem{}, err
 	}
@@ -103,6 +105,8 @@ func (s *SettingsStore) matchLibraryScanItem(ctx context.Context, scanID uuid.UU
 		Imported:                   imported,
 		SelectedMetadataProviderID: input.MetadataProviderID,
 		MediaItemID:                &item.ID,
+		SeasonNumber:               int4Value(input.SeasonNumber),
+		EpisodeNumber:              int4Value(input.EpisodeNumber),
 		SeasonID:                   seasonID,
 		EpisodeID:                  episodeID,
 		ScanID:                     scanID,

@@ -8,7 +8,12 @@ import type {
 	SeriesType
 } from '$lib/settings/types';
 import { duplicateDraftStatesForRows } from './libraryScanDuplicates';
-import { effectiveDraftValue, isSeriesKind, type MatchDraft } from './libraryScanImport';
+import {
+	effectiveDraftValue,
+	isSeriesKind,
+	scanItemGroupRows,
+	type MatchDraft
+} from './libraryScanImport';
 
 export interface ImportBulkOptions {
 	qualityProfileId: string;
@@ -35,6 +40,8 @@ export function importRequestForDraft(
 			? 'released'
 			: effectiveDraftValue(draft.minimumAvailability, bulk.minimumAvailability),
 		seriesType: series ? effectiveDraftValue(draft.seriesType, bulk.seriesType) : undefined,
+		seasonNumber: series ? draft.seasonNumber : undefined,
+		episodeNumber: series ? draft.episodeNumber : undefined,
 		metadataProviderId: draft.metadataProviderId || undefined,
 		mediaItemId: match.id,
 		externalProvider: match.externalProvider,
@@ -63,13 +70,25 @@ export function importPayloadForSingleRow(
 	item: LibraryScanItem,
 	drafts: Record<string, MatchDraft>,
 	bulk: ImportBulkOptions,
-	removeDuplicatePaths: string[] = []
+	removeDuplicatePaths: string[] = [],
+	allRows: LibraryScanItem[] = [item]
 ): LibraryScanImportRequest {
+	const rowDraft = drafts[item.id];
+	const group = scanItemGroupRows(item, allRows);
+	const representative = group.find((row) => !row.imported && row.status === 'pending') ?? group[0];
+	const groupDraft = drafts[representative?.id] ?? rowDraft;
+	const draft = {
+		...groupDraft,
+		selected: rowDraft.selected,
+		seasonNumber: rowDraft.seasonNumber,
+		episodeNumber: rowDraft.episodeNumber,
+		removeDuplicate: rowDraft.removeDuplicate
+	};
 	return {
 		items: [
 			{
 				itemId: item.id,
-				match: importRequestForDraft(drafts[item.id], drafts[item.id].matched!, bulk)
+				match: importRequestForDraft(draft, draft.matched!, bulk)
 			}
 		],
 		removeDuplicatePaths

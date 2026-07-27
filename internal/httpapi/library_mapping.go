@@ -171,6 +171,9 @@ func libraryMatchInput(w http.ResponseWriter, request LibraryScanItemMatchReques
 		writeError(w, http.StatusBadRequest, "invalid_media_kind", "A movie, series, or anime type is required")
 		return storage.LibraryMatchInput{}, false
 	}
+	if !validLibraryEpisodeNumbers(w, request.SeasonNumber, request.EpisodeNumber) {
+		return storage.LibraryMatchInput{}, false
+	}
 	qualityProfileID := strings.TrimSpace(request.QualityProfileId)
 	if qualityProfileID == "" {
 		writeError(w, http.StatusBadRequest, "invalid_quality_profile", "Quality profile is required")
@@ -189,6 +192,8 @@ func libraryMatchInput(w http.ResponseWriter, request LibraryScanItemMatchReques
 		MonitorMode:         string(request.MonitorMode),
 		MinimumAvailability: string(request.MinimumAvailability),
 		SeriesType:          optionalLibrarySeriesType(request.SeriesType),
+		SeasonNumber:        request.SeasonNumber,
+		EpisodeNumber:       request.EpisodeNumber,
 		MetadataProviderID:  optionalUUID(request.MetadataProviderId),
 		MediaItemID:         optionalUUID(request.MediaItemId),
 		ExternalProvider:    optionalTrimmedString(request.ExternalProvider),
@@ -203,6 +208,7 @@ func libraryFolderResponse(folder storage.LibraryFolder) LibraryFolder {
 		Id:        openapi_types.UUID(folder.ID),
 		Path:      folder.Path,
 		Kind:      LibraryFolderKind(folder.Kind),
+		Manual:    folder.Manual,
 		CreatedAt: folder.CreatedAt,
 		UpdatedAt: folder.UpdatedAt,
 	}
@@ -269,6 +275,7 @@ func libraryScanItemResponse(item storage.LibraryScanItem) LibraryScanItem {
 		ScanId:                     openapi_types.UUID(item.ScanID),
 		Path:                       item.Path,
 		FileName:                   item.FileName,
+		SeriesFolderPath:           optionalString(item.SeriesFolderPath),
 		SizeBytes:                  optionalInt64(item.SizeBytes),
 		DetectedTitle:              item.DetectedTitle,
 		DetectedYear:               item.DetectedYear,

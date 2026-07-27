@@ -5,16 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"regexp"
-	"strconv"
 	"strings"
 
+	"media-manager/internal/episodepath"
 	storagegen "media-manager/internal/storage/generated"
 
 	"github.com/google/uuid"
 )
-
-var importedEpisodePattern = regexp.MustCompile(`(?i)s(\d{1,2})e(\d{1,3})`)
 
 func (s *SettingsStore) RecordImportedMediaFile(ctx context.Context, item MediaItem, filePath string) error {
 	return s.RecordImportedMediaFileWithHistory(ctx, item, "", filePath, "")
@@ -155,6 +152,17 @@ func importedEpisodeReference(
 	item MediaItem,
 	filePath string,
 ) (*uuid.UUID, *uuid.UUID, error) {
+	return importedEpisodeReferenceWithNumbers(ctx, q, item, filePath, nil, nil)
+}
+
+func importedEpisodeReferenceWithNumbers(
+	ctx context.Context,
+	q mediaItemQuerier,
+	item MediaItem,
+	filePath string,
+	seasonOverride *int32,
+	episodeOverride *int32,
+) (*uuid.UUID, *uuid.UUID, error) {
 	if item.Type != "serie" {
 		return nil, nil, nil
 	}
@@ -162,7 +170,7 @@ func importedEpisodeReference(
 	if err != nil || !mediaSeriesHasEpisodes(seasons) {
 		return nil, nil, err
 	}
-	seasonNumber, episodeNumber, ok := importedEpisodeNumbers(filePath)
+	seasonNumber, episodeNumber, ok := resolvedImportedEpisodeNumbers(filePath, seasonOverride, episodeOverride)
 	if !ok {
 		return nil, nil, fmt.Errorf("episode import target could not be resolved from %s", filepath.Base(filePath))
 	}
@@ -188,17 +196,18 @@ func mediaSeriesHasEpisodes(seasons []MediaSeriesSeason) bool {
 	return false
 }
 
+func resolvedImportedEpisodeNumbers(filePath string, seasonOverride *int32, episodeOverride *int32) (int32, int32, bool) {
+	if seasonOverride != nil || episodeOverride != nil {
+		if seasonOverride == nil || episodeOverride == nil {
+			return 0, 0, false
+		}
+		return *seasonOverride, *episodeOverride, true
+	}
+	return importedEpisodeNumbers(filePath)
+}
+
 func importedEpisodeNumbers(filePath string) (int32, int32, bool) {
-	matches := importedEpisodePattern.FindStringSubmatch(filepath.Base(filePath))
-	if len(matches) != 3 {
-		return 0, 0, false
-	}
-	season, seasonErr := strconv.ParseInt(matches[1], 10, 32)
-	episode, episodeErr := strconv.ParseInt(matches[2], 10, 32)
-	if seasonErr != nil || episodeErr != nil {
-		return 0, 0, false
-	}
-	return int32(season), int32(episode), true
+	return episodepath.Numbers(filePath)
 }
 
 func mediaItemKind(mediaType string) (string, error) {

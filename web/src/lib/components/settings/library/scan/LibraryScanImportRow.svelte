@@ -9,6 +9,7 @@
 	import {
 		isSeriesKind,
 		minimumAvailabilityOptions,
+		relativeScanPath,
 		movieMonitorModeOptions,
 		seriesMonitorModeOptions,
 		seriesTypeOptions,
@@ -62,7 +63,12 @@
 	const importable = $derived(
 		Boolean(draft.matched) && item.status === 'pending' && !item.imported && !draft.removeDuplicate
 	);
-	const displayPath = $derived(relativeScanPath(item.path, folderPath));
+	const displayPath = $derived(
+		relativeScanPath(
+			series && item.seriesFolderPath ? item.seriesFolderPath : item.path,
+			folderPath
+		)
+	);
 	const qualityProfileOptions = $derived([
 		{ value: '', label: 'Select profile' },
 		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
@@ -78,29 +84,11 @@
 		draft.removeDuplicate = checked;
 		if (checked) draft.selected = false;
 	}
-
-	function relativeScanPath(path: string, root: string) {
-		const normalizedPath = normalizePath(path);
-		const normalizedRoot = normalizePath(root);
-		const comparablePath = comparablePathValue(normalizedPath);
-		const comparableRoot = comparablePathValue(normalizedRoot);
-		if (!normalizedRoot || comparablePath === comparableRoot) return normalizedPath;
-		if (!comparablePath.startsWith(`${comparableRoot}/`)) return normalizedPath;
-		return normalizedPath.slice(normalizedRoot.length + 1) || normalizedPath;
-	}
-
-	function normalizePath(path: string) {
-		return path.replaceAll('\\', '/').replace(/\/+$/g, '');
-	}
-
-	function comparablePathValue(path: string) {
-		return /^[a-z]:\//i.test(path) ? path.toLowerCase() : path;
-	}
 </script>
 
-<Table.Row class={duplicateState?.duplicate ? 'bg-amber-500/5' : undefined}>
+<Table.Row class={duplicateState?.duplicate && !series ? 'bg-amber-500/5' : undefined}>
 	<Table.Cell class="w-px align-middle">
-		<Checkbox bind:checked={draft.selected} disabled={!importable || locked} />
+		{#if !series}<Checkbox bind:checked={draft.selected} disabled={!importable || locked} />{/if}
 	</Table.Cell>
 	<Table.Cell class="min-w-120 align-top">
 		<div class="flex items-end justify-between gap-3">
@@ -111,14 +99,14 @@
 							<div class="min-w-0 flex-1">
 								<LibraryScanMatchCell {item} bind:draft disabled={locked} {onSearch} {onSelect} />
 							</div>
-							{#if item.imported}
+							{#if !series && item.imported}
 								<Badge
 									variant="outline"
 									class="mt-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
 								>
 									Imported
 								</Badge>
-							{:else if importing}
+							{:else if !series && importing}
 								<span class="mt-1 shrink-0">
 									<InlineSpinner label="Importing" />
 								</span>
@@ -126,7 +114,7 @@
 						</div>
 						<div class="flex ml-3 min-w-0 items-start gap-3">
 							<span class="block truncate text-xs text-muted-foreground">{displayPath}</span>
-							{#if canRemoveFile}
+							{#if !series && canRemoveFile}
 								<label class="flex shrink-0 items-center gap-2 text-xs text-amber-500">
 									<Checkbox
 										checked={draft.removeDuplicate}
@@ -141,7 +129,7 @@
 							{/if}
 						</div>
 					</div>
-					{#if item.imported}
+					{#if !series && item.imported}
 						<LibraryScanResetImportButton {item} {resetting} {onResetImport} />
 					{/if}
 				</div>
@@ -160,7 +148,7 @@
 		<SettingsSelect
 			value={draft.qualityProfileId}
 			options={qualityProfileOptions}
-			disabled={!draft.selected || !draft.matched || locked}
+			disabled={(!series && !draft.selected) || !draft.matched || locked}
 			onValueChange={(value) => (draft.qualityProfileId = value)}
 		/>
 	</Table.Cell>
@@ -168,7 +156,7 @@
 		<SettingsSelect
 			value={draft.monitorMode}
 			options={monitorOptions}
-			disabled={!draft.selected || !draft.matched || locked}
+			disabled={(!series && !draft.selected) || !draft.matched || locked}
 			onValueChange={(value) => (draft.monitorMode = value as MediaMonitorMode)}
 		/>
 	</Table.Cell>
@@ -189,7 +177,7 @@
 			<SettingsSelect
 				value={draft.seriesType}
 				options={seriesTypeOptions}
-				disabled={!draft.selected || !draft.matched || locked}
+				disabled={!draft.matched || locked}
 				onValueChange={(value) => (draft.seriesType = value as SeriesType)}
 			/>
 		{/if}

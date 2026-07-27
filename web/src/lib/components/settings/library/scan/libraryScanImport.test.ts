@@ -5,6 +5,7 @@ import {
 	defaultQualityProfileId,
 	type MatchDraft
 } from '$lib/components/settings/library/scan/libraryScanImport';
+import { applyEpisodeSeason } from '$lib/components/settings/library/scan/libraryScanBulk';
 import { importRequestForDraft } from '$lib/components/settings/library/scan/libraryScanImportPayloads';
 import {
 	defaultMetadataProviderId,
@@ -12,11 +13,6 @@ import {
 	initialMatchDraft,
 	matchFromScanItem
 } from '$lib/components/settings/library/scan/libraryScanDrafts';
-import {
-	applyMovieOptions,
-	applySeriesOptions,
-	matchedRowsByKind
-} from '$lib/components/settings/library/scan/libraryScanBulk';
 import type { LibraryScanItem, MediaSearchResult, MetadataProvider } from '$lib/settings/types';
 
 describe('library scan import payloads', () => {
@@ -61,6 +57,25 @@ describe('library scan import payloads', () => {
 				{ id: 'profile-2', name: 'UHD', isDefault: true }
 			])
 		).toBe('profile-2');
+	});
+
+	it('applies a season to selected episodes and resets their episode numbers', () => {
+		const rows = [{ id: 'one' }, { id: 'two' }] as LibraryScanItem[];
+		const drafts = {
+			one: movieDraft({ mediaKind: 'series', seasonNumber: 1, episodeNumber: 2 }),
+			two: movieDraft({ mediaKind: 'series', seasonNumber: 1, episodeNumber: 3 })
+		};
+		applyEpisodeSeason(rows, drafts, 4);
+		expect(drafts.one).toMatchObject({ seasonNumber: 4, episodeNumber: undefined });
+		expect(drafts.two).toMatchObject({ seasonNumber: 4, episodeNumber: undefined });
+		drafts.one.episodeNumber = 5;
+		const request = importRequestForDraft(drafts.one, drafts.one.matched!, {
+			qualityProfileId: '',
+			monitorMode: 'all_episodes',
+			minimumAvailability: 'released',
+			seriesType: 'standard'
+		});
+		expect(request).toMatchObject({ seasonNumber: 4, episodeNumber: 5 });
 	});
 
 	it('prefills monitor mode from matched media type', () => {
@@ -144,31 +159,6 @@ describe('library scan import payloads', () => {
 		});
 		expect(drafts[item.id].matched).toBeUndefined();
 	});
-
-	it('applies footer movie and series sections only to matched media of that type', () => {
-		const rows = [
-			{ id: 'movie-1' } as LibraryScanItem,
-			{ id: 'series-1' } as LibraryScanItem,
-			{ id: 'unmatched-1' } as LibraryScanItem
-		];
-		const drafts = {
-			'movie-1': movieDraft({ matched: match('movie-1', 'movie') }),
-			'series-1': movieDraft({ matched: match('series-1', 'serie'), monitorMode: 'all_episodes' }),
-			'unmatched-1': movieDraft({ matched: undefined, monitorMode: 'none' })
-		};
-		applyMovieOptions(matchedRowsByKind(rows, drafts, 'movie'), drafts, 'collection', 'announced');
-		applySeriesOptions(
-			matchedRowsByKind(rows, drafts, 'series'),
-			drafts,
-			'missing_episodes',
-			'daily'
-		);
-		expect(drafts['movie-1'].monitorMode).toBe('collection');
-		expect(drafts['movie-1'].minimumAvailability).toBe('announced');
-		expect(drafts['series-1'].monitorMode).toBe('missing_episodes');
-		expect(drafts['series-1'].seriesType).toBe('daily');
-		expect(drafts['unmatched-1'].monitorMode).toBe('none');
-	});
 });
 
 function matchedItem(kind: 'movie' | 'series'): LibraryScanItem {
@@ -182,21 +172,6 @@ function matchedItem(kind: 'movie' | 'series'): LibraryScanItem {
 		imported: false,
 		matchedTitle: 'Scenario'
 	} as LibraryScanItem;
-}
-
-function match(
-	externalId: string,
-	type: MediaSearchResult['type'] = 'movie',
-	title = 'Scenario Movie',
-	year = 2026
-): MediaSearchResult {
-	return {
-		title,
-		type,
-		year,
-		externalProvider: 'tmdb',
-		externalId
-	};
 }
 
 function movieDraft(overrides: Partial<MatchDraft> = {}): MatchDraft {

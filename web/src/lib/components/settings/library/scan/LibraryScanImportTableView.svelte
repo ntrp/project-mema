@@ -51,6 +51,8 @@
 		onSearch: (_item: LibraryScanItem) => void;
 		onSelect: (_item: LibraryScanItem, _result: MediaSearchResult) => void;
 		onProviderChange: (_item: LibraryScanItem, _providerId: string) => void;
+		onSeasonChange: (_item: LibraryScanItem, _value: number | undefined) => void;
+		onEpisodeChange: (_item: LibraryScanItem, _value: number | undefined) => void;
 		onResetImport: (_item: LibraryScanItem) => void | Promise<void>;
 		onApplyProvider: () => void;
 		onApplyQualityProfile: () => void;
@@ -94,6 +96,8 @@
 		onSearch,
 		onSelect,
 		onProviderChange,
+		onSeasonChange,
+		onEpisodeChange,
 		onResetImport,
 		onApplyProvider,
 		onApplyQualityProfile,
@@ -136,6 +140,8 @@
 			{onSearch}
 			{onSelect}
 			{onProviderChange}
+			{onSeasonChange}
+			{onEpisodeChange}
 			{onResetImport}
 		/>
 		<LibraryScanImportFooter

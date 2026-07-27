@@ -50,6 +50,19 @@ export function applyMovieOptions(
 	}
 }
 
+export function applyEpisodeSeason(
+	rows: LibraryScanItem[],
+	drafts: Record<string, MatchDraft>,
+	seasonNumber: number | undefined
+) {
+	for (const item of rows) {
+		const draft = drafts[item.id];
+		if (!draft) continue;
+		draft.seasonNumber = seasonNumber;
+		draft.episodeNumber = undefined;
+	}
+}
+
 export function applySeriesOptions(
 	rows: LibraryScanItem[],
 	drafts: Record<string, MatchDraft>,

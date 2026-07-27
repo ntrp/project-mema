@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,6 +16,7 @@ func libraryFolderFromRow(row storagegen.AppLibraryFolder) LibraryFolder {
 		ID:        row.ID,
 		Path:      absoluteCleanPathOrClean(row.Path),
 		Kind:      row.Kind,
+		Manual:    row.Manual,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 	}
@@ -127,6 +130,23 @@ type libraryScanItemFields struct {
 	MediaItemID                *uuid.UUID
 	CreatedAt                  time.Time
 	UpdatedAt                  time.Time
+}
+
+func assignSeriesFolderPaths(items []LibraryScanItem, root string) {
+	for i := range items {
+		if items[i].DetectedMediaKind != "series" && items[i].DetectedMediaKind != "anime_series" {
+			continue
+		}
+		relativePath, err := filepath.Rel(root, items[i].Path)
+		if err != nil {
+			continue
+		}
+		folder := strings.Split(filepath.ToSlash(relativePath), "/")[0]
+		if filepath.Dir(relativePath) == "." {
+			folder = "."
+		}
+		items[i].SeriesFolderPath = filepath.Join(root, folder)
+	}
 }
 
 func libraryScanItemFromFields(row libraryScanItemFields) LibraryScanItem {
