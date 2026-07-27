@@ -18,8 +18,8 @@ clean_name() {
 
 bitrate_bps() {
 	case "$1" in
-		*k) printf '%s000' "${1%k}" ;;
-		*) printf '%s' "$1" ;;
+	*k) printf '%s000' "${1%k}" ;;
+	*) printf '%s' "$1" ;;
 	esac
 }
 
@@ -95,16 +95,16 @@ movie_one_audio() {
 		-f lavfi -i "anoisesrc=color=white:duration=$DURATION:sample_rate=48000:amplitude=0.02")
 	if [[ -n "$sub_lang" ]]; then
 		case "$sub_format" in
-			ass | ssa)
-				srt="$dir/$base.embedded.$sub_lang.ass"
-				write_ass "$srt" "$base embedded $sub_lang $sub_format"
-				;;
-			*)
-				srt="$dir/$base.embedded.$sub_lang.srt"
-				write_srt "$srt" "$base embedded $sub_lang $sub_format"
-				sub_format="subrip"
-				sub_encoder="srt"
-				;;
+		ass | ssa)
+			srt="$dir/$base.embedded.$sub_lang.ass"
+			write_ass "$srt" "$base embedded $sub_lang $sub_format"
+			;;
+		*)
+			srt="$dir/$base.embedded.$sub_lang.srt"
+			write_srt "$srt" "$base embedded $sub_lang $sub_format"
+			sub_format="subrip"
+			sub_encoder="srt"
+			;;
 		esac
 		if [[ -z "$sub_encoder" ]]; then sub_encoder="$sub_format"; fi
 		args+=(-i "$srt")

@@ -6,7 +6,10 @@ MEDIA_DIR="$ROOT_DIR/.data/media/test-series"
 DURATION="3"
 
 for tool in ffmpeg ffprobe; do
-	command -v "$tool" >/dev/null 2>&1 || { echo "Missing required tool: $tool" >&2; exit 1; }
+	command -v "$tool" >/dev/null 2>&1 || {
+		echo "Missing required tool: $tool" >&2
+		exit 1
+	}
 done
 
 write_episode() {
