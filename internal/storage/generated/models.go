@@ -95,6 +95,7 @@ type AppDlnaRendererProfileDefault struct {
 type AppDlnaSetting struct {
 	ID                      bool
 	Enabled                 bool
+	MediaRendererEnabled    bool
 	FriendlyName            string
 	Interfaces              []string
 	AllowedCidrs            []string
@@ -290,6 +291,7 @@ type AppLibraryFolder struct {
 	ID        uuid.UUID
 	Path      string
 	Kind      string
+	Manual    bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

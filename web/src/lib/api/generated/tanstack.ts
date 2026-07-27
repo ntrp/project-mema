@@ -856,6 +856,7 @@ export interface TargetSatisfactionSummary {
 }
 
 export interface MediaFileInfo {
+	fileId?: string;
 	path: string;
 	status: MediaFileInfoStatus;
 	/** @minimum 0 */
@@ -2036,6 +2037,8 @@ export interface RendererMuteRequest {
 
 export interface DLNASettingsRequest {
 	enabled: boolean;
+	/** Discover and control media renderer devices independently of the DLNA server */
+	mediaRendererEnabled: boolean;
 	/**
 	 * @minLength 1
 	 * @maxLength 120
@@ -3460,6 +3463,8 @@ export interface LibraryFolderRequest {
 	 */
 	path: string;
 	kind: LibraryFolderKind;
+	/** Disable automated operations for files in this root */
+	manual: boolean;
 }
 
 export type LibraryFolder = LibraryFolderRequest & {
@@ -3515,6 +3520,7 @@ export interface LibraryScanItem {
 	scanId: string;
 	path: string;
 	fileName: string;
+	seriesFolderPath?: string;
 	/** @minimum 0 */
 	sizeBytes?: number;
 	detectedTitle: string;
@@ -3571,6 +3577,11 @@ export interface LibraryScan {
 export interface LibraryFolderCreateResponse {
 	folder: LibraryFolder;
 	scan: LibraryScan;
+}
+
+export interface LibraryFolderUpdateRequest {
+	/** Disable automated operations for files in this root */
+	manual: boolean;
 }
 
 export interface PathMappingRequest {
@@ -3641,6 +3652,10 @@ export interface LibraryScanItemMatchRequest {
 	monitorMode: MediaMonitorMode;
 	minimumAvailability: MinimumAvailability;
 	seriesType?: SeriesType;
+	/** @minimum 0 */
+	seasonNumber?: number;
+	/** @minimum 0 */
+	episodeNumber?: number;
 	metadataProviderId?: string;
 	mediaItemId?: string;
 	/** @maxLength 100 */
@@ -3882,6 +3897,8 @@ export type InternalServerErrorResponse = ErrorResponse;
 
 export type MediaFilePathParameter = string;
 
+export type MediaFileIdParameter = string;
+
 export type SearchDiscoverMoviesParams = {
 	sort?: string;
 	/**
@@ -4011,10 +4028,7 @@ export type DeleteMediaItemParams = {
 };
 
 export type StreamMediaItemFileParams = {
-	/**
-	 * @minLength 1
-	 */
-	path: MediaFilePathParameter;
+	fileId: MediaFileIdParameter;
 	streamExpires?: number;
 	streamToken?: string;
 };
@@ -4079,10 +4093,7 @@ export type PreviewMediaItemFileSubtitleParams = {
 };
 
 export type PlayMediaItemFileInVlcParams = {
-	/**
-	 * @minLength 1
-	 */
-	path: MediaFilePathParameter;
+	fileId: MediaFileIdParameter;
 };
 
 export type StreamMediaReleaseSearchParams = {
@@ -19201,6 +19212,103 @@ export function createCreateLibraryFolder<
 ): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 	const query = createQuery(
 		() => getCreateLibraryFolderQueryOptions(libraryFolderRequest(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getUpdateLibraryFolderUrl = (id: string) => {
+	return `/api/settings/library/folders/${id}`;
+};
+
+/**
+ * @summary Update a configured library folder
+ */
+export const updateLibraryFolder = async (
+	id: string,
+	libraryFolderUpdateRequest: LibraryFolderUpdateRequest,
+	options?: RequestInit
+): Promise<LibraryFolder> => {
+	const res = await fetch(getUpdateLibraryFolderUrl(id), {
+		...options,
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json', ...options?.headers },
+		body: JSON.stringify(libraryFolderUpdateRequest)
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: LibraryFolder = body ? JSON.parse(body) : {};
+	return data;
+};
+
+export const getUpdateLibraryFolderQueryKey = (
+	id: string,
+	libraryFolderUpdateRequest?: LibraryFolderUpdateRequest
+) => {
+	return ['PATCH', `/api/settings/library/folders/${id}`, libraryFolderUpdateRequest] as const;
+};
+
+export const getUpdateLibraryFolderQueryOptions = <
+	TData = Awaited<ReturnType<typeof updateLibraryFolder>>,
+	TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>(
+	id: string,
+	libraryFolderUpdateRequest: LibraryFolderUpdateRequest,
+	options?: {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof updateLibraryFolder>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getUpdateLibraryFolderQueryKey(id, libraryFolderUpdateRequest);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof updateLibraryFolder>>> = ({ signal }) =>
+		updateLibraryFolder(id, libraryFolderUpdateRequest, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof updateLibraryFolder>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type UpdateLibraryFolderQueryResult = NonNullable<
+	Awaited<ReturnType<typeof updateLibraryFolder>>
+>;
+export type UpdateLibraryFolderQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse;
+
+/**
+ * @summary Update a configured library folder
+ */
+
+export function createUpdateLibraryFolder<
+	TData = Awaited<ReturnType<typeof updateLibraryFolder>>,
+	TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>(
+	id: () => string,
+	libraryFolderUpdateRequest: () => LibraryFolderUpdateRequest,
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof updateLibraryFolder>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getUpdateLibraryFolderQueryOptions(id(), libraryFolderUpdateRequest(), options?.()),
 		queryClient
 	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

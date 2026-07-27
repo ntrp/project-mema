@@ -28,6 +28,7 @@ func (s *Server) UpdateDLNASettings(w http.ResponseWriter, r *http.Request) {
 	}
 	settings, err := s.settings.UpdateDLNASettings(r.Context(), storage.DLNASettingsInput{
 		Enabled:                 body.Enabled,
+		MediaRendererEnabled:    body.MediaRendererEnabled,
 		FriendlyName:            body.FriendlyName,
 		Interfaces:              body.Interfaces,
 		AllowedCIDRs:            body.AllowedCidrs,

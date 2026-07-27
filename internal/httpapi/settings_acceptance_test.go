@@ -207,6 +207,9 @@ func TestDLNASettingsDiagnosticsAndRestart(t *testing.T) {
 
 	var settings DLNASettings
 	client.doJSON(t, http.MethodGet, "/settings/dlna", nil, http.StatusOK, &settings)
+	if !settings.MediaRendererEnabled {
+		t.Fatal("media renderer controls should default to enabled")
+	}
 	if settings.Status.RecentClients == nil || settings.Status.ActiveStreams == nil || settings.Status.ActiveTranscodes == nil {
 		t.Fatalf("diagnostic arrays should be present: %#v", settings.Status)
 	}

@@ -3,6 +3,9 @@ package storage
 import "testing"
 
 func TestDLNASettingsDefaultsAndNormalization(t *testing.T) {
+	if !dlnaDefaultParams().MediaRendererEnabled {
+		t.Fatal("media renderer controls should default to enabled")
+	}
 	input := normalizeDLNASettings(DLNASettingsInput{
 		FriendlyName:     "  ",
 		Interfaces:       []string{" en0 ", "en0", ""},

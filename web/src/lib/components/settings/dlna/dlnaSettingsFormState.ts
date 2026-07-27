@@ -6,6 +6,7 @@ export function createDLNASettingsForm(settings?: DLNASettingsRequest): DLNASett
 	if (!settings) {
 		return {
 			enabled: false,
+			mediaRendererEnabled: true,
 			friendlyName: 'Mema',
 			interfaces: [],
 			allowedCidrs: [...defaultAllowedCidrs],
@@ -19,6 +20,7 @@ export function createDLNASettingsForm(settings?: DLNASettingsRequest): DLNASett
 
 	return {
 		enabled: settings.enabled,
+		mediaRendererEnabled: settings.mediaRendererEnabled,
 		friendlyName: settings.friendlyName,
 		interfaces: [...settings.interfaces],
 		allowedCidrs: [...settings.allowedCidrs],

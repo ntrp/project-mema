@@ -491,7 +491,7 @@ export interface paths {
 	'/media/items/{id}/files/stream': {
 		parameters: {
 			query: {
-				path: components['parameters']['MediaFilePath'];
+				fileId: components['parameters']['MediaFileId'];
 			};
 			header?: never;
 			path: {
@@ -596,7 +596,7 @@ export interface paths {
 	'/media/items/{id}/files/vlc': {
 		parameters: {
 			query: {
-				path: components['parameters']['MediaFilePath'];
+				fileId: components['parameters']['MediaFileId'];
 			};
 			header?: never;
 			path: {
@@ -2419,7 +2419,8 @@ export interface paths {
 		delete: operations['deleteLibraryFolder'];
 		options?: never;
 		head?: never;
-		patch?: never;
+		/** Update a configured library folder */
+		patch: operations['updateLibraryFolder'];
 		trace?: never;
 	};
 	'/settings/library/folders/{id}/scan': {
@@ -3408,6 +3409,8 @@ export interface components {
 			chapterIndex?: number;
 		};
 		MediaFileInfo: {
+			/** Format: uuid */
+			fileId?: string;
 			path: string;
 			/** @enum {string} */
 			status: 'available' | 'missing';
@@ -4400,6 +4403,8 @@ export interface components {
 		};
 		DLNASettingsRequest: {
 			enabled: boolean;
+			/** @description Discover and control media renderer devices independently of the DLNA server */
+			mediaRendererEnabled: boolean;
 			friendlyName: string;
 			interfaces: string[];
 			allowedCidrs: string[];
@@ -5505,6 +5510,12 @@ export interface components {
 		LibraryFolderRequest: {
 			path: string;
 			kind: components['schemas']['LibraryFolderKind'];
+			/** @description Disable automated operations for files in this root */
+			manual: boolean;
+		};
+		LibraryFolderUpdateRequest: {
+			/** @description Disable automated operations for files in this root */
+			manual: boolean;
 		};
 		PathMappingListResponse: {
 			mappings: components['schemas']['PathMapping'][];
@@ -5576,6 +5587,7 @@ export interface components {
 			scanId: string;
 			path: string;
 			fileName: string;
+			seriesFolderPath?: string;
 			/** Format: int64 */
 			sizeBytes?: number;
 			detectedTitle: string;
@@ -5616,6 +5628,10 @@ export interface components {
 			monitorMode: components['schemas']['MediaMonitorMode'];
 			minimumAvailability: components['schemas']['MinimumAvailability'];
 			seriesType?: components['schemas']['SeriesType'];
+			/** Format: int32 */
+			seasonNumber?: number;
+			/** Format: int32 */
+			episodeNumber?: number;
 			/** Format: uuid */
 			metadataProviderId?: string;
 			/** Format: uuid */
@@ -5840,6 +5856,7 @@ export interface components {
 	parameters: {
 		ResourceId: string;
 		MediaFilePath: string;
+		MediaFileId: string;
 		RendererId: string;
 		ProfileId: string;
 	};
@@ -6669,7 +6686,7 @@ export interface operations {
 	streamMediaItemFile: {
 		parameters: {
 			query: {
-				path: components['parameters']['MediaFilePath'];
+				fileId: components['parameters']['MediaFileId'];
 				streamExpires?: number;
 				streamToken?: string;
 			};
@@ -6817,7 +6834,7 @@ export interface operations {
 	playMediaItemFileInVlc: {
 		parameters: {
 			query: {
-				path: components['parameters']['MediaFilePath'];
+				fileId: components['parameters']['MediaFileId'];
 			};
 			header?: never;
 			path: {
@@ -10149,6 +10166,35 @@ export interface operations {
 				};
 				content?: never;
 			};
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	updateLibraryFolder: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['LibraryFolderUpdateRequest'];
+			};
+		};
+		responses: {
+			/** @description Updated library folder */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['LibraryFolder'];
+				};
+			};
+			400: components['responses']['BadRequest'];
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};

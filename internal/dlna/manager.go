@@ -53,6 +53,7 @@ type Manager struct {
 	rateLimiter      *dlnaRateLimiter
 	nextStreamID     int
 	startSSDP        func(context.Context, ssdp.Config) (ssdpRuntime, error)
+	discoverSSDP     func(ssdp.Config) ([]ssdp.Interface, error)
 	ssdp             ssdpRuntime
 	controlPoint     *controlpoint.Service
 	mu               sync.Mutex
@@ -76,6 +77,7 @@ func NewManager(store *storage.SettingsStore, baseURL string) *Manager {
 		streamCancel:     streamCancel,
 		rateLimiter:      newDLNARateLimiter(defaultDLNARateLimit, defaultDLNARateWindow),
 		startSSDP:        startSSDPRuntime,
+		discoverSSDP:     ssdp.DiscoverInterfaces,
 	}
 }
 
@@ -101,28 +103,45 @@ func (m *Manager) ApplySettings(ctx context.Context, settings storage.DLNASettin
 	m.allowedNets = parseAllowedCIDRs(settings.AllowedCIDRs)
 	m.stopControlPoint()
 	m.stopSSDP(ctx)
-	if !settings.Enabled {
-		m.cancelStreamsLocked()
-		event := "stopped"
-		m.status = Status{}
-		m.status.LastSSDPEvent = &event
-		return nil
-	}
-	runtime, err := m.startSSDP(ctx, ssdp.Config{
+	runtimeCtx := context.WithoutCancel(ctx)
+	config := ssdp.Config{
 		FriendlyName:    settings.FriendlyName,
 		HTTPPort:        m.httpPort,
 		Interfaces:      settings.Interfaces,
 		AnnounceSeconds: settings.AnnounceIntervalSeconds,
 		UUID:            deviceUUID(settings),
-	})
-	if err != nil {
-		message := err.Error()
-		m.status = Status{LastError: &message}
-		return err
 	}
-	m.ssdp = runtime
-	m.startControlPoint(ctx, runtime.Interfaces())
-	m.status = m.statusForSettings(settings, runtime.Interfaces())
+	ifaces := []ssdp.Interface{}
+	if settings.Enabled {
+		runtime, err := m.startSSDP(runtimeCtx, config)
+		if err != nil {
+			message := err.Error()
+			m.status = Status{LastError: &message}
+			return err
+		}
+		m.ssdp = runtime
+		ifaces = runtime.Interfaces()
+	} else if settings.MediaRendererEnabled {
+		var err error
+		ifaces, err = m.discoverSSDP(config)
+		if err != nil {
+			message := err.Error()
+			m.status = Status{LastError: &message}
+			return err
+		}
+	}
+	if settings.MediaRendererEnabled {
+		m.startControlPoint(runtimeCtx, ifaces)
+	}
+	if settings.Enabled {
+		m.status = m.statusForSettings(settings, ifaces)
+		return nil
+	}
+	if !settings.MediaRendererEnabled {
+		m.cancelStreamsLocked()
+	}
+	event := "stopped"
+	m.status = Status{LastSSDPEvent: &event}
 	return nil
 }
 

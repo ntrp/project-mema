@@ -14,6 +14,7 @@ const getDLNASettings = `-- name: GetDLNASettings :one
 insert into app.dlna_settings (
     id,
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,
@@ -24,10 +25,11 @@ insert into app.dlna_settings (
     default_renderer_profile,
     device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 on conflict (id) do update set id = excluded.id
 returning
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,
@@ -43,6 +45,7 @@ returning
 
 type GetDLNASettingsParams struct {
 	Enabled                 bool
+	MediaRendererEnabled    bool
 	FriendlyName            string
 	Interfaces              []string
 	AllowedCidrs            []string
@@ -56,6 +59,7 @@ type GetDLNASettingsParams struct {
 
 type GetDLNASettingsRow struct {
 	Enabled                 bool
+	MediaRendererEnabled    bool
 	FriendlyName            string
 	Interfaces              []string
 	AllowedCidrs            []string
@@ -72,6 +76,7 @@ type GetDLNASettingsRow struct {
 func (q *Queries) GetDLNASettings(ctx context.Context, arg GetDLNASettingsParams) (GetDLNASettingsRow, error) {
 	row := q.db.QueryRow(ctx, getDLNASettings,
 		arg.Enabled,
+		arg.MediaRendererEnabled,
 		arg.FriendlyName,
 		arg.Interfaces,
 		arg.AllowedCidrs,
@@ -85,6 +90,7 @@ func (q *Queries) GetDLNASettings(ctx context.Context, arg GetDLNASettingsParams
 	var i GetDLNASettingsRow
 	err := row.Scan(
 		&i.Enabled,
+		&i.MediaRendererEnabled,
 		&i.FriendlyName,
 		&i.Interfaces,
 		&i.AllowedCidrs,
@@ -104,6 +110,7 @@ const updateDLNASettings = `-- name: UpdateDLNASettings :one
 insert into app.dlna_settings (
     id,
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,
@@ -114,9 +121,10 @@ insert into app.dlna_settings (
     default_renderer_profile,
     device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 on conflict (id) do update
 set enabled = excluded.enabled,
+    media_renderer_enabled = excluded.media_renderer_enabled,
     friendly_name = excluded.friendly_name,
     interfaces = excluded.interfaces,
     allowed_cidrs = excluded.allowed_cidrs,
@@ -128,6 +136,7 @@ set enabled = excluded.enabled,
     updated_at = now()
 returning
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,
@@ -143,6 +152,7 @@ returning
 
 type UpdateDLNASettingsParams struct {
 	Enabled                 bool
+	MediaRendererEnabled    bool
 	FriendlyName            string
 	Interfaces              []string
 	AllowedCidrs            []string
@@ -156,6 +166,7 @@ type UpdateDLNASettingsParams struct {
 
 type UpdateDLNASettingsRow struct {
 	Enabled                 bool
+	MediaRendererEnabled    bool
 	FriendlyName            string
 	Interfaces              []string
 	AllowedCidrs            []string
@@ -172,6 +183,7 @@ type UpdateDLNASettingsRow struct {
 func (q *Queries) UpdateDLNASettings(ctx context.Context, arg UpdateDLNASettingsParams) (UpdateDLNASettingsRow, error) {
 	row := q.db.QueryRow(ctx, updateDLNASettings,
 		arg.Enabled,
+		arg.MediaRendererEnabled,
 		arg.FriendlyName,
 		arg.Interfaces,
 		arg.AllowedCidrs,
@@ -185,6 +197,7 @@ func (q *Queries) UpdateDLNASettings(ctx context.Context, arg UpdateDLNASettings
 	var i UpdateDLNASettingsRow
 	err := row.Scan(
 		&i.Enabled,
+		&i.MediaRendererEnabled,
 		&i.FriendlyName,
 		&i.Interfaces,
 		&i.AllowedCidrs,

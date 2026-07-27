@@ -2,6 +2,7 @@
 insert into app.dlna_settings (
     id,
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,
@@ -12,10 +13,11 @@ insert into app.dlna_settings (
     default_renderer_profile,
     device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 on conflict (id) do update set id = excluded.id
 returning
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,
@@ -32,6 +34,7 @@ returning
 insert into app.dlna_settings (
     id,
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,
@@ -42,9 +45,10 @@ insert into app.dlna_settings (
     default_renderer_profile,
     device_uuid
 )
-values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+values (true, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 on conflict (id) do update
 set enabled = excluded.enabled,
+    media_renderer_enabled = excluded.media_renderer_enabled,
     friendly_name = excluded.friendly_name,
     interfaces = excluded.interfaces,
     allowed_cidrs = excluded.allowed_cidrs,
@@ -56,6 +60,7 @@ set enabled = excluded.enabled,
     updated_at = now()
 returning
     enabled,
+    media_renderer_enabled,
     friendly_name,
     interfaces,
     allowed_cidrs,

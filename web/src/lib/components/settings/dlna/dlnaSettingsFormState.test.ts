@@ -9,6 +9,7 @@ describe('DLNA settings form state helpers', () => {
 
 		expect(form).toEqual({
 			enabled: false,
+			mediaRendererEnabled: true,
 			friendlyName: 'Mema',
 			interfaces: [],
 			allowedCidrs: ['127.0.0.1/32', '::1/128'],
@@ -24,6 +25,7 @@ describe('DLNA settings form state helpers', () => {
 
 		expect(createDLNASettingsForm()).toEqual({
 			enabled: false,
+			mediaRendererEnabled: true,
 			friendlyName: 'Mema',
 			interfaces: [],
 			allowedCidrs: ['127.0.0.1/32', '::1/128'],
@@ -38,6 +40,7 @@ describe('DLNA settings form state helpers', () => {
 	it('clones loaded settings and formats allowed CIDRs', () => {
 		const settings: DLNASettingsRequest = {
 			enabled: true,
+			mediaRendererEnabled: false,
 			friendlyName: 'Living Room TV',
 			interfaces: ['eth0'],
 			allowedCidrs: ['192.168.1.0/24'],

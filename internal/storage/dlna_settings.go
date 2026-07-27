@@ -28,6 +28,7 @@ var DefaultDLNAAllowedCIDRs = []string{
 
 type DLNASettings struct {
 	Enabled                 bool
+	MediaRendererEnabled    bool
 	FriendlyName            string
 	Interfaces              []string
 	AllowedCIDRs            []string
@@ -43,6 +44,7 @@ type DLNASettings struct {
 
 type DLNASettingsInput struct {
 	Enabled                 bool
+	MediaRendererEnabled    bool
 	FriendlyName            string
 	Interfaces              []string
 	AllowedCIDRs            []string
@@ -68,6 +70,7 @@ func (s *SettingsStore) UpdateDLNASettings(ctx context.Context, input DLNASettin
 	}
 	row, err := storagegen.New(s.pool).UpdateDLNASettings(ctx, storagegen.UpdateDLNASettingsParams{
 		Enabled:                 input.Enabled,
+		MediaRendererEnabled:    input.MediaRendererEnabled,
 		FriendlyName:            input.FriendlyName,
 		Interfaces:              input.Interfaces,
 		AllowedCidrs:            input.AllowedCIDRs,
@@ -87,6 +90,7 @@ func (s *SettingsStore) UpdateDLNASettings(ctx context.Context, input DLNASettin
 func dlnaDefaultParams() storagegen.GetDLNASettingsParams {
 	return storagegen.GetDLNASettingsParams{
 		Enabled:                 false,
+		MediaRendererEnabled:    true,
 		FriendlyName:            DefaultDLNAFriendlyName,
 		Interfaces:              []string{},
 		AllowedCidrs:            append([]string{}, DefaultDLNAAllowedCIDRs...),
@@ -159,6 +163,7 @@ func normalizedStringList(values []string) []string {
 func dlnaSettingsFromGetRow(row storagegen.GetDLNASettingsRow) DLNASettings {
 	return DLNASettings{
 		Enabled:                 row.Enabled,
+		MediaRendererEnabled:    row.MediaRendererEnabled,
 		FriendlyName:            row.FriendlyName,
 		Interfaces:              append([]string{}, row.Interfaces...),
 		AllowedCIDRs:            append([]string{}, row.AllowedCidrs...),
@@ -176,6 +181,7 @@ func dlnaSettingsFromGetRow(row storagegen.GetDLNASettingsRow) DLNASettings {
 func dlnaSettingsFromUpdateRow(row storagegen.UpdateDLNASettingsRow) DLNASettings {
 	return DLNASettings{
 		Enabled:                 row.Enabled,
+		MediaRendererEnabled:    row.MediaRendererEnabled,
 		FriendlyName:            row.FriendlyName,
 		Interfaces:              append([]string{}, row.Interfaces...),
 		AllowedCIDRs:            append([]string{}, row.AllowedCidrs...),

@@ -2,6 +2,7 @@ package dlna
 
 import (
 	"context"
+	"net"
 	"testing"
 
 	"media-manager/internal/dlna/ssdp"
@@ -45,6 +46,45 @@ func TestManagerStartsWithConfiguredInterfaces(t *testing.T) {
 	}
 	if len(status.AdvertisedURLs) != 1 || status.AdvertisedURLs[0] != "http://127.0.0.1:18080/dlna/rootDesc.xml" {
 		t.Fatalf("advertised urls = %#v", status.AdvertisedURLs)
+	}
+}
+
+func TestManagerStartsRendererDiscoveryWithoutDLNAServer(t *testing.T) {
+	manager := NewManager(nil, "http://127.0.0.1:18080")
+	manager.discoverSSDP = func(config ssdp.Config) ([]ssdp.Interface, error) {
+		return []ssdp.Interface{{Name: "lo0", Addr: net.ParseIP("127.0.0.1")}}, nil
+	}
+	if err := manager.ApplySettings(context.Background(), storage.DLNASettings{MediaRendererEnabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	if manager.controlPoint == nil {
+		t.Fatal("media renderer discovery was not started")
+	}
+	if manager.ssdp != nil || manager.Status().Running {
+		t.Fatal("DLNA server started with only media renderer controls enabled")
+	}
+	if err := manager.Stop(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestManagerRuntimeOutlivesSettingsRequest(t *testing.T) {
+	manager := NewManager(nil, "http://127.0.0.1:18080")
+	requestCtx, cancel := context.WithCancel(context.Background())
+	var runtimeCtx context.Context
+	manager.startSSDP = func(ctx context.Context, config ssdp.Config) (ssdpRuntime, error) {
+		runtimeCtx = ctx
+		return &fakeSSDPRuntime{}, nil
+	}
+	if err := manager.ApplySettings(requestCtx, storage.DLNASettings{Enabled: true}); err != nil {
+		t.Fatal(err)
+	}
+	cancel()
+	if runtimeCtx.Err() != nil {
+		t.Fatal("DLNA runtime stopped with the completed settings request")
+	}
+	if err := manager.Stop(context.Background()); err != nil {
+		t.Fatal(err)
 	}
 }
 

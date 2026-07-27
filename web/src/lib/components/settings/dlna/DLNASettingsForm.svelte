@@ -16,6 +16,7 @@
 		profiles?: DLNARendererProfile[];
 		allowedText: string;
 		saving?: boolean;
+		onEnabledChange: (_enabled: boolean) => void | Promise<void>;
 		onSave: (event: SubmitEvent) => void | Promise<void>;
 	}
 
@@ -25,6 +26,7 @@
 		profiles = [],
 		allowedText = $bindable(),
 		saving = false,
+		onEnabledChange,
 		onSave
 	}: Props = $props();
 
@@ -55,8 +57,21 @@
 <form class="grid gap-4" onsubmit={onSave}>
 	<div class="grid gap-4 sm:grid-cols-2">
 		<label class="flex items-center gap-3">
-			<Switch bind:checked={form.enabled} />
+			<Switch
+				checked={form.enabled}
+				disabled={saving}
+				onCheckedChange={(checked) => onEnabledChange(checked)}
+			/>
 			<span class="text-sm font-medium">Enable DLNA</span>
+		</label>
+		<label class="flex items-center gap-3">
+			<Switch bind:checked={form.mediaRendererEnabled} />
+			<span class="grid gap-0.5">
+				<span class="text-sm font-medium">Media renderer controls</span>
+				<span class="text-xs text-muted-foreground">
+					Enables Play on device even when the DLNA server is off.
+				</span>
+			</span>
 		</label>
 		<div class="space-y-2">
 			<Label for="dlna-friendly-name">Friendly name</Label>

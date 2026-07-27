@@ -35,6 +35,7 @@ func fileDeleteSettingsResponse(settings storage.FileDeleteSettings) FileDeleteS
 func (s *Server) dlnaSettingsResponse(settings storage.DLNASettings) DLNASettings {
 	return DLNASettings{
 		Enabled:                 settings.Enabled,
+		MediaRendererEnabled:    settings.MediaRendererEnabled,
 		FriendlyName:            settings.FriendlyName,
 		Interfaces:              append([]string{}, settings.Interfaces...),
 		AllowedCidrs:            append([]string{}, settings.AllowedCIDRs...),

@@ -376,6 +376,7 @@ on conflict (id) do nothing;
 create table if not exists app.dlna_settings (
     id boolean primary key default true check (id),
     enabled boolean not null default false,
+    media_renderer_enabled boolean not null default true,
     friendly_name text not null default 'Mema',
     interfaces text[] not null default '{}',
     allowed_cidrs text[] not null default array[
@@ -900,6 +901,7 @@ create table if not exists app.library_folders (
     id uuid primary key,
     path text not null unique,
     kind text not null default 'movie' check (kind in ('movie', 'series')),
+    manual boolean not null default false,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );

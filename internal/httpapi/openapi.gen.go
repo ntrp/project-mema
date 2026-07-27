@@ -2625,18 +2625,21 @@ type DLNARendererProfileRequest struct {
 
 // DLNASettings defines model for DLNASettings.
 type DLNASettings struct {
-	AllowedCidrs            []string   `json:"allowedCidrs"`
-	AnnounceIntervalSeconds int32      `json:"announceIntervalSeconds"`
-	CreatedAt               time.Time  `json:"createdAt"`
-	DefaultRendererProfile  string     `json:"defaultRendererProfile"`
-	Enabled                 bool       `json:"enabled"`
-	FriendlyName            string     `json:"friendlyName"`
-	Interfaces              []string   `json:"interfaces"`
-	Status                  DLNAStatus `json:"status"`
-	SubtitlesEnabled        bool       `json:"subtitlesEnabled"`
-	ThumbnailsEnabled       bool       `json:"thumbnailsEnabled"`
-	TranscodeEnabled        bool       `json:"transcodeEnabled"`
-	UpdatedAt               time.Time  `json:"updatedAt"`
+	AllowedCidrs            []string  `json:"allowedCidrs"`
+	AnnounceIntervalSeconds int32     `json:"announceIntervalSeconds"`
+	CreatedAt               time.Time `json:"createdAt"`
+	DefaultRendererProfile  string    `json:"defaultRendererProfile"`
+	Enabled                 bool      `json:"enabled"`
+	FriendlyName            string    `json:"friendlyName"`
+	Interfaces              []string  `json:"interfaces"`
+
+	// MediaRendererEnabled Discover and control media renderer devices independently of the DLNA server
+	MediaRendererEnabled bool       `json:"mediaRendererEnabled"`
+	Status               DLNAStatus `json:"status"`
+	SubtitlesEnabled     bool       `json:"subtitlesEnabled"`
+	ThumbnailsEnabled    bool       `json:"thumbnailsEnabled"`
+	TranscodeEnabled     bool       `json:"transcodeEnabled"`
+	UpdatedAt            time.Time  `json:"updatedAt"`
 }
 
 // DLNASettingsRequest defines model for DLNASettingsRequest.
@@ -2647,9 +2650,12 @@ type DLNASettingsRequest struct {
 	Enabled                 bool     `json:"enabled"`
 	FriendlyName            string   `json:"friendlyName"`
 	Interfaces              []string `json:"interfaces"`
-	SubtitlesEnabled        bool     `json:"subtitlesEnabled"`
-	ThumbnailsEnabled       bool     `json:"thumbnailsEnabled"`
-	TranscodeEnabled        bool     `json:"transcodeEnabled"`
+
+	// MediaRendererEnabled Discover and control media renderer devices independently of the DLNA server
+	MediaRendererEnabled bool `json:"mediaRendererEnabled"`
+	SubtitlesEnabled     bool `json:"subtitlesEnabled"`
+	ThumbnailsEnabled    bool `json:"thumbnailsEnabled"`
+	TranscodeEnabled     bool `json:"transcodeEnabled"`
 }
 
 // DLNAStatus defines model for DLNAStatus.
@@ -3212,8 +3218,11 @@ type LibraryFolder struct {
 	CreatedAt time.Time          `json:"createdAt"`
 	Id        openapi_types.UUID `json:"id"`
 	Kind      LibraryFolderKind  `json:"kind"`
-	Path      string             `json:"path"`
-	UpdatedAt time.Time          `json:"updatedAt"`
+
+	// Manual Disable automated operations for files in this root
+	Manual    bool      `json:"manual"`
+	Path      string    `json:"path"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // LibraryFolderCreateResponse defines model for LibraryFolderCreateResponse.
@@ -3252,7 +3261,16 @@ type LibraryFolderOptionListResponse struct {
 // LibraryFolderRequest defines model for LibraryFolderRequest.
 type LibraryFolderRequest struct {
 	Kind LibraryFolderKind `json:"kind"`
-	Path string            `json:"path"`
+
+	// Manual Disable automated operations for files in this root
+	Manual bool   `json:"manual"`
+	Path   string `json:"path"`
+}
+
+// LibraryFolderUpdateRequest defines model for LibraryFolderUpdateRequest.
+type LibraryFolderUpdateRequest struct {
+	// Manual Disable automated operations for files in this root
+	Manual bool `json:"manual"`
 }
 
 // LibraryMediaKind defines model for LibraryMediaKind.
@@ -3319,6 +3337,7 @@ type LibraryScanItem struct {
 	ScanId                     openapi_types.UUID          `json:"scanId"`
 	SeasonNumber               *int32                      `json:"seasonNumber,omitempty"`
 	SelectedMetadataProviderId *openapi_types.UUID         `json:"selectedMetadataProviderId,omitempty"`
+	SeriesFolderPath           *string                     `json:"seriesFolderPath,omitempty"`
 	SizeBytes                  *int64                      `json:"sizeBytes,omitempty"`
 	Status                     LibraryScanItemStatus       `json:"status"`
 	UpdatedAt                  time.Time                   `json:"updatedAt"`
@@ -3326,6 +3345,7 @@ type LibraryScanItem struct {
 
 // LibraryScanItemMatchRequest defines model for LibraryScanItemMatchRequest.
 type LibraryScanItemMatchRequest struct {
+	EpisodeNumber       *int32              `json:"episodeNumber,omitempty"`
 	ExternalId          *string             `json:"externalId,omitempty"`
 	ExternalProvider    *string             `json:"externalProvider,omitempty"`
 	MediaItemId         *openapi_types.UUID `json:"mediaItemId,omitempty"`
@@ -3337,6 +3357,7 @@ type LibraryScanItemMatchRequest struct {
 	Overview            *string             `json:"overview,omitempty"`
 	PosterPath          *string             `json:"posterPath,omitempty"`
 	QualityProfileId    string              `json:"qualityProfileId"`
+	SeasonNumber        *int32              `json:"seasonNumber,omitempty"`
 	SeriesType          *SeriesType         `json:"seriesType,omitempty"`
 	Title               string              `json:"title"`
 	Year                *int32              `json:"year,omitempty"`
@@ -3696,6 +3717,7 @@ type MediaFileHistoryResponse struct {
 // MediaFileInfo defines model for MediaFileInfo.
 type MediaFileInfo struct {
 	Chapters             *[]MediaFileChapter            `json:"chapters,omitempty"`
+	FileId               *openapi_types.UUID            `json:"fileId,omitempty"`
 	MissingTracks        *[]MediaFileMissingTrack       `json:"missingTracks,omitempty"`
 	OtherFiles           *[]MediaFileOtherFile          `json:"otherFiles,omitempty"`
 	Path                 string                         `json:"path"`
@@ -5371,6 +5393,9 @@ type WantedRowListResponse struct {
 	Rows []WantedRow `json:"rows"`
 }
 
+// MediaFileId defines model for MediaFileId.
+type MediaFileId = openapi_types.UUID
+
 // MediaFilePath defines model for MediaFilePath.
 type MediaFilePath = string
 
@@ -5509,9 +5534,9 @@ type PreviewMediaItemFileSegmentParams struct {
 
 // StreamMediaItemFileParams defines parameters for StreamMediaItemFile.
 type StreamMediaItemFileParams struct {
-	StreamExpires *int64        `form:"streamExpires,omitempty" json:"streamExpires,omitempty"`
-	StreamToken   *string       `form:"streamToken,omitempty" json:"streamToken,omitempty"`
-	Path          MediaFilePath `form:"path" json:"path"`
+	StreamExpires *int64      `form:"streamExpires,omitempty" json:"streamExpires,omitempty"`
+	StreamToken   *string     `form:"streamToken,omitempty" json:"streamToken,omitempty"`
+	FileId        MediaFileId `form:"fileId" json:"fileId"`
 }
 
 // PreviewMediaItemFileSubtitleParams defines parameters for PreviewMediaItemFileSubtitle.
@@ -5522,7 +5547,7 @@ type PreviewMediaItemFileSubtitleParams struct {
 
 // PlayMediaItemFileInVlcParams defines parameters for PlayMediaItemFileInVlc.
 type PlayMediaItemFileInVlcParams struct {
-	Path MediaFilePath `form:"path" json:"path"`
+	FileId MediaFileId `form:"fileId" json:"fileId"`
 }
 
 // StreamMediaReleaseSearchParams defines parameters for StreamMediaReleaseSearch.
@@ -5763,6 +5788,9 @@ type CreateLibraryFolderOptionJSONRequestBody = LibraryFolderOptionCreateRequest
 
 // CreateLibraryFolderJSONRequestBody defines body for CreateLibraryFolder for application/json ContentType.
 type CreateLibraryFolderJSONRequestBody = LibraryFolderRequest
+
+// UpdateLibraryFolderJSONRequestBody defines body for UpdateLibraryFolder for application/json ContentType.
+type UpdateLibraryFolderJSONRequestBody = LibraryFolderUpdateRequest
 
 // CreatePathMappingJSONRequestBody defines body for CreatePathMapping for application/json ContentType.
 type CreatePathMappingJSONRequestBody = PathMappingRequest
@@ -6258,6 +6286,9 @@ type ServerInterface interface {
 	// Remove a configured library folder
 	// (DELETE /settings/library/folders/{id})
 	DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Update a configured library folder
+	// (PATCH /settings/library/folders/{id})
+	UpdateLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Scan an existing library folder for media
 	// (POST /settings/library/folders/{id}/scan)
 	ScanLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId)
@@ -7308,6 +7339,12 @@ func (_ Unimplemented) CreateLibraryFolder(w http.ResponseWriter, r *http.Reques
 // Remove a configured library folder
 // (DELETE /settings/library/folders/{id})
 func (_ Unimplemented) DeleteLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a configured library folder
+// (PATCH /settings/library/folders/{id})
+func (_ Unimplemented) UpdateLibraryFolder(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -9693,15 +9730,15 @@ func (siw *ServerInterfaceWrapper) StreamMediaItemFile(w http.ResponseWriter, r 
 		return
 	}
 
-	// ------------- Required query parameter "path" -------------
+	// ------------- Required query parameter "fileId" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "fileId", r.URL.Query(), &params.FileId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
-			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "fileId"})
 		} else {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fileId", Err: err})
 		}
 		return
 	}
@@ -9834,15 +9871,15 @@ func (siw *ServerInterfaceWrapper) PlayMediaItemFileInVlc(w http.ResponseWriter,
 	// Parameter object where we will unmarshal all parameters from the context
 	var params PlayMediaItemFileInVlcParams
 
-	// ------------- Required query parameter "path" -------------
+	// ------------- Required query parameter "fileId" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, true, "path", r.URL.Query(), &params.Path, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "fileId", r.URL.Query(), &params.FileId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
-			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "path"})
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "fileId"})
 		} else {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "path", Err: err})
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fileId", Err: err})
 		}
 		return
 	}
@@ -12499,6 +12536,38 @@ func (siw *ServerInterfaceWrapper) DeleteLibraryFolder(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// UpdateLibraryFolder operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLibraryFolder(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLibraryFolder(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ScanLibraryFolder operation middleware
 func (siw *ServerInterfaceWrapper) ScanLibraryFolder(w http.ResponseWriter, r *http.Request) {
 
@@ -14933,6 +15002,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Delete(options.BaseURL+"/settings/library/folders/{id}", wrapper.DeleteLibraryFolder)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/settings/library/folders/{id}", wrapper.UpdateLibraryFolder)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/settings/library/folders/{id}/scan", wrapper.ScanLibraryFolder)

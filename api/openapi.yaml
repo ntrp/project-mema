@@ -1021,7 +1021,7 @@ paths:
   /media/items/{id}/files/stream:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
-      - $ref: "#/components/parameters/MediaFilePath"
+      - $ref: "#/components/parameters/MediaFileId"
     get:
       operationId: streamMediaItemFile
       tags:
@@ -1229,7 +1229,7 @@ paths:
   /media/items/{id}/files/vlc:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
-      - $ref: "#/components/parameters/MediaFilePath"
+      - $ref: "#/components/parameters/MediaFileId"
     get:
       operationId: playMediaItemFileInVlc
       tags:
@@ -2970,12 +2970,12 @@ paths:
             schema:
               $ref: "#/components/schemas/RendererSeekRequest"
       responses:
-        "204": {description: Seek completed}
-        "400": {$ref: "#/components/responses/BadRequest"}
-        "401": {$ref: "#/components/responses/Unauthorized"}
-        "404": {$ref: "#/components/responses/NotFound"}
-        "409": {$ref: "#/components/responses/Conflict"}
-        "502": {$ref: "#/components/responses/BadGateway"}
+        "204": { description: Seek completed }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "502": { $ref: "#/components/responses/BadGateway" }
   /renderers/{id}/volume:
     parameters:
       - $ref: "#/components/parameters/RendererId"
@@ -2992,12 +2992,12 @@ paths:
             schema:
               $ref: "#/components/schemas/RendererVolumeRequest"
       responses:
-        "204": {description: Volume updated}
-        "400": {$ref: "#/components/responses/BadRequest"}
-        "401": {$ref: "#/components/responses/Unauthorized"}
-        "404": {$ref: "#/components/responses/NotFound"}
-        "409": {$ref: "#/components/responses/Conflict"}
-        "502": {$ref: "#/components/responses/BadGateway"}
+        "204": { description: Volume updated }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "502": { $ref: "#/components/responses/BadGateway" }
   /renderers/{id}/mute:
     parameters:
       - $ref: "#/components/parameters/RendererId"
@@ -3014,12 +3014,12 @@ paths:
             schema:
               $ref: "#/components/schemas/RendererMuteRequest"
       responses:
-        "204": {description: Mute updated}
-        "400": {$ref: "#/components/responses/BadRequest"}
-        "401": {$ref: "#/components/responses/Unauthorized"}
-        "404": {$ref: "#/components/responses/NotFound"}
-        "409": {$ref: "#/components/responses/Conflict"}
-        "502": {$ref: "#/components/responses/BadGateway"}
+        "204": { description: Mute updated }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "502": { $ref: "#/components/responses/BadGateway" }
   /settings/dlna:
     get:
       operationId: getDLNASettings
@@ -4302,6 +4302,32 @@ paths:
   /settings/library/folders/{id}:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
+    patch:
+      operationId: updateLibraryFolder
+      tags:
+        - Settings
+      summary: Update a configured library folder
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryFolderUpdateRequest"
+      responses:
+        "200":
+          description: Updated library folder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LibraryFolder"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       operationId: deleteLibraryFolder
       tags:
@@ -5250,6 +5276,13 @@ components:
       schema:
         type: string
         minLength: 1
+    MediaFileId:
+      name: fileId
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
     RendererId:
       name: id
       in: path
@@ -5334,12 +5367,10 @@ components:
           $ref: "#/components/schemas/HealthStatus"
         version:
           type: string
-          examples:
-            - 0.0.0-dev
+          example: 0.0.0-dev
         commit:
           type: string
-          examples:
-            - dev
+          example: dev
         time:
           type: string
           format: date-time
@@ -6484,6 +6515,9 @@ components:
         - path
         - status
       properties:
+        fileId:
+          type: string
+          format: uuid
         path:
           type: string
         status:
@@ -8962,13 +8996,13 @@ components:
         - expiresAt
         - supports
       properties:
-        id: {type: string}
-        name: {type: string}
-        manufacturer: {type: string}
-        modelName: {type: string}
-        address: {type: string}
-        lastSeen: {type: string, format: date-time}
-        expiresAt: {type: string, format: date-time}
+        id: { type: string }
+        name: { type: string }
+        manufacturer: { type: string }
+        modelName: { type: string }
+        address: { type: string }
+        lastSeen: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
         supports:
           $ref: "#/components/schemas/RendererCapabilities"
     RendererCapabilities:
@@ -8976,14 +9010,14 @@ components:
       additionalProperties: false
       required: [play, pause, stop, seek, next, previous, volume, mute]
       properties:
-        play: {type: boolean}
-        pause: {type: boolean}
-        stop: {type: boolean}
-        seek: {type: boolean}
-        next: {type: boolean}
-        previous: {type: boolean}
-        volume: {type: boolean}
-        mute: {type: boolean}
+        play: { type: boolean }
+        pause: { type: boolean }
+        stop: { type: boolean }
+        seek: { type: boolean }
+        next: { type: boolean }
+        previous: { type: boolean }
+        volume: { type: boolean }
+        mute: { type: boolean }
     RendererStatus:
       type: object
       additionalProperties: false
@@ -8993,25 +9027,25 @@ components:
         - positionSeconds
         - durationSeconds
       properties:
-        transportState: {type: string}
-        transportStatus: {type: string}
-        positionSeconds: {type: integer, format: int32, minimum: 0}
-        durationSeconds: {type: integer, format: int32, minimum: 0}
-        volume: {type: integer, format: int32, minimum: 0, maximum: 100}
-        muted: {type: boolean}
+        transportState: { type: string }
+        transportStatus: { type: string }
+        positionSeconds: { type: integer, format: int32, minimum: 0 }
+        durationSeconds: { type: integer, format: int32, minimum: 0 }
+        volume: { type: integer, format: int32, minimum: 0, maximum: 100 }
+        muted: { type: boolean }
     RendererPlayRequest:
       type: object
       additionalProperties: false
       required: [mediaItemId]
       properties:
-        mediaItemId: {type: string, format: uuid}
-        path: {type: string, maxLength: 4096}
+        mediaItemId: { type: string, format: uuid }
+        path: { type: string, maxLength: 4096 }
     RendererPlaybackResponse:
       type: object
       additionalProperties: false
       required: [profileId]
       properties:
-        profileId: {type: string}
+        profileId: { type: string }
     RendererTransportRequest:
       type: object
       additionalProperties: false
@@ -9025,19 +9059,19 @@ components:
       additionalProperties: false
       required: [positionSeconds]
       properties:
-        positionSeconds: {type: integer, format: int32, minimum: 0}
+        positionSeconds: { type: integer, format: int32, minimum: 0 }
     RendererVolumeRequest:
       type: object
       additionalProperties: false
       required: [volume]
       properties:
-        volume: {type: integer, format: int32, minimum: 0, maximum: 100}
+        volume: { type: integer, format: int32, minimum: 0, maximum: 100 }
     RendererMuteRequest:
       type: object
       additionalProperties: false
       required: [muted]
       properties:
-        muted: {type: boolean}
+        muted: { type: boolean }
     DLNASettings:
       allOf:
         - $ref: "#/components/schemas/DLNASettingsRequest"
@@ -9061,6 +9095,7 @@ components:
       additionalProperties: false
       required:
         - enabled
+        - mediaRendererEnabled
         - friendlyName
         - interfaces
         - allowedCidrs
@@ -9072,6 +9107,11 @@ components:
       properties:
         enabled:
           type: boolean
+        mediaRendererEnabled:
+          type: boolean
+          description: >-
+            Discover and control media renderer devices independently of
+            the DLNA server
         friendlyName:
           type: string
           minLength: 1
@@ -11937,6 +11977,7 @@ components:
       required:
         - path
         - kind
+        - manual
       properties:
         path:
           type: string
@@ -11944,6 +11985,18 @@ components:
           maxLength: 4000
         kind:
           $ref: "#/components/schemas/LibraryFolderKind"
+        manual:
+          type: boolean
+          description: Disable automated operations for files in this root
+    LibraryFolderUpdateRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - manual
+      properties:
+        manual:
+          type: boolean
+          description: Disable automated operations for files in this root
     PathMappingListResponse:
       type: object
       additionalProperties: false
@@ -12135,6 +12188,8 @@ components:
           type: string
         fileName:
           type: string
+        seriesFolderPath:
+          type: string
         sizeBytes:
           type: integer
           format: int64
@@ -12228,6 +12283,14 @@ components:
           $ref: "#/components/schemas/MinimumAvailability"
         seriesType:
           $ref: "#/components/schemas/SeriesType"
+        seasonNumber:
+          type: integer
+          format: int32
+          minimum: 0
+        episodeNumber:
+          type: integer
+          format: int32
+          minimum: 0
         metadataProviderId:
           type: string
           format: uuid
