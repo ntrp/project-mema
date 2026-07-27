@@ -156,6 +156,23 @@ func TestSeriesBrowseMapsSeasonsEpisodesAndFiles(t *testing.T) {
 	}
 }
 
+func TestBrowseMetadataFindsExplicitFileWithoutEpisodeMetadata(t *testing.T) {
+	path := "/media/Scenario.Show/Scenario.Show.S01E21.mkv"
+	item := storage.MediaItem{
+		ID: uuid.New(), Type: "serie", Title: "Scenario Show", FilePaths: []string{path},
+		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{Seasons: []storage.MediaSeason{{SeasonNumber: 1}}},
+	}
+	tree := NewTree(fakeSource{items: []storage.MediaItem{item}}).WithStat(fakeStat(path))
+
+	object, err := tree.BrowseMetadata(context.Background(), EncodeID(FileRef(item.ID, path)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if object.FilePath != path || object.MediaItemID == nil || *object.MediaItemID != item.ID {
+		t.Fatalf("file metadata = %#v", object)
+	}
+}
+
 func assertContainer(t *testing.T, objects []Object, title string, childCount int) {
 	t.Helper()
 	for _, object := range objects {

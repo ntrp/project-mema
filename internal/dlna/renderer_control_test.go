@@ -174,6 +174,18 @@ func TestRendererRegistryAccessHandlesOfflineState(t *testing.T) {
 	}
 }
 
+func TestRendererAuthorizationTimeoutIsAcceptedOnlyForLG(t *testing.T) {
+	if !rendererAuthorizationPending("lg-oled-2022", context.DeadlineExceeded) {
+		t.Fatal("expected LG authorization timeout to remain pending")
+	}
+	if rendererAuthorizationPending("generic", context.DeadlineExceeded) {
+		t.Fatal("generic renderer timeout must remain an error")
+	}
+	if rendererAuthorizationPending("lg-oled-2022", errors.New("connection refused")) {
+		t.Fatal("non-timeout LG errors must remain errors")
+	}
+}
+
 func rendererManager(t *testing.T, handler http.HandlerFunc) (*Manager, *[]string) {
 	t.Helper()
 	var mu sync.Mutex

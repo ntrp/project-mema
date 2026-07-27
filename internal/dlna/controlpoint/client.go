@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -32,6 +33,9 @@ func (e *FaultError) Error() string {
 	detail := strings.TrimSpace(e.Description)
 	if detail == "" {
 		detail = fmt.Sprintf("HTTP status %d", e.StatusCode)
+	}
+	if e.UPnPCode != "" {
+		detail += " (UPnP " + e.UPnPCode + ")"
 	}
 	return fmt.Sprintf("renderer rejected %s: %s", e.Action, detail)
 }
@@ -119,25 +123,57 @@ func (c Client) request(ctx context.Context, renderer Renderer, endpoint, servic
 }
 func parseFault(action string, response *http.Response) error {
 	body, _ := io.ReadAll(io.LimitReader(response.Body, 16<<10))
-	var fault struct {
-		Code        string `xml:"Body>Fault>detail>UPnPError>errorCode"`
-		Description string `xml:"Body>Fault>detail>UPnPError>errorDescription"`
+	var root xmlNode
+	_ = xml.Unmarshal(body, &root)
+	values := map[string]string{}
+	root.flatten(values)
+	return &FaultError{
+		Action: action, StatusCode: response.StatusCode,
+		UPnPCode: values["errorCode"], Description: values["errorDescription"],
 	}
-	_ = xml.Unmarshal(body, &fault)
-	return &FaultError{Action: action, StatusCode: response.StatusCode, UPnPCode: fault.Code, Description: fault.Description}
+}
+
+var argumentOrder = map[string][]string{
+	"SetAVTransportURI": {"InstanceID", "CurrentURI", "CurrentURIMetaData"},
+	"Play":              {"InstanceID", "Speed"},
+	"Seek":              {"InstanceID", "Unit", "Target"},
+	"GetVolume":         {"InstanceID", "Channel"},
+	"GetMute":           {"InstanceID", "Channel"},
+	"SetVolume":         {"InstanceID", "Channel", "DesiredVolume"},
+	"SetMute":           {"InstanceID", "Channel", "DesiredMute"},
 }
 
 func envelope(service, action string, args map[string]string) ([]byte, error) {
 	var body bytes.Buffer
-	body.WriteString(`<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body>`)
+	body.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
+	body.WriteString(`<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"><s:Body>`)
 	body.WriteString(`<u:` + action + ` xmlns:u="` + service + `">`)
-	for key, value := range args {
+	keys := orderedArgumentKeys(action, args)
+	for _, key := range keys {
 		body.WriteString(`<` + key + `>`)
-		if err := xml.EscapeText(&body, []byte(value)); err != nil {
+		if err := xml.EscapeText(&body, []byte(args[key])); err != nil {
 			return nil, err
 		}
 		body.WriteString(`</` + key + `>`)
 	}
 	body.WriteString(`</u:` + action + `></s:Body></s:Envelope>`)
 	return body.Bytes(), nil
+}
+
+func orderedArgumentKeys(action string, args map[string]string) []string {
+	keys := make([]string, 0, len(args))
+	seen := map[string]bool{}
+	for _, key := range argumentOrder[action] {
+		if _, ok := args[key]; ok {
+			keys, seen[key] = append(keys, key), true
+		}
+	}
+	var remaining []string
+	for key := range args {
+		if !seen[key] {
+			remaining = append(remaining, key)
+		}
+	}
+	sort.Strings(remaining)
+	return append(keys, remaining...)
 }

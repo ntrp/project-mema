@@ -165,13 +165,21 @@ func (m *Manager) PlayOnRenderer(ctx context.Context, udn string, mediaID uuid.U
 	if !controlpoint.SupportsTransport(renderer, "SetAVTransportURI") || !controlpoint.SupportsTransport(renderer, "Play") {
 		return RendererPlayback{}, ErrUnsupportedAction
 	}
-	if err := client.SetAVTransportURI(ctx, renderer, selected.URL, string(metadata)); err != nil {
+	if err := client.SetAVTransportURI(ctx, renderer, selected.URL, string(metadata)); err != nil && !rendererAuthorizationPending(profile.ID, err) {
 		return RendererPlayback{}, err
 	}
-	if err := client.Play(ctx, renderer); err != nil {
+	if err := client.Play(ctx, renderer); err != nil && !rendererAuthorizationPending(profile.ID, err) {
 		return RendererPlayback{}, err
 	}
 	return RendererPlayback{URI: selected.URL, Metadata: string(metadata), ProfileID: profile.ID}, nil
+}
+
+func rendererAuthorizationPending(profileID string, err error) bool {
+	if !strings.HasPrefix(profileID, "lg-") {
+		return false
+	}
+	var networkError net.Error
+	return errors.As(err, &networkError) && networkError.Timeout()
 }
 
 func (m *Manager) Transport(ctx context.Context, udn, action string) error {

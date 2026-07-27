@@ -23,11 +23,12 @@ func TestParseRendererDescriptionFindsControlURLs(t *testing.T) {
 }
 
 func TestClientSendsAVTransportActionsToFakeRenderer(t *testing.T) {
-	var actions []string
+	var actions, payloads []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		actions = append(actions, r.Header.Get("SOAPACTION"))
 		payload := make([]byte, r.ContentLength)
 		_, _ = r.Body.Read(payload)
+		payloads = append(payloads, string(payload))
 		if strings.Contains(r.Header.Get("SOAPACTION"), "SetAVTransportURI") &&
 			!strings.Contains(string(payload), "http://mema.local/dlna/resource/item") {
 			t.Fatalf("payload = %s", string(payload))
@@ -55,6 +56,26 @@ func TestClientSendsAVTransportActionsToFakeRenderer(t *testing.T) {
 	}
 	if len(actions) != 7 || !strings.Contains(actions[0], "SetAVTransportURI") || !strings.Contains(actions[1], "Play") {
 		t.Fatalf("actions = %#v", actions)
+	}
+	if !strings.HasPrefix(payloads[0], `<?xml version="1.0"`) || !strings.Contains(payloads[0], `s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"`) {
+		t.Fatalf("SOAP compatibility attributes missing: %s", payloads[0])
+	}
+	instance, uri, metadata := strings.Index(payloads[0], "<InstanceID>"), strings.Index(payloads[0], "<CurrentURI>"), strings.Index(payloads[0], "<CurrentURIMetaData>")
+	if instance < 0 || instance > uri || uri > metadata {
+		t.Fatalf("SetAVTransportURI arguments are out of order: %s", payloads[0])
+	}
+}
+
+func TestClientReportsNamespacedUPnPFault(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><s:Fault><detail><UPnPError xmlns="urn:schemas-upnp-org:control-1-0"><errorCode>714</errorCode><errorDescription>Illegal MIME-type</errorDescription></UPnPError></detail></s:Fault></s:Body></s:Envelope>`))
+	}))
+	defer server.Close()
+
+	err := NewClient(server.Client()).Stop(context.Background(), Renderer{AVTransportURL: server.URL})
+	if err == nil || !strings.Contains(err.Error(), "Illegal MIME-type (UPnP 714)") {
+		t.Fatalf("error = %v", err)
 	}
 }
 

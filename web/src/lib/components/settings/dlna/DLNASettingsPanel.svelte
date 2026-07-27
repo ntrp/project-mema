@@ -38,14 +38,28 @@
 
 	async function save(event: SubmitEvent) {
 		event.preventDefault();
+		await persistSettings('DLNA settings saved');
+	}
+
+	async function setEnabled(enabled: boolean) {
+		const previous = form.enabled;
+		form.enabled = enabled;
+		if (!(await persistSettings(enabled ? 'DLNA enabled' : 'DLNA disabled'))) {
+			form.enabled = previous;
+		}
+	}
+
+	async function persistSettings(successMessage: string) {
 		errorMessage = '';
 		message = '';
 		try {
 			const saved = await resources.updateSettings.mutateAsync(normalizedForm());
 			syncSettings(saved);
-			message = 'DLNA settings saved';
+			message = successMessage;
+			return true;
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Could not save DLNA settings';
+			return false;
 		}
 	}
 
@@ -121,6 +135,7 @@
 				availableInterfaces={status?.availableInterfaces ?? []}
 				profiles={resources.profiles.data ?? []}
 				{saving}
+				onEnabledChange={setEnabled}
 				onSave={save}
 			/>
 		</Card.Content>

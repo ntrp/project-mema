@@ -7,6 +7,8 @@ import (
 	"strconv"
 
 	"media-manager/internal/storage"
+
+	"github.com/google/uuid"
 )
 
 var ErrObjectNotFound = errors.New("dlna content object not found")
@@ -48,6 +50,11 @@ func (t *Tree) BrowseMetadata(ctx context.Context, id string) (Object, error) {
 	if id == RootID {
 		return Object{ID: RootID, Title: "Mema", Class: "object.container", Kind: ObjectContainer}, nil
 	}
+	if object, found, err := t.explicitFileMetadata(ctx, id); err != nil {
+		return Object{}, err
+	} else if found {
+		return object, nil
+	}
 	children, err := t.allObjects(ctx)
 	if err != nil {
 		return Object{}, err
@@ -58,6 +65,32 @@ func (t *Tree) BrowseMetadata(ctx context.Context, id string) (Object, error) {
 		}
 	}
 	return Object{}, ErrObjectNotFound
+}
+
+func (t *Tree) explicitFileMetadata(ctx context.Context, id string) (Object, bool, error) {
+	ref, err := DecodeID(id)
+	if err != nil || ref.Kind != "file" {
+		return Object{}, false, nil
+	}
+	mediaID, err := uuid.Parse(ref.Key)
+	if err != nil {
+		return Object{}, false, nil
+	}
+	items, err := t.source.ListMediaItems(ctx)
+	if err != nil {
+		return Object{}, false, err
+	}
+	for _, item := range items {
+		if item.ID != mediaID {
+			continue
+		}
+		for _, file := range t.availableFiles(item) {
+			if file.Hash == ref.Aux {
+				return fileObject(EncodeID(MediaItemRef(item.ID)), item.ID, file, SubtitlesForFile(item, file.Path)), true, nil
+			}
+		}
+	}
+	return Object{}, false, nil
 }
 
 func (t *Tree) rootChildren(items []storage.MediaItem) []Object {
