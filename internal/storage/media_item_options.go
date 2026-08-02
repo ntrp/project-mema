@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	storagegen "media-manager/internal/storage/generated"
@@ -13,10 +14,6 @@ func (s *SettingsStore) UpdateMediaItemOptions(ctx context.Context, id uuid.UUID
 	qualityProfileID := optionalTrimmed(input.QualityProfileID)
 	minimumAvailability := optionalMinimumAvailability(input.MinimumAvailability)
 	monitorMode := optionalTrimmed(input.MonitorMode)
-	mediaFolderPath, err := s.updatedMediaFolderPath(ctx, id, input.LibraryFolderID)
-	if err != nil {
-		return MediaItem{}, err
-	}
 	item, err := s.GetMediaItem(ctx, id)
 	if err != nil {
 		return MediaItem{}, err
@@ -25,6 +22,27 @@ func (s *SettingsStore) UpdateMediaItemOptions(ctx context.Context, id uuid.UUID
 	seasonsPayload, err := mediaItemSeasonsPayload(seasons)
 	if err != nil {
 		return MediaItem{}, err
+	}
+	mediaFolderPath, err := s.updatedMediaFolderPath(ctx, item, input.LibraryFolderID)
+	if err != nil {
+		return MediaItem{}, err
+	}
+	var movedItem *MediaItem
+	if mediaFolderPath != nil {
+		moved, moveErr := mediaItemAtRoot(item, *mediaFolderPath)
+		if moveErr != nil {
+			return MediaItem{}, moveErr
+		}
+		if moveErr := s.moveMediaItemFiles(ctx, item, *mediaFolderPath); moveErr != nil {
+			return MediaItem{}, moveErr
+		}
+		movedItem = &moved
+	}
+	rollbackMove := func(cause error) error {
+		if movedItem == nil || item.MediaFolderPath == nil {
+			return cause
+		}
+		return errors.Join(cause, s.moveMediaItemFiles(ctx, *movedItem, *item.MediaFolderPath))
 	}
 	rows, err := storagegen.New(s.pool).UpdateMediaItemOptionsRecord(ctx, storagegen.UpdateMediaItemOptionsRecordParams{
 		QualityProfileID:    textValue(qualityProfileID),
@@ -38,42 +56,28 @@ func (s *SettingsStore) UpdateMediaItemOptions(ctx context.Context, id uuid.UUID
 		ID:                  id,
 	})
 	if err != nil {
-		return MediaItem{}, err
+		return MediaItem{}, rollbackMove(err)
 	}
 	if rows == 0 {
-		return MediaItem{}, ErrNotFound
+		return MediaItem{}, rollbackMove(ErrNotFound)
 	}
 	if updateSeasons && seasons != nil {
 		if err := applyMediaSeriesMonitorSnapshot(ctx, s.pool, id, *seasons); err != nil {
 			return MediaItem{}, err
 		}
 	}
-	if input.LibraryFolderID != nil {
-		return s.RescanMediaItemFiles(ctx, id)
-	}
 	return s.GetMediaItem(ctx, id)
 }
 
 func (s *SettingsStore) updatedMediaFolderPath(
 	ctx context.Context,
-	id uuid.UUID,
+	item MediaItem,
 	libraryFolderID *uuid.UUID,
 ) (*string, error) {
 	if libraryFolderID == nil {
 		return nil, nil
 	}
-	item, err := s.GetMediaItem(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	mediaFolderPath, err := ensureMediaMainFolder(ctx, s.pool, mediaItemInputForFolder(item, libraryFolderID))
-	if err != nil || mediaFolderPath == nil {
-		return mediaFolderPath, err
-	}
-	if err := moveMediaItemFiles(item, *mediaFolderPath); err != nil {
-		return nil, err
-	}
-	return mediaFolderPath, nil
+	return ensureMediaMainFolder(ctx, s.pool, mediaItemInputForFolder(item, libraryFolderID))
 }
 
 func mediaItemInputForFolder(item MediaItem, libraryFolderID *uuid.UUID) MediaItemInput {

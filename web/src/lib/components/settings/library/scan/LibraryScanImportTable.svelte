@@ -18,6 +18,8 @@
 	import {
 		canImportRows,
 		defaultQualityProfileId,
+		importDisabledReason as rowImportDisabledReason,
+		isDraftSelectableForImport,
 		sortedScanItems,
 		type MatchDraft
 	} from './libraryScanImport';
@@ -66,7 +68,7 @@
 	const allRows = $derived(sortedScanItems(scan.items));
 	const rows = $derived(allRows.filter((item) => showImported || !item.imported));
 	const importableRows = $derived(
-		rows.filter((item) => item.status === 'pending' && !item.imported && drafts[item.id]?.matched)
+		rows.filter((item) => isDraftSelectableForImport(item, drafts[item.id]))
 	);
 	const checkedRows = $derived(importableRows.filter((item) => drafts[item.id]?.selected));
 	const checkedMatchedMovies = $derived(matchedRowsByKind(checkedRows, drafts, 'movie'));
@@ -75,6 +77,9 @@
 		checkedRows.length > 0 && checkedRows.every((item) => drafts[item.id]?.matched)
 	);
 	const canImport = $derived(canImportRows(checkedRows, drafts, bulkQualityProfileId));
+	const importDisabledReason = $derived(
+		rowImportDisabledReason(checkedRows, drafts, bulkQualityProfileId)
+	);
 	const allVisibleChecked = $derived(
 		importableRows.length > 0 && importableRows.every((item) => drafts[item.id]?.selected)
 	);
@@ -135,8 +140,7 @@
 		});
 	}
 	function changeEpisodeSeason(item: LibraryScanItem, seasonNumber: number | undefined) {
-		const targets = drafts[item.id]?.selected ? checkedMatchedSeries : [item];
-		applyEpisodeSeason(targets, drafts, seasonNumber);
+		applyEpisodeSeason([item], drafts, seasonNumber);
 	}
 	function changeEpisodeNumber(item: LibraryScanItem, episodeNumber: number | undefined) {
 		const draft = drafts[item.id];
@@ -167,6 +171,7 @@
 	showSeriesControls={scan.folderKind !== 'movie'}
 	{checkedRowsMatched}
 	{canImport}
+	{importDisabledReason}
 	{loading}
 	{importing}
 	{duplicateRemovalCount}

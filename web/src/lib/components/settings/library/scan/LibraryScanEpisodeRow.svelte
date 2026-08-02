@@ -5,7 +5,11 @@
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import { Input } from '$lib/components/ui/input';
 	import * as Table from '$lib/components/ui/table';
-	import { relativeScanPath, type MatchDraft } from './libraryScanImport';
+	import {
+		isDraftSelectableForImport,
+		relativeScanPath,
+		type MatchDraft
+	} from './libraryScanImport';
 	import type { DuplicateDraftState } from './libraryScanDuplicates';
 	import type { LibraryScanItem } from '$lib/settings/types';
 
@@ -16,6 +20,9 @@
 		duplicateState?: DuplicateDraftState;
 		importing?: boolean;
 		resetting?: boolean;
+		onSelectionStart: (_item: LibraryScanItem, _event: PointerEvent) => void;
+		onSelectionEnter: (_item: LibraryScanItem) => void;
+		onSelectionClick: (_item: LibraryScanItem, _event: MouseEvent) => void;
 		onSeasonChange: (_item: LibraryScanItem, _value: number | undefined) => void;
 		onEpisodeChange: (_item: LibraryScanItem, _value: number | undefined) => void;
 		onResetImport: (_item: LibraryScanItem) => void | Promise<void>;
@@ -28,14 +35,15 @@
 		duplicateState,
 		importing = false,
 		resetting = false,
+		onSelectionStart,
+		onSelectionEnter,
+		onSelectionClick,
 		onSeasonChange,
 		onEpisodeChange,
 		onResetImport
 	}: Props = $props();
 	const locked = $derived(item.imported || importing || resetting);
-	const importable = $derived(
-		Boolean(draft.matched) && item.status === 'pending' && !item.imported && !draft.removeDuplicate
-	);
+	const importable = $derived(isDraftSelectableForImport(item, draft));
 	const canRemoveFile = $derived(
 		!item.imported && item.status === 'pending' && (!draft.matched || duplicateState?.duplicate)
 	);
@@ -55,7 +63,14 @@
 	class={['h-8 bg-muted/20 text-xs [&>td]:py-1', duplicateState?.duplicate && 'bg-amber-500/5']}
 >
 	<Table.Cell class="w-px pl-8 align-middle">
-		<Checkbox bind:checked={draft.selected} disabled={!importable || locked} />
+		<Checkbox
+			checked={draft.selected}
+			disabled={!importable || locked}
+			aria-label={`Select ${displayPath}`}
+			onpointerdown={(event) => onSelectionStart(item, event)}
+			onpointerenter={() => onSelectionEnter(item)}
+			onclick={(event) => onSelectionClick(item, event)}
+		/>
 	</Table.Cell>
 	<Table.Cell class="min-w-120 pl-4 align-middle">
 		<div class="flex min-w-0 items-center gap-3">

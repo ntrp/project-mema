@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	applyAutoMatch,
 	autoMatchResult,
 	normalizedMatchTitle
 } from '$lib/components/settings/library/scan/libraryScanAutoMatch';
@@ -49,6 +50,41 @@ describe('library scan auto matching', () => {
 				match('10681')
 			])
 		).toBeUndefined();
+	});
+
+	it('falls back to title matching when the search provider cannot return the embedded id', () => {
+		const result = match('1413', 'serie', 'The Apothecary Diaries', 2023);
+		expect(
+			autoMatchResult(
+				{
+					...detectedScanItem('item-imdb', 'The Apothecary Diaries', 2023),
+					path: 'The Apothecary Diaries (2023) [imdbid-tt26743760]/Season 1/01.mkv'
+				},
+				[result]
+			)
+		).toBe(result);
+	});
+
+	it('leaves episodes unselected when a series match is applied', () => {
+		const rows = [
+			{
+				...detectedScanItem('episode-1', 'The Apothecary Diaries', 2023),
+				detectedMediaKind: 'series',
+				seriesFolderPath: '/series/The Apothecary Diaries'
+			},
+			{
+				...detectedScanItem('episode-2', 'The Apothecary Diaries', 2023),
+				detectedMediaKind: 'series',
+				seriesFolderPath: '/series/The Apothecary Diaries'
+			}
+		] as LibraryScanItem[];
+		const drafts = Object.fromEntries(
+			rows.map((row) => [row.id, movieDraft({ mediaKind: 'series', selected: true })])
+		);
+
+		applyAutoMatch(rows[0], match('1413', 'serie', 'The Apothecary Diaries', 2023), rows, drafts);
+
+		expect(rows.map((row) => drafts[row.id].selected)).toEqual([false, false]);
 	});
 
 	it('stops the auto matching spinner when the provider title changes the query', async () => {

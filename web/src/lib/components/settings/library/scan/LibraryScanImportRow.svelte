@@ -1,31 +1,23 @@
 <script lang="ts">
 	import LibraryScanMatchCell from '$lib/components/settings/library/scan/LibraryScanMatchCell.svelte';
 	import LibraryScanResetImportButton from '$lib/components/settings/library/scan/LibraryScanResetImportButton.svelte';
-	import SettingsSelect from '$lib/components/settings/shared/SettingsSelect.svelte';
+	import LibraryScanRowSettings from './row/LibraryScanRowSettings.svelte';
 	import InlineSpinner from '$lib/components/shared/InlineSpinner.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Checkbox } from '$lib/components/ui/checkbox';
 	import * as Table from '$lib/components/ui/table';
 	import {
 		isSeriesKind,
-		minimumAvailabilityOptions,
 		relativeScanPath,
-		movieMonitorModeOptions,
-		seriesMonitorModeOptions,
-		seriesTypeOptions,
 		type MatchDraft
 	} from '$lib/components/settings/library/scan/libraryScanImport';
 	import type { DuplicateDraftState } from './libraryScanDuplicates';
 	import type {
 		LibraryScanItem,
-		MediaMonitorMode,
 		MediaSearchResult,
 		MetadataProvider,
-		MinimumAvailability,
-		QualityProfileOption,
-		SeriesType
+		QualityProfileOption
 	} from '$lib/settings/types';
-
 	interface Props {
 		item: LibraryScanItem;
 		folderPath: string;
@@ -35,6 +27,13 @@
 		duplicateState?: DuplicateDraftState;
 		importing?: boolean;
 		resetting?: boolean;
+		selectionChecked?: boolean;
+		selectionIndeterminate?: boolean;
+		selectionDisabled?: boolean;
+		collapsed?: boolean;
+		onToggleSeries?: () => void;
+		onSelectionChange?: (_checked: boolean) => void;
+		onSeriesSettingChange?: (_field: 'quality' | 'monitor' | 'type', _value: string) => void;
 		onSearch: (_item: LibraryScanItem) => void;
 		onSelect: (_item: LibraryScanItem, _result: MediaSearchResult) => void;
 		onProviderChange: (_item: LibraryScanItem, _providerId: string) => void;
@@ -50,6 +49,13 @@
 		duplicateState,
 		importing = false,
 		resetting = false,
+		selectionChecked = false,
+		selectionIndeterminate = false,
+		selectionDisabled = false,
+		collapsed = false,
+		onToggleSeries,
+		onSelectionChange,
+		onSeriesSettingChange,
 		onSearch,
 		onSelect,
 		onProviderChange,
@@ -69,117 +75,91 @@
 			folderPath
 		)
 	);
-	const qualityProfileOptions = $derived([
-		{ value: '', label: 'Select profile' },
-		...qualityProfiles.map((profile) => ({ value: profile.id, label: profile.name }))
-	]);
-	const providerOptions = $derived(
-		metadataProviders
-			.filter((provider) => provider.enabled)
-			.map((provider) => ({ value: provider.id, label: provider.name }))
+	const selectionActive = $derived(
+		series ? selectionChecked || selectionIndeterminate : draft.selected
 	);
-	const monitorOptions = $derived(series ? seriesMonitorModeOptions : movieMonitorModeOptions);
-
+	function handleRowClick(event: MouseEvent) {
+		const target = event.target as { closest?: (_selector: string) => unknown };
+		if (series && !target.closest?.('button, input, [role="button"], [role="checkbox"]')) {
+			onToggleSeries?.();
+		}
+	}
 	function setRemoveFile(checked: boolean) {
 		draft.removeDuplicate = checked;
 		if (checked) draft.selected = false;
 	}
 </script>
 
-<Table.Row class={duplicateState?.duplicate && !series ? 'bg-amber-500/5' : undefined}>
+<Table.Row
+	class={duplicateState?.duplicate && !series ? 'bg-amber-500/5' : undefined}
+	onclick={handleRowClick}
+>
 	<Table.Cell class="w-px align-middle">
-		{#if !series}<Checkbox bind:checked={draft.selected} disabled={!importable || locked} />{/if}
+		<Checkbox
+			checked={series ? selectionChecked : draft.selected}
+			indeterminate={series && selectionIndeterminate}
+			disabled={series ? selectionDisabled : !importable || locked}
+			aria-label={series ? `Select all episodes in ${item.detectedTitle}` : undefined}
+			onCheckedChange={(checked) =>
+				series ? onSelectionChange?.(checked === true) : (draft.selected = checked === true)}
+		/>
 	</Table.Cell>
 	<Table.Cell class="min-w-120 align-top">
-		<div class="flex items-end justify-between gap-3">
-			<div class="min-w-0 flex-1">
-				<div class="flex min-w-0 items-start justify-between gap-3">
-					<div class="grid min-w-0 flex-1 gap-1">
-						<div class="flex min-w-0 items-start gap-2">
-							<div class="min-w-0 flex-1">
-								<LibraryScanMatchCell {item} bind:draft disabled={locked} {onSearch} {onSelect} />
-							</div>
-							{#if !series && item.imported}
-								<Badge
-									variant="outline"
-									class="mt-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
-								>
-									Imported
-								</Badge>
-							{:else if !series && importing}
-								<span class="mt-1 shrink-0">
-									<InlineSpinner label="Importing" />
-								</span>
-							{/if}
-						</div>
-						<div class="flex ml-3 min-w-0 items-start gap-3">
-							<span class="block truncate text-xs text-muted-foreground">{displayPath}</span>
-							{#if !series && canRemoveFile}
-								<label class="flex shrink-0 items-center gap-2 text-xs text-amber-500">
-									<Checkbox
-										checked={draft.removeDuplicate}
-										disabled={Boolean(
-											importing ||
-											(draft.matched && duplicateState?.duplicate && !duplicateState.removalAllowed)
-										)}
-										onCheckedChange={(checked) => setRemoveFile(checked === true)}
-									/>
-									<span>Remove file</span>
-								</label>
-							{/if}
-						</div>
+		<div class="flex min-w-0 flex-1 items-start justify-between gap-3">
+			<div class="grid min-w-0 flex-1 gap-1">
+				<div class="flex min-w-0 items-start gap-2">
+					<div class="min-w-0 flex-1">
+						<LibraryScanMatchCell {item} bind:draft disabled={locked} {onSearch} {onSelect} />
 					</div>
 					{#if !series && item.imported}
-						<LibraryScanResetImportButton {item} {resetting} {onResetImport} />
+						<Badge
+							variant="outline"
+							class="mt-1 border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+						>
+							Imported
+						</Badge>
+					{:else if !series && importing}
+						<span class="mt-1 shrink-0">
+							<InlineSpinner label="Importing" />
+						</span>
+					{/if}
+				</div>
+				<div class="flex ml-3 min-w-0 items-start gap-3">
+					{#if series}<button
+							type="button"
+							class="block truncate text-xs text-muted-foreground hover:text-foreground"
+							aria-expanded={!collapsed}
+							onclick={onToggleSeries}>{collapsed ? '▸' : '▾'} {displayPath}</button
+						>{:else}<span class="block truncate text-xs text-muted-foreground">{displayPath}</span
+						>{/if}
+					{#if !series && canRemoveFile}
+						<label class="flex shrink-0 items-center gap-2 text-xs text-amber-500">
+							<Checkbox
+								checked={draft.removeDuplicate}
+								disabled={Boolean(
+									importing ||
+									(draft.matched && duplicateState?.duplicate && !duplicateState.removalAllowed)
+								)}
+								onCheckedChange={(checked) => setRemoveFile(checked === true)}
+							/>
+							<span>Remove file</span>
+						</label>
 					{/if}
 				</div>
 			</div>
+			{#if !series && item.imported}
+				<LibraryScanResetImportButton {item} {resetting} {onResetImport} />
+			{/if}
 		</div>
 	</Table.Cell>
-	<Table.Cell class="w-px align-top">
-		<SettingsSelect
-			value={draft.metadataProviderId}
-			options={providerOptions}
-			disabled={!providerOptions.length || locked}
-			onValueChange={(value) => onProviderChange(item, value)}
-		/>
-	</Table.Cell>
-	<Table.Cell class="w-px align-top">
-		<SettingsSelect
-			value={draft.qualityProfileId}
-			options={qualityProfileOptions}
-			disabled={(!series && !draft.selected) || !draft.matched || locked}
-			onValueChange={(value) => (draft.qualityProfileId = value)}
-		/>
-	</Table.Cell>
-	<Table.Cell class="w-px align-top">
-		<SettingsSelect
-			value={draft.monitorMode}
-			options={monitorOptions}
-			disabled={(!series && !draft.selected) || !draft.matched || locked}
-			onValueChange={(value) => (draft.monitorMode = value as MediaMonitorMode)}
-		/>
-	</Table.Cell>
-	<Table.Cell class="w-px align-top">
-		{#if series}
-			<span class="text-xs text-muted-foreground">-</span>
-		{:else}
-			<SettingsSelect
-				value={draft.minimumAvailability}
-				options={minimumAvailabilityOptions}
-				disabled={!draft.selected || !draft.matched || locked}
-				onValueChange={(value) => (draft.minimumAvailability = value as MinimumAvailability)}
-			/>
-		{/if}
-	</Table.Cell>
-	<Table.Cell class="w-px align-top">
-		{#if series}
-			<SettingsSelect
-				value={draft.seriesType}
-				options={seriesTypeOptions}
-				disabled={!draft.matched || locked}
-				onValueChange={(value) => (draft.seriesType = value as SeriesType)}
-			/>
-		{/if}
-	</Table.Cell>
+	<LibraryScanRowSettings
+		{item}
+		bind:draft
+		{qualityProfiles}
+		{metadataProviders}
+		{locked}
+		{selectionActive}
+		{onProviderChange}
+		{onSeriesSettingChange}
+	/>
 </Table.Row>

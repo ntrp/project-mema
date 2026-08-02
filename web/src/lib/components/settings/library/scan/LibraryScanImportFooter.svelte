@@ -19,6 +19,7 @@
 	interface Props {
 		checkedRowsMatched: boolean;
 		canImport: boolean;
+		importDisabledReason: string;
 		loading: boolean;
 		importing: boolean;
 		duplicateRemovalCount: number;
@@ -43,6 +44,7 @@
 	let {
 		checkedRowsMatched,
 		canImport,
+		importDisabledReason,
 		loading,
 		importing,
 		duplicateRemovalCount,
@@ -134,6 +136,7 @@
 		<Table.Cell class="align-top" colspan={2}>
 			<LibraryScanImportButton
 				{canImport}
+				{importDisabledReason}
 				{loading}
 				{importing}
 				{duplicateRemovalCount}

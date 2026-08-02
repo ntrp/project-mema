@@ -1,6 +1,7 @@
 import {
 	cleanMatchSearchTitle,
 	defaultMonitorModeForMatch,
+	isSeriesKind,
 	scanItemGroupRows,
 	type MatchDraft
 } from './libraryScanImport';
@@ -31,11 +32,15 @@ export function scanItemExternalReference(item: LibraryScanItem) {
 export function autoMatchResult(item: LibraryScanItem, results: MediaSearchResult[]) {
 	const reference = scanItemExternalReference(item);
 	if (reference) {
-		return results.find(
+		const referencedResult = results.find(
 			(result) =>
 				result.externalProvider?.toLowerCase() === reference.provider &&
 				result.externalId?.toLowerCase() === reference.id
 		);
+		if (referencedResult) return referencedResult;
+		if (results.some((result) => result.externalProvider?.toLowerCase() === reference.provider)) {
+			return undefined;
+		}
 	}
 	if (results.length === 1) return results[0];
 	const detectedTitle = normalizedMatchTitle(item.detectedTitle ?? '');
@@ -64,7 +69,7 @@ export function applyAutoMatch(
 		draft.matched = result;
 		draft.query = result.title;
 		draft.results = [];
-		draft.selected = true;
+		draft.selected = !isSeriesKind(draft.mediaKind);
 		draft.searched = true;
 		draft.searching = false;
 		draft.metadataProviderId = source.metadataProviderId;

@@ -82,6 +82,17 @@ export function isSeriesKind(kind: LibraryMediaKind) {
 	return kind === 'series' || kind === 'anime_series';
 }
 
+export function isDraftSelectableForImport(item: LibraryScanItem, draft?: MatchDraft) {
+	return Boolean(
+		draft?.matched &&
+		item.status === 'pending' &&
+		!item.imported &&
+		!draft.removeDuplicate &&
+		(!isSeriesKind(draft.mediaKind) ||
+			(draft.seasonNumber !== undefined && draft.episodeNumber !== undefined))
+	);
+}
+
 export function scanItemGroupKey(item: LibraryScanItem) {
 	if (isSeriesKind(scanMediaKind(item)) && item.seriesFolderPath) {
 		return `series:${item.seriesFolderPath.replaceAll('\\', '/')}`;
@@ -94,11 +105,13 @@ export function scanItemGroupRows(item: LibraryScanItem, rows: LibraryScanItem[]
 	return rows.filter((row) => scanItemGroupKey(row) === key);
 }
 
-export function isScanItemGroupRepresentative(item: LibraryScanItem, rows: LibraryScanItem[]) {
+export function scanItemGroupRepresentative(item: LibraryScanItem, rows: LibraryScanItem[]) {
 	const group = scanItemGroupRows(item, rows);
-	return (
-		(group.find((row) => !row.imported && row.status === 'pending') ?? group[0])?.id === item.id
-	);
+	return group.find((row) => !row.imported && row.status === 'pending') ?? group[0];
+}
+
+export function isScanItemGroupRepresentative(item: LibraryScanItem, rows: LibraryScanItem[]) {
+	return scanItemGroupRepresentative(item, rows)?.id === item.id;
 }
 
 export function relativeScanPath(path: string, root: string) {
@@ -156,17 +169,31 @@ export function canImportRows(
 	drafts: Record<string, MatchDraft>,
 	bulkQualityProfileId: string
 ) {
-	if (items.length === 0) return false;
-	if (!duplicateSelectionValid(items, drafts)) return false;
-	return items.every((item) => {
+	return importDisabledReason(items, drafts, bulkQualityProfileId) === '';
+}
+
+export function importDisabledReason(
+	items: LibraryScanItem[],
+	drafts: Record<string, MatchDraft>,
+	bulkQualityProfileId: string
+) {
+	if (items.length === 0) return 'Select at least one file to import';
+	if (!duplicateSelectionValid(items, drafts))
+		return 'Resolve duplicate selections before importing';
+	for (const item of items) {
 		const draft = drafts[item.id];
-		return Boolean(
-			draft?.matched &&
-			effectiveDraftValue(draft.qualityProfileId, bulkQualityProfileId) &&
-			(!isSeriesKind(draft.mediaKind) ||
-				(draft.seasonNumber !== undefined && draft.episodeNumber !== undefined))
-		);
-	});
+		if (!draft?.matched) return 'Match every selected item before importing';
+		if (!effectiveDraftValue(draft.qualityProfileId, bulkQualityProfileId)) {
+			return 'Choose a quality profile for every selected item';
+		}
+		if (
+			isSeriesKind(draft.mediaKind) &&
+			(draft.seasonNumber === undefined || draft.episodeNumber === undefined)
+		) {
+			return 'Set season and episode for every selected episode';
+		}
+	}
+	return '';
 }
 
 export function wait(ms: number) {

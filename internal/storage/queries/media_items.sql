@@ -33,23 +33,33 @@ select m.id,
     m.quality_profile_id,
     mp.name as quality_profile_name,
     case
-        when exists (
-            select 1
-            from app.library_scan_items status_lsi
-            where status_lsi.media_item_id = m.id
-        ) then 'downloaded'
-        when exists (
-            select 1
-            from app.download_activity status_activity
-            where status_activity.media_item_id = m.id
-                and status_activity.status in ('queued', 'grabbed', 'downloading')
-        ) then 'downloading'
-        when exists (
-            select 1
-            from app.download_activity status_activity
-            where status_activity.media_item_id = m.id
-                and status_activity.status = 'completed'
-        ) then 'downloaded'
+        when m.media_type in ('serie', 'anime_series')
+            and exists (
+                select 1
+                from app.media_episodes status_episode
+                where status_episode.media_item_id = m.id
+                    and status_episode.season_number > 0
+                    and not exists (
+                        select 1
+                        from app.library_scan_items status_lsi
+                        where status_lsi.media_item_id = m.id
+                            and status_lsi.imported
+                            and (
+                                status_lsi.episode_id = status_episode.id
+                                or (
+                                    status_lsi.season_number = status_episode.season_number
+                                    and status_lsi.episode_number = status_episode.episode_number
+                                )
+                            )
+                    )
+            )
+            and (
+                exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id and status_lsi.imported)
+                or exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed')
+            ) then 'missing'
+        when exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id) then 'downloaded'
+        when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status in ('queued', 'grabbed', 'downloading')) then 'downloading'
+        when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed') then 'downloaded'
         else 'missing'
     end as status,
     m.library_folder_id,
@@ -118,6 +128,30 @@ select m.id,
     m.quality_profile_id,
     mp.name as quality_profile_name,
     case
+        when m.media_type in ('serie', 'anime_series')
+            and exists (
+                select 1
+                from app.media_episodes status_episode
+                where status_episode.media_item_id = m.id
+                    and status_episode.season_number > 0
+                    and not exists (
+                        select 1
+                        from app.library_scan_items status_lsi
+                        where status_lsi.media_item_id = m.id
+                            and status_lsi.imported
+                            and (
+                                status_lsi.episode_id = status_episode.id
+                                or (
+                                    status_lsi.season_number = status_episode.season_number
+                                    and status_lsi.episode_number = status_episode.episode_number
+                                )
+                            )
+                    )
+            )
+            and (
+                exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id and status_lsi.imported)
+                or exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed')
+            ) then 'missing'
         when exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id) then 'downloaded'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status in ('queued', 'grabbed', 'downloading')) then 'downloading'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed') then 'downloaded'
@@ -183,6 +217,30 @@ select m.id,
     m.quality_profile_id,
     mp.name as quality_profile_name,
     case
+        when m.media_type in ('serie', 'anime_series')
+            and exists (
+                select 1
+                from app.media_episodes status_episode
+                where status_episode.media_item_id = m.id
+                    and status_episode.season_number > 0
+                    and not exists (
+                        select 1
+                        from app.library_scan_items status_lsi
+                        where status_lsi.media_item_id = m.id
+                            and status_lsi.imported
+                            and (
+                                status_lsi.episode_id = status_episode.id
+                                or (
+                                    status_lsi.season_number = status_episode.season_number
+                                    and status_lsi.episode_number = status_episode.episode_number
+                                )
+                            )
+                    )
+            )
+            and (
+                exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id and status_lsi.imported)
+                or exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed')
+            ) then 'missing'
         when exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id) then 'downloaded'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status in ('queued', 'grabbed', 'downloading')) then 'downloading'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed') then 'downloaded'
@@ -243,6 +301,30 @@ select m.id,
     m.quality_profile_id,
     mp.name as quality_profile_name,
     case
+        when m.media_type in ('serie', 'anime_series')
+            and exists (
+                select 1
+                from app.media_episodes status_episode
+                where status_episode.media_item_id = m.id
+                    and status_episode.season_number > 0
+                    and not exists (
+                        select 1
+                        from app.library_scan_items status_lsi
+                        where status_lsi.media_item_id = m.id
+                            and status_lsi.imported
+                            and (
+                                status_lsi.episode_id = status_episode.id
+                                or (
+                                    status_lsi.season_number = status_episode.season_number
+                                    and status_lsi.episode_number = status_episode.episode_number
+                                )
+                            )
+                    )
+            )
+            and (
+                exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id and status_lsi.imported)
+                or exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed')
+            ) then 'missing'
         when exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id) then 'downloaded'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status in ('queued', 'grabbed', 'downloading')) then 'downloading'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed') then 'downloaded'
@@ -267,10 +349,39 @@ from app.media_items m
 left join app.media_profiles mp on mp.id = m.quality_profile_id
 left join app.library_folders lf on lf.id = m.library_folder_id
 where m.monitored = true
-    and not exists (
-        select 1
-        from app.library_scan_items lsi
-        where lsi.media_item_id = m.id
+    and (
+        not exists (
+            select 1
+            from app.library_scan_items lsi
+            where lsi.media_item_id = m.id
+        )
+        or (
+            m.media_type in ('serie', 'anime_series')
+            and exists (
+                select 1
+                from app.library_scan_items lsi
+                where lsi.media_item_id = m.id and lsi.imported
+            )
+            and exists (
+                select 1
+                from app.media_episodes missing_episode
+                where missing_episode.media_item_id = m.id
+                    and missing_episode.season_number > 0
+                    and not exists (
+                        select 1
+                        from app.library_scan_items imported_episode
+                        where imported_episode.media_item_id = m.id
+                            and imported_episode.imported
+                            and (
+                                imported_episode.episode_id = missing_episode.id
+                                or (
+                                    imported_episode.season_number = missing_episode.season_number
+                                    and imported_episode.episode_number = missing_episode.episode_number
+                                )
+                            )
+                    )
+            )
+        )
     )
     and not exists (
         select 1
@@ -315,6 +426,30 @@ select m.id,
     m.quality_profile_id,
     mp.name as quality_profile_name,
     case
+        when m.media_type in ('serie', 'anime_series')
+            and exists (
+                select 1
+                from app.media_episodes status_episode
+                where status_episode.media_item_id = m.id
+                    and status_episode.season_number > 0
+                    and not exists (
+                        select 1
+                        from app.library_scan_items status_lsi
+                        where status_lsi.media_item_id = m.id
+                            and status_lsi.imported
+                            and (
+                                status_lsi.episode_id = status_episode.id
+                                or (
+                                    status_lsi.season_number = status_episode.season_number
+                                    and status_lsi.episode_number = status_episode.episode_number
+                                )
+                            )
+                    )
+            )
+            and (
+                exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id and status_lsi.imported)
+                or exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed')
+            ) then 'missing'
         when exists (select 1 from app.library_scan_items status_lsi where status_lsi.media_item_id = m.id) then 'downloaded'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status in ('queued', 'grabbed', 'downloading')) then 'downloading'
         when exists (select 1 from app.download_activity status_activity where status_activity.media_item_id = m.id and status_activity.status = 'completed') then 'downloaded'

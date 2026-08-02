@@ -177,11 +177,15 @@ func ensureMediaMainFolder(ctx context.Context, q mediaItemQuerier, input MediaI
 		}
 		return nil, err
 	}
+	root, err := absoluteCleanPath(folder.Path)
+	if err != nil {
+		return nil, err
+	}
 	settings, err := getFileNamingSettings(ctx, q)
 	if err != nil {
 		return nil, err
 	}
-	path := mediaMainFolderPath(folder.Path, settings, input)
+	path := mediaMainFolderPath(root, settings, input)
 	if err := os.MkdirAll(path, 0o755); err != nil {
 		return nil, err
 	}

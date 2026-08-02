@@ -36,6 +36,7 @@
 		showSeriesControls: boolean;
 		checkedRowsMatched: boolean;
 		canImport: boolean;
+		importDisabledReason: string;
 		loading: boolean;
 		importing: boolean;
 		duplicateRemovalCount: number;
@@ -81,6 +82,7 @@
 		showSeriesControls,
 		checkedRowsMatched,
 		canImport,
+		importDisabledReason,
 		loading,
 		importing,
 		duplicateRemovalCount,
@@ -147,6 +149,7 @@
 		<LibraryScanImportFooter
 			{checkedRowsMatched}
 			{canImport}
+			{importDisabledReason}
 			{loading}
 			{importing}
 			{duplicateRemovalCount}

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/google/uuid"
@@ -75,6 +76,83 @@ func TestMediaSeriesRowsUpsertAndMonitorState(t *testing.T) {
 	}
 	if !seasons[0].Monitored || !seasons[0].Episodes[0].Monitored || seasons[0].Episodes[1].Monitored {
 		t.Fatalf("expected parent to follow monitored episode, got %#v", seasons[0])
+	}
+}
+
+func TestMediaSeriesStatusRequiresEveryEpisode(t *testing.T) {
+	ctx, store := testDBStore(t)
+	item := createSeriesItem(t, ctx, store)
+	_, err := store.UpsertMediaSeriesSeasons(ctx, item.ID, []MediaSeriesSeasonInput{{
+		SeasonNumber: 1,
+		Name:         "Season 1",
+		Episodes: []MediaSeriesEpisodeInput{
+			{EpisodeNumber: 1, Name: "First"},
+			{EpisodeNumber: 2, Name: "Second"},
+		},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	folder, err := store.CreateLibraryFolder(ctx, t.TempDir(), "series")
+	if err != nil {
+		t.Fatal(err)
+	}
+	season, firstEpisode, secondEpisode := int32(1), int32(1), int32(2)
+	addEpisode := func(episodeNumber *int32) {
+		t.Helper()
+		_, err = store.CreateLibraryScan(ctx, folder, []LibraryScanItemInput{{
+			Path:              folder.Path + "/episode-" + strconv.Itoa(int(*episodeNumber)) + ".mkv",
+			DetectedMediaKind: "series",
+			SeasonNumber:      &season,
+			EpisodeNumber:     episodeNumber,
+			Imported:          true,
+			MediaItemID:       &item.ID,
+		}})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	addEpisode(&firstEpisode)
+	incomplete, err := store.GetMediaItem(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if incomplete.Status != "missing" {
+		t.Fatalf("incomplete series status = %q, want missing", incomplete.Status)
+	}
+	items, err := store.ListMediaItems(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listedStatus := ""
+	for _, listed := range items {
+		if listed.ID == item.ID {
+			listedStatus = listed.Status
+		}
+	}
+	if listedStatus != "missing" {
+		t.Fatalf("listed incomplete series status = %q, want missing", listedStatus)
+	}
+	missingItems, err := store.ListMissingMediaItems(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listedAsMissing := false
+	for _, missing := range missingItems {
+		listedAsMissing = listedAsMissing || missing.ID == item.ID
+	}
+	if !listedAsMissing {
+		t.Fatal("incomplete series was omitted from missing media items")
+	}
+
+	addEpisode(&secondEpisode)
+	complete, err := store.GetMediaItem(ctx, item.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if complete.Status != "downloaded" {
+		t.Fatalf("complete series status = %q, want downloaded", complete.Status)
 	}
 }
 

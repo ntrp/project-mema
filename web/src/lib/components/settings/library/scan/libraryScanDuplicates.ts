@@ -1,5 +1,5 @@
-import type { LibraryScanItem, MediaSearchResult } from '$lib/settings/types';
-import type { MatchDraft } from './libraryScanImport';
+import type { LibraryScanItem } from '$lib/settings/types';
+import { isSeriesKind, type MatchDraft } from './libraryScanImport';
 
 export interface DuplicateDraftState {
 	duplicate: boolean;
@@ -61,16 +61,19 @@ export function normalizeDuplicateDrafts(
 
 function duplicateValidationKey(item: LibraryScanItem, draft?: MatchDraft) {
 	if (!item.duplicateGroupId || !draft?.matched) return '';
-	const matchKey = duplicateMatchKey(item, draft.matched);
+	const matchKey = duplicateMatchKey(draft);
 	return matchKey ? `${item.duplicateGroupId}:${matchKey}` : '';
 }
 
-function duplicateMatchKey(item: LibraryScanItem, match: MediaSearchResult) {
-	if (match.id) return `media:${match.id}`;
-	if (!match.externalProvider || !match.externalId) return '';
-	let key = `external:${match.externalProvider}:${match.externalId}`.toLowerCase();
-	if (item.seasonNumber !== undefined && item.episodeNumber !== undefined) {
-		key += `:s${item.seasonNumber}e${item.episodeNumber}`;
+function duplicateMatchKey(draft: MatchDraft) {
+	const match = draft.matched;
+	if (!match) return '';
+	let episodeKey = '';
+	if (isSeriesKind(draft.mediaKind)) {
+		if (draft.seasonNumber === undefined || draft.episodeNumber === undefined) return '';
+		episodeKey = `:s${draft.seasonNumber}e${draft.episodeNumber}`;
 	}
-	return key;
+	if (match.id) return `media:${match.id}${episodeKey}`;
+	if (!match.externalProvider || !match.externalId) return '';
+	return `external:${match.externalProvider}:${match.externalId}${episodeKey}`.toLowerCase();
 }

@@ -11,7 +11,7 @@ import { duplicateDraftStatesForRows } from './libraryScanDuplicates';
 import {
 	effectiveDraftValue,
 	isSeriesKind,
-	scanItemGroupRows,
+	scanItemGroupRepresentative,
 	type MatchDraft
 } from './libraryScanImport';
 
@@ -74,8 +74,7 @@ export function importPayloadForSingleRow(
 	allRows: LibraryScanItem[] = [item]
 ): LibraryScanImportRequest {
 	const rowDraft = drafts[item.id];
-	const group = scanItemGroupRows(item, allRows);
-	const representative = group.find((row) => !row.imported && row.status === 'pending') ?? group[0];
+	const representative = scanItemGroupRepresentative(item, allRows);
 	const groupDraft = drafts[representative?.id] ?? rowDraft;
 	const draft = {
 		...groupDraft,

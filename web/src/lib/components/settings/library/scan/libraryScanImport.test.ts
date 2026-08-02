@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	canImportRows,
 	defaultQualityProfileId,
+	isDraftSelectableForImport,
 	type MatchDraft
 } from '$lib/components/settings/library/scan/libraryScanImport';
 import { applyEpisodeSeason } from '$lib/components/settings/library/scan/libraryScanBulk';
@@ -16,6 +17,20 @@ import {
 import type { LibraryScanItem, MediaSearchResult, MetadataProvider } from '$lib/settings/types';
 
 describe('library scan import payloads', () => {
+	it('requires season and episode numbers before selecting a series episode', () => {
+		const item = { id: 'episode', status: 'pending', imported: false } as LibraryScanItem;
+		const draft = movieDraft({
+			mediaKind: 'series',
+			seasonNumber: undefined,
+			episodeNumber: 1
+		});
+		expect(isDraftSelectableForImport(item, draft)).toBe(false);
+		draft.seasonNumber = 1;
+		expect(isDraftSelectableForImport(item, draft)).toBe(true);
+		draft.episodeNumber = undefined;
+		expect(isDraftSelectableForImport(item, draft)).toBe(false);
+	});
+
 	it('uses the footer quality profile when row draft has not been updated yet', () => {
 		const item = { id: 'item-1' } as LibraryScanItem;
 		const draft = movieDraft({ qualityProfileId: '' });
@@ -85,8 +100,14 @@ describe('library scan import payloads', () => {
 			minimumAvailability: 'released',
 			seriesType: 'standard'
 		} as const;
-		expect(initialMatchDraft(matchedItem('movie'), [], bulk).monitorMode).toBe('only_media');
-		expect(initialMatchDraft(matchedItem('series'), [], bulk).monitorMode).toBe('all_episodes');
+		expect(initialMatchDraft(matchedItem('movie'), [], bulk)).toMatchObject({
+			monitorMode: 'only_media',
+			selected: true
+		});
+		expect(initialMatchDraft(matchedItem('series'), [], bulk)).toMatchObject({
+			monitorMode: 'all_episodes',
+			selected: false
+		});
 	});
 
 	it('shows imported scan rows as matched even when rescans only carry media item links', () => {

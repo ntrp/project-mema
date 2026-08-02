@@ -256,25 +256,25 @@ func assignLibraryScanDuplicateGroups(inputs []storage.LibraryScanItemInput) {
 }
 
 func libraryScanDuplicateKey(input storage.LibraryScanItemInput) string {
+	episodeKey := ""
+	if input.DetectedMediaKind == "series" || input.DetectedMediaKind == "anime_series" {
+		if input.SeasonNumber == nil || input.EpisodeNumber == nil {
+			return ""
+		}
+		episodeKey = ":s" + int32String(*input.SeasonNumber) + "e" + int32String(*input.EpisodeNumber)
+	}
 	if input.MediaItemID != nil {
-		return "media:" + input.MediaItemID.String()
+		return "media:" + input.MediaItemID.String() + episodeKey
 	}
 	if input.MatchedExternalProvider != nil && input.MatchedExternalID != nil {
-		key := strings.ToLower(*input.MatchedExternalProvider + ":" + *input.MatchedExternalID)
-		if input.SeasonNumber != nil && input.EpisodeNumber != nil {
-			key += ":s" + int32String(*input.SeasonNumber) + "e" + int32String(*input.EpisodeNumber)
-		}
-		return key
+		return strings.ToLower(*input.MatchedExternalProvider+":"+*input.MatchedExternalID) + episodeKey
 	}
 	if input.DetectedTitle != "" {
 		key := input.DetectedMediaKind + ":" + normalizedMediaTitle(input.DetectedTitle)
 		if input.DetectedYear != nil {
 			key += ":" + int32String(*input.DetectedYear)
 		}
-		if input.SeasonNumber != nil && input.EpisodeNumber != nil {
-			key += ":s" + int32String(*input.SeasonNumber) + "e" + int32String(*input.EpisodeNumber)
-		}
-		return key
+		return key + episodeKey
 	}
 	return ""
 }

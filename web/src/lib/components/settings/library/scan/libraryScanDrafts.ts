@@ -53,7 +53,8 @@ export function initialMatchDraft(
 	const mediaKind = scanMediaKind(item);
 	const matched = matchFromScanItem(item);
 	return {
-		selected: Boolean(matched) && item.status === 'pending' && !item.imported,
+		selected:
+			Boolean(matched) && !isSeriesKind(mediaKind) && item.status === 'pending' && !item.imported,
 		query: item.matchedTitle ?? item.detectedTitle,
 		mediaKind,
 		metadataProviderId:

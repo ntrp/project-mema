@@ -1,13 +1,15 @@
 package storage
 
 import (
+	"context"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func moveMediaItemFiles(item MediaItem, newRoot string) error {
+func (s *SettingsStore) moveMediaItemFiles(ctx context.Context, item MediaItem, newRoot string) error {
 	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
 		return nil
 	}
@@ -22,17 +24,77 @@ func moveMediaItemFiles(item MediaItem, newRoot string) error {
 	if oldRoot == newRoot {
 		return nil
 	}
+	moves := make([]mediaFileMove, 0, len(item.FilePaths))
+	metadataMoves := make([]mediaFileMove, 0, len(item.MetadataFilePaths))
+	allMoves := make([]mediaFileMove, 0, len(item.FilePaths)+len(item.MetadataFilePaths))
+	filePaths := make(map[string]struct{}, len(item.FilePaths))
+	for _, path := range item.FilePaths {
+		filePaths[filepath.Clean(strings.TrimSpace(path))] = struct{}{}
+	}
 	for _, source := range mediaItemMovePaths(item) {
 		target, err := movedMediaFileTarget(oldRoot, newRoot, source)
 		if err != nil {
 			return err
 		}
-		if err := moveFile(source, target); err != nil {
-			return err
+		move := mediaFileMove{Source: source, Destination: target}
+		allMoves = append(allMoves, move)
+		if _, ok := filePaths[source]; ok {
+			moves = append(moves, move)
+		} else {
+			metadataMoves = append(metadataMoves, move)
 		}
+	}
+	moved := make([]mediaFileMove, 0, len(allMoves))
+	for _, move := range allMoves {
+		if err := moveFile(move.Source, move.Destination); err != nil {
+			return errors.Join(err, rollbackMediaItemMoves(moved))
+		}
+		moved = append(moved, move)
+	}
+	if err := s.moveMediaFileRecords(ctx, item.ID, moves, metadataMoves); err != nil {
+		return errors.Join(err, rollbackMediaItemMoves(moved))
 	}
 	removeEmptyMediaDirs(oldRoot)
 	return nil
+}
+
+func rollbackMediaItemMoves(moves []mediaFileMove) error {
+	var result error
+	for index := len(moves) - 1; index >= 0; index-- {
+		result = errors.Join(result, moveFile(moves[index].Destination, moves[index].Source))
+	}
+	return result
+}
+
+func mediaItemAtRoot(item MediaItem, newRoot string) (MediaItem, error) {
+	if item.MediaFolderPath == nil || strings.TrimSpace(*item.MediaFolderPath) == "" {
+		item.MediaFolderPath = &newRoot
+		return item, nil
+	}
+	oldRoot := *item.MediaFolderPath
+	movePaths := func(paths []string) ([]string, error) {
+		moved := make([]string, 0, len(paths))
+		for _, source := range paths {
+			target, err := movedMediaFileTarget(oldRoot, newRoot, source)
+			if err != nil {
+				return nil, err
+			}
+			moved = append(moved, target)
+		}
+		return moved, nil
+	}
+	filePaths, err := movePaths(item.FilePaths)
+	if err != nil {
+		return MediaItem{}, err
+	}
+	metadataPaths, err := movePaths(item.MetadataFilePaths)
+	if err != nil {
+		return MediaItem{}, err
+	}
+	item.MediaFolderPath = &newRoot
+	item.FilePaths = filePaths
+	item.MetadataFilePaths = metadataPaths
+	return item, nil
 }
 
 func mediaItemMovePaths(item MediaItem) []string {
@@ -86,9 +148,12 @@ func moveFile(source string, target string) error {
 		return nil
 	}
 	if err := copyFile(source, target); err != nil {
-		return err
+		return errors.Join(err, os.Remove(target))
 	}
-	return os.Remove(source)
+	if err := os.Remove(source); err != nil {
+		return errors.Join(err, os.Remove(target))
+	}
+	return nil
 }
 
 func copyFile(source string, target string) error {
