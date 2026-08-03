@@ -1,4 +1,3 @@
-import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import LibraryScanImportRow from '$lib/components/settings/library/scan/LibraryScanImportRow.svelte';
@@ -52,48 +51,42 @@ describe('rendered library settings (SCN-LIBRARY-004)', () => {
 			removeDuplicate: false
 		} as MatchDraft;
 
-		const table = render(LibraryScanImportTable, {
-			props: {
-				scan: {
-					id: 'scan-1',
-					folderPath: '/downloads',
-					status: 'completed',
-					totalFiles: 1,
-					items: [item]
-				} as LibraryScan,
-				qualityProfiles: profiles,
-				metadataProviders: providers,
-				loading: false,
-				onSearchMatch: vi.fn(),
-				onImport: vi.fn(),
-				onResetImport: vi.fn()
-			}
-		});
-		const row = render(LibraryScanImportRow, {
-			props: {
-				item,
+		const table = renderWithTooltip(LibraryScanImportTable, {
+			scan: {
+				id: 'scan-1',
 				folderPath: '/downloads',
-				draft,
-				qualityProfiles: profiles,
-				metadataProviders: providers,
-				onSearch: vi.fn(),
-				onSelect: vi.fn(),
-				onProviderChange: vi.fn(),
-				onResetImport: vi.fn()
-			}
+				status: 'completed',
+				totalFiles: 1,
+				items: [item]
+			} as LibraryScan,
+			qualityProfiles: profiles,
+			metadataProviders: providers,
+			loading: false,
+			onSearchMatch: vi.fn(),
+			onImport: vi.fn(),
+			onResetImport: vi.fn()
 		});
-		const unmatchedRow = render(LibraryScanImportRow, {
-			props: {
-				item,
-				folderPath: '/downloads',
-				draft: { ...draft, matched: undefined, selected: false, searched: false },
-				qualityProfiles: profiles,
-				metadataProviders: providers,
-				onSearch: vi.fn(),
-				onSelect: vi.fn(),
-				onProviderChange: vi.fn(),
-				onResetImport: vi.fn()
-			}
+		const row = renderWithTooltip(LibraryScanImportRow, {
+			item,
+			folderPath: '/downloads',
+			draft,
+			qualityProfiles: profiles,
+			metadataProviders: providers,
+			onSearch: vi.fn(),
+			onSelect: vi.fn(),
+			onProviderChange: vi.fn(),
+			onResetImport: vi.fn()
+		});
+		const unmatchedRow = renderWithTooltip(LibraryScanImportRow, {
+			item,
+			folderPath: '/downloads',
+			draft: { ...draft, matched: undefined, selected: false, searched: false },
+			qualityProfiles: profiles,
+			metadataProviders: providers,
+			onSearch: vi.fn(),
+			onSelect: vi.fn(),
+			onProviderChange: vi.fn(),
+			onResetImport: vi.fn()
 		});
 
 		expect(table.body).toContain('1 files');
