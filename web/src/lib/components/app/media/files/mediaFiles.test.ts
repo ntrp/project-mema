@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { fileRow, mediaFileGroups } from '$lib/components/app/media/files/mediaFiles';
-import {
-	episodeKey,
-	missingRow,
-	seasonNumberFromName
-} from '$lib/components/app/media/files/mediaFileMissing';
+import { episodeKey, missingRow } from '$lib/components/app/media/files/mediaFileMissing';
 import { qualityInfo } from '$lib/components/app/media/files/mediaFileParsing';
 import type { MediaItem } from '$lib/settings/types';
 
@@ -74,11 +70,12 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 			...movie,
 			type: 'serie',
 			title: 'Scenario Series',
-			filePaths: ['/tv/Scenario/S01E01.720p.Dual.mkv'],
+			filePaths: ['/tv/Scenario/S04E01.720p.Dual.mkv'],
 			mediaFolderPath: '/tv/Scenario',
 			seasons: [
 				{
-					name: 'Season 1',
+					name: 'The Final Season',
+					seasonNumber: 4,
 					episodes: [
 						{ episodeNumber: 1, name: 'Pilot' },
 						{ episodeNumber: 2, name: 'Second' }
@@ -89,7 +86,7 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 
 		const groups = mediaFileGroups(series);
 
-		expect(groups[0].key).toBe('season-1');
+		expect(groups[0].key).toBe('season-4');
 		expect(groups[0].rows.map((row) => [row.exists, row.episodeNumber, row.episodeTitle])).toEqual([
 			[true, 1, undefined],
 			[false, 2, 'Second']
@@ -97,10 +94,7 @@ describe('media file display models (SCN-MEDIA-001)', () => {
 		expect(groups[0].rows[0].languages).toBe('Dual');
 	});
 
-	it('parses season numbers and episode keys', () => {
-		expect(seasonNumberFromName('Specials')).toBe(0);
-		expect(seasonNumberFromName('Season 12')).toBe(12);
-		expect(seasonNumberFromName('No number')).toBeUndefined();
+	it('creates episode keys', () => {
 		expect(episodeKey(2, 3)).toBe('2:3');
 	});
 

@@ -1,4 +1,3 @@
-import { seasonNumberFromName } from '$lib/components/app/media/files/mediaFileMissing';
 import type { MediaMetadataDetails, MediaMetadataSeason } from '$lib/settings/types';
 
 export interface SeasonOption {
@@ -9,10 +8,11 @@ export interface SeasonOption {
 
 export function seasonOptions(details?: MediaMetadataDetails): SeasonOption[] {
 	return (details?.seasons ?? [])
-		.map((season, index) => {
-			const number = seasonNumberFromName(season.name) ?? index + 1;
-			return { value: String(number), label: season.name, season };
-		})
+		.map((season) => ({
+			value: String(season.seasonNumber),
+			label: season.name,
+			season
+		}))
 		.sort((left, right) => Number(left.value) - Number(right.value));
 }
 

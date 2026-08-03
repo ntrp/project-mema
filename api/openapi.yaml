@@ -6010,9 +6010,13 @@ components:
       additionalProperties: false
       required:
         - name
+        - seasonNumber
       properties:
         name:
           type: string
+        seasonNumber:
+          type: integer
+          format: int32
         episodeCount:
           type: integer
           format: int32

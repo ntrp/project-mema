@@ -4122,6 +4122,7 @@ type MediaMetadataSeason struct {
 	Monitored    *bool                   `json:"monitored,omitempty"`
 	Name         string                  `json:"name"`
 	PosterPath   *string                 `json:"posterPath,omitempty"`
+	SeasonNumber int32                   `json:"seasonNumber"`
 }
 
 // MediaMonitorMode defines model for MediaMonitorMode.

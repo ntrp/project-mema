@@ -53,6 +53,7 @@ const seasons: SeasonOption[] = [
 		label: 'Season 1',
 		season: {
 			name: 'Season 1',
+			seasonNumber: 1,
 			episodeCount: 3,
 			episodes: episodes()
 		}

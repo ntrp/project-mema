@@ -53,11 +53,3 @@ export function missingRow(
 export function episodeKey(season?: number, episode?: number) {
 	return `${season ?? 0}:${episode ?? 0}`;
 }
-
-export function seasonNumberFromName(name: string) {
-	if (name.trim().toLowerCase() === 'specials') {
-		return 0;
-	}
-	const match = /(\d+)/.exec(name);
-	return match ? Number(match[1]) : undefined;
-}

@@ -92,8 +92,8 @@
 		<div class="grid gap-2.5">
 			<MediaRootPanel {item} {libraryFolders} {canManage} {onSaveOptions} />
 			<h3 class="m-0 text-xl font-semibold text-foreground">Seasons</h3>
-			{#each seasons as season, index (season.name)}
-				{@const seasonRows = seasonEpisodeRows(season, index, mediaRows, activities, item.id)}
+			{#each seasons as season (season.seasonNumber)}
+				{@const seasonRows = seasonEpisodeRows(season, mediaRows, activities, item.id)}
 				{@const summary = seasonFileSummary(seasonRows)}
 				<MediaSeasonPanel summary={summary.label} size={summary.size} tone={summary.tone}>
 					{#snippet title()}
@@ -113,7 +113,7 @@
 							{canManage}
 							busy={searchingItemId === item.id || summary.hasActive}
 							onAutoSearch={() => onAutoSearch(item)}
-							onManualSearch={() => (searchContext = seasonReleaseSearchContext(season, index))}
+							onManualSearch={() => (searchContext = seasonReleaseSearchContext(season))}
 						/>
 					{/snippet}
 					{#if seasonRows.length > 0}

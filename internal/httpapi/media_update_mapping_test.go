@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"media-manager/internal/metadata"
 	"media-manager/internal/storage"
 )
 
@@ -15,6 +16,7 @@ func TestSCNMedia007StorageMediaSeasonsMapsNestedMonitorState(t *testing.T) {
 	airDate := "2026-01-02"
 	values := []MediaMetadataSeason{{
 		Name:         "Season 1",
+		SeasonNumber: 1,
 		EpisodeCount: &episodeCount,
 		AirDate:      &airDate,
 		Monitored:    &seasonMonitored,
@@ -32,7 +34,7 @@ func TestSCNMedia007StorageMediaSeasonsMapsNestedMonitorState(t *testing.T) {
 		t.Fatalf("seasons = %#v", seasons)
 	}
 	season := (*seasons)[0]
-	if season.Name != "Season 1" || !season.Monitored || season.EpisodeCount == nil {
+	if season.Name != "Season 1" || season.SeasonNumber != 1 || !season.Monitored || season.EpisodeCount == nil {
 		t.Fatalf("season = %#v", season)
 	}
 	if len(season.Episodes) != 1 || season.Episodes[0].Monitored {
@@ -40,6 +42,17 @@ func TestSCNMedia007StorageMediaSeasonsMapsNestedMonitorState(t *testing.T) {
 	}
 	if storageMediaSeasons(nil) != nil {
 		t.Fatal("nil season pointer should stay nil")
+	}
+}
+
+func TestMetadataDetailsResponseMapsSeasonNumber(t *testing.T) {
+	response := metadataDetailsResponse(metadata.Details{Seasons: []metadata.Season{{
+		Name:         "The Final Season",
+		SeasonNumber: 4,
+	}}})
+
+	if response.Seasons == nil || len(*response.Seasons) != 1 || (*response.Seasons)[0].SeasonNumber != 4 {
+		t.Fatalf("seasons = %#v", response.Seasons)
 	}
 }
 

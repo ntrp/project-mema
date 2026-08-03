@@ -1,10 +1,6 @@
 import { activityForEpisode } from '$lib/components/app/activity/activityQueue';
 import type { MediaFileRow } from '$lib/components/app/media/files/mediaFiles';
-import {
-	episodeKey,
-	missingRow,
-	seasonNumberFromName
-} from '$lib/components/app/media/files/mediaFileMissing';
+import { episodeKey, missingRow } from '$lib/components/app/media/files/mediaFileMissing';
 import type { ReleaseSearchContext } from '$lib/components/app/media/release-search/releaseSearchQuery';
 import type { SeasonEpisodeFile } from '$lib/components/app/media/series/mediaSeasonSummary';
 import type {
@@ -25,11 +21,8 @@ export function seasonMonitored(season: MediaMetadataSeason) {
 	return (season.episodes ?? []).some((episode) => episode.monitored) || season.monitored === true;
 }
 
-export function seasonReleaseSearchContext(
-	season: MediaMetadataSeason,
-	index: number
-): ReleaseSearchContext {
-	return { type: 'season', seasonNumber: seasonNumberFromName(season.name) ?? index + 1 };
+export function seasonReleaseSearchContext(season: MediaMetadataSeason): ReleaseSearchContext {
+	return { type: 'season', seasonNumber: season.seasonNumber };
 }
 
 export function episodeReleaseSearchContext(row: MediaFileRow): ReleaseSearchContext {
@@ -38,13 +31,12 @@ export function episodeReleaseSearchContext(row: MediaFileRow): ReleaseSearchCon
 
 export function seasonEpisodeRows(
 	season: MediaMetadataSeason,
-	seasonIndex: number,
 	mediaRows: MediaFileRow[],
 	activities: DownloadActivity[],
 	itemId: string
 ): SeasonEpisodeRow[] {
 	return (season.episodes ?? []).map((episode) => {
-		const row = episodeFileRow(season, seasonIndex, episode, mediaRows);
+		const row = episodeFileRow(season, episode, mediaRows);
 		return {
 			episode,
 			row,
@@ -55,11 +47,10 @@ export function seasonEpisodeRows(
 
 function episodeFileRow(
 	season: MediaMetadataSeason,
-	seasonIndex: number,
 	episode: MediaMetadataEpisode,
 	mediaRows: MediaFileRow[]
 ) {
-	const seasonNumber = seasonNumberFromName(season.name) ?? seasonIndex + 1;
+	const seasonNumber = season.seasonNumber;
 	return (
 		mediaRows.find(
 			(row) =>

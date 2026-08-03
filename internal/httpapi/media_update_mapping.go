@@ -10,6 +10,7 @@ func storageMediaSeasons(values *[]MediaMetadataSeason) *[]storage.MediaSeason {
 	for _, value := range *values {
 		items = append(items, storage.MediaSeason{
 			Name:         value.Name,
+			SeasonNumber: value.SeasonNumber,
 			EpisodeCount: value.EpisodeCount,
 			AirDate:      value.AirDate,
 			PosterPath:   value.PosterPath,

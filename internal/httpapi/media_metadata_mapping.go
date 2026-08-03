@@ -26,6 +26,7 @@ func metadataDetailsResponse(details metadata.Details) MediaMetadataDetails {
 		}
 		seasons = append(seasons, MediaMetadataSeason{
 			Name:         season.Name,
+			SeasonNumber: season.SeasonNumber,
 			EpisodeCount: season.EpisodeCount,
 			AirDate:      season.AirDate,
 			PosterPath:   season.PosterPath,

@@ -72,6 +72,7 @@ describe('rendered media detail area (SCN-MEDIA-004)', () => {
 				seasons: [
 					{
 						name: 'Season 1',
+						seasonNumber: 1,
 						episodeCount: 1,
 						episodes: [{ episodeNumber: 1, name: 'Pilot', monitored: true }]
 					}

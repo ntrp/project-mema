@@ -174,6 +174,7 @@ func mediaSeasonResponses(values []storage.MediaSeason) []MediaMetadataSeason {
 		episodes := mediaEpisodeResponses(value.Episodes)
 		items = append(items, MediaMetadataSeason{
 			Name:         value.Name,
+			SeasonNumber: value.SeasonNumber,
 			EpisodeCount: value.EpisodeCount,
 			AirDate:      value.AirDate,
 			PosterPath:   value.PosterPath,

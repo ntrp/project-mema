@@ -8,7 +8,8 @@ import { seasonFileSummary } from '$lib/components/app/media/series/mediaSeasonS
 import {
 	episodeTitle,
 	seasonEpisodeRows,
-	seasonMonitored
+	seasonMonitored,
+	seasonReleaseSearchContext
 } from '$lib/components/app/media/series/mediaSeriesRows';
 import {
 	episodeLabel,
@@ -55,19 +56,19 @@ describe('series helper projections (SCN-MEDIA-004)', () => {
 	it('creates episode rows with existing files, missing fallbacks, and active activity', () => {
 		const rows = seasonEpisodeRows(
 			{
-				name: 'Season 2',
+				name: 'The Final Season',
+				seasonNumber: 4,
 				episodes: [
 					{ episodeNumber: 1, name: 'Start', monitored: false },
 					{ episodeNumber: 2, name: 'Next', monitored: true }
 				]
 			},
-			0,
 			[
 				{
 					exists: true,
-					seasonNumber: 2,
+					seasonNumber: 4,
 					episodeNumber: 1,
-					relativePath: 'S02E01.mkv'
+					relativePath: 'S04E01.mkv'
 				} as MediaFileRow
 			],
 			[
@@ -76,7 +77,7 @@ describe('series helper projections (SCN-MEDIA-004)', () => {
 					mediaItemId: 'media-1',
 					mediaTitle: 'Scenario Series',
 					mediaType: 'serie',
-					releaseTitle: 'Scenario.Series.S02E02.1080p.WEB-DL',
+					releaseTitle: 'Scenario.Series.S04E02.1080p.WEB-DL',
 					indexerName: 'Indexer',
 					downloadClientName: 'Client',
 					downloadUrl: 'https://example.test/download',
@@ -86,6 +87,10 @@ describe('series helper projections (SCN-MEDIA-004)', () => {
 			'media-1'
 		);
 
+		expect(seasonReleaseSearchContext({ name: 'The Final Season', seasonNumber: 4 })).toEqual({
+			type: 'season',
+			seasonNumber: 4
+		});
 		expect(
 			rows.map((row) => [row.row.exists, row.row.episodeNumber, row.activityStatus?.status])
 		).toEqual([
@@ -100,9 +105,13 @@ describe('series helper projections (SCN-MEDIA-004)', () => {
 	it('builds season and episode controls from metadata details', () => {
 		const details = {
 			seasons: [
-				{ name: 'Season 10', episodes: [] },
-				{ name: 'Specials', episodes: [{ episodeNumber: 1, name: 'Bonus' }] },
-				{ name: 'Season 2', monitored: true, episodes: [] }
+				{ name: 'Season 10', seasonNumber: 10, episodes: [] },
+				{
+					name: 'Specials',
+					seasonNumber: 0,
+					episodes: [{ episodeNumber: 1, name: 'Bonus' }]
+				},
+				{ name: 'Season 2', seasonNumber: 2, monitored: true, episodes: [] }
 			]
 		} as MediaMetadataDetails;
 		const options = seasonOptions(details);

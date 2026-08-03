@@ -3211,6 +3211,8 @@ export interface components {
 		MediaMetadataSeason: {
 			name: string;
 			/** Format: int32 */
+			seasonNumber: number;
+			/** Format: int32 */
 			episodeCount?: number;
 			airDate?: string;
 			posterPath?: string;

@@ -10,11 +10,7 @@ import {
 	fileName,
 	relativePath
 } from '$lib/components/app/media/files/mediaFilePath';
-import {
-	episodeKey,
-	missingRow,
-	seasonNumberFromName
-} from '$lib/components/app/media/files/mediaFileMissing';
+import { episodeKey, missingRow } from '$lib/components/app/media/files/mediaFileMissing';
 import {
 	audioInfo,
 	matchToken,
@@ -31,11 +27,7 @@ export type {
 	MediaFileGroup,
 	MediaFileRow
 } from '$lib/components/app/media/file-data/mediaFileRows';
-export {
-	episodeKey,
-	missingRow,
-	seasonNumberFromName
-} from '$lib/components/app/media/files/mediaFileMissing';
+export { episodeKey, missingRow } from '$lib/components/app/media/files/mediaFileMissing';
 
 export function mediaFileGroups(
 	item: MediaItem,
@@ -61,8 +53,8 @@ function seriesGroups(
 		rows.map((row) => [episodeKey(row.seasonNumber, row.episodeNumber), row])
 	);
 	const groups = (item.seasons ?? [])
-		.map((season, index) => {
-			const seasonNumber = seasonNumberFromName(season.name) ?? index + 1;
+		.map((season) => {
+			const seasonNumber = season.seasonNumber;
 			const rows = (season.episodes ?? []).map(
 				(episode) =>
 					byEpisode.get(episodeKey(seasonNumber, episode.episodeNumber)) ??

@@ -320,6 +320,7 @@ export interface MediaMetadataEpisode {
 
 export interface MediaMetadataSeason {
 	name: string;
+	seasonNumber: number;
 	episodeCount?: number;
 	airDate?: string;
 	posterPath?: string;
