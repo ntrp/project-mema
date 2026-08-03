@@ -86,7 +86,7 @@ func searchReleasesWithProgress(
 	}
 	if shouldFallbackEpisodeToSeason(item, criteria, profile, formats, languages, releases) {
 		publishReleaseSearchProgress(progress, "No matching episode release found; searching the whole season")
-		seasonCriteria := seasonFallbackCriteria(criteria)
+		seasonCriteria := withSeasonName(item, seasonFallbackCriteria(criteria))
 		seasonQueries := decisions.SearchQueriesForCriteria(seasonCriteria, "")
 		seasonReleases, seasonErrors, err := searchReleaseQueries(ctx, releaseQuerySearch{
 			settings:       settings,
@@ -106,6 +106,25 @@ func searchReleasesWithProgress(
 		}
 		releases = append(releases, seasonReleases...)
 		searchErrors = append(searchErrors, seasonErrors...)
+	}
+	if !manual && criteria.Kind == "serie" {
+		releases = dedupeReleaseCandidates(item, profile, formats, languages, releases)
+		missingBranches := automaticMissingEpisodeBranches(item, profile, formats, languages, releases)
+		if len(missingBranches) > 0 {
+			publishReleaseSearchProgress(progress, "Searching %d missing episode(s) individually", len(missingBranches))
+		}
+		for _, branch := range missingBranches {
+			episodeReleases, episodeErrors, err := searchReleaseQueries(ctx, releaseQuerySearch{
+				settings: settings, indexerService: indexerService, limiter: limiter, configs: configs,
+				item: item, criteria: branch.criteria, queries: branch.queries, cacheSettings: cacheSettings,
+				eventBroker: eventBroker, manual: false, progress: progress,
+			})
+			if err != nil {
+				return nil, episodeErrors, err
+			}
+			releases = append(releases, episodeReleases...)
+			searchErrors = append(searchErrors, episodeErrors...)
+		}
 	}
 	releases = dedupeReleaseCandidates(item, profile, formats, languages, releases)
 	sortReleaseCandidates(item, profile, formats, languages, releases)

@@ -8,6 +8,7 @@ import (
 var (
 	seasonEpisodePattern   = regexp.MustCompile(`(?i)\bs(\d{1,2})(?:e(\d{1,3}))?\b`)
 	absoluteEpisodePattern = regexp.MustCompile(`(?i)(?:^|[\s._-])(?:e|ep|episode)?[\s._-]?(\d{1,3})(?:v\d+)?(?:[\s._-]|$)`)
+	seriesPackPattern      = regexp.MustCompile(`(?i)\b(?:the[\s._-]+)?complete[\s._-]+(?:tv[\s._-]+)?series\b`)
 )
 
 func releaseSeriesTitle(title string) string {
@@ -16,10 +17,16 @@ func releaseSeriesTitle(title string) string {
 		index = match[0]
 	} else if match := absoluteEpisodePattern.FindStringIndex(title); match != nil && match[0] > 0 {
 		index = match[0]
+	} else if match := seriesPackPattern.FindStringIndex(title); match != nil && match[0] > 0 {
+		index = match[0]
 	} else if year := yearPattern.FindStringIndex(title); year != nil && year[0] > 0 {
 		index = year[0]
 	}
 	return cleanReleaseResourceTitle(title[:index])
+}
+
+func IsSeriesPackTitle(title string) bool {
+	return seriesPackPattern.MatchString(title)
 }
 
 func detectSeasonEpisode(title string) (*int32, *int32) {

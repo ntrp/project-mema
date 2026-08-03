@@ -89,12 +89,16 @@ func (s *Server) EnqueueMediaAutomaticSearch(w http.ResponseWriter, r *http.Requ
 		writeSettingsError(w, err, "Could not find media item")
 		return
 	}
-	jobID, err := s.jobs.EnqueueAutoSearchDownload(r.Context(), mediaItemID)
+	jobID, inserted, err := s.jobs.EnqueueAutoSearchDownload(r.Context(), mediaItemID)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "automatic_search_enqueue_failed", "Could not enqueue automatic search")
 		s.recordEvent(r.Context(), eventSeverityError, "media", "Automatic search enqueue failed", map[string]any{"mediaItemId": mediaItemID.String(), "error": err.Error()})
 		return
 	}
-	s.recordEvent(r.Context(), eventSeverityInfo, "media", "Automatic search queued", map[string]any{"mediaItemId": mediaItemID.String(), "jobId": jobID})
-	writeJSON(w, http.StatusAccepted, JobEnqueueResponse{JobId: jobID, Message: "Automatic search queued"})
+	message := "Automatic search queued"
+	if !inserted {
+		message = "Automatic search already active"
+	}
+	s.recordEvent(r.Context(), eventSeverityInfo, "media", message, map[string]any{"mediaItemId": mediaItemID.String(), "jobId": jobID})
+	writeJSON(w, http.StatusAccepted, JobEnqueueResponse{JobId: jobID, Message: message})
 }

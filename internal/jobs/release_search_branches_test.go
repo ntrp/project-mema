@@ -24,8 +24,26 @@ func TestReleaseSearchBranchesExpandsMonitoredSeasons(t *testing.T) {
 	if len(branches) != 1 {
 		t.Fatalf("len(branches) = %d, want 1", len(branches))
 	}
-	if branches[0].criteria.Kind != "season" || *branches[0].criteria.SeasonNumber != 1 {
+	if branches[0].criteria.Kind != "season" || *branches[0].criteria.SeasonNumber != 1 || branches[0].criteria.SeasonName != "" {
 		t.Fatalf("branch criteria = %#v, want season 1", branches[0].criteria)
+	}
+}
+
+func TestReleaseSearchBranchesPrioritizesStoredSeasonName(t *testing.T) {
+	item := storage.MediaItem{
+		Type:  "serie",
+		Title: "Attack on Titan",
+		MediaMetadataSnapshot: storage.MediaMetadataSnapshot{Seasons: []storage.MediaSeason{{
+			Name:         "The Final Season",
+			SeasonNumber: 4,
+		}}},
+	}
+	branches := releaseSearchBranches(item, decisions.SearchCriteriaForQuery(item, "Attack on Titan s4"), "Attack on Titan s4")
+	if len(branches) != 1 || branches[0].criteria.SeasonName != "The Final Season" {
+		t.Fatalf("branch = %#v, want stored season name", branches)
+	}
+	if got := branches[0].queries[0]; got != "Attack on Titan The Final Season" {
+		t.Fatalf("first query = %q, want stored season name", got)
 	}
 }
 

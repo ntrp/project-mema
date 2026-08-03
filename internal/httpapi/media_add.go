@@ -264,6 +264,6 @@ func (s *Server) enqueueAutomaticSearch(ctx context.Context, items []storage.Med
 		return
 	}
 	for _, item := range items {
-		_, _ = s.jobs.EnqueueAutoSearchDownload(ctx, item.ID)
+		_, _, _ = s.jobs.EnqueueAutoSearchDownload(ctx, item.ID)
 	}
 }

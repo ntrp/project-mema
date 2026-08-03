@@ -43,6 +43,7 @@ type ReleaseSearchCriteria struct {
 	Year          *int32
 	SeasonID      *uuid.UUID
 	EpisodeID     *uuid.UUID
+	SeasonName    string
 	SeasonNumber  *int32
 	EpisodeNumber *int32
 }
@@ -91,17 +92,29 @@ func SearchQueriesForCriteria(criteria ReleaseSearchCriteria, original string) [
 		}
 		queries = append(queries, value)
 	}
-	addQuery(original)
 	titles := append([]string{criteria.Title}, criteria.Aliases...)
 	switch criteria.Kind {
 	case "season":
 		if criteria.SeasonNumber != nil {
-			for _, title := range titles {
-				addQuery(fmt.Sprintf("%s s%d", title, *criteria.SeasonNumber))
-				addQuery(fmt.Sprintf("%s S%s", title, padded(*criteria.SeasonNumber, 2)))
+			variants := []string{criteria.SeasonName,
+				fmt.Sprintf("season %s", padded(*criteria.SeasonNumber, 2)),
+				fmt.Sprintf("season %d", *criteria.SeasonNumber),
+				fmt.Sprintf("S%s", padded(*criteria.SeasonNumber, 2)),
+				fmt.Sprintf("s%d", *criteria.SeasonNumber),
+			}
+			for _, variant := range variants {
+				for _, title := range titles {
+					addQuery(fmt.Sprintf("%s %s", title, variant))
+				}
 			}
 		}
+		addQuery(original)
+		for _, title := range titles {
+			addQuery(fmt.Sprintf("%s seasons", title))
+			addQuery(fmt.Sprintf("%s season", title))
+		}
 	case "episode":
+		addQuery(original)
 		if criteria.SeasonNumber != nil && criteria.EpisodeNumber != nil {
 			for _, title := range titles {
 				addQuery(fmt.Sprintf("%s s%de%d", title, *criteria.SeasonNumber, *criteria.EpisodeNumber))
@@ -114,6 +127,7 @@ func SearchQueriesForCriteria(criteria ReleaseSearchCriteria, original string) [
 			}
 		}
 	default:
+		addQuery(original)
 		for _, title := range criteria.Aliases {
 			addQuery(title)
 		}
@@ -229,6 +243,7 @@ func evaluateParsedRelease(
 	details = append(details, languageWarnings...)
 	upgradeDetails, upgradeReject := upgradeDecisionDetails(
 		item,
+		criteria,
 		context.Profile,
 		context.Formats,
 		score,

@@ -14,15 +14,13 @@ type currentReleaseState struct {
 
 func upgradeDecisionDetails(
 	item storage.MediaItem,
+	criteria ReleaseSearchCriteria,
 	profile *storage.MediaProfile,
 	formats []storage.CustomFormat,
 	qualityScore int32,
 	customFormatScore int32,
 ) ([]string, string) {
-	if len(item.FilePaths) == 0 {
-		return []string{"No current file score is available."}, ""
-	}
-	current, ok := currentReleaseStateForItem(item, profile, formats)
+	current, ok := currentReleaseStateForItem(item, criteria, profile, formats)
 	if !ok || current.qualityID == "" {
 		return []string{"No current file score is available."}, ""
 	}
@@ -67,12 +65,16 @@ func upgradeDecisionDetails(
 
 func currentReleaseStateForItem(
 	item storage.MediaItem,
+	criteria ReleaseSearchCriteria,
 	profile *storage.MediaProfile,
 	formats []storage.CustomFormat,
 ) (currentReleaseState, bool) {
 	best := currentReleaseState{}
 	found := false
 	for _, path := range item.FilePaths {
+		if !currentFileMatchesCriteria(item, path, criteria) {
+			continue
+		}
 		parsed := ParseReleaseFileName(path)
 		qualityScore := profileQualityScore(parsed.QualityID, profile)
 		customScore, _ := customFormatScore(parsed, profile, formats)
@@ -88,6 +90,20 @@ func currentReleaseStateForItem(
 		}
 	}
 	return best, found
+}
+
+func currentFileMatchesCriteria(item storage.MediaItem, path string, criteria ReleaseSearchCriteria) bool {
+	if criteria.Kind != "episode" {
+		return true
+	}
+	for _, fact := range item.FileFacts {
+		if fact.FilePath == path && fact.EpisodeID != nil && criteria.EpisodeID != nil {
+			return *fact.EpisodeID == *criteria.EpisodeID
+		}
+	}
+	parsed := ParseReleaseFileName(path)
+	return sameInt32(criteria.SeasonNumber, parsed.SeasonNumber) &&
+		sameInt32(criteria.EpisodeNumber, parsed.EpisodeNumber)
 }
 
 func reachedQualityTarget(current currentReleaseState, profile *storage.MediaProfile) bool {

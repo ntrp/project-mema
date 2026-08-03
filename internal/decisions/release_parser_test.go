@@ -82,6 +82,13 @@ func TestSCNMedia002ParseReleaseFileNameExtractsReleaseMetadata(t *testing.T) {
 	}
 }
 
+func TestCompleteSeriesPackKeepsOnlyTheSeriesTitle(t *testing.T) {
+	parsed := ParseReleaseFileName("Death Note The Complete TV Series (2006-2007) 1080p BluRay")
+	if !IsSeriesPackTitle(parsed.ReleaseTitle) || parsed.SeriesTitle != "Death Note" {
+		t.Fatalf("parsed=%#v", parsed)
+	}
+}
+
 func int32Pointer(value int32) *int32 {
 	return &value
 }

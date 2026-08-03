@@ -42,6 +42,45 @@ func TestReleaseUpgradePolicyStopsAtQualityTarget(t *testing.T) {
 	requireReleaseDecisionDetail(t, match, "quality upgrade target")
 }
 
+func TestReleaseUpgradePolicyScopesCurrentFileToRequestedEpisode(t *testing.T) {
+	season, episode := int32(4), int32(1)
+	target := "bluray-1080p"
+	profile := storage.MediaProfile{
+		QualityIDs:            []string{"webdl-1080p", "bluray-1080p"},
+		UpgradesAllowed:       true,
+		UpgradeUntilQualityID: &target,
+	}
+	item := storage.MediaItem{
+		Type:      "serie",
+		Title:     "Attack on Titan",
+		FilePaths: []string{"/media/Attack.on.Titan.S01E01.1080p.BluRay.mkv"},
+	}
+	release := storage.ReleaseCandidate{
+		Title:            "Attack.on.Titan.S04E01.1080p.DSNP.WEB-DL.x264-AndreMor",
+		SearchKind:       "episode",
+		RequestedSeason:  &season,
+		RequestedEpisode: &episode,
+	}
+
+	match := EvaluateReleaseMatchWithContext(item, release, &profile, nil)
+	if match.Severity != "info" {
+		t.Fatalf("expected missing episode release to be accepted, got %q: %v", match.Severity, match.Details)
+	}
+	requireReleaseDecisionDetail(t, match, "No current file score")
+
+	item.FilePaths = append(item.FilePaths, "/media/Attack.on.Titan.S04E01.1080p.BluRay.mkv")
+	match = EvaluateReleaseMatchWithContext(item, release, &profile, nil)
+	requireBlockedRelease(t, match)
+	requireReleaseDecisionDetail(t, match, "quality upgrade target")
+
+	episodeID := uuid.New()
+	release.EpisodeID = &episodeID
+	item.FilePaths = []string{"/media/Attack.on.Titan.Final.Chapter.1080p.BluRay.mkv"}
+	item.FileFacts = []storage.MediaFileFact{{FilePath: item.FilePaths[0], EpisodeID: &episodeID}}
+	match = EvaluateReleaseMatchWithContext(item, release, &profile, nil)
+	requireBlockedRelease(t, match)
+}
+
 func TestReleaseUpgradePolicyRequiresCustomFormatIncrement(t *testing.T) {
 	formatID := uuid.MustParse("00000000-0000-4000-8000-000000000301")
 	profile := storage.MediaProfile{

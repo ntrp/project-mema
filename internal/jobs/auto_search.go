@@ -77,10 +77,27 @@ func autoSearchDownload(
 	eventBroker *events.Broker,
 	item storage.MediaItem,
 ) error {
-	if item.Status == "downloaded" || item.Status == "downloading" {
+	if item.Status == "downloaded" {
 		slog.Debug("auto search download skipped", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
 		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search skipped", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "status": item.Status})
 		return nil
+	}
+	if item.Status == "downloading" && item.Type != "serie" {
+		slog.Debug("auto search download skipped", "mediaItemId", item.ID, "title", item.Title, "status", item.Status)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search skipped", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "status": item.Status})
+		return nil
+	}
+	if item.Status == "downloading" {
+		activities, err := settings.ListDownloadActivity(ctx)
+		if err != nil {
+			return err
+		}
+		var covered bool
+		item, covered = markActiveEpisodeDownloads(item, activities)
+		if covered {
+			publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search skipped while an overlapping download is active", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title})
+			return nil
+		}
 	}
 	allowed, err := libraryOperationAllowed(ctx, settings, item, false, "")
 	if err != nil {
@@ -103,48 +120,25 @@ func autoSearchDownload(
 	}
 	slog.Debug("auto search release search finished", "mediaItemId", item.ID, "title", item.Title, "releaseCount", len(releases), "errorCount", len(searchErrors))
 	profile, formats, languages := releaseDecisionContext(ctx, settings, item)
-	for attempt := 1; attempt <= maxAutomaticGrabAttempts; attempt++ {
-		availableReleases, clients, ok, err := autoSearchCandidatesWithDownloadClient(ctx, settings, eventBroker, item, releases, searchErrors)
-		if err != nil || !ok {
-			return err
-		}
-		decision, ok := decisionEngine.ChooseReleaseWithProfileAndLanguages(
-			item,
-			profile,
-			formats,
-			languages,
-			availableReleases,
-		)
-		if !ok {
-			slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
-			publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{
-				"mediaItemId":  item.ID.String(),
-				"title":        item.Title,
-				"releaseCount": len(availableReleases),
-				"errorCount":   len(searchErrors),
-				"reasons":      topDecisionRejections(item, profile, formats, languages, availableReleases),
-			})
-			return nil
-		}
-		if err := grabReleaseNow(ctx, settings, downloadClientService, eventBroker, clients, item, decision.Release); err != nil {
-			slog.Error("auto search grab failed", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title, "error", err)
-			if shouldRetryAlternativeRelease(err, attempt) {
-				publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search trying alternative release", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "failedReleaseTitle": decision.Release.Title, "attempt": attempt})
-				continue
-			}
-			if automaticRetryLimitReached(err, attempt) {
-				publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search retry limit reached", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "attempts": attempt})
-				return nil
-			} else {
-				publishSystemEvent(ctx, settings, eventBroker, jobEventError, "jobs", "Automatic search grab failed", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title, "error": err.Error()})
-			}
-			return err
-		}
-		slog.Debug("auto search grab queued", "mediaItemId", item.ID, "title", item.Title, "releaseTitle", decision.Release.Title)
-		publishSystemEvent(ctx, settings, eventBroker, jobEventInfo, "jobs", "Automatic search queued download", map[string]any{"mediaItemId": item.ID.String(), "title": item.Title, "releaseTitle": decision.Release.Title})
+	availableReleases, clients, ok, err := autoSearchCandidatesWithDownloadClient(ctx, settings, eventBroker, item, releases, searchErrors)
+	if err != nil || !ok {
+		return err
+	}
+	targets, missingEpisodes := automaticReleaseTargets(decisionEngine, item, profile, formats, languages, availableReleases)
+	if len(targets) == 0 {
+		slog.Debug("auto search found no acceptable release", "mediaItemId", item.ID, "title", item.Title)
+		publishSystemEvent(ctx, settings, eventBroker, jobEventWarning, "jobs", "Automatic search found no acceptable release", map[string]any{
+			"mediaItemId":  item.ID.String(),
+			"title":        item.Title,
+			"releaseCount": len(availableReleases),
+			"errorCount":   len(searchErrors),
+			"missingCount": len(missingEpisodes),
+			"reasons":      topDecisionRejections(item, profile, formats, languages, availableReleases),
+		})
 		return nil
 	}
-	return nil
+	recordJobProgress(ctx, settings, eventBroker, nil, fmt.Sprintf("Queueing %d automatic download(s)", len(targets)))
+	return grabAutomaticTargets(ctx, settings, downloadClientService, decisionEngine, eventBroker, item, profile, formats, languages, clients, targets)
 }
 
 func grabReleaseNow(

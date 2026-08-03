@@ -271,14 +271,23 @@ func TestEvaluateReleaseMatchScoresSeededHDRCustomFormat(t *testing.T) {
 }
 
 func TestSearchQueriesForSeasonFallback(t *testing.T) {
-	season := int32(1)
+	season := int32(4)
 	queries := SearchQueriesForCriteria(ReleaseSearchCriteria{
 		Kind:         "season",
 		Title:        "The Show",
+		SeasonName:   "The Final Season",
 		SeasonNumber: &season,
-	}, "")
+	}, "The Show s4")
 
-	want := []string{"The Show s1", "The Show S01"}
+	want := []string{
+		"The Show The Final Season",
+		"The Show season 04",
+		"The Show season 4",
+		"The Show S04",
+		"The Show s4",
+		"The Show seasons",
+		"The Show season",
+	}
 	if len(queries) != len(want) {
 		t.Fatalf("queries = %#v, want %#v", queries, want)
 	}

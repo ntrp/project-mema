@@ -109,8 +109,8 @@ func betterRelease(
 	if leftMatch.LanguageScore != rightMatch.LanguageScore {
 		return leftMatch.LanguageScore > rightMatch.LanguageScore
 	}
-	if leftProtocol := protocolRank(left.IndexerProtocol, profile); leftProtocol != protocolRank(right.IndexerProtocol, profile) {
-		return leftProtocol > protocolRank(right.IndexerProtocol, profile)
+	if leftProtocol := ProtocolRank(left.IndexerProtocol, profile); leftProtocol != ProtocolRank(right.IndexerProtocol, profile) {
+		return leftProtocol > ProtocolRank(right.IndexerProtocol, profile)
 	}
 	if packRank := seasonPackRank(left.Title, profile) - seasonPackRank(right.Title, profile); packRank != 0 {
 		return packRank > 0
@@ -153,7 +153,7 @@ func seasonPackRank(title string, profile *storage.MediaProfile) int {
 	return 0
 }
 
-func protocolRank(indexerProtocol string, profile *storage.MediaProfile) int {
+func ProtocolRank(indexerProtocol string, profile *storage.MediaProfile) int {
 	if profile == nil || profile.PreferredProtocol == "" || profile.PreferredProtocol == "any" {
 		return 0
 	}

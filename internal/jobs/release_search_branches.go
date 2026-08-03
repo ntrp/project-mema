@@ -25,6 +25,7 @@ func releaseSearchBranches(
 	criteria decisions.ReleaseSearchCriteria,
 	query string,
 ) []releaseSearchBranch {
+	criteria = withSeasonName(item, criteria)
 	if item.Type != "serie" || criteria.Kind != "serie" {
 		return []releaseSearchBranch{{criteria: criteria, queries: decisions.SearchQueriesForCriteria(criteria, query)}}
 	}
@@ -37,6 +38,7 @@ func releaseSearchBranches(
 				Kind:         "season",
 				Title:        item.Title,
 				SeasonID:     season.id,
+				SeasonName:   season.name,
 				SeasonNumber: &seasonNumber,
 			}
 			branches = append(branches, releaseSearchBranch{
@@ -73,6 +75,7 @@ func releaseSearchBranches(
 
 type monitoredSeason struct {
 	id     *uuid.UUID
+	name   string
 	number int32
 }
 
@@ -83,9 +86,32 @@ func monitoredSeasons(seasons []storage.MediaSeason) []monitoredSeason {
 		if !ok || !season.Monitored {
 			continue
 		}
-		values = append(values, monitoredSeason{id: season.ID, number: number})
+		values = append(values, monitoredSeason{id: season.ID, name: distinctSeasonName(season.Name, number), number: number})
 	}
 	return values
+}
+
+func withSeasonName(item storage.MediaItem, criteria decisions.ReleaseSearchCriteria) decisions.ReleaseSearchCriteria {
+	if criteria.SeasonNumber == nil || criteria.SeasonName != "" {
+		return criteria
+	}
+	for _, season := range item.Seasons {
+		number, ok := seasonNumber(season)
+		if ok && number == *criteria.SeasonNumber {
+			criteria.SeasonName = distinctSeasonName(season.Name, number)
+			break
+		}
+	}
+	return criteria
+}
+
+func distinctSeasonName(name string, number int32) string {
+	name = strings.TrimSpace(name)
+	if strings.EqualFold(name, fmt.Sprintf("Season %d", number)) ||
+		strings.EqualFold(name, fmt.Sprintf("Season %02d", number)) {
+		return ""
+	}
+	return name
 }
 
 type monitoredEpisode struct {

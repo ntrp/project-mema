@@ -97,18 +97,26 @@ func (c *Client) EnqueueReleaseSearch(ctx context.Context, mediaItemID uuid.UUID
 	return result.Job.ID, nil
 }
 
-func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid.UUID) (int64, error) {
-	result, err := c.river.Insert(ctx, AutoSearchDownloadArgs{MediaItemID: mediaItemID.String()}, jobInsertOptsWithUnique(
-		queueMediaSearch,
-		river.UniqueOpts{
-			ByArgs: true,
-		},
-	))
+func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid.UUID) (int64, bool, error) {
+	result, err := c.river.Insert(ctx, AutoSearchDownloadArgs{MediaItemID: mediaItemID.String()}, autoSearchDownloadInsertOpts())
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
-	return result.Job.ID, nil
+	return result.Job.ID, !result.UniqueSkippedAsDuplicate, nil
+}
+
+func autoSearchDownloadInsertOpts() *river.InsertOpts {
+	return jobInsertOptsWithUnique(queueMediaSearch, river.UniqueOpts{
+		ByArgs: true,
+		ByState: []rivertype.JobState{
+			rivertype.JobStateAvailable,
+			rivertype.JobStatePending,
+			rivertype.JobStateRunning,
+			rivertype.JobStateScheduled,
+			rivertype.JobStateRetryable,
+		},
+	})
 }
 
 func (c *Client) EnqueueGrabReleaseRetry(ctx context.Context, args GrabReleaseArgs) (int64, error) {
