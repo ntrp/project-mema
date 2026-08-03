@@ -30,6 +30,7 @@ describe('rendered advanced search area (SCN-MEDIA-008)', () => {
 		expect(body).toContain('TMDb');
 		expect(body).not.toContain('Disabled Provider');
 		expect(body).toContain('2 results');
+		expect(body).toContain('Searching');
 		expect(body).toContain('Existing Library Result');
 		expect(body).toContain('/movies/media-1');
 		expect(body).toContain('In library');

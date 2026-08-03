@@ -59,9 +59,6 @@
 	onMount(() => {
 		query = initialQuery;
 		selectedProviderIds = enabledProviders.map((provider) => provider.id);
-		if (query.trim().length > 0) {
-			void submitSearch();
-		}
 	});
 
 	function toggleProvider(id: string) {
