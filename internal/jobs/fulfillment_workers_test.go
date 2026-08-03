@@ -65,6 +65,15 @@ func TestJobInsertOptsAreNonRetryable(t *testing.T) {
 	if string(opts.Metadata) != string(metadata) || len(opts.UniqueOpts.ByState) != 1 {
 		t.Fatalf("insert opts lost metadata/unique fields: %#v", opts)
 	}
+
+	retryOpts := retryGrabReleaseInsertOpts()
+	regularGrabOpts := jobInsertOptsWithUnique(queueDownloads, river.UniqueOpts{ByArgs: true})
+	if retryOpts.UniqueOpts.ByArgs || len(retryOpts.UniqueOpts.ByState) != 0 {
+		t.Fatalf("manual retry must allow duplicate completed grab args: %#v", retryOpts.UniqueOpts)
+	}
+	if !regularGrabOpts.UniqueOpts.ByArgs {
+		t.Fatal("normal grabs should remain protected from duplicate args")
+	}
 }
 
 func TestFulfillmentTargetMatchesPartialAudioTranscode(t *testing.T) {

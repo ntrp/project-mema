@@ -186,10 +186,11 @@ func (s *Service) statusTransmission(ctx context.Context, config Config, request
 			"statusCode", torrent.Status,
 		)
 	}
+	files := transmissionStatusFiles(torrent.DownloadDir, torrent.Name, torrent.Files)
 	if torrent.Status == 0 {
-		return statusLookupResultWithProgress("grabbed", progressFromFraction(torrent.PercentDone), "Transmission download is stopped", "torrentId", torrent.ID, "statusCode", torrent.Status)
+		return statusLookupResultWithProgressAndFiles("grabbed", progressFromFraction(torrent.PercentDone), "Transmission download is stopped", files, "torrentId", torrent.ID, "statusCode", torrent.Status)
 	}
-	return statusLookupResultWithProgress("downloading", progressFromFraction(torrent.PercentDone), "Transmission download is active", "torrentId", torrent.ID, "statusCode", torrent.Status)
+	return statusLookupResultWithProgressAndFiles("downloading", progressFromFraction(torrent.PercentDone), "Transmission download is active", files, "torrentId", torrent.ID, "statusCode", torrent.Status)
 }
 
 func (s *Service) doTransmissionRequest(ctx context.Context, endpoint string, config Config, sessionID string) (*http.Response, error) {

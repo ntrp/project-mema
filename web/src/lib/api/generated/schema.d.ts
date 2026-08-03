@@ -1152,6 +1152,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/activity/downloads/{id}/retry': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** Retry a failed or cancelled download activity */
+		post: operations['retryDownloadActivity'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/activity/downloads/{id}/manual-import': {
 		parameters: {
 			query?: never;
@@ -4914,18 +4933,26 @@ export interface components {
 			mediaYear?: number;
 			releaseTitle: string;
 			indexerName: string;
+			indexerProtocol: components['schemas']['IndexerProtocol'];
 			downloadClientName: string;
 			downloadId?: string;
 			downloadUrl: string;
 			/** @enum {string} */
 			status: 'queued' | 'grabbed' | 'downloading' | 'completed' | 'cancelled' | 'failed';
 			progressPercent?: number;
+			clientFiles?: components['schemas']['DownloadActivityClientFile'][];
 			error?: string;
 			failureType?: components['schemas']['DownloadActivityFailureType'];
 			/** Format: date-time */
 			createdAt: string;
 			/** Format: date-time */
 			updatedAt: string;
+		};
+		DownloadActivityClientFile: {
+			path: string;
+			/** Format: int64 */
+			sizeBytes: number;
+			complete: boolean;
 		};
 		/** @enum {string} */
 		DownloadActivityFailureType: 'download' | 'import';
@@ -7659,6 +7686,31 @@ export interface operations {
 		responses: {
 			/** @description Download activity cancelled */
 			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DownloadActivity'];
+				};
+			};
+			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	retryDownloadActivity: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: components['parameters']['ResourceId'];
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Download activity retry queued */
+			202: {
 				headers: {
 					[name: string]: unknown;
 				};

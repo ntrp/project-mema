@@ -25,6 +25,9 @@ func TestScenarioSCNMedia009AdminManagesDownloadActivityLifecycle(t *testing.T) 
 	if !downloadActivityListHas(listed.Activities, activity.ID.String(), DownloadActivityStatusQueued) {
 		t.Fatalf("download activity not listed: %#v", listed.Activities)
 	}
+	if listed.Activities[0].IndexerProtocol != IndexerProtocolTorrent {
+		t.Fatalf("download activity protocol = %q", listed.Activities[0].IndexerProtocol)
+	}
 
 	var cancelled DownloadActivity
 	client.doJSON(t, http.MethodPost, "/activity/downloads/"+activity.ID.String()+"/cancel", nil, http.StatusOK, &cancelled)
@@ -123,6 +126,7 @@ func createScenarioDownloadActivity(t *testing.T, store *storage.SettingsStore) 
 		MediaItemID:        item.ID,
 		ReleaseTitle:       "Activity.Scenario.Movie.2026.1080p",
 		IndexerName:        "Scenario Indexer",
+		IndexerProtocol:    "torrent",
 		DownloadClientName: "Scenario Client",
 		DownloadURL:        "https://example.test/download/activity",
 		Status:             "queued",

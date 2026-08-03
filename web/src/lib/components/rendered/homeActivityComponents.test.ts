@@ -21,7 +21,17 @@ describe('rendered activity components (SCN-ACTIVITY-001)', () => {
 					status: 'failed',
 					failureType: 'import',
 					error: 'Import failed',
+					clientFiles: [
+						{ path: '/downloads/Broken.Movie.2026.mkv', sizeBytes: 1_073_741_824, complete: true }
+					],
 					releaseTitle: 'Broken.Movie.2026.720p.HDTV-GROUP'
+				}),
+				downloadActivity({
+					id: 'activity-3',
+					mediaTitle: 'Scenario Series',
+					mediaType: 'serie',
+					mediaYear: 2025,
+					releaseTitle: 'Scenario.Series.S02E05.The.Return.1080p.WEB-DL-GROUP'
 				})
 			],
 			loading: false,
@@ -30,15 +40,31 @@ describe('rendered activity components (SCN-ACTIVITY-001)', () => {
 			deletingId: 'activity-2',
 			onRefresh: vi.fn(),
 			onCancel: vi.fn(),
+			onRetry: vi.fn(),
 			onDelete: vi.fn()
 		});
 
 		expect(body).toContain('Activity queue');
-		expect(body).toContain('Scenario Movie');
+		expect(body).toContain('Scenario Movie (2026)');
+		expect(body).toContain('aria-label="Movie media type"');
+		expect(body).toContain('Scenario.Movie.2026.German.1080p.WEB-DL.Atmos-GROUP');
+		expect(body).toContain('Scenario Series (2025) - 2x5 - The Return');
+		expect(body).toContain('aria-label="Series media type"');
+		expect(body).not.toContain('>Season<');
+		expect(body).not.toContain('>Episode<');
+		expect(body).not.toContain('>Languages<');
+		expect(body).toContain('Protocol');
+		expect(body).toContain('Client');
+		expect(body).toContain('Status');
+		expect(body).toContain('aria-label="downloading status"');
+		expect(body).toContain('aria-label="failed status: Import failed: 1 client file(s)"');
+		expect(body).toContain('torrent');
 		expect(body).toContain('German');
 		expect(body).toContain('1080p');
 		expect(body).toContain('WEB-DL');
 		expect(body).toContain('42%');
+		expect(body).not.toContain('2026-07-03T00:00:00Z');
+		expect(body).toContain('Retry Broken.Movie.2026.720p.HDTV-GROUP');
 		expect(body).toContain('Manual import Broken.Movie.2026.720p.HDTV-GROUP');
 		expect(body).toContain('Cancel Scenario.Movie.2026.German.1080p.WEB-DL.Atmos-GROUP');
 		expect(body).toContain('Delete Broken.Movie.2026.720p.HDTV-GROUP');
@@ -51,11 +77,28 @@ describe('rendered activity components (SCN-ACTIVITY-001)', () => {
 			canManage: false,
 			onRefresh: vi.fn(),
 			onCancel: vi.fn(),
+			onRetry: vi.fn(),
 			onDelete: vi.fn()
 		});
 
 		expect(body).toContain('Refreshing');
 		expect(body).toContain('No queued activity');
+	});
+
+	it('allows cancelled history downloads to be retried', () => {
+		const { body } = renderWithTooltip(ActivityList, {
+			section: 'history' as const,
+			activities: [downloadActivity({ status: 'cancelled' })],
+			loading: false,
+			canManage: true,
+			onRefresh: vi.fn(),
+			onCancel: vi.fn(),
+			onRetry: vi.fn(),
+			onDelete: vi.fn()
+		});
+
+		expect(body).toContain('Activity history');
+		expect(body).toContain('Retry Scenario.Movie.2026.German.1080p.WEB-DL.Atmos-GROUP');
 	});
 
 	it('renders blocklist rows with protocol, client, and management actions', () => {
@@ -69,6 +112,7 @@ describe('rendered activity components (SCN-ACTIVITY-001)', () => {
 			clearingReleaseBlocklist: false,
 			onRefresh: vi.fn(),
 			onCancel: vi.fn(),
+			onRetry: vi.fn(),
 			onDelete: vi.fn(),
 			onDeleteReleaseBlocklistItem: vi.fn(),
 			onClearReleaseBlocklist: vi.fn()
@@ -175,6 +219,7 @@ function downloadActivity(overrides: Partial<DownloadActivity> = {}): DownloadAc
 		mediaYear: 2026,
 		releaseTitle: 'Scenario.Movie.2026.German.1080p.WEB-DL.Atmos-GROUP',
 		indexerName: 'Scenario Indexer',
+		indexerProtocol: 'torrent',
 		downloadClientName: 'Scenario Client',
 		downloadUrl: 'https://example.test/download',
 		status: 'downloading',

@@ -89,6 +89,12 @@ type MediaItemOptionsInput struct {
 	EpisodeMonitored     *bool
 }
 
+type DownloadActivityClientFile struct {
+	Path      string `json:"path"`
+	SizeBytes int64  `json:"sizeBytes"`
+	Complete  bool   `json:"complete"`
+}
+
 type DownloadActivity struct {
 	ID                 uuid.UUID
 	MediaItemID        uuid.UUID
@@ -97,11 +103,13 @@ type DownloadActivity struct {
 	MediaYear          *int32
 	ReleaseTitle       string
 	IndexerName        string
+	IndexerProtocol    string
 	DownloadClientName string
 	DownloadID         *string
 	DownloadURL        string
 	Status             string
 	ProgressPercent    *int
+	ClientFiles        []DownloadActivityClientFile
 	Error              *string
 	FailureType        *string
 	CreatedAt          time.Time
@@ -112,6 +120,7 @@ type DownloadActivityInput struct {
 	MediaItemID        uuid.UUID
 	ReleaseTitle       string
 	IndexerName        string
+	IndexerProtocol    string
 	DownloadClientName string
 	DownloadID         *string
 	DownloadURL        string

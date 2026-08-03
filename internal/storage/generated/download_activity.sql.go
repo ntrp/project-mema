@@ -22,8 +22,8 @@ set status = 'cancelled',
     updated_at = now()
 where id = $1
     and status in ('queued', 'grabbed', 'downloading')
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at
 `
 
@@ -35,11 +35,13 @@ func (q *Queries) CancelDownloadActivity(ctx context.Context, id uuid.UUID) (App
 		&i.MediaItemID,
 		&i.ReleaseTitle,
 		&i.IndexerName,
+		&i.IndexerProtocol,
 		&i.DownloadClientName,
 		&i.DownloadID,
 		&i.DownloadUrl,
 		&i.Status,
 		&i.ProgressPercent,
+		&i.ClientFiles,
 		&i.Error,
 		&i.FailureType,
 		&i.CreatedAt,
@@ -50,7 +52,7 @@ func (q *Queries) CancelDownloadActivity(ctx context.Context, id uuid.UUID) (App
 
 const createDownloadActivity = `-- name: CreateDownloadActivity :one
 insert into app.download_activity (
-    id, media_item_id, release_title, indexer_name, download_client_name,
+    id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
     download_id, download_url, status, error, failure_type
 )
 values (
@@ -63,10 +65,11 @@ values (
     $7,
     $8,
     $9,
-    $10
+    $10,
+    $11
 )
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at
 `
 
@@ -75,6 +78,7 @@ type CreateDownloadActivityParams struct {
 	MediaItemID        uuid.UUID
 	ReleaseTitle       string
 	IndexerName        string
+	IndexerProtocol    string
 	DownloadClientName string
 	DownloadID         pgtype.Text
 	DownloadUrl        string
@@ -89,6 +93,7 @@ func (q *Queries) CreateDownloadActivity(ctx context.Context, arg CreateDownload
 		arg.MediaItemID,
 		arg.ReleaseTitle,
 		arg.IndexerName,
+		arg.IndexerProtocol,
 		arg.DownloadClientName,
 		arg.DownloadID,
 		arg.DownloadUrl,
@@ -102,11 +107,13 @@ func (q *Queries) CreateDownloadActivity(ctx context.Context, arg CreateDownload
 		&i.MediaItemID,
 		&i.ReleaseTitle,
 		&i.IndexerName,
+		&i.IndexerProtocol,
 		&i.DownloadClientName,
 		&i.DownloadID,
 		&i.DownloadUrl,
 		&i.Status,
 		&i.ProgressPercent,
+		&i.ClientFiles,
 		&i.Error,
 		&i.FailureType,
 		&i.CreatedAt,
@@ -137,8 +144,8 @@ set status = 'failed',
     failure_type = $2,
     updated_at = now()
 where id = $3
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at
 `
 
@@ -156,11 +163,13 @@ func (q *Queries) FailDownloadActivity(ctx context.Context, arg FailDownloadActi
 		&i.MediaItemID,
 		&i.ReleaseTitle,
 		&i.IndexerName,
+		&i.IndexerProtocol,
 		&i.DownloadClientName,
 		&i.DownloadID,
 		&i.DownloadUrl,
 		&i.Status,
 		&i.ProgressPercent,
+		&i.ClientFiles,
 		&i.Error,
 		&i.FailureType,
 		&i.CreatedAt,
@@ -178,11 +187,13 @@ select
     m.year as media_year,
     a.release_title,
     a.indexer_name,
+    a.indexer_protocol,
     a.download_client_name,
     a.download_id,
     a.download_url,
     a.status,
     a.progress_percent,
+    a.client_files,
     a.error,
     a.failure_type,
     a.created_at,
@@ -200,11 +211,13 @@ type GetDownloadActivityRow struct {
 	MediaYear          pgtype.Int4
 	ReleaseTitle       string
 	IndexerName        string
+	IndexerProtocol    string
 	DownloadClientName string
 	DownloadID         pgtype.Text
 	DownloadUrl        string
 	Status             string
 	ProgressPercent    pgtype.Int4
+	ClientFiles        []byte
 	Error              pgtype.Text
 	FailureType        pgtype.Text
 	CreatedAt          time.Time
@@ -222,11 +235,13 @@ func (q *Queries) GetDownloadActivity(ctx context.Context, id uuid.UUID) (GetDow
 		&i.MediaYear,
 		&i.ReleaseTitle,
 		&i.IndexerName,
+		&i.IndexerProtocol,
 		&i.DownloadClientName,
 		&i.DownloadID,
 		&i.DownloadUrl,
 		&i.Status,
 		&i.ProgressPercent,
+		&i.ClientFiles,
 		&i.Error,
 		&i.FailureType,
 		&i.CreatedAt,
@@ -244,11 +259,13 @@ select
     m.year as media_year,
     a.release_title,
     a.indexer_name,
+    a.indexer_protocol,
     a.download_client_name,
     a.download_id,
     a.download_url,
     a.status,
     a.progress_percent,
+    a.client_files,
     a.error,
     a.failure_type,
     a.created_at,
@@ -268,11 +285,13 @@ type ListActiveDownloadActivityRow struct {
 	MediaYear          pgtype.Int4
 	ReleaseTitle       string
 	IndexerName        string
+	IndexerProtocol    string
 	DownloadClientName string
 	DownloadID         pgtype.Text
 	DownloadUrl        string
 	Status             string
 	ProgressPercent    pgtype.Int4
+	ClientFiles        []byte
 	Error              pgtype.Text
 	FailureType        pgtype.Text
 	CreatedAt          time.Time
@@ -296,11 +315,13 @@ func (q *Queries) ListActiveDownloadActivity(ctx context.Context) ([]ListActiveD
 			&i.MediaYear,
 			&i.ReleaseTitle,
 			&i.IndexerName,
+			&i.IndexerProtocol,
 			&i.DownloadClientName,
 			&i.DownloadID,
 			&i.DownloadUrl,
 			&i.Status,
 			&i.ProgressPercent,
+			&i.ClientFiles,
 			&i.Error,
 			&i.FailureType,
 			&i.CreatedAt,
@@ -325,11 +346,13 @@ select
     m.year as media_year,
     a.release_title,
     a.indexer_name,
+    a.indexer_protocol,
     a.download_client_name,
     a.download_id,
     a.download_url,
     a.status,
     a.progress_percent,
+    a.client_files,
     a.error,
     a.failure_type,
     a.created_at,
@@ -348,11 +371,13 @@ type ListDownloadActivityRow struct {
 	MediaYear          pgtype.Int4
 	ReleaseTitle       string
 	IndexerName        string
+	IndexerProtocol    string
 	DownloadClientName string
 	DownloadID         pgtype.Text
 	DownloadUrl        string
 	Status             string
 	ProgressPercent    pgtype.Int4
+	ClientFiles        []byte
 	Error              pgtype.Text
 	FailureType        pgtype.Text
 	CreatedAt          time.Time
@@ -376,11 +401,13 @@ func (q *Queries) ListDownloadActivity(ctx context.Context) ([]ListDownloadActiv
 			&i.MediaYear,
 			&i.ReleaseTitle,
 			&i.IndexerName,
+			&i.IndexerProtocol,
 			&i.DownloadClientName,
 			&i.DownloadID,
 			&i.DownloadUrl,
 			&i.Status,
 			&i.ProgressPercent,
+			&i.ClientFiles,
 			&i.Error,
 			&i.FailureType,
 			&i.CreatedAt,
@@ -396,17 +423,57 @@ func (q *Queries) ListDownloadActivity(ctx context.Context) ([]ListDownloadActiv
 	return items, nil
 }
 
+const retryDownloadActivity = `-- name: RetryDownloadActivity :one
+update app.download_activity
+set status = 'queued',
+    download_id = null,
+    progress_percent = null,
+    client_files = '[]'::jsonb,
+    error = null,
+    failure_type = null,
+    updated_at = now()
+where id = $1
+    and status in ('failed', 'cancelled')
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
+    created_at, updated_at
+`
+
+func (q *Queries) RetryDownloadActivity(ctx context.Context, id uuid.UUID) (AppDownloadActivity, error) {
+	row := q.db.QueryRow(ctx, retryDownloadActivity, id)
+	var i AppDownloadActivity
+	err := row.Scan(
+		&i.ID,
+		&i.MediaItemID,
+		&i.ReleaseTitle,
+		&i.IndexerName,
+		&i.IndexerProtocol,
+		&i.DownloadClientName,
+		&i.DownloadID,
+		&i.DownloadUrl,
+		&i.Status,
+		&i.ProgressPercent,
+		&i.ClientFiles,
+		&i.Error,
+		&i.FailureType,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateDownloadActivity = `-- name: UpdateDownloadActivity :one
 update app.download_activity
 set status = $1,
     download_id = coalesce($2::text, download_id),
     progress_percent = $3,
-    error = $4,
+    client_files = coalesce($4::jsonb, client_files),
+    error = $5,
     failure_type = null,
     updated_at = now()
-where id = $5
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+where id = $6
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at
 `
 
@@ -414,6 +481,7 @@ type UpdateDownloadActivityParams struct {
 	Status          string
 	DownloadID      pgtype.Text
 	ProgressPercent pgtype.Int4
+	ClientFiles     []byte
 	Error           pgtype.Text
 	ID              uuid.UUID
 }
@@ -423,6 +491,7 @@ func (q *Queries) UpdateDownloadActivity(ctx context.Context, arg UpdateDownload
 		arg.Status,
 		arg.DownloadID,
 		arg.ProgressPercent,
+		arg.ClientFiles,
 		arg.Error,
 		arg.ID,
 	)
@@ -432,11 +501,13 @@ func (q *Queries) UpdateDownloadActivity(ctx context.Context, arg UpdateDownload
 		&i.MediaItemID,
 		&i.ReleaseTitle,
 		&i.IndexerName,
+		&i.IndexerProtocol,
 		&i.DownloadClientName,
 		&i.DownloadID,
 		&i.DownloadUrl,
 		&i.Status,
 		&i.ProgressPercent,
+		&i.ClientFiles,
 		&i.Error,
 		&i.FailureType,
 		&i.CreatedAt,

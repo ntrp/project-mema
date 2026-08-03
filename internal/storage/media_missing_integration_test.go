@@ -44,6 +44,7 @@ func TestScenarioSCNMedia013StorageListsWantedMedia(t *testing.T) {
 		MediaItemID:        downloading.ID,
 		ReleaseTitle:       prefix + ".2026.1080p.WEB-DL",
 		IndexerName:        "Wanted Indexer",
+		IndexerProtocol:    "torrent",
 		DownloadClientName: "Wanted Client",
 		DownloadID:         stringPtr("download-" + suffix),
 		DownloadURL:        "http://download.test/" + suffix,

@@ -7,7 +7,8 @@ const mocks = vi.hoisted(() => ({
 	clear: vi.fn(),
 	deleteDownload: vi.fn(),
 	deleteBlocklistItem: vi.fn(),
-	manualImport: vi.fn()
+	manualImport: vi.fn(),
+	retry: vi.fn()
 }));
 
 vi.mock('@tanstack/svelte-query', () => ({
@@ -19,7 +20,8 @@ vi.mock('./api', () => ({
 	clearReleaseBlocklist: mocks.clear,
 	deleteDownloadActivity: mocks.deleteDownload,
 	deleteReleaseBlocklistItem: mocks.deleteBlocklistItem,
-	manualImportDownloadActivity: mocks.manualImport
+	manualImportDownloadActivity: mocks.manualImport,
+	retryDownloadActivity: mocks.retry
 }));
 
 import { createActivityMutations } from './mutations.svelte';
@@ -33,12 +35,14 @@ describe('activity mutations', () => {
 		const request = { path: '/downloads/item.mkv' };
 
 		mutations.cancel.mutationFn('one');
+		mutations.retry.mutationFn('retry');
 		mutations.deleteDownload.mutationFn('two');
 		mutations.manualImport.mutationFn({ id: 'three', request });
 		mutations.deleteBlocklistItem.mutationFn('four');
 		mutations.clearBlocklist.mutationFn();
 
 		expect(mocks.cancel).toHaveBeenCalledWith('one');
+		expect(mocks.retry).toHaveBeenCalledWith('retry');
 		expect(mocks.deleteDownload).toHaveBeenCalledWith('two');
 		expect(mocks.manualImport).toHaveBeenCalledWith('three', request);
 		expect(mocks.deleteBlocklistItem).toHaveBeenCalledWith('four');
@@ -49,16 +53,17 @@ describe('activity mutations', () => {
 		const mutations = createActivityMutations() as unknown as MutationOptions;
 
 		mutations.cancel.onSuccess();
+		mutations.retry.onSuccess();
 		mutations.deleteDownload.onSuccess();
 		mutations.manualImport.onSuccess();
 		mutations.deleteBlocklistItem.onSuccess();
 		mutations.clearBlocklist.onSuccess();
 
-		expect(mocks.client.invalidateQueries).toHaveBeenCalledTimes(5);
+		expect(mocks.client.invalidateQueries).toHaveBeenCalledTimes(6);
 		expect(mocks.client.invalidateQueries).toHaveBeenNthCalledWith(1, {
 			queryKey: activityKeys.downloads()
 		});
-		expect(mocks.client.invalidateQueries).toHaveBeenNthCalledWith(4, {
+		expect(mocks.client.invalidateQueries).toHaveBeenNthCalledWith(5, {
 			queryKey: activityKeys.blocklist()
 		});
 	});
@@ -67,6 +72,7 @@ describe('activity mutations', () => {
 type Command<T> = { mutationFn: (value: T) => unknown; onSuccess: () => unknown };
 type MutationOptions = {
 	cancel: Command<string>;
+	retry: Command<string>;
 	deleteDownload: Command<string>;
 	manualImport: Command<{ id: string; request: { path: string } }>;
 	deleteBlocklistItem: Command<string>;

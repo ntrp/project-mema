@@ -1078,11 +1078,13 @@ create table if not exists app.download_activity (
     media_item_id uuid not null references app.media_items(id) on delete cascade,
     release_title text not null,
     indexer_name text not null,
+    indexer_protocol text not null check (indexer_protocol in ('torrent', 'usenet')),
     download_client_name text not null,
     download_id text,
     download_url text not null,
     status text not null check (status in ('queued', 'grabbed', 'downloading', 'completed', 'cancelled', 'failed')),
     progress_percent integer check (progress_percent is null or (progress_percent >= 0 and progress_percent <= 100)),
+    client_files jsonb not null default '[]'::jsonb check (jsonb_typeof(client_files) = 'array'),
     error text,
     failure_type text check (failure_type is null or failure_type in ('download', 'import')),
     created_at timestamptz not null default now(),
@@ -1092,8 +1094,10 @@ create table if not exists app.download_activity (
 -- +goose StatementBegin
 do $$
 begin
+    alter table app.download_activity add column if not exists indexer_protocol text;
     alter table app.download_activity add column if not exists download_id text;
     alter table app.download_activity add column if not exists progress_percent integer;
+    alter table app.download_activity add column if not exists client_files jsonb not null default '[]'::jsonb;
     alter table app.download_activity add column if not exists failure_type text;
     alter table app.download_activity drop constraint if exists download_activity_progress_percent_check;
     alter table app.download_activity drop constraint if exists download_activity_failure_type_check;

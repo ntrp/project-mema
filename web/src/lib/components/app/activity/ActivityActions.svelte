@@ -6,23 +6,57 @@
 	import ConfirmActionButton from '$lib/components/shared/ConfirmActionButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Tooltip from '$lib/components/ui/tooltip';
-	import { cancellable, deletable, manualImportable } from './activityDisplay';
+	import { cancellable, deletable, manualImportable, retryable } from './activityDisplay';
 	import type { DownloadActivity } from '$lib/settings/types';
 
 	interface Props {
 		activity: DownloadActivity;
 		canManage: boolean;
 		cancellingId?: string;
+		retryingId?: string;
 		deletingId?: string;
 		onManualImport: (_activity: DownloadActivity) => void;
 		onCancel: (_activity: DownloadActivity) => void;
+		onRetry: (_activity: DownloadActivity) => void;
 		onDelete: (_activity: DownloadActivity) => void;
 	}
 
-	let { activity, canManage, cancellingId, deletingId, onManualImport, onCancel, onDelete }: Props =
-		$props();
+	let {
+		activity,
+		canManage,
+		cancellingId,
+		retryingId,
+		deletingId,
+		onManualImport,
+		onCancel,
+		onRetry,
+		onDelete
+	}: Props = $props();
 </script>
 
+{#if canManage && retryable(activity)}
+	<Tooltip.Root>
+		<Tooltip.Trigger>
+			{#snippet child({ props })}
+				<Button
+					{...props}
+					type="button"
+					variant="outline"
+					size="icon-sm"
+					aria-label={`Retry ${activity.releaseTitle}`}
+					disabled={retryingId === activity.id}
+					onclick={() => onRetry(activity)}
+				>
+					<RefreshCwIcon
+						aria-hidden="true"
+						class={retryingId === activity.id ? 'animate-spin' : ''}
+					/>
+				</Button>
+			{/snippet}
+		</Tooltip.Trigger>
+		<Tooltip.Content>Retry</Tooltip.Content>
+	</Tooltip.Root>
+{/if}
 {#if canManage && manualImportable(activity)}
 	<Tooltip.Root>
 		<Tooltip.Trigger>

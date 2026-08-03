@@ -2730,26 +2730,35 @@ type DiscoverMovieSearchResponse struct {
 
 // DownloadActivity defines model for DownloadActivity.
 type DownloadActivity struct {
-	CreatedAt          time.Time                    `json:"createdAt"`
-	DownloadClientName string                       `json:"downloadClientName"`
-	DownloadId         *string                      `json:"downloadId,omitempty"`
-	DownloadUrl        string                       `json:"downloadUrl"`
-	Error              *string                      `json:"error,omitempty"`
-	FailureType        *DownloadActivityFailureType `json:"failureType,omitempty"`
-	Id                 openapi_types.UUID           `json:"id"`
-	IndexerName        string                       `json:"indexerName"`
-	MediaItemId        openapi_types.UUID           `json:"mediaItemId"`
-	MediaTitle         string                       `json:"mediaTitle"`
-	MediaType          MediaType                    `json:"mediaType"`
-	MediaYear          *int32                       `json:"mediaYear,omitempty"`
-	ProgressPercent    *int                         `json:"progressPercent,omitempty"`
-	ReleaseTitle       string                       `json:"releaseTitle"`
-	Status             DownloadActivityStatus       `json:"status"`
-	UpdatedAt          time.Time                    `json:"updatedAt"`
+	ClientFiles        *[]DownloadActivityClientFile `json:"clientFiles,omitempty"`
+	CreatedAt          time.Time                     `json:"createdAt"`
+	DownloadClientName string                        `json:"downloadClientName"`
+	DownloadId         *string                       `json:"downloadId,omitempty"`
+	DownloadUrl        string                        `json:"downloadUrl"`
+	Error              *string                       `json:"error,omitempty"`
+	FailureType        *DownloadActivityFailureType  `json:"failureType,omitempty"`
+	Id                 openapi_types.UUID            `json:"id"`
+	IndexerName        string                        `json:"indexerName"`
+	IndexerProtocol    IndexerProtocol               `json:"indexerProtocol"`
+	MediaItemId        openapi_types.UUID            `json:"mediaItemId"`
+	MediaTitle         string                        `json:"mediaTitle"`
+	MediaType          MediaType                     `json:"mediaType"`
+	MediaYear          *int32                        `json:"mediaYear,omitempty"`
+	ProgressPercent    *int                          `json:"progressPercent,omitempty"`
+	ReleaseTitle       string                        `json:"releaseTitle"`
+	Status             DownloadActivityStatus        `json:"status"`
+	UpdatedAt          time.Time                     `json:"updatedAt"`
 }
 
 // DownloadActivityStatus defines model for DownloadActivity.Status.
 type DownloadActivityStatus string
+
+// DownloadActivityClientFile defines model for DownloadActivityClientFile.
+type DownloadActivityClientFile struct {
+	Complete  bool   `json:"complete"`
+	Path      string `json:"path"`
+	SizeBytes int64  `json:"sizeBytes"`
+}
 
 // DownloadActivityFailureType defines model for DownloadActivityFailureType.
 type DownloadActivityFailureType string
@@ -5879,6 +5888,9 @@ type ServerInterface interface {
 	// Manually import a failed import activity
 	// (POST /activity/downloads/{id}/manual-import)
 	ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
+	// Retry a failed or cancelled download activity
+	// (POST /activity/downloads/{id}/retry)
+	RetryDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId)
 	// Log in with local admin credentials
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
@@ -6524,6 +6536,12 @@ func (_ Unimplemented) CancelDownloadActivity(w http.ResponseWriter, r *http.Req
 // Manually import a failed import activity
 // (POST /activity/downloads/{id}/manual-import)
 func (_ Unimplemented) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Retry a failed or cancelled download activity
+// (POST /activity/downloads/{id}/retry)
+func (_ Unimplemented) RetryDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7915,6 +7933,38 @@ func (siw *ServerInterfaceWrapper) ManualImportDownloadActivity(w http.ResponseW
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ManualImportDownloadActivity(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RetryDownloadActivity operation middleware
+func (siw *ServerInterfaceWrapper) RetryDownloadActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id ResourceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RetryDownloadActivity(w, r, id)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14595,6 +14645,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/activity/downloads/{id}/manual-import", wrapper.ManualImportDownloadActivity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/activity/downloads/{id}/retry", wrapper.RetryDownloadActivity)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/auth/login", wrapper.Login)

@@ -79,6 +79,7 @@ describe('series helper projections (SCN-MEDIA-004)', () => {
 					mediaType: 'serie',
 					releaseTitle: 'Scenario.Series.S04E02.1080p.WEB-DL',
 					indexerName: 'Indexer',
+					indexerProtocol: 'torrent',
 					downloadClientName: 'Client',
 					downloadUrl: 'https://example.test/download',
 					status: 'queued'

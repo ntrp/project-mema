@@ -71,6 +71,7 @@ func TestSCNMedia014RSSSyncSkipsHandledMedia(t *testing.T) {
 		MediaItemID:        item.ID,
 		ReleaseTitle:       "Existing",
 		IndexerName:        "Indexer",
+		IndexerProtocol:    "usenet",
 		DownloadClientName: "Client",
 		DownloadURL:        "https://indexer.test/download/existing",
 		Status:             "downloading",

@@ -2447,6 +2447,13 @@ export const DownloadActivityStatus = {
 	failed: 'failed'
 } as const;
 
+export interface DownloadActivityClientFile {
+	path: string;
+	/** @minimum 0 */
+	sizeBytes: number;
+	complete: boolean;
+}
+
 export type DownloadActivityFailureType =
 	(typeof DownloadActivityFailureType)[keyof typeof DownloadActivityFailureType];
 
@@ -2463,6 +2470,7 @@ export interface DownloadActivity {
 	mediaYear?: number;
 	releaseTitle: string;
 	indexerName: string;
+	indexerProtocol: IndexerProtocol;
 	downloadClientName: string;
 	downloadId?: string;
 	downloadUrl: string;
@@ -2472,6 +2480,7 @@ export interface DownloadActivity {
 	 * @maximum 100
 	 */
 	progressPercent?: number;
+	clientFiles?: DownloadActivityClientFile[];
 	error?: string;
 	failureType?: DownloadActivityFailureType;
 	createdAt: string;
@@ -10595,6 +10604,94 @@ export function createCancelDownloadActivity<
 ): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 	const query = createQuery(
 		() => getCancelDownloadActivityQueryOptions(id(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
+export const getRetryDownloadActivityUrl = (id: string) => {
+	return `/api/activity/downloads/${id}/retry`;
+};
+
+/**
+ * @summary Retry a failed or cancelled download activity
+ */
+export const retryDownloadActivity = async (
+	id: string,
+	options?: RequestInit
+): Promise<DownloadActivity> => {
+	const res = await fetch(getRetryDownloadActivityUrl(id), {
+		...options,
+		method: 'POST'
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+	const data: DownloadActivity = body ? JSON.parse(body) : {};
+	return data;
+};
+
+export const getRetryDownloadActivityQueryKey = (id: string) => {
+	return ['POST', `/api/activity/downloads/${id}/retry`] as const;
+};
+
+export const getRetryDownloadActivityQueryOptions = <
+	TData = Awaited<ReturnType<typeof retryDownloadActivity>>,
+	TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>(
+	id: string,
+	options?: {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof retryDownloadActivity>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getRetryDownloadActivityQueryKey(id);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof retryDownloadActivity>>> = ({ signal }) =>
+		retryDownloadActivity(id, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: id !== null && id !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof retryDownloadActivity>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type RetryDownloadActivityQueryResult = NonNullable<
+	Awaited<ReturnType<typeof retryDownloadActivity>>
+>;
+export type RetryDownloadActivityQueryError =
+	| BadRequestResponse
+	| UnauthorizedResponse
+	| NotFoundResponse;
+
+/**
+ * @summary Retry a failed or cancelled download activity
+ */
+
+export function createRetryDownloadActivity<
+	TData = Awaited<ReturnType<typeof retryDownloadActivity>>,
+	TError = BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>(
+	id: () => string,
+	options?: () => {
+		query?: Partial<
+			CreateQueryOptions<Awaited<ReturnType<typeof retryDownloadActivity>>, TError, TData>
+		>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getRetryDownloadActivityQueryOptions(id(), options?.()),
 		queryClient
 	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

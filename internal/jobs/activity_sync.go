@@ -118,7 +118,22 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		return nil
 	}
 	slog.Debug("download activity status received", "activityId", activity.ID, "status", result.Status, "progressPercent", result.ProgressPercent, "fileCount", len(result.Files))
+	clientFiles := activityClientFiles(result.Files)
 	if result.Status == "completed" {
+		if len(clientFiles) > 0 {
+			persisted, err := w.settings.UpdateDownloadActivityProgressWithFiles(
+				ctx,
+				activity.ID,
+				activity.Status,
+				activity.ProgressPercent,
+				clientFiles,
+				activity.Error,
+			)
+			if err != nil {
+				return err
+			}
+			activity.ClientFiles = persisted.ClientFiles
+		}
 		if err := w.imports.ImportCompletedDownload(ctx, activity, result.Files); err != nil {
 			slog.Error("completed download import failed", "activityId", activity.ID, "mediaItemId", activity.MediaItemID, "error", err)
 			publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Completed download import failed", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "error": err.Error()})
@@ -140,7 +155,14 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 		}
 		blocked = w.blockActivity(ctx, activity, blockMessage, "download_failed")
 	}
-	updated, err := w.settings.UpdateDownloadActivityProgress(ctx, activity.ID, result.Status, result.ProgressPercent, message)
+	updated, err := w.settings.UpdateDownloadActivityProgressWithFiles(
+		ctx,
+		activity.ID,
+		result.Status,
+		result.ProgressPercent,
+		clientFiles,
+		message,
+	)
 	if err != nil {
 		slog.Error("failed to update download activity progress", "activityId", activity.ID, "status", result.Status, "error", err)
 		publishSystemEvent(ctx, w.settings, w.events, jobEventError, "downloads", "Download activity progress update failed", map[string]any{"activityId": activity.ID.String(), "status": result.Status, "error": err.Error()})
@@ -154,6 +176,21 @@ func (w *DownloadActivitySyncWorker) syncActivity(ctx context.Context, activity 
 	}
 	w.publishActivity(updated, activity)
 	return nil
+}
+
+func activityClientFiles(files []downloadclients.StatusFile) []storage.DownloadActivityClientFile {
+	if files == nil {
+		return nil
+	}
+	result := make([]storage.DownloadActivityClientFile, 0, len(files))
+	for _, file := range files {
+		result = append(result, storage.DownloadActivityClientFile{
+			Path:      file.Path,
+			SizeBytes: file.SizeBytes,
+			Complete:  file.Complete,
+		})
+	}
+	return result
 }
 
 func (w *DownloadActivitySyncWorker) failActivity(ctx context.Context, activity storage.DownloadActivity, message string) error {
@@ -229,11 +266,13 @@ func publishDownloadActivity(broker *events.Broker, activity storage.DownloadAct
 		"mediaYear":          activity.MediaYear,
 		"releaseTitle":       activity.ReleaseTitle,
 		"indexerName":        activity.IndexerName,
+		"indexerProtocol":    activity.IndexerProtocol,
 		"downloadClientName": activity.DownloadClientName,
 		"downloadId":         activity.DownloadID,
 		"downloadUrl":        activity.DownloadURL,
 		"status":             activity.Status,
 		"progressPercent":    activity.ProgressPercent,
+		"clientFiles":        activity.ClientFiles,
 		"error":              activity.Error,
 		"failureType":        activity.FailureType,
 		"createdAt":          activity.CreatedAt,

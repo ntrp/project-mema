@@ -116,6 +116,7 @@ function downloadActivity(overrides: Partial<DownloadActivity> = {}): DownloadAc
 		mediaYear: 2026,
 		releaseTitle: 'Scenario.Movie.2026.German.1080p.WEB-DL.Atmos-GROUP',
 		indexerName: 'Scenario Indexer',
+		indexerProtocol: 'torrent',
 		downloadClientName: 'Scenario Client',
 		downloadUrl: 'https://example.test/download',
 		status: 'failed',

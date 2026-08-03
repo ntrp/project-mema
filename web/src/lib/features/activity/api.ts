@@ -5,7 +5,8 @@ export {
 	deleteReleaseBlocklistItem,
 	listDownloadActivity,
 	listReleaseBlocklist,
-	manualImportDownloadActivity
+	manualImportDownloadActivity,
+	retryDownloadActivity
 } from '$lib/api/generated/tanstack';
 
 export type {

@@ -173,6 +173,7 @@ func grabReleaseNow(
 		MediaItemID:        item.ID,
 		ReleaseTitle:       release.Title,
 		IndexerName:        release.IndexerName,
+		IndexerProtocol:    release.IndexerProtocol,
 		DownloadClientName: client.Name,
 		DownloadURL:        release.DownloadURL,
 		Status:             "queued",

@@ -5,6 +5,7 @@ import {
 	deleteDownloadActivity,
 	deleteReleaseBlocklistItem,
 	manualImportDownloadActivity,
+	retryDownloadActivity,
 	type ManualImportRequest
 } from './api';
 import { activityKeys } from './queries.svelte';
@@ -17,6 +18,10 @@ export function createActivityMutations() {
 	return {
 		cancel: createMutation(() => ({
 			mutationFn: (id: string) => cancelDownloadActivity(id),
+			onSuccess: refreshDownloads
+		})),
+		retry: createMutation(() => ({
+			mutationFn: (id: string) => retryDownloadActivity(id),
 			onSuccess: refreshDownloads
 		})),
 		deleteDownload: createMutation(() => ({

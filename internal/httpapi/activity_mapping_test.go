@@ -21,6 +21,15 @@ func TestSCNMedia009ActivityStateRulesAndManualImportInput(t *testing.T) {
 	if downloadActivityDeletable("queued") {
 		t.Fatal("queued activity should not be deletable")
 	}
+	if !downloadActivityRetryable("failed") || !downloadActivityRetryable("cancelled") || downloadActivityRetryable("queued") {
+		t.Fatal("only failed and cancelled activity should be retryable")
+	}
+	response := downloadActivityResponse(storage.DownloadActivity{ClientFiles: []storage.DownloadActivityClientFile{
+		{Path: "/downloads/movie.mkv", SizeBytes: 2048, Complete: true},
+	}})
+	if response.ClientFiles == nil || len(*response.ClientFiles) != 1 || (*response.ClientFiles)[0].Path != "/downloads/movie.mkv" {
+		t.Fatalf("download activity client files = %#v", response.ClientFiles)
+	}
 
 	failureType := "import"
 	if !manualImportAllowed(storage.DownloadActivity{Status: "failed", FailureType: &failureType}) {

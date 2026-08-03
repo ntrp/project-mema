@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"media-manager/internal/downloadclients"
 	"media-manager/internal/events"
 	"media-manager/internal/storage"
 )
@@ -86,14 +87,18 @@ func TestSCNMedia009DownloadActivityPublishesObservablePayload(t *testing.T) {
 		MediaType:          "movie",
 		ReleaseTitle:       "Scenario.Movie.2026.1080p",
 		IndexerName:        "Local Torznab",
+		IndexerProtocol:    "usenet",
 		DownloadClientName: "Local SABnzbd",
 		DownloadURL:        "https://downloads.invalid/scenario",
 		Status:             "failed",
 		ProgressPercent:    &progress,
-		Error:              &errorMessage,
-		FailureType:        &failureType,
-		CreatedAt:          time.Date(2026, 7, 3, 1, 0, 0, 0, time.UTC),
-		UpdatedAt:          time.Date(2026, 7, 3, 1, 1, 0, 0, time.UTC),
+		ClientFiles: []storage.DownloadActivityClientFile{
+			{Path: "/downloads/Scenario.Movie/feature.mkv", SizeBytes: 1024, Complete: true},
+		},
+		Error:       &errorMessage,
+		FailureType: &failureType,
+		CreatedAt:   time.Date(2026, 7, 3, 1, 0, 0, 0, time.UTC),
+		UpdatedAt:   time.Date(2026, 7, 3, 1, 1, 0, 0, time.UTC),
 	})
 
 	event := readEvent(t, updates, "activity.download.updated")
@@ -101,11 +106,27 @@ func TestSCNMedia009DownloadActivityPublishesObservablePayload(t *testing.T) {
 	if !ok {
 		t.Fatalf("event payload = %#v", event.Data)
 	}
-	if payload["mediaTitle"] != "Scenario Movie" || payload["status"] != "failed" {
+	if payload["mediaTitle"] != "Scenario Movie" || payload["status"] != "failed" || payload["indexerProtocol"] != "usenet" {
 		t.Fatalf("unexpected activity payload: %#v", payload)
 	}
 	if payload["progressPercent"] != &progress || payload["error"] != &errorMessage {
 		t.Fatalf("unexpected activity progress payload: %#v", payload)
+	}
+	files, ok := payload["clientFiles"].([]storage.DownloadActivityClientFile)
+	if !ok || len(files) != 1 || files[0].Path != "/downloads/Scenario.Movie/feature.mkv" {
+		t.Fatalf("unexpected activity client files: %#v", payload["clientFiles"])
+	}
+}
+
+func TestSCNMedia009ActivityClientFilesPreserveExternalDetails(t *testing.T) {
+	files := activityClientFiles([]downloadclients.StatusFile{
+		{Path: "/downloads/movie.mkv", SizeBytes: 2048, Complete: true},
+	})
+	if len(files) != 1 || files[0].Path != "/downloads/movie.mkv" || files[0].SizeBytes != 2048 || !files[0].Complete {
+		t.Fatalf("activity client files = %#v", files)
+	}
+	if activityClientFiles(nil) != nil {
+		t.Fatal("nil client files should stay nil")
 	}
 }
 

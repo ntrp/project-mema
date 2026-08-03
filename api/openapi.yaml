@@ -2039,6 +2039,29 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /activity/downloads/{id}/retry:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      operationId: retryDownloadActivity
+      tags:
+        - Activity
+      summary: Retry a failed or cancelled download activity
+      security:
+        - sessionCookie: []
+      responses:
+        "202":
+          description: Download activity retry queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DownloadActivity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /activity/downloads/{id}/manual-import:
     parameters:
       - $ref: "#/components/parameters/ResourceId"
@@ -10441,6 +10464,7 @@ components:
         - mediaType
         - releaseTitle
         - indexerName
+        - indexerProtocol
         - downloadClientName
         - downloadUrl
         - status
@@ -10464,6 +10488,8 @@ components:
           type: string
         indexerName:
           type: string
+        indexerProtocol:
+          $ref: "#/components/schemas/IndexerProtocol"
         downloadClientName:
           type: string
         downloadId:
@@ -10483,6 +10509,10 @@ components:
           type: integer
           minimum: 0
           maximum: 100
+        clientFiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/DownloadActivityClientFile"
         error:
           type: string
         failureType:
@@ -10493,6 +10523,22 @@ components:
         updatedAt:
           type: string
           format: date-time
+    DownloadActivityClientFile:
+      type: object
+      additionalProperties: false
+      required:
+        - path
+        - sizeBytes
+        - complete
+      properties:
+        path:
+          type: string
+        sizeBytes:
+          type: integer
+          format: int64
+          minimum: 0
+        complete:
+          type: boolean
     DownloadActivityFailureType:
       type: string
       enum:

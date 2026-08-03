@@ -259,8 +259,8 @@ func TestSCNIntegrations003TransmissionAddStatusAndCancel(t *testing.T) {
 	if status.ProgressPercent == nil || *status.ProgressPercent != 50 {
 		t.Fatalf("progress = %#v", status.ProgressPercent)
 	}
-	if len(status.Files) != 0 {
-		t.Fatalf("active downloads should not report completed files: %#v", status.Files)
+	if len(status.Files) != 1 || status.Files[0].Path != "/downloads/Scenario.Movie.mkv" || status.Files[0].Complete {
+		t.Fatalf("active download files = %#v", status.Files)
 	}
 	cancelled := service.Cancel(context.Background(), config, CancelRequest{DownloadID: added.DownloadID})
 	if !cancelled.Success {

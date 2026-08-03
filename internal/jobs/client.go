@@ -111,6 +111,15 @@ func (c *Client) EnqueueAutoSearchDownload(ctx context.Context, mediaItemID uuid
 	return result.Job.ID, nil
 }
 
+func (c *Client) EnqueueGrabReleaseRetry(ctx context.Context, args GrabReleaseArgs) (int64, error) {
+	result, err := c.river.Insert(ctx, args, retryGrabReleaseInsertOpts())
+	if err != nil {
+		return 0, err
+	}
+	recordJobUpdated(ctx, c.settings, c.events, result.Job, "")
+	return result.Job.ID, nil
+}
+
 func (c *Client) EnqueueSubtitleSearch(ctx context.Context, args SubtitleSearchArgs) (int64, error) {
 	result, err := c.river.Insert(ctx, args, jobInsertOptsWithUnique(
 		queueMediaSearch,

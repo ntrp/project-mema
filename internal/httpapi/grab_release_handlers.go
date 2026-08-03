@@ -62,6 +62,7 @@ func (s *Server) GrabMediaRelease(w http.ResponseWriter, r *http.Request, id Res
 		MediaItemID:        item.ID,
 		ReleaseTitle:       release.Title,
 		IndexerName:        release.IndexerName,
+		IndexerProtocol:    release.IndexerProtocol,
 		DownloadClientName: client.Name,
 		DownloadURL:        release.DownloadURL,
 		Status:             "queued",

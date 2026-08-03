@@ -1,6 +1,6 @@
 -- name: CreateDownloadActivity :one
 insert into app.download_activity (
-    id, media_item_id, release_title, indexer_name, download_client_name,
+    id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
     download_id, download_url, status, error, failure_type
 )
 values (
@@ -8,6 +8,7 @@ values (
     sqlc.arg(media_item_id),
     sqlc.arg(release_title),
     sqlc.arg(indexer_name),
+    sqlc.arg(indexer_protocol),
     sqlc.arg(download_client_name),
     sqlc.narg(download_id),
     sqlc.arg(download_url),
@@ -15,8 +16,8 @@ values (
     sqlc.narg(error),
     sqlc.narg(failure_type)
 )
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at;
 
 -- name: FailDownloadActivity :one
@@ -27,8 +28,23 @@ set status = 'failed',
     failure_type = sqlc.arg(failure_type),
     updated_at = now()
 where id = sqlc.arg(id)
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
+    created_at, updated_at;
+
+-- name: RetryDownloadActivity :one
+update app.download_activity
+set status = 'queued',
+    download_id = null,
+    progress_percent = null,
+    client_files = '[]'::jsonb,
+    error = null,
+    failure_type = null,
+    updated_at = now()
+where id = sqlc.arg(id)
+    and status in ('failed', 'cancelled')
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at;
 
 -- name: UpdateDownloadActivity :one
@@ -36,12 +52,13 @@ update app.download_activity
 set status = sqlc.arg(status),
     download_id = coalesce(sqlc.narg(download_id)::text, download_id),
     progress_percent = sqlc.narg(progress_percent),
+    client_files = coalesce(sqlc.narg(client_files)::jsonb, client_files),
     error = sqlc.narg(error),
     failure_type = null,
     updated_at = now()
 where id = sqlc.arg(id)
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at;
 
 -- name: ListDownloadActivity :many
@@ -53,11 +70,13 @@ select
     m.year as media_year,
     a.release_title,
     a.indexer_name,
+    a.indexer_protocol,
     a.download_client_name,
     a.download_id,
     a.download_url,
     a.status,
     a.progress_percent,
+    a.client_files,
     a.error,
     a.failure_type,
     a.created_at,
@@ -76,11 +95,13 @@ select
     m.year as media_year,
     a.release_title,
     a.indexer_name,
+    a.indexer_protocol,
     a.download_client_name,
     a.download_id,
     a.download_url,
     a.status,
     a.progress_percent,
+    a.client_files,
     a.error,
     a.failure_type,
     a.created_at,
@@ -98,8 +119,8 @@ set status = 'cancelled',
     updated_at = now()
 where id = $1
     and status in ('queued', 'grabbed', 'downloading')
-returning id, media_item_id, release_title, indexer_name, download_client_name,
-    download_id, download_url, status, progress_percent, error, failure_type,
+returning id, media_item_id, release_title, indexer_name, indexer_protocol, download_client_name,
+    download_id, download_url, status, progress_percent, client_files, error, failure_type,
     created_at, updated_at;
 
 -- name: DeleteDownloadActivity :execrows
@@ -116,11 +137,13 @@ select
     m.year as media_year,
     a.release_title,
     a.indexer_name,
+    a.indexer_protocol,
     a.download_client_name,
     a.download_id,
     a.download_url,
     a.status,
     a.progress_percent,
+    a.client_files,
     a.error,
     a.failure_type,
     a.created_at,

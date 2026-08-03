@@ -39,6 +39,7 @@
 	loading={section === 'blocklist' ? blocklist.isFetching : downloads.isFetching}
 	canManage={app.isAdmin}
 	cancellingId={mutations.cancel.isPending ? mutations.cancel.variables : undefined}
+	retryingId={mutations.retry.isPending ? mutations.retry.variables : undefined}
 	deletingId={mutations.deleteDownload.isPending ? mutations.deleteDownload.variables : undefined}
 	deletingBlocklistId={mutations.deleteBlocklistItem.isPending
 		? mutations.deleteBlocklistItem.variables
@@ -50,6 +51,12 @@
 			() => mutations.cancel.mutateAsync(activity.id),
 			'Download activity cancelled',
 			'Could not cancel download activity'
+		)}
+	onRetry={(activity) =>
+		void run(
+			() => mutations.retry.mutateAsync(activity.id),
+			'Download retry queued',
+			'Could not retry download activity'
 		)}
 	onDelete={(activity) =>
 		void run(

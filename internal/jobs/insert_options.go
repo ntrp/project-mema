@@ -11,6 +11,10 @@ func jobInsertOpts(queue string) *river.InsertOpts {
 	}
 }
 
+func retryGrabReleaseInsertOpts() *river.InsertOpts {
+	return jobInsertOpts(queueDownloads)
+}
+
 func jobInsertOptsWithUnique(queue string, unique river.UniqueOpts) *river.InsertOpts {
 	opts := jobInsertOpts(queue)
 	opts.UniqueOpts = unique

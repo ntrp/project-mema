@@ -8,12 +8,15 @@ interface ActivityResponse {
 
 export function createActivityCache(client: QueryClient) {
 	function upsert(activity: DownloadActivity) {
-		client.setQueryData<ActivityResponse>(activityKeys.downloads(), (current) => ({
-			activities: [
-				activity,
-				...(current?.activities ?? []).filter((item) => item.id !== activity.id)
-			]
-		}));
+		client.setQueryData<ActivityResponse>(activityKeys.downloads(), (current) => {
+			const previous = current?.activities.find((item) => item.id === activity.id);
+			return {
+				activities: [
+					previous ? { ...previous, ...activity } : activity,
+					...(current?.activities ?? []).filter((item) => item.id !== activity.id)
+				]
+			};
+		});
 	}
 
 	function removeForMedia(mediaItemId: string) {

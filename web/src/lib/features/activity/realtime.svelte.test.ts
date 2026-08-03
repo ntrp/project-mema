@@ -42,7 +42,23 @@ describe('activity real-time cache updates', () => {
 					{ id: 'one', status: 'queued' }
 				]
 			})
-		).toEqual({ activities: [updated, { id: 'two', status: 'queued' }] });
+		).toEqual({
+			activities: [
+				{ id: 'one', status: 'completed' },
+				{ id: 'two', status: 'queued' }
+			]
+		});
+	});
+
+	it('preserves fields omitted from partial real-time updates', () => {
+		connectActivityQueryEvents();
+		const handler = mocks.subscribe.mock.calls[0][1];
+		handler({ data: { id: 'one', status: 'downloading' } });
+
+		const update = mocks.setQueryData.mock.calls[0][1];
+		expect(
+			update({ activities: [{ id: 'one', status: 'queued', indexerProtocol: 'usenet' }] })
+		).toEqual({ activities: [{ id: 'one', status: 'downloading', indexerProtocol: 'usenet' }] });
 	});
 
 	it('ignores empty data and initializes an empty cache', () => {

@@ -114,11 +114,13 @@ type AppDownloadActivity struct {
 	MediaItemID        uuid.UUID
 	ReleaseTitle       string
 	IndexerName        string
+	IndexerProtocol    string
 	DownloadClientName string
 	DownloadID         pgtype.Text
 	DownloadUrl        string
 	Status             string
 	ProgressPercent    pgtype.Int4
+	ClientFiles        []byte
 	Error              pgtype.Text
 	FailureType        pgtype.Text
 	CreatedAt          time.Time

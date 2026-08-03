@@ -10,6 +10,7 @@ import (
 
 	"media-manager/internal/downloadclients"
 	"media-manager/internal/imports"
+	"media-manager/internal/jobs"
 	"media-manager/internal/storage"
 )
 
@@ -44,6 +45,49 @@ func (s *Server) CancelDownloadActivity(w http.ResponseWriter, r *http.Request, 
 	s.publishDownloadActivity(updated)
 	s.recordEvent(r.Context(), eventSeverityWarning, "downloads", "Download activity cancelled", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": activity.ReleaseTitle})
 	writeJSON(w, http.StatusOK, downloadActivityResponse(updated))
+}
+
+func (s *Server) RetryDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
+	if _, ok := s.requireAdmin(w, r); !ok {
+		return
+	}
+
+	activity, err := s.settings.GetDownloadActivity(r.Context(), uuid.UUID(id))
+	if err != nil {
+		writeSettingsError(w, err, "Could not find download activity")
+		return
+	}
+	if !downloadActivityRetryable(activity.Status) {
+		writeError(w, http.StatusBadRequest, "activity_not_retryable", "Only failed or cancelled download activity can be retried")
+		return
+	}
+
+	updated, err := s.settings.RetryDownloadActivity(r.Context(), activity.ID)
+	if err != nil {
+		writeSettingsError(w, err, "Could not retry download activity")
+		return
+	}
+	updated.MediaTitle = activity.MediaTitle
+	updated.MediaType = activity.MediaType
+	updated.MediaYear = activity.MediaYear
+	jobID, err := s.jobs.EnqueueGrabReleaseRetry(r.Context(), jobs.GrabReleaseArgs{
+		ActivityID:  activity.ID.String(),
+		MediaItemID: activity.MediaItemID.String(),
+		Title:       activity.ReleaseTitle,
+		DownloadURL: activity.DownloadURL,
+		IndexerName: activity.IndexerName,
+		Protocol:    activity.IndexerProtocol,
+	})
+	if err != nil {
+		message := "Could not enqueue download retry"
+		_, _ = s.settings.FailDownloadActivity(r.Context(), activity.ID, &message, "download")
+		writeError(w, http.StatusInternalServerError, "download_retry_enqueue_failed", message)
+		return
+	}
+
+	s.publishDownloadActivity(updated)
+	s.recordEvent(r.Context(), eventSeverityInfo, "downloads", "Download activity retry queued", map[string]any{"activityId": activity.ID.String(), "mediaItemId": activity.MediaItemID.String(), "releaseTitle": activity.ReleaseTitle, "jobId": jobID})
+	writeJSON(w, http.StatusAccepted, downloadActivityResponse(updated))
 }
 
 func (s *Server) ManualImportDownloadActivity(w http.ResponseWriter, r *http.Request, id ResourceId) {
@@ -131,6 +175,10 @@ func downloadActivityCancellable(status string) bool {
 }
 
 func downloadActivityDeletable(status string) bool {
+	return status == "failed" || status == "cancelled"
+}
+
+func downloadActivityRetryable(status string) bool {
 	return status == "failed" || status == "cancelled"
 }
 

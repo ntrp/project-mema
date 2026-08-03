@@ -18,16 +18,33 @@ func downloadActivityResponse(activity storage.DownloadActivity) DownloadActivit
 		MediaYear:          activity.MediaYear,
 		ReleaseTitle:       activity.ReleaseTitle,
 		IndexerName:        activity.IndexerName,
+		IndexerProtocol:    IndexerProtocol(activity.IndexerProtocol),
 		DownloadClientName: activity.DownloadClientName,
 		DownloadId:         activity.DownloadID,
 		DownloadUrl:        activity.DownloadURL,
 		Status:             DownloadActivityStatus(activity.Status),
 		ProgressPercent:    activity.ProgressPercent,
+		ClientFiles:        downloadActivityClientFiles(activity.ClientFiles),
 		Error:              activity.Error,
 		FailureType:        downloadActivityFailureType(activity.FailureType),
 		CreatedAt:          activity.CreatedAt,
 		UpdatedAt:          activity.UpdatedAt,
 	}
+}
+
+func downloadActivityClientFiles(files []storage.DownloadActivityClientFile) *[]DownloadActivityClientFile {
+	if len(files) == 0 {
+		return nil
+	}
+	result := make([]DownloadActivityClientFile, 0, len(files))
+	for _, file := range files {
+		result = append(result, DownloadActivityClientFile{
+			Path:      file.Path,
+			SizeBytes: file.SizeBytes,
+			Complete:  file.Complete,
+		})
+	}
+	return &result
 }
 
 func downloadActivityFailureType(value *string) *DownloadActivityFailureType {

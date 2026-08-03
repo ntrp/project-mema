@@ -7,7 +7,20 @@ import (
 	"testing"
 )
 
-func TestSCNIntegrations003TransmissionCompletedStatusIncludesFiles(t *testing.T) {
+func TestSCNIntegrations003TransmissionStatusIncludesFiles(t *testing.T) {
+	torrent := map[string]interface{}{
+		"id":            42,
+		"status":        6,
+		"isFinished":    true,
+		"percentDone":   1,
+		"leftUntilDone": 0,
+		"downloadDir":   "/downloads",
+		"name":          "Scenario.Movie",
+		"files": []map[string]interface{}{
+			{"name": "Scenario.Movie/feature.mkv", "length": 1000, "bytesCompleted": 1000},
+			{"name": "Scenario.Movie/sample.mkv", "length": 100, "bytesCompleted": 50},
+		},
+	}
 	client := fakeHTTPDoer(func(r *http.Request) (*http.Response, error) {
 		var request struct {
 			Method string `json:"method"`
@@ -21,26 +34,13 @@ func TestSCNIntegrations003TransmissionCompletedStatusIncludesFiles(t *testing.T
 		return jsonResponse(t, map[string]interface{}{
 			"result": "success",
 			"arguments": map[string]interface{}{
-				"torrents": []map[string]interface{}{
-					{
-						"id":            42,
-						"status":        6,
-						"isFinished":    true,
-						"percentDone":   1,
-						"leftUntilDone": 0,
-						"downloadDir":   "/downloads",
-						"name":          "Scenario.Movie",
-						"files": []map[string]interface{}{
-							{"name": "Scenario.Movie/feature.mkv", "length": 1000, "bytesCompleted": 1000},
-							{"name": "Scenario.Movie/sample.mkv", "length": 100, "bytesCompleted": 50},
-						},
-					},
-				},
+				"torrents": []map[string]interface{}{torrent},
 			},
 		}), nil
 	})
 
-	result := NewService(client).Status(context.Background(), Config{
+	service := NewService(client)
+	result := service.Status(context.Background(), Config{
 		Type:    "transmission",
 		BaseURL: "http://transmission.local",
 	}, StatusRequest{DownloadID: "42"})
@@ -59,6 +59,17 @@ func TestSCNIntegrations003TransmissionCompletedStatusIncludesFiles(t *testing.T
 	}
 	if result.Files[1].Complete {
 		t.Fatalf("second file should be incomplete: %#v", result.Files[1])
+	}
+
+	torrent["isFinished"] = false
+	torrent["percentDone"] = 0.5
+	torrent["leftUntilDone"] = 500
+	result = service.Status(context.Background(), Config{
+		Type:    "transmission",
+		BaseURL: "http://transmission.local",
+	}, StatusRequest{DownloadID: "42"})
+	if result.Status != "downloading" || len(result.Files) != 2 {
+		t.Fatalf("active status files = %#v", result)
 	}
 }
 

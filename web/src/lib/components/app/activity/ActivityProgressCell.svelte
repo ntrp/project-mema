@@ -1,8 +1,6 @@
 <script lang="ts">
-	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import { Progress } from '$lib/components/ui/progress';
-	import { cn } from '$lib/utils';
-	import { activityDisplay, createdLabel } from './activityDisplay';
+	import { activityDisplay } from './activityDisplay';
 	import type { DownloadActivity } from '$lib/settings/types';
 
 	interface Props {
@@ -14,31 +12,22 @@
 	const showProgress = $derived(
 		['queued', 'grabbed', 'downloading', 'completed'].includes(activity.status)
 	);
-	const progressValue = $derived(display.progressValue ?? 42);
-	const statusTone = $derived(
-		activity.status === 'grabbed' || activity.status === 'completed'
-			? 'success'
-			: activity.status === 'queued' || activity.status === 'downloading'
-				? 'pending'
-				: activity.status === 'failed' || activity.status === 'cancelled'
-					? 'error'
-					: 'muted'
-	);
+	const progressValue = $derived(display.progressValue);
 </script>
 
-<div class="grid min-w-45 gap-1.5">
-	<StatusPill tone={statusTone}>{activity.status}</StatusPill>
-	{#if showProgress}
+{#if showProgress}
+	<div class="relative min-w-0">
 		<Progress
 			value={progressValue}
-			class={cn(
-				'h-2 w-full max-w-80 bg-muted [&_[data-slot=progress-indicator]]:bg-primary',
-				display.progressValue === undefined && 'animate-pulse'
-			)}
+			class="h-6 w-full rounded-sm bg-muted [&_[data-slot=progress-indicator]]:bg-primary"
 			aria-label="Download progress"
 			aria-valuenow={display.progressValue}
+			aria-valuetext={display.progressLabel}
 		/>
-		<small>{display.progressLabel}</small>
-	{/if}
-	<small>{createdLabel(activity.createdAt)}</small>
-</div>
+		<span
+			class="pointer-events-none absolute inset-0 grid place-items-center text-xs font-extrabold"
+		>
+			{display.progressLabel}
+		</span>
+	</div>
+{/if}

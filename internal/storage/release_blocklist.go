@@ -67,6 +67,7 @@ func (s *SettingsStore) BlockReleaseActivity(ctx context.Context, activity Downl
 		MediaItemID:        activity.MediaItemID,
 		ReleaseTitle:       activity.ReleaseTitle,
 		IndexerName:        activity.IndexerName,
+		IndexerProtocol:    activity.IndexerProtocol,
 		DownloadClientName: activity.DownloadClientName,
 		DownloadURL:        activity.DownloadURL,
 		Reason:             reason,

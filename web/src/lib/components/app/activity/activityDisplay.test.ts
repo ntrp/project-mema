@@ -4,7 +4,9 @@ import {
 	cancellable,
 	deletable,
 	manualImportable,
-	releaseGroupFromTitle
+	releaseGroupFromTitle,
+	retryable,
+	statusTone
 } from './activityDisplay';
 import type { DownloadActivity } from '$lib/settings/types';
 
@@ -16,6 +18,7 @@ const activity: DownloadActivity = {
 	mediaYear: 2026,
 	releaseTitle: 'Example.Movie.2026.German.1080p.WEB-DL.Atmos-GROUP',
 	indexerName: 'Scenario Indexer',
+	indexerProtocol: 'torrent',
 	downloadClientName: 'Scenario Client',
 	downloadUrl: '',
 	status: 'downloading',
@@ -28,6 +31,8 @@ describe('activity display', () => {
 	it('SCN-ACTIVITY-001 summarizes release details and available actions', () => {
 		expect(activityDisplay(activity)).toMatchObject({
 			year: '2026',
+			seriesEpisode: '',
+			episodeTitle: '',
 			languages: ['German'],
 			quality: '1080p',
 			formats: ['WEB-DL', 'Atmos'],
@@ -38,9 +43,27 @@ describe('activity display', () => {
 		expect(manualImportable(activity)).toBe(false);
 		expect(deletable(activity)).toBe(false);
 		expect(releaseGroupFromTitle(activity.releaseTitle)).toBe('GROUP');
+		expect(statusTone(activity.status)).toBe('pending');
+		expect(
+			activityDisplay({
+				...activity,
+				mediaType: 'serie',
+				releaseTitle: 'Show.S02E005.The.Return.1080p.WEB-DL-GROUP'
+			})
+		).toMatchObject({
+			seriesEpisode: '2x5',
+			episodeTitle: 'The Return'
+		});
+		expect(activityDisplay({ ...activity, progressPercent: undefined })).toMatchObject({
+			progressValue: 0,
+			progressLabel: '0%'
+		});
 
 		expect(manualImportable({ ...activity, status: 'failed', failureType: 'import' })).toBe(true);
 		expect(deletable({ ...activity, status: 'cancelled' })).toBe(true);
+		expect(retryable({ ...activity, status: 'failed' })).toBe(true);
+		expect(retryable({ ...activity, status: 'cancelled' })).toBe(true);
+		expect(retryable(activity)).toBe(false);
 		expect(
 			activityDisplay({ ...activity, status: 'completed', progressPercent: undefined })
 				.progressLabel

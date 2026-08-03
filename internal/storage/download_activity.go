@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	storagegen "media-manager/internal/storage/generated"
@@ -17,6 +18,7 @@ func (s *SettingsStore) CreateDownloadActivity(ctx context.Context, input Downlo
 		MediaItemID:        input.MediaItemID,
 		ReleaseTitle:       input.ReleaseTitle,
 		IndexerName:        input.IndexerName,
+		IndexerProtocol:    input.IndexerProtocol,
 		DownloadClientName: input.DownloadClientName,
 		DownloadID:         textValue(input.DownloadID),
 		DownloadUrl:        input.DownloadURL,
@@ -40,19 +42,29 @@ func (s *SettingsStore) FailDownloadActivity(ctx context.Context, id uuid.UUID, 
 	return downloadActivityResult(row, err)
 }
 
+func (s *SettingsStore) RetryDownloadActivity(ctx context.Context, id uuid.UUID) (DownloadActivity, error) {
+	row, err := storagegen.New(s.pool).RetryDownloadActivity(ctx, id)
+	return downloadActivityResult(row, err)
+}
+
 func (s *SettingsStore) UpdateDownloadActivityProgress(ctx context.Context, id uuid.UUID, status string, progressPercent *int, activityError *string) (DownloadActivity, error) {
-	return s.updateDownloadActivity(ctx, id, status, nil, progressPercent, activityError)
+	return s.updateDownloadActivity(ctx, id, status, nil, progressPercent, nil, activityError)
+}
+
+func (s *SettingsStore) UpdateDownloadActivityProgressWithFiles(ctx context.Context, id uuid.UUID, status string, progressPercent *int, clientFiles []DownloadActivityClientFile, activityError *string) (DownloadActivity, error) {
+	return s.updateDownloadActivity(ctx, id, status, nil, progressPercent, clientFiles, activityError)
 }
 
 func (s *SettingsStore) UpdateDownloadActivityClientState(ctx context.Context, id uuid.UUID, status string, downloadID *string, activityError *string) (DownloadActivity, error) {
-	return s.updateDownloadActivity(ctx, id, status, downloadID, nil, activityError)
+	return s.updateDownloadActivity(ctx, id, status, downloadID, nil, nil, activityError)
 }
 
-func (s *SettingsStore) updateDownloadActivity(ctx context.Context, id uuid.UUID, status string, downloadID *string, progressPercent *int, activityError *string) (DownloadActivity, error) {
+func (s *SettingsStore) updateDownloadActivity(ctx context.Context, id uuid.UUID, status string, downloadID *string, progressPercent *int, clientFiles []DownloadActivityClientFile, activityError *string) (DownloadActivity, error) {
 	row, err := storagegen.New(s.pool).UpdateDownloadActivity(ctx, storagegen.UpdateDownloadActivityParams{
 		Status:          status,
 		DownloadID:      textValue(downloadID),
 		ProgressPercent: intValue(progressPercent),
+		ClientFiles:     downloadActivityClientFilesJSON(clientFiles),
 		Error:           textValue(activityError),
 		ID:              id,
 	})
@@ -107,6 +119,20 @@ func (s *SettingsStore) ListActiveDownloadActivity(ctx context.Context) ([]Downl
 	return activities, nil
 }
 
+func downloadActivityClientFilesJSON(files []DownloadActivityClientFile) []byte {
+	if files == nil {
+		return nil
+	}
+	value, _ := json.Marshal(files)
+	return value
+}
+
+func downloadActivityClientFiles(value []byte) []DownloadActivityClientFile {
+	var files []DownloadActivityClientFile
+	_ = json.Unmarshal(value, &files)
+	return files
+}
+
 func downloadActivityResult(row storagegen.AppDownloadActivity, err error) (DownloadActivity, error) {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return DownloadActivity{}, ErrNotFound
@@ -120,11 +146,13 @@ func downloadActivityFromRow(row storagegen.AppDownloadActivity) DownloadActivit
 		MediaItemID:        row.MediaItemID,
 		ReleaseTitle:       row.ReleaseTitle,
 		IndexerName:        row.IndexerName,
+		IndexerProtocol:    row.IndexerProtocol,
 		DownloadClientName: row.DownloadClientName,
 		DownloadID:         textPtr(row.DownloadID),
 		DownloadURL:        row.DownloadUrl,
 		Status:             row.Status,
 		ProgressPercent:    intPtr(row.ProgressPercent),
+		ClientFiles:        downloadActivityClientFiles(row.ClientFiles),
 		Error:              textPtr(row.Error),
 		FailureType:        textPtr(row.FailureType),
 		CreatedAt:          row.CreatedAt,
@@ -141,11 +169,13 @@ func downloadActivityFromListRow(row storagegen.ListDownloadActivityRow) Downloa
 		MediaYear:          int4Ptr(row.MediaYear),
 		ReleaseTitle:       row.ReleaseTitle,
 		IndexerName:        row.IndexerName,
+		IndexerProtocol:    row.IndexerProtocol,
 		DownloadClientName: row.DownloadClientName,
 		DownloadID:         textPtr(row.DownloadID),
 		DownloadURL:        row.DownloadUrl,
 		Status:             row.Status,
 		ProgressPercent:    intPtr(row.ProgressPercent),
+		ClientFiles:        downloadActivityClientFiles(row.ClientFiles),
 		Error:              textPtr(row.Error),
 		FailureType:        textPtr(row.FailureType),
 		CreatedAt:          row.CreatedAt,
@@ -162,11 +192,13 @@ func downloadActivityFromGetRow(row storagegen.GetDownloadActivityRow) DownloadA
 		MediaYear:          int4Ptr(row.MediaYear),
 		ReleaseTitle:       row.ReleaseTitle,
 		IndexerName:        row.IndexerName,
+		IndexerProtocol:    row.IndexerProtocol,
 		DownloadClientName: row.DownloadClientName,
 		DownloadID:         textPtr(row.DownloadID),
 		DownloadURL:        row.DownloadUrl,
 		Status:             row.Status,
 		ProgressPercent:    intPtr(row.ProgressPercent),
+		ClientFiles:        downloadActivityClientFiles(row.ClientFiles),
 		Error:              textPtr(row.Error),
 		FailureType:        textPtr(row.FailureType),
 		CreatedAt:          row.CreatedAt,
@@ -183,11 +215,13 @@ func downloadActivityFromActiveRow(row storagegen.ListActiveDownloadActivityRow)
 		MediaYear:          int4Ptr(row.MediaYear),
 		ReleaseTitle:       row.ReleaseTitle,
 		IndexerName:        row.IndexerName,
+		IndexerProtocol:    row.IndexerProtocol,
 		DownloadClientName: row.DownloadClientName,
 		DownloadID:         textPtr(row.DownloadID),
 		DownloadURL:        row.DownloadUrl,
 		Status:             row.Status,
 		ProgressPercent:    intPtr(row.ProgressPercent),
+		ClientFiles:        downloadActivityClientFiles(row.ClientFiles),
 		Error:              textPtr(row.Error),
 		FailureType:        textPtr(row.FailureType),
 		CreatedAt:          row.CreatedAt,
