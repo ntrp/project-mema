@@ -11,8 +11,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+
+	"media-manager/internal/config"
+	"media-manager/internal/storage"
 )
 
 const (
@@ -77,8 +81,32 @@ func reset(ctx context.Context, databaseURL string) error {
 				return err
 			}
 		}
-		return applyOptionalSeed(ctx, db, devLocalSeedPath)
+		if err := applyOptionalSeed(ctx, db, devLocalSeedPath); err != nil {
+			return err
+		}
+		return ensureDefaultAdminUser(ctx, db)
 	})
+}
+
+type contextExecer interface {
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
+func ensureDefaultAdminUser(ctx context.Context, db contextExecer) error {
+	cfg := config.Load()
+	hash, err := storage.HashPassword(cfg.AdminPassword)
+	if err != nil {
+		return fmt.Errorf("default admin password hash failed: %w", err)
+	}
+	_, err = db.ExecContext(ctx, `
+		insert into app.users (id, username, password_hash, role)
+		select $1, $2, $3, 'admin'
+		where not exists (select 1 from app.users where username = $2)
+	`, uuid.New(), cfg.AdminUsername, hash)
+	if err != nil {
+		return fmt.Errorf("default admin seed failed: %w", err)
+	}
+	return nil
 }
 
 func withDB(ctx context.Context, databaseURL string, fn func(*sql.DB) error) error {
@@ -102,6 +130,7 @@ func cleanSchema(ctx context.Context, db *sql.DB) error {
 }
 
 func runMigrations(ctx context.Context, db *sql.DB) error {
+	goose.SetBaseFS(nil)
 	goose.SetLogger(goose.NopLogger())
 	goose.SetTableName(gooseVersionTable)
 	if err := goose.SetDialect("postgres"); err != nil {
@@ -118,12 +147,14 @@ func applyRequiredSeed(ctx context.Context, db *sql.DB, path string) error {
 }
 
 func applyOptionalSeed(ctx context.Context, db *sql.DB, path string) error {
-	err := applySeed(ctx, db, path)
-	if err == nil {
-		return nil
+	if _, err := os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			fmt.Fprintf(os.Stderr, "warning: skipped missing optional %s\n", path)
+			return nil
+		}
+		return fmt.Errorf("optional seed check failed for %s: %w", path, err)
 	}
-	fmt.Fprintf(os.Stderr, "warning: skipped optional %s: %v\n", path, err)
-	return nil
+	return applySeed(ctx, db, path)
 }
 
 func applySeed(ctx context.Context, db *sql.DB, path string) error {
