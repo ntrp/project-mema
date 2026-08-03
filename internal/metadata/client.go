@@ -84,16 +84,23 @@ func (s *Service) doJSONOnce(ctx context.Context, config Config, method string, 
 
 func (s *Service) wait(ctx context.Context, config Config) error {
 	interval := 500 * time.Millisecond
+	key := config.ID.String()
 	switch config.Type {
 	case "tvdb":
 		interval = time.Second
 	case "anidb":
-		// AniDB asks HTTP API clients to keep at least two seconds between requests.
-		interval = 2 * time.Second
+		// AniDB requires at least two seconds between all HTTP API requests.
+		interval = s.anidbInterval
+		key = "anidb"
 	}
-	key := config.ID.String()
+
 	s.mu.Lock()
 	now := time.Now()
+	if config.Type == "anidb" && now.Before(s.anidbCooldownUntil) {
+		wait := time.Until(s.anidbCooldownUntil)
+		s.mu.Unlock()
+		return rateLimitedError{retryAfter: wait}
+	}
 	next := s.lastByID[key].Add(interval)
 	if next.Before(now) {
 		next = now
@@ -111,9 +118,17 @@ func (s *Service) wait(ctx context.Context, config Config) error {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-timer.C:
+		return nil
 	}
+}
 
-	return nil
+func (s *Service) blockAniDB(duration time.Duration) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	until := time.Now().Add(duration)
+	if until.After(s.anidbCooldownUntil) {
+		s.anidbCooldownUntil = until
+	}
 }
 
 type rateLimitedError struct {

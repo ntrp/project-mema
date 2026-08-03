@@ -18,7 +18,10 @@ import (
 
 // AniDB HTTP API contract: https://wiki.anidb.net/HTTP_API_Definition
 // The registered application client name/version are required; user login is not.
-const anidbProtocolVersion = "1"
+const (
+	anidbProtocolVersion = "1"
+	anidbBanCooldown     = 24 * time.Hour
+)
 
 var (
 	ErrAniDBClientIdentityRequired = errors.New("AniDB application client name and version are required")
@@ -48,10 +51,11 @@ func (p anidbProvider) Search(ctx context.Context, request SearchRequest) ([]Sea
 	if anime.ID == 0 || anidbMainTitle(anime) == "" {
 		return nil, fmt.Errorf("AniDB returned incomplete anime search data")
 	}
-	return []SearchResult{anidbSearchResult(anime, anidbPicture(anime.Picture))}, nil
+	posterPath := p.cacheArtwork(ctx, anime.Picture)
+	return []SearchResult{anidbSearchResult(anime, posterPath)}, nil
 }
 
-func (p anidbProvider) Details(ctx context.Context, request DetailsRequest) (Details, error) {
+func (p anidbProvider) Details(ctx context.Context, request DetailsRequest) (MediaResource, error) {
 	id, err := strconv.Atoi(strings.TrimSpace(request.ExternalID))
 	if err != nil || id <= 0 {
 		return Details{}, fmt.Errorf("invalid AniDB id")
@@ -63,7 +67,38 @@ func (p anidbProvider) Details(ctx context.Context, request DetailsRequest) (Det
 	if anime.ID == 0 || anidbMainTitle(anime) == "" {
 		return Details{}, fmt.Errorf("AniDB returned incomplete anime details")
 	}
-	return anidbDetails(anime, anidbPicture(anime.Picture)), nil
+	posterPath := p.cacheArtwork(ctx, anime.Picture)
+	resource := anidbDetails(anime, posterPath)
+	p.cacheCastArtwork(ctx, anime.Characters, resource.Cast)
+	return resource, nil
+}
+
+func (p anidbProvider) cacheArtwork(ctx context.Context, picture string) *string {
+	client, version, err := anidbClientIdentity(p.config)
+	if err != nil {
+		return nil
+	}
+	return p.service.cacheAniDBArtwork(ctx, picture, client+"/"+version)
+}
+
+func (p anidbProvider) cacheCastArtwork(ctx context.Context, characters []anidbCharacter, cast []Person) {
+	pictures := map[string]string{}
+	for _, character := range characters {
+		for _, actor := range character.Seiyuu {
+			if actor.ID > 0 && strings.TrimSpace(actor.Picture) != "" {
+				pictures[strconv.Itoa(actor.ID)] = actor.Picture
+			}
+		}
+	}
+	profiles := map[string]*string{}
+	for id, picture := range pictures {
+		profiles[id] = p.cacheArtwork(ctx, picture)
+	}
+	for index := range cast {
+		if cast[index].ExternalID != nil {
+			cast[index].ProfilePath = profiles[*cast[index].ExternalID]
+		}
+	}
 }
 
 func (p anidbProvider) request(ctx context.Context, params map[string]string, target any) error {
@@ -88,18 +123,7 @@ func (p anidbProvider) request(ctx context.Context, params map[string]string, ta
 	}
 	u.RawQuery = query.Encode()
 
-	err = p.requestOnce(ctx, u.String(), target)
-	if retry, wait := retryAfter(err); retry && wait <= 5*time.Second {
-		timer := time.NewTimer(wait)
-		defer timer.Stop()
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-timer.C:
-		}
-		return p.requestOnce(ctx, u.String(), target)
-	}
-	return err
+	return p.requestOnce(ctx, u.String(), target)
 }
 
 func (p anidbProvider) requestOnce(ctx context.Context, endpoint string, target any) error {
@@ -111,13 +135,19 @@ func (p anidbProvider) requestOnce(ctx context.Context, endpoint string, target 
 		return err
 	}
 	req.Header.Set("Accept", "application/xml")
+	req.Header.Set("User-Agent", req.URL.Query().Get("client")+"/"+req.URL.Query().Get("clientver"))
 	resp, err := p.service.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusTooManyRequests {
-		return rateLimitedError{retryAfter: ratelimit.DelayFromHeaders(resp.Header)}
+		wait := ratelimit.DelayFromHeaders(resp.Header)
+		if wait <= 0 {
+			wait = anidbBanCooldown
+		}
+		p.service.blockAniDB(wait)
+		return rateLimitedError{retryAfter: wait}
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return ProviderHTTPError{StatusCode: resp.StatusCode}

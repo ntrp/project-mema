@@ -5,6 +5,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { cn } from '$lib/utils';
 	import type { MediaSearchGroup, MediaSearchResult } from '$lib/settings/types';
+	import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 
 	interface Props {
 		searchQuery: string;
@@ -87,9 +88,7 @@
 	}
 
 	function posterUrl(path?: string) {
-		if (!path) return undefined;
-		if (path.startsWith('http://') || path.startsWith('https://')) return path;
-		return `https://image.tmdb.org/t/p/w92${path}`;
+		return mediaImageUrl(path, 'w92');
 	}
 </script>
 

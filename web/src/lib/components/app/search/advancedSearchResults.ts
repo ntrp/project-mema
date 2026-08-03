@@ -1,15 +1,10 @@
 import { resolve } from '$app/paths';
 import { providerPageUrl } from '$lib/settings/providerLinks';
+import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 import type { MediaSearchResult, PersonSearchResult } from '$lib/settings/types';
 
 export function imageUrl(path?: string) {
-	if (!path) {
-		return undefined;
-	}
-	if (path.startsWith('http://') || path.startsWith('https://')) {
-		return path;
-	}
-	return `https://image.tmdb.org/t/p/w185${path}`;
+	return mediaImageUrl(path, 'w185');
 }
 
 export function mediaResultKey(result: MediaSearchResult) {

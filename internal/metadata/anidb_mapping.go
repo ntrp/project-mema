@@ -208,16 +208,3 @@ func anidbEpisodeFactValue(fact EpisodeFact) string {
 	}
 	return strings.Join(parts, "; ")
 }
-
-func anidbPicture(value string) *string {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return nil
-	}
-	if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
-		return &value
-	}
-	value = "https://cdn-eu.anidb.net/images/main/" + strings.TrimLeft(value, "/")
-	return &value
-}
-

@@ -8,6 +8,7 @@
 	import type { MediaItem, MediaType } from '$lib/settings/types';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
 	import { isUnreleasedMedia } from '$lib/components/app/media/shared/mediaRelease';
+	import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 
 	interface Props {
 		mediaType: MediaType;
@@ -24,13 +25,7 @@
 	);
 
 	function posterUrl(path?: string) {
-		if (!path) {
-			return undefined;
-		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/w500${path}`;
+		return mediaImageUrl(path, 'w500');
 	}
 
 	function statusLabel(item: MediaItem) {

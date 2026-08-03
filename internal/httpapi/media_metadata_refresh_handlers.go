@@ -41,7 +41,12 @@ func (s *Server) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	primary, err := s.freshMetadataProviderDetails(r.Context(), provider, metadata.DetailsRequest{
+	loadPrimary := s.freshMetadataProviderDetails
+	if provider.Type == "anidb" {
+		// AniDB forbids repeatedly requesting the same dataset; its details cache lasts 24 hours.
+		loadPrimary = s.metadataProviderDetails
+	}
+	primary, err := loadPrimary(r.Context(), provider, metadata.DetailsRequest{
 		MediaType:  item.Type,
 		ExternalID: externalID,
 	})

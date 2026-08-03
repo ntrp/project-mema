@@ -3,6 +3,7 @@
 	import StatusPill from '$lib/components/shared/StatusPill.svelte';
 	import type { MediaRequest } from '$lib/settings/types';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
+	import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 
 	interface Props {
 		request: MediaRequest;
@@ -11,13 +12,7 @@
 	let { request }: Props = $props();
 
 	function posterUrl(path?: string) {
-		if (!path) {
-			return undefined;
-		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/w185${path}`;
+		return mediaImageUrl(path, 'w185');
 	}
 
 	function statusTone(status: MediaRequest['status']) {

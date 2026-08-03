@@ -5915,6 +5915,9 @@ type ServerInterface interface {
 	// Search selected metadata providers with detailed filters
 	// (POST /media/advanced-search)
 	AdvancedSearchMedia(w http.ResponseWriter, r *http.Request)
+	// Get locally cached AniDB artwork
+	// (GET /media/artwork/anidb/{filename})
+	GetAniDBArtwork(w http.ResponseWriter, r *http.Request, filename string)
 	// Search local library and metadata providers for autocomplete
 	// (GET /media/autocomplete)
 	AutocompleteMedia(w http.ResponseWriter, r *http.Request, params AutocompleteMediaParams)
@@ -6584,6 +6587,12 @@ func (_ Unimplemented) GetHealth(w http.ResponseWriter, r *http.Request) {
 // Search selected metadata providers with detailed filters
 // (POST /media/advanced-search)
 func (_ Unimplemented) AdvancedSearchMedia(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get locally cached AniDB artwork
+// (GET /media/artwork/anidb/{filename})
+func (_ Unimplemented) GetAniDBArtwork(w http.ResponseWriter, r *http.Request, filename string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -8073,6 +8082,38 @@ func (siw *ServerInterfaceWrapper) AdvancedSearchMedia(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AdvancedSearchMedia(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAniDBArtwork operation middleware
+func (siw *ServerInterfaceWrapper) GetAniDBArtwork(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "filename" -------------
+	var filename string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "filename", chi.URLParam(r, "filename"), &filename, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filename", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, SessionCookieScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAniDBArtwork(w, r, filename)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14672,6 +14713,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/media/advanced-search", wrapper.AdvancedSearchMedia)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/media/artwork/anidb/{filename}", wrapper.GetAniDBArtwork)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/media/autocomplete", wrapper.AutocompleteMedia)

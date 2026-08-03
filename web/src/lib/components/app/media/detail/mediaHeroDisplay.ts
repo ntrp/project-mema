@@ -1,9 +1,8 @@
 import type { MediaItemStatus, MediaMetadataDetails } from '$lib/settings/types';
+import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 
 export function imageUrl(path?: string, size = 'w780') {
-	if (!path) return undefined;
-	if (path.startsWith('http://') || path.startsWith('https://')) return path;
-	return `https://image.tmdb.org/t/p/${size}${path}`;
+	return mediaImageUrl(path, size);
 }
 
 export function runtimeText(minutes?: number) {

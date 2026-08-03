@@ -5869,6 +5869,81 @@ export function createGetMediaMetadataDetails<
 	return query;
 }
 
+export const getGetAniDBArtworkUrl = (filename: string) => {
+	return `/api/media/artwork/anidb/${filename}`;
+};
+
+/**
+ * @summary Get locally cached AniDB artwork
+ */
+export const getAniDBArtwork = async (filename: string, options?: RequestInit): Promise<Blob> => {
+	const res = await fetch(getGetAniDBArtworkUrl(filename), {
+		...options,
+		method: 'GET'
+	});
+
+	const body = [204, 205, 304].includes(res.status) ? null : await res.blob();
+	const data: Blob = body as Blob;
+	return data;
+};
+
+export const getGetAniDBArtworkQueryKey = (filename: string) => {
+	return [`/api/media/artwork/anidb/${filename}`] as const;
+};
+
+export const getGetAniDBArtworkQueryOptions = <
+	TData = Awaited<ReturnType<typeof getAniDBArtwork>>,
+	TError = UnauthorizedResponse | NotFoundResponse
+>(
+	filename: string,
+	options?: {
+		query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof getAniDBArtwork>>, TError, TData>>;
+		fetch?: RequestInit;
+	}
+) => {
+	const { query: queryOptions, fetch: fetchOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetAniDBArtworkQueryKey(filename);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getAniDBArtwork>>> = ({ signal }) =>
+		getAniDBArtwork(filename, { signal, ...fetchOptions });
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: filename !== null && filename !== undefined,
+		...queryOptions
+	} as CreateQueryOptions<Awaited<ReturnType<typeof getAniDBArtwork>>, TError, TData> & {
+		queryKey: DataTag<QueryKey, TData, TError>;
+	};
+};
+
+export type GetAniDBArtworkQueryResult = NonNullable<Awaited<ReturnType<typeof getAniDBArtwork>>>;
+export type GetAniDBArtworkQueryError = UnauthorizedResponse | NotFoundResponse;
+
+/**
+ * @summary Get locally cached AniDB artwork
+ */
+
+export function createGetAniDBArtwork<
+	TData = Awaited<ReturnType<typeof getAniDBArtwork>>,
+	TError = UnauthorizedResponse | NotFoundResponse
+>(
+	filename: () => string,
+	options?: () => {
+		query?: Partial<CreateQueryOptions<Awaited<ReturnType<typeof getAniDBArtwork>>, TError, TData>>;
+		fetch?: RequestInit;
+	},
+	queryClient?: () => QueryClient
+): CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+	const query = createQuery(
+		() => getGetAniDBArtworkQueryOptions(filename(), options?.()),
+		queryClient
+	) as CreateQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+	return query;
+}
+
 export const getGetPersonDetailsUrl = (provider: MetadataProviderType, personId: string) => {
 	return `/api/people/${provider}/${personId}`;
 };

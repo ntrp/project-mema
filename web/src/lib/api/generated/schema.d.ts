@@ -299,6 +299,25 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/media/artwork/anidb/{filename}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				filename: string;
+			};
+			cookie?: never;
+		};
+		/** Get locally cached AniDB artwork */
+		get: operations['getAniDBArtwork'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/people/{provider}/{personId}': {
 		parameters: {
 			query?: never;
@@ -6379,6 +6398,30 @@ export interface operations {
 				};
 			};
 			400: components['responses']['BadRequest'];
+			401: components['responses']['Unauthorized'];
+			404: components['responses']['NotFound'];
+		};
+	};
+	getAniDBArtwork: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				filename: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Cached AniDB JPEG artwork */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'image/jpeg': string;
+				};
+			};
 			401: components['responses']['Unauthorized'];
 			404: components['responses']['NotFound'];
 		};

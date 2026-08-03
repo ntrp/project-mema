@@ -690,6 +690,33 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /media/artwork/anidb/{filename}:
+    parameters:
+      - name: filename
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: "^[0-9]+\\.jpg$"
+    get:
+      operationId: getAniDBArtwork
+      tags:
+        - Media
+      summary: Get locally cached AniDB artwork
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Cached AniDB JPEG artwork
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /people/{provider}/{personId}:
     parameters:
       - name: provider

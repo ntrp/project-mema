@@ -254,18 +254,26 @@ type TestResult struct {
 }
 
 type Service struct {
-	httpClient       *http.Client
-	tokenStore       TokenStore
-	mu               sync.Mutex
-	lastByID         map[string]time.Time
-	anidbTitleCaches map[string]anidbTitleCache
+	httpClient          *http.Client
+	tokenStore          TokenStore
+	mu                  sync.Mutex
+	lastByID            map[string]time.Time
+	anidbTitleCaches    map[string]anidbTitleCache
+	anidbArtworkDir     string
+	anidbImageBaseURL   string
+	anidbArtworkFlights map[string]chan struct{}
+	anidbInterval       time.Duration
+	anidbCooldownUntil  time.Time
 }
 
 func NewService(httpClient *http.Client, tokenStore TokenStore) *Service {
 	return &Service{
-		httpClient:       httpClient,
-		tokenStore:       tokenStore,
-		lastByID:         map[string]time.Time{},
-		anidbTitleCaches: map[string]anidbTitleCache{},
+		httpClient:          httpClient,
+		tokenStore:          tokenStore,
+		lastByID:            map[string]time.Time{},
+		anidbTitleCaches:    map[string]anidbTitleCache{},
+		anidbImageBaseURL:   "https://cdn.anidb.net/images/main",
+		anidbArtworkFlights: map[string]chan struct{}{},
+		anidbInterval:       2200 * time.Millisecond,
 	}
 }

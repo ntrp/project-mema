@@ -129,6 +129,7 @@ func newHTTPServer(cfg config.Config, pool *pgxpool.Pool) (*http.Server, *jobs.C
 	downloadClientService := downloadclients.NewService(httpClient)
 	indexerService := indexers.NewService(httpClient)
 	metadataService := metadata.NewService(httpClient, settingsStore)
+	metadataService.ConfigureAniDBArtworkCache(cfg.MediaDataDir)
 	eventBroker := events.NewBroker()
 	jobClient, err := jobs.NewClient(pool, settingsStore, indexerService, downloadClientService, eventBroker)
 	if err != nil {

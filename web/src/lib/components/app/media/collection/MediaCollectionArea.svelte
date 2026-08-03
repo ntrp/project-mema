@@ -9,6 +9,7 @@
 	import MediaBadge from '$lib/components/app/media/shared/MediaBadge.svelte';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
 	import { isUnreleasedMedia } from '$lib/components/app/media/shared/mediaRelease';
+	import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 
 	interface Props {
 		collection?: MediaCollection;
@@ -55,13 +56,7 @@
 	}
 
 	function posterUrl(path?: string) {
-		if (!path) {
-			return undefined;
-		}
-		if (path.startsWith('http://') || path.startsWith('https://')) {
-			return path;
-		}
-		return `https://image.tmdb.org/t/p/w342${path}`;
+		return mediaImageUrl(path, 'w342');
 	}
 </script>
 

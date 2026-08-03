@@ -1,4 +1,5 @@
 import type { LibraryFolder, MediaType, QualityProfileOption } from '$lib/settings/types';
+import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 
 type MediaCandidate = {
 	type: MediaType;
@@ -15,7 +16,7 @@ export function preselectQualityProfileId(
 	candidate: MediaCandidate,
 	qualityProfiles: QualityProfileOption[]
 ) {
-	return bestScored(qualityProfiles, (profile) => profileScore(candidate, profile))?.id ?? '';
+	return bestScored(qualityProfiles, (option) => profileScore(candidate, option))?.id ?? '';
 }
 
 export function preselectLibraryFolderId(
@@ -35,13 +36,7 @@ export function matchingLibraryFolders(type: MediaType, libraryFolders: LibraryF
 }
 
 export function mediaPosterUrl(path?: string) {
-	if (!path) {
-		return undefined;
-	}
-	if (path.startsWith('http://') || path.startsWith('https://')) {
-		return path;
-	}
-	return `https://image.tmdb.org/t/p/w780${path}`;
+	return mediaImageUrl(path);
 }
 
 function profileScore(candidate: MediaCandidate, profile: QualityProfileOption) {

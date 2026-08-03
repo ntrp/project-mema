@@ -10,6 +10,9 @@
   </titles>
   <description>Example overview</description>
   <picture>456.jpg</picture>
+  <characters>
+    <character id="42"><name>Hero</name><picture>788.jpg</picture><seiyuu id="1678" picture="789.jpg">Kaji Yuuki</seiyuu></character>
+  </characters>
   <episodes>
     <episode id="1001"><epno type="1">1</epno><airdate>2024-01-02</airdate><title xml:lang="en">Regular</title></episode>
     <episode id="1002"><epno type="2">1</epno><airdate>2024-02-02</airdate><title xml:lang="en">Special</title></episode>

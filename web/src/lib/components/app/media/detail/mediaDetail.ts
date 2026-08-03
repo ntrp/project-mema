@@ -1,3 +1,4 @@
+import { mediaImageUrl } from '$lib/components/app/media/shared/mediaImage';
 import type {
 	DownloadActivity,
 	GrabSubtitleRequest,
@@ -86,9 +87,7 @@ export interface MediaDetailProps {
 }
 
 export function imageUrl(path?: string, size = 'w780') {
-	if (!path) return undefined;
-	if (path.startsWith('http://') || path.startsWith('https://')) return path;
-	return `https://image.tmdb.org/t/p/${size}${path}`;
+	return mediaImageUrl(path, size);
 }
 
 export function mediaRatingText(voteAverage: number | undefined, provider: string) {
