@@ -8,10 +8,11 @@
 	interface Props {
 		visibleNodes: TreeNode[];
 		selectedPath: string;
+		onSelect: (_path: string) => void;
 		onToggle: (_path: string) => void;
 	}
 
-	let { visibleNodes, selectedPath = $bindable(), onToggle }: Props = $props();
+	let { visibleNodes, selectedPath, onSelect, onToggle }: Props = $props();
 
 	const itemDepthClasses = [
 		'pl-1.5',
@@ -78,10 +79,12 @@
 				variant="ghost"
 				class="grid h-auto justify-items-start gap-1 px-2 py-1.5 text-left"
 				ondblclick={() => onToggle(node.path)}
-				onclick={() => (selectedPath = node.path)}
+				onclick={() => onSelect(node.path)}
 			>
 				<span class="font-semibold">{node.name}</span>
-				<small class="break-all text-muted-foreground">{node.path}</small>
+				{#if node.name !== node.path}
+					<small class="break-all text-muted-foreground">{node.path}</small>
+				{/if}
 			</Button>
 		</div>
 		{#if node.error}

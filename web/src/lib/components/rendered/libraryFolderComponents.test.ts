@@ -7,6 +7,7 @@ import LibraryFolderTree from '$lib/components/settings/library/folders/LibraryF
 import {
 	createNode,
 	flattenTree,
+	folderPathChain,
 	type TreeNode
 } from '$lib/components/settings/library/folders/libraryFolderTree';
 
@@ -62,6 +63,7 @@ describe('rendered library folder controls (SCN-SETTINGS-016)', () => {
 					})
 				],
 				selectedPath: '/media/movies',
+				onSelect: vi.fn(),
 				onToggle: vi.fn()
 			}
 		});
@@ -71,6 +73,16 @@ describe('rendered library folder controls (SCN-SETTINGS-016)', () => {
 		expect(body).toContain('Permission denied');
 		expect(body).toContain('aria-selected="true"');
 		expect(body).toContain('...');
+	});
+
+	it('builds the path used to preopen the main data directory', () => {
+		expect(folderPathChain('/Users/admin/.data/media/')).toEqual([
+			'/',
+			'/Users',
+			'/Users/admin',
+			'/Users/admin/.data',
+			'/Users/admin/.data/media'
+		]);
 	});
 
 	it('flattens only expanded folder descendants', () => {

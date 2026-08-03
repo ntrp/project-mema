@@ -36,6 +36,16 @@ export function createNode(
 	};
 }
 
+export function folderPathChain(path: string) {
+	const chain = ['/'];
+	let current = '';
+	for (const part of path.split('/').filter(Boolean)) {
+		current += `/${part}`;
+		chain.push(current);
+	}
+	return chain;
+}
+
 export function flattenTree(treeNodes: Record<string, TreeNode>, rootPath: string) {
 	const root = treeNodes[rootPath];
 	if (!root) {

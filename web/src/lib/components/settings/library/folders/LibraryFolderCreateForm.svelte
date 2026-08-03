@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FolderPlusIcon from '@lucide/svelte/icons/folder-plus';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 
@@ -24,6 +25,7 @@
 		<Input bind:value={name} placeholder="New folder name" maxlength={255} disabled={creating} />
 	</label>
 	<Button type="submit" variant="outline" disabled={disabled || !name.trim() || creating}>
+		<FolderPlusIcon aria-hidden="true" />
 		{creating ? 'Creating' : 'Create folder'}
 	</Button>
 </form>

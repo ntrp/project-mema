@@ -4,6 +4,10 @@ import viteConfig from './vite.config';
 
 export default defineConfig({
 	...viteConfig,
+	optimizeDeps: {
+		...viteConfig.optimizeDeps,
+		include: [...(viteConfig.optimizeDeps?.include ?? []), '@lucide/svelte/icons/folder-plus']
+	},
 	test: {
 		include: ['src/**/*.browser.test.ts'],
 		browser: {
