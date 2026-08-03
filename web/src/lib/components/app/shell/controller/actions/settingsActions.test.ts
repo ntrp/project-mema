@@ -160,6 +160,33 @@ describe('settings save actions (SCN-SETTINGS-009)', () => {
 		expect(state.currentUser).toEqual({ id: 'user-1', username: 'editor-new', role: 'admin' });
 		expect(state.message).toBe('User saved');
 	});
+
+	it('tracks an unsaved metadata provider by type while creating it', async () => {
+		let finishSave = () => {};
+		apiMock.saveMetadataProvider.mockReturnValue(
+			new Promise<void>((resolve) => {
+				finishSave = resolve;
+			})
+		);
+		const state = shellState();
+		const pending = createSettingsSaveActions(state, {
+			clearNotice: vi.fn(),
+			loadSettings: vi.fn()
+		}).saveMetadataProvider({
+			name: 'AniList',
+			type: 'anilist',
+			baseUrl: 'https://graphql.anilist.co',
+			enabled: true,
+			fallbackEnabled: false,
+			priority: 120
+		});
+
+		await Promise.resolve();
+		expect(state.savingMetadataProviderId).toBe('anilist');
+		finishSave();
+		await pending;
+		expect(state.savingMetadataProviderId).toBeUndefined();
+	});
 });
 
 describe('settings delete and import actions (SCN-SETTINGS-009)', () => {

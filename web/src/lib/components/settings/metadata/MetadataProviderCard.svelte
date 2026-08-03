@@ -6,6 +6,7 @@
 	import SecretInput from '$lib/components/settings/shared/SecretInput.svelte';
 	import SectionHeading from '$lib/components/shared/SectionHeading.svelte';
 	import IntegrationTestStatus from '../shared/IntegrationTestStatus.svelte';
+	import { metadataProviderFormFromProvider } from '$lib/settings/providerIntegrationForms';
 	import type { MetadataProviderDefinition } from './metadataProviderDefinitions';
 	import type {
 		IntegrationTestResponse,
@@ -24,28 +25,10 @@
 	}
 
 	let { definition, provider, onSave, onTest, testingId, savingId, testResult }: Props = $props();
-	let form = $derived(provider ? formFromProvider(provider) : defaultForm(definition));
-
-	function formFromProvider(value: MetadataProvider): MetadataProviderForm {
-		const form: MetadataProviderForm = {
-			id: value.id,
-			name: value.name,
-			type: value.type,
-			baseUrl: value.baseUrl,
-			enabled: value.enabled,
-			priority: value.priority
-		};
-		if (value.type === 'anilist') return form;
-		return {
-			...form,
-			apiKey: value.apiKey ?? '',
-			pin: value.pin ?? '',
-			accessToken: value.accessToken ?? '',
-			apiKeySet: value.apiKeySet,
-			pinSet: value.pinSet,
-			accessTokenSet: value.accessTokenSet
-		};
-	}
+	let form = $derived(
+		provider ? metadataProviderFormFromProvider(provider) : defaultForm(definition)
+	);
+	let saving = $derived(savingId === (form.id ?? form.type));
 
 	function defaultForm(value: MetadataProviderDefinition): MetadataProviderForm {
 		const form: MetadataProviderForm = {
@@ -53,6 +36,7 @@
 			type: value.type,
 			baseUrl: value.baseUrl,
 			enabled: value.type !== 'anidb',
+			fallbackEnabled: false,
 			priority: value.priority
 		};
 		return value.fields === 'anilist' ? form : { ...form, apiKey: '', pin: '', accessToken: '' };
@@ -69,6 +53,10 @@
 
 	function updateEnabled(value: boolean) {
 		form = { ...form, enabled: value };
+	}
+
+	function updateFallback(value: boolean) {
+		form = { ...form, fallbackEnabled: value };
 	}
 
 	function updatePriority(value: number) {
@@ -104,6 +92,16 @@
 				/>
 				<Label for={`${definition.type}-metadata-enabled`}>Enabled</Label>
 			</div>
+			{#if definition.type === 'tmdb'}
+				<div class="flex min-h-9 items-center gap-2 self-end">
+					<Checkbox
+						id="tmdb-metadata-fallback"
+						checked={form.fallbackEnabled}
+						onCheckedChange={(checked) => updateFallback(checked === true)}
+					/>
+					<Label for="tmdb-metadata-fallback">Fill missing metadata</Label>
+				</div>
+			{/if}
 			<label class="grid gap-1.5 md:col-span-2">
 				<span class="text-sm font-bold text-muted-foreground">Base URL</span>
 				<Input
@@ -178,8 +176,8 @@
 		</div>
 
 		<div class="flex flex-wrap justify-end gap-2.5">
-			<Button type="submit" disabled={savingId === form.id}>
-				{savingId === form.id ? 'Saving' : 'Save'}
+			<Button type="submit" disabled={saving}>
+				{saving ? 'Saving' : 'Save'}
 			</Button>
 			<Button
 				type="button"

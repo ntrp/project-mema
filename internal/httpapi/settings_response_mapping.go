@@ -168,20 +168,21 @@ func indexerSearchHistoryEntryResponse(entry storage.IndexerSearchHistoryEntry) 
 
 func metadataProviderResponse(provider storage.MetadataProvider) MetadataProvider {
 	return MetadataProvider{
-		Id:             openapi_types.UUID(provider.ID),
-		Name:           provider.Name,
-		Type:           MetadataProviderType(provider.Type),
-		BaseUrl:        provider.BaseURL,
-		ApiKey:         provider.APIKey,
-		Pin:            provider.PIN,
-		AccessToken:    provider.AccessToken,
-		ApiKeySet:      provider.APIKey != nil,
-		PinSet:         provider.PIN != nil,
-		AccessTokenSet: provider.AccessToken != nil,
-		Enabled:        provider.Enabled,
-		Priority:       provider.Priority,
-		CreatedAt:      provider.CreatedAt,
-		UpdatedAt:      provider.UpdatedAt,
+		Id:              openapi_types.UUID(provider.ID),
+		Name:            provider.Name,
+		Type:            MetadataProviderType(provider.Type),
+		BaseUrl:         provider.BaseURL,
+		ApiKey:          provider.APIKey,
+		Pin:             provider.PIN,
+		AccessToken:     provider.AccessToken,
+		ApiKeySet:       provider.APIKey != nil,
+		PinSet:          provider.PIN != nil,
+		AccessTokenSet:  provider.AccessToken != nil,
+		Enabled:         provider.Enabled,
+		FallbackEnabled: provider.FallbackEnabled,
+		Priority:        provider.Priority,
+		CreatedAt:       provider.CreatedAt,
+		UpdatedAt:       provider.UpdatedAt,
 	}
 }
 

@@ -806,6 +806,7 @@ type AppMetadataProvider struct {
 	SessionToken          pgtype.Text
 	SessionTokenExpiresAt *time.Time
 	Enabled               bool
+	FallbackEnabled       bool
 	Priority              int32
 	CreatedAt             time.Time
 	UpdatedAt             time.Time

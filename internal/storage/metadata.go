@@ -25,20 +25,22 @@ type MetadataProvider struct {
 	SessionToken          *string
 	SessionTokenExpiresAt *time.Time
 	Enabled               bool
+	FallbackEnabled       bool
 	Priority              int32
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 }
 
 type MetadataProviderInput struct {
-	Name        string
-	Type        string
-	BaseURL     string
-	APIKey      *string
-	PIN         *string
-	AccessToken *string
-	Enabled     bool
-	Priority    int32
+	Name            string
+	Type            string
+	BaseURL         string
+	APIKey          *string
+	PIN             *string
+	AccessToken     *string
+	Enabled         bool
+	FallbackEnabled bool
+	Priority        int32
 }
 
 type MetadataCacheStats struct {
@@ -210,15 +212,16 @@ func metadataProviderResult(row storagegen.AppMetadataProvider, err error) (Meta
 
 func metadataProviderCreateParams(id uuid.UUID, input MetadataProviderInput) storagegen.CreateMetadataProviderParams {
 	return storagegen.CreateMetadataProviderParams{
-		ID:          id,
-		Name:        input.Name,
-		Type:        input.Type,
-		BaseUrl:     input.BaseURL,
-		ApiKey:      textValue(input.APIKey),
-		Pin:         textValue(input.PIN),
-		AccessToken: textValue(input.AccessToken),
-		Enabled:     input.Enabled,
-		Priority:    input.Priority,
+		ID:              id,
+		Name:            input.Name,
+		Type:            input.Type,
+		BaseUrl:         input.BaseURL,
+		ApiKey:          textValue(input.APIKey),
+		Pin:             textValue(input.PIN),
+		AccessToken:     textValue(input.AccessToken),
+		Enabled:         input.Enabled,
+		FallbackEnabled: input.Type == "tmdb" && input.FallbackEnabled,
+		Priority:        input.Priority,
 	}
 }
 
@@ -234,6 +237,7 @@ func metadataProviderFromRow(row storagegen.AppMetadataProvider) MetadataProvide
 		SessionToken:          textPtr(row.SessionToken),
 		SessionTokenExpiresAt: row.SessionTokenExpiresAt,
 		Enabled:               row.Enabled,
+		FallbackEnabled:       row.FallbackEnabled,
 		Priority:              row.Priority,
 		CreatedAt:             row.CreatedAt,
 		UpdatedAt:             row.UpdatedAt,

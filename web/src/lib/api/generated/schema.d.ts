@@ -5271,6 +5271,8 @@ export interface components {
 			pin?: string;
 			accessToken?: string;
 			enabled: boolean;
+			/** @description When this TMDB provider is enabled, fill only metadata fields missing from the selected provider. */
+			fallbackEnabled: boolean;
 			/** Format: int32 */
 			priority: number;
 		};

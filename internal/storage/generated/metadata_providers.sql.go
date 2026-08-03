@@ -15,7 +15,7 @@ import (
 
 const createMetadataProvider = `-- name: CreateMetadataProvider :one
 insert into app.metadata_providers (
-    id, name, type, base_url, api_key, pin, access_token, enabled, priority
+    id, name, type, base_url, api_key, pin, access_token, enabled, fallback_enabled, priority
 )
 values (
     $1,
@@ -26,22 +26,24 @@ values (
     $6,
     $7,
     $8,
-    $9
+    $9,
+    $10
 )
 returning id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 `
 
 type CreateMetadataProviderParams struct {
-	ID          uuid.UUID
-	Name        string
-	Type        string
-	BaseUrl     string
-	ApiKey      pgtype.Text
-	Pin         pgtype.Text
-	AccessToken pgtype.Text
-	Enabled     bool
-	Priority    int32
+	ID              uuid.UUID
+	Name            string
+	Type            string
+	BaseUrl         string
+	ApiKey          pgtype.Text
+	Pin             pgtype.Text
+	AccessToken     pgtype.Text
+	Enabled         bool
+	FallbackEnabled bool
+	Priority        int32
 }
 
 func (q *Queries) CreateMetadataProvider(ctx context.Context, arg CreateMetadataProviderParams) (AppMetadataProvider, error) {
@@ -54,6 +56,7 @@ func (q *Queries) CreateMetadataProvider(ctx context.Context, arg CreateMetadata
 		arg.Pin,
 		arg.AccessToken,
 		arg.Enabled,
+		arg.FallbackEnabled,
 		arg.Priority,
 	)
 	var i AppMetadataProvider
@@ -68,6 +71,7 @@ func (q *Queries) CreateMetadataProvider(ctx context.Context, arg CreateMetadata
 		&i.SessionToken,
 		&i.SessionTokenExpiresAt,
 		&i.Enabled,
+		&i.FallbackEnabled,
 		&i.Priority,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -121,7 +125,7 @@ func (q *Queries) EnsureMetadataProvider(ctx context.Context, arg EnsureMetadata
 
 const getMetadataProvider = `-- name: GetMetadataProvider :one
 select id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 from app.metadata_providers
 where id = $1
 `
@@ -140,6 +144,7 @@ func (q *Queries) GetMetadataProvider(ctx context.Context, id uuid.UUID) (AppMet
 		&i.SessionToken,
 		&i.SessionTokenExpiresAt,
 		&i.Enabled,
+		&i.FallbackEnabled,
 		&i.Priority,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -149,7 +154,7 @@ func (q *Queries) GetMetadataProvider(ctx context.Context, id uuid.UUID) (AppMet
 
 const listEnabledMetadataProviders = `-- name: ListEnabledMetadataProviders :many
 select id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 from app.metadata_providers
 where enabled = true
     and (($1 = 'movie' and type in ('tmdb', 'tvdb', 'anilist'))
@@ -177,6 +182,7 @@ func (q *Queries) ListEnabledMetadataProviders(ctx context.Context, mediaType in
 			&i.SessionToken,
 			&i.SessionTokenExpiresAt,
 			&i.Enabled,
+			&i.FallbackEnabled,
 			&i.Priority,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -193,7 +199,7 @@ func (q *Queries) ListEnabledMetadataProviders(ctx context.Context, mediaType in
 
 const listMetadataProviders = `-- name: ListMetadataProviders :many
 select id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 from app.metadata_providers
 order by priority asc, name asc
 `
@@ -218,6 +224,7 @@ func (q *Queries) ListMetadataProviders(ctx context.Context) ([]AppMetadataProvi
 			&i.SessionToken,
 			&i.SessionTokenExpiresAt,
 			&i.Enabled,
+			&i.FallbackEnabled,
 			&i.Priority,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -243,23 +250,25 @@ set name = $2,
     session_token = null,
     session_token_expires_at = null,
     enabled = $8,
-    priority = $9,
+    fallback_enabled = $9,
+    priority = $10,
     updated_at = now()
 where id = $1
 returning id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 `
 
 type UpdateMetadataProviderParams struct {
-	ID          uuid.UUID
-	Name        string
-	Type        string
-	BaseUrl     string
-	ApiKey      pgtype.Text
-	Pin         pgtype.Text
-	AccessToken pgtype.Text
-	Enabled     bool
-	Priority    int32
+	ID              uuid.UUID
+	Name            string
+	Type            string
+	BaseUrl         string
+	ApiKey          pgtype.Text
+	Pin             pgtype.Text
+	AccessToken     pgtype.Text
+	Enabled         bool
+	FallbackEnabled bool
+	Priority        int32
 }
 
 func (q *Queries) UpdateMetadataProvider(ctx context.Context, arg UpdateMetadataProviderParams) (AppMetadataProvider, error) {
@@ -272,6 +281,7 @@ func (q *Queries) UpdateMetadataProvider(ctx context.Context, arg UpdateMetadata
 		arg.Pin,
 		arg.AccessToken,
 		arg.Enabled,
+		arg.FallbackEnabled,
 		arg.Priority,
 	)
 	var i AppMetadataProvider
@@ -286,6 +296,7 @@ func (q *Queries) UpdateMetadataProvider(ctx context.Context, arg UpdateMetadata
 		&i.SessionToken,
 		&i.SessionTokenExpiresAt,
 		&i.Enabled,
+		&i.FallbackEnabled,
 		&i.Priority,
 		&i.CreatedAt,
 		&i.UpdatedAt,

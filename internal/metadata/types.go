@@ -145,7 +145,7 @@ type EpisodeFact struct {
 	Title          string
 	AirDate        *string
 }
-type Details struct {
+type MediaResource struct {
 	Title            string
 	Aliases          []Alias
 	ProviderMappings []ProviderMapping
@@ -178,6 +178,9 @@ type Details struct {
 	Recommendations  []SearchResult
 	Similar          []SearchResult
 }
+
+// Details is kept as a compatibility alias while callers migrate to MediaResource.
+type Details = MediaResource
 
 type Collection struct {
 	ID           string

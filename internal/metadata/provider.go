@@ -4,7 +4,7 @@ import "context"
 
 type Provider interface {
 	Search(ctx context.Context, request SearchRequest) ([]SearchResult, error)
-	Details(ctx context.Context, request DetailsRequest) (Details, error)
+	Details(ctx context.Context, request DetailsRequest) (MediaResource, error)
 }
 
 type DiscoverProvider interface {
@@ -27,7 +27,7 @@ func (p tmdbProvider) Discover(ctx context.Context, request DiscoverRequest) ([]
 	return p.service.discoverTMDB(ctx, p.config, request)
 }
 
-func (p tmdbProvider) Details(ctx context.Context, request DetailsRequest) (Details, error) {
+func (p tmdbProvider) Details(ctx context.Context, request DetailsRequest) (MediaResource, error) {
 	return p.service.detailsTMDB(ctx, p.config, request)
 }
 
@@ -39,7 +39,7 @@ type anilistProvider struct {
 func (p anilistProvider) Search(ctx context.Context, request SearchRequest) ([]SearchResult, error) {
 	return p.service.searchAniList(ctx, p.config, request)
 }
-func (p anilistProvider) Details(ctx context.Context, request DetailsRequest) (Details, error) {
+func (p anilistProvider) Details(ctx context.Context, request DetailsRequest) (MediaResource, error) {
 	return p.service.detailsAniList(ctx, p.config, request)
 }
 
@@ -52,6 +52,6 @@ func (p tvdbProvider) Search(ctx context.Context, request SearchRequest) ([]Sear
 	return p.service.searchTVDB(ctx, p.config, request)
 }
 
-func (p tvdbProvider) Details(ctx context.Context, request DetailsRequest) (Details, error) {
+func (p tvdbProvider) Details(ctx context.Context, request DetailsRequest) (MediaResource, error) {
 	return p.service.detailsTVDB(ctx, p.config, request)
 }

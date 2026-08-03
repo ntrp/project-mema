@@ -147,6 +147,7 @@ function metadataProviderForm() {
 		pin: '',
 		accessToken: '',
 		enabled: true,
+		fallbackEnabled: false,
 		priority: 1
 	} as const;
 }

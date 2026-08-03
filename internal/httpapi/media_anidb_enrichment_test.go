@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -60,7 +61,7 @@ func TestAppendAniDBArtifactsPreservesPrimaryAndAttachesOnlyResolvedRegularEpiso
 
 func TestDirectAniDBDetailsMarkMediaAsAnime(t *testing.T) {
 	provider, externalID := "anidb", "123"
-	got := applyMediaDetails(storage.MediaItemInput{Type: "serie", ExternalProvider: &provider, ExternalID: &externalID}, metadata.Details{
+	got := applyMediaResource(storage.MediaItemInput{Type: "serie", ExternalProvider: &provider, ExternalID: &externalID}, metadata.Details{
 		Title: "Anime", Type: "serie", ExternalProvider: "anidb", ExternalID: "123",
 	})
 	if got.ContentKind != "anime" {
@@ -76,6 +77,55 @@ func TestEnrichAniDBFactsUsesPrimaryDetailsWithoutChangingDisplay(t *testing.T) 
 	})
 	if err != nil || got.Title != "Display" || len(got.ProviderMappings) != 1 || !got.ProviderMappings[0].Canonical {
 		t.Fatalf("input=%#v err=%v", got, err)
+	}
+}
+
+func TestMetadataFallbackMustBeEnabledAndOnlyFillsMissingFields(t *testing.T) {
+	apiKey, poster, backdrop := "tmdb-key", "/anidb.jpg", "/tmdb-backdrop.jpg"
+	year := int32(2013)
+	primary := metadata.MediaResource{
+		Title: "Shingeki no Kyojin", Type: "serie", Year: &year, ExternalProvider: "anidb", ExternalID: "9541",
+		PosterPath:       &poster,
+		ProviderMappings: []metadata.ProviderMapping{{ProviderName: "tmdb", ExternalID: "1429"}},
+	}
+	loads := 0
+	load := func(_ context.Context, _ storage.MetadataProvider, request metadata.DetailsRequest) (metadata.MediaResource, error) {
+		loads++
+		if request.ExternalID != "1429" {
+			t.Fatalf("TMDB request = %#v", request)
+		}
+		return metadata.MediaResource{
+			Title: "Attack on Titan", Type: "serie", ExternalProvider: "tmdb", ExternalID: "1429",
+			BackdropPath: &backdrop, Genres: []string{"Animation"},
+		}, nil
+	}
+	search := func(_ context.Context, _ storage.MetadataProvider, request metadata.SearchRequest) ([]metadata.SearchResult, error) {
+		return []metadata.SearchResult{{Title: request.Query, Year: request.Year, ExternalID: "1429"}}, nil
+	}
+	provider := storage.MetadataProvider{Type: "tmdb", Enabled: true, APIKey: &apiKey}
+	server := &Server{}
+	if got := server.resourceWithMetadataFallback(context.Background(), []storage.MetadataProvider{provider}, primary, load, search); got.BackdropPath != nil || loads != 0 {
+		t.Fatalf("disabled fallback changed resource: %#v loads=%d", got, loads)
+	}
+	provider.FallbackEnabled = true
+	got := server.resourceWithMetadataFallback(context.Background(), []storage.MetadataProvider{provider}, primary, load, search)
+	if loads != 1 || got.Title != primary.Title || got.PosterPath != primary.PosterPath || got.BackdropPath == nil || *got.BackdropPath != backdrop {
+		t.Fatalf("fallback resource = %#v loads=%d", got, loads)
+	}
+	unmapped := primary
+	unmapped.ProviderMappings = nil
+	got = server.resourceWithMetadataFallback(context.Background(), []storage.MetadataProvider{provider}, unmapped, load, search)
+	if loads != 2 || got.BackdropPath == nil || *got.BackdropPath != backdrop {
+		t.Fatalf("searched fallback resource = %#v loads=%d", got, loads)
+	}
+	failed := server.resourceWithMetadataFallback(
+		context.Background(), []storage.MetadataProvider{provider}, primary,
+		func(context.Context, storage.MetadataProvider, metadata.DetailsRequest) (metadata.MediaResource, error) {
+			return metadata.MediaResource{}, errors.New("fallback unavailable")
+		}, search,
+	)
+	if failed.Title != primary.Title || failed.BackdropPath != nil {
+		t.Fatalf("failed fallback changed primary: %#v", failed)
 	}
 }
 

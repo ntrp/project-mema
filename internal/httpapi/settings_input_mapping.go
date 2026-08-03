@@ -81,14 +81,15 @@ func metadataProviderInput(w http.ResponseWriter, request MetadataProviderReques
 	apiKey := optionalTrimmedString(request.ApiKey)
 	accessToken := optionalTrimmedString(request.AccessToken)
 	return storage.MetadataProviderInput{
-		Name:        name,
-		Type:        string(request.Type),
-		BaseURL:     baseURL,
-		APIKey:      apiKey,
-		PIN:         optionalTrimmedString(request.Pin),
-		AccessToken: accessToken,
-		Enabled:     request.Enabled,
-		Priority:    request.Priority,
+		Name:            name,
+		Type:            string(request.Type),
+		BaseURL:         baseURL,
+		APIKey:          apiKey,
+		PIN:             optionalTrimmedString(request.Pin),
+		AccessToken:     accessToken,
+		Enabled:         request.Enabled,
+		FallbackEnabled: request.Type == Tmdb && request.FallbackEnabled,
+		Priority:        request.Priority,
 	}, true
 }
 

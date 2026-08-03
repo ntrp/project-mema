@@ -50,10 +50,10 @@ func (s *Service) Discover(ctx context.Context, config Config, request DiscoverR
 	return discoverProvider.Discover(ctx, request)
 }
 
-func (s *Service) Details(ctx context.Context, config Config, request DetailsRequest) (Details, error) {
+func (s *Service) Details(ctx context.Context, config Config, request DetailsRequest) (MediaResource, error) {
 	provider, err := s.provider(config)
 	if err != nil {
-		return Details{}, err
+		return MediaResource{}, err
 	}
 	return provider.Details(ctx, request)
 }

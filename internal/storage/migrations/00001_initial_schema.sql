@@ -803,6 +803,7 @@ create table if not exists app.metadata_providers (
     session_token text,
     session_token_expires_at timestamptz,
     enabled boolean not null default true,
+    fallback_enabled boolean not null default false check (not fallback_enabled or type = 'tmdb'),
     priority integer not null default 100 check (priority >= 0 and priority <= 1000),
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()

@@ -102,6 +102,7 @@ describe('settings entity save actions (SCN-SETTINGS-009)', () => {
 			type: 'tmdb',
 			baseUrl: 'https://metadata.test',
 			enabled: true,
+			fallbackEnabled: true,
 			priority: 100
 		});
 
@@ -116,6 +117,7 @@ describe('settings entity save actions (SCN-SETTINGS-009)', () => {
 			type: 'tmdb',
 			baseUrl: 'https://metadata.test',
 			enabled: true,
+			fallbackEnabled: true,
 			priority: 100
 		});
 		expect(loadSettings).toHaveBeenCalledTimes(3);

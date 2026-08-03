@@ -10,7 +10,7 @@ import (
 	"media-manager/internal/storage"
 )
 
-func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
+func TestSCNMedia008ApplyMediaResourceCopiesProviderSnapshot(t *testing.T) {
 	year := int32(2026)
 	runtime := int32(120)
 	seasonCount := int32(1)
@@ -82,7 +82,7 @@ func TestSCNMedia008ApplyMediaDetailsCopiesProviderSnapshot(t *testing.T) {
 		}},
 	}
 
-	input := applyMediaDetails(storage.MediaItemInput{Title: "Old"}, details)
+	input := applyMediaResource(storage.MediaItemInput{Title: "Old"}, details)
 
 	if input.Title != "Scenario Series" || input.Type != "serie" || input.Year == nil || *input.Year != year {
 		t.Fatalf("core fields = %#v", input)
@@ -165,7 +165,7 @@ func TestApplyAniListDetailsPreservesExistingTMDBPrimary(t *testing.T) {
 			Source: map[string]any{"source": "anilist", "raw": map[string]any{"id": float64(154587)}}}},
 	}
 
-	input := applyMediaDetails(storage.MediaItemInput{Type: "serie", ExternalProvider: &tmdb, ExternalID: &tmdbID}, details)
+	input := applyMediaResource(storage.MediaItemInput{Type: "serie", ExternalProvider: &tmdb, ExternalID: &tmdbID}, details)
 
 	if input.ExternalProvider == nil || *input.ExternalProvider != "tmdb" || input.ExternalID == nil || *input.ExternalID != "209867" {
 		t.Fatalf("primary provider changed: %#v %#v", input.ExternalProvider, input.ExternalID)

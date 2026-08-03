@@ -57,7 +57,7 @@ export function createIntegrationSaveActions({
 	}
 
 	async function saveMetadataProvider(form: MetadataProviderFormValue) {
-		state.savingMetadataProviderId = form.id;
+		state.savingMetadataProviderId = form.id ?? form.type;
 		clearNotice();
 
 		try {

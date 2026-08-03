@@ -51,15 +51,16 @@ func TestSCNSettings009IntegrationInputsNormalizeAndValidate(t *testing.T) {
 
 	token := " access "
 	provider, ok := metadataProviderInput(httptest.NewRecorder(), MetadataProviderRequest{
-		Name:        " Provider ",
-		Type:        Tmdb,
-		BaseUrl:     " http://provider.local ",
-		ApiKey:      &apiKey,
-		AccessToken: &token,
-		Enabled:     true,
-		Priority:    20,
+		Name:            " Provider ",
+		Type:            Tmdb,
+		BaseUrl:         " http://provider.local ",
+		ApiKey:          &apiKey,
+		AccessToken:     &token,
+		Enabled:         true,
+		FallbackEnabled: true,
+		Priority:        20,
 	})
-	if !ok || provider.Name != "Provider" || provider.AccessToken == nil || *provider.AccessToken != "access" {
+	if !ok || provider.Name != "Provider" || provider.AccessToken == nil || *provider.AccessToken != "access" || !provider.FallbackEnabled {
 		t.Fatalf("provider input = %#v, ok = %v", provider, ok)
 	}
 

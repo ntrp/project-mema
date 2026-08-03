@@ -11400,6 +11400,7 @@ components:
         - type
         - baseUrl
         - enabled
+        - fallbackEnabled
         - priority
       properties:
         name:
@@ -11423,6 +11424,11 @@ components:
           maxLength: 4096
         enabled:
           type: boolean
+        fallbackEnabled:
+          type: boolean
+          description: >-
+            When this TMDB provider is enabled, fill only metadata fields
+            missing from the selected provider.
         priority:
           type: integer
           format: int32

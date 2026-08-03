@@ -41,7 +41,7 @@ func (s *Server) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	details, err := s.freshMetadataProviderDetails(r.Context(), provider, metadata.DetailsRequest{
+	primary, err := s.freshMetadataProviderDetails(r.Context(), provider, metadata.DetailsRequest{
 		MediaType:  item.Type,
 		ExternalID: externalID,
 	})
@@ -50,7 +50,11 @@ func (s *Server) RefreshMediaItemMetadata(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	input, err := s.enrichAniDBFacts(r.Context(), item, providers, refreshedMediaInput(item, details), details)
+	resource := s.resourceWithMetadataFallback(
+		r.Context(), providers, primary, s.freshMetadataProviderDetails, s.searchMetadataProvider,
+	)
+	input := refreshedMediaInput(item, resource)
+	input, err = s.enrichAniDBFacts(r.Context(), item, providers, input, primary)
 	if err != nil {
 		writeMetadataDetailsError(w, err)
 		return
@@ -94,7 +98,7 @@ func mediaAliasInputs(values []storage.MediaItemAlias) []storage.MediaItemAliasI
 	return inputs
 }
 
-func refreshedMediaInput(item storage.MediaItem, details metadata.Details) storage.MediaItemInput {
+func refreshedMediaInput(item storage.MediaItem, resource metadata.MediaResource) storage.MediaItemInput {
 	input := storage.MediaItemInput{
 		Type:                  item.Type,
 		Title:                 item.Title,
@@ -114,5 +118,5 @@ func refreshedMediaInput(item storage.MediaItem, details metadata.Details) stora
 		Aliases:               mediaAliasInputs(item.Aliases),
 		Tags:                  item.Tags,
 	}
-	return applyMediaDetails(input, details)
+	return applyMediaResource(input, resource)
 }

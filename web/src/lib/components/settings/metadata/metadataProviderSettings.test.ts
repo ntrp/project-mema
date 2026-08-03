@@ -25,6 +25,7 @@ function provider(overrides: Partial<MetadataProvider> = {}): MetadataProvider {
 		createdAt: now,
 		updatedAt: now,
 		...overrides,
+		fallbackEnabled: overrides.fallbackEnabled ?? false,
 		apiKeySet: overrides.apiKeySet ?? false,
 		pinSet: overrides.pinSet ?? false,
 		accessTokenSet: overrides.accessTokenSet ?? false
@@ -66,6 +67,7 @@ describe('metadata provider settings (SCN-SETTINGS-014)', () => {
 		expect(body).toContain('http://metadata.test/tmdb');
 		expect(body).toContain('https://api4.thetvdb.com/v4');
 		expect(body).toContain('Enabled');
+		expect(body).toContain('Fill missing metadata');
 		expect(body).toContain('Test OK');
 		expect(body).toContain('Mock metadata ready - 42 ms');
 		expect(body).toContain('Saving');
@@ -87,6 +89,8 @@ describe('metadata provider settings (SCN-SETTINGS-014)', () => {
 		expect(body).toContain('AniList');
 		expect(body).toContain('https://graphql.anilist.co');
 		expect(body).toContain('No credentials required');
+		expect(body).toContain('Save');
+		expect(body).not.toContain('Saving');
 		expect(body).not.toContain('API key');
 		expect(body).not.toContain('Access token');
 	});

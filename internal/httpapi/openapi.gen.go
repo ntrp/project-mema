@@ -4482,20 +4482,23 @@ type MetadataCacheStats struct {
 
 // MetadataProvider defines model for MetadataProvider.
 type MetadataProvider struct {
-	AccessToken    *string              `json:"accessToken,omitempty"`
-	AccessTokenSet bool                 `json:"accessTokenSet"`
-	ApiKey         *string              `json:"apiKey,omitempty"`
-	ApiKeySet      bool                 `json:"apiKeySet"`
-	BaseUrl        string               `json:"baseUrl"`
-	CreatedAt      time.Time            `json:"createdAt"`
-	Enabled        bool                 `json:"enabled"`
-	Id             openapi_types.UUID   `json:"id"`
-	Name           string               `json:"name"`
-	Pin            *string              `json:"pin,omitempty"`
-	PinSet         bool                 `json:"pinSet"`
-	Priority       int32                `json:"priority"`
-	Type           MetadataProviderType `json:"type"`
-	UpdatedAt      time.Time            `json:"updatedAt"`
+	AccessToken    *string   `json:"accessToken,omitempty"`
+	AccessTokenSet bool      `json:"accessTokenSet"`
+	ApiKey         *string   `json:"apiKey,omitempty"`
+	ApiKeySet      bool      `json:"apiKeySet"`
+	BaseUrl        string    `json:"baseUrl"`
+	CreatedAt      time.Time `json:"createdAt"`
+	Enabled        bool      `json:"enabled"`
+
+	// FallbackEnabled When this TMDB provider is enabled, fill only metadata fields missing from the selected provider.
+	FallbackEnabled bool                 `json:"fallbackEnabled"`
+	Id              openapi_types.UUID   `json:"id"`
+	Name            string               `json:"name"`
+	Pin             *string              `json:"pin,omitempty"`
+	PinSet          bool                 `json:"pinSet"`
+	Priority        int32                `json:"priority"`
+	Type            MetadataProviderType `json:"type"`
+	UpdatedAt       time.Time            `json:"updatedAt"`
 }
 
 // MetadataProviderListResponse defines model for MetadataProviderListResponse.
@@ -4505,14 +4508,17 @@ type MetadataProviderListResponse struct {
 
 // MetadataProviderRequest defines model for MetadataProviderRequest.
 type MetadataProviderRequest struct {
-	AccessToken *string              `json:"accessToken,omitempty"`
-	ApiKey      *string              `json:"apiKey,omitempty"`
-	BaseUrl     string               `json:"baseUrl"`
-	Enabled     bool                 `json:"enabled"`
-	Name        string               `json:"name"`
-	Pin         *string              `json:"pin,omitempty"`
-	Priority    int32                `json:"priority"`
-	Type        MetadataProviderType `json:"type"`
+	AccessToken *string `json:"accessToken,omitempty"`
+	ApiKey      *string `json:"apiKey,omitempty"`
+	BaseUrl     string  `json:"baseUrl"`
+	Enabled     bool    `json:"enabled"`
+
+	// FallbackEnabled When this TMDB provider is enabled, fill only metadata fields missing from the selected provider.
+	FallbackEnabled bool                 `json:"fallbackEnabled"`
+	Name            string               `json:"name"`
+	Pin             *string              `json:"pin,omitempty"`
+	Priority        int32                `json:"priority"`
+	Type            MetadataProviderType `json:"type"`
 }
 
 // MetadataProviderType defines model for MetadataProviderType.

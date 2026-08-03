@@ -18,6 +18,13 @@ const anilistDefinition = {
 	priority: 120,
 	fields: 'anilist' as const
 };
+const tmdbDefinition = {
+	type: 'tmdb' as const,
+	name: 'TMDB',
+	baseUrl: 'https://api.themoviedb.org/3',
+	priority: 100,
+	fields: 'tmdb' as const
+};
 let component: ReturnType<typeof mount> | undefined;
 let target = document.createElement('div');
 
@@ -33,9 +40,9 @@ function input(selector: string) {
 	return element;
 }
 
-function update(element: HTMLInputElement, value: string) {
-	element.value = value;
-	element.dispatchEvent(new window.InputEvent('input', { bubbles: true }));
+function updateInput(change: { element: HTMLInputElement; value: string }) {
+	change.element.value = change.value;
+	change.element.dispatchEvent(new window.InputEvent('input', { bubbles: true }));
 }
 
 function click(selector: string) {
@@ -45,6 +52,24 @@ function click(selector: string) {
 }
 
 describe('MetadataProviderCard interactions', () => {
+	it('enables TMDB fallback before save', async () => {
+		const onSave = vi.fn<(form: MetadataProviderForm) => void>();
+		target = document.createElement('div');
+		document.body.append(target);
+		component = mount(MetadataProviderCard, {
+			target,
+			props: { definition: tmdbDefinition, onSave, onTest: vi.fn() }
+		});
+		await tick();
+
+		const checkboxes = target.querySelectorAll('[role="checkbox"]');
+		expect(checkboxes).toHaveLength(2);
+		(checkboxes.item(1) as HTMLElement).click();
+		click('button[type="submit"]');
+
+		expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ fallbackEnabled: true }));
+	});
+
 	it('updates AniDB inputs, enabled state, and priority before save', async () => {
 		const onSave = vi.fn<(form: MetadataProviderForm) => void>();
 		target = document.createElement('div');
@@ -55,10 +80,10 @@ describe('MetadataProviderCard interactions', () => {
 		});
 		await tick();
 
-		update(input('input[maxlength="2000"]'), 'http://metadata.test/anidb');
-		update(input('input[pattern="[a-z0-9]+"]'), 'registeredclient1');
-		update(input('input[type="number"][required]'), '3');
-		update(input('input[type="number"][max="1000"]'), '321');
+		updateInput({ element: input('input[maxlength="2000"]'), value: 'http://metadata.test/anidb' });
+		updateInput({ element: input('input[pattern="[a-z0-9]+"]'), value: 'registeredclient1' });
+		updateInput({ element: input('input[type="number"][required]'), value: '3' });
+		updateInput({ element: input('input[type="number"][max="1000"]'), value: '321' });
 		click('[role="checkbox"]');
 		await tick();
 		expect(target.querySelector('[role="checkbox"]')?.getAttribute('aria-checked')).toBe('true');
@@ -97,6 +122,7 @@ describe('MetadataProviderCard interactions', () => {
 					pinSet: true,
 					accessTokenSet: false,
 					enabled: true,
+					fallbackEnabled: false,
 					priority: 120,
 					createdAt: '2026-07-03T00:00:00Z',
 					updatedAt: '2026-07-03T00:00:00Z'
@@ -108,7 +134,7 @@ describe('MetadataProviderCard interactions', () => {
 		await tick();
 
 		click('[role="checkbox"]');
-		update(input('input[type="number"][max="1000"]'), '');
+		updateInput({ element: input('input[type="number"][max="1000"]'), value: '' });
 		await tick();
 		const buttons = target.querySelectorAll('button');
 		expect(Array.from(buttons, (button) => button.textContent?.trim())).toEqual([
@@ -141,6 +167,7 @@ describe('MetadataProviderCard interactions', () => {
 					pinSet: false,
 					accessTokenSet: false,
 					enabled: true,
+					fallbackEnabled: false,
 					priority: 120,
 					createdAt: '2026-07-24T00:00:00Z',
 					updatedAt: '2026-07-24T00:00:00Z'
@@ -154,7 +181,7 @@ describe('MetadataProviderCard interactions', () => {
 		expect(target.textContent).toContain('No credentials required');
 		expect(target.querySelectorAll('input')).toHaveLength(2);
 		click('[role="checkbox"]');
-		update(input('input[type="number"][max="1000"]'), '125');
+		updateInput({ element: input('input[type="number"][max="1000"]'), value: '125' });
 		click('button[type="button"]:last-child');
 		click('button[type="submit"]');
 

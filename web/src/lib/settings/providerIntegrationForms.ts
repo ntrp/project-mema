@@ -18,6 +18,7 @@ export function emptyMetadataProviderForm(): MetadataProviderForm {
 		pin: '',
 		accessToken: '',
 		enabled: true,
+		fallbackEnabled: false,
 		priority: 100
 	};
 }
@@ -50,19 +51,24 @@ export function emptySubtitleProviderForm(
 }
 
 export function metadataProviderFormFromProvider(provider: MetadataProvider): MetadataProviderForm {
-	return {
+	const form: MetadataProviderForm = {
 		id: provider.id,
 		name: provider.name,
 		type: provider.type,
 		baseUrl: provider.baseUrl,
+		enabled: provider.enabled,
+		fallbackEnabled: provider.fallbackEnabled,
+		priority: provider.priority
+	};
+	if (provider.type === 'anilist') return form;
+	return {
+		...form,
 		apiKey: provider.apiKey ?? '',
 		pin: provider.pin ?? '',
 		accessToken: provider.accessToken ?? '',
 		apiKeySet: provider.apiKeySet,
 		pinSet: provider.pinSet,
-		accessTokenSet: provider.accessTokenSet,
-		enabled: provider.enabled,
-		priority: provider.priority
+		accessTokenSet: provider.accessTokenSet
 	};
 }
 
@@ -99,10 +105,11 @@ export function normalizeMetadataProviderForm(form: MetadataProviderForm): Metad
 		name: form.name.trim(),
 		type: form.type,
 		baseUrl: form.baseUrl.trim(),
-		apiKey: optionalSavedSecret(form.apiKey, form.apiKeySet),
-		pin: optionalSavedSecret(form.pin, form.pinSet),
-		accessToken: optionalSavedSecret(form.accessToken, form.accessTokenSet),
+		apiKey: optionalSavedSecret({ value: form.apiKey, isSaved: form.apiKeySet }),
+		pin: optionalSavedSecret({ value: form.pin, isSaved: form.pinSet }),
+		accessToken: optionalSavedSecret({ value: form.accessToken, isSaved: form.accessTokenSet }),
 		enabled: form.enabled,
+		fallbackEnabled: form.type === 'tmdb' && form.fallbackEnabled,
 		priority: form.priority
 	};
 }
@@ -180,10 +187,10 @@ function optionalString(value: string | undefined) {
 	return trimmed === '' ? undefined : trimmed;
 }
 
-function optionalSavedSecret(value: string | undefined, saved: boolean | undefined) {
-	const trimmed = value?.trim() ?? '';
-	if (saved && trimmed === '') {
+function optionalSavedSecret(secret: { value?: string; isSaved?: boolean }) {
+	const trimmed = secret.value?.trim() ?? '';
+	if (secret.isSaved && trimmed === '') {
 		return undefined;
 	}
-	return optionalString(value);
+	return optionalString(secret.value);
 }

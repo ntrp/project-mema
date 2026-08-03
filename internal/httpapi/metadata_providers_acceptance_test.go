@@ -17,14 +17,15 @@ func TestScenarioSCNSettings022AdminManagesMetadataProviders(t *testing.T) {
 
 	var created MetadataProvider
 	client.doJSON(t, http.MethodPost, "/settings/metadata-providers", MetadataProviderRequest{
-		Name:     "Scenario TMDb",
-		Type:     Tmdb,
-		BaseUrl:  provider.URL + "/tmdb/3",
-		ApiKey:   &apiKey,
-		Enabled:  true,
-		Priority: 10,
+		Name:            "Scenario TMDb",
+		Type:            Tmdb,
+		BaseUrl:         provider.URL + "/tmdb/3",
+		ApiKey:          &apiKey,
+		Enabled:         true,
+		FallbackEnabled: true,
+		Priority:        10,
 	}, http.StatusCreated, &created)
-	if created.Name != "Scenario TMDb" || created.Type != Tmdb || !created.Enabled || !created.ApiKeySet {
+	if created.Name != "Scenario TMDb" || created.Type != Tmdb || !created.Enabled || !created.ApiKeySet || !created.FallbackEnabled {
 		t.Fatalf("created metadata provider = %#v", created)
 	}
 	if created.ApiKey == nil || *created.ApiKey != apiKey {
@@ -33,14 +34,15 @@ func TestScenarioSCNSettings022AdminManagesMetadataProviders(t *testing.T) {
 
 	var updated MetadataProvider
 	client.doJSON(t, http.MethodPut, "/settings/metadata-providers/"+created.Id.String(), MetadataProviderRequest{
-		Name:     "Updated TMDb",
-		Type:     Tmdb,
-		BaseUrl:  provider.URL + "/tmdb/3",
-		ApiKey:   &apiKey,
-		Enabled:  false,
-		Priority: 20,
+		Name:            "Updated TMDb",
+		Type:            Tmdb,
+		BaseUrl:         provider.URL + "/tmdb/3",
+		ApiKey:          &apiKey,
+		Enabled:         false,
+		FallbackEnabled: true,
+		Priority:        20,
 	}, http.StatusOK, &updated)
-	if updated.Name != "Updated TMDb" || updated.Enabled || updated.Priority != 20 {
+	if updated.Name != "Updated TMDb" || updated.Enabled || !updated.FallbackEnabled || updated.Priority != 20 {
 		t.Fatalf("updated metadata provider = %#v", updated)
 	}
 	if updated.ApiKey == nil || *updated.ApiKey != apiKey {

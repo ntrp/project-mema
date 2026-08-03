@@ -61,9 +61,10 @@ describe('settings form normalization', () => {
 				pin: ' 1234 ',
 				accessToken: ' ',
 				enabled: true,
+				fallbackEnabled: true,
 				priority: 1
 			})
-		).toMatchObject({ name: 'TMDB', pin: '1234', accessToken: undefined });
+		).toMatchObject({ name: 'TMDB', pin: '1234', accessToken: undefined, fallbackEnabled: true });
 
 		expect(
 			normalizeLibraryFolderForm({ path: ' /media/movies ', kind: 'movie', manual: true })

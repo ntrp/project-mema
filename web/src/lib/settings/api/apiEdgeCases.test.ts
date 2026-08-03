@@ -223,6 +223,7 @@ function providerForm() {
 		pin: '',
 		accessToken: '',
 		enabled: true,
+		fallbackEnabled: false,
 		priority: 10
 	} as const;
 }

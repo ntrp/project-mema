@@ -81,10 +81,11 @@ func (s *Server) enrichMediaItemInput(ctx context.Context, input storage.MediaIt
 	if err != nil {
 		return storage.MediaItemInput{}, err
 	}
-	return applyMediaDetails(input, details), nil
+	resource := s.resourceWithMetadataFallback(ctx, providers, details, s.metadataProviderDetails, s.searchMetadataProvider)
+	return applyMediaResource(input, resource), nil
 }
 
-func applyMediaDetails(input storage.MediaItemInput, details metadata.Details) storage.MediaItemInput {
+func applyMediaResource(input storage.MediaItemInput, details metadata.MediaResource) storage.MediaItemInput {
 	primaryProvider := valueOrEmpty(input.ExternalProvider)
 	primaryID := valueOrEmpty(input.ExternalID)
 	input.Title = details.Title

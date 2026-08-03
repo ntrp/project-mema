@@ -3144,6 +3144,8 @@ export interface MetadataProviderRequest {
 	/** @maxLength 4096 */
 	accessToken?: string;
 	enabled: boolean;
+	/** When this TMDB provider is enabled, fill only metadata fields missing from the selected provider. */
+	fallbackEnabled: boolean;
 	/**
 	 * @minimum 0
 	 * @maximum 1000

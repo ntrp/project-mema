@@ -9,13 +9,13 @@ where not exists (
 
 -- name: ListMetadataProviders :many
 select id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 from app.metadata_providers
 order by priority asc, name asc;
 
 -- name: ListEnabledMetadataProviders :many
 select id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 from app.metadata_providers
 where enabled = true
     and ((sqlc.arg(media_type) = 'movie' and type in ('tmdb', 'tvdb', 'anilist'))
@@ -24,13 +24,13 @@ order by priority asc, name asc;
 
 -- name: GetMetadataProvider :one
 select id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at
 from app.metadata_providers
 where id = $1;
 
 -- name: CreateMetadataProvider :one
 insert into app.metadata_providers (
-    id, name, type, base_url, api_key, pin, access_token, enabled, priority
+    id, name, type, base_url, api_key, pin, access_token, enabled, fallback_enabled, priority
 )
 values (
     sqlc.arg(id),
@@ -41,10 +41,11 @@ values (
     sqlc.narg(pin),
     sqlc.narg(access_token),
     sqlc.arg(enabled),
+    sqlc.arg(fallback_enabled),
     sqlc.arg(priority)
 )
 returning id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at;
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at;
 
 -- name: UpdateMetadataProvider :one
 update app.metadata_providers
@@ -56,12 +57,13 @@ set name = $2,
     access_token = $7,
     session_token = null,
     session_token_expires_at = null,
-    enabled = $8,
-    priority = $9,
+    enabled = sqlc.arg(enabled),
+    fallback_enabled = sqlc.arg(fallback_enabled),
+    priority = sqlc.arg(priority),
     updated_at = now()
 where id = $1
 returning id, name, type, base_url, api_key, pin, access_token, session_token,
-    session_token_expires_at, enabled, priority, created_at, updated_at;
+    session_token_expires_at, enabled, fallback_enabled, priority, created_at, updated_at;
 
 -- name: DeleteMetadataProvider :execrows
 delete from app.metadata_providers
