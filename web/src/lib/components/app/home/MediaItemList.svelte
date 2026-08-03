@@ -4,6 +4,7 @@
 	import EmptyState from '$lib/components/shared/EmptyState.svelte';
 	import PageHeading from '$lib/components/shared/PageHeading.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import type { MediaItem, MediaType } from '$lib/settings/types';
 	import PosterPlaceholder from '$lib/components/app/media/posters/PosterPlaceholder.svelte';
 	import { isUnreleasedMedia } from '$lib/components/app/media/shared/mediaRelease';
@@ -11,9 +12,10 @@
 	interface Props {
 		mediaType: MediaType;
 		items: MediaItem[];
+		loading?: boolean;
 	}
 
-	let { mediaType, items }: Props = $props();
+	let { mediaType, items, loading = false }: Props = $props();
 
 	const heading = $derived(mediaType === 'movie' ? 'Added movies' : 'Added series');
 	const label = $derived(mediaType === 'movie' ? 'Movies' : 'Series');
@@ -65,7 +67,17 @@
 
 <PageHeading eyebrow={label} title={heading} titleId="home-title" />
 
-{#if items.length === 0}
+{#if loading}
+	<div
+		class="grid grid-cols-[repeat(auto-fill,minmax(132px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(190px,220px))] sm:gap-5"
+		role="status"
+		aria-label={`Loading ${label.toLowerCase()}`}
+	>
+		{#each { length: 8 }}
+			<Skeleton class="min-w-0 aspect-[2/3] rounded-md" aria-hidden="true" />
+		{/each}
+	</div>
+{:else if items.length === 0}
 	<EmptyState
 		class="my-[18px] grid min-h-60 w-full place-items-center content-center gap-[18px] text-center"
 	>

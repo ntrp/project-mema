@@ -12,4 +12,4 @@
 	const items = $derived((library.data ?? []).filter((item: MediaItem) => item.type === mediaType));
 </script>
 
-<MediaItemList {mediaType} {items} />
+<MediaItemList {mediaType} {items} loading={library.isFetching && library.data === undefined} />

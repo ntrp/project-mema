@@ -138,6 +138,14 @@ describe('rendered home media components (SCN-MEDIA-003)', () => {
 		expect(body).toContain('Manual search Scenario Movie');
 	});
 
+	it('renders library skeletons while loading', () => {
+		const { body } = render(MediaItemList, {
+			props: { mediaType: 'movie', items: [], loading: true }
+		});
+		expect(body).toContain('aria-label="Loading movies"');
+		expect(body).not.toContain('No movies added yet.');
+	});
+
 	it('renders empty library and wanted states', () => {
 		const library = render(MediaItemList, {
 			props: { mediaType: 'movie', items: [] }

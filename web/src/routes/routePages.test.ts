@@ -23,11 +23,13 @@ describe('top-level route pages (SCN-ROUTES-001)', () => {
 
 		const movies = renderPage(MoviesPage);
 		expect(movies.body).toContain('Added movies');
-		expect(movies.body).toContain('No movies added yet.');
+		expect(movies.body).toContain('Loading movies');
+		expect(movies.body).not.toContain('No movies added yet.');
 
 		const series = renderPage(SeriesPage);
 		expect(series.body).toContain('Added series');
-		expect(series.body).toContain('No series added yet.');
+		expect(series.body).toContain('Loading series');
+		expect(series.body).not.toContain('No series added yet.');
 	});
 
 	it('renders activity, request, blacklist, and wanted fallbacks', () => {
