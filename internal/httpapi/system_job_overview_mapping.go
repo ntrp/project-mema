@@ -55,6 +55,13 @@ func systemJobExecutionResponses(executions []storage.SystemJobExecution) []Syst
 }
 
 func systemJobExecutionResponse(execution storage.SystemJobExecution) SystemJobExecution {
+	progressPercent := execution.ProgressPercent
+	progressLabel := execution.ProgressLabel
+	if execution.Status == "completed" {
+		completed := int32(100)
+		progressPercent = &completed
+		progressLabel = "Completed"
+	}
 	return SystemJobExecution{
 		RiverJobId:      execution.RiverJobID,
 		ScheduleId:      optionalStringPointer(execution.ScheduleID),
@@ -66,8 +73,8 @@ func systemJobExecutionResponse(execution storage.SystemJobExecution) SystemJobE
 		Attempt:         execution.Attempt,
 		MaxAttempts:     execution.MaxAttempts,
 		Priority:        execution.Priority,
-		ProgressPercent: execution.ProgressPercent,
-		ProgressLabel:   execution.ProgressLabel,
+		ProgressPercent: progressPercent,
+		ProgressLabel:   progressLabel,
 		ProgressData:    execution.ProgressData,
 		Args:            execution.Args,
 		Metadata:        execution.Metadata,

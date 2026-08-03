@@ -91,6 +91,28 @@ func TestSCNSystem008JobFinishedPublishesDiscardedAndCompletedStates(t *testing.
 	}
 }
 
+func TestRecordJobFinishedSetsCompletedProgressToOneHundred(t *testing.T) {
+	ctx, store := jobsTestStore(t)
+	row := &rivertype.JobRow{
+		ID: 48064, Kind: "media.auto_search_download", Queue: "media_search", MaxAttempts: 1,
+		ScheduledAt: time.Now().UTC(), CreatedAt: time.Now().UTC(),
+	}
+	ctx = withJobExecution(ctx, row.ID)
+	recordJobUpdated(ctx, store, nil, row, "running")
+	partial := int32(35)
+	recordJobProgress(ctx, store, nil, &partial, "Searching for an automatic download")
+
+	recordJobFinished(ctx, store, nil, row, nil)
+
+	execution, err := store.GetSystemJobExecution(ctx, row.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if execution.Status != "completed" || execution.ProgressPercent == nil || *execution.ProgressPercent != 100 || execution.ProgressLabel != "Completed" {
+		t.Fatalf("execution=%#v", execution)
+	}
+}
+
 func TestSCNSystem008JobExecutionInputClassifiesPeriodicJobs(t *testing.T) {
 	row := &rivertype.JobRow{
 		ID:          44,

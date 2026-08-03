@@ -117,6 +117,15 @@ func TestSCNSystem006SystemJobOverviewResponsesPreserveProgressAndSettings(t *te
 	}
 }
 
+func TestSystemJobExecutionResponseShowsCompletedJobsAtOneHundredPercent(t *testing.T) {
+	response := systemJobExecutionResponse(storage.SystemJobExecution{
+		Status: "completed", ProgressLabel: "Searching for an automatic download",
+	})
+	if response.ProgressPercent == nil || *response.ProgressPercent != 100 || response.ProgressLabel != "Completed" {
+		t.Fatalf("response=%#v", response)
+	}
+}
+
 func TestSCNSystem006SystemJobExecutionResponsePreservesLogsContract(t *testing.T) {
 	now := time.Date(2026, time.July, 8, 10, 0, 0, 0, time.UTC)
 	progress := int32(75)

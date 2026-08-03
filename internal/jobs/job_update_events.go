@@ -94,6 +94,10 @@ func recordJobUpdated(ctx context.Context, store *storage.SettingsStore, broker 
 
 func recordJobFinished(ctx context.Context, store *storage.SettingsStore, broker *events.Broker, row *rivertype.JobRow, err error) {
 	recordJobUpdated(ctx, store, broker, row, finalJobStatusForResult(err))
+	if err == nil {
+		completed := int32(100)
+		recordJobProgress(ctx, store, broker, &completed, "Completed")
+	}
 }
 
 func jobUpdateFromRow(row *rivertype.JobRow, status string) jobUpdateEvent {
