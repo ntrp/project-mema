@@ -91,6 +91,17 @@ export function imageUrl(path?: string, size = 'w780') {
 	return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
+export function mediaRatingText(voteAverage: number | undefined, provider: string) {
+	if (!voteAverage) return undefined;
+	return provider === 'anidb' ? voteAverage.toFixed(2) : `${Math.round(voteAverage * 10)}%`;
+}
+
+export function mediaRatingProvider(provider: string) {
+	return (
+		{ anidb: 'AniDB', anilist: 'AniList', tvdb: 'TVDB' }[provider.trim().toLowerCase()] ?? 'TMDb'
+	);
+}
+
 export function mediaMetadataDetail(mediaItem: MediaItem): MediaMetadataDetails {
 	return {
 		title: mediaItem.title,

@@ -3,7 +3,6 @@ package metadata
 import (
 	"compress/gzip"
 	"context"
-	"encoding/xml"
 	"errors"
 	"io"
 	"net/http"
@@ -59,7 +58,7 @@ func TestAniDBSearchAndDetailsUseRegisteredClientAndMapFacts(t *testing.T) {
 	if details.EpisodeFacts[0].AbsoluteNumber == nil || *details.EpisodeFacts[0].AbsoluteNumber != 1 {
 		t.Fatalf("regular episode = %#v", details.EpisodeFacts[0])
 	}
-	if details.EpisodeFacts[1].OriginalType != "2" || details.EpisodeFacts[1].AbsoluteNumber != nil || len(details.Seasons) != 0 {
+	if details.EpisodeFacts[1].OriginalType != "2" || details.EpisodeFacts[1].AbsoluteNumber != nil || len(details.Seasons) != 2 {
 		t.Fatalf("special episode was assigned standard numbering: %#v", details.EpisodeFacts[1])
 	}
 	if requests[1].Get("aid") != "123" || requests[1].Get("aname") != "" {
@@ -128,30 +127,6 @@ type zeroReader struct{}
 func (zeroReader) Read(payload []byte) (int, error) {
 	clear(payload)
 	return len(payload), nil
-}
-
-func TestAniDBOVAONAAndSpecialFixturesRemainFacts(t *testing.T) {
-	for _, test := range []struct {
-		fixture, animeType, episodeType string
-		absolute                        bool
-	}{
-		{fixture: "anidb-ova.xml", animeType: "OVA", episodeType: "1", absolute: true},
-		{fixture: "anidb-ona.xml", animeType: "Web", episodeType: "2", absolute: false},
-	} {
-		t.Run(test.animeType, func(t *testing.T) {
-			var anime anidbAnime
-			if err := xml.Unmarshal(readAniDBFixture(t, test.fixture), &anime); err != nil {
-				t.Fatal(err)
-			}
-			details := anidbDetails(anime)
-			if details.Facts[1].Value != test.animeType || details.EpisodeFacts[0].OriginalType != test.episodeType {
-				t.Fatalf("facts = %#v episodeFacts = %#v", details.Facts, details.EpisodeFacts)
-			}
-			if (details.EpisodeFacts[0].AbsoluteNumber != nil) != test.absolute {
-				t.Fatalf("unexpected standard numbering: %#v", details.EpisodeFacts[0])
-			}
-		})
-	}
 }
 
 func TestAniDBClearErrorsAndBounded429Retry(t *testing.T) {

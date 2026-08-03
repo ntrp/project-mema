@@ -141,6 +141,25 @@ describe('rendered media components (SCN-MEDIA-003)', () => {
 		expect(body).toContain('Scenario Pictures');
 	});
 
+	it('renders AniDB rating and provider type', () => {
+		const { body } = renderWithTooltip(MediaOverviewInfoCard, {
+			detail: {
+				title: 'Scenario Anime',
+				type: 'serie' as const,
+				externalProvider: 'anidb',
+				externalId: '1',
+				voteAverage: 8.25
+			},
+			facts: [{ label: 'AniDB type', value: 'TV Series' }]
+		});
+
+		expect(body).toContain('AniDB');
+		expect(body).toContain('8.25');
+		expect(body).not.toContain('83%');
+		expect(body).toContain('Type');
+		expect(body).toContain('TV Series');
+	});
+
 	it('renders series status and first-aired facts', () => {
 		const { body } = renderWithTooltip(MediaOverviewInfoCard, {
 			detail: {

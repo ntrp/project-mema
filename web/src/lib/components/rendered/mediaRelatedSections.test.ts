@@ -37,6 +37,27 @@ describe('rendered media related sections (SCN-MEDIA-008)', () => {
 		expect(body).toContain('Working');
 	});
 
+	it('labels AniDB relations and similar anime separately', () => {
+		const { body } = render(MediaRelatedSections, {
+			props: {
+				detail: metadataDetail({
+					type: 'serie',
+					externalProvider: 'anidb',
+					externalId: '1',
+					recommendations: [searchResult({ title: 'Direct Sequel', externalProvider: 'anidb' })],
+					similar: [searchResult({ title: 'Similar Anime', externalProvider: 'anidb' })]
+				}),
+				actionLabel: 'Add anime',
+				onAdd: vi.fn()
+			}
+		});
+
+		expect(body).toContain('Directly Related Anime');
+		expect(body).toContain('Direct Sequel');
+		expect(body).toContain('Similar Anime');
+		expect(body).not.toContain('/recommendations');
+	});
+
 	it('uses series labels and omits empty sections', () => {
 		const { body } = render(MediaRelatedSections, {
 			props: {

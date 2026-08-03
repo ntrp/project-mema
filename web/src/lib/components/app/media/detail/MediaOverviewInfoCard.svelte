@@ -4,6 +4,10 @@
 	import PlayIcon from '@lucide/svelte/icons/play';
 	import SquareIcon from '@lucide/svelte/icons/square';
 	import MediaReleaseDateValue from '$lib/components/app/media/detail/MediaReleaseDateValue.svelte';
+	import {
+		mediaRatingProvider,
+		mediaRatingText
+	} from '$lib/components/app/media/detail/mediaDetail';
 	import { formatDate } from '$lib/settings/dateFormat';
 	import { displayLanguage } from '$lib/settings/languageDisplay';
 	import type { MediaMetadataDetails, MediaMetadataFact } from '$lib/settings/types';
@@ -27,11 +31,13 @@
 	};
 
 	const factMap = $derived(new Map(facts.map((fact) => [fact.label, fact.value])));
-	const score = $derived(detail.voteAverage ? Math.round(detail.voteAverage * 10) : undefined);
+	const score = $derived(mediaRatingText(detail.voteAverage, detail.externalProvider));
+	const ratingProvider = $derived(mediaRatingProvider(detail.externalProvider));
 	const rows = $derived(infoRows(detail, factMap));
 
 	function infoRows(details: MediaMetadataDetails, lookup: Map<string, string>): InfoRow[] {
 		return [
+			row('Type', lookup.get('AniDB type') ?? (details.type === 'movie' ? 'Movie' : 'TV Series')),
 			row('Status', details.status),
 			row(
 				details.type === 'movie' ? 'Release Dates' : 'First Aired',
@@ -135,11 +141,11 @@
 			<span class="inline-flex items-center gap-3 text-sm font-black text-foreground">
 				<span
 					class="inline-flex min-h-5.5 items-center rounded-md bg-primary px-2.25 py-0.75 text-xs leading-none font-black text-primary-foreground"
-					aria-label="TMDB"
+					aria-label={ratingProvider}
 				>
-					TMDb
+					{ratingProvider}
 				</span>
-				{score}%
+				{score}
 			</span>
 		</div>
 	{/if}

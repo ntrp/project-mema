@@ -69,6 +69,34 @@ func TestDirectAniDBDetailsMarkMediaAsAnime(t *testing.T) {
 	}
 }
 
+func TestAniDBRelatedMediaLoadsCachedCardDetails(t *testing.T) {
+	poster, overview := "/api/media/artwork/anidb/2.jpg", "Related overview"
+	year := int32(2024)
+	loads := 0
+	load := func(_ context.Context, _ storage.MetadataProvider, request metadata.DetailsRequest) (metadata.MediaResource, error) {
+		loads++
+		return metadata.MediaResource{
+			Title: "Loaded " + request.ExternalID, Type: "serie", Year: &year,
+			ExternalProvider: "anidb", ExternalID: request.ExternalID,
+			PosterPath: &poster, Overview: &overview,
+		}, nil
+	}
+	resource := metadata.MediaResource{
+		Recommendations: []metadata.SearchResult{{Title: "Related", Type: "serie", ExternalProvider: "anidb", ExternalID: "2"}},
+		Similar:         []metadata.SearchResult{{Title: "Similar", Type: "serie", ExternalProvider: "anidb", ExternalID: "2"}},
+	}
+
+	got := enrichAniDBRelatedMedia(context.Background(), storage.MetadataProvider{Type: "anidb"}, resource, load)
+	if loads != 1 {
+		t.Fatalf("loads = %d, want one deduplicated load", loads)
+	}
+	for _, result := range []metadata.SearchResult{got.Recommendations[0], got.Similar[0]} {
+		if result.Title != "Loaded 2" || result.Year == nil || *result.Year != year || result.PosterPath == nil || *result.PosterPath != poster || result.Overview == nil || *result.Overview != overview {
+			t.Fatalf("result = %#v", result)
+		}
+	}
+}
+
 func TestEnrichAniDBFactsUsesPrimaryDetailsWithoutChangingDisplay(t *testing.T) {
 	provider, externalID := "anidb", "123"
 	input := storage.MediaItemInput{Title: "Display", ExternalProvider: &provider, ExternalID: &externalID}

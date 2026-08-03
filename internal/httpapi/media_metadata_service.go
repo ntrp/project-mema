@@ -44,6 +44,9 @@ func writeMetadataDetailsError(w http.ResponseWriter, err error) {
 
 func (s *Server) searchMetadataProvider(ctx context.Context, provider storage.MetadataProvider, request metadata.SearchRequest) ([]metadata.SearchResult, error) {
 	cacheKey := strings.ToLower(strings.Join(strings.Fields(request.Query), " "))
+	if provider.Type == "anidb" {
+		cacheKey = "anidb:v2:" + cacheKey
+	}
 	cached := []metadata.SearchResult{}
 	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, request.Year, &cached)
 	if err != nil {
@@ -113,8 +116,8 @@ func (s *Server) discoverMetadataProvider(
 	return results, nil
 }
 
-func (s *Server) metadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
-	cacheKey := metadataDetailsCacheKey(request.ExternalID)
+func (s *Server) cachedMetadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
+	cacheKey := metadataDetailsCacheKey(provider.Type, request.ExternalID)
 	var cached metadata.Details
 	found, err := s.settings.GetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, &cached)
 	if err != nil {
@@ -142,11 +145,11 @@ func (s *Server) metadataProviderDetails(ctx context.Context, provider storage.M
 func (s *Server) freshMetadataProviderDetails(ctx context.Context, provider storage.MetadataProvider, request metadata.DetailsRequest) (metadata.Details, error) {
 	details, err := s.metadata.Details(ctx, metadataProviderConfig(provider), request)
 	if err != nil {
-		cacheKey := metadataDetailsCacheKey(request.ExternalID)
+		cacheKey := metadataDetailsCacheKey(provider.Type, request.ExternalID)
 		s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, nil, false, nil, err)
 		return metadata.Details{}, err
 	}
-	cacheKey := metadataDetailsCacheKey(request.ExternalID)
+	cacheKey := metadataDetailsCacheKey(provider.Type, request.ExternalID)
 	expiresAt := s.now().Add(24 * time.Hour)
 	s.recordMetadataSearchHistory(ctx, provider, request.MediaType, cacheKey, nil, false, details, nil)
 	if err := s.settings.SetMetadataSearchCache(ctx, provider.ID, request.MediaType, cacheKey, nil, details, expiresAt); err != nil {
@@ -154,10 +157,6 @@ func (s *Server) freshMetadataProviderDetails(ctx context.Context, provider stor
 	}
 	s.publishMetadataCacheUpdated(ctx, provider, request.MediaType, cacheKey, nil, details, expiresAt)
 	return details, nil
-}
-
-func metadataDetailsCacheKey(externalID string) string {
-	return "details:v3:" + strings.ToLower(strings.TrimSpace(externalID))
 }
 
 type groupedMediaSearchRequest struct {

@@ -18,6 +18,9 @@ export function providerPageUrl(
 	if (provider === 'tvdb') {
 		return `https://thetvdb.com/dereferrer/${type === 'movie' ? 'movie' : 'series'}/${externalId}`;
 	}
+	if (provider === 'anidb') {
+		return `https://anidb.net/a${externalId}`;
+	}
 	return undefined;
 }
 

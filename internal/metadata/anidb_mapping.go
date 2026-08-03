@@ -1,20 +1,29 @@
 package metadata
 
 import (
+	"encoding/xml"
 	"strconv"
 	"strings"
 )
 
 type anidbAnime struct {
-	ID           int            `xml:"id,attr"`
-	Type         string         `xml:"type"`
-	EpisodeCount int32          `xml:"episodecount"`
-	StartDate    string         `xml:"startdate"`
-	EndDate      string         `xml:"enddate"`
-	Description  string         `xml:"description"`
-	Picture      string         `xml:"picture"`
-	Titles       []anidbTitle   `xml:"titles>title"`
-	Episodes     []anidbEpisode `xml:"episodes>episode"`
+	ID           int              `xml:"id,attr"`
+	Type         string           `xml:"type"`
+	EpisodeCount int32            `xml:"episodecount"`
+	StartDate    string           `xml:"startdate"`
+	EndDate      string           `xml:"enddate"`
+	Description  string           `xml:"description"`
+	Picture      string           `xml:"picture"`
+	Titles       []anidbTitle     `xml:"titles>title"`
+	Categories   []anidbNamedFact `xml:"categories>category"`
+	Tags         []anidbNamedFact `xml:"tags>tag"`
+	Characters   []anidbCharacter `xml:"characters>character"`
+	Creators     []anidbCreator   `xml:"creators>name"`
+	Resources    []anidbResource  `xml:"resources>resource"`
+	RelatedAnime []anidbRelated   `xml:"relatedanime>anime"`
+	SimilarAnime []anidbSimilar   `xml:"similaranime>anime"`
+	Ratings      anidbRatings     `xml:"ratings"`
+	Episodes     []anidbEpisode   `xml:"episodes>episode"`
 }
 
 type anidbTitle struct {
@@ -32,8 +41,29 @@ type anidbEpisode struct {
 }
 
 type anidbEpisodeNumber struct {
-	Type   string `xml:"type,attr"`
-	Number int32  `xml:",chardata"`
+	Type   string
+	Number int32
+}
+
+func (number *anidbEpisodeNumber) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) error {
+	var value struct {
+		Type string `xml:"type,attr"`
+		Text string `xml:",chardata"`
+	}
+	if err := decoder.DecodeElement(&value, &start); err != nil {
+		return err
+	}
+	text := strings.TrimSpace(value.Text)
+	if len(text) > 1 && strings.Contains("SCTPO", text[:1]) {
+		text = text[1:]
+	}
+	parsed, err := strconv.ParseInt(text, 10, 32)
+	if err != nil {
+		return err
+	}
+	number.Type = value.Type
+	number.Number = int32(parsed)
+	return nil
 }
 
 func anidbMainTitle(anime anidbAnime) string {
@@ -50,38 +80,52 @@ func anidbMainTitle(anime anidbAnime) string {
 	return ""
 }
 
-func anidbSearchResult(anime anidbAnime) SearchResult {
+func anidbSearchResult(anime anidbAnime, posterPath *string) SearchResult {
 	id := strconv.Itoa(anime.ID)
 	return SearchResult{
 		Title:            anidbMainTitle(anime),
-		Type:             "serie",
+		Type:             anidbMediaType(anime.Type),
 		Year:             yearFromString(anime.StartDate),
 		ExternalProvider: "anidb",
 		ExternalID:       id,
 		ExternalURL:      optionalString("https://anidb.net/anime/" + id),
-		Overview:         optionalString(anime.Description),
-		PosterPath:       anidbPicture(anime.Picture),
+		Overview:         optionalString(anidbOverview(anime.Description)),
+		PosterPath:       posterPath,
 		ReleaseDate:      optionalString(anime.StartDate),
 	}
 }
 
-func anidbDetails(anime anidbAnime) Details {
-	result := anidbSearchResult(anime)
+func anidbDetails(anime anidbAnime, posterPath *string) Details {
+	result := anidbSearchResult(anime, posterPath)
 	details := Details{
 		Title: result.Title, Type: result.Type, Year: result.Year,
 		ExternalProvider: result.ExternalProvider, ExternalID: result.ExternalID,
 		ExternalURL: result.ExternalURL, Overview: result.Overview, PosterPath: result.PosterPath,
-		ReleaseDate: result.ReleaseDate,
+		Status: anidbStatus(anime.EndDate), OriginalLanguage: optionalString("ja"),
+		ReleaseDate: result.ReleaseDate, FirstAirDate: result.ReleaseDate,
+		RuntimeMinutes: anidbRuntime(anime.Episodes),
 		Facts: []Fact{
 			{Label: "AniDB ID", Value: result.ExternalID},
 			{Label: "AniDB type", Value: strings.TrimSpace(anime.Type)},
 		},
-		Aliases:      anidbAliases(anime.Titles),
-		EpisodeFacts: anidbEpisodeFacts(anime.Episodes),
+		Aliases:          anidbAliases(anime.Titles),
+		ProviderMappings: anidbProviderMappings(anime.Resources),
+		Genres:           anidbNames(anime.Categories),
+		Keywords:         anidbTags(anime.Tags),
+		Seasons:          anidbSeasons(anime.Episodes),
+		Cast:             anidbCast(anime.Characters),
+		Crew:             anidbCrew(anime.Creators),
+		EpisodeFacts:     anidbEpisodeFacts(anime.Episodes),
+		Recommendations:  anidbRelatedResults(anime.RelatedAnime, result.Type),
+		Similar:          anidbSimilarResults(anime.SimilarAnime, result.Type),
+	}
+	if rating := anidbVoteAverage(anime.Ratings); rating != nil {
+		details.VoteAverage = rating
 	}
 	if anime.EpisodeCount > 0 {
 		details.EpisodeCount = &anime.EpisodeCount
 	}
+	details.SeasonCount = anidbSeasonCount(details.Seasons)
 	if strings.TrimSpace(anime.EndDate) != "" {
 		details.Facts = append(details.Facts, Fact{Label: "AniDB end date", Value: strings.TrimSpace(anime.EndDate)})
 	}
@@ -154,6 +198,17 @@ func anidbEpisodeTitle(titles []anidbTitle) string {
 	return ""
 }
 
+func anidbEpisodeFactValue(fact EpisodeFact) string {
+	parts := []string{"type=" + fact.OriginalType, "number=" + strconv.Itoa(int(fact.OriginalNumber))}
+	if fact.Title != "" {
+		parts = append(parts, "title="+fact.Title)
+	}
+	if fact.AirDate != nil {
+		parts = append(parts, "airdate="+*fact.AirDate)
+	}
+	return strings.Join(parts, "; ")
+}
+
 func anidbPicture(value string) *string {
 	value = strings.TrimSpace(value)
 	if value == "" {
@@ -166,13 +221,3 @@ func anidbPicture(value string) *string {
 	return &value
 }
 
-func anidbEpisodeFactValue(fact EpisodeFact) string {
-	parts := []string{"type=" + fact.OriginalType, "number=" + strconv.Itoa(int(fact.OriginalNumber))}
-	if fact.Title != "" {
-		parts = append(parts, "title="+fact.Title)
-	}
-	if fact.AirDate != nil {
-		parts = append(parts, "airdate="+*fact.AirDate)
-	}
-	return strings.Join(parts, "; ")
-}

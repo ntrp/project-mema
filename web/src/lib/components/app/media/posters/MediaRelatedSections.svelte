@@ -19,9 +19,18 @@
 	const relatedScroller = createPosterRowScroller();
 
 	const sections = $derived([
-		{ title: 'Recommendations', kind: 'recommendations', results: detail.recommendations ?? [] },
 		{
-			title: detail.type === 'movie' ? 'Similar Movies' : 'Similar Series',
+			title: detail.externalProvider === 'anidb' ? 'Directly Related Anime' : 'Recommendations',
+			kind: detail.externalProvider === 'anidb' ? 'related' : 'recommendations',
+			results: detail.recommendations ?? []
+		},
+		{
+			title:
+				detail.externalProvider === 'anidb'
+					? 'Similar Anime'
+					: detail.type === 'movie'
+						? 'Similar Movies'
+						: 'Similar Series',
 			kind: 'similar',
 			results: detail.similar ?? []
 		}
@@ -73,13 +82,19 @@
 			type: detail.type,
 			externalId: detail.externalId
 		};
+		if (kind === 'related') {
+			return undefined;
+		}
 		return kind === 'recommendations'
 			? resolve('/media/[provider]/[type]/[externalId]/recommendations', params)
 			: resolve('/media/[provider]/[type]/[externalId]/similar', params);
 	}
 
-	function trackRelatedRow(node: HTMLDivElement, title: string) {
-		return relatedScroller.trackRow(node, title);
+	function trackRelatedRow(title: string) {
+		return (node: HTMLDivElement) => {
+			const tracked = relatedScroller.trackRow(node, title);
+			return () => tracked.destroy();
+		};
 	}
 
 	function scrollRelated(title: string, direction: -1 | 1) {
@@ -111,7 +126,7 @@
 			</SectionHeading>
 			<div
 				class="-mx-3.5 mt-[-12px] grid auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
-				use:trackRelatedRow={section.title}
+				{@attach trackRelatedRow(section.title)}
 			>
 				{#each section.results as result (resultKey(result))}
 					<MediaPosterCard

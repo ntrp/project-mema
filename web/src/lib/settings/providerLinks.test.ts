@@ -12,6 +12,7 @@ describe('provider links (SCN-SETTINGS-012)', () => {
 		expect(providerPageUrl('tvdb', 'serie', '101')).toBe(
 			'https://thetvdb.com/dereferrer/series/101'
 		);
+		expect(providerPageUrl('anidb', 'serie', '9541')).toBe('https://anidb.net/a9541');
 		expect(providerPageUrl('tvdb', 'movie', '789', 'https://thetvdb.com/movies/walle')).toBe(
 			'https://thetvdb.com/movies/walle'
 		);

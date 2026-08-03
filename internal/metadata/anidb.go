@@ -48,7 +48,7 @@ func (p anidbProvider) Search(ctx context.Context, request SearchRequest) ([]Sea
 	if anime.ID == 0 || anidbMainTitle(anime) == "" {
 		return nil, fmt.Errorf("AniDB returned incomplete anime search data")
 	}
-	return []SearchResult{anidbSearchResult(anime)}, nil
+	return []SearchResult{anidbSearchResult(anime, anidbPicture(anime.Picture))}, nil
 }
 
 func (p anidbProvider) Details(ctx context.Context, request DetailsRequest) (Details, error) {
@@ -63,7 +63,7 @@ func (p anidbProvider) Details(ctx context.Context, request DetailsRequest) (Det
 	if anime.ID == 0 || anidbMainTitle(anime) == "" {
 		return Details{}, fmt.Errorf("AniDB returned incomplete anime details")
 	}
-	return anidbDetails(anime), nil
+	return anidbDetails(anime, anidbPicture(anime.Picture)), nil
 }
 
 func (p anidbProvider) request(ctx context.Context, params map[string]string, target any) error {
