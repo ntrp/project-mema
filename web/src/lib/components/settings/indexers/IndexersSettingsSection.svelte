@@ -10,6 +10,7 @@
 	import { emptyIndexerForm } from '$lib/settings/forms';
 	import type {
 		Indexer,
+		IndexerCatalogEntry,
 		IndexerForm as IndexerFormValue,
 		IndexerSearchResponse,
 		IndexerSearchSettings,
@@ -60,7 +61,7 @@
 
 	let modalOpen = $state(false);
 	const auxiliary = createIndexerAuxiliaryQueries();
-	const catalog = $derived(auxiliary.catalog.data?.entries ?? []);
+	let catalog = $state.raw<IndexerCatalogEntry[]>([]);
 	const appProfiles = $derived(auxiliary.appProfiles.data ?? []);
 	const proxies = $derived(auxiliary.proxies.data ?? []);
 	const catalogError = $derived(
@@ -74,12 +75,19 @@
 		form = emptyIndexerForm();
 		testResult = undefined;
 		modalOpen = true;
+		void loadCatalog();
 	}
 
 	function editIndexer(indexer: Indexer) {
 		onEdit(indexer);
 		testResult = undefined;
 		modalOpen = true;
+		void loadCatalog();
+	}
+
+	async function loadCatalog() {
+		const response = auxiliary.catalog.data ?? (await auxiliary.catalog.refetch()).data;
+		catalog = response?.entries ?? [];
 	}
 
 	function closeModal() {
