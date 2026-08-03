@@ -25,7 +25,15 @@ const crewRolePriority = ['Creator', 'Director', 'Writer', 'Producer', 'Editor']
 export const crewRoleLabels = [...crewRolePriority];
 
 export function castPeople(cast: MediaMetadataPerson[] = []): MediaPersonCardData[] {
-	return cast.map(personData);
+	const people: MediaPersonCardData[] = [];
+	for (const person of cast) {
+		const card = personData(person);
+		if (people.some((existing) => existing.role === card.role && samePerson(existing, card))) {
+			continue;
+		}
+		people.push(card);
+	}
+	return people;
 }
 
 export function crewPersonGroups(

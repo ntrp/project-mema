@@ -10,7 +10,11 @@
 	import MediaSeasonPanel from '$lib/components/app/media/series/MediaSeasonPanel.svelte';
 	import PosterRowControls from '$lib/components/app/media/posters/PosterRowControls.svelte';
 	import { createPosterRowScroller } from '$lib/components/app/media/posters/posterRowScroller.svelte';
-	import { crewPersonGroups, mediaPersonHref } from '$lib/components/app/media/people/mediaPeople';
+	import {
+		castPeople,
+		crewPersonGroups,
+		mediaPersonHref
+	} from '$lib/components/app/media/people/mediaPeople';
 	import type { Snippet } from 'svelte';
 	import type { MediaMetadataDetails } from '$lib/settings/types';
 
@@ -28,7 +32,7 @@
 	const keywords = $derived(detail.keywords ?? []);
 	const crewGroups = $derived(crewPersonGroups(detail.crew ?? [], facts));
 	const seasons = $derived(detail.seasons ?? []);
-	const cast = $derived(detail.cast ?? []);
+	const cast = $derived(castPeople(detail.cast ?? []));
 	const resolvedCastHref = $derived(castHref ?? resolvedPeopleHref(detail, 'cast'));
 	const resolvedCrewHref = $derived(crewHref ?? resolvedPeopleHref(detail, 'crew'));
 	const castRowKey = 'cast';
@@ -53,7 +57,8 @@
 	}
 
 	function trackCastRow(node: HTMLDivElement) {
-		return castScroller.trackRow(node, castRowKey);
+		const tracked = castScroller.trackRow(node, castRowKey);
+		return () => tracked.destroy();
 	}
 
 	function scrollCast(direction: -1 | 1) {
@@ -132,13 +137,13 @@
 		</SectionHeading>
 		<div
 			class="-mx-3.5 mt-[-12px] grid max-w-full auto-cols-[minmax(190px,220px)] grid-flow-col gap-5 overflow-x-auto overflow-y-hidden overscroll-x-contain snap-x snap-proximity scroll-px-3.5 px-3.5 pt-[18px] pb-5 [scrollbar-width:none] max-[980px]:auto-cols-[minmax(160px,180px)] max-[980px]:gap-3.5 max-sm:mx-0 max-sm:auto-cols-[minmax(128px,150px)] max-sm:gap-3 max-sm:px-0 max-sm:pt-3.5 max-sm:pb-4 [&::-webkit-scrollbar]:hidden"
-			use:trackCastRow
+			{@attach trackCastRow}
 		>
-			{#each cast as person (`${person.name}:${person.role ?? ''}`)}
+			{#each cast as person, index (`${person.externalProvider ?? ''}:${person.externalId ?? person.name}:${person.role ?? ''}:${index}`)}
 				<MediaPersonCard
 					name={person.name}
 					role={person.role}
-					image={person.profilePath}
+					image={person.image}
 					href={personHref(person)}
 				/>
 			{/each}
