@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -28,6 +29,21 @@ func (s *Server) GetPersonDetails(w http.ResponseWriter, r *http.Request, provid
 	}
 
 	details, err := s.metadata.PersonDetails(r.Context(), metadataProviderConfig(provider), personID)
+	if errors.Is(err, metadata.ErrUnsupportedProvider) && providerType == Anidb {
+		// ponytail: scan local metadata; add indexed people storage if large libraries make this slow.
+		items, listErr := s.settings.ListMediaItems(r.Context())
+		if listErr != nil {
+			writeError(w, http.StatusInternalServerError, "media_item_list_failed", "Could not list media items")
+			return
+		}
+		var found bool
+		details, found = localPersonDetails(items, string(providerType), strings.TrimSpace(personID))
+		if !found {
+			writeError(w, http.StatusNotFound, "person_not_found", "Could not find person details")
+			return
+		}
+		err = nil
+	}
 	if err != nil {
 		writeMetadataDetailsError(w, err)
 		return
